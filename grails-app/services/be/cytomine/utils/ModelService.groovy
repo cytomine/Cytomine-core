@@ -101,7 +101,7 @@ abstract class ModelService {
      * @param newObject New domain
      * @param message Message build for the command
      */
-    protected def fillDomainWithData(def object, def json) {
+     def fillDomainWithData(def object, def json) {
         def domain = object.get(json.id)
         domain = object.insertDataIntoDomain(json,domain)
         domain.id = json.id
@@ -115,7 +115,7 @@ abstract class ModelService {
         return GrailsNameUtils.getPropertyName(GrailsNameUtils.getShortName(this.getClass()))
     }
 
-    protected def executeCommand(Command c, CytomineDomain domain, def json, Task task = null) {
+     def executeCommand(Command c, CytomineDomain domain, def json, Task task = null) {
         //bug, cannot do new XXXCommand(domain:domain, json:...) => new XXXCommand(); c.domain = domain; c.json = ...
         c.domain = domain
         c.json = json
@@ -125,7 +125,7 @@ abstract class ModelService {
     /**
      * Execute command with JSON data
      */
-    protected def executeCommand(Command c, Task task = null) {
+     def executeCommand(Command c, Task task = null) {
         log.info "Command ${c.class} with flag ${c.delete}"
         if(c instanceof DeleteCommand || c.delete) {
             def domainToDelete = c.domain
@@ -167,7 +167,7 @@ abstract class ModelService {
 
     }
 
-//    protected def retrieve(def json) {
+//     def retrieve(def json) {
 //        throw new NotYetImplementedException("The retrieve method must be implement in service "+ this.class)
 //    }
     /**
@@ -324,7 +324,7 @@ abstract class ModelService {
     /**
      * Clean GORM cache
      */
-    protected void cleanUpGorm() {
+     void cleanUpGorm() {
         propertyInstanceMap.get().clear()
         def session = sessionFactory.currentSession
         session.flush()
@@ -360,27 +360,27 @@ abstract class ModelService {
     }
 
 
-    protected def beforeAdd(def domain) {
+     def beforeAdd(def domain) {
 
     }
 
-    protected def beforeDelete(def domain) {
+     def beforeDelete(def domain) {
 
     }
 
-    protected def beforeUpdate(def domain) {
+     def beforeUpdate(def domain) {
 
     }
 
-    protected def afterAdd(def domain, def response) {
+     def afterAdd(def domain, def response) {
 
     }
 
-    protected def afterDelete(def domain, def response) {
+     def afterDelete(def domain, def response) {
 
     }
 
-    protected def afterUpdate(def domain, def response) {
+     def afterUpdate(def domain, def response) {
 
     }
 
@@ -398,7 +398,7 @@ abstract class ModelService {
     }
 
 
-    protected boolean columnExist(ResultSet rs, String column) {
+     boolean columnExist(ResultSet rs, String column) {
         ResultSetMetaData rsMetaData = rs.getMetaData();
         int numberOfColumns = rsMetaData.getColumnCount();
 
