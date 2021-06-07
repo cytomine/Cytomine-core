@@ -101,7 +101,11 @@ class User extends SecUser {
     boolean algo() {
         return false
     }
-    
+
+    Set<Workplace> getWorkplaces() {
+        (UserWorkplace.findAllByUser(this) as List<UserWorkplace>)*.workplace as Set<Workplace>
+    }
+
     /**
      * Insert JSON data into domain in param
      * @param domain Domain that must be filled
@@ -155,6 +159,8 @@ class User extends SecUser {
         returnArray['color'] = domain?.color
         returnArray['user'] = domain?.creator
         returnArray['pidPseudonym'] = domain?.pidPseudonym
+        if(domain instanceof User) returnArray['workplaces'] = domain?.getWorkplaces().collect{it.name}.join(",")
+        else returnArray['workplaces'] = ((UserWorkplace.findAllByUser(User.findById(domain?.id)) as List<UserWorkplace>)*.workplace as Set<Workplace>).collect{it.name}.join(",")
         returnArray['phoneNumber'] = domain?.phoneNumber
         returnArray
     }

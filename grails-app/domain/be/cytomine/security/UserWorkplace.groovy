@@ -24,37 +24,37 @@ import org.restapidoc.annotation.RestApiObject
 import org.restapidoc.annotation.RestApiObjectField
 
 /**
- * User - role link
- * A user may have many role (user+admin for example)
+ * User - workplace link
+ * A user may have many workplace
  */
 @RestApiObject(name = "Sec user sec role", description="User - role link. A user may have many role (USER, ADMIN, GUEST)")
-class SecUserSecRole extends CytomineDomain implements Serializable {
+class UserWorkplace extends CytomineDomain implements Serializable {
 
     @RestApiObjectField(description = "The user id")
-    SecUser secUser
+    User user
 
-    @RestApiObjectField(description = "The role id")
-    SecRole secRole
+    @RestApiObjectField(description = "The workplace id")
+    Workplace workplace
 
     static mapping = {
         id generator: "assigned"
         sort "id"
-        secRole lazy: false
+        workplace lazy: false
     }
 
 
-    static SecUserSecRole get(long secUserId, long secRoleId) {
-        SecUserSecRole.findBySecRoleAndSecUser(SecRole.get(secRoleId),SecUser.get(secUserId))
+    static UserWorkplace get(long userId, long workplaceId) {
+        UserWorkplace.findByWorkplaceAndUser(Workplace.get(workplaceId),User.get(userId))
     }
 
-    static SecUserSecRole create(SecUser secUser, SecRole secRole, boolean flush = true) {
-        if(!get(secUser.id,secRole.id)) {
-            new SecUserSecRole(secUser: secUser, secRole: secRole).save(flush: flush, insert: true)
+    static UserWorkplace create(User user, Workplace workplace, boolean flush = true) {
+        if(!get(user.id,workplace.id)) {
+            new UserWorkplace(user: user, workplace: workplace).save(flush: flush, insert: true)
         }
     }
 
-    static boolean remove(SecUser secUser, SecRole secRole, boolean flush = false) {
-        SecUserSecRole instance = SecUserSecRole.findBySecUserAndSecRole(secUser, secRole)
+    static boolean remove(User user, Workplace workplace, boolean flush = false) {
+        UserWorkplace instance = UserWorkplace.findByWorkplaceAndUser(workplace, user)
         instance ? instance.delete(flush: flush) : false
     }
 
@@ -64,10 +64,10 @@ class SecUserSecRole extends CytomineDomain implements Serializable {
      * @param json JSON containing data
      * @return Domain with json data filled
      */
-    static SecUserSecRole insertDataIntoDomain(def json,def domain = new SecUserSecRole()) {
+    static UserWorkplace insertDataIntoDomain(def json, def domain = new UserWorkplace()) {
         domain.id = JSONUtils.getJSONAttrLong(json,'id',null)
-        domain.secUser = JSONUtils.getJSONAttrDomain(json, "user", new SecUser(), true)
-        domain.secRole = JSONUtils.getJSONAttrDomain(json, "role", new SecRole(), true)
+        domain.user = JSONUtils.getJSONAttrDomain(json, "user", new User(), true)
+        domain.workplace = JSONUtils.getJSONAttrDomain(json, "workplace", new Workplace(), true)
         return domain;
     }
 
@@ -78,31 +78,30 @@ class SecUserSecRole extends CytomineDomain implements Serializable {
      */
     static def getDataFromDomain(def domain) {
         def returnArray = CytomineDomain.getDataFromDomain(domain)
-        returnArray['user'] = domain?.secUser?.id
-        returnArray['role'] = domain?.secRole?.id
-        returnArray['authority'] = domain?.secRole?.authority
+        returnArray['user'] = domain?.user?.id
+        returnArray['workplace'] = domain?.workplace?.id
         returnArray
     }
 
 
     boolean equals(other) {
-        if (!(other instanceof SecUserSecRole)) {
+        if (!(other instanceof UserWorkplace)) {
             return false
         }
-        other.secUser?.id == secUser?.id && other.secRole?.id == secRole?.id
+        other.user?.id == user?.id && other.workplace?.id == workplace?.id
     }
 
     int hashCode() {
         def builder = new HashCodeBuilder()
-        if (secUser) builder.append(secUser.id)
-        if (secRole) builder.append(secRole.id)
+        if (user) builder.append(user.id)
+        if (workplace) builder.append(workplace.id)
         builder.toHashCode()
     }
 
     void checkAlreadyExist() {
-        SecUserSecRole.withNewSession {
-            SecUserSecRole roleAlready = SecUserSecRole.findBySecUserAndSecRole(secUser,secRole)
-            if(roleAlready && (roleAlready.id!=id))  throw new AlreadyExistException("Role ${secRole} already exist set for user ${secUser}!")
+        UserWorkplace.withNewSession {
+            UserWorkplace workplaceAlready = UserWorkplace.findByWorkplaceAndUser(workplace, user)
+            if(workplaceAlready && (workplaceAlready.id!=id))  throw new AlreadyExistException("Workplace ${workplace} already exist set for user ${user}!")
         }
     }
 }

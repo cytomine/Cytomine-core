@@ -22,27 +22,23 @@ import be.cytomine.utils.JSONUtils
 import org.restapidoc.annotation.RestApiObject
 import org.restapidoc.annotation.RestApiObjectField
 
-/**
- * A group is a set of user
- */
-@RestApiObject(name = "Group", description="A group is a set of users. A user may be in many groups")
-class Group extends CytomineDomain {
+@RestApiObject(name = "Workplace", description="A Workplace is related to users. A user may be in many workplaces")
+class Workplace extends CytomineDomain {
 
-    @RestApiObjectField(description="The group name")
+    @RestApiObjectField(description="The workplace name")
     String name
 
     @RestApiObjectField(description = "The id for external connection (LDAP, etc.)")
-    String gid
+    String address
 
 
     static mapping = {
-        table "`group`" //otherwise there is a conflict with the word "GROUP" from the SQL SYNTAX
         sort "id"
     }
 
     static constraints = {
         name(blank: false, unique: true)
-        gid(nullable: true)
+        address nullable: true
     }
 
     /**
@@ -51,10 +47,10 @@ class Group extends CytomineDomain {
      * @param json JSON containing data
      * @return Domain with json data filled
      */
-    static Group insertDataIntoDomain(def json,def domain=new Group()) {
+    static Workplace insertDataIntoDomain(def json, def domain=new Workplace()) {
         domain.id = JSONUtils.getJSONAttrLong(json,'id',null)
         domain.name = JSONUtils.getJSONAttrStr(json,'name',true)
-        domain.gid = JSONUtils.getJSONAttrStr(json,'gid',false)
+        domain.address = JSONUtils.getJSONAttrStr(json,'address',false)
         return domain;
     }
 
@@ -70,7 +66,7 @@ class Group extends CytomineDomain {
     static def getDataFromDomain(def domain) {
         def returnArray = CytomineDomain.getDataFromDomain(domain)
         returnArray['name'] = domain?.name
-        returnArray['gid'] = domain?.gid
+        returnArray['address'] = domain?.address
         returnArray
     }
 
@@ -78,9 +74,9 @@ class Group extends CytomineDomain {
      * Check if this domain will cause unique constraint fail if saving on database
      */
     void checkAlreadyExist() {
-        Group.withNewSession {
-            Group groupAlreadyExist = Group.findByName(name)
-            if(groupAlreadyExist && (groupAlreadyExist.id!=id))  throw new AlreadyExistException("Group $name already exist!")
+        Workplace.withNewSession {
+            Workplace workplaceAlreadyExist = Workplace.findByName(name)
+            if(workplaceAlreadyExist && (workplaceAlreadyExist.id!=id))  throw new AlreadyExistException("Workplace $name already exist!")
         }
     }
 

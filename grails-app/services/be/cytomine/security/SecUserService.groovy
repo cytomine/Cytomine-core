@@ -708,7 +708,25 @@ class SecUserService extends ModelService {
             json.user = cytomineService.getCurrentUser().id
             json.origin = "ADMINISTRATOR"
         }
-        return executeCommand(new AddCommand(user: currentUser),null,json)
+        def result = executeCommand(new AddCommand(user: currentUser),null,json)
+
+        def user = User.findById(result?.data?.user?.id)
+
+        //add all workplace params
+        def params = json.workplaces;
+        if (params) {
+            params.each { param ->
+                log.info "add workplace = " + param
+                Workplace w = Workplace.findByName(param)
+                if(!w) {
+                    w = new Workplace(name : param)
+                    w = w.save(flush: true, failOnError: true)
+                }
+                UserWorkplace.create(user, w, true)
+            }
+        }
+
+        return result
     }
 
     /**
