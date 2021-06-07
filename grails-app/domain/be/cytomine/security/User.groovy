@@ -46,6 +46,9 @@ class User extends SecUser {
     @RestApiObjectField(description = "User that created this user. Its parent.")
     User creator
 
+    String pidPseudonym;
+    String phoneNumber;
+
     @RestApiObjectFields(params=[
         @RestApiObjectField(apiFieldName = "admin", description = "(ONLY VISIBLE WHEN DOING GET /api/user/id.format service) True if the user is ADMIN ",allowedType = "boolean",useForCreation = false),
         @RestApiObjectField(apiFieldName = "user", description = "(ONLY VISIBLE WHEN DOING GET /api/user/id.format service) True if the user is NOT ADMIN and is USER ",allowedType = "boolean",useForCreation = false),
@@ -57,6 +60,8 @@ class User extends SecUser {
         language(nullable: true)
         email(blank: false, email: true)
         color(blank: false, nullable: true)
+        pidPseudonym(nullable: true)
+        phoneNumber(nullable: true)
     }
 
     static mapping = {
@@ -121,6 +126,8 @@ class User extends SecUser {
         domain.created = JSONUtils.getJSONAttrDate(json, 'created')
         domain.updated = JSONUtils.getJSONAttrDate(json, 'updated')
         domain.enabled = JSONUtils.getJSONAttrBoolean(json,'enabled', true)
+        domain.pidPseudonym = JSONUtils.getJSONAttrStr(json,'pidPseudonym')
+        domain.phoneNumber = JSONUtils.getJSONAttrStr(json,'phoneNumber')
 
         if (domain.getPublicKey() == null || domain.getPrivateKey() == null || json.publicKey == "" || json.privateKey == "") {
             domain.generateKeys()
@@ -147,6 +154,8 @@ class User extends SecUser {
         returnArray['enabled'] = domain?.enabled
         returnArray['color'] = domain?.color
         returnArray['user'] = domain?.creator
+        returnArray['pidPseudonym'] = domain?.pidPseudonym
+        returnArray['phoneNumber'] = domain?.phoneNumber
         returnArray
     }
 
