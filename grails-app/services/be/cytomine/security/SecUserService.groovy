@@ -706,7 +706,7 @@ class SecUserService extends ModelService {
         securityACLService.checkUser(currentUser)
         if(json.user == null) {
             json.user = cytomineService.getCurrentUser().id
-            json.origin = "ADMINISTRATOR"
+            if(json.origin == null) json.origin = "ADMINISTRATOR"
         }
         def result = executeCommand(new AddCommand(user: currentUser),null,json)
 
