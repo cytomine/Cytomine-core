@@ -738,7 +738,26 @@ class SecUserService extends ModelService {
     def update(SecUser user, def jsonNewData) {
         SecUser currentUser = cytomineService.getCurrentUser()
         securityACLService.checkIsCreator(user,currentUser)
-        return executeCommand(new EditCommand(user: currentUser),user, jsonNewData)
+
+        def result = executeCommand(new EditCommand(user: currentUser),user, jsonNewData)
+
+        //update all workplace params
+        def params = jsonNewData.workplaces
+        if (params) {
+            UserWorkplace.findAllByUser((User)user).each {it.delete(flush: true, failOnError: true)}
+            params.each { param ->
+                log.info "add workplace = " + param
+                Workplace w = Workplace.findByName(param)
+                if(!w) {
+                    w = new Workplace(name : param)
+                    w = w.save(flush: true, failOnError: true)
+                }
+                UserWorkplace.create(user, w, true)
+            }
+        }
+
+        return result
+
     }
 
     /**
