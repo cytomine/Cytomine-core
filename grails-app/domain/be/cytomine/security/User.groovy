@@ -161,6 +161,7 @@ class User extends SecUser {
         returnArray['pidPseudonym'] = domain?.pidPseudonym
         if(domain instanceof User) returnArray['workplaces'] = domain?.getWorkplaces().collect{it.name}.join(",")
         else returnArray['workplaces'] = ((UserWorkplace.findAllByUser(User.findById(domain?.id)) as List<UserWorkplace>)*.workplace as Set<Workplace>).collect{it.name}.join(",")
+        //TODO previous line is not performant at all. Include perf optimization into the user service ?
         returnArray['phoneNumber'] = domain?.phoneNumber
         returnArray
     }
