@@ -41,19 +41,24 @@ class CytomineMailService {
 
         if (!from) from = defaultEmail
 
+        def smtpProperties = Holders.getGrailsApplication().config.grails.notification.smtp
+
         Properties props = new Properties();
-        props.put("mail.smtp.starttls.enable","true");
-        props.put("mail.smtp.starttls.required","true");
-        props.put("mail.smtp.host",Holders.getGrailsApplication().config.grails.notification.smtp.host);
-        props.put("mail.smtp.port",Holders.getGrailsApplication().config.grails.notification.smtp.port);
-        props.put("mail.smtp.auth", "true" );
-        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.host",smtpProperties.host);
+        props.put("mail.smtp.port",smtpProperties.port);
+        props.put("mail.transport.protocol", smtpProperties.protocol);
+        props.put("mail.smtp.starttls.enable",smtpProperties.starttls.enable);
+        props.put("mail.smtp.starttls.required",smtpProperties.starttls.required);
+
+        String password = Holders.getGrailsApplication().config.grails.notification.password
+        if(password && !password.isEmpty()) props.put("mail.smtp.auth", "true" );
+        else props.put("mail.smtp.auth", "false" );
 
         //Create Mail Sender
         def sender = new JavaMailSenderImpl()
         sender.setJavaMailProperties(props)
         sender.setUsername(defaultEmail)
-        sender.setPassword(Holders.getGrailsApplication().config.grails.notification.password)
+        sender.setPassword(password)
         sender.setDefaultEncoding("UTF-8")
         MimeMessage mail = sender.createMimeMessage()
         MimeMessageHelper helper = new MimeMessageHelper(mail, true)
