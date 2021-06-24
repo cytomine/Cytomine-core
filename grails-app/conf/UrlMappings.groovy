@@ -96,9 +96,9 @@ class UrlMappings {
             action = [GET:"listNews"]
         }
 
-        "/loginWithoutSSO/login" (controller: "login") {
+        /*"/loginWithoutSSO/login" (controller: "login") {
             action = [GET:"loginWithoutSSO"]
-        }
+        }*/
 
         "/login/forgotPassword" (controller: "login") {
             action = [POST:"forgotPassword"]

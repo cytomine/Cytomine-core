@@ -35,6 +35,8 @@ import org.grails.plugin.resource.ResourceMeta
 import org.grails.plugin.resource.ResourceProcessor
 import org.grails.plugin.resource.URLUtils
 
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocket
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
@@ -64,6 +66,8 @@ class BootStrap {
 
     def dataSource
     def sessionFactory
+
+    def cytomineMailService
 
 
 
@@ -115,6 +119,10 @@ class BootStrap {
             log.info "Version was not set, set to last version"
             Version.setCurrentVersion(grailsApplication.metadata.'app.version')
         }
+
+        def test = SSLContext.getDefault().getSupportedSSLParameters()
+        test.setProtocols(["TLSv1.2"] as String[]);
+        System.setProperty("https.protocols", "TLSv1.2");
 
         //Initialize marshallers and services
         log.info "init marshaller..."

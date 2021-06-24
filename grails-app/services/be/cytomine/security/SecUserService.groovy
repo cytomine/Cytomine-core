@@ -745,9 +745,10 @@ class SecUserService extends ModelService {
         def params = jsonNewData.workplaces
         if (params) {
             UserWorkplace.findAllByUser((User)user).each {it.delete(flush: true, failOnError: true)}
+            if(params instanceof String) params = params.split(",")
             params.each { param ->
                 log.info "add workplace = " + param
-                Workplace w = Workplace.findByName(param)
+                Workplace w = Workplace.findByName(param.toString())
                 if(!w) {
                     w = new Workplace(name : param)
                     w = w.save(flush: true, failOnError: true)
