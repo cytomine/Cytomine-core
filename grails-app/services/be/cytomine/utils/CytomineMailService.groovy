@@ -49,6 +49,8 @@ class CytomineMailService {
         props.put("mail.transport.protocol", smtpProperties.protocol);
         props.put("mail.smtp.starttls.enable",smtpProperties.starttls.enable);
         props.put("mail.smtp.starttls.required",smtpProperties.starttls.required);
+        props.put("mail.smtp.ssl.protocols","TLSv1.2");
+        props.put("mail.debug",smtpProperties.debug);
 
         String password = Holders.getGrailsApplication().config.grails.notification.password
         if(password && !password.isEmpty()) props.put("mail.smtp.auth", "true" );

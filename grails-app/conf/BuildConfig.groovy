@@ -85,6 +85,7 @@ grails.project.dependency.resolution = {
         compile( "commons-validator:commons-validator:1.5.0" ) {
             excludes 'xml-apis','commons-digester','commons-logging','commons-beanutils', 'commons-collections'
         }
+        compile 'com.sun.mail:javax.mail:1.6.0'
     }
     plugins {
         compile ":mongodb:3.0.2"
@@ -104,7 +105,7 @@ grails.project.dependency.resolution = {
         runtime ":resources:1.2.8"
         compile ":executor:0.3"
         test ":code-coverage:2.0.3-3"
-        compile ":mail:1.0.7"
+        //compile ":mail:1.0.7"
         test(":spock:0.7") {
             exclude "spock-grails-support"
         }

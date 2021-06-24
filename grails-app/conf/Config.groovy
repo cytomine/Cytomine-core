@@ -454,6 +454,7 @@ grails.notification.smtp.port = "587"
 grails.notification.smtp.protocol = "smtp"
 grails.notification.smtp.starttls.required = "true"
 grails.notification.smtp.starttls.enable = "true"
+grails.notification.smtp.debug= "true"
 
 grails.instanceHostWebsite = "https://www.cytomine.org"
 grails.instanceHostSupportMail = "support@cytomine.coop"
