@@ -63,6 +63,7 @@ class StorageService extends ModelService {
             usersData['username'] = it.username
             usersData['firstname'] = it.firstname
             usersData['lastname'] = it.lastname
+            usersData['fullName'] = it.firstname + ' ' + it.lastname
             usersData['numberOfFiles'] = 0
             usersData['totalSize'] = 0
             usersData['created'] = it.created
