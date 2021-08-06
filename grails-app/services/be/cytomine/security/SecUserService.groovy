@@ -862,13 +862,11 @@ class SecUserService extends ModelService {
 
     }
 
-    def addUserToStorage(SecUser user, Storage storage) {
+    def addUserToStorage(SecUser user, Storage storage, def permission = 'WRITE') {
         securityACLService.check(storage, ADMINISTRATION)
 
-        log.info "Add user $user to storage $storage"
-        permissionService.addPermission(storage, user.username, READ)
-        permissionService.addPermission(storage, user.username, WRITE)
-
+        log.info "Add user $user to storage $storage with permissions ${permission}"
+        permissionService.addPermission(storage, user.username, permissionService.retrievePermissionFromString(permission))
         [data: [message: "OK"], status: 201]
     }
 
@@ -880,8 +878,7 @@ class SecUserService extends ModelService {
         }
 
         log.info "Remove user $user from storage $storage"
-        permissionService.deletePermission(storage, user.username, READ)
-        permissionService.deletePermission(storage, user.username, WRITE)
+        permissionService.deletePermission(storage, user.username)
         [data: [message: "OK"], status: 201]
     }
 

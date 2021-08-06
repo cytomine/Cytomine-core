@@ -1,5 +1,8 @@
 package be.cytomine.image.server
 
+import be.cytomine.Exception.WrongArgumentException
+import be.cytomine.api.UrlApi
+
 /*
 * Copyright (c) 2009-2021. Authors: see NOTICE file.
 *
@@ -19,8 +22,10 @@ package be.cytomine.image.server
 import be.cytomine.command.*
 import be.cytomine.security.SecUser
 import be.cytomine.utils.ModelService
+import be.cytomine.utils.PaginationUtils
 import be.cytomine.utils.Task
 import grails.plugin.springsecurity.SpringSecurityUtils
+import groovy.sql.Sql
 import org.codehaus.groovy.grails.web.json.JSONObject
 
 import static org.springframework.security.acls.domain.BasePermission.*
@@ -33,6 +38,8 @@ class StorageService extends ModelService {
     def securityACLService
     def springSecurityService
     def currentRoleServiceProxy
+    def secUserService
+    def dataSource
 
     static transactional = true
 
@@ -46,6 +53,46 @@ class StorageService extends ModelService {
 
     def list(SecUser user) {
         return securityACLService.getStorageList(user, false)
+    }
+
+    def usersStats(Storage storage, String sortColumn, String sortDirection, Long max = 0, Long offset = 0) {
+        Map<Long, Object> results = [:]
+        secUserService.listUsers(storage).each {
+            def usersData = [:]
+            usersData['id'] = it.id
+            usersData['username'] = it.username
+            usersData['firstname'] = it.firstname
+            usersData['lastname'] = it.lastname
+            usersData['numberOfFiles'] = 0
+            usersData['totalSize'] = 0
+            usersData['created'] = it.created
+            results.put(it.username, usersData)
+        }
+
+        permissionService.listUsersAndPermissions(storage).each {
+            if(results.containsKey(it.key)) {
+                results.get(it.key)['role'] = permissionService.retrievePermissionFromInt(it.value)
+            }
+        }
+
+        def sql = new Sql(dataSource)
+        sql.eachRow("" +
+                "SELECT su.username, su.id, count(uf.id) as files, sum(uf.size) as size\n" +
+                "FROM uploaded_file uf, sec_user su \n" +
+                "WHERE su.id = uf.user_id AND uf.storage_id = ${storage.id}\n" +
+                "GROUP BY su.username, su.id") {
+
+            if(results.containsKey(it[0])) {
+                results.get(it[0]).numberOfFiles = it[2]
+                results.get(it[0]).totalSize = it[3]
+            }
+        }
+        sql.close()
+        return PaginationUtils.convertListToPage(results.values(), sortColumn, sortDirection, max, offset)
+    }
+
+    def userAccess(SecUser user) {
+        return securityACLService.getStoragesIdsWithMaxPermission(user)
     }
 
     def read(def id) {

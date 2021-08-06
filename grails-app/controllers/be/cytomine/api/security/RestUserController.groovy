@@ -576,15 +576,69 @@ class RestUserController extends RestController {
     @RestApiMethod(description="Add user in a storage")
     @RestApiParams(params=[
             @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The storage id"),
-            @RestApiParam(name="idUser", type="long", paramType = RestApiParamType.PATH, description = "The user id")
+            @RestApiParam(name="idUser", type="long", paramType = RestApiParamType.PATH, description = "The user id"),
+            @RestApiParam(name="permission", type="string", paramType = RestApiParamType.QUERY, description = "Storage permission")
     ])
     @RestApiResponseObject(objectIdentifier = "empty")
     def addUserToStorage() {
         Storage storage = storageService.read(params.long('id'))
         SecUser user = secUserService.read(params.long('idUser'))
-        secUserService.addUserToStorage(user, storage)
+
+        secUserService.addUserToStorage(user, storage, params.get('permission', "READ"))
         response.status = 200
         response([data: [message: "OK"], status: 200])
+    }
+
+    @RestApiMethod(description="Add users in a storage")
+    @RestApiParams(params=[
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The storage id"),
+            @RestApiParam(name="users", type="array", paramType = RestApiParamType.QUERY, description = "The users ids"),
+            @RestApiParam(name="permission", type="string", paramType = RestApiParamType.QUERY, description = "ACL rights")
+    ])
+    @RestApiResponseObject(objectIdentifier = "empty")
+    def addUsersToStorage() {
+        Storage storage = storageService.read(params.long('id'))
+        securityACLService.check(storage,ADMINISTRATION)
+
+        def idUsers = params.users.toString().split(",")
+        def users = []
+        def wrongIds = []
+
+        def errorMessage = ""
+        def errors = []
+
+        for(def id : idUsers){
+            try{
+                users << Long.parseLong(id)
+            } catch(NumberFormatException e){
+                wrongIds << id
+            }
+        }
+
+        idUsers = users
+        log.info "addUsersToStorage storage=${storage} users=${users}"
+        users = User.findAllByIdInList(users)
+
+        wrongIds.addAll(idUsers- (users.collect{it.id}))
+
+        users.each { user ->
+            def code = secUserService.addUserToStorage(user, storage, params.get('permission', "READ")).status
+            if(code != 200 && code != 201) errors << user.id
+        }
+
+        if(!errors.isEmpty()) errorMessage += "Cannot add theses users to the storage ${storage.id} : "+errors.join(",")+". "
+        if(!wrongIds.isEmpty()) errorMessage += wrongIds.join(",")+" are not well formatted ids"
+
+        def result = [data: [message: "OK"], status: 200]
+        response.status = 200
+
+        if(!errors.isEmpty() || !wrongIds.isEmpty()) {
+            result.data.message = errorMessage
+            result.status = 206
+            response.status = 206
+        }
+
+        response(result)
     }
     
     @RestApiMethod(description="Delete user from a storage")
@@ -599,6 +653,58 @@ class RestUserController extends RestController {
         secUserService.deleteUserFromStorage(user, storage)
         response.status = 200
         response([data: [message: "OK"], status: 200])
+    }
+
+
+    @RestApiMethod(description="Delete users from a storage")
+    @RestApiParams(params=[
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The storage id"),
+            @RestApiParam(name="users", type="array", paramType = RestApiParamType.QUERY, description = "The users ids")
+    ])
+    @RestApiResponseObject(objectIdentifier = "empty")
+    def deleteUsersFromStorage() {
+
+        Storage storage = storageService.read(params.long('id'))
+        securityACLService.check(storage,ADMINISTRATION)
+
+        def idUsers = params.users.toString().split(",")
+        def users = []
+        def wrongIds = []
+
+        def errorMessage = ""
+        def errors = []
+
+        for(def id : idUsers){
+            try{
+                users << Long.parseLong(id)
+            } catch(NumberFormatException e){
+                wrongIds << id
+            }
+        }
+        idUsers = users
+        users = User.findAllByIdInList(users)
+
+        users.each { user ->
+            def code = secUserService.deleteUserFromStorage(user, storage).status
+            if(code != 200 && code != 201) {
+                errors << user.id
+            }
+        }
+        wrongIds.addAll(idUsers- (users.collect{it.id}))
+
+        if(!errors.isEmpty()) errorMessage += "Cannot add theses users to the storage ${storage.id} : "+errors.join(",")+". "
+        if(!wrongIds.isEmpty()) errorMessage += wrongIds.join(",")+" are not well formatted ids"
+
+        def result = [data: [message: "OK"], status: 200]
+        response.status = 200
+
+        if(!errors.isEmpty() || !wrongIds.isEmpty()) {
+            result.data.message = errorMessage
+            result.status = 206
+            response.status = 206
+        }
+
+        response(result)
     }
 
     @RestApiMethod(description="Change a user password for a user")

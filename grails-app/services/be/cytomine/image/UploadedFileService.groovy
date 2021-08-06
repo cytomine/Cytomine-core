@@ -80,7 +80,11 @@ class UploadedFileService extends ModelService {
 
         String search = ""
         searchParameters.each {
-            search += "AND uf.${SQLUtils.toSnakeCase(it.field)} ${it.sqlOperator} '${it.value}' "
+            if (it.field == 'storage') {
+                search += "AND uf.storage_id in (${it.value}) "
+            } else {
+                search += "AND uf.${SQLUtils.toSnakeCase(it.field)} ${it.sqlOperator} '${it.value}' "
+            }
         }
 
         String sort = ""
@@ -128,6 +132,7 @@ class UploadedFileService extends ModelService {
 
         def data = []
         def sql = new Sql(dataSource)
+        println request
         sql.eachRow(request, [username: user.username]) { resultSet ->
             def row = SQLUtils.keysToCamelCase(resultSet.toRowResult())
             row.thumbURL = (row.image) ? UrlApi.getAbstractImageThumbUrl(row.image as Long) : null

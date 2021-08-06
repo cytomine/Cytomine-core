@@ -76,6 +76,21 @@ class ImageConsultationTests {
 
     }
 
+    void testGetLastOpenedImageDoNotShowImageRemovedFromProject() {
+        def consultation = BasicInstanceBuilder.getImageConsultationNotExist()
+
+        def result = ImageConsultationAPI.create(consultation.image, consultation.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+
+        result = ImageInstanceAPI.delete(ImageInstance.read(consultation.image), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+
+        result = ImageInstanceAPI.listLastOpened(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        assert !ImageInstanceAPI.containsInJSONList(consultation.image, json)
+    }
+
     void testListImageConsultationByProjectAndUser(){
         ImageInstance image = BasicInstanceBuilder.getImageInstance()
         SecUser user = BasicInstanceBuilder.getUser(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD);
@@ -99,6 +114,28 @@ class ImageConsultationTests {
         result = ImageConsultationAPI.listImageConsultationByProjectAndUser(image.project.id, user.id, true, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
         assert JSON.parse(result.data).collection.size() == 2
+    }
+
+    void testListImageConsultationByProjectAndUserDoNotShowImageRemovedFromProject(){
+        ImageInstance image = BasicInstanceBuilder.getImageInstance()
+        SecUser user = BasicInstanceBuilder.getUser(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD);
+        def result = ImageConsultationAPI.listImageConsultationByProjectAndUser(image.project.id, user.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+
+        BasicInstanceBuilder.getImageConsultationNotExist(image, true)
+        BasicInstanceBuilder.getImageConsultationNotExist(image, true)
+        def consultation = BasicInstanceBuilder.getImageConsultationNotExist(image, true)
+
+        result = ImageConsultationAPI.listImageConsultationByProjectAndUser(image.project.id, user.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        assert JSON.parse(result.data).collection.collect{String.valueOf(it.id)}.contains(String.valueOf(consultation.id))
+
+        result = ImageInstanceAPI.delete(ImageInstance.read(consultation.image), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+
+        result = ImageConsultationAPI.listImageConsultationByProjectAndUser(image.project.id, user.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        assert !JSON.parse(result.data).collection.collect{String.valueOf(it.id)}.contains(String.valueOf(consultation.id))
     }
 
     void testResumeByUserAndProject() {

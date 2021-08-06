@@ -84,6 +84,28 @@ class RestStorageController extends RestController {
         delete(storageService, JSON.parse("{id : $params.id}"), null)
     }
 
+    @RestApiMethod(description="List user details for a storage", listing=true)
+    @RestApiParams(params = [
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The storage id"),
+    ])
+    def statsPerUser() {
+        Storage storage = storageService.read(params.long('id'))
+        if (storage) {
+            String sortColumn = params.sort ?: "created"
+            String sortDirection = params.order ?: "desc"
+            responseSuccess(storageService.usersStats(storage, sortColumn, sortDirection, params.long('max',0), params.long('offset',0)))
+        } else {
+            responseNotFound("Storage", params.id)
+        }
+    }
+
+    @RestApiMethod(description="List storages access for current user", listing=true)
+    @RestApiParams(params = [
+    ])
+    def storageAccess() {
+        responseSuccess(storageService.userAccess(cytomineService.getCurrentUser()))
+    }
+
     /**
      * Create a storage for user with default parameters
      */

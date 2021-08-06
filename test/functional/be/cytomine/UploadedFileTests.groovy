@@ -130,6 +130,30 @@ class UploadedFileTests {
         assert json.collection.size() == previousSize + 1
     }
 
+    void testSearchUploadedFileByStorage() {
+        Storage storage = BasicInstanceBuilder.getStorageNotExist(true)
+        def result = UploadedFileAPI.searchByStorage(storage, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert 0 == json.collection.size()
+
+        UploadedFile uf = BasicInstanceBuilder.getUploadedFileNotExist()
+        uf.originalFilename = "test"
+        uf.storage = storage
+        BasicInstanceBuilder.saveDomain(uf)
+        uf = BasicInstanceBuilder.getUploadedFileNotExist()
+        uf.storage = BasicInstanceBuilder.getStorage()
+        uf.originalFilename = "other_storage"
+        BasicInstanceBuilder.saveDomain(uf)
+
+        result = UploadedFileAPI.searchByStorage(storage, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert 1 == json.collection.size()
+    }
+
     void testShowUploadedFileWithCredential() {
         def result = UploadedFileAPI.show(BasicInstanceBuilder.getUploadedFile().id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code

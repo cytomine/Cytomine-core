@@ -25,6 +25,7 @@ import be.cytomine.processing.Software
 import be.cytomine.processing.SoftwareProject
 import be.cytomine.project.Project
 import be.cytomine.security.Group
+import be.cytomine.security.PermissionService
 import be.cytomine.security.SecUser
 import be.cytomine.security.UserGroup
 import be.cytomine.security.UserJob
@@ -215,6 +216,7 @@ class SecurityACLService {
                         "and aclEntry.sid = aclSid.id and aclSid.sid like '"+user.username+"'")
     }
 
+
     public List<Ontology> getOntologyList(SecUser user) {
         //faster method
         if (currentRoleServiceProxy.isAdminByNow(user)) return Ontology.findAllByDeletedIsNull()
@@ -277,6 +279,29 @@ class SecurityACLService {
         }
     }
 
+    public def getStoragesIdsWithMaxPermission(SecUser user) {
+        return getMaxPermissionsForDomainType(user, 'be.cytomine.image.server.Storage')
+    }
+
+    /**
+     * Retrieve the max permission a user owned for each instance of a class (project, ontology,...)
+     */
+    public def getMaxPermissionsForDomainType(SecUser user, String classType) {
+        def data = []
+        def result =  Storage.executeQuery(
+                "select storage.id, max(aclEntry.mask) "+
+                        "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, AclClass as aclClass, Storage as storage "+
+                        "where aclClass.className = '"  + classType + "'" +
+                        "and aclClass.id = aclObjectId.aclClass " +
+                        "and aclEntry.aclObjectIdentity = aclObjectId.id "+
+                        "and storage.id = aclObjectId.objectId "+
+                        "and aclEntry.sid = aclSid.id and aclSid.sid like '"+user.username+"' " +
+                        "group by storage.id")
+        result.each {
+            data << [id: it[0], permission: PermissionService.retrievePermissionFromInt(it[1])]
+        }
+        return data
+    }
 
 
     public def checkAdmin(SecUser user) {

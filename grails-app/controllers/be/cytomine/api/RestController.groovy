@@ -415,7 +415,7 @@ class RestController {
                 String operator = tmp[1].substring(0,tmp[1].length()-1)
                 String field = tmp[0]
 
-                def allowedParameter = allowedParameters.find { it.field = field }
+                def allowedParameter = allowedParameters.find { it.field == field }
                 if (allowedParameter?.allowedOperators?.contains(operator)) {
                     String value = param.value
                     if (operator == SEARCH_PARAM_LIKE || operator == SEARCH_PARAM_ILIKE)

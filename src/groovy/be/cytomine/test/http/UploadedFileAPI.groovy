@@ -17,6 +17,7 @@ package be.cytomine.test.http
 */
 
 import be.cytomine.image.UploadedFile
+import be.cytomine.image.server.Storage
 import be.cytomine.security.User
 import be.cytomine.test.BasicInstanceBuilder
 import be.cytomine.test.Infos
@@ -75,6 +76,11 @@ class UploadedFileAPI extends DomainAPI {
     }
     static def searchWithName(String name, String username, String password) {
         String URL = Infos.CYTOMINEURL + "api/uploadedfile.json?onlyRootsWithDetails=true&originalFilename[ilike]="+name
+        return doGET(URL, username, password)
+    }
+
+    static def searchByStorage(Storage storage, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/uploadedfile.json?onlyRootsWithDetails=true&storage[in]="+storage.id + ",123"
         return doGET(URL, username, password)
     }
 
