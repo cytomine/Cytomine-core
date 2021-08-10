@@ -211,25 +211,18 @@ public class StorageTests {
         assert 100 == json.collection[1].totalSize
         assert 'WRITE' == json.collection[1].role
 
-        assert 200 == AclAPI.delete(storage.class.name, storage.id, userWithFiles.id,"WRITE",Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD).code
-        assert 200 == AclAPI.delete(storage.class.name, storage.id, userWithFiles.id,"READ",Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD).code
+        assert 200 == StorageAPI.deleteUserFromStorage(storage.id, userWithFiles.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD).code
 
         result = StorageAPI.usersStats(storage.id, 'creaded', 'asc', 0, 0, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
         json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
-        assert 2 == json.collection.size()
+        assert 1 == json.collection.size() // user 1 has no longer the right on the storage
 
-        assert userWithFiles.username == json.collection[0].username
         assert owner.username == json.collection[0].username
-        assert 0 == json.collection[0].numberOfFiles
+        assert 1 == json.collection[0].numberOfFiles // storage owner has now files from deleted user
+        assert 100 == json.collection[0].totalSize // storage owner has now files from deleted user
         assert 'ADMINISTRATION' == json.collection[0].role
-
-        // user has no longer the right on the storage, but expect to be in the listing with no role
-        assert userWithFiles.username == json.collection[1].username
-        assert 1 == json.collection[1].numberOfFiles
-        assert 100 == json.collection[1].totalSize
-        assert null == json.collection[1].role
     }
 
     void testAddStorageCorrect() {

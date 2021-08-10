@@ -29,6 +29,7 @@ import be.cytomine.image.UploadedFile
 import be.cytomine.image.server.Storage
 import be.cytomine.ontology.*
 import be.cytomine.processing.Job
+import be.cytomine.processing.Software
 import be.cytomine.project.Project
 import be.cytomine.project.ProjectDefaultLayer
 import be.cytomine.project.ProjectRepresentativeUser
@@ -862,6 +863,15 @@ class SecUserService extends ModelService {
 
     }
 
+    def changeUserPermission(SecUser user, Storage storage, def permission = 'WRITE') {
+        securityACLService.check(storage, ADMINISTRATION)
+
+        log.info "change permission for user $user on storage $storage with new permission ${permission}"
+        try { permissionService.deletePermission(storage, user.username) } catch(Exception ignored) {}
+        permissionService.addPermission(storage, user.username, permissionService.retrievePermissionFromString(permission))
+        [data: [message: "OK"], status: 201]
+    }
+
     def addUserToStorage(SecUser user, Storage storage, def permission = 'WRITE') {
         securityACLService.check(storage, ADMINISTRATION)
 
@@ -878,6 +888,8 @@ class SecUserService extends ModelService {
         }
 
         log.info "Remove user $user from storage $storage"
+        log.info "${UploadedFile.countByUser(user)} uploaded files will be link to storage owner ${storage.user.username}"
+        UploadedFile.executeUpdate("update UploadedFile set user = ? where user = ?", [storage.user, user])
         permissionService.deletePermission(storage, user.username)
         [data: [message: "OK"], status: 201]
     }

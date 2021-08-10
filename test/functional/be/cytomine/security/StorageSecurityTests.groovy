@@ -207,6 +207,10 @@ class StorageSecurityTests extends SecurityTestsAbstract {
         assert (403 == StorageAPI.update(storage.id,storage.encodeAsJSON(),USERNAME2,PASSWORD2).code)
         assert (403 == StorageAPI.delete(storage.id,USERNAME2,PASSWORD2).code)
 
+        UploadedFile uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
+        uploadedfileToAdd.storage = storage
+        result = UploadedFileAPI.create(uploadedfileToAdd.encodeAsJSON(), USERNAME2, PASSWORD2)
+        assert 403 == result.code
 
         //remove right to user2
         resAddUser = StorageAPI.deleteUserFromStorage(storage.id,user2.id,USERNAME1,PASSWORD1)
@@ -219,7 +223,7 @@ class StorageSecurityTests extends SecurityTestsAbstract {
         assert (403 == StorageAPI.update(storage.id,storage.encodeAsJSON(),USERNAME2,PASSWORD2).code)
         assert (403 == StorageAPI.delete(storage.id,USERNAME2,PASSWORD2).code)
 
-        UploadedFile uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
+        uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
         uploadedfileToAdd.storage = storage
         result = UploadedFileAPI.create(uploadedfileToAdd.encodeAsJSON(), USERNAME2, PASSWORD2)
         assert 403 == result.code
@@ -319,21 +323,13 @@ class StorageSecurityTests extends SecurityTestsAbstract {
         def resAddUser = StorageAPI.addUsersToStorage(storage.id,[user1.id,user2.id],"READ",USERNAMEADMIN,PASSWORDADMIN)
         assert 200 == resAddUser.code
 
-        assert (200 == StorageAPI.show(storage.id,USERNAME1,PASSWORD1).code)
-        assert (403 == StorageAPI.update(storage.id,storage.encodeAsJSON(),USERNAME1,PASSWORD1).code)
+        checkAbleToRead(storage, USERNAME1, PASSWORD1)
+        checkNotAbleToWrite(storage, USERNAME1, PASSWORD1)
+        checkNotAbleToAdministrate(storage, USERNAME1, PASSWORD1)
 
-        assert (200 == StorageAPI.show(storage.id,USERNAME2,PASSWORD2).code)
-        assert (403 == StorageAPI.update(storage.id,storage.encodeAsJSON(),USERNAME2,PASSWORD2).code)
-
-        UploadedFile uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
-        uploadedfileToAdd.storage = storage
-        result = UploadedFileAPI.create(uploadedfileToAdd.encodeAsJSON(), USERNAME1, PASSWORD1)
-        assert 403 == result.code
-
-        uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
-        uploadedfileToAdd.storage = storage
-        result = UploadedFileAPI.create(uploadedfileToAdd.encodeAsJSON(), USERNAME2, PASSWORD2)
-        assert 403 == result.code
+        checkAbleToRead(storage, USERNAME2, PASSWORD2)
+        checkNotAbleToWrite(storage, USERNAME2, PASSWORD2)
+        checkNotAbleToAdministrate(storage, USERNAME2, PASSWORD2)
 
     }
 
@@ -355,19 +351,13 @@ class StorageSecurityTests extends SecurityTestsAbstract {
         def resAddUser = StorageAPI.addUsersToStorage(storage.id,[user1.id,user2.id],"WRITE",USERNAMEADMIN,PASSWORDADMIN)
         assert 200 == resAddUser.code
 
-        assert (200 == StorageAPI.show(storage.id,USERNAME1,PASSWORD1).code)
-        assert (200 == StorageAPI.show(storage.id,USERNAME2,PASSWORD2).code)
+        checkAbleToRead(storage, USERNAME1, PASSWORD1)
+        checkAbleToWrite(storage, USERNAME1, PASSWORD1)
+        checkNotAbleToAdministrate(storage, USERNAME1, PASSWORD1)
 
-        UploadedFile uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
-        uploadedfileToAdd.storage = storage
-        result = UploadedFileAPI.create(uploadedfileToAdd.encodeAsJSON(), USERNAME1, PASSWORD1)
-        assert 200 == result.code
-
-        uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
-        uploadedfileToAdd.storage = storage
-        result = UploadedFileAPI.create(uploadedfileToAdd.encodeAsJSON(), USERNAME2, PASSWORD2)
-        assert 200 == result.code
-
+        checkAbleToRead(storage, USERNAME2, PASSWORD2)
+        checkAbleToWrite(storage, USERNAME2, PASSWORD2)
+        checkNotAbleToAdministrate(storage, USERNAME2, PASSWORD2)
     }
 
     void testStorageMultipleRemoveUsers() {
@@ -379,7 +369,9 @@ class StorageSecurityTests extends SecurityTestsAbstract {
         User user2 = BasicInstanceBuilder.getUser(USERNAME2,PASSWORD2)
 
         //Create new storage (user1)
-        def result = StorageAPI.create(BasicInstanceBuilder.getStorageNotExist().encodeAsJSON(),USERNAMEADMIN,PASSWORDADMIN)
+        Storage storageToCreate = BasicInstanceBuilder.getStorageNotExist()
+        storageToCreate.user = admin
+        def result = StorageAPI.create(storageToCreate.encodeAsJSON(),USERNAMEADMIN,PASSWORDADMIN)
         assert 200 == result.code
         Storage storage = result.data
 
@@ -387,16 +379,107 @@ class StorageSecurityTests extends SecurityTestsAbstract {
         def resAddUser = StorageAPI.addUsersToStorage(storage.id,[user1.id,user2.id],"WRITE",USERNAMEADMIN,PASSWORDADMIN)
         assert 200 == resAddUser.code
 
+        // user 1 will have an uploaded file
+        UploadedFile uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
+        uploadedfileToAdd.storage = storage
+        uploadedfileToAdd.user = user1
+        result = UploadedFileAPI.create(uploadedfileToAdd.encodeAsJSON(), USERNAME1, PASSWORD1)
+        assert 200 == result.code
+
         def resDelUser = StorageAPI.deleteUsersFromStorage(storage.id,[user1.id,user2.id],USERNAMEADMIN,PASSWORDADMIN)
         assert 200 == resDelUser.code
 
-        assert (403 == StorageAPI.show(storage.id,USERNAME1,PASSWORD1).code)
-        assert (403 == StorageAPI.update(storage.id,storage.encodeAsJSON(),USERNAME1,PASSWORD1).code)
+        checkNotAbleToRead(storage, USERNAME1, PASSWORD1)
+        checkNotAbleToWrite(storage, USERNAME1, PASSWORD1)
+        checkNotAbleToAdministrate(storage, USERNAME1, PASSWORD1)
 
-        assert (403 == StorageAPI.show(storage.id,USERNAME2,PASSWORD2).code)
-        assert (403 == StorageAPI.update(storage.id,storage.encodeAsJSON(),USERNAME2,PASSWORD2).code)
+        checkNotAbleToRead(storage, USERNAME2, PASSWORD2)
+        checkNotAbleToWrite(storage, USERNAME2, PASSWORD2)
+        checkNotAbleToAdministrate(storage, USERNAME2, PASSWORD2)
 
-
-
+        // the uploaded file is now link to the storage owner
+        assert USERNAMEADMIN == storage.user.username
+        UploadedFile uploadedFile = UploadedFile.findById(result.data.id).refresh()
+        assert USERNAMEADMIN == uploadedFile.user.username
     }
+
+
+    void testStorageChangeUserPermission() {
+        //Get admin user
+        User admin = BasicInstanceBuilder.getSuperAdmin(USERNAMEADMIN,PASSWORDADMIN)
+        //Get user1
+        User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
+
+        //Create new storage (user1)
+        def result = StorageAPI.create(BasicInstanceBuilder.getStorageNotExist().encodeAsJSON(),USERNAMEADMIN,PASSWORDADMIN)
+        assert 200 == result.code
+        Storage storage = result.data
+
+        checkNotAbleToRead(storage, USERNAME1, PASSWORD1)
+        checkNotAbleToWrite(storage, USERNAME1, PASSWORD1)
+        checkNotAbleToAdministrate(storage, USERNAME1, PASSWORD1)
+
+        assert (200 == StorageAPI.changeUserPermission(storage.id, user1.id,"READ",USERNAMEADMIN,PASSWORDADMIN).code)
+
+        checkAbleToRead(storage, USERNAME1, PASSWORD1)
+        checkNotAbleToWrite(storage, USERNAME1, PASSWORD1)
+        checkNotAbleToAdministrate(storage, USERNAME1, PASSWORD1)
+
+        assert (200 == StorageAPI.changeUserPermission(storage.id, user1.id,"WRITE",USERNAMEADMIN,PASSWORDADMIN).code)
+
+        checkAbleToRead(storage, USERNAME1, PASSWORD1)
+        checkAbleToWrite(storage, USERNAME1, PASSWORD1)
+        checkNotAbleToAdministrate(storage, USERNAME1, PASSWORD1)
+
+        assert (200 == StorageAPI.changeUserPermission(storage.id, user1.id,"ADMINISTRATION",USERNAMEADMIN,PASSWORDADMIN).code)
+
+        checkAbleToRead(storage, USERNAME1, PASSWORD1)
+        checkAbleToWrite(storage, USERNAME1, PASSWORD1)
+        checkAbleToAdministrate(storage, USERNAME1, PASSWORD1)
+
+        assert (200 == StorageAPI.changeUserPermission(storage.id, user1.id,"READ",USERNAMEADMIN,PASSWORDADMIN).code)
+
+        checkAbleToRead(storage, USERNAME1, PASSWORD1)
+        checkNotAbleToWrite(storage, USERNAME1, PASSWORD1)
+        checkNotAbleToAdministrate(storage, USERNAME1, PASSWORD1)
+    }
+
+
+    def checkAbleToRead(Storage storage, String username, String password) {
+        assert (200 == retrieveReadCode(storage, username, password))
+    }
+    def checkNotAbleToRead(Storage storage, String username, String password) {
+        assert (403 == retrieveReadCode(storage, username, password))
+    }
+
+    def checkAbleToWrite(Storage storage, String username, String password) {
+        assert (200 == retrieveWriteCode(storage, username, password))
+    }
+    def checkNotAbleToWrite(Storage storage, String username, String password) {
+        assert (403 == retrieveWriteCode(storage, username, password))
+    }
+
+    def checkAbleToAdministrate(Storage storage, String username, String password) {
+        assert (200 == retrieveAdminCode(storage, username, password))
+    }
+
+    def checkNotAbleToAdministrate(Storage storage, String username, String password) {
+        assert (403 == retrieveAdminCode(storage, username, password))
+    }
+
+    def retrieveReadCode(Storage storage, String username, String password) {
+        return StorageAPI.show(storage.id,username,password).code
+    }
+
+    def retrieveWriteCode(Storage storage, String username, String password) {
+        UploadedFile uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
+        uploadedfileToAdd.storage = storage
+        def result = UploadedFileAPI.create(uploadedfileToAdd.encodeAsJSON(), username, password)
+        return result.code
+    }
+
+    def retrieveAdminCode(Storage storage, String username, String password) {
+        return StorageAPI.update(storage.id,storage.encodeAsJSON(),username,password).code
+    }
+
 }

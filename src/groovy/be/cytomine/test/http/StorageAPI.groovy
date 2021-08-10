@@ -85,6 +85,11 @@ class StorageAPI  extends DomainAPI {
         return doPOST(URL,"",username,password)
     }
 
+    static def changeUserPermission(def idStorage, def idUser, def permission, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/storage/${idStorage}/user/${idUser}.json?permission=${permission}"
+        return doPUT(URL,"",username,password)
+    }
+
     static def deleteUserFromStorage(def idStorage, def idUser, String username, String password) {
         String URL = Infos.CYTOMINEURL + "api/storage/${idStorage}/user/${idUser}.json"
         return doDELETE(URL,username,password)

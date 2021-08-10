@@ -106,6 +106,7 @@ class UploadedFileService extends ModelService {
                 "uf.original_filename, " +
                 "uf.size, " +
                 "uf.status, " +
+                "uf.storage_id, " +
                 "CASE WHEN (nlevel(uf.l_tree) > 0) THEN ltree2text(subltree(uf.l_tree, 0, 1)) ELSE NULL END AS root, " +
                 "COUNT(DISTINCT tree.id) AS nb_children, " +
                 "COALESCE(SUM(DISTINCT tree.size),0)+uf.size AS global_size, " +

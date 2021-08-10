@@ -707,6 +707,28 @@ class RestUserController extends RestController {
         response(result)
     }
 
+
+    @RestApiMethod(description="Change user permission in storage")
+    @RestApiParams(params=[
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The storage id"),
+            @RestApiParam(name="idUser", type="long", paramType = RestApiParamType.PATH, description = "The user id"),
+            @RestApiParam(name="permission", type="string", paramType = RestApiParamType.QUERY, description = "Storage permission")
+    ])
+    @RestApiResponseObject(objectIdentifier = "empty")
+    def changeUserPermission() {
+        Storage storage = storageService.read(params.long('id'))
+        SecUser user = secUserService.read(params.long('idUser'))
+
+        secUserService.changeUserPermission(user, storage, params.get('permission', "READ"))
+        response.status = 200
+        response([data: [message: "OK"], status: 200])
+    }
+
+
+
+
+
+
     @RestApiMethod(description="Change a user password for a user")
     @RestApiParams(params=[
             @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The user id"),

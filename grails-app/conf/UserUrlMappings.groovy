@@ -96,7 +96,7 @@ class UserUrlMappings {
             action = [GET: "showUserByStorage", POST:"addUsersToStorage", DELETE:"deleteUsersFromStorage"]
         }
         "/api/storage/$id/user/$idUser.$format"(controller: "restUser"){
-            action = [DELETE:"deleteUserFromStorage",POST:"addUserToStorage"]
+            action = [DELETE:"deleteUserFromStorage",POST:"addUserToStorage", PUT: "changeUserPermission"]
         }
 
         "/api/ldap/user.$format"(controller:"restUser"){
