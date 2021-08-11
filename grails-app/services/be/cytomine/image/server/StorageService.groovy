@@ -55,6 +55,10 @@ class StorageService extends ModelService {
         return securityACLService.getStorageList(user, false)
     }
 
+    def list(SecUser user, String searchString) {
+        return securityACLService.getStorageList(user, false, searchString)
+    }
+
     def usersStats(Storage storage, String sortColumn, String sortDirection, Long max = 0, Long offset = 0) {
         Map<Long, Object> results = [:]
         secUserService.listUsers(storage).each {

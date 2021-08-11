@@ -203,6 +203,10 @@ class SecurityACLService {
     }
 
     public List<Storage> getStorageList(SecUser user, def adminByPass = true) {
+        getStorageList(user, adminByPass, null)
+    }
+
+    public List<Storage> getStorageList(SecUser user, def adminByPass = true, String searchString) {
         //faster method
         if (adminByPass && currentRoleServiceProxy.isAdminByNow(user)) return Storage.list();
         while (user instanceof UserJob) {
@@ -213,7 +217,7 @@ class SecurityACLService {
                         "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid,  Storage as storage "+
                         "where aclObjectId.objectId = storage.id " +
                         "and aclEntry.aclObjectIdentity = aclObjectId.id "+
-                        "and aclEntry.sid = aclSid.id and aclSid.sid like '"+user.username+"'")
+                        "and aclEntry.sid = aclSid.id and aclSid.sid like '"+user.username+"'" + (searchString? " and lower(storage.name) like '%" + searchString.toLowerCase() + "%'" : ""))
     }
 
 

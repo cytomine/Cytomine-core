@@ -21,6 +21,7 @@ import be.cytomine.api.RestController
 import be.cytomine.image.server.Storage
 import be.cytomine.security.SecUser
 import be.cytomine.security.User
+import be.cytomine.utils.PaginationUtils
 import grails.converters.JSON
 import org.restapidoc.annotation.RestApi
 import org.restapidoc.annotation.RestApiMethod
@@ -37,7 +38,8 @@ class RestStorageController extends RestController {
 
     @RestApiMethod(description="List all storages", listing=true)
     @RestApiParams(params = [
-            @RestApiParam(name = "all", type = "boolean", paramType = RestApiParamType.QUERY, description = "True to list storages for all users the current user has access to")
+            @RestApiParam(name = "all", type = "boolean", paramType = RestApiParamType.QUERY, description = "True to list storages for all users the current user has access to"),
+            @RestApiParam(name = "searchString", type = "string", paramType = RestApiParamType.QUERY, description = "Filter storage by name")
     ])
     def list() {
         def storages
@@ -45,9 +47,10 @@ class RestStorageController extends RestController {
             storages = storageService.list()
         }
         else {
-            storages = storageService.list(cytomineService.getCurrentUser())
+            storages = storageService.list(cytomineService.getCurrentUser(), params.get("searchString", ""))
         }
-        responseSuccess(storages)
+        def storageSorted = PaginationUtils.sortByProperty(storages, params.sort ?: "name", params.order ?: "asc")
+        responseSuccess(storageSorted)
     }
 
     @RestApiMethod(description="Get a storage")
