@@ -295,13 +295,22 @@ class BootstrapOldVersionService {
         if (bootstrapUtilsService.checkSqlColumnExistence("image_instance", "physical_sizex")) {
             log.info "Migration of image instances"
             new Sql(dataSource).executeUpdate("UPDATE image_instance SET physical_size_x = physical_sizex;")
-            new Sql(dataSource).executeUpdate("UPDATE image_instance SET physical_size_y = physical_sizey;")
-            new Sql(dataSource).executeUpdate("UPDATE image_instance SET physical_size_z = physical_sizez;")
             new Sql(dataSource).executeUpdate("ALTER TABLE image_instance DROP COLUMN physical_sizex CASCADE;")
-            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance DROP COLUMN physical_sizey CASCADE;")
-            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance DROP COLUMN physical_sizez CASCADE;")
-        }
 
+            if (bootstrapUtilsService.checkSqlColumnExistence("image_instance", "physical_sizey")) {
+                log.info "Migration of image instances"
+                new Sql(dataSource).executeUpdate("UPDATE image_instance SET physical_size_y = physical_sizey;")
+                new Sql(dataSource).executeUpdate("ALTER TABLE image_instance DROP COLUMN physical_sizey CASCADE;")
+            } else {
+                new Sql(dataSource).executeUpdate("UPDATE image_instance SET physical_size_y = physical_size_x;")
+            }
+
+            if (bootstrapUtilsService.checkSqlColumnExistence("image_instance", "physical_sizez")) {
+                log.info "Migration of image instances"
+                new Sql(dataSource).executeUpdate("UPDATE image_instance SET physical_size_z = physical_sizez;")
+                new Sql(dataSource).executeUpdate("ALTER TABLE image_instance DROP COLUMN physical_sizez CASCADE;")
+            }
+        }
 
         /****** IMAGE GROUP ******/
         def imageInstancesFromImageGroupToSlices = [:]
