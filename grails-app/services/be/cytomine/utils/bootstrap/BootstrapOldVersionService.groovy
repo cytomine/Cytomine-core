@@ -587,11 +587,7 @@ class BootstrapOldVersionService {
 
         /****** VIEWS ******/
         log.info "Regeneration of DB views"
-        try {
-            sql.executeUpdate("DROP VIEW user_image;")
-        } catch(Exception ignored) {
-            // view may not exist
-        }
+        sql.executeUpdate("DROP VIEW IF EXISTS user_image;")
         tableService.initTable()
 
         sql.close()
