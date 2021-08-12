@@ -62,6 +62,13 @@ class BootstrapUtilsService {
         return result
     }
 
+    def renameSqlColumn(def table, def column, def columnNewName) {
+        def sql = new Sql(dataSource)
+        def result = sql.executeUpdate('ALTER TABLE ' + table + ' RENAME COLUMN ' + column + ' TO ' + columnNewName + ';')
+        sql.close()
+        return result
+    }
+
     def updateSqlColumnConstraint(def table, def column, def newSqlConstraint) {
         def sql = new Sql(dataSource)
         def result

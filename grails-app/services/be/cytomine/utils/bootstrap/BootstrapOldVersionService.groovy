@@ -257,6 +257,11 @@ class BootstrapOldVersionService {
         /****** ABSTRACT IMAGE ******/
         log.info "Migration of abstract images"
 
+        if (!bootstrapUtilsService.checkSqlColumnExistence("abstract_image", "physical_sizex") &&
+                bootstrapUtilsService.checkSqlColumnExistence("abstract_image", "resolution")) {
+            bootstrapUtilsService.renameSqlColumn("abstract_image", "resolution","physical_sizex")
+        }
+
         if (bootstrapUtilsService.checkSqlColumnExistence("abstract_image", "physical_sizex")) {
             new Sql(dataSource).executeUpdate("UPDATE abstract_image SET physical_size_x = physical_sizex;")
             new Sql(dataSource).executeUpdate("UPDATE abstract_image SET physical_size_y = physical_sizey;")
@@ -282,6 +287,11 @@ class BootstrapOldVersionService {
 
 
         /****** IMAGE INSTANCE ******/
+        if (!bootstrapUtilsService.checkSqlColumnExistence("image_instance", "physical_sizex") &&
+                bootstrapUtilsService.checkSqlColumnExistence("image_instance", "resolution")) {
+            bootstrapUtilsService.renameSqlColumn("image_instance", "resolution","physical_sizex")
+        }
+
         if (bootstrapUtilsService.checkSqlColumnExistence("image_instance", "physical_sizex")) {
             log.info "Migration of image instances"
             new Sql(dataSource).executeUpdate("UPDATE image_instance SET physical_size_x = physical_sizex;")
