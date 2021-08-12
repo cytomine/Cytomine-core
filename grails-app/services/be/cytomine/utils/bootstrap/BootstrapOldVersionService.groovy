@@ -41,6 +41,7 @@ import be.cytomine.utils.Version
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Holders
 import groovy.sql.Sql
+import org.postgresql.util.PSQLException
 import org.springframework.security.acls.domain.BasePermission
 
 /**
@@ -586,7 +587,11 @@ class BootstrapOldVersionService {
 
         /****** VIEWS ******/
         log.info "Regeneration of DB views"
-        sql.executeUpdate("DROP VIEW user_image;")
+        try {
+            sql.executeUpdate("DROP VIEW user_image;")
+        } catch(PSQLException ignored) {
+            // view may not exist
+        }
         tableService.initTable()
 
         sql.close()
