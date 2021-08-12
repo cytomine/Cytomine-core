@@ -263,12 +263,23 @@ class BootstrapOldVersionService {
         }
 
         if (bootstrapUtilsService.checkSqlColumnExistence("abstract_image", "physical_sizex")) {
+            log.info "Migration of image instances"
             new Sql(dataSource).executeUpdate("UPDATE abstract_image SET physical_size_x = physical_sizex;")
-            new Sql(dataSource).executeUpdate("UPDATE abstract_image SET physical_size_y = physical_sizey;")
-            new Sql(dataSource).executeUpdate("UPDATE abstract_image SET physical_size_z = physical_sizez;")
             bootstrapUtilsService.dropSqlColumn("abstract_image", "physical_sizex")
-            bootstrapUtilsService.dropSqlColumn("abstract_image", "physical_sizey")
-            bootstrapUtilsService.dropSqlColumn("abstract_image", "physical_sizez")
+
+            if (bootstrapUtilsService.checkSqlColumnExistence("abstract_image", "physical_sizey")) {
+                log.info "Migration of image instances"
+                new Sql(dataSource).executeUpdate("UPDATE abstract_image SET physical_size_y = physical_sizey;")
+                bootstrapUtilsService.dropSqlColumn("abstract_image", "physical_sizey")
+            } else {
+                new Sql(dataSource).executeUpdate("UPDATE abstract_image SET physical_size_y = physical_size_x;")
+            }
+
+            if (bootstrapUtilsService.checkSqlColumnExistence("abstract_image", "physical_sizez")) {
+                log.info "Migration of image instances"
+                new Sql(dataSource).executeUpdate("UPDATE abstract_image SET physical_size_z = physical_sizez;")
+                bootstrapUtilsService.dropSqlColumn("abstract_image", "physical_sizez")
+            }
         }
 
         log.info "Abstract image: update new fields depth, duration and channels"
