@@ -61,7 +61,8 @@ class RestUploadedFileController extends RestController {
         } else if (params.onlyRootsWithDetails) {
             def allowedSearchParameters = [
                     [field: "originalFilename", allowedOperators: equalsAndLikeAndIlikeOperators],
-                    [field: "storage", allowedOperators: 'in']
+                    [field: "storage", allowedOperators: 'in'],
+                    [field: "user", allowedOperators: 'in']
             ]
             uploadedFiles = uploadedFileService.listWithDetails((User) cytomineService.getCurrentUser(), getSearchParameters(allowedSearchParameters), params.sort, params.order)
         } else if (params.all) {

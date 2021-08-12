@@ -80,8 +80,8 @@ class UploadedFileService extends ModelService {
 
         String search = ""
         searchParameters.each {
-            if (it.field == 'storage') {
-                search += "AND uf.storage_id in (${it.value}) "
+            if (it.field == 'storage' || it.field == 'user') {
+                search += "AND uf.${it.field}_id in (${it.value}) "
             } else {
                 search += "AND uf.${SQLUtils.toSnakeCase(it.field)} ${it.sqlOperator} '${it.value}' "
             }
@@ -107,6 +107,7 @@ class UploadedFileService extends ModelService {
                 "uf.size, " +
                 "uf.status, " +
                 "uf.storage_id, " +
+                "uf.user_id, " +
                 "CASE WHEN (nlevel(uf.l_tree) > 0) THEN ltree2text(subltree(uf.l_tree, 0, 1)) ELSE NULL END AS root, " +
                 "COUNT(DISTINCT tree.id) AS nb_children, " +
                 "COALESCE(SUM(DISTINCT tree.size),0)+uf.size AS global_size, " +
