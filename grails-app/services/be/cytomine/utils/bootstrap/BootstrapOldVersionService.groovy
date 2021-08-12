@@ -589,7 +589,7 @@ class BootstrapOldVersionService {
         log.info "Regeneration of DB views"
         try {
             sql.executeUpdate("DROP VIEW user_image;")
-        } catch(PSQLException ignored) {
+        } catch(Exception ignored) {
             // view may not exist
         }
         tableService.initTable()
