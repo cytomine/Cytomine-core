@@ -866,6 +866,10 @@ class SecUserService extends ModelService {
     def changeUserPermission(SecUser user, Storage storage, def permission = 'WRITE') {
         securityACLService.check(storage, ADMINISTRATION)
 
+        if (user == storage.user) {
+            throw new InvalidRequestException("Cannot change permission for storage owner.")
+        }
+
         log.info "change permission for user $user on storage $storage with new permission ${permission}"
         try { permissionService.deletePermission(storage, user.username) } catch(Exception ignored) {}
         permissionService.addPermission(storage, user.username, permissionService.retrievePermissionFromString(permission))

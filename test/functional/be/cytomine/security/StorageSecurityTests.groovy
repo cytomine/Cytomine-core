@@ -315,9 +315,7 @@ class StorageSecurityTests extends SecurityTestsAbstract {
         User user2 = BasicInstanceBuilder.getUser(USERNAME2,PASSWORD2)
 
         //Create new storage (user1)
-        def result = StorageAPI.create(BasicInstanceBuilder.getStorageNotExist().encodeAsJSON(),USERNAMEADMIN,PASSWORDADMIN)
-        assert 200 == result.code
-        Storage storage = result.data
+        Storage storage = createStorageFromAPI(USERNAMEADMIN, PASSWORDADMIN)
 
         //Add right to user2
         def resAddUser = StorageAPI.addUsersToStorage(storage.id,[user1.id,user2.id],"READ",USERNAMEADMIN,PASSWORDADMIN)
@@ -343,9 +341,7 @@ class StorageSecurityTests extends SecurityTestsAbstract {
         User user2 = BasicInstanceBuilder.getUser(USERNAME2,PASSWORD2)
 
         //Create new storage (user1)
-        def result = StorageAPI.create(BasicInstanceBuilder.getStorageNotExist().encodeAsJSON(),USERNAMEADMIN,PASSWORDADMIN)
-        assert 200 == result.code
-        Storage storage = result.data
+        Storage storage = createStorageFromAPI(USERNAMEADMIN, PASSWORDADMIN)
 
         //Add right to user2
         def resAddUser = StorageAPI.addUsersToStorage(storage.id,[user1.id,user2.id],"WRITE",USERNAMEADMIN,PASSWORDADMIN)
@@ -410,10 +406,7 @@ class StorageSecurityTests extends SecurityTestsAbstract {
         //Get user1
         User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
 
-        //Create new storage (user1)
-        def result = StorageAPI.create(BasicInstanceBuilder.getStorageNotExist().encodeAsJSON(),USERNAMEADMIN,PASSWORDADMIN)
-        assert 200 == result.code
-        Storage storage = result.data
+        Storage storage = createStorageFromAPI(USERNAMEADMIN, PASSWORDADMIN)
 
         checkNotAbleToRead(storage, USERNAME1, PASSWORD1)
         checkNotAbleToWrite(storage, USERNAME1, PASSWORD1)
@@ -442,6 +435,41 @@ class StorageSecurityTests extends SecurityTestsAbstract {
         checkAbleToRead(storage, USERNAME1, PASSWORD1)
         checkNotAbleToWrite(storage, USERNAME1, PASSWORD1)
         checkNotAbleToAdministrate(storage, USERNAME1, PASSWORD1)
+    }
+
+    void testStorageOwnerHasAdministrationPrivilege() {
+        BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
+
+        Storage storage = createStorageFromAPI(USERNAME1, PASSWORD1)
+
+        checkAbleToAdministrate(storage, USERNAME1, PASSWORD1)
+    }
+
+    void testStorageCannotChangeOwnerPermission() {
+        User admin = BasicInstanceBuilder.getSuperAdmin(USERNAMEADMIN,PASSWORDADMIN)
+        User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
+
+        Storage storage = createStorageFromAPI(USERNAME1, PASSWORD1)
+
+        assert (400 == StorageAPI.changeUserPermission(storage.id, user1.id,"READ",USERNAMEADMIN,PASSWORDADMIN).code)
+        assert (400 == StorageAPI.changeUserPermission(storage.id, user1.id,"WRITE",USERNAMEADMIN,PASSWORDADMIN).code)
+    }
+
+    void testStorageCannotRemoveOwnerFromStorage() {
+        User admin = BasicInstanceBuilder.getSuperAdmin(USERNAMEADMIN,PASSWORDADMIN)
+        User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
+
+        Storage storage = createStorageFromAPI(USERNAME1, PASSWORD1)
+
+        assert (400 == StorageAPI.deleteUserFromStorage(storage.id, user1.id,USERNAMEADMIN,PASSWORDADMIN).code)
+    }
+
+    Storage createStorageFromAPI(String username, String password) {
+        Storage storage = BasicInstanceBuilder.getStorageNotExist()
+        def result = StorageAPI.create(storage.encodeAsJSON(),username,password)
+        assert 200 == result.code
+        storage = result.data
+        return storage
     }
 
 
