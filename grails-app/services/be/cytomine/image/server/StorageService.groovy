@@ -51,12 +51,12 @@ class StorageService extends ModelService {
         return securityACLService.getStorageList(cytomineService.currentUser, true)
     }
 
-    def list(SecUser user) {
-        return securityACLService.getStorageList(user, false)
+    def list(SecUser user, Boolean adminByPass = false) {
+        return securityACLService.getStorageList(user, adminByPass)
     }
 
-    def list(SecUser user, String searchString) {
-        return securityACLService.getStorageList(user, false, searchString)
+    def list(SecUser user, String searchString, Boolean adminByPass = false) {
+        return securityACLService.getStorageList(user, adminByPass, searchString)
     }
 
     def usersStats(Storage storage, String sortColumn, String sortDirection, Long max = 0, Long offset = 0) {

@@ -29,6 +29,7 @@ import be.cytomine.security.PermissionService
 import be.cytomine.security.SecUser
 import be.cytomine.security.UserGroup
 import be.cytomine.security.UserJob
+import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Permission
 
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION
@@ -208,7 +209,10 @@ class SecurityACLService {
 
     public List<Storage> getStorageList(SecUser user, def adminByPass = true, String searchString) {
         //faster method
-        if (adminByPass && currentRoleServiceProxy.isAdminByNow(user)) return Storage.list();
+        if (adminByPass && currentRoleServiceProxy.isAdminByNow(user)){
+            if(searchString && !searchString.isEmpty()) return Storage.list();
+            else return Storage.findAllByNameIlike('%'+searchString+'%');
+        }
         while (user instanceof UserJob) {
             user = ((UserJob) user).user
         }
@@ -292,6 +296,10 @@ class SecurityACLService {
      */
     public def getMaxPermissionsForDomainType(SecUser user, String classType) {
         def data = []
+        if (currentRoleServiceProxy.isAdminByNow(user)) {
+            return Storage.list().collect {[id:it.id, permission: PermissionService.retrievePermissionFromInt(ADMINISTRATION.mask)]}
+        }
+
         def result =  Storage.executeQuery(
                 "select storage.id, max(aclEntry.mask) "+
                         "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, AclClass as aclClass, Storage as storage "+

@@ -43,12 +43,7 @@ class RestStorageController extends RestController {
     ])
     def list() {
         def storages
-        if (params.boolean("all", false)) {
-            storages = storageService.list()
-        }
-        else {
-            storages = storageService.list(cytomineService.getCurrentUser(), params.get("searchString", ""))
-        }
+        storages = storageService.list(cytomineService.getCurrentUser(), params.get("searchString", "").toString(), params.boolean("all", false))
         def storageSorted = PaginationUtils.sortByProperty(storages, params.sort ?: "name", params.order ?: "asc")
         responseSuccess(storageSorted)
     }
