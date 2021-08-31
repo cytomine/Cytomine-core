@@ -216,15 +216,15 @@ class UserPositionTests  {
     }
 
     void testListOnlineFriendsWithOpenedImages() {
-        def image1 = BasicInstanceBuilder.getImageInstance()
-        def project = image1.project
-        def image2 = BasicInstanceBuilder.getImageInstanceNotExist(project, true)
+        def slice1 = BasicInstanceBuilder.getSliceInstance()
+        def project = slice1.project
+        def slice2 = BasicInstanceBuilder.getSliceInstanceNotExist(slice1.image, true)
         def user1 = BasicInstanceBuilder.getUserNotExist(true)
         def user2 = BasicInstanceBuilder.getUserNotExist(true)
 
-        BasicInstanceBuilder.getPersistentUserPosition(image1, user1, true)
-        BasicInstanceBuilder.getPersistentUserPosition(image2, user1, true)
-        BasicInstanceBuilder.getPersistentUserPosition(image2, user2,true)
+        BasicInstanceBuilder.getPersistentUserPosition(slice1, user1, true)
+        BasicInstanceBuilder.getPersistentUserPosition(slice2, user1, true)
+        BasicInstanceBuilder.getPersistentUserPosition(slice2, user2,true)
 
         def result = UserAPI.listOnline(project.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
 
@@ -234,10 +234,10 @@ class UserPositionTests  {
         assert (json.collection.find{it.id == user2.id})
         assert (json.collection.find{it.id == user1.id}.position.size() == 2)
         assert (json.collection.find{it.id == user2.id}.position.size() == 1)
-        assert (json.collection.find{it.id == user1.id}.position.find{it.image == image1.id})
-        assert (json.collection.find{it.id == user1.id}.position.find{it.image == image2.id})
-        assert (json.collection.find{it.id == user2.id}.position.find{it.image == image2.id})
-        assert (json.collection.find{it.id == user2.id}.position.find{it.image == image1.id} == null)
+        assert (json.collection.find{it.id == user1.id}.position.find{it.slice == slice1.id})
+        assert (json.collection.find{it.id == user1.id}.position.find{it.slice == slice2.id})
+        assert (json.collection.find{it.id == user2.id}.position.find{it.slice == slice2.id})
+        assert (json.collection.find{it.id == user2.id}.position.find{it.slice == slice1.id} == null)
 
         assert 200 == result.code
     }

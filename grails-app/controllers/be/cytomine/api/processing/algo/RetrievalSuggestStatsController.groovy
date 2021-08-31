@@ -18,6 +18,7 @@ package be.cytomine.api.processing.algo
 
 import be.cytomine.AnnotationDomain
 import be.cytomine.api.RestController
+import be.cytomine.api.UrlApi
 import be.cytomine.ontology.AlgoAnnotationTerm
 import be.cytomine.ontology.Term
 import be.cytomine.processing.Job
@@ -290,7 +291,7 @@ class RetrievalSuggestStatsController extends RestController {
             AnnotationDomain annotation = suggest.retrieveAnnotationDomain()
             result['annotation'] = annotation.id
             result['project'] = annotation.image.id
-            result['cropURL'] = annotation.toCropURL()
+            result['cropURL'] = UrlApi.getAnnotationCropWithAnnotationId(annotation.id)
             result['term'] = suggest.term.id
             result['expectedTerm'] = suggest.expectedTerm.id
             result['rate'] = suggest.rate

@@ -172,34 +172,34 @@ class AlgoAnnotationListingTests {
         Project project = BasicInstanceBuilder.getProjectNotExist(true)
         Ontology ontology = BasicInstanceBuilder.getOntology()
         project.ontology = ontology
-        project.save(flush: true)
+        BasicInstanceBuilder.saveDomain(project)
 
         ImageInstance image = BasicInstanceBuilder.getImageInstanceNotExist()
         image.project = project
-        image.save(flush: true)
+        BasicInstanceBuilder.saveDomain(image)
 
         AlgoAnnotation annotationWithoutTerm = BasicInstanceBuilder.getAlgoAnnotationNotExist()
         annotationWithoutTerm.project = project
         annotationWithoutTerm.image = image
         annotationWithoutTerm.user = userJob
-        assert annotationWithoutTerm.save(flush: true)
+        assert BasicInstanceBuilder.saveDomain(annotationWithoutTerm)
 
         AlgoAnnotationTerm at = BasicInstanceBuilder.getAlgoAnnotationTermNotExistForAlgoAnnotation()
         at.term.ontology = ontology
-        at.term.save(flush: true)
+        BasicInstanceBuilder.saveDomain(at.term)
         at.project = project
         at.userJob = userJob
         println at.validate()
         println at.annotationClassName
         println at.annotationIdent
         println "#######################"
-        at.save(flush: true)
+        BasicInstanceBuilder.saveDomain(at)
         println "***********************"
         AnnotationDomain annotationWithTerm = at.retrieveAnnotationDomain()
         annotationWithTerm.user = userJob
         annotationWithTerm.project = project
         annotationWithTerm.image = image
-        assert annotationWithTerm.save(flush: true)
+        assert BasicInstanceBuilder.saveDomain(annotationWithTerm)
 
         //list annotation without term with this user
         def result = AlgoAnnotationAPI.listByProjectAndUsersWithoutTerm(project.id, userJob.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
@@ -236,39 +236,39 @@ class AlgoAnnotationListingTests {
         Project project = BasicInstanceBuilder.getProjectNotExist(true)
         Ontology ontology = BasicInstanceBuilder.getOntology()
         project.ontology = ontology
-        project.save(flush: true)
+        BasicInstanceBuilder.saveDomain(project)
 
         ImageInstance image = BasicInstanceBuilder.getImageInstanceNotExist()
         image.project = project
-        image.save(flush: true)
+        BasicInstanceBuilder.saveDomain(image)
 
         //annotation with no multiple term
         AlgoAnnotation annotationWithNoTerm = BasicInstanceBuilder.getAlgoAnnotationNotExist()
         annotationWithNoTerm.project = project
         annotationWithNoTerm.image = image
         annotationWithNoTerm.user = userJob
-        assert annotationWithNoTerm.save(flush: true)
+        BasicInstanceBuilder.saveDomain(annotationWithNoTerm)
 
         //annotation with multiple term
         AlgoAnnotationTerm at = BasicInstanceBuilder.getAlgoAnnotationTermNotExistForAlgoAnnotation()
         at.term.ontology = ontology
-        at.term.save(flush: true)
+        BasicInstanceBuilder.saveDomain(at.term)
         at.userJob = userJob
         at.project = project
-        assert at.save(flush: true)
+        BasicInstanceBuilder.saveDomain(at)
 
         AnnotationDomain annotationWithMultipleTerm = at.retrieveAnnotationDomain()
         annotationWithMultipleTerm.user = userJob
         annotationWithMultipleTerm.project = project
         annotationWithMultipleTerm.image = image
-        assert annotationWithMultipleTerm.save(flush: true)
+        BasicInstanceBuilder.saveDomain(annotationWithMultipleTerm)
         AlgoAnnotationTerm at2 = BasicInstanceBuilder.getAlgoAnnotationTermNotExistForAlgoAnnotation()
         at2.term.ontology = ontology
         at2.project = project
-        assert at2.term.save(flush: true)
+        BasicInstanceBuilder.saveDomain(at2.term)
         at2.userJob = userJob
         at2.setAnnotation(annotationWithMultipleTerm)
-        at2.save(flush: true)
+        BasicInstanceBuilder.saveDomain(at2)
 
         //list annotation without term with this user
         def result = AlgoAnnotationAPI.listByProjectAndUsersSeveralTerm(project.id, userJob.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)

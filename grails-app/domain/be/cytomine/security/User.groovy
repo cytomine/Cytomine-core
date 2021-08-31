@@ -38,10 +38,14 @@ class User extends SecUser {
     @RestApiObjectField(description = "The email of the user")
     String email
 
+    @RestApiObjectField(description = "NOT USED.")
     String color //deprecated
 
-    @RestApiObjectField(description = "The language of the user")
+    @RestApiObjectField(description = "The language of the user", allowedType = "string")
     Language language
+
+    @RestApiObjectField(description = "True if user is in developer mode")
+    Boolean isDeveloper = false
 
     @RestApiObjectField(description = "User that created this user. Its parent.")
     User creator
@@ -58,6 +62,7 @@ class User extends SecUser {
         firstname blank: false
         lastname blank: false
         language(nullable: true)
+        isDeveloper(nullable: true)
         email(blank: false, email: true)
         color(blank: false, nullable: true)
         pidPseudonym(nullable: true)
@@ -122,6 +127,7 @@ class User extends SecUser {
         domain.language = Language.findByCode(JSONUtils.getJSONAttrStr(json,'language') ?: "EN")
         if(!domain.language) domain.language = Language.valueOf(JSONUtils.getJSONAttrStr(json,'language') ?: "EN")
         domain.origin = JSONUtils.getJSONAttrStr(json,'origin')
+        domain.isDeveloper = JSONUtils.getJSONAttrBoolean(json, 'isDeveloper', false)
         if (json.password && domain.password != null) {
             domain.newPassword = JSONUtils.getJSONAttrStr(json,'password') //user is updated
         } else if (json.password) {
@@ -149,7 +155,8 @@ class User extends SecUser {
         returnArray['firstname'] = domain?.firstname
         returnArray['lastname'] = domain?.lastname
         returnArray['email'] = domain?.email
-        returnArray['language'] = domain?.language.toString()
+        returnArray['language'] = domain?.language?.toString()
+        returnArray['isDeveloper'] = domain?.isDeveloper
         if (!(domain?.springSecurityService?.principal instanceof String) && domain?.id == domain?.springSecurityService?.currentUser?.id) {
             returnArray['publicKey'] = domain?.publicKey
             returnArray['privateKey'] = domain?.privateKey

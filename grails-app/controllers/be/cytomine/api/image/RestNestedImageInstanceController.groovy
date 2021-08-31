@@ -35,7 +35,6 @@ import org.restapidoc.pojo.RestApiParamType
 @RestApi(name = "Image | nested image services", description = "Methods for managing a nested image, a sub-image of an existing image instance")
 class RestNestedImageInstanceController extends RestController {
 
-    def imageProcessingService
     def nestedImageInstanceService
     def imageInstanceService
     def projectService

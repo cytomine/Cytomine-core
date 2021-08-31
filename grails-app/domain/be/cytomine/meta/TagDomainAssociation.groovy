@@ -23,8 +23,9 @@ import be.cytomine.Exception.AlreadyExistException
 import be.cytomine.utils.JSONUtils
 import org.restapidoc.annotation.RestApiObject
 import org.restapidoc.annotation.RestApiObjectField
+import org.restapidoc.annotation.RestApiObjectFields
 
-@RestApiObject(name = "tag", description = "A flag that can be associated to a Cytomine domain.")
+@RestApiObject(name = "Tag domain association", description = "A flag that can be associated to a Cytomine domain.")
 class TagDomainAssociation extends CytomineDomain implements Serializable{
     @RestApiObjectField(description = "The tag id")
     Tag tag
@@ -34,6 +35,11 @@ class TagDomainAssociation extends CytomineDomain implements Serializable{
 
     @RestApiObjectField(description = "The domain identifier (id)")
     Long domainIdent
+
+    @RestApiObjectFields(params = [
+            @RestApiObjectField(apiFieldName = "tagName", description = "The tag name", allowedType = "string", useForCreation = false),
+    ])
+    static transients = []
 
     static constraints = {
         domainClassName(nullable: false, blank:  false)

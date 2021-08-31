@@ -36,7 +36,7 @@ import org.restapidoc.pojo.RestApiParamType
 import static org.springframework.security.acls.domain.BasePermission.READ
 import static org.springframework.security.acls.domain.BasePermission.WRITE
 
-@RestApi(name = "property services", description = "Methods for managing properties")
+@RestApi(name = "Metadata | property services", description = "Methods for managing properties")
 class RestPropertyController extends RestController {
 
     def propertyService
@@ -316,6 +316,9 @@ class RestPropertyController extends RestController {
         } else {
             if (json.domainClassName == null || json.domainClassName == "")
                 json.domainClassName = params.get("domainClassName")
+
+            if (json.domainIdent == null || json.domainIdent == "")
+                json.domainIdent = params.get("domainIdent")
 
             responseResult(addOne(propertyService, json))
         }

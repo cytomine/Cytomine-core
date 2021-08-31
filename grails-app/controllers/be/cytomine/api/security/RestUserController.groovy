@@ -20,6 +20,7 @@ import be.cytomine.Exception.CytomineException
 import be.cytomine.Exception.ForbiddenException
 import be.cytomine.api.RestController
 import be.cytomine.image.ImageInstance
+import be.cytomine.image.server.Storage
 import be.cytomine.ontology.Ontology
 import be.cytomine.project.Project
 import be.cytomine.security.Group
@@ -60,6 +61,7 @@ class RestUserController extends RestController {
     def imageConsultationService
     def projectRepresentativeUserService
     def userAnnotationService
+    def storageService
 
 
     /**
@@ -158,6 +160,19 @@ class RestUserController extends RestController {
         }
     }
 
+    @RestApiMethod(description="Get all storage users.", listing = true)
+    @RestApiParams(params=[
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The storage id")
+    ])
+    def showUserByStorage() {
+        Storage storage = storageService.read(params.long('id'))
+        if (storage) {
+            responseSuccess(secUserService.listUsers(storage))
+        } else {
+            responseNotFound("User", "Storage", params.id)
+        }
+    }
+
     def listByGroup() {
         Group group = groupService.read(params.long('id'))
         if (group) {
@@ -184,7 +199,7 @@ class RestUserController extends RestController {
             def extended = [:]
             if(params.getBoolean("withRoles")) extended.put("withRoles",params.withRoles)
             result = secUserService.list(extended, searchParameters, params.sort, params.order, params.long("max",0), params.long("offset",0))
-            responseSuccess([collection : result.data, size : result.total])
+            responseSuccess([collection : result.data, size : result.total, offset: result.offset, perPage: result.perPage, totalPages: result.totalPages])
         }
     }
 
@@ -378,7 +393,7 @@ class RestUserController extends RestController {
 
         def results = secUserService.listUsersExtendedByProject(project, extended, searchParameters, sortColumn, sortDirection, params.long('max',0), params.long('offset',0))
 
-        responseSuccess([collection : results.data, size:results.total])
+        responseSuccess([collection : results.data, size:results.total, offset: results.offset, perPage: results.perPage, totalPages: results.totalPages])
 
         //boolean showUserJob = params.boolean('showJob')
     }
@@ -495,7 +510,7 @@ class RestUserController extends RestController {
         users = User.findAllByIdInList(users)
 
         users.each { user ->
-            secUserService.deleteUserFromProject(user, project, true)
+            if(project.getPermissionInACL(project, user).contains(ADMINISTRATION.mask)) secUserService.deleteUserFromProject(user, project, true)
             def code = secUserService.deleteUserFromProject(user, project, false).status
             if(code != 200 && code != 201) {
                 errors << user.id
@@ -557,6 +572,162 @@ class RestUserController extends RestController {
         def ret = [data: [message: "OK"], status: 200]
         response(ret)
     }
+
+    @RestApiMethod(description="Add user in a storage")
+    @RestApiParams(params=[
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The storage id"),
+            @RestApiParam(name="idUser", type="long", paramType = RestApiParamType.PATH, description = "The user id"),
+            @RestApiParam(name="permission", type="string", paramType = RestApiParamType.QUERY, description = "Storage permission")
+    ])
+    @RestApiResponseObject(objectIdentifier = "empty")
+    def addUserToStorage() {
+        Storage storage = storageService.read(params.long('id'))
+        SecUser user = secUserService.read(params.long('idUser'))
+
+        secUserService.addUserToStorage(user, storage, params.get('permission', "READ"))
+        response.status = 200
+        response([data: [message: "OK"], status: 200])
+    }
+
+    @RestApiMethod(description="Add users in a storage")
+    @RestApiParams(params=[
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The storage id"),
+            @RestApiParam(name="users", type="array", paramType = RestApiParamType.QUERY, description = "The users ids"),
+            @RestApiParam(name="permission", type="string", paramType = RestApiParamType.QUERY, description = "ACL rights")
+    ])
+    @RestApiResponseObject(objectIdentifier = "empty")
+    def addUsersToStorage() {
+        Storage storage = storageService.read(params.long('id'))
+        securityACLService.check(storage,ADMINISTRATION)
+
+        def idUsers = params.users.toString().split(",")
+        def users = []
+        def wrongIds = []
+
+        def errorMessage = ""
+        def errors = []
+
+        for(def id : idUsers){
+            try{
+                users << Long.parseLong(id)
+            } catch(NumberFormatException e){
+                wrongIds << id
+            }
+        }
+
+        idUsers = users
+        log.info "addUsersToStorage storage=${storage} users=${users}"
+        users = User.findAllByIdInList(users)
+
+        wrongIds.addAll(idUsers- (users.collect{it.id}))
+
+        users.each { user ->
+            def code = secUserService.addUserToStorage(user, storage, params.get('permission', "READ")).status
+            if(code != 200 && code != 201) errors << user.id
+        }
+
+        if(!errors.isEmpty()) errorMessage += "Cannot add theses users to the storage ${storage.id} : "+errors.join(",")+". "
+        if(!wrongIds.isEmpty()) errorMessage += wrongIds.join(",")+" are not well formatted ids"
+
+        def result = [data: [message: "OK"], status: 200]
+        response.status = 200
+
+        if(!errors.isEmpty() || !wrongIds.isEmpty()) {
+            result.data.message = errorMessage
+            result.status = 206
+            response.status = 206
+        }
+
+        response(result)
+    }
+    
+    @RestApiMethod(description="Delete user from a storage")
+    @RestApiParams(params=[
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The storage id"),
+            @RestApiParam(name="idUser", type="long", paramType = RestApiParamType.PATH, description = "The user id")
+    ])
+    @RestApiResponseObject(objectIdentifier = "empty")
+    def deleteUserFromStorage() {
+        Storage storage = storageService.read(params.long('id'))
+        SecUser user = secUserService.read(params.long('idUser'))
+        secUserService.deleteUserFromStorage(user, storage)
+        response.status = 200
+        response([data: [message: "OK"], status: 200])
+    }
+
+
+    @RestApiMethod(description="Delete users from a storage")
+    @RestApiParams(params=[
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The storage id"),
+            @RestApiParam(name="users", type="array", paramType = RestApiParamType.QUERY, description = "The users ids")
+    ])
+    @RestApiResponseObject(objectIdentifier = "empty")
+    def deleteUsersFromStorage() {
+
+        Storage storage = storageService.read(params.long('id'))
+        securityACLService.check(storage,ADMINISTRATION)
+
+        def idUsers = params.users.toString().split(",")
+        def users = []
+        def wrongIds = []
+
+        def errorMessage = ""
+        def errors = []
+
+        for(def id : idUsers){
+            try{
+                users << Long.parseLong(id)
+            } catch(NumberFormatException e){
+                wrongIds << id
+            }
+        }
+        idUsers = users
+        users = User.findAllByIdInList(users)
+
+        users.each { user ->
+            def code = secUserService.deleteUserFromStorage(user, storage).status
+            if(code != 200 && code != 201) {
+                errors << user.id
+            }
+        }
+        wrongIds.addAll(idUsers- (users.collect{it.id}))
+
+        if(!errors.isEmpty()) errorMessage += "Cannot add theses users to the storage ${storage.id} : "+errors.join(",")+". "
+        if(!wrongIds.isEmpty()) errorMessage += wrongIds.join(",")+" are not well formatted ids"
+
+        def result = [data: [message: "OK"], status: 200]
+        response.status = 200
+
+        if(!errors.isEmpty() || !wrongIds.isEmpty()) {
+            result.data.message = errorMessage
+            result.status = 206
+            response.status = 206
+        }
+
+        response(result)
+    }
+
+
+    @RestApiMethod(description="Change user permission in storage")
+    @RestApiParams(params=[
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The storage id"),
+            @RestApiParam(name="idUser", type="long", paramType = RestApiParamType.PATH, description = "The user id"),
+            @RestApiParam(name="permission", type="string", paramType = RestApiParamType.QUERY, description = "Storage permission")
+    ])
+    @RestApiResponseObject(objectIdentifier = "empty")
+    def changeUserPermission() {
+        Storage storage = storageService.read(params.long('id'))
+        SecUser user = secUserService.read(params.long('idUser'))
+
+        secUserService.changeUserPermission(user, storage, params.get('permission', "READ"))
+        response.status = 200
+        response([data: [message: "OK"], status: 200])
+    }
+
+
+
+
+
 
     @RestApiMethod(description="Change a user password for a user")
     @RestApiParams(params=[
@@ -659,9 +830,9 @@ class RestUserController extends RestController {
         DateTime thirtySecondsAgo = new DateTime().minusSeconds(30)
         def result = db.lastUserPosition.aggregate(
                 [$match : [ project : project.id, created:[$gt:thirtySecondsAgo.toDate()]]],
-                [$project:[user:1,image:1,imageName:1,created:1]],
-                [$group : [_id : [ user: '$user', image: '$image',imageName: '$imageName'], "date":[$max:'$created']]],
-                [$group : [_id : [ user: '$_id.user'], "position":[$push: [id: '$_id.image',image: '$_id.image', filename: '$_id.imageName', originalFilename: '$_id.imageName', date: '$date']]]]
+                [$project:[user:1,image:1,slice:1,imageName:1,created:1]],
+                [$group : [_id : [ user: '$user', slice: '$slice'], "date":[$max:'$created'], image: [$first:'$image'],imageName: [$first:'$imageName']]],
+                [$group : [_id : [ user: '$_id.user'], "position":[$push: [id: '$_id.image',slice: '$_id.slice', image: '$image', filename: '$imageName', originalFilename: '$imageName', date: '$date']]]]
         )
 
         def usersWithPosition = []

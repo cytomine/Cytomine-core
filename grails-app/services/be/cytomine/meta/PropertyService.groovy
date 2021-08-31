@@ -29,6 +29,7 @@ import be.cytomine.utils.ModelService
 import be.cytomine.utils.Task
 import com.vividsolutions.jts.geom.Geometry
 import groovy.sql.Sql
+import grails.converters.JSON
 
 import static org.springframework.security.acls.domain.BasePermission.READ
 import static org.springframework.security.acls.domain.BasePermission.WRITE
@@ -122,7 +123,7 @@ class PropertyService extends ModelService {
 
     def read(def id) {
         def property = Property.read(id)
-        if (property && !property.domainClassName.contains("AbstractImage")) {
+        if (property && !property.domainClassName.contains("AbstractImage") && !property.domainClassName.contains("Software")) {
             securityACLService.check(property.container(),READ)
         }
         property
@@ -130,7 +131,7 @@ class PropertyService extends ModelService {
 
     def read(CytomineDomain domain, String key) {
         def property = Property.findByDomainIdentAndKey(domain.id,key)
-        if (property && !property.domainClassName.contains("AbstractImage")) {
+        if (property && !property.domainClassName.contains("AbstractImage") && !property.domainClassName.contains("Software")) {
             securityACLService.check(property.container(),READ)
         }
         property
@@ -162,6 +163,15 @@ class PropertyService extends ModelService {
         SecUser currentUser = cytomineService.getCurrentUser()
         Command command = new AddCommand(user: currentUser, transaction: transaction)
         return executeCommand(command,null,json)
+    }
+
+    def addProperty(def domainClassName, def domainIdent, def key, def value, SecUser user, Transaction transaction) {
+        def json = JSON.parse("""{
+                "domainClassName": "${domainClassName}", 
+                "domainIdent": "${domainIdent}", 
+                "key": "$key", 
+                "value": "$value" }""")
+        return executeCommand(new AddCommand(user: user, transaction: transaction), null, json)
     }
 
     /**

@@ -17,6 +17,7 @@ package be.cytomine.api.image.multidim
 */
 
 import be.cytomine.Exception.CytomineException
+import be.cytomine.Exception.ForbiddenException
 import be.cytomine.api.RestController
 import be.cytomine.image.ImageInstance
 import be.cytomine.image.multidim.ImageGroup
@@ -38,63 +39,67 @@ class RestImageSequenceController extends RestController {
     def imageInstanceService
     def projectService
 
-    @RestApiMethod(description="Get an image sequence")
+    @RestApiMethod(description="[REMOVED] Get an image sequence")
     @RestApiParams(params=[
         @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The image sequence id")
     ])
     def show() {
-        ImageSequence image = imageSequenceService.read(params.long('id'))
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        /*ImageSequence image = imageSequenceService.read(params.long('id'))
         if (image) {
             responseSuccess(image)
         } else {
             responseNotFound("ImageGroup", params.id)
-        }
+        }*/
     }
 
-    @RestApiMethod(description="Get all image sequence from an image group", listing=true)
+    @RestApiMethod(description="[REMOVED] Get all image sequence from an image group", listing=true)
     @RestApiParams(params=[
         @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The group id")
     ])
     def listByImageGroup() {
-        ImageGroup imageGroup = imageGroupService.read(params.long('id'))
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        /*ImageGroup imageGroup = imageGroupService.read(params.long('id'))
         if (imageGroup)  {
             responseSuccess(imageSequenceService.list(imageGroup))
         }
         else {
             responseNotFound("ImageSequence", "ImageGroup", params.id)
-        }
+        }*/
     }
 
-    @RestApiMethod(description="List all image sequence from a specific image instance", listing=true)
+    @RestApiMethod(description="[REMOVED] List all image sequence from a specific image instance", listing=true)
     @RestApiParams(params=[
         @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The image instance id")
     ])
     def getByImageInstance () {
-        ImageInstance imageInstance = imageInstanceService.read(params.long('id'))
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        /*ImageInstance imageInstance = imageInstanceService.read(params.long('id'))
         if (imageInstance)  {
             responseSuccess(imageSequenceService.get(imageInstance))
         }
         else {
             responseNotFound("ImageSequence", "ImageInstance", params.id)
-        }
+        }*/
     }
 
-    @RestApiMethod(description="Get the image dimension index (e.g. c=0, z=1, t=3,...) and the possible range for each dimension (e.g. image x has channel [0-2], zstack only 0, time [0-1],... ")
+    @RestApiMethod(description="[REMOVED] Get the image dimension index (e.g. c=0, z=1, t=3,...) and the possible range for each dimension (e.g. image x has channel [0-2], zstack only 0, time [0-1],... ")
     @RestApiResponseObject(objectIdentifier =  "[sequence_possibilties]")
     @RestApiParams(params=[
         @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The image instance id")
     ])
     def getSequenceInfo () {
-        ImageInstance imageInstance = imageInstanceService.read(params.long('id'))
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        /*ImageInstance imageInstance = imageInstanceService.read(params.long('id'))
         if (imageInstance)  {
             responseSuccess(imageSequenceService.getPossibilities(imageInstance))
         }
         else {
             responseNotFound("ImageSequence", "ImageInstance", params.id)
-        }
+        }*/
     }
 
-    @RestApiMethod(description="Get the image sequence in the given channel, zstack,... and image group", listing=true)
+    @RestApiMethod(description="[REMOVED] Get the image sequence in the given channel, zstack,... and image group", listing=true)
     @RestApiParams(params=[
         @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The image group id"),
         @RestApiParam(name="zstack", type="long", paramType = RestApiParamType.PATH, description = "Zstack filter"),
@@ -103,7 +108,8 @@ class RestImageSequenceController extends RestController {
         @RestApiParam(name="slice", type="long", paramType = RestApiParamType.PATH, description = "Slice filter")
     ])
     def getByImageGroupAndIndexes() {
-        try {
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        /*try {
             ImageGroup imageGroup = imageGroupService.read(params.long('id'))
             if (imageGroup)  {
                 Integer zStack = params.int("zstack")
@@ -118,24 +124,27 @@ class RestImageSequenceController extends RestController {
         } catch (CytomineException e) {
             log.error(e)
             response([success: false, errors: e.msg], e.code)
-        }
+        }*/
     }
 
-    @RestApiMethod(description="Add a new image sequence (index a new image instance at a given channel, zstack,... in an image group")
+    @RestApiMethod(description="[REMOVED] Add a new image sequence (index a new image instance at a given channel, zstack,... in an image group")
     def add () {
-        add(imageSequenceService, request.JSON)
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        //add(imageSequenceService, request.JSON)
     }
 
-    @RestApiMethod(description="Update an image sequence (id must be defined in post data JSON)")
+    @RestApiMethod(description="[REMOVED] Update an image sequence (id must be defined in post data JSON)")
     def update () {
-        update(imageSequenceService, request.JSON)
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        //update(imageSequenceService, request.JSON)
     }
 
-    @RestApiMethod(description="Delete an image sequence)")
+    @RestApiMethod(description="[REMOVED] Delete an image sequence)")
     @RestApiParams(params=[
         @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The image sequence id")
     ])
     def delete () {
-        delete(imageSequenceService, JSON.parse("{id : $params.id}"),null)
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        //delete(imageSequenceService, JSON.parse("{id : $params.id}"),null)
     }
 }

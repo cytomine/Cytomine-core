@@ -30,7 +30,7 @@ class ImageGroupSecurityTests extends SecurityTestsAbstract{
 
 
     void testImageGroupSecurityForProjectUser() {
-
+/*
         //Get user1
         User user1 = getUser1()
         User user2 = getUser2()
@@ -65,7 +65,7 @@ class ImageGroupSecurityTests extends SecurityTestsAbstract{
         //project.mode = Project.EditingMode.CLASSIC
         //BasicInstanceBuilder.saveDomain(project)
         //assert (200 == ImageGroupAPI.delete(idImageGroup,SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2).code)
-
+*/
     }
 
 

@@ -1,6 +1,6 @@
 package be.cytomine.image.server
 
-import be.cytomine.CytomineDomain
+import be.cytomine.middleware.ImageServer
 
 /*
 * Copyright (c) 2009-2021. Authors: see NOTICE file.
@@ -18,37 +18,8 @@ import be.cytomine.CytomineDomain
 * limitations under the License.
 */
 
-/**
- * Cytomine
- * User: stevben
- * Date: 5/02/13
- * Time: 11:40
- */
+@Deprecated
 class ImageServerStorage {
     ImageServer imageServer
     Storage storage
-
-    def getZoomifyUrl() {
-        log.info "imageServer.url=${imageServer.url}"
-        return imageServer.url + imageServer.service + "?zoomify=" + storage.getBasePath()
-    }
-
-    /**
-     * Define fields available for JSON response
-     * This Method is called during application start
-     */
-    static def getDataFromDomain(def is) {
-        def returnArray = [:]
-        returnArray['imageServer'] = is?.imageServer
-        returnArray['storage'] = is?.storage
-        returnArray
-    }
-
-    /**
-     * Get the container domain for this domain (usefull for security)
-     * @return Container of this domain
-     */
-    public CytomineDomain container() {
-        return storage.container();
-    }
 }

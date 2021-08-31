@@ -45,10 +45,9 @@ class AmqpQueueService extends ModelService {
     def messageBrokerServerService
 
     // Avoid loading loop because rabbitConnectionService -> amqpService -> rabbitConnectionService
-    private getRabbitConnectionService(){
+    private getRabbitConnectionService() {
         grailsApplication.mainContext.rabbitConnectionService
     }
-
 
     def currentDomain() {
         return AmqpQueue

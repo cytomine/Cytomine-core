@@ -26,7 +26,7 @@ class RetrieveErrorsService {
             if (domainClass.clazz.name.contains("be.cytomine")) {//only add it to the domains in my plugin
 
                 domainClass.metaClass.retrieveErrors = {
-                    def list = delegate?.errors?.allErrors?.collect {messageSource.getMessage(it, null)}
+                    def list = delegate?.errors?.allErrors?.collect {messageSource.getMessage(it, Locale.ENGLISH)}
                     return list?.join('\n')
                 }
             }

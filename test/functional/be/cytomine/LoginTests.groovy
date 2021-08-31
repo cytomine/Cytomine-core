@@ -72,13 +72,13 @@ class LoginTests {
         User user = BasicInstanceBuilder.getUserNotExist()
 
         String url = Infos.CYTOMINEURL + "api/token.json"
-        String data = "{username : " + user.username + ", validity : " + 1 + "}";
+        String data = "{username : \"" + user.username + "\", validity : " + 1 + "}"
 
         def result = DomainAPI.doPOST(url,data,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD)
         assert 403 == result.code
 
         user = BasicInstanceBuilder.getUserNotExist(true)
-        data = "{username : " + user.username + ", validity : " + 1 + "}";
+        data = "{username : \"" + user.username + "\", validity : " + 1 + "}";
         result = DomainAPI.doPOST(url,data,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
         def json = JSON.parse(result.data)

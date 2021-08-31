@@ -16,28 +16,81 @@
 
 dataSource {
     pooled = true
+
+    /**
+     * (String) The fully qualified Java class name of the JDBC driver to be used.
+     * The driver has to be accessible from the same classloader as tomcat-jdbc.jar
+     */
     driverClassName = "org.postgresql.Driver"
-//    driverClassName = "com.p6spy.engine.spy.P6SpyDriver" // use this driver to enable p6spy logging
-    username = "postgres"
+
+    /**
+     * (String) The connection username to be passed to our JDBC driver to establish a connection.
+     */
+    username = "docker"
+    password = "docker"
+
     dialect = org.hibernate.spatial.dialect.postgis.PostgisDialect
+
     properties {
-        //specifies that this tc Server is enabled to be monitored using JMX
+        /**
+         * (boolean) Register the pool with JMX or not. The default value is true.
+         */
         jmxEnabled = true
-        //number of connections that are created when the pool is started
-        initialSize = 10
-        //maximum number of active connections that can be allocated from this pool at the same time
+
+        /**
+         * (int)The initial number of connections that are created when the pool is started. Default value is 10
+         */
+        initialSize = 50
+
+        /**
+         * (int) The minimum number of established connections that should be kept in the pool at all times.
+         * The connection pool can shrink below this number if validation queries fail.
+         * Default value is derived from initialSize:10
+         */
+        minIdle = 50
+
+        /**
+         * (int) The maximum number of active connections that can be allocated from this pool at the same time.
+         * The default value is 100
+         */
         maxActive = 500
-        //minimum number of established connections that should be kept in the pool at all times
-        minIdle = 10
-        //maximum number of connections that should be kept in the pool at all times
+
+        /**
+         * (int) The maximum number of connections that should be kept in the pool at all times.
+         * Default value is maxActive:100 Idle connections are checked periodically (if enabled)
+         */
         maxIdle = 500
-        //maximum number of milliseconds that the pool will wait
+
+        /**
+         * (int) The maximum number of milliseconds that the pool will wait (when there are no available connections)
+         * for a connection to be returned before throwing an exception. Default value is 30000 (30 seconds)
+         */
         maxWait = 30000
-        //Time in milliseconds to keep this connection
+
+        /**
+         * (long) Time in milliseconds to keep this connection. This attribute works both when returning connection
+         * and when borrowing connection.
+         * When a connection is borrowed from the pool, the pool will check to see if the now - time-when-connected > maxAge
+         * has been reached , and if so, it reconnects before borrow it.
+         * When a connection is returned to the pool, the pool will check to see if the now - time-when-connected > maxAge
+         * has been reached, and if so, it closes the connection rather than returning it to the pool.
+         * The default value is 0, which implies that connections will be left open and no age check will be done upon
+         * borrowing from the pool and returning the connection to the pool.
+         */
         maxAge = 5 * 60000
-        //number of milliseconds to sleep between runs of the idle connection validation/cleaner thread
+
+        /**
+         * (int) The number of milliseconds to sleep between runs of the idle connection validation/cleaner thread.
+         * This value should not be set under 1 second.
+         * It dictates how often we check for idle, abandoned connections, and how often we validate idle connections.
+         * The default value is 5000 (5 seconds).
+         */
         timeBetweenEvictionRunsMillis = 5000
-        //minimum amount of time an object may sit idle in the pool before it is eligible for eviction
+
+        /**
+         * (int) The minimum amount of time an object may sit idle in the pool before it is eligible for eviction.
+         * The default value is 60000 (60 seconds).
+         */
         minEvictableIdleTimeMillis = 60000
     }
 }
@@ -63,8 +116,6 @@ environments {
     scratch {
         dataSource {
             dbCreate = "update"
-//      url="jdbc:postgresql://139.165.144.107:5432/cytominedev"
-//      password = 'postgres'
             url = "jdbc:postgresql://localhost:5432/cytomineempty"
             password = "postgres"
         }
@@ -72,41 +123,26 @@ environments {
     development {
         dataSource {
             dbCreate = "update"
-//      url="jdbc:postgresql://139.165.144.107:5432/cytominedev"
-//      password = 'postgres'
-            //url = "jdbc:postgresql://localhost:5432/cytomine"
             url = "jdbc:postgresql://localhost:5432/docker"
             username = "docker"
             password = "docker"
-            //password = "postgres"
-
-        }
-    }
-    cluster {
-        dataSource {
-            dbCreate = "update"
-//      url="jdbc:postgresql://139.165.144.107:5432/cytominedev"
-//      password = 'postgres'
-            url = "jdbc:postgresql://localhost:5432/cytomine"
-            password = "postgres"
-
         }
     }
     test {
         dataSource {
             //loggingSql = true
             dbCreate = "create"
-            url = "jdbc:postgresql://localhost:5432/docker"
+            url = "jdbc:postgresql://localhost:5433/docker"
             username = "docker"
             password = "docker"
-            //password = "postgres"
         }
     }
     production {
         dataSource {
             dbCreate = "update"
-            url = "jdbc:postgresql://localhost:5432/cytomine"
-            password = "postgres"
+            url = "jdbc:postgresql://postgresql:5432/docker"
+            username='docker'
+            password='docker'
         }
     }
     perf {
@@ -134,6 +170,16 @@ grails {
         options {
             connectionsPerHost = 10 // The maximum number of connections allowed per host
             threadsAllowedToBlockForConnectionMultiplier = 5 // so it*connectionsPerHost threads can wait for a connection
+        }
+    }
+}
+
+environments {
+    test {
+        grails {
+            mongo {
+                port = 27018
+            }
         }
     }
 }

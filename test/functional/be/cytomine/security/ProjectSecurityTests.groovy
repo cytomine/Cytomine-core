@@ -17,6 +17,7 @@ package be.cytomine.security
 */
 
 import be.cytomine.image.ImageInstance
+import be.cytomine.image.SliceInstance
 import be.cytomine.meta.Property
 import be.cytomine.ontology.UserAnnotation
 import be.cytomine.processing.Job
@@ -81,7 +82,44 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         assert (200 == ProjectAPI.delete(project.id,USERNAME1,PASSWORD1).code)
     }
 
-    void testProjectSecurityForProjectUser() {
+    void testProjectSecurityForProjectManager() {
+
+        //Get user1
+        User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
+        //Get user2
+        User user2 = BasicInstanceBuilder.getUser(USERNAME2,PASSWORD2)
+
+        //Create new project (user1)
+        def result = ProjectAPI.create(BasicInstanceBuilder.getProjectNotExist().encodeAsJSON(),USERNAME1,PASSWORD1)
+        assert 200 == result.code
+        Project project = result.data
+
+        //Add admin right to user2 then remove them to test if old admin has no more right
+        def resAddUser = ProjectAPI.addAdminProject(project.id,user2.id,USERNAME1,PASSWORD1)
+        assert 200 == resAddUser.code
+        resAddUser = ProjectAPI.deleteAdminProject(project.id,user2.id,USERNAME1,PASSWORD1)
+        assert 200 == resAddUser.code
+
+        Infos.printRight(project)
+        //check if user 2 can access/update/delete he is still a contributor
+        assert (200 == ProjectAPI.show(project.id,USERNAME2,PASSWORD2).code)
+        assert (true ==ProjectAPI.containsInJSONList(project.id,JSON.parse(ProjectAPI.list(USERNAME2,PASSWORD2).data)))
+        assert (403 == ProjectAPI.update(project.id,project.encodeAsJSON(),USERNAME2,PASSWORD2).code)
+        assert (403 == ProjectAPI.delete(project.id,USERNAME2,PASSWORD2).code)
+
+        //Add admin right to user2
+        resAddUser = ProjectAPI.addAdminProject(project.id,user2.id,USERNAME1,PASSWORD1)
+        assert 200 == resAddUser.code
+
+        Infos.printRight(project)
+        //check if user 2 can access/update/delete
+        assert (200 == ProjectAPI.show(project.id,USERNAME2,PASSWORD2).code)
+        assert (true ==ProjectAPI.containsInJSONList(project.id,JSON.parse(ProjectAPI.list(USERNAME2,PASSWORD2).data)))
+        assert (200 == ProjectAPI.update(project.id,project.encodeAsJSON(),USERNAME2,PASSWORD2).code)
+        assert (200 == ProjectAPI.delete(project.id,USERNAME2,PASSWORD2).code)
+    }
+
+    void testProjectSecurityForProjectContributor() {
 
         //Get user1
         User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
@@ -858,7 +896,7 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
 
         //Force project to Read and write
         project.mode = Project.EditingMode.RESTRICTED
-        BasicInstanceBuilder.saveDomain(project)
+        project = BasicInstanceBuilder.saveDomain(project)
 
         //Add a simple project user
         User simpleUser = BasicInstanceBuilder.getUser(simpleUsername,password)
@@ -872,7 +910,7 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         Software software = BasicInstanceBuilder.getSoftwareNotExist(true);
         Job job = BasicInstanceBuilder.getJobNotExist(true, software, project)
         JobData jobData = BasicInstanceBuilder.getJobDataNotExist(job)
-        BasicInstanceBuilder.saveDomain(jobData)
+        jobData = BasicInstanceBuilder.saveDomain(jobData)
 
 
         // Now Test as simple user
@@ -1244,7 +1282,7 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
 
 
         assert 403 == JobDataAPI.upload(jobData.id, new byte[5], simpleUsername, password).code
-        JobDataAPI.upload(jobData.id, new byte[5], adminUsername, password)
+        assert 200 == JobDataAPI.upload(jobData.id, new byte[5], adminUsername, password).code
         assert 200 == JobDataAPI.download(jobData.id, simpleUsername, password).code
         assert 403 == JobDataAPI.update(jobData.id, jobData.encodeAsJSON(), simpleUsername, password).code
 
@@ -1277,7 +1315,7 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         assert 200 == result.code
         assert 200 == JobAPI.delete(result.data.id, adminUsername, password).code
 
-        result = SoftwareProjectAPI.create(BasicInstanceBuilder.getSoftwareProjectNotExist(software, project, false).encodeAsJSON(),adminUsername, password)
+        result = SoftwareProjectAPI.create(BasicInstanceBuilder.getSoftwareProjectNotExist(BasicInstanceBuilder.getSoftwareNotExist(true), project, false).encodeAsJSON(),adminUsername, password)
         assert 200 == result.code
         assert 200 == SoftwareProjectAPI.delete(result.data.id, adminUsername, password).code
 
@@ -1299,6 +1337,7 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         /*super admin data*/
         //Create an annotation (by superadmin)
         ImageInstance image = BasicInstanceBuilder.getImageInstanceNotExist(project,true)
+        SliceInstance slice = BasicInstanceBuilder.getSliceInstanceNotExist(image,true)
         UserAnnotation annotation = BasicInstanceBuilder.getUserAnnotationNotExist(project,image,true)
         //Create a description
         Description description = BasicInstanceBuilder.getDescriptionNotExist(annotation,true)
@@ -1315,6 +1354,7 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         ImageInstance imageAdmin = BasicInstanceBuilder.getImageInstanceNotExist(project,false)
         imageAdmin.user = admin;
         BasicInstanceBuilder.saveDomain(imageAdmin)
+        slice = BasicInstanceBuilder.getSliceInstanceNotExist(imageAdmin,true)
         UserAnnotation annotationAdmin = BasicInstanceBuilder.getUserAnnotationNotExist(project,imageAdmin,admin,false)
         annotationAdmin.user = admin;
         BasicInstanceBuilder.saveDomain(annotationAdmin)
@@ -1333,6 +1373,7 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         ImageInstance imageUser = BasicInstanceBuilder.getImageInstanceNotExist(project,false)
         imageUser.user = simpleUser;
         BasicInstanceBuilder.saveDomain(imageUser)
+        slice = BasicInstanceBuilder.getSliceInstanceNotExist(imageUser,true)
         UserAnnotation annotationUser = BasicInstanceBuilder.getUserAnnotationNotExist(project,imageUser,simpleUser,false)
         annotationUser.user = simpleUser;
         BasicInstanceBuilder.saveDomain(annotationUser)

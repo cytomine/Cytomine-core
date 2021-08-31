@@ -42,6 +42,9 @@ class CytomineMailService {
         if (!from) from = defaultEmail
 
         def smtpProperties = Holders.getGrailsApplication().config.grails.notification.smtp
+        if (smtpProperties && smtpProperties.host == 'disabled') {
+            return
+        }
 
         Properties props = new Properties();
         props.put("mail.smtp.host",smtpProperties.host);

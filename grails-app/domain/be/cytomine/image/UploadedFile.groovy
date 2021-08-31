@@ -18,8 +18,9 @@ package be.cytomine.image
 
 import be.cytomine.CytomineDomain
 import be.cytomine.Exception.CytomineException
-import be.cytomine.api.UrlApi
-import be.cytomine.image.server.StorageAbstractImage
+import be.cytomine.Exception.WrongArgumentException
+import be.cytomine.middleware.ImageServer
+import be.cytomine.image.server.Storage
 import be.cytomine.postgresql.LTreeType
 import be.cytomine.security.SecUser
 import be.cytomine.security.UserJob
@@ -28,179 +29,166 @@ import org.restapidoc.annotation.RestApiObject
 import org.restapidoc.annotation.RestApiObjectField
 import org.restapidoc.annotation.RestApiObjectFields
 
+import java.nio.file.Paths
+
 /**
  * An UploadedFile is a file uploaded through the API.
  * Uploaded are temporaly instances, files related to them are placed
  * in a buffer space before being converted into the right format and copied to the storages
  */
-@RestApiObject(name = "Uploaded file", description = "A file uploaded on the server, when finished, we create an 'abstract image' from this uploaded file")
-class UploadedFile extends CytomineDomain implements Serializable{
+@RestApiObject(name = "Uploaded file", description = "A file uploaded on the server")
+class UploadedFile extends CytomineDomain implements Serializable {
 
-    public static int UPLOADED = 0
-    public static int CONVERTED = 1
-    public static int DEPLOYED = 2
-    public static int ERROR_FORMAT = 3
-    public static int ERROR_CONVERSION = 4
-    public static int UNCOMPRESSED = 5
-    public static int TO_DEPLOY = 6
-    public static int TO_CONVERT = 7
-    public static int ERROR_DEPLOYMENT = 8
+    enum Status {
+        /**
+         * Even codes lower than 100 => information
+         * Even codes greater or equal to 100 => success
+         * Odd codes => error
+         */
+        UPLOADED (0),
 
-    @RestApiObjectField(description = "The user that upload the file")
+        DETECTING_FORMAT (10),
+        ERROR_FORMAT (11), // 3
+
+        EXTRACTING_DATA (20),
+        ERROR_EXTRACTION (21),
+
+        CONVERTING (30),
+        ERROR_CONVERSION (31), // 4
+
+        DEPLOYING (40),
+        ERROR_DEPLOYMENT (41), // 8
+
+        DEPLOYED (100),
+        EXTRACTED (102),
+        CONVERTED (104)
+
+        private final int code
+
+        Status(int code) {
+            this.code = code
+        }
+
+        int getCode() {
+            return code
+        }
+
+        static Status findByCode(int code) {
+            return values().find{ it.code == code }
+        }
+    }
+
+    @RestApiObjectField(description = "The uploader")
     SecUser user
 
-    @RestApiObjectField(description = "List of project (id) that will get the image")
-    Long[] projects //projects ids that we have to link with the new file
+    @RestApiObjectField(description = "The virtual storage where the file is uploaded")
+    Storage storage
 
-    @RestApiObjectField(description = "List of storage (id) that will store the image")
-    Long[] storages //storage ids on which we have to upload files
+    @RestApiObjectField(description = "List of projects (id) that will have the image, if it can be deployed")
+    Long[] projects
 
-    @RestApiObjectField(description = "Upload file filename")
+    @RestApiObjectField(description = "The internal filename path, including extension")
     String filename
 
-    @RestApiObjectField(description = "Upload file short name")
+    @RestApiObjectField(description = "The original filename, including extension")
     String originalFilename
 
     @RestApiObjectField(description = "Extension name")
     String ext
 
-    @RestApiObjectField(description = "Path name")
-    String path
+    @RestApiObjectField(description = "The image server managing the file")
+    ImageServer imageServer
 
-    @RestApiObjectField(description = "File content type", presentInResponse = false)
+    @RestApiObjectField(description = "File content type")
     String contentType
 
+    @RestApiObjectField(description = "The parent uploaded file in the hierarchy")
     UploadedFile parent
 
     @RestApiObjectField(description = "File size", mandatory = false)
     Long size
 
-    @RestApiObjectField(description = "File status (UPLOADED = 0,CONVERTED = 1,DEPLOYED = 2,ERROR_FORMAT = 3,ERROR_CONVERT = 4,UNCOMPRESSED = 5,TO_DEPLOY = 6)", mandatory = false)
+    @RestApiObjectField(description = "File status", mandatory = false)
     int status = 0
 
-    @RestApiObjectField(description = "The image created by this file")
-    AbstractImage image
-
-    /**
-     * Indicates whether or not a conversion was done
-     */
-    @RestApiObjectField(description = "Indicates wether or not a conversion was done", mandatory = false)
-    Boolean converted = false
-
-    @RestApiObjectField(description = "ltree used for uploaded files hierarchy", mandatory = false)
+    @RestApiObjectField(description = "Hierarchical tree of uploaded files", mandatory = false, presentInResponse = false)
     String lTree
 
     @RestApiObjectFields(params=[
-        @RestApiObjectField(apiFieldName = "uploaded", description = "Indicates if the file is uploaded",allowedType = "boolean",useForCreation = false),
-        @RestApiObjectField(apiFieldName = "converted", description = "Indicates if the file is converted",allowedType = "boolean",useForCreation = false),
-        @RestApiObjectField(apiFieldName = "deployed", description = "Indicates if the file is deployed",allowedType = "boolean",useForCreation = false),
-        @RestApiObjectField(apiFieldName = "error_format", description = "Indicates if there is a error with file format",allowedType = "boolean",useForCreation = false),
-        @RestApiObjectField(apiFieldName = "error_convert", description = "Indicates if there is an error with file conversion",allowedType = "boolean",useForCreation = false),
-        @RestApiObjectField(apiFieldName = "uncompressed", description = "Indicates if the file is not compressed",allowedType = "boolean",useForCreation = false)
+            @RestApiObjectField(apiFieldName = "path", description = "The internal path of the file", allowedType = "string", useForCreation = false),
+            @RestApiObjectField(apiFieldName = "statusText", description = "Textual file status", allowedType = "string", useForCreation = false),
     ])
-    static transients = ["zoomLevels", "thumbURL"]
+
+    static belongsTo = [ImageServer, Storage]
 
     static mapping = {
-        lTree type: LTreeType, sqlType: 'ltree'
+        id(generator: 'assigned', unique: true)
+        lTree(type: LTreeType, sqlType: 'ltree')
+        cache(true)
     }
-
 
     static constraints = {
         projects nullable: true
-        storages nullable: false
         parent(nullable : true)
-        image(nullable : true)
-        lTree nullable : true
+        lTree nullable : true //Due to DB schema update issue
+        imageServer nullable: true //Due to DB schema update issue
+        storage nullable: true //Due to DB schema update issue
     }
 
     static def getDataFromDomain(def uploaded) {
         def returnArray = CytomineDomain.getDataFromDomain(uploaded)
         returnArray['user'] = uploaded?.user?.id
-        returnArray['projects'] = uploaded?.projects
-        returnArray['storages'] = uploaded?.storages
-        returnArray['filename'] = uploaded?.filename
+        returnArray['parent'] = uploaded?.parent?.id
+        returnArray['imageServer'] = uploaded?.imageServer?.id
+        returnArray['storage'] = uploaded?.storage?.id
+
         returnArray['originalFilename'] = uploaded?.originalFilename
+        returnArray['filename'] = uploaded?.filename
         returnArray['ext'] = uploaded?.ext
         returnArray['contentType'] = uploaded?.contentType
         returnArray['size'] = uploaded?.size
         returnArray['path'] = uploaded?.path
+
         returnArray['status'] = uploaded?.status
+        returnArray['statusText'] = uploaded?.statusText
 
-        returnArray['uploaded'] = (uploaded?.status == UploadedFile.UPLOADED)
-        returnArray['converted'] = (uploaded?.status == UploadedFile.CONVERTED)
-        returnArray['deployed'] = (uploaded?.status == UploadedFile.DEPLOYED)
-        returnArray['error_format'] = (uploaded?.status == UploadedFile.ERROR_FORMAT)
-        returnArray['error_convert'] = (uploaded?.status == UploadedFile.ERROR_CONVERSION)
-        returnArray['uncompressed'] = (uploaded?.status == UploadedFile.UNCOMPRESSED)
-        returnArray['to_deploy'] = (uploaded?.status == UploadedFile.TO_DEPLOY)
-
-
-        returnArray['image'] = uploaded?.getAbstractImage()?.id
-        returnArray['parent'] = uploaded?.parent?.id
-        returnArray['thumbURL'] = uploaded?.status == UploadedFile.DEPLOYED && uploaded?.image ? UrlApi.getThumbImage(uploaded?.image?.id, 256) : null
-        returnArray['macroURL'] = uploaded?.status == UploadedFile.DEPLOYED && uploaded?.image ? UrlApi.getAssociatedImage(uploaded?.image?.id, "macro", 256) : null
+        returnArray['projects'] = uploaded?.projects
         returnArray
     }
 
-
-    /**
-     * Insert JSON data into domain in param
-     * @param domain Domain that must be filled
-     * @param json JSON containing data
-     * @return Domain with json data filled
-     */
     static UploadedFile insertDataIntoDomain(def json, def domain = new UploadedFile()) throws CytomineException {
-
         domain.id = JSONUtils.getJSONAttrLong(json,'id',null)
         domain.created = JSONUtils.getJSONAttrDate(json,'created')
         domain.updated = JSONUtils.getJSONAttrDate(json,'updated')
+        domain.deleted = JSONUtils.getJSONAttrDate(json, "deleted")
 
         def user = JSONUtils.getJSONAttrDomain(json, "user", new SecUser(), true)
-        if(user instanceof UserJob){
-            domain.user = ((UserJob) user).user
-        } else {
-            domain.user = user
-        }
+        domain.user = (user instanceof UserJob) ? ((UserJob) user).user : user
 
-        domain.projects = JSONUtils.getJSONAttrListLong(json,'projects')
-        domain.storages = JSONUtils.getJSONAttrListLong(json,'storages')
+        domain.parent = JSONUtils.getJSONAttrDomain(json, "parent", new UploadedFile(), false)
+        domain.imageServer = JSONUtils.getJSONAttrDomain(json, "imageServer", new ImageServer(), true)
+        domain.storage = JSONUtils.getJSONAttrDomain(json, "storage", new Storage(), true)
 
         domain.filename = JSONUtils.getJSONAttrStr(json,'filename')
         domain.originalFilename = JSONUtils.getJSONAttrStr(json,'originalFilename')
         domain.ext = JSONUtils.getJSONAttrStr(json,'ext')
-        domain.path = JSONUtils.getJSONAttrStr(json,'path')
         domain.contentType = JSONUtils.getJSONAttrStr(json,'contentType')
-
-        domain.parent = JSONUtils.getJSONAttrDomain(json, "parent", new UploadedFile(), false)
-
         domain.size = JSONUtils.getJSONAttrLong(json,'size',0)
 
         domain.status = JSONUtils.getJSONAttrInteger(json,'status',0)
+        domain.projects = JSONUtils.getJSONAttrListLong(json,'projects')
 
-        domain.converted = JSONUtils.getJSONAttrBoolean(json,'converted',false)
-
-        domain.image = JSONUtils.getJSONAttrDomain(json, "image", new AbstractImage(), false)
-
-        domain.deleted = JSONUtils.getJSONAttrDate(json, "deleted")
-
-        return domain;
+        domain
     }
 
-    def getAbsolutePath() {
-        AbstractImage img = this.getAbstractImage();
-        if(img) return [ StorageAbstractImage.findByAbstractImage(img).storage.basePath, this.filename].join(File.separator)
-        // at creation, img are not set
-        else return [ this.path, this.filename].join(File.separator)
+    def getStatusText() {
+        return Status.findByCode(status)?.name()
     }
 
-    def getAbstractImage() {
-        try {
-            if (image) return image
-            if (parent?.image) return parent.image
-            else return null
-        } catch(Exception e) {
-            return null
-        }
+    def getPath() {
+        if (contentType == "virtual/stack")
+            return null;
+        return Paths.get(imageServer?.basePath, storage.id as String, filename).toString()
     }
 
     def beforeInsert() {
@@ -213,5 +201,9 @@ class UploadedFile extends CytomineDomain implements Serializable{
         super.beforeUpdate()
         lTree = parent ? parent.lTree+"." : ""
         lTree += id
+    }
+
+    CytomineDomain container() {
+        return storage
     }
 }

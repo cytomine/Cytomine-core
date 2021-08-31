@@ -43,7 +43,7 @@ class SimplifyGeometryService {
      * Simplify form (limit point number)
      * Return simplify polygon and the rate used for simplification
      */
-    def simplifyPolygon(Geometry geometry, def minPoint = null, def maxPoint = null) {
+    def simplifyPolygon(Geometry geometry, Long minPoint = null, Long maxPoint = null) {
         // Fast response for simple geometries
         if (geometry.numPoints < 100)
             return [geometry: geometry, rate: 0.0d]
@@ -139,9 +139,7 @@ class SimplifyGeometryService {
         return [geometry: newGeometry, rate: rate]
     }
 
-
     def simplifyPolygonForCrop(def geometry) {
-
         if (geometry.numPoints < 100)
             return reduceGeometryPrecision(geometry)
 

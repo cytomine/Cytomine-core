@@ -118,6 +118,10 @@ class UrlMappings {
             action = [GET:"infoAdminSession"]
         }
 
+        "/api/testing/mailing.$format" (controller: "admin") {
+            action = [GET:"mailTesting"]
+        }
+
         "/api/custom-ui/config.$format" (controller: "customUI") {
             action = [GET:"retrieveUIConfig"]
         }

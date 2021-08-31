@@ -17,6 +17,7 @@ package be.cytomine.job
 */
 
 import be.cytomine.security.SecUser
+import org.springframework.transaction.annotation.Transactional
 
 /**
  * Cytomine
@@ -30,6 +31,7 @@ class GenerateMissingKeysJob {
         simple name: 'generateMissingKeysJob', startDelay: 1000, repeatInterval: 60000*60
     }
 
+    @Transactional
     def execute() {
         Collection<SecUser> secUsers = SecUser.findAllByPrivateKeyIsNullOrPublicKeyIsNull()
         secUsers?.each { user ->

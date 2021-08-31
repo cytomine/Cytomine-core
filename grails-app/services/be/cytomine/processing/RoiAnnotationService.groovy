@@ -159,7 +159,7 @@ class RoiAnnotationService extends ModelService {
     }
 
     def getStringParamsI18n(def domain) {
-        return [cytomineService.getCurrentUser().toString(), domain.image?.getFileName(), domain.user.toString()]
+        return [cytomineService.getCurrentUser().toString(), domain.image?.getBlindInstanceFilename(), domain.user.toString()]
     }
 
     def afterAdd(def domain, def response) {

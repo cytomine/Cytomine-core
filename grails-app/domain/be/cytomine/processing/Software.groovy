@@ -70,7 +70,8 @@ class Software extends CytomineDomain {
     String sourcePath
 
     @RestApiObjectFields(params=[
-        @RestApiObjectField(apiFieldName = "fullName", description = "Full name, including version.", useForCreation = false),
+        @RestApiObjectField(apiFieldName = "fullName", description = "Full name, including version.", allowedType = "string", useForCreation = false),
+        @RestApiObjectField(apiFieldName = "executable", description = "True if it can be executed by Cytomine", allowedType = "boolean", useForCreation = false),
         @RestApiObjectField(apiFieldName = "parameters", description = "List of 'software parameter' for this software (sort by index asc)",allowedType = "list",useForCreation = false),
         @RestApiObjectField(apiFieldName = "numberOfJob", description = "The number of job for this software",allowedType = "long",useForCreation = false),
         @RestApiObjectField(apiFieldName = "numberOfKilled", description = "The number of job killed for this software",allowedType = "long",useForCreation = false),

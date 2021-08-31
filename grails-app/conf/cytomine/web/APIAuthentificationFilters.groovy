@@ -79,7 +79,12 @@ class APIAuthentificationFilters implements javax.servlet.Filter {
 
             String accessKey = authorization.substring(authorization.indexOf(" ") + 1, authorization.indexOf(":"))
             String authorizationSign = authorization.substring(authorization.indexOf(":") + 1)
-            SecUser user = SecUser.findByPublicKeyAndEnabled(accessKey,true)
+
+            SecUser user = null
+            SecUser.withTransaction {
+                user = SecUser.findByPublicKeyAndEnabled(accessKey,true)
+            }
+
             if (!user) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
                 return false

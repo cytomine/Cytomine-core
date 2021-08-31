@@ -17,19 +17,47 @@ package be.cytomine.job
 */
 
 import be.cytomine.image.AbstractImage
+import be.cytomine.image.UploadedFile
+import grails.validation.ValidationException
+import org.springframework.transaction.annotation.Transactional
 
 class ExtractImageMetadataJob {
 
     def imagePropertiesService
+    def sampleHistogramService
 
     static triggers = {
-        //simple name: 'extractImageMetadataJob', startDelay: 60000, repeatInterval: 1000*60
+        simple name: 'extractImageMetadataJob', startDelay: 10000, repeatInterval: 1000*20
     }
 
+    @Transactional
     def execute() {
-        Collection<AbstractImage> abstractImages = AbstractImage.findAllByWidthIsNullOrWidthLike(-1)
+        Collection<AbstractImage> abstractImages = AbstractImage.findAllByWidthInListOrWidthIsNull([-1,0])
         abstractImages.each { image ->
-            imagePropertiesService.extractUseful(image)
+            try {
+                imagePropertiesService.extractUseful(image)
+            } catch (ValidationException e) {
+                log.error "$image cannot be saved"
+                log.error e.getMessage()
+            }
         }
+        //TODO activate when bitPerSample is implemented
+        /*Collection<AbstractImage> abstractImages = AbstractImage.findAllBySamplePerPixelIsNullOrWidthIsNullOrWidth(-1, [max: 10, sort: "created", order: "desc"])
+        abstractImages.each { image ->
+            try {
+                UploadedFile.withNewSession {
+                    AbstractImage.withNewSession {
+                        image.attach()
+                        log.info "Regenerate properties for image $image - ${image.originalFilename}"
+                        imagePropertiesService.regenerate(image)
+                        if (image.bitPerSample > 8)
+                            sampleHistogramService.extractHistogram(image)
+                    }
+                }
+            }
+            catch (Exception e) {
+                log.error "Error during metadata extraction for image $image: ${e.printStackTrace()}"
+            }
+        }*/
     }
 }

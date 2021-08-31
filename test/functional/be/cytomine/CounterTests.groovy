@@ -22,6 +22,8 @@ import be.cytomine.ontology.ReviewedAnnotation
 import be.cytomine.ontology.UserAnnotation
 import be.cytomine.project.Project
 import be.cytomine.test.BasicInstanceBuilder
+import be.cytomine.test.Infos
+import be.cytomine.test.http.ImageInstanceAPI
 import grails.util.Holders
 
 /**
@@ -86,19 +88,13 @@ class CounterTests {
        checkCounterAnnotation(image,1,1,1)
 
        //remove image
-       image.deleted = new Date()
-       BasicInstanceBuilder.saveDomain(image)
+       ImageInstanceAPI.delete(image, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
 
        //check if project p has 0 annotations for each class, 0 for image
        refreshCounter(project)
        checkCounterAnnotation(project,0,0,0,0)
 
-       //restore image
-       image.deleted = null
-       BasicInstanceBuilder.saveDomain(image)
-       refreshCounter(project)
-       checkCounterAnnotation(project,1,1,1,1)
-       checkCounterAnnotation(image,1,1,1)
+       // as soft-deleting an image cannot be "undo", we don't test the recover
 
    }
 

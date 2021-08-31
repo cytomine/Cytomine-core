@@ -1,5 +1,7 @@
 package be.cytomine.processing
 
+import be.cytomine.Exception.AlreadyExistException
+
 /*
 * Copyright (c) 2009-2021. Authors: see NOTICE file.
 *
@@ -21,6 +23,7 @@ import be.cytomine.command.AddCommand
 import be.cytomine.command.Command
 import be.cytomine.command.DeleteCommand
 import be.cytomine.command.Transaction
+import be.cytomine.image.ImageInstance
 import be.cytomine.project.Project
 import be.cytomine.security.SecUser
 import be.cytomine.utils.ModelService
@@ -69,7 +72,15 @@ class SoftwareProjectService extends ModelService{
         securityACLService.checkisNotReadOnly(json.project,Project)
         SecUser currentUser = cytomineService.getCurrentUser()
         json.user = currentUser.id
-        return executeCommand(new AddCommand(user: currentUser),null,json)
+        synchronized (this.getClass()) {
+            Project project = Project.read(json.project)
+            Software software = Software.read(json.software)
+            if (SoftwareProject.findByProjectAndSoftware(project, software)) {
+                throw new AlreadyExistException("Software ${json.project} already linked to ${json.software}")
+            }
+            return executeCommand(new AddCommand(user: currentUser),null,json)
+        }
+
     }
 
     /**

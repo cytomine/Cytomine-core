@@ -200,7 +200,7 @@ class OntologyTests  {
 
     void testDeleteOntology() {
         def ontologyToDelete = BasicInstanceBuilder.getOntologyNotExist()
-        assert ontologyToDelete.save(flush: true)!= null
+        BasicInstanceBuilder.saveDomain(ontologyToDelete)
         def id = ontologyToDelete.id
 
         def result = OntologyAPI.list(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)

@@ -412,9 +412,8 @@ class UserSearchTests {
         assert 200 == result.code
         json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
-        assert json.size == totalSize
-        Long size = totalSize
-        assert json.collection.size() == size
+        assert json.size <= totalSize // totalSize - users without role (creating in test)
+        assert json.collection.size() <= totalSize // totalSize - users without role (creating in test)
         Long id1 = json.collection[0].id
         Long id2 = json.collection[-1].id
 
@@ -422,7 +421,7 @@ class UserSearchTests {
         assert 200 == result.code
         json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
-        assert json.size == size
+        assert json.size <= totalSize // totalSize - users without role (creating in test)
         assert json.collection.size() == 1
         assert json.collection[0].id == id1
 
@@ -430,7 +429,7 @@ class UserSearchTests {
         assert 200 == result.code
         json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
-        assert json.size == size
+        assert json.size <= totalSize // totalSize - users without role (creating in test)
         assert json.collection.size() == 1
         assert json.collection[0].id != id1
         assert json.collection[0].role == "ROLE_SUPER_ADMIN"
@@ -444,26 +443,26 @@ class UserSearchTests {
         json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
         assert json.size == totalSize
-        size = totalSize
+        def size = totalSize
         assert json.collection.size() == size
-        id1 = json.collection[0].id
-        id2 = json.collection[-1].id
+        String origin1 = json.collection[0].origin
+        String origin2 = json.collection[-1].origin
 
         result = UserAPI.list( "origin", "asc", 1, 0, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
         json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
-        assert json.size == size
+        assert json.size == totalSize
         assert json.collection.size() == 1
-        assert json.collection[0].id == id1
+        assert json.collection[0].origin == origin1
 
         result = UserAPI.list("origin", "desc", 1, 0, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
         json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
-        assert json.size == size
+        assert json.size == totalSize
         assert json.collection.size() == 1
-        assert json.collection[0].id != id1
+        assert json.collection[0].origin == origin2
     }
 
     void testProjectUserSort(){

@@ -73,29 +73,26 @@ class BootstrapDataService {
         ]
         bootstrapUtilsService.createFilters(filters)
 
-        def IIPMimeSamples = [
+        def nativelySupportedMimes = [
+                [extension : 'tif', mimeType : 'image/pyrtiff'],
+                [extension : 'jp2', mimeType : 'image/jp2'],
+                [extension : 'ndpi', mimeType : 'openslide/ndpi'],
                 [extension : 'mrxs', mimeType : 'openslide/mrxs'],
                 [extension : 'vms', mimeType : 'openslide/vms'],
-                [extension : 'tif', mimeType : 'openslide/ventana'],
-                [extension : 'tif', mimeType : 'image/tif'],
-                [extension : 'tif', mimeType : 'philips/tif'],
-                [extension : 'tiff', mimeType : 'image/tiff'],
-                [extension : 'tif', mimeType : 'image/pyrtiff'],
                 [extension : 'svs', mimeType : 'openslide/svs'],
-                [extension : 'jp2', mimeType : 'image/jp2'],
                 [extension : 'scn', mimeType : 'openslide/scn'],
-                [extension : 'ndpi', mimeType : 'openslide/ndpi'],
                 [extension : 'bif', mimeType : 'openslide/bif'],
-                [extension : 'zvi', mimeType : 'zeiss/zvi']
+                [extension : 'tif', mimeType : 'openslide/ventana'],
+                [extension : 'tif', mimeType : 'philips/tif']
         ]
-        bootstrapUtilsService.createMimes(IIPMimeSamples)
+        bootstrapUtilsService.createMimes(nativelySupportedMimes)
 
 
         def usersSamples = [
                 [username : 'ImageServer1', firstname : 'Image', lastname : 'Server', email : grailsApplication.config.grails.admin.email, group : [[name : "Cytomine"]], password : RandomStringUtils.random(32,  (('A'..'Z') + ('0'..'0')).join().toCharArray()), color : "#FF0000", roles : ["ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN"]],
                 [username : 'superadmin', firstname : 'Super', lastname : 'Admin', email : grailsApplication.config.grails.admin.email, group : [[name : "Cytomine"]], password : grailsApplication.config.grails.adminPassword, color : "#FF0000", roles : ["ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"]],
                 [username : 'admin', firstname : 'Just an', lastname : 'Admin', email : grailsApplication.config.grails.admin.email, group : [[name : "Cytomine"]], password : grailsApplication.config.grails.adminPassword, color : "#FF0000", roles : ["ROLE_USER", "ROLE_ADMIN"]],
-                [username : 'rabbitmq', firstname : 'rabbitmq', lastname : 'user', email : grailsApplication.config.grails.admin.email, group : [[name : "Cytomine"]], password : RandomStringUtils.random(32,  (('A'..'Z') + ('0'..'0')).join().toCharArray()), color : "#FF0000", roles : ["ROLE_USER","ROLE_SUPER_ADMIN"]],
+                [username : 'rabbitmq', firstname : 'rabbitmq', lastname : 'user', email : grailsApplication.config.grails.admin.email, group : [[name : "Cytomine"]], password : RandomStringUtils.random(32,  (('A'..'Z') + ('0'..'0')).join().toCharArray()), color : "#FF0000", roles : ["ROLE_USER", "ROLE_SUPER_ADMIN"]],
                 [username : 'monitoring', firstname : 'Monitoring', lastname : 'Monitoring', email : grailsApplication.config.grails.admin.email, group : [[name : "Cytomine"]], password : RandomStringUtils.random(32,  (('A'..'Z') + ('0'..'0')).join().toCharArray()), color : "#FF0000", roles : ["ROLE_USER","ROLE_SUPER_ADMIN"]]
         ]
 

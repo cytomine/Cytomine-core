@@ -18,6 +18,7 @@ package be.cytomine.processing
 
 import be.cytomine.AnnotationDomain
 import be.cytomine.Exception.ServerException
+import be.cytomine.api.UrlApi
 import be.cytomine.image.server.RetrievalServer
 import be.cytomine.ontology.Ontology
 import be.cytomine.ontology.Term
@@ -52,6 +53,7 @@ class ImageRetrievalService {
     def cytomineService
     def dataSource
     def abstractImageService
+    def imageServerService
 
 
     public void indexImageAsync(URL url,String id, String storage, Map<String,String> properties) {
@@ -177,7 +179,7 @@ class ImageRetrievalService {
         log.info "get similarities for userAnnotation " + searchAnnotation.id + " on " + projectSearch
         if(!RetrievalServer.list().isEmpty()) {
             RetrievalServer server = RetrievalServer.list().get(0)
-            def cropUrl = searchAnnotation.urlImageServerCrop(abstractImageService)
+            def cropUrl = imageServerService.crop(searchAnnotation, [:], true)
             def responseJSON = doRetrievalSearch(server.url+"/api/searchUrl",server.username,server.password,searchAnnotation.id,cropUrl,projectSearch.collect{it+""})
             def result =  readRetrievalResponse(searchAnnotation,responseJSON.data)
             log.info "result=$result"
@@ -243,7 +245,8 @@ class ImageRetrievalService {
             try {
                 UserAnnotation annotation = UserAnnotation.read(annotationjson.id)
                 if (annotation && annotation.id != searchAnnotation.id) {
-                    annotation.similarity = new Double(annotationjson.similarities)
+                    def item = UserAnnotation.getDataFromDomain(annotation)
+                    item.similarity = new Double(annotationjson.similarities)
                     data << annotation
                 }
             }
@@ -285,7 +288,7 @@ class ImageRetrievalService {
                 log.debug "Annotation $annotation.id IS NOT INDEXED"
                 try {
 
-                    def cropUrl = AnnotationDomain.getAnnotationDomain(annotation.id).urlImageServerCrop(abstractImageService)
+                    def cropUrl = UrlApi.getAnnotationCropWithAnnotationId(annotation.id)
                     if(data.size() == 0) {
                         indexFirstAnnot = i;
                     }

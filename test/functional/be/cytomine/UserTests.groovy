@@ -480,13 +480,15 @@ class UserTests  {
         assert 200 == ProjectAPI.addAdminProject(project.id,admin.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
 
         //a admin must see all layers
-        assert checkIfContains(UserAPI.listLayers(project.id,adminUsername,password),simpleUser1.id)
-        assert checkIfContains(UserAPI.listLayers(project.id,adminUsername,password),simpleUser2.id)
-        assert checkIfContains(UserAPI.listLayers(project.id,adminUsername,password),admin.id)
-        //a simple user must see all admisn layer and his layer
-        assert checkIfContains(UserAPI.listLayers(project.id,simpleUsername1,password),simpleUser1.id)
-        assert !checkIfContains(UserAPI.listLayers(project.id,simpleUsername1,password),simpleUser2.id)
-        assert checkIfContains(UserAPI.listLayers(project.id,simpleUsername1,password),admin.id)
+        def layers = UserAPI.listLayers(project.id,adminUsername,password)
+        assert checkIfContains(layers,simpleUser1.id)
+        assert checkIfContains(layers,simpleUser2.id)
+        assert checkIfContains(layers,admin.id)
+        //a simple user must see all admin layers and his layer
+        layers = UserAPI.listLayers(project.id,simpleUsername1,password)
+        assert checkIfContains(layers,simpleUser1.id)
+        assert !checkIfContains(layers,simpleUser2.id)
+        assert checkIfContains(layers,admin.id)
     }
 
     void testListLayerAllLayersHideUserLayersAndHideAdminLayers() {

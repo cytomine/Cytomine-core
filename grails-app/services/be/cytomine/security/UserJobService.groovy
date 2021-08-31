@@ -16,33 +16,9 @@ package be.cytomine.security
 * limitations under the License.
 */
 
-import be.cytomine.CytomineDomain
-import be.cytomine.Exception.ConstraintException
 import be.cytomine.Exception.ObjectNotFoundException
-import be.cytomine.command.*
-import be.cytomine.image.ImageInstance
-import be.cytomine.image.NestedImageInstance
-import be.cytomine.image.UploadedFile
-import be.cytomine.image.server.ImageServerStorage
-import be.cytomine.image.server.Storage
-import be.cytomine.image.server.StorageAbstractImage
-import be.cytomine.ontology.*
-import be.cytomine.processing.Job
-import be.cytomine.project.Project
-import be.cytomine.project.ProjectDefaultLayer
-import be.cytomine.project.ProjectRepresentativeUser
-import be.cytomine.social.LastConnection
+import be.cytomine.command.EditCommand
 import be.cytomine.utils.ModelService
-import be.cytomine.utils.News
-import be.cytomine.utils.Task
-import be.cytomine.utils.Utils
-import grails.converters.JSON
-import grails.plugin.springsecurity.acl.AclSid
-import groovy.sql.Sql
-import org.apache.commons.collections.ListUtils
-
-import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION
-import static org.springframework.security.acls.domain.BasePermission.READ
 
 class UserJobService extends ModelService {
 

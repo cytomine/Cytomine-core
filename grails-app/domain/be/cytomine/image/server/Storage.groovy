@@ -19,63 +19,46 @@ package be.cytomine.image.server
 import be.cytomine.CytomineDomain
 import be.cytomine.security.SecUser
 import be.cytomine.utils.JSONUtils
+import org.restapidoc.annotation.RestApiObject
+import org.restapidoc.annotation.RestApiObjectField
 
-/**
- * A storage is a remote file repository
- * It contains the network configuration, the credentials
- * and the remote path of the remote machine
- */
+@RestApiObject(name = "Storage", description = "A virtual directory where uploaded files are stored. It is owned by a human user and can be shared with other human users.")
 class Storage extends CytomineDomain {
+    /* TODO: add quota on a storage to limit disk usage per user */
 
+    @RestApiObjectField(description = "The storage name")
     String name
-    String basePath
 
-    SecUser user //the creator, who got rights administration on the domain
+    @RestApiObjectField(description = "The storage owner, which has administration rights on the domain.", useForCreation = false)
+    SecUser user
 
+    static belongsTo = [SecUser]
 
-    static constraints = {
-        name(unique: false)
-        basePath(nullable: false, blank: false)
+    static mapping = {
+        id(generator: 'assigned', unique: true)
+        cache(true)
     }
 
-    /**
-     * Define fields available for JSON response
-     * This Method is called during application start
-     */
+    static constraints = {
+        name(unique: false, blank: false)
+    }
+
     static def getDataFromDomain(def storage) {
         def returnArray = CytomineDomain.getDataFromDomain(storage)
-        returnArray['name'] = storage?.name
-        returnArray['basePath'] = storage?.basePath
         returnArray['user'] = storage?.user?.id
+        returnArray['name'] = storage?.name
+
         returnArray
     }
 
-    public boolean equals(Object o) {
-        if (!o) {
-            return false
-        } else {
-            try {
-                return ((Storage) o).getId() == this.getId()
-            } catch (Exception e) {
-                return false
-            }
-        }
-
-    }
-
-    /**
-     * Insert JSON data into domain in param
-     * @param domain Domain that must be filled
-     * @param json JSON containing data
-     * @return Domain with json data filled
-     */
-    static Storage insertDataIntoDomain(def json,def domain = new Storage()) {
-        domain.id = JSONUtils.getJSONAttrLong(json,'id',null)
-        domain.name = JSONUtils.getJSONAttrStr(json, 'name',true)
-        domain.basePath = JSONUtils.getJSONAttrStr(json, 'basePath',true)
+    static Storage insertDataIntoDomain(def json, def domain = new Storage()) {
+        domain.id = JSONUtils.getJSONAttrLong(json, 'id', null)
         domain.created = JSONUtils.getJSONAttrDate(json, 'created')
         domain.updated = JSONUtils.getJSONAttrDate(json, 'updated')
-        domain.user = JSONUtils.getJSONAttrDomain(json, "user", new SecUser(), false)
+
+        domain.user = JSONUtils.getJSONAttrDomain(json, "user", new SecUser(), true)
+        domain.name = JSONUtils.getJSONAttrStr(json, 'name', true)
+
         return domain
     }
 

@@ -17,8 +17,8 @@ package be.cytomine.security
 */
 
 import be.cytomine.processing.Job
-import be.cytomine.utils.JSONUtils
 import be.cytomine.Exception.AlreadyExistException
+import be.cytomine.utils.JSONUtils
 import org.restapidoc.annotation.RestApiObject
 import org.restapidoc.annotation.RestApiObjectField
 import org.restapidoc.annotation.RestApiObjectFields

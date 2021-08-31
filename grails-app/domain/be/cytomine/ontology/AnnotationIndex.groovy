@@ -17,19 +17,19 @@ package be.cytomine.ontology
 */
 
 import be.cytomine.CytomineDomain
-import be.cytomine.image.ImageInstance
+import be.cytomine.image.SliceInstance
 import be.cytomine.security.SecUser
 import org.restapidoc.annotation.RestApiObject
 import org.restapidoc.annotation.RestApiObjectField
 
-@RestApiObject(name = "Annotation index", description="A index entry that store, for an image and a user, the number of annotation created/reviewed")
+@RestApiObject(name = "Annotation index", description="A index entry that store, for a slice and a user, the number of annotation created/reviewed")
 class AnnotationIndex implements Serializable {
 
     @RestApiObjectField(description = "The user criteria", useForCreation = false)
     SecUser user
 
-    @RestApiObjectField(description = "The image criteria",useForCreation = false)
-    ImageInstance image
+    @RestApiObjectField(description = "The slice criteria",useForCreation = false)
+    SliceInstance slice
 
     @RestApiObjectField(description = "The number of annotation added by the user (auto incr with trigger)",useForCreation = false)
     Long countAnnotation
@@ -38,6 +38,7 @@ class AnnotationIndex implements Serializable {
     Long countReviewedAnnotation
 
     static constraints = {
+        slice nullable: true
     }
 
     static mapping = {
@@ -54,7 +55,7 @@ class AnnotationIndex implements Serializable {
     static def getDataFromDomain(def domain) {
         def returnArray = CytomineDomain.getDataFromDomain(domain)
         returnArray['user'] = domain?.user?.id
-        returnArray['image'] = domain?.image?.id
+        returnArray['slice'] = domain?.slice?.id
         returnArray['countAnnotation'] = domain?.countAnnotation
         returnArray['countReviewedAnnotation'] = domain?.countReviewedAnnotation
         return returnArray

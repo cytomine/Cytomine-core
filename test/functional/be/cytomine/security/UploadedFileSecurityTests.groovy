@@ -20,48 +20,41 @@ import be.cytomine.image.UploadedFile
 import be.cytomine.test.BasicInstanceBuilder
 import be.cytomine.test.http.UploadedFileAPI
 
-/**
- * Created by IntelliJ IDEA.
- * User: lrollus
- * Date: 2/03/11
- * Time: 11:08
- * To change this template use File | Settings | File Templates.
- */
 class UploadedFileSecurityTests extends SecurityTestsAbstract {
 
 
-  void testUploadedFileSecurityForCytomineAdmin() {
+    void testUploadedFileSecurityForCytomineAdmin() {
 
-      //Get admin user
-      User admin = BasicInstanceBuilder.getSuperAdmin(USERNAMEADMIN,PASSWORDADMIN)
+        //Get admin user
+        User admin = BasicInstanceBuilder.getSuperAdmin(USERNAMEADMIN,PASSWORDADMIN)
 
-      //Create new uploadedFile (user1)
-      def result = UploadedFileAPI.create(BasicInstanceBuilder.getUploadedFileNotExist().encodeAsJSON(),USERNAME1,PASSWORD1)
-      assert 200 == result.code
-      UploadedFile uploadedFile = result.data
-      //check if admin user can access/update/delete
-      assert (200 == UploadedFileAPI.show(uploadedFile.id,USERNAMEADMIN,PASSWORDADMIN).code)
-      assert (200 == UploadedFileAPI.update(uploadedFile.id,uploadedFile.encodeAsJSON(),USERNAMEADMIN,PASSWORDADMIN).code)
-      assert (200 == UploadedFileAPI.delete(uploadedFile.id,USERNAMEADMIN,PASSWORDADMIN).code)
-  }
+        //Create new uploadedFile (user1)
+        def result = UploadedFileAPI.create(BasicInstanceBuilder.getUploadedFileNotExist(user1).encodeAsJSON(),USERNAME1,PASSWORD1)
+        assert 200 == result.code
+        UploadedFile uploadedFile = result.data
+        //check if admin user can access/update/delete
+        assert (200 == UploadedFileAPI.show(uploadedFile.id,USERNAMEADMIN,PASSWORDADMIN).code)
+        assert (200 == UploadedFileAPI.update(uploadedFile.id,uploadedFile.encodeAsJSON(),USERNAMEADMIN,PASSWORDADMIN).code)
+        assert (200 == UploadedFileAPI.delete(uploadedFile.id,USERNAMEADMIN,PASSWORDADMIN).code)
+    }
 
-  void testUploadedFileSecurityForUploadedFileCreator() {
+    void testUploadedFileSecurityForUploadedFileCreator() {
 
-      //Get user1
-      User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
+        //Get user1
+        User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
 
-      //Create new UploadedFile (user1)
-      UploadedFile uf = BasicInstanceBuilder.getUploadedFileNotExist();
-      uf.user = user1
-      def result = UploadedFileAPI.create(uf.encodeAsJSON(),USERNAME1,PASSWORD1)
-      assert 200 == result.code
-      UploadedFile uploadedFile = result.data
+        //Create new UploadedFile (user1)
+        UploadedFile uf = BasicInstanceBuilder.getUploadedFileNotExist(user1);
+        uf.user = user1
+        def result = UploadedFileAPI.create(uf.encodeAsJSON(),USERNAME1,PASSWORD1)
+        assert 200 == result.code
+        UploadedFile uploadedFile = result.data
 
-      //check if user 1 can access/update/delete
-      assert (200 == UploadedFileAPI.show(uploadedFile.id,USERNAME1,PASSWORD1).code)
-      assert (200 == UploadedFileAPI.update(uploadedFile.id,uploadedFile.encodeAsJSON(),USERNAME1,PASSWORD1).code)
-      assert (200 == UploadedFileAPI.delete(uploadedFile.id,USERNAME1,PASSWORD1).code)
-  }
+        //check if user 1 can access/update/delete
+        assert (200 == UploadedFileAPI.show(uploadedFile.id,USERNAME1,PASSWORD1).code)
+        assert (200 == UploadedFileAPI.update(uploadedFile.id,uploadedFile.encodeAsJSON(),USERNAME1,PASSWORD1).code)
+        assert (200 == UploadedFileAPI.delete(uploadedFile.id,USERNAME1,PASSWORD1).code)
+    }
 
     void testUploadedFileSecurityForGhest() {
 
@@ -71,11 +64,11 @@ class UploadedFileSecurityTests extends SecurityTestsAbstract {
         User ghest = BasicInstanceBuilder.getGhest("GHEST","PASSWORD")
 
         //Create new UploadedFile (user2)
-        def result = UploadedFileAPI.create(BasicInstanceBuilder.getUploadedFileNotExist().encodeAsJSON(),"GHEST","PASSWORD")
+        def result = UploadedFileAPI.create(BasicInstanceBuilder.getUploadedFileNotExist(ghest).encodeAsJSON(),"GHEST","PASSWORD")
         assert 403 == result.code
 
         //Create new UploadedFile (user1)
-        result = UploadedFileAPI.create(BasicInstanceBuilder.getUploadedFileNotExist().encodeAsJSON(),USERNAME1,PASSWORD1)
+        result = UploadedFileAPI.create(BasicInstanceBuilder.getUploadedFileNotExist(user1).encodeAsJSON(),USERNAME1,PASSWORD1)
         assert 200 == result.code
         UploadedFile uploadedFile = result.data
         //check if user 2 cannot access/update/delete
@@ -87,39 +80,39 @@ class UploadedFileSecurityTests extends SecurityTestsAbstract {
     }
 
 
-  void testUploadedFileSecurityForSimpleUser() {
+    void testUploadedFileSecurityForSimpleUser() {
 
-      //Get user1
-      User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
-      //Get user2
-      User user2 = BasicInstanceBuilder.getUser(USERNAME2,PASSWORD2)
+        //Get user1
+        User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
+        //Get user2
+        User user2 = BasicInstanceBuilder.getUser(USERNAME2,PASSWORD2)
 
-      //Create new UploadedFile (user1)
-      def result = UploadedFileAPI.create(BasicInstanceBuilder.getUploadedFileNotExist().encodeAsJSON(),USERNAME1,PASSWORD1)
-      assert 200 == result.code
-      UploadedFile uploadedFile = result.data
-      //check if user 2 cannot access/update/delete
-      assert (403 == UploadedFileAPI.show(uploadedFile.id,USERNAME2,PASSWORD2).code)
-      assert (403 == UploadedFileAPI.update(uploadedFile.id,uploadedFile.encodeAsJSON(),USERNAME2,PASSWORD2).code)
-      assert (403 == UploadedFileAPI.delete(uploadedFile.id,USERNAME2,PASSWORD2).code)
+        //Create new UploadedFile (user1)
+        def result = UploadedFileAPI.create(BasicInstanceBuilder.getUploadedFileNotExist(user1).encodeAsJSON(),USERNAME1,PASSWORD1)
+        assert 200 == result.code
+        UploadedFile uploadedFile = result.data
+        //check if user 2 cannot access/update/delete
+        assert (403 == UploadedFileAPI.show(uploadedFile.id,USERNAME2,PASSWORD2).code)
+        assert (403 == UploadedFileAPI.update(uploadedFile.id,uploadedFile.encodeAsJSON(),USERNAME2,PASSWORD2).code)
+        assert (403 == UploadedFileAPI.delete(uploadedFile.id,USERNAME2,PASSWORD2).code)
 
-  }
+    }
 
-  void testUploadedFileSecurityForAnonymous() {
+    void testUploadedFileSecurityForAnonymous() {
 
-      //Get user1
-      User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
-      //Get user2
-      User ghest = BasicInstanceBuilder.getGhest("GHEST","PASSWORD")
+        //Get user1
+        User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
+        //Get user2
+        User ghest = BasicInstanceBuilder.getGhest("GHEST","PASSWORD")
 
-      //Create new UploadedFile (user1)
-      def result = UploadedFileAPI.create(BasicInstanceBuilder.getUploadedFileNotExist().encodeAsJSON(),USERNAME1,PASSWORD1)
-      assert 200 == result.code
-      UploadedFile uploadedFile = result.data
-      //check if user 2 cannot access/update/delete
-      assert (401 == UploadedFileAPI.show(uploadedFile.id,USERNAMEBAD,PASSWORDBAD).code)
-      assert (401 == UploadedFileAPI.list(USERNAMEBAD,PASSWORDBAD).code)
-      assert (401 == UploadedFileAPI.update(uploadedFile.id,uploadedFile.encodeAsJSON(),USERNAMEBAD,PASSWORDBAD).code)
-      assert (401 == UploadedFileAPI.delete(uploadedFile.id,USERNAMEBAD,PASSWORDBAD).code)
-  }
+        //Create new UploadedFile (user1)
+        def result = UploadedFileAPI.create(BasicInstanceBuilder.getUploadedFileNotExist(user1).encodeAsJSON(),USERNAME1,PASSWORD1)
+        assert 200 == result.code
+        UploadedFile uploadedFile = result.data
+        //check if user 2 cannot access/update/delete
+        assert (401 == UploadedFileAPI.show(uploadedFile.id,USERNAMEBAD,PASSWORDBAD).code)
+        assert (401 == UploadedFileAPI.list(USERNAMEBAD,PASSWORDBAD).code)
+        assert (401 == UploadedFileAPI.update(uploadedFile.id,uploadedFile.encodeAsJSON(),USERNAMEBAD,PASSWORDBAD).code)
+        assert (401 == UploadedFileAPI.delete(uploadedFile.id,USERNAMEBAD,PASSWORDBAD).code)
+    }
 }

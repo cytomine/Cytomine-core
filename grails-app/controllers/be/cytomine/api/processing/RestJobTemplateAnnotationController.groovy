@@ -27,7 +27,7 @@ import org.restapidoc.annotation.RestApiParam
 import org.restapidoc.annotation.RestApiParams
 import org.restapidoc.pojo.RestApiParamType
 
-@RestApi(name = "job template annotation services", description = "Methods for managing a link between a job template and an annotation (roi or other type)")
+@RestApi(name = "Processing | job template annotation services", description = "Methods for managing a link between a job template and an annotation (roi or other type)")
 class RestJobTemplateAnnotationController extends RestController{
 
     def jobTemplateAnnotationService

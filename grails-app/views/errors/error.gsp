@@ -31,7 +31,19 @@
     <strong>Error ${request.'javax.servlet.error.status_code'}:</strong> ${request.'javax.servlet.error.message'.encodeAsHTML()}<br/>
     <strong>Servlet:</strong> ${request.'javax.servlet.error.servlet_name'}<br/>
     <strong>URI:</strong> ${request.'javax.servlet.error.request_uri'}<br/>
-    <g:if test="${exception}">
+    <g:if test="${exception && exception.getCause() instanceof be.cytomine.Exception.CytomineException}">
+        <strong>Exception Message:</strong> ${exception.message?.encodeAsHTML()} <br />
+        <strong>Caused by:</strong> ${exception.cause?.msg?.encodeAsHTML()} <br />
+        <strong>Class:</strong> ${exception.getCause().getClass()} <br />
+        <strong>At Line:</strong> [${exception.lineNumber}] <br />
+        <strong>Code Snippet:</strong><br />
+        <div class="snippet">
+            <g:each var="cs" in="${exception.codeSnippet}">
+                ${cs?.encodeAsHTML()}<br />
+            </g:each>
+        </div>
+    </g:if>
+    <g:elseif test="${exception}">
         <strong>Exception Message:</strong> ${exception.message?.encodeAsHTML()} <br />
         <strong>Caused by:</strong> ${exception.cause?.message?.encodeAsHTML()} <br />
         <strong>Class:</strong> ${exception.className} <br />
@@ -42,7 +54,7 @@
                 ${cs?.encodeAsHTML()}<br />
             </g:each>
         </div>
-    </g:if>
+    </g:elseif>
 </div>
 <g:if test="${exception}">
     <h2>Stack Trace</h2>

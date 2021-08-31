@@ -25,6 +25,7 @@ import be.cytomine.test.http.ImageConsultationAPI
 import be.cytomine.test.http.ImageInstanceAPI
 import be.cytomine.test.http.ProjectAPI
 import be.cytomine.test.http.ProjectConnectionAPI
+import grails.converters.JSON
 
 /**
  * Created by IntelliJ IDEA.
@@ -153,6 +154,22 @@ class ImageConsultationSecurityTests extends SecurityTestsAbstract{
       assert 403 == result.code
       result = ImageConsultationAPI.countByProject(project.id, SecurityTestsAbstract.USERNAME2, SecurityTestsAbstract.PASSWORD2)
       assert 200 == result.code
+
+      result = ImageConsultationAPI.listImageConsultationByProjectAndUser(project.id, user2.id, SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
+      assert 200 == result.code
+      def json = JSON.parse(result.data)
+      assert json.collection[0].imageName == image.getBlindInstanceFilename()
+
+      project.blindMode = true
+      project = BasicInstanceBuilder.saveDomain(project)
+
+      result = ImageConsultationAPI.create(image.id,consultation.encodeAsJSON(),SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
+      assert 200 == result.code
+
+      result = ImageConsultationAPI.listImageConsultationByProjectAndUser(project.id, user2.id, SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
+      assert 200 == result.code
+      json = JSON.parse(result.data)
+      assert json.collection[0].imageName == image.getBlindInstanceFilename()
   }
 
   void testImageConsultationSecurityForSimpleUser() {

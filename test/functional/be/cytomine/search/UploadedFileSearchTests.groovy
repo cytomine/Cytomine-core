@@ -263,13 +263,13 @@ class UploadedFileSearchTests {
         json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
         assert json.collection.size() > 1
-        sizeU = json.collection[0].globalSize
+        long greaterSizeId = json.collection[0].id
 
         result = UploadedFileAPI.list(true, "globalSize", "desc", Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
         json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
-        assert sizeU != json.collection[0].globalSize
+        assert greaterSizeId != json.collection[0].id
 
 
         long status

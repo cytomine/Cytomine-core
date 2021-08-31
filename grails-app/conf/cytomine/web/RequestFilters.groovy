@@ -37,7 +37,7 @@ class RequestFilters {
                 if(actionName.equals("ping")) return
                 if(actionName.equals("listOnlineFriendsWithPosition")) return
                 if(actionName.equals("listOnlineUsersByImage")) return
-                if(controllerName.equals("restAnnotationIndex") && actionName.equals("listByImage")) return
+                if(controllerName.equals("restAnnotationIndex") && actionName.equals("listBySlice")) return
 
                 if(controllerName.equals("restUserPosition") && actionName.equals("add")) return
                 request.currentTime = System.currentTimeMillis()
@@ -53,7 +53,7 @@ class RequestFilters {
                 if(actionName.equals("listOnlineFriendsWithPosition")) return
                 if(actionName.equals("listOnlineUsersByImage")) return
                 if(controllerName.equals("restUserPosition") && actionName.equals("add")) return
-                if(controllerName.equals("restAnnotationIndex") && actionName.equals("listByImage")) return
+                if(controllerName.equals("restAnnotationIndex") && actionName.equals("listBySlice")) return
 
                 log.info controllerName+"."+actionName + " Request took ${System.currentTimeMillis()-request.currentTime}ms"
             }

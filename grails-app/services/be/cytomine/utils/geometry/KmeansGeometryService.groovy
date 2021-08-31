@@ -17,6 +17,7 @@ package be.cytomine.utils.geometry
 */
 
 import be.cytomine.image.ImageInstance
+import be.cytomine.image.SliceInstance
 import be.cytomine.security.SecUser
 import com.vividsolutions.jts.geom.Geometry
 import com.vividsolutions.jts.io.WKTReader
@@ -91,17 +92,17 @@ class KmeansGeometryService {
         data
     }
 
-    public int mustBeReduce(Long image, Long user, String bbox) {
-        mustBeReduce(ImageInstance.read(image),SecUser.read(user),new WKTReader().read(bbox))
+    public int mustBeReduce(Long slice, Long user, String bbox) {
+        mustBeReduce(SliceInstance.read(slice),SecUser.read(user),new WKTReader().read(bbox))
     }
 
 
-    public int mustBeReduce(ImageInstance image, SecUser user, Geometry bbox) {
-        if (image.baseImage.width==null) {
+    public int mustBeReduce(SliceInstance slice, SecUser user, Geometry bbox) {
+        if (slice.image.baseImage.width==null) {
             return  FULL
         }
 
-        double imageWidth = image.baseImage.width
+        double imageWidth = slice.image.baseImage.width
         double bboxWidth = bbox.getEnvelopeInternal().width
 
         double ratio = bboxWidth/imageWidth
@@ -114,7 +115,7 @@ class KmeansGeometryService {
 
         def ruleLine = rules.get(Math.min(ratio25,100))
 
-        int numberOfAnnotation = Math.max(0, annotationIndexService.count(image,user))
+        int numberOfAnnotation = Math.max(0, annotationIndexService.count(slice,user))
 
         def rule = getRuleForNumberOfAnnotations(numberOfAnnotation, ruleLine)
 

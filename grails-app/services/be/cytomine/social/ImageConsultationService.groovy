@@ -46,8 +46,8 @@ class ImageConsultationService extends ModelService {
         consultation.projectConnection = projectConnectionService.lastConnectionInProject(image.project, user.id)[0].id
         consultation.mode = JSONUtils.getJSONAttrStr(json,"mode",true)
         consultation.created = new Date()
-        consultation.imageName = image.getInstanceFilename()
-        consultation.imageThumb = UrlApi.getThumbImage(image.baseImage?.id, 256)
+        consultation.imageName = image.getBlindInstanceFilename()
+        consultation.imageThumb = UrlApi.getImageInstanceThumbUrlWithMaxSize(image.id, 256)
         consultation.insert(flush:true, failOnError : true) //don't use save (stateless collection)
 
         return consultation
@@ -82,8 +82,7 @@ class ImageConsultationService extends ModelService {
 
                     String filename;
                     if(image) {
-                        filename = image.instanceFilename == null ? image.baseImage.originalFilename : image.instanceFilename;
-                        if(image.project.blindMode) filename = image.getBlindedName()
+                        filename = image.getBlindInstanceFilename();
                     } else {
                         filename = "Image "+imageInstanceId
                     }
@@ -92,7 +91,7 @@ class ImageConsultationService extends ModelService {
                             user:user,
                             image:it['_id'],
                             time:it['time'],
-                            imageThumb: UrlApi.getAbstractImageThumbURL(image.baseImage.id),
+                            imageThumb: UrlApi.getImageInstanceThumbUrl(image.id),
                             imageName:filename,
                             project:image.project.id,
                             countCreatedAnnotations:it['countCreatedAnnotations']
@@ -136,8 +135,7 @@ class ImageConsultationService extends ModelService {
             if(!image){
                 image = ImageInstance.read(it["image"])
                 if(image) {
-                    filename = image.instanceFilename == null ? image.baseImage.originalFilename : image.instanceFilename;
-                    if(image.project.blindMode) filename = image.getBlindedName()
+                    filename = image.getBlindInstanceFilename()
                 } else {
                     filename = "Image "+it["image"]
                 }
@@ -226,8 +224,7 @@ class ImageConsultationService extends ModelService {
             }
             String filename;
             if(image) {
-                filename = image.instanceFilename == null ? image.baseImage.originalFilename : image.instanceFilename;
-                if(image.project.blindMode) filename = image.getBlindedName()
+                filename = image.getBlindInstanceFilename()
             } else {
                 filename = "Image "+imageInstanceId
             }
@@ -304,8 +301,7 @@ class ImageConsultationService extends ModelService {
             ImageInstance image = ImageInstance.read(it["_id"].image)
             String filename;
             if(image) {
-                filename = image.instanceFilename == null ? image.baseImage.originalFilename : image.instanceFilename;
-                if(image.project.blindMode) filename = image.getBlindedName()
+                filename = image.getBlindInstanceFilename()
             } else {
                 filename = "Image "+it["_id"].image
             }

@@ -40,6 +40,7 @@ class JobParameter extends CytomineDomain implements Comparable {
         @RestApiObjectField(apiFieldName = "job", description = "The job of the parameter",allowedType = "long",useForCreation = true),
         @RestApiObjectField(apiFieldName = "softwareParameter", description = "The parameter id of the software",allowedType = "long",useForCreation = true),
         @RestApiObjectField(apiFieldName = "name", description = "The parameter name", useForCreation = false, allowedType = "string"),
+        @RestApiObjectField(apiFieldName = "humanName", description = "The parameter name in a human readable form", useForCreation = false, allowedType = "string"),
         @RestApiObjectField(apiFieldName = "type", description = "The parameter data type (Number, String, Date, Boolean, Domain (e.g: image instance id,...), ListDomain )", useForCreation = false, allowedType = "string"),
         @RestApiObjectField(apiFieldName = "index",description = "Index for parameter position. When launching software, parameter will be send ordered by index (asc).", useForCreation = false, allowedType = "string"),
         @RestApiObjectField(apiFieldName = "uri", description = "Used for UI. If parameter has '(List)Domain' type, the URI will provide a list of choice. E.g. if uri is 'api/project.json', the choice list will be cytomine project list", useForCreation = false, allowedType = "string"),

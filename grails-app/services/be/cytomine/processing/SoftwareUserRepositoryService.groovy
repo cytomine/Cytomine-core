@@ -35,6 +35,7 @@ class SoftwareUserRepositoryService extends ModelService {
     def transactionService
     def securityACLService
     def amqpQueueService
+    def softwareService
 
     @Override
     def currentDomain() {
@@ -94,14 +95,10 @@ class SoftwareUserRepositoryService extends ModelService {
         return executeCommand(c, domain, null)
     }
 
-//    def deleteDependentSoftware(SoftwareUserRepository domain, Transaction transaction, Task task = null) {
-//
-//
-//        log.info("delteDependantSoftware ${Software.findAllBySoftwareRepository(domain).size()}")
-//        Software.findAllBySoftwareRepository(domain).each {
-//            softwareService.delete(it, transaction, null, false)
-//        }
-//    }
+    def deleteDependentSoftware(SoftwareUserRepository domain, Transaction transaction, Task task = null) {
+        log.info("deleteDependantSoftware ${Software.findAllBySoftwareUserRepository(domain).size()}")
+        Software.executeUpdate("update Software set softwareUserRepository = null where softwareUserRepository.id = ?", [domain.id])
+    }
 
     @Override
     def getStringParamsI18n(def domain) {
@@ -122,6 +119,20 @@ class SoftwareUserRepositoryService extends ModelService {
         JsonBuilder jsonBuilder = new JsonBuilder()
         jsonBuilder(message)
 
+        amqpQueueService.publishMessage(AmqpQueue.findByName("queueCommunication"), jsonBuilder.toString())
+    }
+
+    @Override
+    def afterDelete(Object domain, Object response) {
+        SoftwareUserRepository softwareUserRepository = domain as SoftwareUserRepository
+        def message = [requestType: "removeSoftwareUserRepository",
+                       id: softwareUserRepository.id,
+                       provider: softwareUserRepository.provider,
+                       username: softwareUserRepository.username,
+                       dockerUsername: softwareUserRepository.dockerUsername,
+                       prefix: softwareUserRepository.prefix]
+        JsonBuilder jsonBuilder = new JsonBuilder()
+        jsonBuilder(message)
         amqpQueueService.publishMessage(AmqpQueue.findByName("queueCommunication"), jsonBuilder.toString())
     }
 

@@ -714,14 +714,15 @@ class ProjectTests  {
         assert 200 == result.code
         def json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
-        assert json.collection[0].instanceFilename == image.instanceFilename
+        assert json.collection[0].instanceFilename == image.getBlindInstanceFilename()
+
         assert json.collection[0].blindedName instanceof JSONObject.Null
 
         result = ImageInstanceAPI.show(image.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
         json = JSON.parse(result.data)
 
-        assert json.instanceFilename == image.instanceFilename
+        assert json.instanceFilename == image.getBlindInstanceFilename()
         assert json.blindedName instanceof JSONObject.Null
 
         project.blindMode = true
@@ -731,14 +732,14 @@ class ProjectTests  {
         assert 200 == result.code
         json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
-        assert json.collection[0].instanceFilename == image.instanceFilename
+        assert json.collection[0].instanceFilename == image.getBlindInstanceFilename()
         assert !(json.collection[0].blindedName instanceof JSONObject.Null)
 
         result = ImageInstanceAPI.show(image.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
         json = JSON.parse(result.data)
 
-        assert json.instanceFilename == image.instanceFilename
+        assert json.instanceFilename == image.getBlindInstanceFilename()
         assert !(json.blindedName instanceof JSONObject.Null)
 
 

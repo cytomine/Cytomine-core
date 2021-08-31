@@ -79,6 +79,7 @@ class AttachedFileSecurityTests extends SecurityTestsAbstract{
         //Add job instance to project
         Job job = BasicInstanceBuilder.getJobNotExist()
         job.project = project
+        job.save(flush: true)
 
         result = JobAPI.create(job.encodeAsJSON(), SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
         assert 200 == result.code
@@ -131,7 +132,8 @@ class AttachedFileSecurityTests extends SecurityTestsAbstract{
 
 
         project.mode = Project.EditingMode.CLASSIC
-        BasicInstanceBuilder.saveDomain(project)
+        project = BasicInstanceBuilder.saveDomain(project)
+        println "project mode = ${project.mode}"
 
         result = AttachedFileAPI.show(idAttachedFile,SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
         assert 200 == result.code
@@ -497,7 +499,7 @@ class AttachedFileSecurityTests extends SecurityTestsAbstract{
         assert 403 == result.code
 
         project.mode = Project.EditingMode.CLASSIC
-        BasicInstanceBuilder.saveDomain(project)
+        project = BasicInstanceBuilder.saveDomain(project)
 
         result = AttachedFileAPI.upload(attachedFile.domainClassName,attachedFile.domainIdent,new File("test/functional/be/cytomine/utils/simpleFile.txt"),SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
         assert 200 == result.code
@@ -505,7 +507,7 @@ class AttachedFileSecurityTests extends SecurityTestsAbstract{
 
         //check all by project settings until the end
         project.mode = Project.EditingMode.READ_ONLY
-        BasicInstanceBuilder.saveDomain(project)
+        project = BasicInstanceBuilder.saveDomain(project)
 
         result = AttachedFileAPI.show(idAttachedFile,SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
         assert 200 == result.code
@@ -544,15 +546,12 @@ class AttachedFileSecurityTests extends SecurityTestsAbstract{
         User user2 = getUser2()
 
         def abstractImage = BasicInstanceBuilder.getAbstractImageNotExist(true)
-        def result = AbstractImageAPI.create(BasicInstanceBuilder.getAbstractImageNotExist().encodeAsJSON(), USERNAME1, PASSWORD1)
-        assert 200 == result.code
-        abstractImage = result.data
 
         def attachedFileToAdd = BasicInstanceBuilder.getAttachedFileNotExist(false)
         attachedFileToAdd.domainClassName = abstractImage.class.name
         attachedFileToAdd.domainIdent = abstractImage.id
 
-        result = AttachedFileAPI.upload(attachedFileToAdd.domainClassName,attachedFileToAdd.domainIdent,new File("test/functional/be/cytomine/utils/simpleFile.txt"),USERNAME2, PASSWORD2)
+        def result = AttachedFileAPI.upload(attachedFileToAdd.domainClassName,attachedFileToAdd.domainIdent,new File("test/functional/be/cytomine/utils/simpleFile.txt"),USERNAME2, PASSWORD2)
         assert 403 == result.code
 
         result = AttachedFileAPI.upload(attachedFileToAdd.domainClassName,attachedFileToAdd.domainIdent,new File("test/functional/be/cytomine/utils/simpleFile.txt"),USERNAME1, PASSWORD1)

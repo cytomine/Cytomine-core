@@ -37,6 +37,8 @@ class ImageGroupService extends ModelService {
     def imageSequenceService
     def securityACLService
     def abstractImageService
+    def imageGroupHDF5Service
+    def imageServerService
 
     def currentDomain() {
         return ImageGroup
@@ -111,6 +113,12 @@ class ImageGroupService extends ModelService {
         }
     }
 
+    def deleteDependentImageGroupHDF5(ImageGroup group, Transaction transaction, Task task = null) {
+        ImageGroupHDF5.findAllByGroup(group).each {
+            imageGroupHDF5Service.delete(it,transaction,null,false)
+        }
+    }
+
     def characteristics(ImageGroup imageGroup){
         def poss = ImageSequence.findAllByImageGroup(imageGroup)
         def z = []
@@ -135,9 +143,10 @@ class ImageGroupService extends ModelService {
 
     def thumb(Long id, int maxSize) {
         ImageGroup imageGroup = ImageGroup.get(id)
-        def sequences = ImageSequence.findAllByImageGroupAndSliceAndTimeAndChannel(imageGroup,0,0,0)
-        def zs = sequences.collect{it.zStack}
-        int zMean = (zs.max() - zs.min())/2
-        return abstractImageService.thumb(sequences.find{it.zStack == zMean}.image.baseImage.id, maxSize)
+        def characteristics = characteristics(imageGroup)
+        def zMean = characteristics.zStack[(int) Math.floor(characteristics.zStack.size() / 2)]
+        def sequence = imageSequenceService.get(imageGroup, characteristics.channel[0], zMean, characteristics.slice[0], characteristics.time[0])
+
+        return imageServerService.thumb(sequence.image.baseImage, [maxSize:maxSize])
     }
 }

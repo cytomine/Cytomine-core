@@ -17,6 +17,8 @@ package be.cytomine
 */
 
 import be.cytomine.api.RestController
+import be.cytomine.security.User
+import be.cytomine.security.UserJob
 import grails.plugin.springsecurity.annotation.Secured
 
 @Secured(['ROLE_ADMIN','ROLE_SUPER_ADMIN'])
@@ -27,6 +29,9 @@ class AdminController extends RestController {
     def modelService
     def springSecurityService
     def archiveCommandService
+    def cytomineService
+    def cytomineMailService
+    def securityACLService
 
     @Secured(['ROLE_ADMIN','ROLE_SUPER_ADMIN'])
     def index() {
@@ -40,5 +45,35 @@ class AdminController extends RestController {
 
     }
 
+    @Secured(['ROLE_ADMIN','ROLE_SUPER_ADMIN'])
+    def mailTesting() {
+
+        def user = cytomineService.currentUser
+        securityACLService.checkAdmin(user)
+
+
+        while(user instanceof UserJob) {
+            user = ((UserJob) user).user
+        }
+        user = (User) user
+
+        try {
+            cytomineMailService.send(
+                    cytomineMailService.NO_REPLY_EMAIL,
+                    (String[]) [user.email],
+                    "",
+                    "test mail : ok",
+                    "This is a test of the mail sending feature of the Cytomine instance ${grailsApplication.config.grails.serverURL}")
+            response([message : "success"], 200)
+        } catch (Exception e){
+            e.printStackTrace()
+            StringWriter sw = new StringWriter()
+            PrintWriter pw = new PrintWriter(sw)
+            e.printStackTrace(pw)
+            String sStackTrace = sw.toString(); // stack trace as a string
+
+            response([stackTrace:sStackTrace, message : e.getMessage()], 500)
+        }
+    }
 
 }

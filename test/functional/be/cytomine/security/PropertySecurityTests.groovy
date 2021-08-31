@@ -17,6 +17,7 @@ package be.cytomine.security
 */
 
 import be.cytomine.image.ImageInstance
+import be.cytomine.image.SliceInstance
 import be.cytomine.meta.Property
 import be.cytomine.ontology.UserAnnotation
 import be.cytomine.project.Project
@@ -143,12 +144,14 @@ class PropertySecurityTests extends SecurityTestsAbstract {
         User admin = BasicInstanceBuilder.getSuperAdmin(USERNAMEADMIN,PASSWORDADMIN)
 
         //Create project with user 1
-        ImageInstance image = ImageInstanceAPI.buildBasicImage(SecurityTestsAbstract.USERNAME1, SecurityTestsAbstract.PASSWORD1)
+        SliceInstance slice = SliceInstanceAPI.buildBasicSlice(SecurityTestsAbstract.USERNAME1, SecurityTestsAbstract.PASSWORD1)
+        ImageInstance image = slice.image
         Project project = image.project
 
         //Add annotation with cytomine admin
         UserAnnotation annotation = BasicInstanceBuilder.getUserAnnotationNotExist()
         annotation.image = image
+        annotation.slice = slice
         annotation.project = project
         def result = UserAnnotationAPI.create(annotation.encodeAsJSON(), SecurityTestsAbstract.USERNAMEADMIN, SecurityTestsAbstract.PASSWORDADMIN)
         assert 200 == result.code
@@ -184,9 +187,11 @@ class PropertySecurityTests extends SecurityTestsAbstract {
         Property annotationProperty = result.data
 
         //Create image, project, annotation
-        ImageInstance image = ImageInstanceAPI.buildBasicImage(SecurityTestsAbstract.USERNAME1, SecurityTestsAbstract.PASSWORD1)
+        SliceInstance slice = SliceInstanceAPI.buildBasicSlice(SecurityTestsAbstract.USERNAME1, SecurityTestsAbstract.PASSWORD1)
+        ImageInstance image = slice.image
         Project project = image.project
         UserAnnotation annotation = BasicInstanceBuilder.getUserAnnotationNotExist()
+        annotation.slice = slice
         annotation.image = image
         annotation.project = image.project
         result = UserAnnotationAPI.create(annotation.encodeAsJSON(), SecurityTestsAbstract.USERNAME1, SecurityTestsAbstract.PASSWORD1)

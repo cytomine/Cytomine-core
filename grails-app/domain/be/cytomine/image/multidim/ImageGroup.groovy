@@ -93,7 +93,7 @@ class ImageGroup extends CytomineDomain implements Serializable {
         returnArray['name'] = domain?.name
         returnArray['project'] = domain?.project?.id
         try {
-            returnArray['thumb'] = UrlApi.getThumbMultiDimImage(domain.id, 512)
+            returnArray['thumb'] = UrlApi.getImageGroupThumbUrlWithMaxSize(domain.id, 512)
         } catch (Exception e) {
             returnArray['thumb'] = 'NO THUMB:' + e.toString()
         }

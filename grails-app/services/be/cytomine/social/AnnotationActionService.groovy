@@ -2,6 +2,7 @@ package be.cytomine.social
 
 import be.cytomine.AnnotationDomain
 import be.cytomine.image.ImageInstance
+import be.cytomine.image.SliceInstance
 import be.cytomine.project.Project
 import be.cytomine.security.SecUser
 import be.cytomine.security.User
@@ -30,6 +31,7 @@ class AnnotationActionService extends ModelService {
         AnnotationAction action = new AnnotationAction()
         action.user = user
         action.image = image
+        action.slice = annotation.slice
         action.project = image.project
         action.created = new Date()
         action.action = JSONUtils.getJSONAttrStr(json,"action",true)
@@ -41,7 +43,18 @@ class AnnotationActionService extends ModelService {
         return action
     }
 
+    def list(SliceInstance slice, User user, Long afterThan = null, Long beforeThan = null){
+        securityACLService.check(slice,WRITE)
+        return AnnotationAction.createCriteria().list(sort: "created", order: "asc") {
+            if(user) eq("user", user)
+            eq("slice", slice)
+            if(afterThan) gte("created", new Date(afterThan))
+            if(beforeThan) lte("created", new Date(beforeThan))
+        }
+    }
+
     def list(ImageInstance image, User user, Long afterThan = null, Long beforeThan = null) {
+        securityACLService.check(image,WRITE)
         return AnnotationAction.createCriteria().list(sort: "created", order: "asc") {
             if (user) eq("user", user)
             eq("image", image)

@@ -18,6 +18,7 @@ package be.cytomine.image.server
 
 import be.cytomine.CytomineDomain
 import be.cytomine.image.Mime
+import be.cytomine.middleware.ImageServer
 
 /**
  * Association between mime and image server
@@ -27,4 +28,7 @@ class MimeImageServer extends CytomineDomain {
     ImageServer imageServer
     Mime mime
 
+    static mapping = {
+        cache true
+    }
 }

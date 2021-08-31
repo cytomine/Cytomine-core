@@ -17,21 +17,14 @@ package be.cytomine.api.image
 */
 
 import be.cytomine.api.RestController
-import be.cytomine.Exception.MiddlewareException
-import be.cytomine.image.AbstractImage
-import be.cytomine.image.ImageInstance
-import be.cytomine.image.Mime
 import be.cytomine.image.UploadedFile
-import be.cytomine.image.server.Storage
-import be.cytomine.laboratory.Sample
-import be.cytomine.project.Project
 import be.cytomine.security.User
-import be.cytomine.utils.JSONUtils
 import grails.converters.JSON
-import org.restapidoc.annotation.*
+import org.restapidoc.annotation.RestApi
+import org.restapidoc.annotation.RestApiMethod
+import org.restapidoc.annotation.RestApiParam
+import org.restapidoc.annotation.RestApiParams
 import org.restapidoc.pojo.RestApiParamType
-
-import javax.activation.MimetypesFileTypeMap
 
 /**
  * Controller that handle request on file uploading (when a file is uploaded, list uploaded files...)
@@ -39,269 +32,98 @@ import javax.activation.MimetypesFileTypeMap
 @RestApi(name = "Image | uploaded file services", description = "Methods for managing an uploaded image file.")
 class RestUploadedFileController extends RestController {
 
-    def imageProcessingService
     def cytomineService
-    def imagePropertiesService
     def projectService
     def storageService
     def grailsApplication
     def uploadedFileService
-    def storageAbstractImageService
     def imageInstanceService
     def abstractImageService
     def notificationService
     def securityACLService
     def secUserService
+    def imageServerService
 
-    static allowedMethods = [image: 'POST']
-
-    def dataTablesService
-    @RestApiMethod(description="Get all uploaded file made by the current user")
+    @RestApiMethod(description = "Get all uploaded files made by the current user")
+    @RestApiParams(params = [
+            @RestApiParam(name = "onlyRootsWithDetails", type = "boolean", paramType = RestApiParamType.QUERY, description = "If set, only return uploaded files which are roots (no parent) with supplementary details such global size."),
+            @RestApiParam(name = "onlyRoots", type = "boolean", paramType = RestApiParamType.QUERY, description = "If set, only return uploaded files which are roots (no parent)."),
+            @RestApiParam(name = "parent", type = "long", paramType = RestApiParamType.QUERY, description = "If set, only return uploaded files having the given parent."),
+            @RestApiParam(name = "root", type = "long", paramType = RestApiParamType.QUERY, description = "If set, only return uploaded files which are children of the given root. Returned attributes are a subset of uploaded files attributes."),
+            @RestApiParam(name = "all", type = "boolean", paramType = RestApiParamType.QUERY, description = "True to list uploaded files for all users the current user has access to")
+    ])
     def list() {
         Long root
         def uploadedFiles
-        if(params.root) {
-            root = Long.parseLong(params.root)
-            uploadedFiles = uploadedFileService.listHierarchicalTree((User)cytomineService.getCurrentUser(), root)
-            //if view is datatables, change way to store data
-        } else if (params.datatables) {
-            uploadedFiles = dataTablesService.process(params, UploadedFile, null, null, null)
-        } else if (params.detailed) {
-            String searchRequest = getSearchParameters().find {it.field == "originalFilename" && it.operator == "ilike"}?.values
-            searchRequest = searchRequest ? "%"+searchRequest+"%" : "%"
-
-            def result = dataTablesService.getUploadedFilesTable(params, searchRequest, null, params.order, params.sort)
-            uploadedFiles = [collection : result.data, size : result.total]
+        if (params.root) {
+            root = params.long('root')
+            uploadedFiles = uploadedFileService.listHierarchicalTree((User) cytomineService.getCurrentUser(), root)
+        } else if (params.onlyRootsWithDetails) {
+            def allowedSearchParameters = [
+                    [field: "originalFilename", allowedOperators: equalsAndLikeAndIlikeOperators],
+                    [field: "storage", allowedOperators: 'in'],
+                    [field: "user", allowedOperators: 'in']
+            ]
+            uploadedFiles = uploadedFileService.listWithDetails((User) cytomineService.getCurrentUser(), getSearchParameters(allowedSearchParameters), params.sort, params.order)
+        } else if (params.all) {
+            def result = uploadedFileService.list()
+            uploadedFiles = [collection : result.data, size : result.total, offset: result.offset, perPage: result.perPage, totalPages: result.totalPages]
         } else {
-            Boolean onlyRoots
-            if(params.onlyRoots) {
-                onlyRoots = Boolean.parseBoolean(params.onlyRoots)
-            }
-            Long parent
-            if(params.parent){
-                parent = Long.parseLong(params.parent)
-            }
-            if(params.all){
-                def result = uploadedFileService.list()
-                uploadedFiles = [collection : result.data, size : result.total]
-            } else {
-                def result = uploadedFileService.list((User)secUserService.getUser(cytomineService.getCurrentUser().id), parent, onlyRoots, params.sort, params.order, params.long('max'), params.long('offset'))
-                uploadedFiles = [collection : result.data, size : result.total]
-            }
+            Boolean onlyRoots = params.boolean('onlyRoots', false)
+            Long parent = params.long('parent', null)
+            def result = uploadedFileService.list((User)secUserService.getUser(cytomineService.getCurrentUser().id), parent, onlyRoots, params.sort, params.order, params.long('max'), params.long('offset'))
+            uploadedFiles = [collection : result.data, size : result.total, offset: result.offset, perPage: result.perPage, totalPages: result.totalPages]
         }
-
 
         responseSuccess(uploadedFiles)
     }
 
-    @RestApiMethod(description="Delete all file properties for an image")
-    @RestApiParams(params=[
-    @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The image id")
+    @RestApiMethod(description = "Get an uploaded file")
+    @RestApiParams(params = [
+            @RestApiParam(name = "id", type = "long", paramType = RestApiParamType.PATH, description = "The uploaded file id")
     ])
-    @RestApiResponseObject(objectIdentifier = "empty")
-    def clearProperties () {
-        AbstractImage abstractImage = abstractImageService.read(params.long('id'))
-        imagePropertiesService.clear(abstractImage)
-        responseSuccess([:])
-    }
-
-    @RestApiMethod(description="Get all file properties for an image")
-    @RestApiParams(params=[
-    @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The image id")
-    ])
-    @RestApiResponseObject(objectIdentifier = "empty")
-    def populateProperties () {
-        AbstractImage abstractImage = abstractImageService.read(params.long('id'))
-        imagePropertiesService.populate(abstractImage)
-        responseSuccess([:])
-    }
-
-    @RestApiMethod(description="Fill image field (magn, width,...) with all file properties")
-    @RestApiParams(params=[
-    @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The image id")
-    ])
-    @RestApiResponseObject(objectIdentifier = "empty")
-    def extractProperties () {
-        AbstractImage abstractImage = abstractImageService.read(params.long('id'))
-        imagePropertiesService.extractUseful(abstractImage)
-        responseSuccess([:])
-    }
-
-
-    @RestApiMethod(description="Get an uploaded file")
-    @RestApiParams(params=[
-    @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The uploaded file id")
-    ])
-    def show () {
-        UploadedFile up = uploadedFileService.get(params.long('id'))
+    def show() {
+        UploadedFile up = uploadedFileService.read(params.long('id'))
         if (up) {
-            securityACLService.checkIsSameUser(up.user, cytomineService.getCurrentUser())
             responseSuccess(up)
         } else {
             responseNotFound("UploadedFile", params.id)
         }
     }
 
-    /**
-     * Add a new image
-     * TODO:: how to manage security here?
-     *
-     */
-    @RestApiMethod(description="Add a new uploaded file. This DOES NOT upload the file, just create the domain.")
-    def add () {
+    @RestApiMethod(description = "Add a new uploaded file. This DOES NOT upload the file, just create the domain.")
+    def add() {
         add(uploadedFileService, request.JSON)
     }
 
-    /**
-     * Update a new image
-     * TODO:: how to manage security here?
-     */
-    @RestApiMethod(description="Edit an uploaded file domain (usefull to edit its status during upload)")
-    @RestApiParams(params=[
-    @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The uploaded file id")
+    @RestApiMethod(description = "Edit an uploaded file domain (mainly to edit status during upload)")
+    @RestApiParams(params = [
+            @RestApiParam(name = "id", type = "long", paramType = RestApiParamType.PATH, description = "The uploaded file id")
     ])
-    def update () {
+    def update() {
         update(uploadedFileService, request.JSON)
     }
 
-    /**
-     * Delete a new image
-     * TODO:: how to manage security here?
-     */
-    @RestApiMethod(description="Delete an uploaded file domain. This will not delete the file on disk by default.")
-    @RestApiParams(params=[
-            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The uploaded file id")
+    @RestApiMethod(description = "Delete an uploaded file domain. This do not delete the file on disk.")
+    @RestApiParams(params = [
+            @RestApiParam(name = "id", type = "long", paramType = RestApiParamType.PATH, description = "The uploaded file id")
     ])
-    def delete () {
-        delete(uploadedFileService, JSON.parse("{id : $params.id}"),null)
+    def delete() {
+        delete(uploadedFileService, JSON.parse("{id : $params.id}"), null)
     }
 
-    @RestApiMethod(description="Get the uploaded file of a given Abstract image")
-    @RestApiParams(params=[
-            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The uploaded file id")
+    @RestApiMethod(description = "Download the uploaded file")
+    @RestApiParams(params = [
+            @RestApiParam(name = "id", type = "long", paramType = RestApiParamType.PATH, description = "The uploaded file id")
     ])
-    def getByAbstractImage () {
-        AbstractImage im = abstractImageService.read(params.long('idimage'))
-        UploadedFile up = UploadedFile.findByImage(im);
+    def download() {
+        UploadedFile up = uploadedFileService.read(params.long('id'));
         if (up) {
-            responseSuccess(up)
-        } else {
-            responseNotFound("UploadedFile", params.id)
-        }
-    }
-
-    def upRedirect () {
-        redirect(url: "http://localhost:9090/upload")
-    }
-
-    @RestApiMethod(description="Download the uploaded file")
-    @RestApiParams(params=[
-            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The uploaded file id")
-    ])
-    def downloadUploadedFile(){
-        securityACLService.checkGuest(cytomineService.getCurrentUser())
-        UploadedFile up = uploadedFileService.get(params.long('id'));
-        if (up) {
-            String url = uploadedFileService.downloadURI(up)
+            String url = imageServerService.downloadUri(up)
             log.info "redirect url"
-            redirect (url : url)
+            redirect(url: url)
         } else {
             responseNotFound("UploadedFile", params.id)
         }
     }
-
-    @RestApiMethod(description="Create an image thanks to an uploaded file domain. THis add the image in the good storage and the project (if needed). This send too an email at the end to the uploader and the project managers.")
-    @RestApiParams(params=[
-    @RestApiParam(name="uploadedFile", type="long", paramType = RestApiParamType.PATH,description = "The uploaded file id")
-    ])
-    @RestApiResponseObject(objectIdentifier = "[abstractimage.|abstract image|]")
-    def createImage () {
-        long timestamp = new Date().getTime()
-        def currentUser = cytomineService.currentUser
-        securityACLService.checkUser(currentUser)
-        UploadedFile uploadedFile = UploadedFile.read(params.long('uploadedFile'))
-        String path = request.JSON.path ?: uploadedFile.getFilename();
-        String filename = request.JSON.filename ?: uploadedFile.getFilename();
-        String originalFilename = request.JSON.originalFilename ?: uploadedFile.getOriginalFilename();
-        String mimeType = request.JSON.mimeType;
-        Collection<Storage> storages = []
-        uploadedFile.getStorages()?.each {
-            storages << storageService.read(it)
-        }
-
-        Sample sample = new Sample(name : timestamp.toString() + "-" + uploadedFile.getOriginalFilename())
-
-        def projects = []
-        //create domains instance
-        def ext = uploadedFile.getExt()
-        Mime mime = Mime.findByMimeType(mimeType)
-        if (!mime) {
-            MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
-            // TODO : We are not sure than we will have the same mimetype in uploadedFile
-            mimeType = mimeTypesMap.getContentType(uploadedFile.getAbsolutePath())
-            mime = new Mime(extension: ext, mimeType : mimeType)
-            mime.save(failOnError: true)
-        }
-        log.info "#################################################################"
-        log.info "#################################################################"
-        log.info "##############CREATE IMAGE#################"
-        log.info "#################################################################"
-        log.info "#################################################################"
-        AbstractImage abstractImage = new AbstractImage(
-                filename: filename,
-                originalFilename:  originalFilename,
-                scanner: null,
-                sample: sample,
-                path: path,
-                mime: mime)
-
-        if (sample.validate() && abstractImage.validate()) {
-            sample.save(flush : true,failOnError: true)
-            sample.refresh()
-            abstractImage.setSample(sample)
-            abstractImage.save(flush: true,failOnError: true)
-
-            storages.each { storage ->
-                storageAbstractImageService.add(JSON.parse(JSONUtils.toJSONString([storage : storage.id, abstractimage : abstractImage.id])))
-            }
-
-            log.info "Map image ${abstractImage.id} to uploaded file ${uploadedFile.id}"
-            uploadedFile.image = abstractImage
-            uploadedFile.save(flush:true,failOnError: true)
-
-            try {
-                imagePropertiesService.clear(abstractImage)
-                imagePropertiesService.populate(abstractImage)
-                imagePropertiesService.extractUseful(abstractImage)
-                abstractImage.save(flush: true,failOnError: true)
-                log.info "Image = ${uploadedFile.image?.id}"
-
-                uploadedFile.getProjects()?.each { project_id ->
-                    Project project = projectService.read(project_id)
-                    projects << project
-                    ImageInstance imageInstance = new ImageInstance( baseImage : abstractImage, project:  project, user :currentUser)
-                    imageInstanceService.add(JSON.parse(imageInstance.encodeAsJSON()))
-                }
-            } catch(MiddlewareException e){
-                uploadedFile.status = UploadedFile.ERROR_DEPLOYMENT
-                uploadedFile.save(flush:true,failOnError: true)
-                responseError(e)
-                return
-            }
-
-        } else {
-            sample.errors?.each {
-                log.info "Sample error : " + it
-            }
-            abstractImage.errors?.each {
-                log.info "Sample error : " + it
-            }
-        }
-        //notificationService.notifyNewImageAvailable(currentUser,abstractImage,projects)
-        responseSuccess([abstractimage: abstractImage])
-    }
-
-
-
-
 }

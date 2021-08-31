@@ -64,9 +64,9 @@ class ReportService {
             exporterIdentifier = "excel"
         }
         response.contentType = grailsApplication.config.grails.mime.types[format]
-        SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyyMMdd_hhmmss");
+        SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
         String datePrefix = simpleFormat.format(new Date())
-        response.setHeader("Content-disposition", "attachment; filename=${datePrefix}_annotations_project${project.id}.${format}")
+        response.setHeader("Content-disposition", "attachment; filename=${datePrefix}_annotations_project_${project.id}.${format}")
 
         AnnotationListing al = new UserAnnotationListing()
         if(type=="ALGOANNOTATION") {
@@ -107,10 +107,10 @@ class ReportService {
             data.areaUnit = annotation.areaUnit
             data.area = annotation.area
             data.perimeter = annotation.perimeter
-            data.XCentroid = annotation.x
-            data.YCentroid = annotation.y
+            data.XCentroid = String.format("%.2f", (float) annotation.centroid.x)
+            data.YCentroid = String.format("%.2f", (float) annotation.centroid.y)
             data.image = annotation.image
-            data.filename = annotation.originalfilename
+            data.filename = annotation.instanceFilename
             data.user = annotation.creator
             data.term = annotation.term.collect{termsName.get(it)}.join(", ")
             data.cropURL = UrlApi.getCompleteAnnotationCropDrawedWithAnnotationId(annotation.id)
@@ -131,10 +131,10 @@ class ReportService {
                 data.areaUnit = annotation.areaUnit
                 data.area = annotation.area
                 data.perimeter = annotation.perimeter
-                data.XCentroid = annotation.x
-                data.YCentroid = annotation.y
+                data.XCentroid = String.format("%.2f", (float) annotation.centroid.x)
+                data.YCentroid = String.format("%.2f", (float) annotation.centroid.y)
                 data.image = annotation.image
-                data.filename = annotation.originalfilename
+                data.filename = annotation.instanceFilename
                 data.user = annotation.creator
                 data.term = annotation.term.collect{termsName.get(it)}.join(", ")
                 data.cropURL = UrlApi.getCompleteAnnotationCropDrawedWithAnnotationId(annotation.id)
@@ -161,10 +161,10 @@ class ReportService {
                 data.areaUnit = annotation.areaUnit
                 data.area = annotation.area
                 data.perimeter = annotation.perimeter
-                data.XCentroid = annotation.x
-                data.YCentroid = annotation.y
+                data.XCentroid = String.format("%.2f", (float) annotation.centroid.x)
+                data.YCentroid = String.format("%.2f", (float) annotation.centroid.y)
                 data.image = annotation.image
-                data.filename = annotation.originalfilename
+                data.filename = annotation.instanceFilename
                 data.user = annotation.creator
                 data.term = annotation.term.collect{termsName.get(it)}.join(", ")
                 data.cropURL = UrlApi.getCompleteAnnotationCropDrawedWithAnnotationId(annotation.id)
@@ -173,14 +173,33 @@ class ReportService {
                 annotation.term.each{termNameUsed << termsName.get(it)}
                 userNameUsed << annotation.creator
             }
+
+            termNameUsed << "no term"
         }
 
         termNameUsed.unique()
         userNameUsed.unique()
         List fields = ["id", "area", "perimeter", "XCentroid", "YCentroid", "image", "filename", "user", "term", "cropURL", "cropGOTO"]
-        Map labels = ["id": "Id", "area": "Area (microns²)", "perimeter": "Perimeter (mm)", "XCentroid": "X", "YCentroid": "Y", "image": "Image Id", "filename": "Image Filename", "user": "User", "term": "Term", "cropURL": "View annotation picture", "cropGOTO": "View annotation on image"]
+        Map labels = [
+                "id": "ID",
+                "area": "Area (microns²)",
+                "perimeter": "Perimeter (mm)",
+                "XCentroid": "Center X",
+                "YCentroid": "Center Y",
+                "image": "Image ID",
+                "filename": "Image filename",
+                "user": "User",
+                "term": "Term",
+                "cropURL": "Annotation thumb",
+                "cropGOTO": "Annotation in Cytomine"
+        ]
         String title = "Annotations in " + project.getName() + " created by " + userNameUsed.join(" or ") + " and associated with " + termNameUsed.join(" or ") + " @ " + (new Date()).toLocaleString()
-        exportService.export(exporterIdentifier, response.outputStream, exportResult, fields, labels, null, ["column.widths": [0.04, 0.06, 0.06, 0.04, 0.04, 0.04, 0.08, 0.06, 0.06, 0.25, 0.25], "title": title, "csv.encoding": "UTF-8", "separator": ";"])
+        exportService.export(exporterIdentifier, response.outputStream, exportResult, fields, labels, null,
+                ["column.widths": [0.05, 0.07, 0.07, 0.06, 0.06, 0.05, 0.12, 0.10, 0.12, 0.15, 0.15],
+                 "title": title,
+                 "csv.encoding": "UTF-8",
+                 "separator": ";"]
+        )
 
 
     }

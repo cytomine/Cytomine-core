@@ -17,6 +17,7 @@ package be.cytomine
 */
 
 import be.cytomine.image.ImageInstance
+import be.cytomine.image.SliceInstance
 import be.cytomine.ontology.*
 import be.cytomine.processing.RoiAnnotation
 import be.cytomine.project.Project
@@ -696,6 +697,7 @@ class GenericAnnotationTests  {
 
         Project project  = BasicInstanceBuilder.getProjectNotExist(true)
         ImageInstance image =  BasicInstanceBuilder.getImageInstanceNotExist(project,true)
+        SliceInstance slice =  BasicInstanceBuilder.getSliceInstanceNotExist(image,true)
 
         User user1 = BasicInstanceBuilder.getUser1()
         User user2 = BasicInstanceBuilder.getUser2()
@@ -703,12 +705,12 @@ class GenericAnnotationTests  {
         Term term1 =  BasicInstanceBuilder.getTermNotExist(project.ontology,true)
         Term term2 =  BasicInstanceBuilder.getTermNotExist(project.ontology,true)
 
-        UserAnnotation a1 = BasicInstanceBuilder.getUserAnnotationNotExist(image, polygones['a'],user1,term1)
-        UserAnnotation a2 = BasicInstanceBuilder.getUserAnnotationNotExist(image, polygones['b'],user1,term2)
-        UserAnnotation a3 = BasicInstanceBuilder.getUserAnnotationNotExist(image, polygones['c'],user2,term1)
-        UserAnnotation a4 = BasicInstanceBuilder.getUserAnnotationNotExist(image, polygones['d'],user2,term2)
+        UserAnnotation a1 = BasicInstanceBuilder.getUserAnnotationNotExist(slice, polygones['a'],user1,term1)
+        UserAnnotation a2 = BasicInstanceBuilder.getUserAnnotationNotExist(slice, polygones['b'],user1,term2)
+        UserAnnotation a3 = BasicInstanceBuilder.getUserAnnotationNotExist(slice, polygones['c'],user2,term1)
+        UserAnnotation a4 = BasicInstanceBuilder.getUserAnnotationNotExist(slice, polygones['d'],user2,term2)
 
-        checkIncluded(image,a1,a2,a3,a4,user1,user2,term1,term2)
+        checkIncluded(slice, image,a1,a2,a3,a4,user1,user2,term1,term2)
 
         def result = AnnotationDomainAPI.downloadIncluded("POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))", image.id, user1.id, [term1.id,term2.id], "pdf",Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -722,6 +724,7 @@ class GenericAnnotationTests  {
 
         Project project  = BasicInstanceBuilder.getProjectNotExist(true)
         ImageInstance image =  BasicInstanceBuilder.getImageInstanceNotExist(project,true)
+        SliceInstance slice =  BasicInstanceBuilder.getSliceInstanceNotExist(image,true)
 
         UserJob user1 = BasicInstanceBuilder.getUserJob(project)
         UserJob user2 = BasicInstanceBuilder.getUserJob(project)
@@ -734,16 +737,18 @@ class GenericAnnotationTests  {
         AlgoAnnotation a3 = BasicInstanceBuilder.getAlgoAnnotationNotExist(image, polygones['c'],user2,term1)
         AlgoAnnotation a4 = BasicInstanceBuilder.getAlgoAnnotationNotExist(image, polygones['d'],user2,term2)
 
-        checkIncluded(image,a1,a2,a3,a4,user1,user2,term1,term2)
+        checkIncluded(slice, image,a1,a2,a3,a4,user1,user2,term1,term2)
 
         def result = AnnotationDomainAPI.downloadIncluded("POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))", image.id, user1.id, [term1.id,term2.id], "pdf",Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
         result = AnnotationDomainAPI.downloadIncluded("POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))", image.id, user1.id, [term1.id,term2.id], "csv",Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        println result
         assert 200 == result.code
     }
 
 
     public static def checkIncluded(
+            SliceInstance slice,
             ImageInstance image,
             AnnotationDomain a1,
             AnnotationDomain a2,
@@ -776,7 +781,7 @@ class GenericAnnotationTests  {
         assert AnnotationDomainAPI.containsInJSONList(a3.id,result.data)
         assert !AnnotationDomainAPI.containsInJSONList(a4.id,result.data)
 
-        UserAnnotation a5 = BasicInstanceBuilder.getUserAnnotationNotExist(image, "POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))",User.findByUsername(Infos.SUPERADMINLOGIN),term2)
+        UserAnnotation a5 = BasicInstanceBuilder.getUserAnnotationNotExist(slice, "POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))",User.findByUsername(Infos.SUPERADMINLOGIN),term2)
 
         result = AnnotationDomainAPI.listIncluded(a5, image.id, user1.id, [term1.id,term2.id], Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -794,6 +799,7 @@ class GenericAnnotationTests  {
 
         Project project  = BasicInstanceBuilder.getProjectNotExist(true)
         ImageInstance image =  BasicInstanceBuilder.getImageInstanceNotExist(project,true)
+        SliceInstance slice =  BasicInstanceBuilder.getSliceInstanceNotExist(image,true)
 
         User user1 = BasicInstanceBuilder.getUser1()
         User user2 = BasicInstanceBuilder.getUser2()
@@ -801,10 +807,10 @@ class GenericAnnotationTests  {
         Term term1 =  BasicInstanceBuilder.getTermNotExist(project.ontology,true)
         Term term2 =  BasicInstanceBuilder.getTermNotExist(project.ontology,true)
 
-        ReviewedAnnotation a1 = BasicInstanceBuilder.getReviewedAnnotationNotExist(image, polygones['a'],user1,term1)
-        ReviewedAnnotation a2 = BasicInstanceBuilder.getReviewedAnnotationNotExist(image, polygones['b'],user1,term2)
-        ReviewedAnnotation a3 = BasicInstanceBuilder.getReviewedAnnotationNotExist(image, polygones['c'],user2,term1)
-        ReviewedAnnotation a4 = BasicInstanceBuilder.getReviewedAnnotationNotExist(image, polygones['d'],user2,term2)
+        ReviewedAnnotation a1 = BasicInstanceBuilder.getReviewedAnnotationNotExist(slice, polygones['a'],user1,term1)
+        ReviewedAnnotation a2 = BasicInstanceBuilder.getReviewedAnnotationNotExist(slice, polygones['b'],user1,term2)
+        ReviewedAnnotation a3 = BasicInstanceBuilder.getReviewedAnnotationNotExist(slice, polygones['c'],user2,term1)
+        ReviewedAnnotation a4 = BasicInstanceBuilder.getReviewedAnnotationNotExist(slice, polygones['d'],user2,term2)
 
         //tatic def listIncluded(String geometry, Long idImage, Long idUser,List<Long> terms,String username, String password) {
         def result = AnnotationDomainAPI.listIncluded("POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))", image.id, 0, null, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
@@ -829,7 +835,7 @@ class GenericAnnotationTests  {
         assert !AnnotationDomainAPI.containsInJSONList(a4.id,result.data)
 
 
-        UserAnnotation a5 = BasicInstanceBuilder.getUserAnnotationNotExist(image, "POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))",user1,term2)
+        UserAnnotation a5 = BasicInstanceBuilder.getUserAnnotationNotExist(slice, "POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))",user1,term2)
 
         result = AnnotationDomainAPI.listIncluded(a5, image.id, 0, [term1.id], Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -886,6 +892,20 @@ class GenericAnnotationTests  {
         assert annotation.location.numPoints <= getPointMultiplyByGeometriesOrInteriorRings(annotation.location, maxPoint)
         assert annotation.location.numPoints >= getPointMultiplyByGeometriesOrInteriorRings(annotation.location, minPoint)
 
+
+        //test update and DouglasPeuckerSimplifier
+
+        def jsonUpdate = JSON.parse((String)annotation.encodeAsJSON())
+        String expected = "POLYGON ((120 120, 140 199, 160 200, 180 199, 220 120, 122 122, 120 120))"
+        println jsonUpdate.geometryCompression
+        jsonUpdate.geometryCompression = 10.0
+        jsonUpdate.location = "POLYGON ((120 120, 121 121, 122 122, 220 120, 180 199, 160 200, 140 199, 120 120))"
+        result = UserAnnotationAPI.update(annotation.id, jsonUpdate.toString(),Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+
+        assert 200 == result.code
+        def json = JSON.parse(result.data).annotation
+
+        assert json.location == expected
     }
 
 

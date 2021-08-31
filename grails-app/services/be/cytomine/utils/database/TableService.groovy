@@ -92,6 +92,7 @@ class TableService {
 
             reqcreate = "CREATE VIEW user_image AS " +
                     "SELECT image_instance.*, " +
+                        "abstract_image.original_filename as original_filename, " +
                         "project.name as project_name, " +
                         "project.blind_mode as project_blind, " +
                         "sec_user.id as user_image_id, " +
@@ -99,13 +100,14 @@ class TableService {
                     "FROM image_instance " +
                     "INNER JOIN sec_user ON sec_user.user_id IS NULL " +
                     "INNER JOIN project ON project.id = image_instance.project_id AND project.deleted IS NULL " +
+                    "INNER JOIN abstract_image ON abstract_image.id = image_instance.base_image_id " +
                     "INNER JOIN acl_object_identity ON project.id = acl_object_identity.object_id_identity " +
                     "INNER JOIN acl_sid ON acl_sid.sid = sec_user.username " +
                     "INNER JOIN acl_entry ON acl_entry.sid = acl_sid.id " +
                         "AND acl_entry.acl_object_identity = acl_object_identity.id AND acl_entry.mask >= 1 " +
                     "WHERE image_instance.deleted IS NULL " +
                         "AND image_instance.parent_id IS NULL " + // don't get nested images
-                    "GROUP BY image_instance.id, project.id, sec_user.id"
+                    "GROUP BY image_instance.id, project.id, sec_user.id, abstract_image.id"
             createRequest('user_image',reqcreate)
 
         } catch (org.postgresql.util.PSQLException e) {

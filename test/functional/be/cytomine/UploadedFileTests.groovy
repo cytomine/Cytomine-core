@@ -1,7 +1,5 @@
 package be.cytomine
 
-import be.cytomine.image.ImageInstance
-
 /*
 * Copyright (c) 2009-2021. Authors: see NOTICE file.
 *
@@ -18,6 +16,7 @@ import be.cytomine.image.ImageInstance
 * limitations under the License.
 */
 
+import be.cytomine.image.ImageInstance
 import be.cytomine.image.UploadedFile
 import be.cytomine.image.server.Storage
 import be.cytomine.security.User
@@ -29,13 +28,6 @@ import grails.converters.JSON
 import org.codehaus.groovy.grails.web.json.JSONArray
 import org.codehaus.groovy.grails.web.json.JSONObject
 
-/**
- * Created by IntelliJ IDEA.
- * User: lrollus
- * Date: 16/03/11
- * Time: 16:12
- * To change this template use File | Settings | File Templates.
- */
 class UploadedFileTests {
 
     void testListUploadedFile() {
@@ -138,6 +130,30 @@ class UploadedFileTests {
         assert json.collection.size() == previousSize + 1
     }
 
+    void testSearchUploadedFileByStorage() {
+        Storage storage = BasicInstanceBuilder.getStorageNotExist(true)
+        def result = UploadedFileAPI.searchByStorage(storage, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert 0 == json.collection.size()
+
+        UploadedFile uf = BasicInstanceBuilder.getUploadedFileNotExist()
+        uf.originalFilename = "test"
+        uf.storage = storage
+        BasicInstanceBuilder.saveDomain(uf)
+        uf = BasicInstanceBuilder.getUploadedFileNotExist()
+        uf.storage = BasicInstanceBuilder.getStorage()
+        uf.originalFilename = "other_storage"
+        BasicInstanceBuilder.saveDomain(uf)
+
+        result = UploadedFileAPI.searchByStorage(storage, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert 1 == json.collection.size()
+    }
+
     void testShowUploadedFileWithCredential() {
         def result = UploadedFileAPI.show(BasicInstanceBuilder.getUploadedFile().id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -145,30 +161,30 @@ class UploadedFileTests {
         assert json instanceof JSONObject
     }
 
-  void testAddUploadedFileCorrect() {
-      def uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
-      def result = UploadedFileAPI.create(uploadedfileToAdd.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-      assert 200 == result.code
-      int idUploadedFile = result.data.id
+    void testAddUploadedFileCorrect() {
+        def uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
+        def result = UploadedFileAPI.create(uploadedfileToAdd.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        int idUploadedFile = result.data.id
 
-      result = UploadedFileAPI.show(idUploadedFile, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-      assert 200 == result.code
-  }
+        result = UploadedFileAPI.show(idUploadedFile, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+    }
 
 
-  void testUpdateUploadedFileCorrect() {
-      def uploadedfile = BasicInstanceBuilder.getUploadedFile()
-      def data = UpdateData.createUpdateSet(uploadedfile,[status: [0,4]])
-      def result = UploadedFileAPI.update(uploadedfile.id, data.postData,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-      assert 200 == result.code
-      def json = JSON.parse(result.data)
-      assert json instanceof JSONObject
-      int idUploadedFile = json.uploadedfile.id
+    void testUpdateUploadedFileCorrect() {
+        def uploadedfile = BasicInstanceBuilder.getUploadedFile()
+        def data = UpdateData.createUpdateSet(uploadedfile,[status: [0,4]])
+        def result = UploadedFileAPI.update(uploadedfile.id, data.postData,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        assert json instanceof JSONObject
+        int idUploadedFile = json.uploadedfile.id
 
-      def showResult = UploadedFileAPI.show(idUploadedFile, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-      json = JSON.parse(showResult.data)
-      BasicInstanceBuilder.compare(data.mapNew, json)
-  }
+        def showResult = UploadedFileAPI.show(idUploadedFile, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        json = JSON.parse(showResult.data)
+        BasicInstanceBuilder.compare(data.mapNew, json)
+    }
 
     void testDeleteUploadedFile() {
         def uploadedfileToDelete = BasicInstanceBuilder.getUploadedFileNotExist()
@@ -182,10 +198,10 @@ class UploadedFileTests {
     }
 
     void testDeleteUploadedFileWithImageInProject() {
-        def uploadedfileToDelete = BasicInstanceBuilder.getUploadedFileNotExist()
+        def uploadedfileToDelete = BasicInstanceBuilder.getUploadedFileNotExist(true)
         ImageInstance img = BasicInstanceBuilder.getImageInstanceNotExist(BasicInstanceBuilder.getProjectNotExist(true),true)
-        uploadedfileToDelete.image = img.baseImage;
-        assert uploadedfileToDelete.save(flush: true)!= null
+        img.baseImage.uploadedFile = uploadedfileToDelete
+        assert img.baseImage.save(flush: true)!= null
         def id = uploadedfileToDelete.id
         def result = UploadedFileAPI.delete(id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
 
@@ -193,9 +209,9 @@ class UploadedFileTests {
     }
 
     void testDeleteUploadedFileNotExist() {
-      def result = UploadedFileAPI.delete(-99, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-      assert 404 == result.code
-  }
+        def result = UploadedFileAPI.delete(-99, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 404 == result.code
+    }
 
     void testLTree() {
         UploadedFile uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
@@ -250,70 +266,5 @@ class UploadedFileTests {
 
         assert json.parent == uf2.id
     }
-
-//   void testUploadFileWorkflow() {
-//       def oneAnotherImage = BasicInstanceBuilder.initImage()
-//       UploadedFile uploadedFile = new UploadedFile()
-//       uploadedFile.originalFilename = "test.tif"
-//       uploadedFile.filename = "/data/test.cytomine.be/1/1383567901007/test.tif"
-//       uploadedFile.path = "/tmp/imageserver_buffer"
-//       uploadedFile.size = 243464757l
-//       uploadedFile.ext = "tif"
-//       uploadedFile.contentType  = "image/tiff"
-//       uploadedFile.storages = new Long[1]
-//       uploadedFile.storages[0] = Storage.findByName("lrollus test storage").id
-//       uploadedFile.projects = new Long[1]
-//       uploadedFile.projects[0] = oneAnotherImage.project.id
-//       uploadedFile.user = oneAnotherImage.user
-//       uploadedFile.status = UploadedFile.TO_DEPLOY
-//       uploadedFile.mimeType = "image/tiff"
-//       BasicInstanceBuilder.saveDomain(uploadedFile)
-//
-//       def result = UploadedFileAPI.createImage(uploadedFile.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//       assert 200 == result.code
-//       def image = AbstractImage.findByFilename("/data/test.cytomine.be/1/1383567901007/test.tif")
-//       assert image
-//
-//
-//       result = UploadedFileAPI.clearAbstractImageProperties(image.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//       assert 200 == result.code
-//       result = UploadedFileAPI.populateAbstractImageProperties(image.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//       assert 200 == result.code
-//       result = UploadedFileAPI.extractUsefulAbstractImageProperties(image.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//       assert 200 == result.code
-//
-//       uploadedFile.refresh()
-//
-//       assert uploadedFile.image
-//       assert uploadedFile.image.id == image.id
-//
-//   }
-
-/*
-    void testUploadFileWorkflowForGhest() {
-        User ghest = BasicInstanceBuilder.getGhest("GHESTUPLOAD","PASSWORD")
-        def oneAnotherImage = BasicInstanceBuilder.initImage()
-        UploadedFile uploadedFile = new UploadedFile()
-        uploadedFile.originalFilename = "test.tif"
-        uploadedFile.filename = "/data/test.cytomine.be/1/1383567901007/test.tif"
-        uploadedFile.path = "/tmp/imageserver_buffer"
-        uploadedFile.size = 243464757l
-        uploadedFile.ext = "tif"
-        uploadedFile.contentType  = "image/tiff"
-        uploadedFile.storages = new Long[1]
-        uploadedFile.storages[0] = Storage.findByUser(User.findByUsername(Infos.SUPERADMINLOGIN)).id
-        uploadedFile.projects = new Long[1]
-        uploadedFile.projects[0] = oneAnotherImage.project.id
-        uploadedFile.user = oneAnotherImage.user
-        uploadedFile.status = UploadedFile.TO_DEPLOY
-        BasicInstanceBuilder.saveDomain(uploadedFile)
-
-        def result = UploadedFileAPI.createImage(uploadedFile.id,"GHESTUPLOAD", "PASSWORD")
-        assert 403 == result.code
-
-    }
-
-*/
-
 
 }

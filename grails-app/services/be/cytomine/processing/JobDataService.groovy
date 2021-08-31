@@ -107,9 +107,9 @@ class JobDataService extends ModelService {
     private JobData saveInDatabase(JobData jobData, byte[] data) {
         JobDataBinaryValue value = new JobDataBinaryValue(jobData:jobData)
         value.data = data
-        value.save(failOnError: true)
+        value.save(failOnError: true, flush: true)
         jobData.value = value
-        jobData.save(failOnError: true)
+        jobData.save(failOnError: true, flush:true)
 
         jobData.size = data.length;
         return jobData

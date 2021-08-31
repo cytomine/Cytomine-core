@@ -60,9 +60,9 @@ class RestReviewedAnnotationController extends RestController {
     def reviewedAnnotationService
     def taskService
     def reportService
-    def imageProcessingService
     def securityACLService
     def abstractImageService
+    def imageServerService
 
     /**
      * List all reviewed annotation available for the user
@@ -178,6 +178,9 @@ class RestReviewedAnnotationController extends RestController {
                 securityACLService.checkFullOrRestrictedForOwner(image,image.user)
                 image.reviewStart = new Date()
                 image.reviewUser = cytomineService.currentUser
+                if (image.reviewUser && image.reviewUser.algo()) {
+                    throw new WrongArgumentException("The review user ${image.reviewUser} is not a real user (a userjob)");
+                }
                 reviewedAnnotationService.saveDomain(image)
 
                 response.message = image.reviewUser.username + " start reviewing on " + image.baseImage.filename
@@ -479,6 +482,7 @@ class RestReviewedAnnotationController extends RestController {
         review.user = annotation.user
         review.location = annotation.location
         review.image = annotation.image
+        review.slice = annotation.slice
         review.project = annotation.project
         review.geometryCompression = annotation.geometryCompression
 
@@ -536,91 +540,79 @@ class RestReviewedAnnotationController extends RestController {
 
 
 
-    /**
-     * Get annotation review crop (image area that frame annotation)
-     * (Use this service if you know the annotation type)
-     */
-    @RestApiMethod(description="Get annotation reviewed crop (image area that frame annotation)")
-    @RestApiResponseObject(objectIdentifier = "file")
+    @RestApiMethod(description="Get a crop of a reviewed annotation (image area framing annotation)", extensions=["png", "jpg", "tiff"])
     @RestApiParams(params=[
-            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The annotation id"),
-            @RestApiParam(name="maxSize", type="int", paramType = RestApiParamType.PATH,description = "Maximum size of the crop image (w and h)"),
-            @RestApiParam(name="zoom", type="int", paramType = RestApiParamType.PATH,description = "Zoom level"),
-            @RestApiParam(name="draw", type="boolean", paramType = RestApiParamType.PATH,description = "Draw annotation form border on the image"),
-            @RestApiParam(name="thickness", type="int", paramType = RestApiParamType.QUERY, description = " If draw used, set the thickness of the geometry contour on the crop.", required = false),
-            @RestApiParam(name="color", type="string", paramType = RestApiParamType.QUERY, description = " If draw used, set the color of the geometry contour on the crop. Color are hexadecimal value", required = false),
-            @RestApiParam(name="square", type="boolean", paramType = RestApiParamType.QUERY, description = " If draw used, try to extends the ROI around the crop to have a square.", required = false),
+            @RestApiParam(name="id", type="long", paramType=RestApiParamType.PATH, description="The annotation id"),
+            @RestApiParam(name="type", type="String", paramType=RestApiParamType.QUERY, description="Type of crop. Allowed values are 'crop' (default behavior if not set), 'draw' (the shape is drawn in the crop), 'mask' (annotation binary mask), 'alphaMask (part of crop outside annotation is transparent, requires png format)", required=false),
+            @RestApiParam(name="draw", type="boolean", paramType=RestApiParamType.QUERY, description="Equivalent to set type='draw'", required=false),
+            @RestApiParam(name="mask", type="boolean", paramType=RestApiParamType.QUERY, description="Equivalent to set type='mask'", required=false),
+            @RestApiParam(name="alphaMask", type="boolean", paramType=RestApiParamType.QUERY, description="Equivalent to set type='alphaMask'", required=false),
+            @RestApiParam(name="maxSize", type="int", paramType=RestApiParamType.QUERY, description="Maximum crop size in width and height", required = false),
+            @RestApiParam(name="zoom", type="int", paramType=RestApiParamType.QUERY, description="Zoom level in which crop is extracted. Ignored if maxSize is set.", required = false),
+            @RestApiParam(name="increaseArea", type="double", paramType=RestApiParamType.QUERY, description="Increase crop area by multiplying original crop size by this factor.", required = false),
+            @RestApiParam(name="complete", type="boolean", paramType = RestApiParamType.QUERY,description = "Do not simplify the annotation shape.", required=false),
+            @RestApiParam(name="colormap", type="String", paramType = RestApiParamType.QUERY, description = "The absolute path of a colormap file", required=false),
+            @RestApiParam(name="inverse", type="int", paramType = RestApiParamType.QUERY, description = "True if colors have to be inversed", required=false),
+            @RestApiParam(name="contrast", type="float", paramType = RestApiParamType.QUERY, description = "Multiply pixels by contrast", required=false),
+            @RestApiParam(name="gamma", type="float", paramType = RestApiParamType.QUERY, description = "Apply gamma correction", required=false),
+            @RestApiParam(name="bits", type="int", paramType = RestApiParamType.QUERY, description = "Output bit depth per channel", required=false)
     ])
+    @RestApiResponseObject(objectIdentifier ="image (bytes)")
     def crop() {
         ReviewedAnnotation annotation = ReviewedAnnotation.read(params.long("id"))
-        if (!annotation) {
-            responseNotFound("ReviewedAnnotation", params.id)
+        if (annotation) {
+            responseByteArray(imageServerService.crop(annotation, params))
         } else {
-            String url = annotation.toCropURL(params)
-            if(url.length()<3584){
-                log.info "redirect to ${url}"
-                redirect (url : url)
-            } else {
-                def parameters = annotation.toCropParams(params)
-                url = abstractImageService.getCropIMSUrl(parameters)
-
-                //POST request
-                URL destination = new URL(url)
-
-                log.info "URL too long "+url.length()+". Post request to ${destination.protocol}://${destination.host}${destination.path}"
-
-                HttpClient httpclient = new DefaultHttpClient();
-                HttpPost httppost = new HttpPost("${destination.protocol}://${destination.host}${destination.path}");
-
-                def queries = destination.query.split("&")
-                List<NameValuePair> params = new ArrayList<NameValuePair>(queries.size());
-                for(String parameter : queries){
-                    String[] tmp = parameter.split('=');
-                    params.add(new BasicNameValuePair(tmp[0], URLDecoder.decode(tmp[1])));
-                }
-                httppost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
-
-                HttpResponse httpResponse = httpclient.execute(httppost);
-                InputStream instream = httpResponse.getEntity().getContent()
-
-                byte[] bytesOut = IOUtils.toByteArray(instream);
-                response.contentLength = bytesOut.length;
-                response.setHeader("Connection", "Keep-Alive")
-                response.setHeader("Accept-Ranges", "bytes")
-                if(parameters.format == "png") {
-                    response.setHeader("Content-Type", "image/png")
-                } else {
-                    response.setHeader("Content-Type", "image/jpeg")
-                }
-                response.getOutputStream() << bytesOut
-                response.getOutputStream().flush()
-            }
+            responseNotFound("ReviewedAnnotation", params.id)
         }
-
     }
 
-    //TODO:APIDOC
+    @RestApiMethod(description="Get a binary mask of a reviewed annotation (image area framing annotation). Equivalent to crop with 'mask' type.", extensions=["png", "jpg", "tiff"])
+    @RestApiParams(params=[
+            @RestApiParam(name="id", type="long", paramType=RestApiParamType.PATH, description="The annotation id"),
+            @RestApiParam(name="maxSize", type="int", paramType=RestApiParamType.QUERY, description="Maximum crop size in width and height", required = false),
+            @RestApiParam(name="zoom", type="int", paramType=RestApiParamType.QUERY, description="Zoom level in which crop is extracted. Ignored if maxSize is set.", required = false),
+            @RestApiParam(name="increaseArea", type="double", paramType=RestApiParamType.QUERY, description="Increase crop area by multiplying original crop size by this factor.", required = false),
+            @RestApiParam(name="complete", type="boolean", paramType = RestApiParamType.QUERY,description = "Do not simplify the annotation shape.", required=false),
+            @RestApiParam(name="colormap", type="String", paramType = RestApiParamType.QUERY, description = "The absolute path of a colormap file", required=false),
+            @RestApiParam(name="inverse", type="int", paramType = RestApiParamType.QUERY, description = "True if colors have to be inversed", required=false),
+            @RestApiParam(name="contrast", type="float", paramType = RestApiParamType.QUERY, description = "Multiply pixels by contrast", required=false),
+            @RestApiParam(name="gamma", type="float", paramType = RestApiParamType.QUERY, description = "Apply gamma correction", required=false),
+            @RestApiParam(name="bits", type="int", paramType = RestApiParamType.QUERY, description = "Output bit depth per channel", required=false)
+    ])
+    @RestApiResponseObject(objectIdentifier ="image (bytes)")
     def cropMask () {
         ReviewedAnnotation annotation = ReviewedAnnotation.read(params.long("id"))
         if (annotation) {
             params.mask = true
-            redirect (url : annotation.toCropURL(params))
+            responseByteArray(imageServerService.crop(annotation, params))
         } else {
             responseNotFound("ReviewedAnnotation", params.id)
         }
-
     }
 
-    //TODO:APIDOC
+    @RestApiMethod(description="Get an alpha mask of a reviewed annotation (image area framing annotation). Equivalent to crop with 'alphaMask' type.", extensions=["png"])
+    @RestApiParams(params=[
+            @RestApiParam(name="id", type="long", paramType=RestApiParamType.PATH, description="The annotation id"),
+            @RestApiParam(name="maxSize", type="int", paramType=RestApiParamType.QUERY, description="Maximum crop size in width and height", required = false),
+            @RestApiParam(name="zoom", type="int", paramType=RestApiParamType.QUERY, description="Zoom level in which crop is extracted. Ignored if maxSize is set.", required = false),
+            @RestApiParam(name="increaseArea", type="double", paramType=RestApiParamType.QUERY, description="Increase crop area by multiplying original crop size by this factor.", required = false),
+            @RestApiParam(name="complete", type="boolean", paramType = RestApiParamType.QUERY,description = "Do not simplify the annotation shape.", required=false),
+            @RestApiParam(name="colormap", type="String", paramType = RestApiParamType.QUERY, description = "The absolute path of a colormap file", required=false),
+            @RestApiParam(name="inverse", type="int", paramType = RestApiParamType.QUERY, description = "True if colors have to be inversed", required=false),
+            @RestApiParam(name="contrast", type="float", paramType = RestApiParamType.QUERY, description = "Multiply pixels by contrast", required=false),
+            @RestApiParam(name="gamma", type="float", paramType = RestApiParamType.QUERY, description = "Apply gamma correction", required=false),
+            @RestApiParam(name="bits", type="int", paramType = RestApiParamType.QUERY, description = "Output bit depth per channel", required=false)
+    ])
+    @RestApiResponseObject(objectIdentifier ="image (bytes)")
     def cropAlphaMask () {
         ReviewedAnnotation annotation = ReviewedAnnotation.read(params.long("id"))
         if (annotation) {
             params.alphaMask = true
-            redirect (url : annotation.toCropURL(params))
+            responseByteArray(imageServerService.crop(annotation, params))
         } else {
             responseNotFound("ReviewedAnnotation", params.id)
         }
-
     }
 
     /**

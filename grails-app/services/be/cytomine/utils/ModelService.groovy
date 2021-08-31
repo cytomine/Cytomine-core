@@ -32,6 +32,7 @@ import be.cytomine.meta.Property
 import be.cytomine.meta.TagDomainAssociation
 import be.cytomine.ontology.AlgoAnnotation
 import be.cytomine.ontology.UserAnnotation
+import org.springframework.dao.OptimisticLockingFailureException
 import org.springframework.util.ReflectionUtils
 import grails.util.GrailsNameUtils
 import org.springframework.transaction.annotation.Propagation
@@ -71,9 +72,16 @@ abstract class ModelService {
             log.error newObject.retrieveErrors().toString()
             throw new WrongArgumentException(newObject.retrieveErrors().toString())
         }
-        if (!newObject.save(flush: true, failOnError: true)) {
-            log.error "error"
-            throw new InvalidRequestException(newObject.retrieveErrors().toString())
+
+        try {
+            if (!newObject.save(flush: true, failOnError: true)) {
+                log.error "error"
+                throw new InvalidRequestException(newObject.retrieveErrors().toString())
+            }
+        }
+        catch (OptimisticLockingFailureException e) {
+            log.error "CANNOT SAVE OBJECT"
+            newObject = currentDomain().merge(newObject)
         }
     }
 
@@ -115,7 +123,7 @@ abstract class ModelService {
      * @param newObject New domain
      * @param message Message build for the command
      */
-    protected def fillDomainWithData(def object, def json) {
+     def fillDomainWithData(def object, def json) {
         def domain = object.get(json.id)
         domain = object.insertDataIntoDomain(json,domain)
         domain.id = json.id
@@ -129,7 +137,7 @@ abstract class ModelService {
         return GrailsNameUtils.getPropertyName(GrailsNameUtils.getShortName(this.getClass()))
     }
 
-    protected def executeCommand(Command c, CytomineDomain domain, def json, Task task = null) {
+     def executeCommand(Command c, CytomineDomain domain, def json, Task task = null) {
         //bug, cannot do new XXXCommand(domain:domain, json:...) => new XXXCommand(); c.domain = domain; c.json = ...
         c.domain = domain
         c.json = json
@@ -139,7 +147,7 @@ abstract class ModelService {
     /**
      * Execute command with JSON data
      */
-    protected def executeCommand(Command c, Task task = null) {
+     def executeCommand(Command c, Task task = null) {
         log.info "Command ${c.class} with flag ${c.delete}"
         if(c instanceof DeleteCommand || c.delete) {
             def domainToDelete = c.domain
@@ -182,7 +190,7 @@ abstract class ModelService {
 
     }
 
-//    protected def retrieve(def json) {
+//     def retrieve(def json) {
 //        throw new NotYetImplementedException("The retrieve method must be implement in service "+ this.class)
 //    }
     /**
@@ -304,7 +312,8 @@ abstract class ModelService {
                 errors << [data:json[i], message : e.msg]
                 resp = [message : e.msg, status : e.code]
             } catch(Exception e) {
-                e.printStackTrace()
+                log.info e
+                log.info e.printStackTrace()
                 resp = [message : e.toString(), status : 500]
             }
 
@@ -338,7 +347,7 @@ abstract class ModelService {
     /**
      * Clean GORM cache
      */
-    protected void cleanUpGorm() {
+     void cleanUpGorm() {
         propertyInstanceMap.get().clear()
         def session = sessionFactory.currentSession
         session.flush()
@@ -373,27 +382,27 @@ abstract class ModelService {
     }
 
 
-    protected def beforeAdd(def domain) {
+     def beforeAdd(def domain) {
 
     }
 
-    protected def beforeDelete(def domain) {
+     def beforeDelete(def domain) {
 
     }
 
-    protected def beforeUpdate(def domain) {
+     def beforeUpdate(def domain) {
 
     }
 
-    protected def afterAdd(def domain, def response) {
+     def afterAdd(def domain, def response) {
 
     }
 
-    protected def afterDelete(def domain, def response) {
+     def afterDelete(def domain, def response) {
 
     }
 
-    protected def afterUpdate(def domain, def response) {
+     def afterUpdate(def domain, def response) {
 
     }
 
@@ -411,7 +420,7 @@ abstract class ModelService {
     }
 
 
-    protected boolean columnExist(ResultSet rs, String column) {
+     boolean columnExist(ResultSet rs, String column) {
         ResultSetMetaData rsMetaData = rs.getMetaData();
         int numberOfColumns = rsMetaData.getColumnCount();
 
@@ -650,7 +659,11 @@ abstract class ModelService {
 
         Closure c = selection >> sorting
         def data = domain.createCriteria().list(max:max, offset:offset,c)
-        return [data : data, total : total]
+
+        max = (max != null && max > 0) ? max : Integer.MAX_VALUE
+        offset = (offset != null) ? offset : 0
+
+        return [data: data, total: total, offset: offset, perPage: Math.min(max, total), totalPages: Math.ceil(total/max)]
     }
 
     def deleteDependentAttachedFile(CytomineDomain domain, Transaction transaction, Task task = null) {

@@ -191,7 +191,7 @@ class AnnotationTermSecurityTests extends SecurityTestsAbstract {
         assert (200 == AnnotationTermAPI.deleteAnnotationTerm(annotationTerm.userAnnotation.id,annotationTerm.term.id,annotationTerm.user.id, SecurityTestsAbstract.USERNAME1, SecurityTestsAbstract.PASSWORD1).code)
 
         project.mode = Project.EditingMode.CLASSIC
-        project.save(failOnError: true, flush: true)
+        BasicInstanceBuilder.saveDomain(project)
 
         // Add new annotation term with user 2
         annotationTerm = BasicInstanceBuilder.getAnnotationTermNotExist()

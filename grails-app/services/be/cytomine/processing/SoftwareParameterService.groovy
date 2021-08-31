@@ -63,8 +63,8 @@ class SoftwareParameterService extends ModelService {
      */
     def add(def json) throws CytomineException {
         if(!json.software) throw new InvalidRequestException("software not set")
+        securityACLService.check(json.software, Software, READ)
 
-        securityACLService.check(json.software,Software, READ)
         SecUser currentUser = cytomineService.getCurrentUser()
         json.user = currentUser.id
         return executeCommand(new AddCommand(user: currentUser), null, json)

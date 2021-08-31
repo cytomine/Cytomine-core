@@ -32,10 +32,10 @@ class AbstractImageSearch extends EngineSearch {
             SELECT ai.id as id,'${AbstractImage.class.name}' as type ${getMatchingValue("ai.original_filename")} ${
             getName("ai.original_filename")
         }
-            FROM abstract_image as ai, storage_abstract_image sai, acl_object_identity as aoi, acl_sid as sid, acl_entry as ae
-            WHERE ai.id = sai.abstract_image_id
+            FROM abstract_image as ai, uploaded_file uf, acl_object_identity as aoi, acl_sid as sid, acl_entry as ae
+            WHERE ai.uploaded_file_id = uf.id
             ${getRestrictedIdForm("ai.id")}
-            AND aoi.object_id_identity = sai.storage_id
+            AND aoi.object_id_identity = uf.storage_id
             AND sid.sid = '${currentUser.username}'
             AND ae.acl_object_identity = aoi.id
             AND ae.sid = sid.id
@@ -61,12 +61,12 @@ class AbstractImageSearch extends EngineSearch {
             SELECT property.domain_ident as id, property.domain_class_name as type ${
             getMatchingValue("property.key || ': ' || property.value")
         } ${getName("ai.original_filename")}
-            FROM property property, storage_abstract_image sai, abstract_image ai, acl_object_identity as aoi, acl_sid as sid, acl_entry as ae
+            FROM property property, uploaded_file uf, abstract_image ai, acl_object_identity as aoi, acl_sid as sid, acl_entry as ae
             WHERE property.domain_class_name like '${AbstractImage.class.name}'
             ${getRestrictedIdForm("property.domain_ident")}
             AND property.domain_ident = ai.id
-            AND ai.id = sai.abstract_image_id
-            AND aoi.object_id_identity = sai.storage_id
+            AND ai.uploaded_file_id = uf.id
+            AND aoi.object_id_identity = uf.storage_id
             AND sid.sid = '${currentUser.username}'
             AND ae.acl_object_identity = aoi.id
             AND ae.sid = sid.id
@@ -82,12 +82,12 @@ class AbstractImageSearch extends EngineSearch {
             SELECT description.domain_ident as id, description.domain_class_name as type ${
             getMatchingValue("description.data")
         } ${getName("ai.original_filename")}
-            FROM description description, storage_abstract_image sai,abstract_image ai,acl_object_identity as aoi, acl_sid as sid, acl_entry as ae
+            FROM description description, uploaded_file uf,abstract_image ai,acl_object_identity as aoi, acl_sid as sid, acl_entry as ae
             WHERE description.domain_class_name like '${AbstractImage.class.name}'
             ${getRestrictedIdForm("description.domain_ident")}
             AND description.domain_ident = ai.id
-            AND ai.id = sai.abstract_image_id
-            AND aoi.object_id_identity = sai.storage_id
+            AND ai.uploaded_file_id = uf.id
+            AND aoi.object_id_identity = uf.storage_id
             AND sid.sid = '${currentUser.username}'
             AND ae.acl_object_identity = aoi.id
             AND ae.sid = sid.id

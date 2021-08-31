@@ -36,35 +36,41 @@ class ImageGroupTests {
     
     void testGetImageGroup() {
         def result = ImageGroupAPI.show(BasicInstanceBuilder.getImageGroup().id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 200 == result.code
+        assert 403 == result.code
         def json = JSON.parse(result.data)
-        assert json instanceof JSONObject
+        assert json.errors.contains("removed")
     }
 
     void testGetInfosImageGroup(){
         def dataSet = BasicInstanceBuilder.getMultiDimensionalDataSet(["R","G","B"],["1"],["A"],["10","20"])
         def imagroup = dataSet.last().imageGroup
         def result = ImageGroupAPI.getInfos(imagroup.id, Infos.ANOTHERLOGIN, Infos.ANOTHERPASSWORD)
-        assert 200 == result.code
+        assert 403 == result.code
+        def json = JSON.parse(result.data)
+        assert json.errors.contains("removed")
     }
 
     void testListImageGroupByProject() {
         BasicInstanceBuilder.getImageGroup()
         def result = ImageGroupAPI.list(BasicInstanceBuilder.getImageGroup().project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 200 == result.code
+        assert 403 == result.code
+        def json = JSON.parse(result.data)
+        assert json.errors.contains("removed")
+        /*assert 200 == result.code
         def json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
         assert json.collection.size()>=1
 
         result = ImageGroupAPI.list(-99, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 404 == result.code
+        assert 404 == result.code*/
     }
 
 
     void testAddImageGroupCorrect() {
 
         def result = ImageGroupAPI.create(BasicInstanceBuilder.getImageGroupNotExist(BasicInstanceBuilder.getProject(),false).encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 200 == result.code
+        assert 403 == result.code
+        /*assert 200 == result.code
         ImageGroup image = result.data
         Long idImage = image.id
 
@@ -81,7 +87,7 @@ class ImageGroupTests {
         assert 200 == result.code
 
         result = ImageGroupAPI.show(idImage, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 200 == result.code
+        assert 200 == result.code*/
 
     }
 
@@ -92,13 +98,15 @@ class ImageGroupTests {
         updateImage.project = -99
         jsonImage = updateImage.toString()
         def result = ImageGroupAPI.create(jsonImage, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 404 == result.code
+        assert 403 == result.code
+        //assert 404 == result.code
     }
 
     void testaddImageGroupAlreadyExist() {
         def imageGroup = BasicInstanceBuilder.getImageGroupNotExist(BasicInstanceBuilder.getProject(),false)
         def result = ImageGroupAPI.create(imageGroup.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 200 == result.code
+        assert 403 == result.code
+        //assert 200 == result.code
     }
 
     void testEditImageGroup() {
@@ -107,7 +115,10 @@ class ImageGroupTests {
         def data = UpdateData.createUpdateSet(image,[project: [BasicInstanceBuilder.getProject(),BasicInstanceBuilder.getProjectNotExist(true)]])
 
         def result = ImageGroupAPI.update(image.id, data.postData,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 200 == result.code
+        assert 403 == result.code
+        def json = JSON.parse(result.data)
+        assert json.errors.contains("removed")
+        /*assert 200 == result.code
         def json = JSON.parse(result.data)
         assert json instanceof JSONObject
         int idImageGroup = json.imagegroup.id
@@ -128,7 +139,7 @@ class ImageGroupTests {
 
         showResult = ImageGroupAPI.show(idImageGroup, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         json = JSON.parse(showResult.data)
-        BasicInstanceBuilder.compare(data.mapNew, json)
+        BasicInstanceBuilder.compare(data.mapNew, json)*/
     }
 
     void testEditImageGroupWithBadProject() {
@@ -136,7 +147,10 @@ class ImageGroupTests {
         def jsonUpdate = JSON.parse(imageToEdit.encodeAsJSON())
         jsonUpdate.project = -99
         def result = ImageGroupAPI.update(imageToEdit.id, jsonUpdate.toString(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 404 == result.code
+        assert 403 == result.code
+        def json = JSON.parse(result.data)
+        assert json.errors.contains("removed")
+        //assert 404 == result.code
     }
 
 
@@ -146,7 +160,10 @@ class ImageGroupTests {
         def idImage = imageGroupToDelete.id
 
         def result = ImageGroupAPI.delete(imageGroupToDelete.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 200 == result.code
+        assert 403 == result.code
+        def json = JSON.parse(result.data)
+        assert json.errors.contains("removed")
+        /*assert 200 == result.code
 
         def showResult = ImageGroupAPI.show(imageGroupToDelete.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 404 == showResult.code
@@ -161,12 +178,15 @@ class ImageGroupTests {
         assert 200 == result.code
 
         result = ImageGroupAPI.show(idImage, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 404 == result.code
+        assert 404 == result.code*/
     }
 
     void testDeleteImageGroupNoExist() {
         def imageGroupToDelete = BasicInstanceBuilder.getImageGroupNotExist()
         def result = ImageGroupAPI.delete(imageGroupToDelete.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 404 == result.code
+        assert 403 == result.code
+        def json = JSON.parse(result.data)
+        assert json.errors.contains("removed")
+        //assert 404 == result.code
     }
 }

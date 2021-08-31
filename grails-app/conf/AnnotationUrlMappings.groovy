@@ -27,9 +27,7 @@ class AnnotationUrlMappings {
         /**
          * Annotation generic
          */
-        "/api/annotation/method/union.$format"(controller:"restAnnotationDomain"){
-            action = [PUT:"union", GET:"union"]
-        }
+
         "/api/annotation.$format"(controller:"restAnnotationDomain"){
             action = [GET: "search",POST:"add"]
         }
@@ -51,6 +49,10 @@ class AnnotationUrlMappings {
         }
         "/api/annotation/$id/cropParameters.$format"(controller: "restAnnotationDomain"){
             action = [GET:"cropParameters"]
+        }
+
+        "/api/annotation/$id/profile.$format"(controller: "restAnnotationDomain") {
+            action = [GET: "profile"]
         }
 
         //keep this for retrieval
@@ -90,6 +92,9 @@ class AnnotationUrlMappings {
         "/api/userannotation/$id/alphamask.$format"(controller: "restUserAnnotation"){
             action = [GET:"cropAlphaMask"]
         }
+        "/api/userannotation/$id/repeat.$format"(controller: "restUserAnnotation"){
+            action = [POST: "repeat"]
+        }
 
 
 
@@ -118,9 +123,7 @@ class AnnotationUrlMappings {
         "/api/project/$project/algoannotation/count.$format"(controller:"restAlgoAnnotation"){
             action = [GET: "countByProject"]
         }
-        "/api/algoannotation/method/union.$format"(controller:"restAlgoAnnotation"){
-            action = [PUT:"union", GET:"union"]
-        }
+
         "/api/algoannotation.$format"(controller:"restAlgoAnnotation"){
             action = [GET: "list",POST:"add"]
         }
@@ -229,7 +232,10 @@ class AnnotationUrlMappings {
             action = [POST:"add"]
         }
         "/api/imageinstance/$image/annotation_action.$format" (controller : "restAnnotationAction") {
-            action = [GET:"list"]
+            action = [GET:"listByImage"]
+        }
+        "/api/sliceinstance/$slice/annotation_action.$format" (controller : "restAnnotationAction") {
+            action = [GET:"listBySlice"]
         }
 
         "/api/project/$project/annotation_action/count.$format"(controller: "restAnnotationAction"){

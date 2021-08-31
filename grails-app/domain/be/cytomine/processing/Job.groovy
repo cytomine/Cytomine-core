@@ -91,6 +91,10 @@ class Job extends CytomineDomain  {
     @RestApiObjectField(description = "Flag to see if data generate by this job are deleted",mandatory = false)
     boolean dataDeleted = false
 
+    @RestApiObjectField(description = "Flag to star an interesting job", mandatory =
+    false)
+    Boolean favorite = false
+
     @RestApiObjectFields(params=[
         @RestApiObjectField(apiFieldName = "algoType", description = "The algo type based on the class name",allowedType = "string",useForCreation = false),
         @RestApiObjectField(apiFieldName = "softwareName", description = "The software name of the job",allowedType = "string",useForCreation = false),
@@ -112,6 +116,7 @@ class Job extends CytomineDomain  {
         status(range: 0..8)
         rate(nullable: true)
         processingServer(nullable: true)
+        favorite(nullable: true)
     }
 
     static mapping = {
@@ -172,6 +177,7 @@ class Job extends CytomineDomain  {
         returnArray['name'] = returnArray['softwareName']+" : "+returnArray['number']
         returnArray['rate'] = domain?.rate
         returnArray['dataDeleted'] = domain?.dataDeleted
+        returnArray['favorite'] = domain?.favorite
         try {
             UserJob user = UserJob.findByJob(domain)
             returnArray['username'] = user?.humanUsername()

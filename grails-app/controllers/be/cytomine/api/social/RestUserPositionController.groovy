@@ -20,6 +20,7 @@ import be.cytomine.api.RestController
 import be.cytomine.Exception.CytomineException
 import be.cytomine.Exception.ObjectNotFoundException
 import be.cytomine.image.ImageInstance
+import be.cytomine.image.SliceInstance
 import be.cytomine.security.SecUser
 import be.cytomine.security.User
 import org.restapidoc.annotation.RestApi
@@ -42,10 +43,12 @@ class RestUserPositionController extends RestController {
     def projectService
     def mongo
     def userPositionService
+    def sliceInstanceService
 
     @RestApiMethod(description="Record the position of the current user on an image.")
     @RestApiParams(params=[
-            @RestApiParam(name="image", type="long", paramType = RestApiParamType.QUERY, description = "The image id (Mandatory)"),
+            @RestApiParam(name="image", type="long", paramType = RestApiParamType.PATH, description = "The image id (Mandatory if slice not used)"),
+            @RestApiParam(name="slice", type="long", paramType = RestApiParamType.PATH, description = "The slice id (Mandatory if image not used)"),
             @RestApiParam(name="topLeftX", type="double", paramType = RestApiParamType.QUERY, description = "Top Left X coordinate of the user viewport"),
             @RestApiParam(name="topRightX", type="double", paramType = RestApiParamType.QUERY, description = "Top Right X coordinate of the user viewport"),
             @RestApiParam(name="bottomLeftX", type="double", paramType = RestApiParamType.QUERY, description = "Bottom Left X coordinate of the user viewport"),
@@ -72,18 +75,21 @@ class RestUserPositionController extends RestController {
     @RestApiParams(params=[
             @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The image id (Mandatory)"),
             @RestApiParam(name="user", type="long", paramType = RestApiParamType.PATH, description = "The user id (Mandatory)"),
+            @RestApiParam(name="slice", type="long", paramType = RestApiParamType.QUERY, description = "The slice id", required=false),
             @RestApiParam(name="broadcast", type="boolean", paramType = RestApiParamType.PATH, description = "If set to true, the last position broadcasted by the user will be returned"),
     ])
     def lastPositionByUser() {
         ImageInstance image = imageInstanceService.read(params.id)
         SecUser user = secUserService.read(params.user)
         boolean broadcast = params.getBoolean("broadcast")
-        responseSuccess(userPositionService.lastPositionByUser(image, user, broadcast))
+        SliceInstance slice = (params.slice) ? sliceInstanceService.read(params.slice) : null
+        responseSuccess(userPositionService.lastPositionByUser(image, user, broadcast, slice))
     }
 
     @RestApiMethod(description="Summarize the UserPosition entries.")
     @RestApiParams(params=[
             @RestApiParam(name="image", type="long", paramType = RestApiParamType.PATH, description = "The image id"),
+            @RestApiParam(name="slice", type="long", paramType = RestApiParamType.QUERY, description = "The slice id", required=false),
             @RestApiParam(name="user", type="long", paramType = RestApiParamType.QUERY, description = "The user id", required=false),
             @RestApiParam(name="afterThan", type="long", paramType = RestApiParamType.QUERY, description = "A date. Will select all the entries created after this date.", required=false),
             @RestApiParam(name="beforeThan", type="long", paramType = RestApiParamType.QUERY, description = "A date. Will select all the entries created before this date.", required=false),
@@ -94,6 +100,7 @@ class RestUserPositionController extends RestController {
         User user = secUserService.read(params.user)
         if(params.user != null && user == null) throw new ObjectNotFoundException("Invalid user")
 
+        SliceInstance slice = (params.slice) ? sliceInstanceService.read(params.slice) : null
         Long afterThan = params.long("afterThan")
         Long beforeThan = params.long("beforeThan")
         if(params.getBoolean("showDetails")){
@@ -101,20 +108,22 @@ class RestUserPositionController extends RestController {
             Long offset = params.long('offset')
             params.max = 0
             params.offset = 0
-            responseSuccess(userPositionService.list(image, user, afterThan, beforeThan, max, offset))
+            responseSuccess(userPositionService.list(image, user, slice, afterThan, beforeThan, max, offset))
         } else {
-            responseSuccess(userPositionService.summarize(image, user, afterThan, beforeThan))
+            responseSuccess(userPositionService.summarize(image, user, slice, afterThan, beforeThan))
         }
     }
 
     @RestApiMethod(description="Get users that have opened an image recently.")
     @RestApiParams(params=[
             @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The image id (Mandatory)"),
+            @RestApiParam(name="slice", type="long", paramType = RestApiParamType.QUERY, description = "The slice id", required=false),
             @RestApiParam(name="broadcast", type="boolean", paramType = RestApiParamType.QUERY, description = "If set to true, only users broadcasting their position will be returned"),
     ])
     def listOnlineUsersByImage() {
         boolean broadcast = params.getBoolean("broadcast")
         ImageInstance image = imageInstanceService.read(params.id)
-        responseSuccess(userPositionService.listOnlineUsersByImage(image, broadcast))
+        SliceInstance slice = (params.slice) ? sliceInstanceService.read(params.slice) : null
+        responseSuccess(userPositionService.listOnlineUsersByImage(image, broadcast, slice))
     }
 }

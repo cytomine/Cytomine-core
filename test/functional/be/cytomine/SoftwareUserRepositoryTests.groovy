@@ -2,6 +2,7 @@ package be.cytomine
 
 import be.cytomine.test.BasicInstanceBuilder
 import be.cytomine.test.Infos
+import be.cytomine.test.http.SoftwareAPI
 import be.cytomine.test.http.SoftwareUserRepositoryAPI
 import be.cytomine.utils.UpdateData
 import grails.converters.JSON
@@ -57,5 +58,30 @@ class SoftwareUserRepositoryTests {
 
         def showResult = SoftwareUserRepositoryAPI.show(id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 404 == showResult.code
+    }
+
+    void testDeleteSoftwareUserRepositoryWithSoftware() {
+        def repoToDelete = BasicInstanceBuilder.getSoftwareUserRepositoryNotExist(true)
+        def id = repoToDelete.id
+
+        def software = BasicInstanceBuilder.getSoftwareNotExist(true)
+        software.setSoftwareUserRepository(repoToDelete)
+        software = BasicInstanceBuilder.saveDomain(software)
+
+        def softwareResult = SoftwareAPI.show(software.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == softwareResult.code
+        def json = JSON.parse(softwareResult.data)
+        assert json.softwareUserRepository == repoToDelete.id
+
+        def result = SoftwareUserRepositoryAPI.delete(id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+
+        def showResult = SoftwareUserRepositoryAPI.show(id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 404 == showResult.code
+
+        softwareResult = SoftwareAPI.show(software.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == softwareResult.code
+        json = JSON.parse(softwareResult.data)
+        assert json.softwareUserRepository instanceof JSONObject.Null
     }
 }

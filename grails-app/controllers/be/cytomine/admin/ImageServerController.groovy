@@ -16,7 +16,7 @@ package be.cytomine.admin
 * limitations under the License.
 */
 
-import be.cytomine.image.server.ImageServer
+import be.cytomine.middleware.ImageServer
 import grails.plugin.springsecurity.annotation.Secured
 
 @Secured(['ROLE_ADMIN','ROLE_SUPER_ADMIN'])

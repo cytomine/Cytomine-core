@@ -16,16 +16,40 @@
 
 import grails.converters.JSON
 
-grails.config.locations = ["file:${userHome}/.grails/cytomineconfig.groovy"]
-println "External config file: "+grails.config.locations
-println "###########################################################################"
-println "###########################################################################"
+/******************************************************************************
+ * EXTERNAL configuration
+ ******************************************************************************/
+grails.config.locations = [""]
+environments {
+    production {
+        grails.config.locations = ["file:${userHome}/.grails/cytomineconfig.groovy"]
+    }
+    development {
+        // Update the file path so that it matches the generated configuration file in your bootstrap
+        //grails.config.locations = ["file:${userHome}/Cytomine/Cytomine-bootstrap/configs/core/cytomineconfig.groovy"]
+        grails.config.locations = ["file:${userHome}/.grails/cytomineconfig.groovy"]
+    }
+    test {
+        grails.config.locations = ["file:${userHome}/.grails/cytomineconfig.groovy"]
+    }
+}
+println "External configuration file : ${grails.config.locations}"
+File configFile = new File(grails.config.locations.first().minus("file:") as String)
+println "Found configuration file ? ${configFile.exists()}"
 
-grails.plugin.springsecurity.useHttpSessionEventPublisher = true
 grails.databinding.convertEmptyStringsToNull = false
 JSON.use('default')
-grails.project.groupId = appName // change this to alter the default package name and Maven publishing destination
-grails.mime.file.extensions = true // enables the parsing of file extensions from URLs into the request format
+grails.views.default.codec = "none" // none, html, base64
+grails.views.gsp.encoding = "UTF-8"
+grails.views.gsp.sitemesh.preprocess = true
+grails.converters.encoding = "UTF-8"
+grails.converters.json.default.deep = false
+grails.scaffolding.templates.domainSuffix = 'Instance'
+grails.json.legacy.builder = false // use the new Grails 1.2 JSONBuilder in the render method
+grails.enable.native2ascii = true // enabled native2ascii conversion of i18n properties files
+grails.logging.jul.usebridge = true // whether to install the java.util.logging bridge for sl4j
+grails.spring.bean.packages = [] // packages to include in Spring bean scanning
+grails.mime.file.extensions = true // parsing of file extensions from URLs into the request format
 grails.mime.use.accept.header = false
 grails.mime.types = [
         json: ['application/json','text/json'],
@@ -34,6 +58,8 @@ grails.mime.types = [
         xml: ['text/xml', 'application/xml'],
         png : 'image/png',
         jpg : 'image/jpeg',
+        tiff : 'image/tiff',
+        tif: 'image/tiff',
         text: 'text/plain',
         js: 'text/javascript',
         rss: 'application/rss+xml',
@@ -44,6 +70,20 @@ grails.mime.types = [
         form: 'application/x-www-form-urlencoded',
         multipartForm: 'multipart/form-data'
 ]
+environments {
+    cluster {
+        grails {
+            cache {
+                enabled = false
+                ehcache {
+                    ehcacheXmlLocation = 'classpath:ehcache.xml' // conf/ehcache.xml
+                    reloadable = false
+                }
+            }
+        }
+
+    }
+}
 cytomine.maxRequestSize = 10485760
 storage_path="/data/images" //default path for image locations
 //fast_data_path="/data/images" //default path for HDF5 files location (for ex: a SSD)
@@ -85,7 +125,11 @@ cytomine.jobdata.filesystemPath = "algo/data/"
 
 // RabbitMQ server
 grails.messageBrokerServerURL = "localhost:5672"
-
+environments {
+    test {
+        grails.messageBrokerServerURL = "localhost:5673"
+    }
+}
 // set per-environment serverURL stem for creating absolute links
 environments {
     scratch {
@@ -143,6 +187,8 @@ environments {
         grails.adminPublicKey="XXX"
         grails.superAdminPrivateKey="X"
         grails.superAdminPublicKey="X"
+        grails.rabbitMQPrivateKey="XXX"
+        grails.rabbitMQPublicKey="XXX"
     }
     testrun {
         grails.serverURL = "http://localhost:8090"
@@ -240,6 +286,23 @@ log4j = {
 //    debug 'org.hibernate.SQL'
 //    trace 'org.hibernate.type'
 }
+
+/******************************************************************************
+ * SPRING SECURITY CORE config
+ ******************************************************************************/
+grails.plugin.springsecurity.useHttpSessionEventPublisher = true
+grails.plugin.springsecurity.userLookup.userDomainClassName = 'be.cytomine.security.SecUser'
+grails.plugin.springsecurity.userLookup.passwordPropertyName = 'password'
+grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'be.cytomine.security.SecUserSecRole'
+grails.plugin.springsecurity.authority.className = 'be.cytomine.security.SecRole'
+grails.plugin.springsecurity.authority.nameField = 'authority'
+grails.plugin.springsecurity.projectClass = 'be.cytomine.project.Project'
+grails.plugin.springsecurity.rememberMe.parameter = 'remember_me'
+grails.plugin.springsecurity.password.algorithm = 'SHA-256'
+grails.plugin.springsecurity.password.hash.iterations = 1
+grails.plugin.springsecurity.rejectIfNoRule = false
+grails.plugin.springsecurity.fii.rejectPublicInvocations = false
+grails.plugin.springsecurity.useSwitchUserFilter = true
 grails.plugin.springsecurity.securityConfigType = "InterceptUrlMap"
 grails.plugin.springsecurity.interceptUrlMap = [
         '/admin/**':    ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
@@ -257,13 +320,6 @@ grails.plugin.springsecurity.interceptUrlMap = [
         '/status/**':   ['IS_AUTHENTICATED_ANONYMOUSLY']
 ]
 
-grails.plugin.springsecurity.rejectIfNoRule = false
-grails.plugin.springsecurity.fii.rejectPublicInvocations = false
-
-//allow an admin to connect as a other user
-grails.plugin.springsecurity.useSwitchUserFilter = true
-
-
 // Added by the Spring Security Core plugin:
 grails.plugin.springsecurity.userLookup.userDomainClassName = 'be.cytomine.security.SecUser'
 grails.plugin.springsecurity.userLookup.passwordPropertyName = 'password'
@@ -274,13 +330,13 @@ grails.plugin.springsecurity.projectClass = 'be.cytomine.project.Project'
 grails.plugin.springsecurity.rememberMe.parameter = 'remember_me'
 
 grails.plugins.dynamicController.mixins = [
-        'com.burtbeckwith.grails.plugins.appinfo.IndexControllerMixin':       'com.burtbeckwith.appinfo_test.AdminManageController',
-        'com.burtbeckwith.grails.plugins.appinfo.HibernateControllerMixin':   'com.burtbeckwith.appinfo_test.AdminManageController',
-        'com.burtbeckwith.grails.plugins.appinfo.Log4jControllerMixin' :      'com.burtbeckwith.appinfo_test.AdminManageController',
-        'com.burtbeckwith.grails.plugins.appinfo.SpringControllerMixin' :     'com.burtbeckwith.appinfo_test.AdminManageController',
-        'com.burtbeckwith.grails.plugins.appinfo.MemoryControllerMixin' :     'com.burtbeckwith.appinfo_test.AdminManageController',
-        'com.burtbeckwith.grails.plugins.appinfo.PropertiesControllerMixin' : 'com.burtbeckwith.appinfo_test.AdminManageController',
-        'com.burtbeckwith.grails.plugins.appinfo.ScopesControllerMixin' :     'com.burtbeckwith.appinfo_test.AdminManageController'
+    'com.burtbeckwith.grails.plugins.appinfo.IndexControllerMixin':'com.burtbeckwith.appinfo_test.AdminManageController',
+    'com.burtbeckwith.grails.plugins.appinfo.HibernateControllerMixin':'com.burtbeckwith.appinfo_test.AdminManageController',
+    'com.burtbeckwith.grails.plugins.appinfo.Log4jControllerMixin':'com.burtbeckwith.appinfo_test.AdminManageController',
+    'com.burtbeckwith.grails.plugins.appinfo.SpringControllerMixin':'com.burtbeckwith.appinfo_test.AdminManageController',
+    'com.burtbeckwith.grails.plugins.appinfo.MemoryControllerMixin':'com.burtbeckwith.appinfo_test.AdminManageController',
+    'com.burtbeckwith.grails.plugins.appinfo.PropertiesControllerMixin':'com.burtbeckwith.appinfo_test.AdminManageController',
+    'com.burtbeckwith.grails.plugins.appinfo.ScopesControllerMixin':'com.burtbeckwith.appinfo_test.AdminManageController'
 ]
 
 // Rest API Doc plugin
@@ -323,6 +379,7 @@ cytomine.customUI.global = [
         project: ["ALL"],
         ontology: ["ROLE_ADMIN"],
         storage : ["ROLE_USER","ROLE_ADMIN"],
+        software : ["ROLE_USER", "ROLE_ADMIN"],
         activity : ["ALL"],
         admin : ["ROLE_ADMIN"],
         help : ["ALL"]
@@ -380,6 +437,8 @@ cytomine.customUI.project = [
         "project-explore-annotation-tags":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
         "project-explore-annotation-attached-files":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
         "project-explore-annotation-creation-info":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
+        "project-explore-annotation-tracks":["ADMIN_PROJECT":true, "CONTRIBUTOR_PROJECT":true],
+        "project-explore-annotation-tags": ["ADMIN_PROJECT": true, "CONTRIBUTOR_PROJECT": true],
 
         //annotation tools
         "project-tools-main":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
@@ -405,6 +464,7 @@ cytomine.customUI.project = [
         "project-tools-move":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
         "project-tools-delete":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
         "project-tools-screenshot":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
+        "project-tools-copy-paste":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
         "project-tools-undo-redo":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
 
         //graphs
@@ -417,22 +477,6 @@ cytomine.customUI.project = [
         "project-users-global-activities-graph":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
         "project-users-heatmap-graph":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
 ]
-
-environments {
-    cluster {
-        grails {
-            cache {
-                enabled = false
-                ehcache {
-                    ehcacheXmlLocation = 'classpath:ehcache.xml' // conf/ehcache.xml
-                    reloadable = false
-                }
-            }
-        }
-
-    }
-}
-
 
 grails.plugin.springsecurity.password.algorithm = 'SHA-256'
 grails.plugin.springsecurity.password.hash.iterations = 1
@@ -461,3 +505,6 @@ grails.instanceHostSupportMail = "support@cytomine.coop"
 grails.instanceHostPhoneNumber = null
 
 grails.defaultLanguage = "ENGLISH"
+
+grails.useHTTPInternally = true
+

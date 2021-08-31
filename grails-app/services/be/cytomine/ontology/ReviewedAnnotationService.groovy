@@ -263,7 +263,7 @@ class ReviewedAnnotationService extends ModelService {
 //                            updated: it.updated,
 //                            reviewed: (it.countReviewedAnnotations > 0),
 //                            cropURL: UrlApi.getReviewedAnnotationCropWithAnnotationId(it.id),
-//                            smallCropURL: UrlApi.getReviewedAnnotationCropWithAnnotationIdWithMaxWithOrHeight(it.id, 256),
+//                            smallCropURL: UrlApi.getReviewedAnnotationCropWithAnnotationIdWithMaxSize(it.id, 256),
 //                            url: UrlApi.getReviewedAnnotationCropWithAnnotationId(it.id),
 //                            imageURL: UrlApi.getAnnotationURL(it.project, it.image, it.id),
 //                            term: (it.term ? [it.term] : []),

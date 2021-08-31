@@ -25,8 +25,8 @@ import be.cytomine.test.Infos
  */
 class AnnotationIndexAPI extends DomainAPI {
 
-    static def listByImage(Long id, String username, String password) {
-        String URL = Infos.CYTOMINEURL + "api/imageinstance/" + id + "/annotationindex.json"
+    static def listBySlice(Long id, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/sliceinstance/" + id + "/annotationindex.json"
         return doGET(URL, username, password)
     }
 

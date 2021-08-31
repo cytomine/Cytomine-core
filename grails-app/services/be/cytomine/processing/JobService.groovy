@@ -28,8 +28,10 @@ import be.cytomine.security.User
 import be.cytomine.security.UserJob
 import be.cytomine.sql.AlgoAnnotationListing
 import be.cytomine.sql.ReviewedAnnotationListing
+import be.cytomine.meta.AttachedFile
 import be.cytomine.utils.ModelService
 import be.cytomine.utils.Task
+import grails.converters.JSON
 import groovy.sql.GroovyResultSet
 import groovy.sql.Sql
 import org.codehaus.groovy.grails.web.json.JSONObject
@@ -53,6 +55,8 @@ class JobService extends ModelService {
     def dataSource
     def currentRoleServiceProxy
     def securityACLService
+
+   // static final String[] IGNORES_JOB_PARAMETER = cytomine_host, cytomine_public_key, cytomine_private_key, cytomine_id_software, cytomine_id_project
 
     def currentDomain() {
         return Job
@@ -185,6 +189,25 @@ class JobService extends ModelService {
         def mapParams = sqlSearchConditions.parameters
         if(usernameParams.size() > 0) mapParams += usernameParams
 
+        if (mapParams instanceof Map) {
+            if (mapParams.containsKey("j_favorite_1")) {
+                mapParams["j_favorite_1"] = (mapParams["j_favorite_1"] == 'true');
+            }
+            if (mapParams.containsKey("j_favorite_2")) {
+                mapParams["j_favorite_2"] = (mapParams["j_favorite_2"] == 'true');
+            }
+        }
+        // https://stackoverflow.com/a/42080302
+        if (mapParams.isEmpty() && usernameParams.isEmpty()) {
+            mapParams = []
+        }
+        else if (mapParams.isEmpty()) {
+            mapParams = usernameParams
+        }
+        else {
+            mapParams += usernameParams
+        }
+
         sql.eachRow(request, mapParams) {
             def map = [:]
 
@@ -236,7 +259,13 @@ class JobService extends ModelService {
         }
         sql.close()
 
-        return [data:data, total:size]
+        def result = [data:data, total:size]
+        max = (max > 0) ? max : Integer.MAX_VALUE
+        result.offset = offset
+        result.perPage = Math.min(max, result.total)
+        result.totalPages = Math.ceil(result.total / max)
+
+        return result
     }
 
     /**
@@ -254,7 +283,7 @@ class JobService extends ModelService {
         //Start transaction
         Transaction transaction = transactionService.start()
 
-        //Synchronzed this part of code, prevent two job to be add at the same time
+        //Synchronized this part of code, prevent two job to be add at the same time
         synchronized (this.getClass()) {
             //Add Job
             log.debug this.toString()
@@ -272,6 +301,34 @@ class JobService extends ModelService {
 
             return result
         }
+    }
+
+    /**
+     * Copy an already existing job to create a new one with same values
+     * @param originalJob Job to copy
+     * @return Response job copied
+     */
+    def copy(Job originalJob) {
+        log.info "copy job ${originalJob?.id}"
+        Job newJob = Job.insertDataIntoDomain(Job.getDataFromDomain(originalJob))
+        newJob.id = null
+        newJob.rate = null
+        newJob.statusComment = null
+        newJob.status = 0
+        newJob.progress = 0
+        newJob.dataDeleted = false
+        newJob.created = null
+        newJob.updated = null
+        newJob.deleted = null
+        def map = Job.getDataFromDomain(newJob)
+
+        def params = jobParameterService.list(originalJob)
+        params.each {
+            if (!it.softwareParameter.setByServer) {
+                map.get('params', []).add([softwareParameter: it.softwareParameter.id, value: it.value])
+            }
+        }
+        return this.add(JSON.parse((map as JSON).toString()))
     }
 
     /**
@@ -319,6 +376,12 @@ class JobService extends ModelService {
         def ret = AttachedFile.getDataFromDomain(log)
         ret['data'] = new String(log.data);
         return ret
+    }
+
+    def markAsFavorite(Job job, boolean favorite) {
+        new Sql(dataSource).executeUpdate("UPDATE job SET favorite = ${favorite} WHERE id = ${job.id}");
+        job.favorite = favorite
+        return job
     }
 
     List<UserJob> getAllLastUserJob(Project project, Software software) {
@@ -462,6 +525,7 @@ class JobService extends ModelService {
             job.number = it.number
             job.created = it.created?.time?.toString()
             job.dataDeleted = it.dataDeleted
+            job.favorite = it.favorite
             data << job
         }
         return data

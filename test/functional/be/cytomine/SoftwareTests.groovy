@@ -74,7 +74,7 @@ class SoftwareTests  {
  
    void testUpdateSoftwareCorrect() {
        def software = BasicInstanceBuilder.getSoftware()
-       def data = UpdateData.createUpdateSet(software,[name: ["OLDNAME","NEWNAME"]])
+       def data = UpdateData.createUpdateSet(software,[name: ["OLDNAME","NEWNAME"],executeCommand : ["projectService","userAnnotationService"]])
        def resultBase = SoftwareAPI.update(software.id, data.postData,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
        assert 200==resultBase.code
        def json = JSON.parse(resultBase.data)

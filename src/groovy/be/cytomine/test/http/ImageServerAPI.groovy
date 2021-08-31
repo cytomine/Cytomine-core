@@ -130,10 +130,10 @@ class ImageServerAPI extends DomainAPI {
         return downloadImage(URL,username,password)
     }
 
-    static def listImageServerByMime(String mimeType, String username, String password) {
-        String URL = Infos.CYTOMINEURL + "api/imageserver.json?mimeType=$mimeType"
-        return doGET(URL,username,password)
-    }
+//    static def listImageServerByMime(String mimeType, String username, String password) {
+//        String URL = Infos.CYTOMINEURL + "api/imageserver.json?mimeType=$mimeType"
+//        return doGET(URL,username,password)
+//    }
 
 //    "/api/userannotation/$annotation/mask-$term"(controller: "restImageInstance"){
 //        action = [GET:"cropmask"]

@@ -117,6 +117,13 @@ class SoftwareProjectTests  {
         assert 404 == result.code
     }
 
+    void testAddSoftwareAlreadyLinkedToProject() {
+        SoftwareProject SoftwareProjectToAdd = BasicInstanceBuilder.getSoftwareProject()
+        BasicInstanceBuilder.saveDomain(SoftwareProjectToAdd)
+        def result = SoftwareProjectAPI.create(SoftwareProjectToAdd.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 409 == result.code
+    }
+
      void testDeleteSoftwareProject() {
          def SoftwareProjectToDelete = BasicInstanceBuilder.getSoftwareProjectNotExist(BasicInstanceBuilder.getSoftwareNotExist(true),BasicInstanceBuilder.getProjectNotExist(true),true)
          def id = SoftwareProjectToDelete.id

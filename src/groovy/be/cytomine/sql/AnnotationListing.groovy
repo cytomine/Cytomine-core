@@ -21,7 +21,9 @@ import be.cytomine.CytomineDomain
 import be.cytomine.Exception.ObjectNotFoundException
 import be.cytomine.Exception.WrongArgumentException
 import be.cytomine.image.ImageInstance
+import be.cytomine.image.SliceInstance
 import be.cytomine.ontology.Term
+import be.cytomine.ontology.Track
 import be.cytomine.project.Project
 import be.cytomine.security.SecUser
 import com.vividsolutions.jts.io.WKTReader
@@ -49,44 +51,67 @@ abstract class AnnotationListing {
     def columnToPrint
 
     def project = null
-    def user = null
-    def term = null
     def image = null
-    def suggestedTerm = null
+    def images = null
+
+    def slice = null
+    def slices = null
+
+    def track = null
+    def tracks = null
+    def beforeSlice = null
+    def afterSlice = null
+    def sliceDimension = null
+
+    def user = null
     def userForTermAlgo = null
+    def usersForTermAlgo = null
+
+    def term = null
+    def terms = null
+
+    def suggestedTerm = null
+    def suggestedTerms = null
+
     def users = null //for user that draw annotation
     def usersForTerm = null //for user that add a term to annotation
-    def usersForTermAlgo = null
+
+
+
     def reviewUsers
-    def terms = null
+
+    def tag = null
     def tags = null
-    def images = null
+
     def afterThan = null
     def beforeThan = null
 
-    def suggestedTerms = null
+
 
     def notReviewedOnly = false
     def noTerm = false
     def noTag = false
     def noAlgoTerm = false
     def multipleTerm = false
+    def noTrack = false
+    def multipleTrack = false
 
+    def bbox = null
     def bboxAnnotation = null
 
     def baseAnnotation = null
     def maxDistanceBaseAnnotation = null
 
 
-    def bbox = null
+
 
     def parents
 
     //not used for search critera (just for specific request
     def avoidEmptyCentroid = false
     def excludedAnnotation = null
-    def kmeans = false
 
+    def kmeans = false
     def kmeansValue = 3
 
     abstract def getFrom()
@@ -157,7 +182,15 @@ abstract class AnnotationListing {
             }
             return projectList.first()
         }
-        throw new WrongArgumentException("There is no project or image filter. We cannot check acl!")
+        if (slice) return SliceInstance.read(slice)?.container()
+        if (slices) {
+            def projectList = slices.collect { SliceInstance.read(it).project }.unique()
+            if (projectList.size() > 1) {
+                throw new WrongArgumentException("Slices from filter must all be from the same project!")
+            }
+            return projectList.first()
+        }
+        throw new WrongArgumentException("There is no project or image or slice filter. We cannot check acl!")
     }
 
     /**
@@ -181,69 +214,115 @@ abstract class AnnotationListing {
 
         String whereRequest =
                 getProjectConst() +
+                        getUserConst() +
                         getUsersConst() +
-                        getReviewUsersConst() +
-                        getImagesConst() +
-                        getTagsConst() +
+
                         getImageConst() +
+                        getImagesConst() +
+
+                        getSliceConst() +
+                        getSlicesConst() +
+
+                        getTagConst() +
+                        getTagsConst() +
+
                         getTermConst() +
                         getTermsConst() +
-                        getUserConst() +
-                        getParentsConst() +
-                        getUsersForTermAlgoConst() +
-                        getExcludedAnnotationConst() +
+
+                        getTrackConst() +
+                        getTracksConst() +
+                        getBeforeOrAfterSliceConst() +
+
+                        getUsersForTermConst() +
+
                         getUserForTermAlgoConst() +
+                        getUsersForTermAlgoConst() +
+
                         getSuggestedTermConst() +
                         getSuggestedTermsConst() +
+
                         getNotReviewedOnlyConst() +
-                        getUsersForTermConst() +
+                        getParentsConst() +
                         getAvoidEmptyCentroidConst() +
+                        getReviewUsersConst() +
+
                         getIntersectConst() +
                         getIntersectAnnotationConst() +
                         getMaxDistanceAnnotationConst() +
+                        getExcludedAnnotationConst() +
+
                         getBeforeThan() +
                         getAfterThan() +
                         getNotDeleted() +
                         createOrderBy()
 
-        if(term || terms){
+        if (term || terms || track || tracks) {
             def request = "SELECT DISTINCT a.*, "
-            sqlColumns = sqlColumns.findAll{it.key != "term" && it.key != "annotationTerms" && it.key != "userTerm"}
-            if (this instanceof  AlgoAnnotationListing) {
-                request += "aat.term_id as term, aat.id as annotationTerms, aat.user_job_id as userTerm "
-            } else if (this instanceof ReviewedAnnotationListing) {
-                request += "at.term_id as term, 0 as annotationTerms, a.user as userTerm "
-            } else {
-                request += "at.term_id as term, at.id as annotationTerms, at.user_id as userTerm "
+
+            if (term || terms) {
+                sqlColumns = sqlColumns.findAll{it.key != "term" && it.key != "annotationTerms" && it.key != "userTerm"}
+                if (this instanceof  AlgoAnnotationListing) {
+                    request += "aat.term_id as term, aat.id as annotationTerms, aat.user_job_id as userTerm "
+                }
+                else if (this instanceof ReviewedAnnotationListing) {
+                    request += "at.term_id as term, 0 as annotationTerms, a.user as userTerm "
+                }
+                else {
+                    request += "at.term_id as term, at.id as annotationTerms, at.user_id as userTerm "
+                }
+
+            }
+
+            if ((term || terms) && (track || tracks))
+                request += ", "
+
+            if (track || tracks) {
+                sqlColumns = sqlColumns.findAll{it.key != "track" && it.key != "annotationTracks"}
+                request += "atr.track_id as track, atr.id as annotationTracks "
             }
 
             request += "FROM (" + getSelect(sqlColumns) + getFrom() + whereRequest + ") a \n"
 
-            if (this instanceof AlgoAnnotationListing) {
-                request += "LEFT OUTER JOIN algo_annotation_term aat ON aat.annotation_ident = a.id "
-            } else if (this instanceof ReviewedAnnotationListing) {
-                request += "LEFT OUTER JOIN reviewed_annotation_term at ON a.id = at.reviewed_annotation_terms_id "
-            } else {
-                request += "LEFT OUTER JOIN annotation_term at ON a.id = at.user_annotation_id "
+            if (term || terms) {
+                if (this instanceof AlgoAnnotationListing) {
+                    request += "LEFT OUTER JOIN algo_annotation_term aat ON aat.annotation_ident = a.id "
+                }
+                else if (this instanceof ReviewedAnnotationListing) {
+                    request += "LEFT OUTER JOIN reviewed_annotation_term at ON a.id = at.reviewed_annotation_terms_id "
+                }
+                else {
+                    request += "LEFT OUTER JOIN annotation_term at ON a.id = at.user_annotation_id "
+                }
             }
+
+
+            if (track || tracks)
+                request += "LEFT OUTER JOIN annotation_track atr ON a.id = atr.annotation_ident "
 
             request += "WHERE true "
-            if (this instanceof AlgoAnnotationListing) {
-                request += "AND aat.deleted IS NULL "
-            } else if (!(this instanceof ReviewedAnnotationListing)) {
-                request += "AND at.deleted IS NULL "
-            }
-            request += "ORDER BY a.id desc "
-
-            if (this instanceof AlgoAnnotationListing) {
-                request += ", aat.term_id "
-            }
-            else {
-                request += ", at.term_id "
+            if (term || terms) {
+                if (this instanceof AlgoAnnotationListing) {
+                    request += "AND aat.deleted IS NULL "
+                }
+                else if (!(this instanceof ReviewedAnnotationListing)) {
+                    request += "AND at.deleted IS NULL "
+                }
             }
 
+            request += "ORDER BY "
+            request += (track || tracks) ? "a.rank asc" : "a.id desc "
+            if (term || terms) {
+                if (this instanceof AlgoAnnotationListing) {
+                    request += ", aat.term_id "
+                }
+                else {
+                    request += ", at.term_id "
+                }
+            }
+            request += ((track || tracks) ? ", atr.track_id " : "")
             return request
         }
+
         return getSelect(sqlColumns) + getFrom() + whereRequest
 
     }
@@ -264,6 +343,11 @@ abstract class AnnotationListing {
                     requestHeadList << it.value + " as " + it.key
                 }
             }
+
+            if (track || tracks) {
+                requestHeadList << '(asl.channel + ai.channels * (asl.z_stack + ai.depth * asl.time)) as rank'
+            }
+
             return "SELECT " + requestHeadList.join(', ') + " \n"
         } else {
             return "SELECT ST_ClusterKMeans(location, 5) OVER () AS kmeans, location\n"
@@ -315,16 +399,6 @@ abstract class AnnotationListing {
 
     }
 
-    def getTagsConst() {
-        if (tags && noTag) {
-            return "AND (tda.tag_id IN (${tags.join(',')}) OR tda.tag_id IS NULL)\n"
-        } else if (tags) {
-            return "AND tda.tag_id IN (${tags.join(',')})\n"
-        } else {
-            return ""
-        }
-    }
-
     def getImageConst() {
         if (image) {
             def image = ImageInstance.read(image)
@@ -332,6 +406,31 @@ abstract class AnnotationListing {
                 throw new ObjectNotFoundException("Image $image not exist!")
             }
             return "AND a.image_id = ${image.id}\n"
+        } else {
+            return ""
+        }
+    }
+
+    def getSlicesConst() {
+
+//        if (slices && image && slices.size() == Project.read(project).countSlices) {
+//            return "" //slices number equals to image slice number, no const needed
+//        } else
+        if (slices && slices.isEmpty()) {
+            throw new ObjectNotFoundException("The slice has been deleted!")
+        } else {
+            return (slices ? "AND a.slice_id IN (${slices.join(",")})\n" : "")
+        }
+
+    }
+
+    def getSliceConst() {
+        if (slice) {
+            def slice = SliceInstance.read(slice)
+            if (!slice || slice.checkDeleted()) {
+                throw new ObjectNotFoundException("Slice $slice not exist!")
+            }
+            return "AND a.slice_id = ${slice.id}\n"
         } else {
             return ""
         }
@@ -416,6 +515,65 @@ abstract class AnnotationListing {
         }
     }
 
+    def getTrackConst() {
+        if (track) {
+            if (!Track.read(track)) {
+                throw new ObjectNotFoundException("Track $track not exists !")
+            }
+            addIfMissingColumn('track')
+            return " AND (atr.track_id = ${track}" + ((noTrack) ? " OR atr.track_id IS NULL" : "") + ")\n"
+        } else {
+            return ""
+        }
+    }
+
+    def getTracksConst() {
+        if (tracks) {
+            addIfMissingColumn('track')
+            return "AND (atr.track_id IN (${tracks.join(',')})" + ((noTrack) ? " OR atr.track_id IS NULL" : "") + ")\n"
+        } else {
+            return ""
+        }
+    }
+
+    def getTagConst() {
+        if (tag && noTag) {
+            return "AND (tda.tag_id = ${tag} OR tda.tag_id IS NULL)\n"
+        } else if (tag) {
+            return "AND tda.tag_id = ${tag}\n"
+        } else {
+            return ""
+        }
+    }
+
+    def getTagsConst() {
+        if (tags && noTag) {
+            return "AND (tda.tag_id IN (${tags.join(',')}) OR tda.tag_id IS NULL)\n"
+        } else if (tags) {
+            return "AND tda.tag_id IN (${tags.join(',')})\n"
+        } else {
+            return ""
+        }
+    }
+
+
+    def getBeforeOrAfterSliceConst() {
+        if ((track || tracks) && (beforeSlice || afterSlice)) {
+            addIfMissingColumn('slice')
+            def sliceId = (beforeSlice) ? beforeSlice : afterSlice
+            def slice = SliceInstance.read(sliceId)
+            if (!slice) {
+                throw new ObjectNotFoundException("Slice $sliceId not exists !")
+            }
+
+            def sign = (beforeSlice) ? '<' : '>'
+
+            return "AND (asl.channel + ai.channels * (asl.z_stack + ai.depth * asl.time)) ${sign} ${slice.baseSlice.rank} \n"
+        } else {
+            return ""
+        }
+    }
+
     def getExcludedAnnotationConst() {
         return (excludedAnnotation ? "AND a.id <> ${excludedAnnotation}\n" : "")
     }
@@ -489,6 +647,8 @@ project = $project
 user = $user
 term = $term
 image = $image
+slice = $slice
+track = $track
 suggestedTerm = $suggestedTerm
 userForTermAlgo = $userForTermAlgo
 users = $users
@@ -497,6 +657,8 @@ usersForTermAlgo = $usersForTermAlgo
 reviewUsers = $reviewUsers
 terms = $terms
 images = $images
+slices = $slices
+tracks = $tracks
 afterThan = $afterThan
 beforeThan = $beforeThan
 suggestedTerms = $suggestedTerms
@@ -504,6 +666,8 @@ notReviewedOnly = $notReviewedOnly
 noTerm = $noTerm
 noAlgoTerm = $noAlgoTerm
 multipleTerm = $multipleTerm
+noTrack = $noTrack
+multipleTrack = $multipleTrack
 bboxAnnotation = $bboxAnnotation
 baseAnnotation = $baseAnnotation
 maxDistanceBaseAnnotation = $maxDistanceBaseAnnotation
@@ -527,82 +691,140 @@ class UserAnnotationListing extends AnnotationListing {
      *  all properties group available, each value is a list of assoc [propertyName, SQL columnName/methodName)
      *  If value start with #, don't use SQL column, its a "trensiant property"
      */
-    def availableColumn =
-            [
-                    basic: [id: 'a.id'],
-                    meta: [
-                            countReviewedAnnotations: 'a.count_reviewed_annotations',
-                            reviewed: '(a.count_reviewed_annotations>0)',
-                            image: 'a.image_id',
-                            project: 'a.project_id',
-                            container: "a.project_id",
-                            created: 'extract(epoch from a.created)*1000',
-                            updated: 'extract(epoch from a.updated)*1000',
-                            user: 'a.user_id',
-                            countComments: 'a.count_comments',
-                            geometryCompression: 'a.geometry_compression',
-                            cropURL: '#cropURL',
-                            smallCropURL: '#smallCropURL',
-                            url: '#url',
-                            imageURL: '#imageURL'
+    def availableColumn = [
+        basic: [
+                id: 'a.id'
+        ],
+        meta: [
+                created: 'extract(epoch from a.created)*1000',
+                updated: 'extract(epoch from a.updated)*1000',
+                image: 'a.image_id',
+                slice: 'a.slice_id',
+                project: 'a.project_id',
+                user: 'a.user_id',
 
-                    ],
-                    wkt: [location: 'a.wkt_location'],
-                    gis: [area: 'area', areaUnit: 'area_unit', perimeter: 'perimeter', perimeterUnit: 'perimeter_unit', x: 'ST_X(ST_centroid(a.location))', y: 'ST_Y(ST_centroid(a.location))'],
-                    term: [term: 'at.term_id', annotationTerms: 'at.id', userTerm: 'at.user_id'],
-                    image: [originalfilename: 'ai.original_filename', instancefilename: 'COALESCE(ii.instance_filename, ai.original_filename)'],
-                    algo: [id: 'aat.id', rate: 'aat.rate', idTerm: 'aat.term_id', idExpectedTerm: 'aat.expected_term_id'],
-                    user: [creator: 'u.username', lastname: 'u.lastname', firstname: 'u.firstname']
-            ]
+                nbComments: 'a.count_comments',
+
+                countReviewedAnnotations: 'a.count_reviewed_annotations', // not in single annot marshaller
+                reviewed: '(a.count_reviewed_annotations>0)',
+
+                cropURL: '#cropURL',
+                smallCropURL: '#smallCropURL',
+                url: '#url',
+                imageURL: '#imageURL'
+        ],
+        wkt: [
+                location: 'a.wkt_location',
+                geometryCompression: 'a.geometry_compression',
+        ],
+        gis: [
+                area: 'area',
+                areaUnit: 'area_unit',
+                perimeter: 'perimeter',
+                perimeterUnit: 'perimeter_unit',
+                x: 'ST_X(ST_centroid(a.location))',
+                y: 'ST_Y(ST_centroid(a.location))'
+        ],
+        term: [
+                term: 'at.term_id',
+                annotationTerms: 'at.id', // not in single annot marshaller
+                userTerm: 'at.user_id' // not in single annot marshaller
+        ],
+        track: [
+                track: 'atr.track_id',
+                annotationTracks: 'atr.id',
+        ],
+        image: [
+                originalFilename: 'ai.original_filename', // not in single annot marshaller
+                instanceFilename: 'COALESCE(ii.instance_filename, ai.original_filename)' // not in single annot marshaller
+        ],
+        slice: [
+                channel: 'asl.channel', // not in single annot marshaller
+                zStack: 'asl.z_stack', // not in single annot marshaller
+                time: 'asl.time' // not in single annot marshaller
+        ],
+        algo: [
+                id: 'aat.id', // not in single annot marshaller
+                rate: 'aat.rate', // not in single annot marshaller
+                idTerm: 'aat.term_id', // not in single annot marshaller
+                idExpectedTerm: 'aat.expected_term_id' // not in single annot marshaller
+        ],
+        user: [
+                creator: 'u.username', // not in single annot marshaller
+                lastname: 'u.lastname', // not in single annot marshaller
+                firstname: 'u.firstname' // not in single annot marshaller
+        ]
+    ]
 
     /**
      * Generate SQL string for FROM
      * FROM depends on data to print (if image name is aksed, need to join with imageinstance+abstractimage,...)
      */
     def getFrom() {
-
         def from = "FROM user_annotation a "
         def where = "WHERE true\n"
 
 
-        if(tags) from += " LEFT OUTER JOIN tag_domain_association tda ON a.id = tda.domain_ident AND tda.domain_class_name = '${getDomainClass()}' "
+        if(tags) {
+            from += " LEFT OUTER JOIN tag_domain_association tda ON a.id = tda.domain_ident AND tda.domain_class_name = '${getDomainClass()}' "
+        }
         if (multipleTerm) {
-            from = "$from, annotation_term at, annotation_term at2 "
+            from += "LEFT OUTER JOIN annotation_term at ON a.id = at.user_annotation_id "
+            from += "LEFT OUTER JOIN annotation_term at2 ON a.id = at2.user_annotation_id "
+            where += "AND at.id <> at2.id AND at.term_id <> at2.term_id AND at.deleted IS NULL AND at2.deleted IS NULL "
+            /*from = "$from, annotation_term at, annotation_term at2 "
             where = "$where" +
                     "AND a.id = at.user_annotation_id\n" +
                     " AND a.id = at2.user_annotation_id\n" +
                     " AND at.id <> at2.id \n" +
                     " AND at.term_id <> at2.term_id \n"+
                     " AND at.deleted IS NULL\n"+
-                    " AND at2.deleted IS NULL\n"
-        } else if (noTerm && !(term || terms)) {
-            from += "LEFT JOIN (SELECT * from annotation_term x where true ${users ? "and x.user_id IN (${users.join(",")})" : ""} and x.deleted IS NULL) at ON a.id = at.user_annotation_id "
+                    " AND at2.deleted IS NULL\n"*/
+
+        }
+        else if (noTerm && !(term || terms)) {
+            from += "LEFT JOIN (SELECT * from annotation_term x ${users ? "where x.deleted IS NULL AND x.user_id IN (${users.join(",")})" : ""}) at ON a.id = at.user_annotation_id "
             where = "$where AND (at.id IS NULL OR at.deleted IS NOT NULL) \n"
-        } else if (noAlgoTerm) {
+        }
+        else if (noAlgoTerm) {
             from = "$from LEFT JOIN (SELECT * from algo_annotation_term x where true ${users ? "and x.user_id IN (${users.join(",")})" : ""} and x.deleted IS NULL) aat ON a.id = aat.annotation_ident "
             where = "$where AND (aat.id IS NULL OR aat.deleted IS NOT NULL) \n"
-        } else {
-            if (columnToPrint.contains('term')) {
-                from = "$from LEFT OUTER JOIN annotation_term at ON a.id = at.user_annotation_id"
-            }
+        }
+        else if (columnToPrint.contains('term')) {
+            from += "LEFT OUTER JOIN annotation_term at ON a.id = at.user_annotation_id "
+            where += "AND at.deleted IS NULL "
+        }
 
+        if (multipleTrack) {
+            from += "LEFT OUTER JOIN annotation_track atr2 ON a.id = atr2.annotation_ident "
+            where += "AND atr.id <> atr2.id AND atr.track_id <> atr2.track_id "
+        }
+        else if (noTrack && !(track || tracks)) {
+            where += "AND atr.id IS NULL \n"
+        }
+
+        if (multipleTrack || noTrack || columnToPrint.contains('track')) {
+            from += "LEFT OUTER JOIN annotation_track atr ON a.id = atr.annotation_ident "
         }
 
         if (columnToPrint.contains('user')) {
-            from = "$from, sec_user u "
-            where = "$where AND a.user_id = u.id \n"
+            from += "INNER JOIN sec_user u ON a.user_id = u.id "
         }
 
-        if (columnToPrint.contains('image')) {
-            from = "$from, abstract_image ai, image_instance ii "
-            where = "$where AND a.image_id = ii.id \n" +
-                    "AND ii.base_image_id = ai.id\n"
+        if (columnToPrint.contains('image') || tracks || track) {
+            from += "INNER JOIN image_instance ii ON a.image_id = ii.id INNER JOIN abstract_image ai ON ii.base_image_id = ai.id "
         }
 
         if (columnToPrint.contains('algo')) {
-            from = "$from, algo_annotation_term aat "
+            from += "INNER JOIN algo_annotation_term aat ON aat.annotation_ident = a.id "
+            where += "AND aat.deleted IS NULL "
+            /*from = "$from, algo_annotation_term aat "
             where = "$where AND aat.annotation_ident = a.id\n"
-            where = "$where AND aat.deleted IS NULL\n"
+            where = "$where AND aat.deleted IS NULL\n"*/
+        }
+
+        if (columnToPrint.contains('slice') || tracks || track) {
+            from += "INNER JOIN slice_instance si ON a.slice_id = si.id INNER JOIN abstract_slice asl ON si.base_slice_id = asl.id "
         }
 
         return from + "\n" + where
@@ -622,7 +844,8 @@ class UserAnnotationListing extends AnnotationListing {
         if (orderByRate) {
             return "ORDER BY aat.rate desc"
         } else if (!orderBy) {
-            return "ORDER BY a.id desc " + ((term || terms || columnToPrint.contains("term")) ? ", at.term_id " : "")
+            def order = (track || tracks) ? "rank asc" : "a.id desc "
+            return "ORDER BY "+ order + ((term || terms || columnToPrint.contains("term")) ? ", at.term_id " : "") + ((track || tracks || columnToPrint.contains("track")) ? ", atr.track_id " : "")
         } else {
             return "ORDER BY " + orderBy.collect { it.key + " " + it.value }.join(", ")
         }
@@ -643,74 +866,116 @@ class AlgoAnnotationListing extends AnnotationListing {
      *  all properties group available, each value is a list of assoc [propertyName, SQL columnName/methodName)
      *  If value start with #, don't use SQL column, its a "trensiant property"
      */
-    def availableColumn =
-            [
-                    basic: [id: 'a.id'],
-                    meta: [
-                            countReviewedAnnotations: 'a.count_reviewed_annotations',
-                            reviewed: '(a.count_reviewed_annotations>0)',
-                            image: 'a.image_id',
-                            project: 'a.project_id',
-                            container: "a.project_id",
-                            created: 'extract(epoch from a.created)*1000',
-                            updated: 'extract(epoch from a.updated)*1000',
-                            user: 'a.user_id',
-                            countComments: 'a.count_comments',
-                            geometryCompression: 'a.geometry_compression',
-                            cropURL: '#cropURL',
-                            smallCropURL: '#smallCropURL',
-                            url: '#url',
-                            imageURL: '#imageURL'
+    def availableColumn = [
+        basic: [
+                id: 'a.id'
+        ],
+        meta: [
+                created: 'extract(epoch from a.created)*1000',
+                updated: 'extract(epoch from a.updated)*1000',
+                image: 'a.image_id',
+                slice: 'a.slice_id',
+                project: 'a.project_id',
+                user: 'a.user_id',
 
-                    ],
-                    wkt: [location: 'a.wkt_location'],
-                    gis: [area: 'area', areaUnit: 'area_unit', perimeter: 'perimeter', perimeterUnit: 'perimeter_unit', x: 'ST_X(ST_centroid(a.location))', y: 'ST_Y(ST_centroid(a.location))'],
-                    term: [term: 'aat.term_id', annotationTerms: 'aat.id', userTerm: 'aat.user_job_id', rate: 'aat.rate'],
-                    image: [originalfilename: 'ai.original_filename', instancefilename: 'COALESCE(ii.instance_filename, ai.original_filename)'],
-                    user: [creator: 'u.username', software: 's.name', job: 'j.created']
-            ]
+                nbComments: 'a.count_comments',
+
+                countReviewedAnnotations: 'a.count_reviewed_annotations', // not in single annot marshaller
+                reviewed: '(a.count_reviewed_annotations>0)',
+
+                cropURL: '#cropURL',
+                smallCropURL: '#smallCropURL',
+                url: '#url',
+                imageURL: '#imageURL'
+        ],
+        wkt: [
+                location: 'a.wkt_location',
+                geometryCompression: 'a.geometry_compression',
+        ],
+        gis: [
+                area: 'area',
+                areaUnit: 'area_unit',
+                perimeter: 'perimeter',
+                perimeterUnit: 'perimeter_unit',
+                x: 'ST_X(ST_centroid(a.location))',
+                y: 'ST_Y(ST_centroid(a.location))'
+        ],
+        term: [
+                term: 'aat.term_id',
+                annotationTerms: 'aat.id',
+                userTerm: 'aat.user_job_id',
+                rate: 'aat.rate'
+        ],
+        track: [
+                track: 'atr.track_id',
+                annotationTracks: 'atr.id'
+        ],
+        image: [
+                originalFilename: 'ai.original_filename', // not in single annot marshaller
+                instanceFilename: 'COALESCE(ii.instance_filename, ai.original_filename)' // not in single annot marshaller
+        ],
+        slice: [
+                channel: 'asl.channel', // not in single annot marshaller
+                zStack: 'asl.z_stack', // not in single annot marshaller
+                time: 'asl.time' // not in single annot marshaller
+        ],
+        user: [
+                creator: 'u.username', // not in single annot marshaller
+                software: 's.name', // not in single annot marshaller
+                job: 'j.id' // not in single annot marshaller
+        ]
+    ]
 
     /**
      * Generate SQL string for FROM
      * FROM depends on data to print (if image name is aksed, need to join with imageinstance+abstractimage,...)
      */
     def getFrom() {
-
         def from = "FROM algo_annotation a "
         def where = "WHERE true\n"
 
-
         if(tags) from += " LEFT OUTER JOIN tag_domain_association tda ON a.id = tda.domain_ident AND tda.domain_class_name = '${getDomainClass()}' "
+
         if (multipleTerm) {
-            from = "$from, algo_annotation_term aat, algo_annotation_term aat2 "
+            from += "LEFT OUTER JOIN algo_annotation_term aat ON a.id = aat.annotation_ident "
+            from += "LEFT OUTER JOIN algo_annotation_term aat2 ON a.id = aat2.annotation_ident "
+            where += "AND aat.id <> aat2.id AND aat.term_id <> aat2.term_id AND aat.deleted IS NULL AND aat2.deleted IS NULL "
+            /*from = "$from, algo_annotation_term aat, algo_annotation_term aat2 "
             where = "$where" +
                     "AND a.id = aat.annotation_ident\n" +
                     " AND a.id = aat2.annotation_ident\n" +
                     " AND aat.id <> aat2.id \n" +
                     " AND aat.term_id <> aat2.term_id \n" +
                     " AND aat.deleted is NULL \n"+
-                    " AND aat2.deleted is NULL \n"
-        } else if ((noTerm || noAlgoTerm) && !(term || terms)) {
+                    " AND aat2.deleted is NULL \n"*/
+        }
+        else if ((noTerm || noAlgoTerm) && !(term || terms)) {
+            //from = "$from LEFT JOIN (SELECT * from algo_annotation_term x ${users ? "where x.deleted IS NULL AND x.user_job_id IN (${users.join(",")})" : ""}) aat ON a.id = aat.annotation_ident "
             from = "$from LEFT JOIN (SELECT * from algo_annotation_term x where true ${users ? "and x.user_job_id IN (${users.join(",")})" : ""} and x.deleted IS NULL) aat ON a.id = aat.annotation_ident "
+            //where = "$where AND aat.id IS NULL \n"
             where = "$where AND (aat.id IS NULL OR aat.deleted IS NOT NULL) \n"
 
-        } else {
-            if (columnToPrint.contains('term')) {
-                from = "$from LEFT OUTER JOIN algo_annotation_term aat ON a.id = aat.annotation_ident"
-                where = "$where AND aat.deleted IS NULL \n"
-            }
+        } else if (columnToPrint.contains('term')) {
+            from += "LEFT JOIN algo_annotation_term aat ON a.id = aat.annotation_ident "
+            where += "AND aat.deleted IS NULL "
+            //from = "$from LEFT OUTER JOIN algo_annotation_term aat ON a.id = aat.annotation_ident"
+            //where = "$where AND aat.deleted IS NULL \n"
         }
-        if (columnToPrint.contains('image')) {
-            from = "$from, abstract_image ai, image_instance ii "
-            where = "$where AND a.image_id = ii.id \n" +
-                    "AND ii.base_image_id = ai.id\n"
+
+        if (columnToPrint.contains('track')) {
+            from += "LEFT OUTER JOIN annotation_track atr ON a.id = atr.annotation_ident "
+        }
+
+        if (columnToPrint.contains('image') || tracks || track) {
+            from += "INNER JOIN image_instance ii ON a.image_id = ii.id INNER JOIN abstract_image ai ON ii.base_image_id = ai.id "
+        }
+
+        if (columnToPrint.contains('slice') || tracks || track) {
+            from += "INNER JOIN slice_instance si ON a.slice_id = si.id INNER JOIN abstract_slice asl ON si.base_slice_id = asl.id "
         }
 
         if (columnToPrint.contains('user')) {
-            from = "$from, sec_user u, job j, software s "
-            where = "$where AND a.user_id = u.id \n" +
-                    "AND u.job_id = j.id\n" +
-                    "AND j.software_id = s.id\n"
+            from += "INNER JOIN sec_user u ON a.user_id = u.id INNER JOIN job j ON u.job_id = j.id INNER JOIN software s ON j.software_id = s.id "
         }
 
         return from + "\n" + where
@@ -757,8 +1022,11 @@ class AlgoAnnotationListing extends AnnotationListing {
         if (kmeansValue < 3) return ""
         if (orderBy) {
             return "ORDER BY " + orderBy.collect { it.key + " " + it.value }.join(", ")
+        } else if (!orderBy) {
+            def order = (track || tracks) ? "rank asc" : "a.id desc "
+            return "ORDER BY "+ order + ((term || terms || columnToPrint.contains("term")) ? ", aat.term_id " : "") + ((track || tracks || columnToPrint.contains("track")) ? ", atr.track_id " : "")
         } else {
-            return "ORDER BY " + (columnToPrint.contains("term") ? "aat.rate desc ," : "") + " a.id desc "
+            return "ORDER BY " + orderBy.collect { it.key + " " + it.value }.join(", ")
         }
     }
 }
@@ -774,72 +1042,105 @@ class ReviewedAnnotationListing extends AnnotationListing {
      *  all properties group available, each value is a list of assoc [propertyName, SQL columnName/methodName)
      *  If value start with #, don't use SQL column, its a "trensiant property"
      */
-    def availableColumn =
-            [
-                    basic: [id: 'a.id'],
-                    meta: [
-                            reviewed: 'true',
-                            image: 'a.image_id',
-                            project: 'a.project_id',
-                            container: "a.project_id",
-                            created: 'extract(epoch from a.created)*1000',
-                            updated: 'extract(epoch from a.updated)*1000',
-                            user: 'a.user_id',
-                            reviewUser: 'a.review_user_id',
-                            countComments: 'a.count_comments',
-                            geometryCompression: 'a.geometry_compression',
-                            cropURL: '#cropURL',
-                            smallCropURL: '#smallCropURL',
-                            url: '#url',
-                            imageURL: '#imageURL',
-                            parentIdent: 'parent_ident'
+    def availableColumn = [
+        basic: [
+                id: 'a.id'
+        ],
+        meta: [
+                created: 'extract(epoch from a.created)*1000',
+                updated: 'extract(epoch from a.updated)*1000',
+                image: 'a.image_id',
+                slice: 'a.slice_id',
+                project: 'a.project_id',
+                user: 'a.user_id',
 
-                    ],
-                    wkt: [location: 'a.wkt_location'],
-                    gis: [area: 'area', areaUnit: 'area_unit', perimeter: 'perimeter', perimeterUnit: 'perimeter_unit', x: 'ST_X(ST_centroid(a.location))', y: 'ST_Y(ST_centroid(a.location))'],
-                    term: [term: 'at.term_id', annotationTerms: "0", userTerm: 'a.user_id'],//user who add the term, is the user that create reviewedannotation (a.user_id)
-                    image: [originalfilename: 'ai.original_filename', instancefilename: 'COALESCE(ii.instance_filename, ai.original_filename)'],
-                    algo: [id: 'aat.id', rate: 'aat.rate'],
-                    user: [creator: 'u.username', lastname: 'u.lastname', firstname: 'u.firstname']
-            ]
+                nbComments: 'a.count_comments',
+
+                reviewed: 'true',
+                reviewUser: 'a.review_user_id',
+                parentIdent: 'parent_ident',
+
+                cropURL: '#cropURL',
+                smallCropURL: '#smallCropURL',
+                url: '#url',
+                imageURL: '#imageURL',
+
+        ],
+        wkt: [
+                location: 'a.wkt_location',
+                geometryCompression: 'a.geometry_compression',
+        ],
+        gis: [
+                area: 'area',
+                areaUnit: 'area_unit',
+                perimeter: 'perimeter',
+                perimeterUnit: 'perimeter_unit',
+                x: 'ST_X(ST_centroid(a.location))',
+                y: 'ST_Y(ST_centroid(a.location))'
+        ],
+        term: [
+                term: 'at.term_id',
+                annotationTerms: "0",
+                userTerm: 'a.user_id' //user who add the term, is the user that create reviewedannotation (a.user_id)
+        ],
+        image: [
+                originalFilename: 'ai.original_filename', // not in single annot marshaller
+                instanceFilename: 'COALESCE(ii.instance_filename, ai.original_filename)' // not in single annot marshaller
+        ],
+        slice: [
+                channel: 'asl.channel', // not in single annot marshaller
+                zStack: 'asl.z_stack', // not in single annot marshaller
+                time: 'asl.time' // not in single annot marshaller
+        ],
+        algo: [
+                id: 'aat.id',
+                rate: 'aat.rate'
+        ],
+        user: [
+                creator: 'u.username', // not in single annot marshaller
+                lastname: 'u.lastname', // not in single annot marshaller
+                firstname: 'u.firstname' // not in single annot marshaller
+        ]
+    ]
 
     /**
      * Generate SQL string for FROM
      * FROM depends on data to print (if image name is aksed, need to join with imageinstance+abstractimage,...)
      */
     def getFrom() {
-
         def from = "FROM reviewed_annotation a "
         def where = "WHERE true\n"
-
 
         if(tags) from += " LEFT OUTER JOIN tag_domain_association tda ON a.id = tda.domain_ident AND tda.domain_class_name = '${getDomainClass()}' "
 
         if (multipleTerm) {
-            from = "$from, reviewed_annotation_term at, reviewed_annotation_term at2 "
+            from += "LEFT OUTER JOIN reviewed_annotation_term at ON a.id = at.reviewed_annotation_terms_id "
+            from += "LEFT OUTER JOIN reviewed_annotation_term at2 ON a.id = at2.reviewed_annotation_terms_id "
+            where += "AND at.term_id <> at2.term_id  "
+            /*from = "$from, reviewed_annotation_term at, reviewed_annotation_term at2 "
             where = "$where" +
                     "AND a.id = at.reviewed_annotation_terms_id\n" +
                     " AND a.id = at2.reviewed_annotation_terms_id\n" +
-                    " AND at.term_id <> at2.term_id \n"
-        } else if (noTerm && !(term || terms)) {
+                    " AND at.term_id <> at2.term_id \n"*/
+        }
+        else if (noTerm && !(term || terms)) {
             from = "$from LEFT OUTER JOIN reviewed_annotation_term at ON a.id = at.reviewed_annotation_terms_id "
             where = "$where AND at.reviewed_annotation_terms_id IS NULL \n"
-        } else {
-            if (columnToPrint.contains('term')) {
-                from = "$from LEFT OUTER JOIN reviewed_annotation_term at ON a.id = at.reviewed_annotation_terms_id "
-            }
-
+        }
+        else if (columnToPrint.contains('term')) {
+            from = "$from LEFT OUTER JOIN reviewed_annotation_term at ON a.id = at.reviewed_annotation_terms_id "
         }
 
         if (columnToPrint.contains('image')) {
-            from = "$from, abstract_image ai, image_instance ii "
-            where = "$where AND a.image_id = ii.id \n" +
-                    "AND ii.base_image_id = ai.id\n"
+            from += "INNER JOIN image_instance ii ON a.image_id = ii.id INNER JOIN abstract_image ai ON ii.base_image_id = ai.id "
+        }
+
+        if (columnToPrint.contains('slice')) {
+            from += "INNER JOIN slice_instance si ON a.slice_id = si.id INNER JOIN abstract_slice asl ON si.base_slice_id = asl.id "
         }
 
         if (columnToPrint.contains('user')) {
-            from = "$from, sec_user u "
-            where = "$where AND a.user_id = u.id \n"
+            from += "INNER JOIN sec_user u ON a.user_id = u.id "
         }
 
         return from + "\n" + where
@@ -921,28 +1222,50 @@ class RoiAnnotationListing extends AnnotationListing {
      *  all properties group available, each value is a list of assoc [propertyName, SQL columnName/methodName)
      *  If value start with #, don't use SQL column, its a "trensiant property"
      */
-    def availableColumn =
-            [
-                    basic: [id: 'a.id'],
-                    meta: [
-                            reviewed: 'false',
-                            image: 'a.image_id',
-                            project: 'a.project_id',
-                            container: "a.project_id",
-                            created: 'extract(epoch from a.created)*1000',
-                            updated: 'extract(epoch from a.updated)*1000',
-                            user: 'a.user_id',
-                            geometryCompression: 'a.geometry_compression',
-                            cropURL: '#cropURL',
-                            smallCropURL: '#smallCropURL',
-                            url: '#url',
-                            imageURL: '#imageURL',
-                    ],
-                    wkt: [location: 'a.wkt_location'],
-                    gis: [area: 'area', areaUnit: 'area_unit', perimeter: 'perimeter', perimeterUnit: 'perimeter_unit', x: 'ST_X(ST_centroid(a.location))', y: 'ST_Y(ST_centroid(a.location))'],
-                    image: [originalfilename: 'ai.original_filename', instancefilename: 'COALESCE(ii.instance_filename, ai.original_filename)'],
-                    user: [creator: 'u.username', lastname: 'u.lastname', firstname: 'u.firstname']
+    def availableColumn = [
+            basic: [
+                    id: 'a.id'
+            ],
+            meta: [
+                    created: 'extract(epoch from a.created)*1000',
+                    updated: 'extract(epoch from a.updated)*1000',
+                    image: 'a.image_id',
+                    slice: 'a.slice_id',
+                    project: 'a.project_id',
+                    user: 'a.user_id',
+
+                    cropURL: '#cropURL',
+                    smallCropURL: '#smallCropURL',
+                    url: '#url',
+                    imageURL: '#imageURL'
+            ],
+            wkt: [
+                    location: 'a.wkt_location',
+                    geometryCompression: 'a.geometry_compression',
+            ],
+            gis: [
+                    area: 'area',
+                    areaUnit: 'area_unit',
+                    perimeter: 'perimeter',
+                    perimeterUnit: 'perimeter_unit',
+                    x: 'ST_X(ST_centroid(a.location))',
+                    y: 'ST_Y(ST_centroid(a.location))'
+            ],
+            image: [
+                    originalFilename: 'ai.original_filename', // not in single annot marshaller
+                    instanceFilename: 'COALESCE(ii.instance_filename, ai.original_filename)' // not in single annot marshaller
+            ],
+            slice: [
+                    channel: 'asl.channel', // not in single annot marshaller
+                    zStack: 'asl.z_stack', // not in single annot marshaller
+                    time: 'asl.time' // not in single annot marshaller
+            ],
+            user: [
+                    creator: 'u.username', // not in single annot marshaller
+                    lastname: 'u.lastname', // not in single annot marshaller
+                    firstname: 'u.firstname' // not in single annot marshaller
             ]
+    ]
 
     /**
      * Generate SQL string for FROM
@@ -953,15 +1276,16 @@ class RoiAnnotationListing extends AnnotationListing {
         def from = "FROM roi_annotation a "
         def where = "WHERE true\n"
 
-        if (columnToPrint.contains('image')) {
-            from = "$from, abstract_image ai, image_instance ii "
-            where = "$where AND a.image_id = ii.id \n" +
-                    "AND ii.base_image_id = ai.id\n"
+        if (columnToPrint.contains('user')) {
+            from += "INNER JOIN sec_user u ON a.user_id = u.id "
         }
 
-        if (columnToPrint.contains('user')) {
-            from = "$from, sec_user u "
-            where = "$where AND a.user_id = u.id \n"
+        if (columnToPrint.contains('image')) {
+            from += "INNER JOIN image_instance ii ON a.image_id = ii.id INNER JOIN abstract_image ai ON ii.base_image_id = ai.id "
+        }
+
+        if (columnToPrint.contains('slice')) {
+            from += "INNER JOIN slice_instance si ON a.slice_id = si.id INNER JOIN abstract_slice asl ON si.base_slice_id = asl.id "
         }
 
         if(tags) from += " LEFT OUTER JOIN tag_domain_association tda ON a.id = tda.domain_ident AND tda.domain_class_name = '${getDomainClass()}' "

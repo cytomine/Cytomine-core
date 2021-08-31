@@ -1,0 +1,72 @@
+sudo: required
+
+services:
+  - docker
+
+language: java
+
+jdk:
+  - oraclejdk8
+
+env:
+  global:
+    - DOCKER_USERNAME=cytomineulg
+    - secure: "CUpC18Qy5UbSfShwKxijIThbJaN2j7G+vk+tNbXmvIEOv4Ge9GHDS/63XPpjQYF+Jq2VRNEEFcgLLiy/qV6ILLaKjJIbMzBokd1DDHErD8d84FbXlkDCo/fySqYXj7czNDiE0PTO1RiN5PqT/dGZ7Q4FSQVwNDx8bddd6OmrOVyVDYJllWYIiin9yv20P0QE3Zsu7rDtk2427Po/sbFMCSHv40GndRXn58bkE2/s8j0ByWDIIlRcXKs9QuWmnVgNkBN746Xrbb8feiCDyv3ToKTok4KGPIOO7cOMDsVm5d6ehCn9I57AQDTFR0Zj57477hwTdslqlAK+APnpFiU82VY0gWUNRQLv/Ipaz4hpSODx91rz1xjTH4Ysbd6lZ84RqZ7bcGjMw0zHESO/OUWfbLqFFkRn0zOwiFji8z/tYzROootZWaXtfp9qo2Q/6Hr4grBKeAypf5h7MeDSJDgiE04SSwv0s59bvt/8rMr5i9oyt41LHOWUbaiodbDdZAQ5hbhRamrBnYjsLc9qFVU4JIt6edhTKqPHeCOopdZ0P9Vxv1fY21nvw4kXGIgOqI6lU8FIHDROU56fICN3nqOn9b61F0AgYJVru2REt7CrUFiYNjw/x/5dti7+/zr0MB/Zdy16YINxNi0pjoc2jqbsfxVS0T/ZnGIIUifzT6F8Y8s="
+
+before_install:
+  - ./grailsw clean
+  - sudo service postgresql stop
+  - while sudo lsof -Pi :5432 -sTCP:LISTEN -t; do sleep 1; done
+
+install:
+  - ./grailsw refresh-dependencies
+  - docker run -d -p 27017:27017 -p 28017:28017 --name mongodb cytomineuliege/mongodb:v1.1.2
+  - docker run -d -p 5432:5432 --name postgresql cytomineuliege/postgis:v1.2.0
+
+script: true
+# - ./grailsw test-app ## Skip tests for now.
+
+after_success:
+  - git fetch --tags
+  - export VERSION=$(cat application.properties | grep app.version=)
+  - export VERSION=${VERSION#app.version=}
+  - export DEPLOY=false
+  - >
+    if [[ ! $(git tag -l v$VERSION) ]]; then
+      git config --local user.name "$(git log -1 --pretty=format:'%an')";
+      git config --local user.email "$(git log -1 --pretty=format:'%ae')";
+      git tag "v$VERSION";
+      export DEPLOY=true;
+      echo "Deploy with version $VERSION";
+
+      ./grailsw rest-api-doc;
+      ./grailsw war;
+      cp restapidoc.json docker/;
+      cp core.war docker/;
+      docker build --build-arg RELEASE_PATH="." --build-arg FROM_NAMESPACE=cytomineuliege --build-arg FROM_VERSION=v1.2.0 -t cytomineuliege/core:latest -t cytomineuliege/core:v$VERSION docker/
+    fi;
+
+deploy:
+  - provider: script
+    script: >
+      echo $VERSION &&
+      docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD" &&
+      docker push cytomineuliege/core:v$VERSION &&
+      echo "Done."
+    skip_cleanup: true
+    on:
+      condition: $DEPLOY = true
+  - provider: releases
+    api_key:
+      secure: ml7gn5xsbIzjaCoB3Yt1GZ91wQ9Va+kr7qhW4uvrOwhGc4OjHuy4Dmmd7tmxsyYfziy0X00+plOn1hjfWeKpPCvAwDZctKqtJrNvxu51SkXZn8G0IzJ0yfYM3xWmszeehS639bupQK6flhSti1ipZQSPAPPtVO9hAunBZWk8vZKmF+occ7qwdFlwEd1ZSViMmE4l3QqSDyraG8qctLW8D9VJaGidbPQMVr/Y3SqrSyWGDRcLhB7mJ/hEhDnORJeF7oapq3ablSKonAQsrWn4jLnKuoJ5lMP5MWlIXH0y3kj7zDrYejx6CzUD2m8jhItplpv6+O6xAAhmDM5OHD1PgbVQrS/RSkMfvoY02GX9F8fVu2d449Vbg7VVHIP2ThitC5SO9JXJzrsFnLz6nkoFZcFNj3DdoPQKUm2kHTqQHSv6r/TJt2HXwbSnlr+TyhaIXzxG7z8auyFLLY6J8X6A/rH3uiyqR/TMTJh7gHuVHnszt/VgBjEqGEqDBeIs5mSHPTSA4VpDLFkkljQYpGghyZsOx2oOZjf0g/4n3m3HEstBtDqQYZ3F8DSwzp0U8b+cGg3y2J4/Am3azH51N3z1yOR7+4HUda7jzvuxeiAaJhQoulKO7kkm4e5EfG2vgf95vhnqfz7nHNMMXkmUdmThWdBcapFbYqfcfAjkN+Zd5Wg=
+    file:
+      - core.war
+      - restapidoc.json
+    skip_cleanup: true
+    on:
+      condition: $DEPLOY = true
+
+notifications:
+  email: false
+  slack:
+    secure: TrdyGx56LOXEzrMxZgMhnYwpLQjIX3fL40YYujq40W66Rcis6nm2SP4i0By3fOSwwKcRwP8HXvs219sZddL3KJSZ0ormMvLHVjo9NNEbUAHqWVUBnaNJjF6ANmRFpuIKkVRTu2LQHaJhjMFyrKg8VVRAxNR1keaOsVeb4/U6gLF9LqfMciz56TtoDzfbMfB0V7l+RtUfRpeKGjDqp+lAEIzueSRItK49hP4gACGxJEMACIG+z1PZNLtVTnV6DokqnVmhUBIo9+ikLmU8g48Ark6hmj0JC5zZHK+LwZUhlMeJmPsJMydJ0ZPiOzcdPhQoLZC5looGFYPru2Igu3GTIM/hoTCDIYUCYRStr0vRF4niEEWMXKp9NJUQHkK0RwPCsuc0iwl1Jaeh9+qSEUeEW3tYyRgNwBPI4YK/XFt1/oDHufi8xU50xVTysSOxVJWbZ29OVdJ4LtWrF5rdKiFfl54sAqEnVREp8QcvRFXLMwL89cW5omi4xqmlojLm1pS/6DthlrED7dMz8qQi43shOPQbVqA+TRRUXl7jPo4DNTbI/8KfJGXg76scytZB4qUx4t6j2C9YxllHEZf7nlNyvHQzTLrcNOB6kxYFOibdrWIm1TycpbIBkb3l/1ZP0MgVFLpEu89eYcCpk29g6QkdyMU6Pb69avq4c9HUk0WhGME=

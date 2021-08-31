@@ -220,7 +220,7 @@ class SearchService extends ModelService {
 
             if (it.class.equals(ImageInstance.class.getName())) {
 
-               dataTmp.urlImage = UrlApi.getAbstractImageThumbURL(it.baseImage)
+               dataTmp.urlImage = UrlApi.getAbstractImageThumbUrl(it.baseImage)
                dataTmp.urlGoTo =  UrlApi.getBrowseImageInstanceURL(it.project, it.id)
                dataTmp.urlApi = UrlApi.getApiURL("imageinstance",it.id)
 
@@ -232,7 +232,7 @@ class SearchService extends ModelService {
 
             } else if (it.class.equals(UserAnnotation.class.getName()) || it.class.equals(AlgoAnnotation.class.getName()) || it.class.equals(ReviewedAnnotation.class.getName())) {
 
-                dataTmp.urlImage = UrlApi.getAnnotationMinCropWithAnnotationId(it.id)
+                dataTmp.urlImage = UrlApi.getAnnotationCropWithAnnotationId(it.id, 256)
                 dataTmp.urlGoTo =  UrlApi.getAnnotationURL(it.project, it.image, it.id)
                 dataTmp.urlApi = UrlApi.getApiURL("annotation",it.id)
 

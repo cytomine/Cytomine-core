@@ -30,6 +30,9 @@ class JobUrlMappings {
         "/api/job/$id/execute.$format" (controller : "restJob") {
             action = [POST : "execute", GET: "execute"]
         }
+        "/api/job/$id/copy.$format" (controller : "restJob") {
+            action = [POST : "copy"]
+        }
         "/api/job/$job_id/processing_server/$processing_server_id/execute.$format" (controller: "restJob") {
             action = [POST: "executeWithProcessingServer", GET: "executeWithProcessingServer"]
         }
@@ -39,6 +42,14 @@ class JobUrlMappings {
 
         "/api/job/$id/log.$format" (controller: "restJob") {
             action = [GET: "getLog"]
+        }
+
+        "/api/job/$id/log.$format" (controller: "restJob") {
+            action = [GET: "getLog"]
+        }
+
+        "/api/job/$id/favorite.$format" (controller: "restJob") {
+            action = [POST: "setFavorite"]
         }
 
         "/api/project/$id/job/purge.$format"(controller : "restJob") {

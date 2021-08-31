@@ -31,18 +31,21 @@ import org.codehaus.groovy.grails.web.json.JSONObject
 class ImageGroupHDF5Tests {
 
     void testShowPixelSpectra(){
-        /*ImageGroupHDF5 imageGroupHDF5 = BasicInstanceBuilder.getImageGroupHDF5NotExist(false)
-        imageGroupHDF5.filename = "/data/28/hdf5_35398"
-        imageGroupHDF5 = BasicInstanceBuilder.saveDomain(imageGroupHDF5)
-
-        def result = ImageGroupHDF5API.pixel(imageGroupHDF5.group.id, 0,0, Infos.ANOTHERLOGIN, Infos.ANOTHERPASSWORD)
-        assert 200 == result.code*/
+//        ImageGroupHDF5 imageGroupHDF5 = BasicInstanceBuilder.getImageGroupHDF5NotExist(false)
+//        imageGroupHDF5.filename = "/data/28/hdf5_35398"
+//        imageGroupHDF5 = BasicInstanceBuilder.saveDomain(imageGroupHDF5)
+//
+//        def result = ImageGroupHDF5API.pixel(imageGroupHDF5.group.id, 0,0, Infos.ANOTHERLOGIN, Infos.ANOTHERPASSWORD)
+//        assert 200 == result.code
     }
 
     /*void testDeleteImageGroupHDF5(){
         ImageGroupHDF5 imageGroupHDF5 = BasicInstanceBuilder.getImageGroupHDF5()
         def result = ImageGroupHDF5API.delete(imageGroupHDF5.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 200 == result.code
+        assert 403 == result.code
+        def json = JSON.parse(result.data)
+        assert json.errors.contains("removed")
+        //assert 200 == result.code
     }
 
     void testAddImageGroupHDF5() {
@@ -51,14 +54,9 @@ class ImageGroupHDF5Tests {
         println imageGroupHDF5
         def result = ImageGroupHDF5API.create(((ImageGroupHDF5)imageGroupHDF5).encodeAsJSON(), Infos.ANOTHERLOGIN, Infos.ANOTHERPASSWORD)
         // invalid because no imageSequence
-        assert 400 == result.code
-
-
-        /*int resID = result.data.id
-
-        result = ImageGroupHDF5API.show(resID, Infos.ANOTHERLOGIN, Infos.ANOTHERPASSWORD)
-        assert 200 == result.code*/
-    /*}
+        assert 403 == result.code
+        //assert 400 == result.code
+    }
 
 
     //This test launch a background task that could take a long time, so it is not really achievable if the test server is closed before
@@ -78,13 +76,11 @@ class ImageGroupHDF5Tests {
 
     }
 */
-/*    void testShowImageGroupFromId() {
+    void testShowImageGroupFromId() {
         ImageGroupHDF5 imageGroupHDF5 = BasicInstanceBuilder.getImageGroupHDF5()
         println imageGroupHDF5
         def result = ImageGroupHDF5API.show(imageGroupHDF5.id, Infos.ANOTHERLOGIN, Infos.ANOTHERPASSWORD)
-        assert 200 == result.code
-        def json = JSON.parse(result.data)
-        assert json instanceof JSONObject
+        assert 404 == result.code
     }
 
     void testShowImageGroupFromImageGroupId(){
@@ -94,8 +90,7 @@ class ImageGroupHDF5Tests {
         BasicInstanceBuilder.saveDomain(imageGroupHDF5)
 
         def result = ImageGroupHDF5API.showFromImageGroup(imageGroup.id ,Infos.ANOTHERLOGIN, Infos.ANOTHERPASSWORD)
-        assert 200 == result.code
-
+        assert 404 == result.code
     }
-*/
+
 }

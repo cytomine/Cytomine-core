@@ -20,9 +20,9 @@ import be.cytomine.Exception.CytomineException
 import be.cytomine.Exception.ObjectNotFoundException
 import be.cytomine.api.RestController
 import be.cytomine.image.ImageInstance
+import be.cytomine.image.SliceInstance
 import be.cytomine.project.Project
 import be.cytomine.security.User
-import static org.springframework.security.acls.domain.BasePermission.READ
 import org.restapidoc.annotation.RestApi
 import org.restapidoc.annotation.RestApiMethod
 import org.restapidoc.annotation.RestApiParam
@@ -36,10 +36,11 @@ import static org.springframework.security.acls.domain.BasePermission.WRITE
 class RestAnnotationActionController extends RestController {
 
     def annotationActionService
-    def imageInstanceService
-    def secUserService
     def projectService
     def securityACLService
+    def sliceInstanceService
+    def imageInstanceService
+    def secUserService
 
     @RestApiMethod(description="Record an action performed by a user on an annotation.")
     @RestApiParams(params=[
@@ -55,14 +56,31 @@ class RestAnnotationActionController extends RestController {
         }
     }
 
-    @RestApiMethod(description="Summarize the annotation actions entries.")
+    @RestApiMethod(description="Summarize the annotation actions entries by slice.")
     @RestApiParams(params=[
-    @RestApiParam(name="image", type="long", paramType = RestApiParamType.PATH, description = "The image id"),
-    @RestApiParam(name="user", type="long", paramType = RestApiParamType.QUERY, description = "The user id", required=false),
-    @RestApiParam(name="afterThan", type="long", paramType = RestApiParamType.QUERY, description = "A date. Will select all the entries created after this date", required=false),
-    @RestApiParam(name="beforeThan", type="long", paramType = RestApiParamType.QUERY, description = "A date. Will select all the entries created before this date", required=false),
+            @RestApiParam(name="slice", type="long", paramType = RestApiParamType.PATH, description = "The slice id"),
+            @RestApiParam(name="user", type="long", paramType = RestApiParamType.QUERY, description = "The user id", required=false),
+            @RestApiParam(name="afterThan", type="long", paramType = RestApiParamType.QUERY, description = "A date. Will select all the entries created after this date", required=false),
+            @RestApiParam(name="beforeThan", type="long", paramType = RestApiParamType.QUERY, description = "A date. Will select all the entries created before this date", required=false),
     ])
-    def list() {
+    def listBySlice() {
+        SliceInstance slice = sliceInstanceService.read(params.slice)
+        User user = secUserService.read(params.user)
+        if(slice == null) throw new ObjectNotFoundException("Invalid slice")
+        if(params.user != null && user == null) throw new ObjectNotFoundException("Invalid user")
+        Long afterThan = params.long("afterThan")
+        Long beforeThan = params.long("beforeThan")
+        responseSuccess(annotationActionService.list(slice, user, afterThan, beforeThan))
+    }
+
+    @RestApiMethod(description="Summarize the annotation actions entries by image.")
+    @RestApiParams(params=[
+            @RestApiParam(name="image", type="long", paramType = RestApiParamType.PATH, description = "The image id"),
+            @RestApiParam(name="user", type="long", paramType = RestApiParamType.QUERY, description = "The user id", required=false),
+            @RestApiParam(name="afterThan", type="long", paramType = RestApiParamType.QUERY, description = "A date. Will select all the entries created after this date", required=false),
+            @RestApiParam(name="beforeThan", type="long", paramType = RestApiParamType.QUERY, description = "A date. Will select all the entries created before this date", required=false),
+    ])
+    def listByImage() {
         ImageInstance image = imageInstanceService.read(params.image)
         securityACLService.checkIsAdminContainer(image)
         User user = secUserService.read(params.user)
@@ -89,5 +107,4 @@ class RestAnnotationActionController extends RestController {
 
         responseSuccess(annotationActionService.countByProject(project, startDate, endDate, params.type))
     }
-
 }

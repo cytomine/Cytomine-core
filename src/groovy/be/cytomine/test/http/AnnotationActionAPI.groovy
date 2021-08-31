@@ -26,7 +26,13 @@ class AnnotationActionAPI extends DomainAPI {
         return result
     }
 
-    //pas de s !!!
+    static def countByProject(Long id, String username, String password, Long startDate=null, Long endDate=null) {
+        String URL = Infos.CYTOMINEURL + "/api/project/$id/annotation_action/count.json?" +
+                (startDate ? "&startDate=$startDate" : "") +
+                (endDate ? "&endDate=$endDate" : "")
+        return doGET(URL, username, password)
+    }
+
     static def listByImage(Long idImage, String username, String password, Long afterThan = null, Long beforeThan = null) {
         String URL = Infos.CYTOMINEURL + "/api/imageinstance/$idImage/annotation_action.json?showDetails=true"
         if(afterThan) URL += "&afterThan=$afterThan"
@@ -34,18 +40,24 @@ class AnnotationActionAPI extends DomainAPI {
         return doGET(URL, username, password)
     }
 
-    //pas de s !!!
     static def listByImageAndUser(Long idImage,Long idUser, String username, String password, Long afterThan = null, Long beforeThan = null) {
         String URL = Infos.CYTOMINEURL + "/api/imageinstance/$idImage/annotation_action.json?user=$idUser&showDetails=true"
-        if (afterThan) URL += "&afterThan=$afterThan"
-        if (beforeThan) URL += "&beforeThan=$beforeThan"
+        if(afterThan) URL += "&afterThan=$afterThan"
+        if(beforeThan) URL += "&beforeThan=$beforeThan"
         return doGET(URL, username, password)
     }
 
-    static def countByProject(Long id, String username, String password, Long startDate=null, Long endDate=null) {
-        String URL = Infos.CYTOMINEURL + "/api/project/$id/annotation_action/count.json?" +
-                (startDate ? "&startDate=$startDate" : "") +
-                (endDate ? "&endDate=$endDate" : "")
+    static def listBySlice(Long idSlice, String username, String password, Long afterThan = null, Long beforeThan = null) {
+        String URL = Infos.CYTOMINEURL + "/api/sliceinstance/$idSlice/annotation_action.json?showDetails=true"
+        if(afterThan) URL += "&afterThan=$afterThan"
+        if(beforeThan) URL += "&beforeThan=$beforeThan"
+        return doGET(URL, username, password)
+    }
+
+    static def listBySliceAndUser(Long idSlice,Long idUser, String username, String password, Long afterThan = null, Long beforeThan = null) {
+        String URL = Infos.CYTOMINEURL + "/api/sliceinstance/$idSlice/annotation_action.json?user=$idUser&showDetails=true"
+        if(afterThan) URL += "&afterThan=$afterThan"
+        if(beforeThan) URL += "&beforeThan=$beforeThan"
         return doGET(URL, username, password)
     }
 }

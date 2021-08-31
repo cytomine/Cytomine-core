@@ -19,11 +19,10 @@ package be.cytomine.utils.bootstrap
 import be.cytomine.Exception.InvalidRequestException
 import be.cytomine.Exception.WrongArgumentException
 import be.cytomine.image.AbstractImage
-import be.cytomine.image.ImageInstance
 import be.cytomine.image.Mime
-import be.cytomine.image.UploadedFile
 import be.cytomine.image.server.*
 import be.cytomine.middleware.AmqpQueue
+import be.cytomine.middleware.ImageServer
 import be.cytomine.middleware.AmqpQueueConfigInstance
 import be.cytomine.middleware.MessageBrokerServer
 import be.cytomine.ontology.Relation
@@ -56,6 +55,41 @@ class BootstrapUtilsService {
     def processingServerService
     def configurationService
 
+    def dropSqlColumn(def table, def column) {
+        def sql = new Sql(dataSource)
+        def result = sql.executeUpdate('ALTER TABLE ' + table + ' DROP COLUMN IF EXISTS ' + column + ';')
+        sql.close()
+        return result
+    }
+
+    def updateSqlColumnConstraint(def table, def column, def newSqlConstraint) {
+        def sql = new Sql(dataSource)
+        def result
+        if (checkSqlColumnExistence(table, column)) {
+            result = sql.executeUpdate('ALTER TABLE ' + table + ' ALTER COLUMN ' + column + ' ' + newSqlConstraint + ';')
+        }
+        sql.close()
+        return result
+    }
+
+    def dropSqlColumnUniqueConstraint(def table) {
+        def sql = new Sql(dataSource)
+        sql.eachRow("select constraint_name from information_schema.table_constraints " +
+                "where table_name = '" + table +"' and constraint_type = 'UNIQUE';") {
+            sql.executeUpdate("ALTER TABLE " + table +" DROP CONSTRAINT "+ it.constraint_name +";")
+        }
+        sql.close()
+    }
+
+    def checkSqlColumnExistence(def table, def column) {
+        def sql = new Sql(dataSource)
+        boolean exists = sql.rows("SELECT column_name " +
+                "FROM information_schema.columns " +
+                "WHERE table_name = '" + table +"' and column_name='"+ column + "';").size() == 1;
+        sql.close()
+        return exists
+    }
+
     public def createUsers(def usersSamples) {
 
         SecRole.findByAuthority("ROLE_USER") ?: new SecRole(authority: "ROLE_USER").save(flush: true)
@@ -76,6 +110,7 @@ class BootstrapUtilsService {
                     password: item.password,
                     language: User.Language.valueOf(Holders.getGrailsApplication().config.grails.defaultLanguage),
                     enabled: true,
+                    isDeveloper: false,
                     origin: "BOOTSTRAP")
             user.generateKeys()
 
@@ -141,7 +176,7 @@ class BootstrapUtilsService {
             }
         }
     }
-    
+
     def createFilters(def filters) {
         filters.each {
             if (!ImageFilter.findByName(it.name)) {
@@ -181,8 +216,6 @@ class BootstrapUtilsService {
 
         if(!update) configs << new Configuration(key: "WELCOME", value: "<p>Welcome to the Cytomine software.</p><p>This software is supported by the <a href='https://cytomine.coop'>Cytomine company</a></p>", readingRole: allUsers)
 
-        configs << new Configuration(key: "retrieval_enabled", value: update, readingRole: allUsers)
-
         configs << new Configuration(key: "admin_email", value: grailsApplication.config.grails.admin.email, readingRole: adminRole)
 
         //SMTP values
@@ -218,51 +251,7 @@ class BootstrapUtilsService {
         }
     }
 
-    def createMultipleRetrieval() {
-        Configuration retrieval = Configuration.findByKey("retrieval.enabled")
-        if(retrieval && retrieval.value.equals("false")){
-            RetrievalServer.list().each { server ->
-                server.delete()
-            }
-            return
-        }
-
-        RetrievalServer.list().each { server ->
-            if(!grailsApplication.config.grails.retrievalServerURL.contains(server.url)) {
-                log.info server.url + " is not in config, drop it"
-                log.info "delete Retrieval $server"
-                server.delete()
-            }
-
-        }
-
-        if (Environment.getCurrent() != Environment.TEST) {
-
-            grailsApplication.config.grails.retrievalServerURL.eachWithIndex { it, index ->
-
-                if (!RetrievalServer.findByUrl(it)) {
-                    RetrievalServer server =
-                            new RetrievalServer(
-                                    description: "retrieval $index",
-                                    url: "${it}",
-                                    path: '/retrieval-web/api/resource.json',
-                                    username: grailsApplication.config.grails.retrievalUsername,
-                                    password: grailsApplication.config.grails.retrievalPassword
-                            )
-                    if (server.validate()) {
-                        server.save()
-                    } else {
-                        server.errors?.each {
-                            log.info it
-                        }
-                    }
-                }
-
-            }
-        }
-    }
-
-    def createMessageBrokerServer() {
+    /*def createMessageBrokerServer() {
         MessageBrokerServer.list().each { messageBroker ->
             if(!grailsApplication.config.grails.messageBrokerServerURL.contains(messageBroker.host)) {
                 log.info messageBroker.host + " is not in config, drop it"
@@ -288,47 +277,31 @@ class BootstrapUtilsService {
             }
         }
         MessageBrokerServer.findByHost(splittedURL[0])
-    }
+    }*/
 
     def createMultipleIS() {
-
         ImageServer.list().each { server ->
             if(!grailsApplication.config.grails.imageServerURL.contains(server.url)) {
-                log.info server.url + " is not in config, drop it"
-                MimeImageServer.findAllByImageServer(server).each {
-                    log.info "delete $it"
-                    it.delete()
-                }
-
-                ImageServerStorage.findAllByImageServer(server).each {
-                    log.info "delete $it"
-                    it.delete()
-                }
-                log.info "delete IS $server"
-                server.delete()
+                log.info server.url + " is not in config, set it to unavailable"
+                server.available = false
+                server.save()
             }
-
         }
 
-
-
         grailsApplication.config.grails.imageServerURL.eachWithIndex { it, index ->
-            createNewIS(index+"",it)
+            createNewIS("IMS $index", it as String, grailsApplication.config.storage_path as String)
         }
     }
 
 
-    def createNewIS(String name = "", String url) {
-
+    def createNewIS(String name, String url, String basePath) {
         if(!ImageServer.findByUrl(url)) {
             log.info "Create new IMS: $url"
-            def IIPImageServer = [className : 'IIPResolver', name : 'IIP'+name, service : '/image/tile', url : url, available : true]
             ImageServer imageServer = new ImageServer(
-                    className: IIPImageServer.className,
-                    name: IIPImageServer.name,
-                    service : IIPImageServer.service,
-                    url : IIPImageServer.url,
-                    available : IIPImageServer.available
+                    name: name,
+                    url : url,
+                    available : true,
+                    basePath: basePath
             )
 
             if (imageServer.validate()) {
@@ -337,13 +310,6 @@ class BootstrapUtilsService {
                 imageServer.errors?.each {
                     log.info it
                 }
-            }
-
-            Storage.list().each {
-                new ImageServerStorage(
-                        storage : it,
-                        imageServer: imageServer
-                ).save()
             }
 
             Mime.list().each {
@@ -416,6 +382,7 @@ class BootstrapUtilsService {
         }
 
         String messageBrokerURL = grailsApplication.config.grails.messageBrokerServerURL
+        log.info "messageBrokerURL = $messageBrokerURL"
         def splittedURL = messageBrokerURL.split(':')
         if(toUpdate || (mbs == null)) {
             // create MBS
@@ -628,7 +595,7 @@ class BootstrapUtilsService {
 
         SpringSecurityUtils.doWithAuth {
             def constraints = []
-            
+
             // "Number" dataType
             log.info("Add Number constraints")
             constraints.add(new ParameterConstraint(name: "integer", expression: '("[value]".isInteger()', dataType: "Number"))

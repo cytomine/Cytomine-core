@@ -22,7 +22,7 @@ import be.cytomine.utils.JSONUtils
 import org.restapidoc.annotation.RestApiObject
 import org.restapidoc.annotation.RestApiObjectField
 
-@RestApiObject(name = "Storage abstract image", description="A link between a storage and some images")
+@Deprecated
 class StorageAbstractImage extends CytomineDomain {
 
     @RestApiObjectField(description = "The storage id")
@@ -37,6 +37,7 @@ class StorageAbstractImage extends CytomineDomain {
      * @param json JSON containing data
      * @return Domain with json data filled
      */
+    @Deprecated
     static StorageAbstractImage insertDataIntoDomain(def json, def domain = new StorageAbstractImage()) {
         domain.id = JSONUtils.getJSONAttrLong(json,'id',null)
         domain.storage = JSONUtils.getJSONAttrDomain(json, 'storage', new Storage(), true)
@@ -50,6 +51,7 @@ class StorageAbstractImage extends CytomineDomain {
      * @param domain Domain source for json value
      * @return Map with fields (keys) and their values
      */
+    @Deprecated
     static def getDataFromDomain(def domain) {
         def returnArray = CytomineDomain.getDataFromDomain(domain)
         returnArray['storage'] = domain?.storage?.id

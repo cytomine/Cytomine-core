@@ -24,6 +24,7 @@ import be.cytomine.ontology.ReviewedAnnotation
 import be.cytomine.ontology.UserAnnotation
 import be.cytomine.processing.RoiAnnotation
 import be.cytomine.project.Project
+import be.cytomine.security.SecUser
 import be.cytomine.security.User
 import be.cytomine.test.BasicInstanceBuilder
 import be.cytomine.test.Infos
@@ -101,8 +102,15 @@ class TagDomainAssociationSearchTests {
         TagDomainAssociation tda = BasicInstanceBuilder.getTagDomainAssociationNotExist()
         tda.tag = BasicInstanceBuilder.getTagNotExist(true)
         tda.domain = i1
-        tda.save(true)
+        BasicInstanceBuilder.saveDomain(tda)
 
+        ImageInstance.findAll().each {
+            println "image ${it.id} => review user ${it.reviewUser?.id}"
+        }
+
+        SecUser.findAll().each {
+            println it.id + " " + it.class
+        }
 
         def searchParameters = [[operator : "in", field : "tag", value:tda.tag.id]]
 
@@ -185,7 +193,7 @@ class TagDomainAssociationSearchTests {
         TagDomainAssociation tda = BasicInstanceBuilder.getTagDomainAssociationNotExist()
         tda.tag = BasicInstanceBuilder.getTagNotExist(true)
         tda.domain = ua1
-        tda.save(true)
+        BasicInstanceBuilder.saveDomain(tda)
 
         def result = UserAnnotationAPI.listByProject(project.id, [tda.tag.id], Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -209,7 +217,7 @@ class TagDomainAssociationSearchTests {
         TagDomainAssociation tda2 = BasicInstanceBuilder.getTagDomainAssociationNotExist()
         tda2.tag = tda.tag
         tda2.domain = aa1
-        tda2.save(true)
+        BasicInstanceBuilder.saveDomain(tda2)
 
         result = AlgoAnnotationAPI.listByProject(project.id, [tda.tag.id], Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -237,7 +245,7 @@ class TagDomainAssociationSearchTests {
         TagDomainAssociation tda3 = BasicInstanceBuilder.getTagDomainAssociationNotExist()
         tda3.tag = tda.tag
         tda3.domain = ra1
-        tda3.save(true)
+        BasicInstanceBuilder.saveDomain(tda3)
 
         result = ReviewedAnnotationAPI.listByProject(project.id, [tda.tag.id], Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -262,7 +270,7 @@ class TagDomainAssociationSearchTests {
         TagDomainAssociation tda4 = BasicInstanceBuilder.getTagDomainAssociationNotExist()
         tda4.tag = tda.tag
         tda4.domain = roa1
-        tda4.save(true)
+        BasicInstanceBuilder.saveDomain(tda4)
 
         result = RoiAnnotationAPI.listByProject(project.id, [tda.tag.id], Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code

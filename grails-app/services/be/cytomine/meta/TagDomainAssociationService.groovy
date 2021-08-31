@@ -87,6 +87,11 @@ class TagDomainAssociationService extends ModelService {
             }
         }
 
+        max = (max > 0) ? max : Integer.MAX_VALUE
+        result.offset = offset
+        result.perPage = Math.min(max, result.total)
+        result.totalPages = Math.ceil(result.total / max)
+
         return result
 
 

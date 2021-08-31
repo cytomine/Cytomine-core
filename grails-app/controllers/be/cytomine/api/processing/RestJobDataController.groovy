@@ -33,7 +33,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest
  *  Controller that handle job data files
  *  Files can be saved on filesystem or in database
  */
-@RestApi(name = "job data services", description = "Methods for managing job data file. Files can be saved on filesystem or in database.")
+@RestApi(name = "Processing | job data services", description = "Methods for managing job data file. Files can be saved on filesystem or in database.")
 class RestJobDataController extends RestController {
 
     def jobDataService

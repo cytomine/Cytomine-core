@@ -21,10 +21,13 @@ import be.cytomine.ontology.AlgoAnnotationTerm
 import be.cytomine.ontology.ReviewedAnnotation
 import be.cytomine.processing.Job
 import be.cytomine.processing.JobData
+import be.cytomine.processing.JobParameter
+import be.cytomine.processing.Software
 import be.cytomine.project.Project
 import be.cytomine.security.UserJob
 import be.cytomine.test.BasicInstanceBuilder
 import be.cytomine.test.Infos
+import be.cytomine.test.http.DomainAPI
 import be.cytomine.test.http.JobAPI
 import be.cytomine.test.http.JobDataAPI
 import be.cytomine.test.http.TaskAPI
@@ -60,6 +63,35 @@ class JobTests  {
         assert json.collection.size() == 0
     }
 
+    void testListJobByProjectOnlyFavorite() {
+        Job jobFavorite = BasicInstanceBuilder.getJobNotExist(true)
+        jobFavorite.setFavorite(true)
+        BasicInstanceBuilder.saveDomain(jobFavorite)
+        Job jobNotFavorite = BasicInstanceBuilder.getJobNotExist(true)
+        jobNotFavorite.setProject(jobFavorite.project)
+        jobNotFavorite.setFavorite(false)
+        BasicInstanceBuilder.saveDomain(jobNotFavorite)
+
+        def parameters = []
+
+        def result = JobAPI.listByProject(jobFavorite.project.id, parameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert DomainAPI.containsInJSONList(jobFavorite.id,json)
+        assert DomainAPI.containsInJSONList(jobNotFavorite.id,json)
+
+        parameters = [[field: 'favorite', operator: 'in', value: true]]
+
+        result = JobAPI.listByProject(jobFavorite.project.id, parameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert DomainAPI.containsInJSONList(jobFavorite.id,json)
+        assert !DomainAPI.containsInJSONList(jobNotFavorite.id,json)
+    }
+
+
     void testListJobBySoftwareAndProjectWithCredentialLight() {
         Job job = BasicInstanceBuilder.getJob()
         def result = JobAPI.listBySoftwareAndProject(job.software.id,job.project.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD,true)
@@ -85,6 +117,27 @@ class JobTests  {
         assert 200 == result.code
     }
 
+    void testAddJobWithParameter() {
+        Software software = BasicInstanceBuilder.getSoftwareNotExistWithParameters()
+        def jobToAdd = BasicInstanceBuilder.getJobNotExistWithParameters(software)
+        def jsonToAdd = Job.getDataFromDomain(jobToAdd)
+        JobParameter.findAllByJob(jobToAdd).each {
+            jsonToAdd.get('params', []).add([softwareParameter: it.softwareParameter.id, value: it.value])
+        }
+        println (jsonToAdd as JSON).toString()
+        def result = JobAPI.create((jsonToAdd as JSON).toString(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        println result
+        assert 200 == result.code
+        int idJob = result.data.id
+
+        result = JobAPI.show(idJob, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        println json
+        assert json['jobParameters'] instanceof JSONArray
+        assert 2 == json['jobParameters'].size()
+    }
+
     void testAddJobWithBadSoftware() {
         Job jobToAdd = BasicInstanceBuilder.getJob()
         Job jobToEdit = Job.get(jobToAdd.id)
@@ -94,6 +147,50 @@ class JobTests  {
         jsonJob = jsonUpdate.toString()
         def result = JobAPI.update(jobToAdd.id, jsonJob, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 400 == result.code
+    }
+
+    void testCopyJob() {
+        Software software = BasicInstanceBuilder.getSoftwareNotExistWithParameters()
+        def jobToAdd = BasicInstanceBuilder.getJobNotExistWithParameters(software)
+        def jsonToAdd = Job.getDataFromDomain(jobToAdd)
+        JobParameter.findAllByJob(jobToAdd).each {
+            jsonToAdd.get('params', []).add([softwareParameter: it.softwareParameter.id, value: it.value])
+        }
+        println (jsonToAdd as JSON).toString()
+        def result = JobAPI.create((jsonToAdd as JSON).toString(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        println result
+        assert 200 == result.code
+        int idOriginalJob = result.data.id
+
+        // add fake data, should be reset on the copy
+        result.data.progress = 75
+        result.data.status = 4
+        BasicInstanceBuilder.saveDomain(result.data)
+
+        result = JobAPI.copy(idOriginalJob, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        println result
+        assert 200 == result.code
+        int idNewJobJob = result.data.id
+
+        result = JobAPI.show(idOriginalJob, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def originalJob = JSON.parse(result.data)
+        result = JobAPI.show(idNewJobJob, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def newJob = JSON.parse(result.data)
+
+        assert originalJob.id != newJob.id
+        assert originalJob.algoType == newJob.algoType
+        assert originalJob.project == newJob.project
+        assert originalJob.software == newJob.software
+        assert 75 == originalJob.progress
+        assert 0 == newJob.progress
+        assert 4 == originalJob.status
+        assert 0 == newJob.status
+        assert 2 == JobParameter.findAllByJob(Job.findById(originalJob.id)).size()
+        assert 2 == JobParameter.findAllByJob(Job.findById(newJob.id)).size()
+        assert JobParameter.findAllByJob(Job.findById(newJob.id)).collect {it.value}.containsAll(JobParameter.findAllByJob(Job.findById(originalJob.id)).collect {it.value})
+        assert JobParameter.findAllByJob(Job.findById(newJob.id)).collect {it.softwareParameter.id}.containsAll(JobParameter.findAllByJob(Job.findById(originalJob.id)).collect {it.softwareParameter.id})
     }
 
     void testUpdateJobCorrect() {
@@ -164,7 +261,7 @@ class JobTests  {
         log.domainClassName = job.class.name
         log.domainIdent = job.id
         log.filename = "log.out"
-        log.save(flush: true)
+        log = BasicInstanceBuilder.saveDomain(log)
         result = JobAPI.getLog(job.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
     }

@@ -1,5 +1,7 @@
 package be.cytomine.api.image.multidim
 
+import be.cytomine.Exception.ForbiddenException
+
 /*
 * Copyright (c) 2009-2021. Authors: see NOTICE file.
 *
@@ -18,7 +20,6 @@ package be.cytomine.api.image.multidim
 
 import be.cytomine.api.RestController
 import be.cytomine.image.multidim.ImageGroup
-import be.cytomine.image.multidim.ImageGroupHDF5
 import be.cytomine.project.Project
 import grails.converters.JSON
 import org.restapidoc.annotation.RestApi
@@ -33,7 +34,7 @@ import org.restapidoc.annotation.RestApiResponseObject
  * User: lrollus
  * Date: 18/05/11
  */
-@RestApi(name = "Image | multidim | image group services", description = "Methods for managing image group, a group of image from the same sample in different dimension (channel, zstack,...)")
+@RestApi(name = "Image | multidim | image group services", description = "[REMOVED] Methods for managing image group, a group of image from the same sample in different dimension (channel, zstack,...)")
 class RestImageGroupController extends RestController {
 
     def imageGroupService
@@ -41,87 +42,88 @@ class RestImageGroupController extends RestController {
     def imageSequenceService
     def projectService
 
-    @RestApiMethod(description="Get an image group")
+    @RestApiMethod(description="[REMOVED] Get an image group")
     @RestApiParams(params=[
         @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The image group id")
     ])
     def show() {
-        ImageGroup image = imageGroupService.read(params.long('id'))
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        /*ImageGroup image = imageGroupService.read(params.long('id'))
         if (image) {
             responseSuccess(image)
         } else {
             responseNotFound("ImageGroup", params.id)
-        }
+        }*/
     }
 
-    @RestApiMethod(description="Get image group listing by project", listing=true)
+    @RestApiMethod(description="[REMOVED] Get image group listing by project", listing=true)
     @RestApiParams(params=[
         @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The project id")
     ])
     def listByProject() {
-        Project project = projectService.read(params.long('id'))
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        /*Project project = projectService.read(params.long('id'))
 
         if (project)  {
             responseSuccess(imageGroupService.list(project))
         }
         else {
             responseNotFound("ImageGroup", "Project", params.id)
-        }
+        }*/
     }
 
-    @RestApiMethod(description="Add a new image group")
+    @RestApiMethod(description="[REMOVED] Add a new image group")
     def add () {
-        add(imageGroupService, request.JSON)
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        //add(imageGroupService, request.JSON)
     }
 
-    @RestApiMethod(description="Update an image group")
+    @RestApiMethod(description="[REMOVED] Update an image group")
     @RestApiParams(params=[
         @RestApiParam(name="id", type="int", paramType = RestApiParamType.PATH, description = "The image group id")
     ])
     def update() {
-        update(imageGroupService, request.JSON)
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        //update(imageGroupService, request.JSON)
     }
 
-    @RestApiMethod(description="Delete an image group")
+    @RestApiMethod(description="[REMOVED] Delete an image group")
     @RestApiParams(params=[
         @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The image group")
     ])
     def delete() {
-        ImageGroup image = imageGroupService.read(params.long('id'))
-        if (image) {
-            ImageGroupHDF5 imageh5 = imageGroupHDF5Service.getByGroup(image)
-            if (imageh5)
-                delete(imageGroupHDF5Service, JSON.parse("{id : $imageh5.id}"), null)
-        }
-        delete(imageGroupService, JSON.parse("{id : $params.id}"),null)
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        //delete(imageGroupService, JSON.parse("{id : $params.id}"),null)
     }
 
-    @RestApiMethod(description="Get the different Characteristics for ImageGroup")
+    @RestApiMethod(description="[REMOVED] Get the different Characteristics for ImageGroup")
     @RestApiParams(params=[
             @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The image group")
     ])
     def characteristics() {
-        ImageGroup imageGroup = imageGroupService.read(params.long('id'))
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        /*ImageGroup imageGroup = imageGroupService.read(params.long('id'))
         if (imageGroup)  {
             responseSuccess(imageGroupService.characteristics(imageGroup))
         }
         else {
             responseNotFound("ImageGroup", "ImageGroup", params.id)
-        }
+        }*/
     }
 
     /**
      * Get image thumb URL
      */
-    @RestApiMethod(description="Get a small image (thumb) for a specific multidimensional image")
+    @RestApiMethod(description="[REMOVED] Get a small image (thumb) for a specific multidimensional image")
     @RestApiParams(params=[
             @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The image group id")
     ])
     @RestApiResponseObject(objectIdentifier = "image (bytes)")
     def thumb() {
-        response.setHeader("max-age", "86400")
+        throw new ForbiddenException("The ImageGroup features has been removed in this version")
+        /*response.setHeader("max-age", "86400")
         int maxSize = params.int('maxSize',  512)
         imageGroupService.thumb(params.long('id'), maxSize)
-        responseBufferedImage(imageGroupService.thumb(params.long('id'), maxSize))
+        responseByteArray(imageGroupService.thumb(params.long('id'), maxSize))*/
     }
 }

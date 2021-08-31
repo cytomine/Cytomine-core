@@ -99,12 +99,12 @@ class TermTests  {
       assert size == json.collection.size()+1
   }
 
-  void testShowTermWithCredential() {
-      def result = TermAPI.show(BasicInstanceBuilder.getTerm().id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-      assert 200 == result.code
-      def json = JSON.parse(result.data)
-      assert json instanceof JSONObject
-  }
+    void testShowTermWithCredential() {
+        def result = TermAPI.show(BasicInstanceBuilder.getTerm().id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        assert json instanceof JSONObject
+    }
 
   void testAddTermCorrect() {
       def termToAdd = BasicInstanceBuilder.getTermNotExist()

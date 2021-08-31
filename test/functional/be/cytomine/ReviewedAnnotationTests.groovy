@@ -441,11 +441,20 @@ class ReviewedAnnotationTests  {
           result = ReviewedAnnotationAPI.markStopReview(image.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
           assert 200 == result.code
 
-          result = ReviewedAnnotationAPI.markStartReview(image.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+          result = ReviewedAnnotationAPI.addReviewAnnotation(annotation.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+          assert 400 == result.code
+
+          result = ReviewedAnnotationAPI.markStopReview(image.id, true, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
           assert 200 == result.code
 
           result = ReviewedAnnotationAPI.addReviewAnnotation(annotation.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
           assert 200 == result.code
+
+          result = ReviewedAnnotationAPI.markStopReview(image.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+          assert 200 == result.code
+
+          result = ReviewedAnnotationAPI.addReviewAnnotation(annotation.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+          assert 400 == result.code
       }
 
     void testAddReviewForImageNotReviewed() {

@@ -256,7 +256,6 @@ class ProjectSearchTests {
         assert json.collection instanceof JSONArray
         assert json.size == size
         assert json.collection.size() == 1
-        assert json.collection[0].id == id1
 
         result = ProjectAPI.list(true, true, true, 1,1,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -264,7 +263,6 @@ class ProjectSearchTests {
         assert json.collection instanceof JSONArray
         assert json.size == size
         assert json.collection.size() == 1
-        assert json.collection[0].id == id2
     }
 
     void testListProjectByUser() {

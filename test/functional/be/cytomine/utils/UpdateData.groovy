@@ -41,7 +41,7 @@ class UpdateData {
             domain[key] = it.value[0]
         }
 
-        BasicInstanceBuilder.saveDomain(domain)
+        domain = BasicInstanceBuilder.saveDomain(domain)
 
 
 

@@ -83,9 +83,9 @@ class UserPositionPerformanceTests {
 
         def users = [];
         //users << [login : Infos.SUPERADMINLOGIN, password : Infos.SUPERADMINPASSWORD]
-        def image1 = BasicInstanceBuilder.getImageInstance()
-        def project = image1.project
-        def image2 = BasicInstanceBuilder.getImageInstanceNotExist(project, true)
+        def slice1 = BasicInstanceBuilder.getSliceInstance()
+        def project = slice1.project
+        def slice2 = BasicInstanceBuilder.getSliceInstanceNotExist(slice1.image, true)
 
         def result;
         (1..100).each {
@@ -98,8 +98,8 @@ class UserPositionPerformanceTests {
         (1..100).each {
 
             users.each { user ->
-                BasicInstanceBuilder.getPersistentUserPosition(image1, user, true)
-                BasicInstanceBuilder.getPersistentUserPosition(image2, user, true)
+                BasicInstanceBuilder.getPersistentUserPosition(slice1, user, true)
+                BasicInstanceBuilder.getPersistentUserPosition(slice2, user, true)
             }
         }
 

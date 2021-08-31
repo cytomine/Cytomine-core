@@ -113,7 +113,7 @@ class ImageGroupHDF5Service  extends  ModelService{
         def maxBits = 8
         def imagesFilenames = imagesSequenceList.collect {
             def baseImage = it.image.baseImage
-            def absolutePath =  baseImage.getAbsolutePath()
+            def absolutePath =  baseImage.getPath()
             def path = baseImage.path
             def basePath = absolutePath - path
             basePath + baseImage.filename

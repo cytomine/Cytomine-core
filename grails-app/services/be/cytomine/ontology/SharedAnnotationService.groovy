@@ -39,11 +39,12 @@ import static org.springframework.security.acls.domain.BasePermission.*
 class SharedAnnotationService extends ModelService {
 
     static transactional = true
-    def imageProcessingService
     def securityACLService
     def springSecurityService
     def secRoleService
     def secUserSecRoleService
+    def abstractImageService
+    def imageServerService
 
 
     // Avoid loading loop because secUserService -> userAnnotationService -> shareAnnotationService
@@ -106,44 +107,35 @@ class SharedAnnotationService extends ModelService {
         String cid = UUID.randomUUID().toString()
 
         //create annotation crop (will be send with comment)
-        File annnotationCrop = null
+        File annotationCrop = null
         try {
             params.format = "png"
             params.alphaMask = true
+            params.geometry = annotation.location
+            params.complete = true
+            params.maxSize = 512
+            BufferedImage bufferedImage
+            try {
+                InputStream is = new ByteArrayInputStream(imageServerService.crop(annotation, params));
+                bufferedImage = ImageIO.read(is)
+            } catch(Exception e) {
+                bufferedImage = null
+            }
 
-            if(!params.maxSize) params.maxSize = 256
+            log.info "Image " + bufferedImage
 
-            String cropURL = annotation.toCropURL(params)
-            if (cropURL != null) {
-                log.info "Load image from " + annotation.toCropURL(params)
-                def parameters = annotation.toCropParams(params)
-
-                String query = parameters.collect { key, value ->
-                    if (value instanceof String)
-                        value = URLEncoder.encode(value, "UTF-8")
-                    "$key=$value"
-                }.join("&")
-
-                String url = abstractImageService.crop(parameters, query)
-                BufferedImage bufferedImage = imageProcessingService.getImageFromURL(url)
-
-                log.info "Image " + bufferedImage
-
-                if (bufferedImage != null) {
-                    annnotationCrop = File.createTempFile("temp", ".${params.format}")
-                    annnotationCrop.deleteOnExit()
-                    ImageIO.write(bufferedImage, params.format as String, annnotationCrop)
-                }
+            if (bufferedImage != null) {
+                annotationCrop = File.createTempFile("temp", ".${params.format}")
+                annotationCrop.deleteOnExit()
+                ImageIO.write(bufferedImage, params.format as String, annotationCrop)
             }
         } catch (FileNotFoundException e) {
-            annnotationCrop = null
-        } catch (Exception e) {
-            println e.getClass()
-            e.printStackTrace()
+            annotationCrop = null
         }
+
         def attachments = []
-        if (annnotationCrop != null) {
-            attachments << [cid: cid, file: annnotationCrop]
+        if (annotationCrop != null) {
+            attachments << [cid: cid, file: annotationCrop]
         }
 
         //do receivers email list

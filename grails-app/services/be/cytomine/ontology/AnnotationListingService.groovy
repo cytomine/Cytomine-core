@@ -18,7 +18,9 @@ package be.cytomine.ontology
 
 import be.cytomine.Exception.WrongArgumentException
 import be.cytomine.api.UrlApi
+import be.cytomine.sql.AlgoAnnotationListing
 import be.cytomine.sql.AnnotationListing
+import be.cytomine.sql.UserAnnotationListing
 import be.cytomine.utils.GisUtils
 import be.cytomine.utils.ModelService
 import groovy.sql.Sql
@@ -39,10 +41,15 @@ class AnnotationListingService extends ModelService {
     def listGeneric(AnnotationListing al) {
         securityACLService.check(al.container(),READ)
         if(al.kmeans && !al.kmeansValue) {
-            if(!al.image || !al.bbox) {
-                throw new WrongArgumentException("If you want to use kmeans, you must provide image (=${al.image}, bbox (=${al.bbox})")
+            if(!al.bbox) {
+                throw new WrongArgumentException("If you want to use kmeans, you must provide image bbox (=${al.bbox})")
             }
-            def rule = kmeansGeometryService.mustBeReduce(al.image,al.user,al.bbox)
+
+            if (!al.slice) {
+                throw new WrongArgumentException("If you want to use kmeans, you must provide slice Id")
+            }
+
+            def rule = kmeansGeometryService.mustBeReduce(al.slice,al.user,al.bbox)
             al.kmeansValue = rule
         } else {
             //no kmeans
@@ -71,14 +78,22 @@ class AnnotationListingService extends ModelService {
         def data = []
         long lastAnnotationId = -1
         long lastTermId = -1
+        long lastTrackId = -1
+
         boolean first = true;
 
         def realColumn = []
         def request = al.getAnnotationsRequest()
+
         boolean termAsked = false
+        boolean trackAsked = false
+
+        def excludedColumns = ['annotationTerms', 'annotationTracks', 'userTerm', 'x', 'y']
+
         def sql = new Sql(dataSource)
         log.info request
         sql.eachRow(request) {
+
 
             /**
              * If an annotation has n multiple term, it will be on "n" lines.
@@ -86,24 +101,24 @@ class AnnotationListingService extends ModelService {
              * For the other lines, we add term data to the last annotation
              */
             if (it.id != lastAnnotationId) {
+                termAsked = false
+                trackAsked = false
+
                 if(first) {
                     al.getAllPropertiesName().each { columnName ->
-                        if(columnExist(it,columnName)) {
+                        if(columnExist(it,columnName) && !excludedColumns.contains(columnName)) {
                             realColumn << columnName
                         }
                     }
                     first = false
                 }
 
-
                 def item = [:]
                 item['class'] = al.getDomainClass()
 
                 realColumn.each { columnName ->
-                    item[columnName]=it[columnName]
+                    item[columnName] = it[columnName]
                 }
-
-
 
                 if(al.columnToPrint.contains('term')) {
                     termAsked = true
@@ -111,51 +126,63 @@ class AnnotationListingService extends ModelService {
                     item['userByTerm'] = (it.term ? [[id: it.annotationTerms, term: it.term, user: [it.userTerm]]] : [])
                 }
 
-                if(al.columnToPrint.contains('image')) {
-                    item['originalfilename'] = (it.originalfilename ? it.originalfilename : null)
+                if (al.columnToPrint.contains('track') && (al instanceof UserAnnotationListing || al instanceof AlgoAnnotationListing)) {
+                    trackAsked = true
+                    item['track'] = (it?.track ? [it.track] : [])
+                    item['annotationTrack'] = (it?.track ? [[id: it.annotationTracks, track: it.track]] : [])
                 }
 
                 if(al.columnToPrint.contains('gis')) {
                     item['perimeterUnit'] = (it.perimeterUnit != null? GisUtils.retrieveUnit(it.perimeterUnit) : null)
                     item['areaUnit'] = (it.areaUnit ? GisUtils.retrieveUnit(it.areaUnit) : null)
+                    item['centroid'] = [x: it.x, y: it.y]
                 }
 
                 if(al.columnToPrint.contains('meta')) {
                     if(al.getClass().name.contains("UserAnnotation")) {
                         item['cropURL'] = UrlApi.getUserAnnotationCropWithAnnotationId(it.id)
-                        item['smallCropURL'] = UrlApi.getUserAnnotationCropWithAnnotationIdWithMaxWithOrHeight(it.id, 256)
+                        item['smallCropURL'] = UrlApi.getUserAnnotationCropWithAnnotationIdWithMaxSize(it.id, 256)
                         item['url'] = UrlApi.getUserAnnotationCropWithAnnotationId(it.id)
                         item['imageURL'] = UrlApi.getAnnotationURL(it.project, it.image, it.id)
                     } else if(al.getClass().name.contains("AlgoAnnotation")) {
                         item['cropURL'] = UrlApi.getAlgoAnnotationCropWithAnnotationId(it.id)
-                        item['smallCropURL'] = UrlApi.getAlgoAnnotationCropWithAnnotationIdWithMaxWithOrHeight(it.id, 256)
+                        item['smallCropURL'] = UrlApi.getAlgoAnnotationCropWithAnnotationIdWithMaxSize(it.id, 256)
                         item['url'] = UrlApi.getAlgoAnnotationCropWithAnnotationId(it.id)
                         item['imageURL'] = UrlApi.getAnnotationURL(it.project, it.image, it.id)
                     }else if(al.getClass().name.contains("ReviewedAnnotation")) {
                         item['cropURL'] = UrlApi.getReviewedAnnotationCropWithAnnotationId(it.id)
-                        item['smallCropURL'] = UrlApi.getReviewedAnnotationCropWithAnnotationIdWithMaxWithOrHeight(it.id, 256)
+                        item['smallCropURL'] = UrlApi.getReviewedAnnotationCropWithAnnotationIdWithMaxSize(it.id, 256)
                         item['url'] = UrlApi.getReviewedAnnotationCropWithAnnotationId(it.id)
                         item['imageURL'] = UrlApi.getAnnotationURL(it.project, it.image, it.id)
                     }
                 }
                 data << item
             } else {
-                if (it.term) {
-                    data.last().term.add(it.term)
-                    data.last().term.unique()
+                if (termAsked && it.term) {
                     if (it.term == lastTermId) {
                         data.last().userByTerm.last().user.add(it.userTerm)
                         data.last().userByTerm.last().user.unique()
-                    } else {
+                    } else if (!data.last().term.contains(it.term)) {
+                        data.last().term.add(it.term)
                         data.last().userByTerm.add([id: it.annotationTerms, term: it.term, user: [it.userTerm]])
                     }
                 }
-            }
-            if (termAsked) {
-                lastTermId = it.term
-                lastAnnotationId = it.id
+
+                if (trackAsked && it.track && it.track != lastTrackId && !data.last().track.contains(it.track)) {
+                    data.last().track.add(it.track)
+                    data.last().annotationTrack.add([id: it.annotationTracks, track: it.track])
+                }
             }
 
+            if (termAsked) {
+                lastTermId = it.term
+            }
+
+            if (trackAsked) {
+                lastTrackId = it.track
+            }
+
+            lastAnnotationId = it.id
         }
         sql.close()
         data

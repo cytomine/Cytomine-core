@@ -53,9 +53,12 @@ class ImageInstanceSecurityTests extends SecurityTestsAbstract{
         assert (true ==ImageInstanceAPI.containsInJSONList(image.id,JSON.parse(result.data)))
         assert (200 == ImageInstanceAPI.update(image.id,image.encodeAsJSON(),SecurityTestsAbstract.USERNAMEADMIN,SecurityTestsAbstract.PASSWORDADMIN).code)
 
-        result = ImageInstanceAPI.download(image.id, SecurityTestsAbstract.USERNAMEADMIN,SecurityTestsAbstract.PASSWORDADMIN)
-        assert result.code == 200 || result.code == 500
-
+        try {
+            result = ImageInstanceAPI.download(image.id, SecurityTestsAbstract.USERNAMEADMIN,SecurityTestsAbstract.PASSWORDADMIN)
+            assert result.code == 200 || result.code == 500
+        } catch(UnknownHostException ignored) {
+            // redirect is done but on a fake host (bidon.server.com), we ignore the exception
+        }
         assert (200 == ImageInstanceAPI.delete(image,SecurityTestsAbstract.USERNAMEADMIN,SecurityTestsAbstract.PASSWORDADMIN).code)
     }
 
@@ -84,15 +87,20 @@ class ImageInstanceSecurityTests extends SecurityTestsAbstract{
         result = ImageInstanceAPI.create(image.encodeAsJSON(),SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
         assert 200 == result.code
         image = result.data
+        BasicInstanceBuilder.buildStorageImageServerLinkForImage(image.baseImage)
+
         assert (200 == ImageInstanceAPI.show(image.id,SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2).code)
         result = ImageInstanceAPI.listByProject(project.id,SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
         assert 200 == result.code
         assert (true ==ImageInstanceAPI.containsInJSONList(image.id,JSON.parse(result.data)))
         //assert (200 == ImageInstanceAPI.update(image,USERNAME2,PASSWORD2).code)
 
-        result = ImageInstanceAPI.download(image.id, SecurityTestsAbstract.USERNAMEADMIN,SecurityTestsAbstract.PASSWORDADMIN)
-        assert result.code == 200 || result.code == 500
-
+        try {
+            result = ImageInstanceAPI.download(image.id, SecurityTestsAbstract.USERNAMEADMIN, SecurityTestsAbstract.PASSWORDADMIN)
+            assert result.code == 200 || result.code == 500
+        } catch(UnknownHostException ignored) {
+            // redirect is done but on a fake host (bidon.server.com), we ignore the exception
+        }
         assert (200 == ImageInstanceAPI.delete(image,SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2).code)
     }
 
@@ -125,6 +133,8 @@ class ImageInstanceSecurityTests extends SecurityTestsAbstract{
         result = ImageInstanceAPI.create(image.encodeAsJSON(),SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
         assert 200 == result.code
         image = result.data
+        BasicInstanceBuilder.buildStorageImageServerLinkForImage(image.baseImage)
+
         assert (200 == ImageInstanceAPI.show(image.id,SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2).code)
         result = ImageInstanceAPI.listByProject(project.id,SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
         assert 200 == result.code
@@ -207,19 +217,32 @@ class ImageInstanceSecurityTests extends SecurityTestsAbstract{
         assert 200 == result.code
         image = result.data
 
+        BasicInstanceBuilder.buildStorageImageServerLinkForImage(image.baseImage)
+
         result = ImageInstanceAPI.download(image.id, SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
         assert result.code == 403
 
         result = ImageInstanceAPI.download(image.id, SecurityTestsAbstract.USERNAME3,SecurityTestsAbstract.PASSWORD3)
         assert result.code == 403
 
-        project.areImagesDownloadable = true
-        BasicInstanceBuilder.saveDomain(project)
+        Project.withTransaction {
+            project.areImagesDownloadable = true
+            project = BasicInstanceBuilder.saveDomain(project)
+        }
 
-        result = ImageInstanceAPI.download(image.id, SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
-        assert result.code == 200 || result.code == 500
+        println "project.areImagesDownloadable ${project.areImagesDownloadable}"
+        try {
+            result = ImageInstanceAPI.download(image.id, SecurityTestsAbstract.USERNAME2, SecurityTestsAbstract.PASSWORD2)
+            assert result.code == 200 || result.code == 500
+        } catch(UnknownHostException ignored) {
+            // redirect is done but on a fake host (bidon.server.com), we ignore the exception
+        }
 
-        result = ImageInstanceAPI.download(image.id, SecurityTestsAbstract.USERNAME3,SecurityTestsAbstract.PASSWORD3)
-        assert result.code == 200 || result.code == 500
+        try {
+            result = ImageInstanceAPI.download(image.id, SecurityTestsAbstract.USERNAME3,SecurityTestsAbstract.PASSWORD3)
+            assert result.code == 200 || result.code == 500
+        } catch(UnknownHostException ignored) {
+            // redirect is done but on a fake host (bidon.server.com), we ignore the exception
+        }
     }
 }

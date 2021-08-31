@@ -17,71 +17,79 @@ package be.cytomine.image
 */
 
 import be.cytomine.meta.Property
-import grails.converters.JSON
-import be.cytomine.Exception.MiddlewareException
 
-/**
- * Cytomine
- * User: stevben
- * Date: 19/07/11
- * Time: 15:19
- * TODOSTEVBEN: doc + clean + refactor
- */
-class ImagePropertiesService implements Serializable{
+import grails.transaction.Transactional
+
+class ImagePropertiesService implements Serializable {
 
     def grailsApplication
     def abstractImageService
+    def imageServerService
 
+    def keys() {
+        def parseString = { x -> x }
+        def parseInt = { x -> Integer.parseInt(x) }
+        def parseDouble = { x -> Double.parseDouble(x) }
+        return [
+                width        : [name: 'cytomine.width', parser: parseInt],
+                height       : [name: 'cytomine.height', parser: parseInt],
+                depth        : [name: 'cytomine.depth', parser: parseInt],
+                duration     : [name: 'cytomine.duration', parser: parseInt],
+                channels     : [name: 'cytomine.channels', parser: parseInt],
+                physicalSizeX: [name: 'cytomine.physicalSizeX', parser: parseDouble],
+                physicalSizeY: [name: 'cytomine.physicalSizeY', parser: parseDouble],
+                physicalSizeZ: [name: 'cytomine.physicalSizeZ', parser: parseDouble],
+                fps          : [name: 'cytomine.fps', parser: parseDouble],
+                bitDepth     : [name: 'cytomine.bitdepth', parser: parseInt],
+                colorspace   : [name: 'cytomine.colorspace', parser: parseString],
+                magnification: [name: 'cytomine.magnification', parser: parseInt],
+                resolution   : [name: 'cytomine.resolution', parser: parseDouble]
+        ]
+    }
+
+    @Transactional
     def clear(AbstractImage image) {
-        Property.findAllByDomainIdent(image.id)?.each {
+        def propertyKeys = keys().collect { it.value.name }
+        Property.findAllByDomainIdentAndKeyInList(image.id, propertyKeys)?.each {
             it.delete()
         }
     }
 
-    def populate(AbstractImage abstractImage) {
-        String imageServerURL = abstractImage.getRandomImageServerURL()
-        String fif = abstractImage.absolutePath
-        String mimeType = abstractImage.mimeType
-
-        String uri = "$imageServerURL/image/properties?fif="+URLEncoder.encode(fif, "UTF-8")+"&mimeType=$mimeType"
-        println uri
-        def properties = JSON.parse(new URL(uri).text)
-        println properties
-        properties.each {
-            String value = it.value
-            if (it.value && value.size() < 256) {
-                def property = Property.findByDomainIdentAndKey(abstractImage.id, it.key)
-                if (!property) {
-                    property = new Property(key: it.key, value: it.value, domainIdent: abstractImage.id,domainClassName: abstractImage.class.name)
-                    log.info("new property, $it.key => $it.value")
-                    property.save(failOnError: true)
+    def populate(AbstractImage image) {
+        try {
+            def properties = imageServerService.properties(image)
+            properties.each {
+                String key = it?.key?.toString()?.trim()
+                String value = it?.value?.toString()?.trim()
+                if (key && value) {
+                    def property = Property.findByDomainIdentAndKey(image.id, key)
+                    if (!property) {
+                        log.info("New property: $key => $value for abstract image $image")
+                        property = new Property(key: key, value: value, domainIdent: image.id, domainClassName: image.class.name)
+                        property.save(failOnError: true)
+                    }
                 }
             }
+        } catch(Exception e) {
+            log.error(e)
         }
-        abstractImage.save()
     }
 
-
     def extractUseful(AbstractImage image) {
-        //Width
-        def widthProperty = Property.findByDomainIdentAndKey(image.id, "cytomine.width")
-        if (widthProperty) image.setWidth(Integer.parseInt(widthProperty.getValue()))
-        else log.error "widthProperty is null"
-        //Height
-        def heightProperty = Property.findByDomainIdentAndKey(image.id, "cytomine.height")
-        if (heightProperty) image.setHeight(Integer.parseInt(heightProperty.getValue()))
-        else log.error "heightProperty is null"
-        if((!widthProperty && !image.width) || (!heightProperty && !image.height)){
-            throw new MiddlewareException("Width or Height cannot be determined")
+        keys().each { k, v ->
+            def property = Property.findByDomainIdentAndKey(image.id, v.name)
+            if (property)
+                image[k] = v.parser(property.value)
+            else
+                log.info "No property ${v.name} for abstract image $image"
+
+            image.save(flush: true, failOnError: true)
         }
-        //Magnification
-        def magnificationProperty = Property.findByDomainIdentAndKey(image.id, "cytomine.magnification")
-        if (magnificationProperty) image.setMagnification(Integer.parseInt(magnificationProperty.getValue()))
-        else log.info "magnificationProperty is null"
-        //Resolution
-        def resolutionProperty = Property.findByDomainIdentAndKey(image.id, "cytomine.resolution")
-        if (resolutionProperty) image.setResolution(Float.parseFloat(resolutionProperty.getValue()))
-        else log.info "resolutionProperty is null"
-        image.save(flush:true, failOnError: true)
+    }
+
+    def regenerate(AbstractImage image) {
+        clear(image)
+        populate(image)
+        extractUseful(image)
     }
 }

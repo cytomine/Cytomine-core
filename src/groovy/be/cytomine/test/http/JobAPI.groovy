@@ -76,9 +76,22 @@ class JobAPI extends DomainAPI {
         return doGET(URL, username, password)
     }
 
+    static def listByProject(Long idProject, def searchParameters, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/job.json?project=$idProject&${convertSearchParameters(searchParameters)}&max=0&offset=0"
+        return doGET(URL, username, password)
+    }
+
+
     static def create(String json, String username, String password) {
         String URL = Infos.CYTOMINEURL + "api/job.json"
         def result = doPOST(URL,json,username,password)
+        result.data = Job.get(JSON.parse(result.data)?.job?.id)
+        return result
+    }
+
+    static def copy(def id, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/job/${id}/copy.json"
+        def result = doPOST(URL, "",username,password)
         result.data = Job.get(JSON.parse(result.data)?.job?.id)
         return result
     }

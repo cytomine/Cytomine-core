@@ -107,7 +107,7 @@ class Project extends CytomineDomain implements Serializable {
     @RestApiObjectField(description = "If true, an user (which is not an administrator of the project) cannot see admins layers", mandatory = false)
     boolean hideAdminsLayers = false
 
-    @RestApiObjectField(description = "Editing mode of the current project (read_only, restricted or classic)", mandatory = true)
+//    @RestApiObjectField(description = "Editing mode of the current project (read_only, restricted or classic)", mandatory = true)
     EditingMode mode = EditingMode.CLASSIC;
 
     @RestApiObjectFields(params=[
@@ -116,7 +116,9 @@ class Project extends CytomineDomain implements Serializable {
         @RestApiObjectField(apiFieldName = "ontologyName", description = "The ontology name for the project",allowedType = "string",useForCreation = false),
         @RestApiObjectField(apiFieldName = "disciplineName", description = "The discipline name for the project",allowedType = "string",useForCreation = false),
         @RestApiObjectField(apiFieldName = "numberOfSlides", description = "The number of samples in the project", allowedType = "long",useForCreation = false),
-        @RestApiObjectField(apiFieldName = "retrievalProjects", description = "List all projects id that are used for retrieval search (if retrievalDisable = false and retrievalAllOntology = false)",allowedType = "list",mandatory = false)
+        @RestApiObjectField(apiFieldName = "retrievalProjects", description = "List all projects id that are used for retrieval search (if retrievalDisable = false and retrievalAllOntology = false)",allowedType = "list",mandatory = false),
+        @RestApiObjectField(apiFieldName = "isReadOnly", description = "If true, the project is read only", allowedType = "boolean"),
+        @RestApiObjectField(apiFieldName = "isRestricted", description = "f true, the project is in restricted mode", allowedType = "boolean")
     ])
 
 

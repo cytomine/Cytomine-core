@@ -42,7 +42,7 @@ class RestProjectConnectionController extends RestController {
     def exportService
     def securityACLService
 
-    @RestApiMethod(description="Add a ProjectConnection object associated to the current user")
+    @RestApiMethod(description = "Add a new user connection record to a project")
     def add() {
         try {
             responseSuccess(projectConnectionService.add(request.JSON))
@@ -72,7 +72,7 @@ class RestProjectConnectionController extends RestController {
         responseSuccess(projectConnectionService.lastConnectionInProject(project, userId));
     }
 
-    @RestApiMethod(description="Get the project connections by user and project", listing=true)
+    @RestApiMethod(description = "Get user connections in a project", listing=true)
     @RestApiParams(params=[
             @RestApiParam(name="project", type="long", paramType = RestApiParamType.PATH, description = "The project id"),
             @RestApiParam(name="user", type="long", paramType = RestApiParamType.PATH, description = "The user id"),
@@ -136,6 +136,7 @@ class RestProjectConnectionController extends RestController {
             @RestApiParam(name="afterThan", type="date", paramType = RestApiParamType.QUERY, description = "The date when counting starts"),
             @RestApiParam(name="period", type="string", paramType = RestApiParamType.QUERY, description = "The period of connections (hour : by hours, day : by days, week : by weeks)"),
     ])
+
     def numberOfProjectConnections() {
         securityACLService.checkAdmin(cytomineService.getCurrentUser())
         Long beforeThan = params.long("beforeThan")

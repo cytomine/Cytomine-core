@@ -55,9 +55,28 @@ class SoftwareService extends ModelService {
         Software.findAllByIdInList(ids)
     }
 
-    def list() {
+    def list(Boolean executableOnly = false, def sort = 'id', def order_ = 'desc') {
         securityACLService.checkGuest(cytomineService.currentUser)
-        Software.list()
+        def results
+        if (sort == 'fullName') {
+            def criteria = Software.createCriteria()
+            results = criteria.list {
+                and  {
+                    order('name', order_)
+                    order('softwareVersion', order_)
+                }
+            }
+        }
+        else {
+            results = Software.list([sort: sort, order: order_])
+        }
+
+        if (executableOnly) {
+            return results.findAll {
+                it.executable()
+            }
+        }
+        return results
     }
 
     def list(Project project) {

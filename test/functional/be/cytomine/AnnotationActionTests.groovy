@@ -19,6 +19,7 @@ package be.cytomine
 import be.cytomine.test.BasicInstanceBuilder
 import be.cytomine.test.Infos
 import be.cytomine.test.http.AnnotationActionAPI
+import be.cytomine.test.http.SliceInstanceAPI
 import grails.converters.JSON
 import org.codehaus.groovy.grails.web.json.JSONObject
 
@@ -32,9 +33,10 @@ class AnnotationActionTests {
         assert 200 == result.code
     }
 
-    void testList() {
-        def annotation = BasicInstanceBuilder.getUserAnnotationNotExist(BasicInstanceBuilder.getProject(),true)
-        def image = annotation.image
+    void testListByImage() {
+        def slice = SliceInstanceAPI.buildBasicSlice(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        def annotation = BasicInstanceBuilder.getUserAnnotationNotExist(slice, true)
+        def image = slice.image
         def json = JSON.parse("{image:${image.id}, annotationIdent:${annotation.id}, action:Test}")
 
         def result = AnnotationActionAPI.create(json.toString(),Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
@@ -55,9 +57,34 @@ class AnnotationActionTests {
         assert JSON.parse(result.data).collection.size() == 0
     }
 
+    void testListBySlice() {
+        def slice = SliceInstanceAPI.buildBasicSlice(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        def annotation = BasicInstanceBuilder.getUserAnnotationNotExist(slice, true)
+        def image = slice.image
+        def json = JSON.parse("{slice:${slice.id}, annotationIdent:${annotation.id}, action:Test}")
+
+        def result = AnnotationActionAPI.create(json.toString(),Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+
+        Long creator = JSON.parse(result.data).user
+
+        result = AnnotationActionAPI.listBySlice(slice.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        assert JSON.parse(result.data).collection.size() == 1
+
+        result = AnnotationActionAPI.listBySliceAndUser(slice.id, creator, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        assert JSON.parse(result.data).collection.size() == 1
+
+        result = AnnotationActionAPI.listBySliceAndUser(slice.id, BasicInstanceBuilder.user1.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        assert JSON.parse(result.data).collection.size() == 0
+    }
+
     void testListAfterThan() {
-        def annotation = BasicInstanceBuilder.getUserAnnotationNotExist(BasicInstanceBuilder.getProject(), true)
-        def image = annotation.image
+        def slice = SliceInstanceAPI.buildBasicSlice(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        def annotation = BasicInstanceBuilder.getUserAnnotationNotExist(slice, true)
+        def image = slice.image
         def json = JSON.parse("{image:${image.id}, annotationIdent:${annotation.id}, action:Test}")
 
         def result = AnnotationActionAPI.create(json.toString(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
@@ -82,6 +109,7 @@ class AnnotationActionTests {
         assert 200 == result.code
         assert JSON.parse(result.data).collection.size() == 0
     }
+
     void testCountAnnotationActionsByProject() {
         def result = AnnotationActionAPI.countByProject(BasicInstanceBuilder.getProject().id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code

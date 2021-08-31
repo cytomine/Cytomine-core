@@ -17,30 +17,30 @@ package be.cytomine.api.ontology
 */
 
 import be.cytomine.api.RestController
-import be.cytomine.image.ImageInstance
+import be.cytomine.image.SliceInstance
 import org.restapidoc.annotation.RestApi
 import org.restapidoc.annotation.RestApiMethod
 import org.restapidoc.annotation.RestApiParam
 import org.restapidoc.annotation.RestApiParams
 import org.restapidoc.pojo.RestApiParamType
 
-@RestApi(name = "Ontology | annotation index services", description = "Methods for managing annotation index. Its auto index that store entries <image,user,nbreAnnotation,nbreReviewed")
+@RestApi(name = "Ontology | annotation index services", description = "Methods for managing annotation index. Its auto index that store entries <slice,user,nbAnnotation,nbReviewed>")
 class RestAnnotationIndexController extends RestController {
 
     def annotationIndexService
-    def imageInstanceService
+    def sliceInstanceService
 
-    @RestApiMethod(description="Get all index entries for an image", listing=true)
+    @RestApiMethod(description="Get all index entries for a slice", listing=true)
     @RestApiParams(params=[
-        @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The image id")
+        @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The slice id")
     ])
-    def listByImage() {
-        ImageInstance image = imageInstanceService.read(params.long('id'))
-        if (image) {
-            responseSuccess(annotationIndexService.list(image))
+    def listBySlice() {
+        SliceInstance slice = sliceInstanceService.read(params.long('id'))
+        if (slice) {
+            responseSuccess(annotationIndexService.list(slice))
         }
         else {
-            responseNotFound("Project", params.id)
+            responseNotFound("SliceInstance", params.id)
         }
     }
 }

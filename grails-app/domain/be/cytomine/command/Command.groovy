@@ -112,7 +112,7 @@ class Command extends CytomineDomain {
     }
 
     public String toString() {
-        return this.id + "[" + this.created + "]";
+        return this.class.simpleName +" "+this.id + "[" + this.created + "]";
     }
 
     /**

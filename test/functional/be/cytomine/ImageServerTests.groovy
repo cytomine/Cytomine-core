@@ -38,13 +38,13 @@ import java.awt.image.BufferedImage
  */
 class ImageServerTests {
 
-    void testImageServerListByMime() {
-        ImageInstance imageInstance = BasicInstanceBuilder.initImage()
-        def result = ImageServerAPI.listImageServerByMime(imageInstance.baseImage.mime.mimeType,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 200 == result.code
-        def json = JSON.parse(result.data)
-        assert json.collection.size()>0
-    }
+//    void testImageServerListByMime() {
+//        ImageInstance imageInstance = BasicInstanceBuilder.initImage()
+//        def result = ImageServerAPI.listImageServerByMime(imageInstance.baseImage.mime.mimeType,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+//        assert 200 == result.code
+//        def json = JSON.parse(result.data)
+//        assert json.collection.size()>0
+//    }
 
 /*
     void testGetThumb512() {

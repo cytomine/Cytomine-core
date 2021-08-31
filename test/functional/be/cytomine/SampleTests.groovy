@@ -82,7 +82,7 @@ class SampleTests  {
   }
 
   void testUpdateSampleCorrect() {
-      Sample sampleToAdd = BasicInstanceBuilder.getSample()
+      Sample sampleToAdd = BasicInstanceBuilder.getSampleNotExist()
       def data = UpdateData.createUpdateSet(sampleToAdd,[name: ["OLDNAME","NEWNAME"]])
       def result = SampleAPI.update(sampleToAdd.id, data.postData,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
       assert 200 == result.code

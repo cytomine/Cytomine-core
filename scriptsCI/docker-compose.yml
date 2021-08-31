@@ -1,0 +1,17 @@
+version: "3.4"
+services:
+
+  postgresqltest:
+    image: cytomine/postgis:v2.0.0
+    restart: unless-stopped
+    ports: [ "5433:5432" ]
+
+  mongodbtest:
+    image: cytomine/mongodb:v1.1.2
+    restart: unless-stopped
+    ports: [ "27018:27017" ]
+
+  rabbitmqtest:
+    image: cytomine/rabbitmq:v1.1.2
+    ports: [ "5673:5672", "15673:15672" ]
+    restart: unless-stopped

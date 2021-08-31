@@ -23,14 +23,19 @@ import be.cytomine.security.User
 import be.cytomine.utils.JSONUtils
 import org.restapidoc.annotation.RestApiObject
 import org.restapidoc.annotation.RestApiObjectField
+import org.restapidoc.annotation.RestApiObjectFields
 
-@RestApiObject(name = "tag", description = "A flag that can be associated to a Cytomine domain.")
+@RestApiObject(name = "Tag", description = "A flag that can be associated to a Cytomine domain.")
 class Tag extends CytomineDomain implements Serializable{
     @RestApiObjectField(description = "The tag name")
     String name
 
     @RestApiObjectField(description = "user that created the tag")
     User user
+
+    @RestApiObjectFields(params = [
+            @RestApiObjectField(apiFieldName = "creatorName", description = "The username of the creator", allowedType = "string", useForCreation = false),
+    ])
 
     static constraints = {
         name(blank: false)

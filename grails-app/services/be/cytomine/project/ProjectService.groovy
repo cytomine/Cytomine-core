@@ -266,6 +266,10 @@ class ProjectService extends ModelService {
                 search += sqlSearchConditions.members
             }
         }
+        if (extended.withDescription) {
+            select += ", d.data as description "
+            from += "LEFT OUTER JOIN description d ON d.domain_ident = p.id "
+        }
         if(extended.withCurrentUserRoles) {
             SecUser currentUser = cytomineService.currentUser // cannot use user param because it is set to null if user connected as admin
             select += ", (admin_project.id IS NOT NULL) AS is_admin, (repr.id IS NOT NULL) AS is_representative "
@@ -347,6 +351,9 @@ class ProjectService extends ModelService {
                 if(!map.memberCount) map.memberCount = 0
                 line.putAt("membersCount", map.memberCount)
             }
+            if (extended.withDescription) {
+                line.putAt("description", map.description ?: "")
+            }
             if(extended.withCurrentUserRoles) {
                 line.putAt("currentUserRoles", [admin: map.isAdmin, representative: map.isRepresentative])
             }
@@ -362,7 +369,13 @@ class ProjectService extends ModelService {
         }
         sql.close()
 
-        return [data:data, total:size]
+        def result = [data:data, total:size]
+        max = (max > 0) ? max : Integer.MAX_VALUE
+        result.offset = offset
+        result.perPage = Math.min(max, result.total)
+        result.totalPages = Math.ceil(result.total / max)
+
+        return result
     }
 
     def listByOntology(Ontology ontology) {

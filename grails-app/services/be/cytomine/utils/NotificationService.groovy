@@ -32,8 +32,9 @@ class NotificationService {
     def grailsApplication
     def cytomineMailService
     def secUserService
-    def imageProcessingService
     def renderService
+    def abstractImageService
+    def imageServerService
 
     public def notifyNewImageAvailable(SecUser currentUser, AbstractImage abstractImage, def projects) {
         User recipient = null
@@ -57,10 +58,10 @@ class NotificationService {
 
         def attachments = []
 
-        String thumbURL = UrlApi.getThumbImage(abstractImage.id, 256)
+        String thumbURL = UrlApi.getAbstractImageThumbUrlWithMaxSize(abstractImage.id, 256)
         if (thumbURL) {
             macroCID = UUID.randomUUID().toString()
-            BufferedImage bufferedImage = imageProcessingService.getImageFromURL(thumbURL)
+            BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(imageServerService.thumb(abstractImage, [maxSize: 256])))
             if (bufferedImage != null) {
                 File macroFile = File.createTempFile("temp", ".jpg")
                 macroFile.deleteOnExit()

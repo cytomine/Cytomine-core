@@ -16,6 +16,8 @@ package be.cytomine.utils;
 * limitations under the License.
 */
 
+import org.joda.time.DateTime;
+
 import java.util.*;
 import org.joda.time.DateTime;
 

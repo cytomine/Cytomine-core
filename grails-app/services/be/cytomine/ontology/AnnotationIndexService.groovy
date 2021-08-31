@@ -16,25 +16,24 @@ package be.cytomine.ontology
 * limitations under the License.
 */
 
-import be.cytomine.image.ImageInstance
+import be.cytomine.image.SliceInstance
 import be.cytomine.security.SecUser
 import groovy.sql.Sql
 
 class AnnotationIndexService {
 
     static transactional = true
-    def modelService
     def dataSource
 
-    def list(ImageInstance image) {
-        String request = "SELECT user_id, image_id,count_annotation,count_reviewed_annotation  \n" +
+    def list(SliceInstance slice) {
+        String request = "SELECT user_id, slice_id,count_annotation,count_reviewed_annotation  \n" +
                 " FROM annotation_index \n" +
-                " WHERE image_id = "+image.id
+                " WHERE slice_id = "+slice.id
         def data = []
         def sql = new Sql(dataSource)
 
         sql.eachRow(request) {
-            data << [user:it[0],image: it[1], countAnnotation: it[2],countReviewedAnnotation: it[3]]
+            data << [user:it[0],slice: it[1], countAnnotation: it[2],countReviewedAnnotation: it[3]]
         }
 
         try {
@@ -44,19 +43,19 @@ class AnnotationIndexService {
 
     }
     /**
-     * Return the number of annotation created by this user for this image
-     * If user is null, return the number of reviewed annotation for this image
+     * Return the number of annotation created by this user for this slice
+     * If user is null, return the number of reviewed annotation for this slice
      */
-    def count(ImageInstance image, SecUser user) {
+    def count(SliceInstance slice, SecUser user) {
         String request
         if (user) {
             request = "SELECT count_annotation  \n" +
                     " FROM annotation_index \n" +
-                    " WHERE image_id = "+image.id + " AND user_id = "+ user.id
+                    " WHERE slice_id = "+slice.id + " AND user_id = "+ user.id
         } else {
             request = "SELECT sum(count_reviewed_annotation)  \n" +
                     " FROM annotation_index \n" +
-                    " WHERE image_id = "+image.id
+                    " WHERE slice_id = "+slice.id
         }
 
         long value = 0

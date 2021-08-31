@@ -25,9 +25,11 @@ import be.cytomine.processing.Software
 import be.cytomine.processing.SoftwareProject
 import be.cytomine.project.Project
 import be.cytomine.security.Group
+import be.cytomine.security.PermissionService
 import be.cytomine.security.SecUser
 import be.cytomine.security.UserGroup
 import be.cytomine.security.UserJob
+import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Permission
 
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION
@@ -201,9 +203,16 @@ class SecurityACLService {
         }
     }
 
-    public List<Storage> getStorageList(SecUser user) {
+    public List<Storage> getStorageList(SecUser user, def adminByPass = true) {
+        getStorageList(user, adminByPass, null)
+    }
+
+    public List<Storage> getStorageList(SecUser user, def adminByPass = true, String searchString) {
         //faster method
-        if (currentRoleServiceProxy.isAdminByNow(user)) return Storage.list();
+        if (adminByPass && currentRoleServiceProxy.isAdminByNow(user)){
+            if(searchString && !searchString.isEmpty()) return Storage.list();
+            else return Storage.findAllByNameIlike('%'+searchString+'%');
+        }
         while (user instanceof UserJob) {
             user = ((UserJob) user).user
         }
@@ -212,8 +221,9 @@ class SecurityACLService {
                         "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid,  Storage as storage "+
                         "where aclObjectId.objectId = storage.id " +
                         "and aclEntry.aclObjectIdentity = aclObjectId.id "+
-                        "and aclEntry.sid = aclSid.id and aclSid.sid like '"+user.username+"'")
+                        "and aclEntry.sid = aclSid.id and aclSid.sid like '"+user.username+"'" + (searchString? " and lower(storage.name) like '%" + searchString.toLowerCase() + "%'" : ""))
     }
+
 
     public List<Ontology> getOntologyList(SecUser user) {
         //faster method
@@ -277,6 +287,33 @@ class SecurityACLService {
         }
     }
 
+    public def getStoragesIdsWithMaxPermission(SecUser user) {
+        return getMaxPermissionsForDomainType(user, 'be.cytomine.image.server.Storage')
+    }
+
+    /**
+     * Retrieve the max permission a user owned for each instance of a class (project, ontology,...)
+     */
+    public def getMaxPermissionsForDomainType(SecUser user, String classType) {
+        def data = []
+        if (currentRoleServiceProxy.isAdminByNow(user)) {
+            return Storage.list().collect {[id:it.id, permission: PermissionService.retrievePermissionFromInt(ADMINISTRATION.mask)]}
+        }
+
+        def result =  Storage.executeQuery(
+                "select storage.id, max(aclEntry.mask) "+
+                        "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, AclClass as aclClass, Storage as storage "+
+                        "where aclClass.className = '"  + classType + "'" +
+                        "and aclClass.id = aclObjectId.aclClass " +
+                        "and aclEntry.aclObjectIdentity = aclObjectId.id "+
+                        "and storage.id = aclObjectId.objectId "+
+                        "and aclEntry.sid = aclSid.id and aclSid.sid like '"+user.username+"' " +
+                        "group by storage.id")
+        result.each {
+            data << [id: it[0], permission: PermissionService.retrievePermissionFromInt(it[1])]
+        }
+        return data
+    }
 
 
     public def checkAdmin(SecUser user) {

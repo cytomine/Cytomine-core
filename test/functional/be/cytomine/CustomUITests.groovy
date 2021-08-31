@@ -47,7 +47,6 @@ class CustomUITests {
                 ontology: ["ROLE_USER","ROLE_ADMIN"],
                 storage : ["ROLE_USER","ROLE_ADMIN"],
                 activity : ["ROLE_USER","ROLE_ADMIN"],
-                feedback : ["ROLE_USER","ROLE_ADMIN"],
                 explore : ["ALL"],
                 admin : ["ROLE_ADMIN"],
                 help : ["ALL"]
@@ -72,7 +71,6 @@ class CustomUITests {
         assert false == json.ontology
         assert false == json.storage
         assert true == json.activity
-        assert false == json.feedback
         assert false == json.explore
         assert false == json.admin
         assert true == json.help
@@ -86,7 +84,6 @@ class CustomUITests {
         assert false == json.ontology
         assert true == json.storage
         assert true == json.activity
-        assert true == json.feedback
         assert true == json.explore
         assert false == json.admin
         assert true == json.help
@@ -100,7 +97,6 @@ class CustomUITests {
         assert true == json.ontology
         assert true == json.storage
         assert true == json.activity
-        assert true == json.feedback
         assert true == json.explore
         assert true == json.admin
         assert true == json.help

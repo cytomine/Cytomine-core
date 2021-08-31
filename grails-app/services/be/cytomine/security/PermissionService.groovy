@@ -18,11 +18,15 @@ package be.cytomine.security
 
 import be.cytomine.Exception.ObjectNotFoundException
 import groovy.sql.Sql
+import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.model.Permission
+import static org.springframework.security.acls.domain.BasePermission.*
 
 class PermissionService {
 
     static transactional = true
+
+    static LinkedHashMap<String, Integer> permissionsMasks = new LinkedHashMap<>([READ: 1, WRITE: 2, CREATE: 4, DELETE: 8, ADMINISTRATION: 16])
 
     def aclService
     def aclUtilService
@@ -30,9 +34,6 @@ class PermissionService {
     def objectIdentityRetrievalStrategy
     def dataSource
     def cytomineService
-
-
-
 
 
 //    synchronized void deletePermission(CytomineDomain domain, String username, Permission permission) {
@@ -47,6 +48,21 @@ class PermissionService {
 //        aclService.updateAcl(acl)
 //    }
 
+    Map<String, Integer> listUsersAndPermissions(def domain) {
+        Map<String, Integer> results = new HashMap<>()
+        def sql = new Sql(dataSource)
+        sql.eachRow("SELECT acs.sid, max(mask)\n" +
+                    "FROM acl_entry ae, acl_sid acs, acl_object_identity aoi \n" +
+                    "WHERE ae.sid = acs.id AND ae.acl_object_identity = aoi.id AND aoi.object_id_identity = ?\n" +
+                    "GROUP BY acs.sid",[domain.id]) {
+            results.put(it[0], it[1])
+        }
+        try {
+            sql.close()
+        }catch (Exception e) {}
+        return results
+    }
+
     void deletePermission(def domain, String username, Permission permission) {
         log.info "Delete permission for $username, ${permission.mask}, ${domain.id}"
         def aoi = executeAclRequest("SELECT id FROM acl_object_identity WHERE object_id_identity = ?",[domain.id])
@@ -56,6 +72,14 @@ class PermissionService {
         if(!aoi || !sid) throw ObjectNotFoundException("User ${username} or Object ${domain.id} are not in ACL")
 
         executeAclCUD("DELETE FROM acl_entry WHERE acl_object_identity = ? AND mask = ? AND sid = ?",[aoi,mask,sid])
+    }
+
+    void deletePermission(def domain, String username) {
+        log.info "Delete permission for $username, ${domain.id}"
+        def aoi = executeAclRequest("SELECT id FROM acl_object_identity WHERE object_id_identity = ?",[domain.id])
+        def sid = executeAclRequest("SELECT id FROM acl_sid WHERE sid = ?",[username])
+        if(!aoi || !sid) throw ObjectNotFoundException("User ${username} or Object ${domain.id} are not in ACL")
+        executeAclCUD("DELETE FROM acl_entry WHERE acl_object_identity = ? AND sid = ?",[aoi,sid])
     }
 
     /**
@@ -159,7 +183,33 @@ class PermissionService {
         }catch (Exception e) {}
     }
 
+    static Permission retrievePermissionFromString(String permissionName) {
+        if (permissionName.equals("READ")) {
+            return READ
+        }
+        if (permissionName.equals("WRITE")) {
+            return WRITE
+        }
+        if (permissionName.equals("CREATE")) {
+            return CREATE
+        }
+        if (permissionName.equals("DELETE")) {
+            return DELETE
+        }
+        if (permissionName.equals("ADMINISTRATION")) {
+            return ADMINISTRATION
+        }
+        throw new Exception("Permission $permissionName not found")
+    }
 
+    static String retrievePermissionFromInt(int permissionMask) {
+        for (Map.Entry entry : permissionsMasks.entrySet()) {
+            if (entry.value == permissionMask) {
+                return entry.key
+            }
+        }
+        throw new Exception("PermissionMask $permissionMask not found")
+    }
 }
 
 

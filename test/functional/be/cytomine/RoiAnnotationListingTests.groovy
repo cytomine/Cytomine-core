@@ -68,7 +68,7 @@ class RoiAnnotationListingTests {
         expectedProp = ['showBasic', 'showImage']
         result = RoiAnnotationAPI.listByImage(dataSet.image.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD,expectedProp)
         json = (JSON.parse(result.data))
-        checkForProperties(json.collection.get(0),['id','originalfilename'],['location'])
+        checkForProperties(json.collection.get(0),['id','originalFilename'],['location'])
 
         expectedProp = ['showWKT', 'hideWKT','hideBasic','hideMeta']
         result = RoiAnnotationAPI.listByImage(dataSet.image.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD,expectedProp)

@@ -86,7 +86,8 @@ class RestSoftwareUserRepositoryController extends RestController {
 
     @RestApiMethod(description = "Refresh the software user repositories loaded by the software-router")
     def refreshUserRepositories() {
-        responseSuccess(softwareUserRepositoryService.refreshRepositories())
+        softwareUserRepositoryService.refreshRepositories()
+        responseSuccess(["message": "Software repositories refreshing has been asked!"])
     }
 
 }

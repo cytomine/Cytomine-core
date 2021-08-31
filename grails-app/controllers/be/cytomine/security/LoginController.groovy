@@ -123,7 +123,7 @@ class LoginController extends RestController {
         log.info "springSecurityService.isLoggedIn()="+springSecurityService.isLoggedIn()
         def msg = ''
         Throwable exception = session[AbstractAuthenticationProcessingFilter.SPRING_SECURITY_LAST_EXCEPTION_KEY]
-        if(exception.getCause()) exception = exception.getCause()
+        if(exception && exception.getCause()) exception = exception.getCause()
 
         if (exception) {
             //:todo put error messages in i18n

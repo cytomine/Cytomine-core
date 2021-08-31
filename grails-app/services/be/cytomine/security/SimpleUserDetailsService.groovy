@@ -22,22 +22,28 @@ import org.springframework.dao.DataAccessException
 import org.springframework.security.core.authority.GrantedAuthorityImpl
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UsernameNotFoundException
+import org.springframework.transaction.annotation.Transactional
 
 class SimpleUserDetailsService extends GormUserDetailsService {
 
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username, boolean loadRoles) throws UsernameNotFoundException, DataAccessException {
+        GrailsUser grailsUser
+        SecUser.withTransaction {
 
-        SecUser user = SecUser.findByUsernameIlike(username)
+            SecUser user = SecUser.findByUsernameIlike(username)
 
-        def authorities = []
+            def authorities = []
 
-        def auth = SecUserSecRole.findAllBySecUser(user).collect{new GrantedAuthorityImpl(it.secRole.authority)}
-        //by default, we remove the role_admin for the current session
-        authorities.addAll(auth.findAll{it.authority!="ROLE_ADMIN"})
+            def auth = SecUserSecRole.findAllBySecUser(user).collect{new GrantedAuthorityImpl(it.secRole.authority)}
+            //by default, we remove the role_admin for the current session
+            authorities.addAll(auth.findAll{it.authority!="ROLE_ADMIN"})
 
-        return new GrailsUser(user.username, user.password, user.enabled, !user.accountExpired,
-                !user.passwordExpired, !user.accountLocked,
-                authorities, user.id)
+            grailsUser = new GrailsUser(user.username, user.password, user.enabled, !user.accountExpired,
+                    !user.passwordExpired, !user.accountLocked,
+                    authorities, user.id)
+        }
+        return grailsUser
     }
 }

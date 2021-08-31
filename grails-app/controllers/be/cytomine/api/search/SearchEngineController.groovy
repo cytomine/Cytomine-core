@@ -81,14 +81,14 @@ class SearchEngineController extends RestController {
         Long max = params.long("maxSize", 256l)
         String url = null
         if (className == ImageInstance.class.name) {
-            url = UrlApi.getThumbImage(ImageInstance.read(id).baseImage.id, max)
+            url = UrlApi.getAbstractImageThumbUrlWithMaxSize(ImageInstance.read(id).baseImage.id, max)
         } else if (className == AbstractImage.class.name) {
-            url = UrlApi.getThumbImage(AbstractImage.read(id).id, max)
+            url = UrlApi.getAbstractImageThumbUrlWithMaxSize(AbstractImage.read(id).id, max)
         } else if (className == Project.class.name) {
             List<ImageInstance> images = imageInstanceService.list(Project.read(id))
             images = images.sort { it.id }
             if (!images.isEmpty()) {
-                url = UrlApi.getThumbImage(images.last().baseImage.id, max)
+                url = UrlApi.getAbstractImageThumbUrlWithMaxSize(images.last().baseImage.id, max)
             }
         } else if (className == UserAnnotation.class.name || className == AlgoAnnotation.class.name || className == ReviewedAnnotation.class.name) {
             url = UrlApi.getAnnotationCropWithAnnotationId(id, max)
