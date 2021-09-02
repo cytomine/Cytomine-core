@@ -165,7 +165,6 @@ class AbstractImageService extends ModelService {
     def update(AbstractImage image,def jsonNewData) throws CytomineException {
         securityACLService.checkAtLeastOne(image,WRITE)
         SecUser currentUser = cytomineService.getCurrentUser()
-        return executeCommand(new EditCommand(user: currentUser), image,jsonNewData)
         def attributes = JSON.parse(image.encodeAsJSON())
         def res = executeCommand(new EditCommand(user: currentUser), image,jsonNewData)
         AbstractImage abstractImage = res.object
@@ -225,6 +224,22 @@ class AbstractImageService extends ModelService {
                 imageInstanceService.update(it, json)
             }
         }
+
+        String oldFilename = JSONUtils.getJSONAttrStr(attributes,'originalFilename')
+        boolean filenameUpdated = oldFilename != abstractImage.originalFilename
+
+        if(filenameUpdated) {
+            def json = JSON.parse(abstractImage.uploadedFile.encodeAsJSON())
+            json.originalFilename = abstractImage.originalFilename
+            uploadedFileService.update(abstractImage.uploadedFile, json)
+
+            ImageInstance.findAllByInstanceFilename(oldFilename).each {
+                json = JSON.parse(it.encodeAsJSON())
+                json.instanceFilename = abstractImage.originalFilename
+                imageInstanceService.update(it, json)
+            }
+        }
+
 
         return res
     }

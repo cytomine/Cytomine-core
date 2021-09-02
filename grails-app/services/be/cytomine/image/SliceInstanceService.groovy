@@ -76,8 +76,23 @@ class SliceInstanceService extends ModelService {
         securityACLService.check(json.project, Project,READ)
         securityACLService.checkisNotReadOnly(json.project,Project)
 
-        Command c = new AddCommand(user: currentUser)
-        executeCommand(c, null, json)
+        def project = Project.read(json.project)
+        def image = ImageInstance.read(json.image)
+        def alreadyExist = SliceInstance.findByProjectAndImage(project, image)
+
+        if (alreadyExist && alreadyExist.checkDeleted()) {
+            //Slice was previously deleted, restore it
+            def jsonNewData = JSON.parse(alreadyExist.encodeAsJSON())
+            jsonNewData.deleted = null
+            Command c = new EditCommand(user: currentUser)
+            return executeCommand(c, alreadyExist, jsonNewData)
+        }
+        else {
+            Command c = new AddCommand(user: currentUser)
+            return executeCommand(c, null, json)
+        }
+
+
     }
 
     def update(SliceInstance slice, def json) {

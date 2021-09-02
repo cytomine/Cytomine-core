@@ -21,6 +21,8 @@ import be.cytomine.Exception.CytomineMethodNotYetImplementedException
 import be.cytomine.Exception.ForbiddenException
 import be.cytomine.api.UrlApi
 import be.cytomine.command.*
+import be.cytomine.meta.AttachedFile
+import be.cytomine.meta.TagDomainAssociation
 import be.cytomine.ontology.AlgoAnnotation
 import be.cytomine.ontology.AnnotationTerm
 import be.cytomine.meta.Property
@@ -737,7 +739,10 @@ class ImageInstanceService extends ModelService {
             def jsonNewData = JSON.parse(alreadyExist.encodeAsJSON())
             jsonNewData.deleted = null
             Command c = new EditCommand(user: currentUser)
-            return executeCommand(c, alreadyExist, jsonNewData)
+            def result =  executeCommand(c, alreadyExist, jsonNewData)
+            //mandatory because the afterUpdate don't have the information that it is a previously deleted image
+            this.afterAdd(ImageInstance.read(result.data.imageinstance.id), null)
+            return result
         }
         else {
             Command c = new AddCommand(user: currentUser)
@@ -748,7 +753,40 @@ class ImageInstanceService extends ModelService {
     def afterAdd(ImageInstance domain, def response) {
         def abstractSlices = AbstractSlice.findAllByImage(domain.baseImage)
         abstractSlices.each {
-            new SliceInstance(baseSlice: it, image: domain, project: domain.project).save()
+            sliceInstanceService.add(JSON.parse(new SliceInstance(baseSlice: it, image: domain, project: domain.project).encodeAsJSON()))
+        }
+
+        AbstractImage ai = ((ImageInstance) domain).baseImage
+
+        TagDomainAssociation.findAllByDomainIdent(domain.id).each {it.delete(flush:true)}
+        TagDomainAssociation.findAllByDomainIdentAndDomainClassName(ai.id, ai.getClass().name).each {
+            TagDomainAssociation tda = new TagDomainAssociation(tag: it.tag)
+            tda.setDomain(domain)
+            tagDomainAssociationService.add(JSON.parse(tda.encodeAsJSON()))
+        }
+
+        Property.findAllByDomainIdent(domain.id).each {it.delete(flush:true)}
+        Property.findAllByDomainIdentAndDomainClassName(ai.id, ai.getClass().name).each {
+            if(! (it.key.startsWith("cytomine.") || it.key.startsWith("mimeType") || it.key.startsWith("openslide.") ||
+                    it.key.startsWith("hamamatsu.") || it.key.startsWith("tiff.") || it.key.startsWith("JFIF.") || it.key.startsWith("File."))){
+                Property p= new Property(key: it.key, value: it.value)
+                p.setDomain(domain)
+                propertyService.add(JSON.parse(p.encodeAsJSON()))
+            }
+        }
+
+        Description.findAllByDomainIdentAndDeletedIsNull(domain.id).each {it.delete(flush:true)}
+        Description.findAllByDomainIdentAndDomainClassName(ai.id, ai.getClass().name).each {
+            Description d = new Description(data: it.data)
+            d.setDomain(domain)
+            descriptionService.add(JSON.parse(d.encodeAsJSON()))
+        }
+
+        AttachedFile.findAllByDomainIdent(domain.id).each {it.delete(flush:true)}
+        AttachedFile.findAllByDomainIdentAndDomainClassName(ai.id, ai.getClass().name).each {
+            AttachedFile at = new AttachedFile(data: it.data, filename: it.filename)
+            at.setDomain(domain)
+            attachedFileService.add(at.filename,at.data,at.domainIdent,at.domainClassName)
         }
     }
 
