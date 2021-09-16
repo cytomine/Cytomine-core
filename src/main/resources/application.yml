@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:postgresql://localhost:5433/docker
+    username: docker
+    password: docker
+    hikari:
+      poolName: Hikari
+      auto-commit: false
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true
+  # Replace by 'prod, faker' to add the faker context and have sample data loaded in production
+  #liquibase:
+  #  contexts: prod
+

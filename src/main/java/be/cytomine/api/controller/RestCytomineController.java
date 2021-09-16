@@ -1,0 +1,175 @@
+package be.cytomine.api.controller;
+
+import be.cytomine.domain.CytomineDomain;
+import be.cytomine.exceptions.CytomineException;
+import be.cytomine.service.ModelService;
+import be.cytomine.utils.CommandResponse;
+import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.Task;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+@Slf4j
+public abstract class RestCytomineController {
+
+//    /**
+//     * Response a successful HTTP message
+//     * @param data Message content
+//     */
+//    protected JsonObject responseSuccess(Object data, Map<String,String> params) {
+//        if(data instanceof List) {
+//            return responseList((List)data, params);
+//        } else if(data instanceof Collection) {
+//            List list = new ArrayList();
+//            list.addAll((Collection)data);
+//            return responseList(list, params);
+//        }
+//        else {
+//            response(data);
+//        }
+//    }
+
+
+
+    protected JsonObject responseList(List list, Map<String,String> params) {
+
+        Boolean datatables = (params.get("datatables") != null);
+
+        Integer offset = params.get("offset") != null ? Integer.parseInt(params.get("offset")) : 0;
+        Integer max = (params.get("max") != null && Integer.parseInt(params.get("max"))!=0) ? Integer.parseInt(params.get("max")) : Integer.MAX_VALUE;
+
+        List subList;
+        if (offset >= list.size()) {
+            subList = new ArrayList();
+        } else {
+            int maxForCollection = Math.min(list.size() - offset, max);
+            subList = list.subList(offset,offset + maxForCollection);
+        }
+
+        if (datatables) {
+            return JsonObject.of("aaData", subList, "sEcho", params.get("sEcho") , "iTotalRecords", list.size(), "iTotalDisplayRecords", list.size());
+        } else {
+            return JsonObject.of("collection", subList, "offset", offset, "perPage", Math.min(max, list.size()), "size", list.size(), "totalPages", Math.ceil(list.size()/max));
+        }
+
+    }
+
+//    protected ResponseEntity<String> response(Map<String, Object> response, int code) {
+//        return ResponseEntity.status(code).body(convertObjectToJSON(response));
+//    }
+
+    protected ResponseEntity<String> response(Map<String, Object> response, int code) {
+        return ResponseEntity.status(code).body(convertObjectToJSON(response));
+    }
+
+    protected ResponseEntity<String> responseSuccess(CommandResponse commandResponse) {
+        return ResponseEntity.status(commandResponse.getStatus()).body(
+                convertObjectToJSON(commandResponse.getData()));
+    }
+
+    protected String convertObjectToJSON(Object o) {
+        return JsonObject.toJsonString(o);
+    }
+
+    protected List<JsonObject> convertCytomineDomainListToJSON(List<? extends CytomineDomain> list) {
+        List<JsonObject> results = new ArrayList<>();
+        for (CytomineDomain cytomineDomain : list) {
+            results.add(cytomineDomain.toJsonObject());
+        }
+        return results;
+    }
+
+    protected String convertListToJSON(List o) {
+        return JsonObject.toJsonString(o);
+    }
+
+    /**
+     * Call add function for this service with the json
+     * json parameter can be an array or a single item
+     * If json is array => add multiple item
+     * otherwise add single item
+     * @param service Service for this domain
+     * @param json JSON data
+     * @return response
+     */
+    public ResponseEntity<String> add(ModelService service, JsonObject json) {
+        try {
+//            if (json instanceof JSONArray) {
+//                responseResult(addMultiple(service, json))
+//            } else {
+            CommandResponse result = addOne(service, json);
+            if(result!=null) {
+                return responseSuccess(result);
+            }
+        } catch (CytomineException e) {
+            log.error("add error:" + e.msg);
+            log.error(e.toString());
+            return response(Map.of("success", false, "errors", e.msg), e.code);
+        }
+        return null;
+    }
+
+    /**
+     * Call update function for this service with the json
+     * @param service Service for this domain
+     * @param json JSON data
+     * @return response
+     */
+    public ResponseEntity<String> update(ModelService service, JsonObject json) {
+        try {
+            CytomineDomain domain =  service.retrieve(json);
+            CommandResponse result = service.update(domain, json);
+            return responseSuccess(result);
+        } catch (CytomineException e) {
+            log.error(e.toString());
+            return response(Map.of("success", false, "errors", e.msg), e.code);
+        }
+    }
+
+    /**
+     * Call delete function for this service with the json
+     * @param service Service for this domain
+     * @param json JSON data
+     * @return response
+     */
+    public ResponseEntity<String> delete(ModelService service, JsonObject json, Task task) {
+        try {
+            CytomineDomain domain =  service.retrieve(json);
+            CommandResponse result = service.delete(domain, task,true); // transactionService.start() TODO
+            return responseSuccess(result);
+        } catch (CytomineException e) {
+            log.error(e.toString());
+            return response(Map.of("success", false, "errors", e.msg, "errorValues", e.values), e.code);
+        }
+    }
+
+    /**
+     * Call add function for this service with the json
+     * @param service Service for this domain
+     * @param json JSON data
+     * @return response
+     */
+    public CommandResponse addOne(ModelService service, JsonObject json) {
+        return service.add(json);
+    }
+
+    /**
+     * Build a response message for a domain not found
+     * E.g. annotation 34 was not found
+     * className = annotation, id = 34.
+     * @param className Type of domain not found
+     * @param id Domain id
+     */
+    public static JsonObject responseNotFound(String className, String id) {
+        log.info("responseNotFound $className $id");
+        log.error(className + " Id " + id + " does not exist");
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.put("errors", Map.of("message",  className + " not found with id : " + id));
+        return jsonObject;
+    }
+}
