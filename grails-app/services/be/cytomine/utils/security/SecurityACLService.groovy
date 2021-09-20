@@ -287,30 +287,23 @@ class SecurityACLService {
         }
     }
 
-    public def getStoragesIdsWithMaxPermission(SecUser user) {
-        return getMaxPermissionsForDomainType(user, 'be.cytomine.image.server.Storage')
-    }
-
-    /**
-     * Retrieve the max permission a user owned for each instance of a class (project, ontology,...)
-     */
-    public def getMaxPermissionsForDomainType(SecUser user, String classType) {
+    public def getLightStoragesWithMaxPermission(SecUser user) {
         def data = []
         if (currentRoleServiceProxy.isAdminByNow(user)) {
-            return Storage.list().collect {[id:it.id, permission: PermissionService.retrievePermissionFromInt(ADMINISTRATION.mask)]}
+            return Storage.list().collect {[id:it.id, name:it.name, permission: PermissionService.retrievePermissionFromInt(ADMINISTRATION.mask)]}
         }
 
         def result =  Storage.executeQuery(
-                "select storage.id, max(aclEntry.mask) "+
+                "select storage.id, storage.name, max(aclEntry.mask) "+
                         "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, AclClass as aclClass, Storage as storage "+
-                        "where aclClass.className = '"  + classType + "'" +
+                        "where aclClass.className = 'be.cytomine.image.server.Storage'" +
                         "and aclClass.id = aclObjectId.aclClass " +
                         "and aclEntry.aclObjectIdentity = aclObjectId.id "+
                         "and storage.id = aclObjectId.objectId "+
                         "and aclEntry.sid = aclSid.id and aclSid.sid like '"+user.username+"' " +
                         "group by storage.id")
         result.each {
-            data << [id: it[0], permission: PermissionService.retrievePermissionFromInt(it[1])]
+            data << [id: it[0], name: it[1], permission: PermissionService.retrievePermissionFromInt(it[2])]
         }
         return data
     }

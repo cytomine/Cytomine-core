@@ -97,7 +97,7 @@ class StorageService extends ModelService {
     }
 
     def userAccess(SecUser user) {
-        return securityACLService.getStoragesIdsWithMaxPermission(user)
+        return securityACLService.getLightStoragesWithMaxPermission(user)
     }
 
     def read(def id) {
