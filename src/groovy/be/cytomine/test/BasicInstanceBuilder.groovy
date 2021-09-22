@@ -57,6 +57,9 @@ import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.restapidoc.annotation.RestApiObjectField
 import org.springframework.dao.DataRetrievalFailureException
+import be.cytomine.score.Score
+import be.cytomine.score.ScoreProject
+import be.cytomine.score.ScoreValue
 
 /**
  * Created by IntelliJ IDEA.
@@ -2141,5 +2144,59 @@ class BasicInstanceBuilder {
 
         ImageGroupHDF5 imageGroupHDF5 = new ImageGroupHDF5(group: group, filename: "${group.name}.h5")
         save ? saveDomain(imageGroupHDF5) : checkDomain(imageGroupHDF5)
+    }
+
+    static Score getScoreNotExist(boolean save = false) {
+        def score = new Score(name: getRandomString())
+        if(save) {
+            score = saveDomain(score)
+        } else {
+            checkDomain(score)
+        }
+        score
+    }
+
+
+    static ScoreValue getScoreValueNotExist(Score score = getScoreNotExist(true), boolean save = false) {
+        def scoreValue = new ScoreValue(value: getRandomString(), score: score)
+        if(save) {
+            scoreValue = saveDomain(scoreValue)
+        } else {
+            checkDomain(scoreValue)
+        }
+        scoreValue
+    }
+
+    static ScoreProject getScoreProjectNotExist(Score score = getScoreNotExist(true), Project project = getProjectNotExist(true), boolean save = false) {
+        ScoreProject scoreProject = new ScoreProject(score:score, project:project)
+        save ? saveDomain(scoreProject) : checkDomain(scoreProject)
+    }
+
+    static Score getScore() {
+        def score = Score.findByName("AnotherBasicScore")
+        if (!score) {
+            score = new Score(name: "AnotherBasicScore")
+            score = saveDomain(score)
+        }
+        score
+    }
+
+    static ScoreValue getScoreValue() {
+        def scoreValue = ScoreValue.findByValueAndScore("top", getScore())
+        if (!scoreValue) {
+            scoreValue = new ScoreValue(value: "top", score: getScore())
+            scoreValue = saveDomain(scoreValue)
+        }
+        scoreValue
+    }
+
+
+    static ScoreProject getScoreProject() {
+        def scoreProject = ScoreProject.findByProjectAndScore(getProject(), getScore())
+        if (!scoreProject) {
+            scoreProject = new ScoreProject(project: getProject(), score: getScore())
+            scoreProject = saveDomain(scoreProject)
+        }
+        scoreProject
     }
 }

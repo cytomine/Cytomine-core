@@ -1,0 +1,68 @@
+package be.cytomine.test.http
+
+/*
+* Copyright (c) 2009-2021. Authors: see NOTICE file.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+
+import be.cytomine.processing.SoftwareParameter
+import be.cytomine.test.Infos
+import grails.converters.JSON
+import be.cytomine.score.ScoreValue
+
+/**
+ * User: lrollus
+ * Date: 6/12/11
+ * This class implement all method to easily get/create/update/delete/manage SoftwareParameterAPI to Cytomine with HTTP request during functional test
+ */
+class ScoreValueAPI extends DomainAPI {
+
+    static def show(Long id, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/score_value/" + id + ".json"
+        return doGET(URL, username, password)
+    }
+
+    static def list(String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/score_value.json"
+        return doGET(URL, username, password)
+    }
+
+    static def listByScore(Long id, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/score/$id/score_value.json"
+        return doGET(URL, username, password)
+    }
+
+    static def create(String json, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/score_value.json"
+        def result = doPOST(URL,json,username,password)
+        result.data = ScoreValue.get(JSON.parse(result.data)?.scorevalue?.id)
+        return result
+    }
+
+    static def update(def id, def jsonScoreValue, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/score_value/" + id + ".json"
+        return doPUT(URL,jsonScoreValue,username,password)
+    }
+
+    static def delete(def id, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/score_value/" + id + ".json"
+        return doDELETE(URL,username,password)
+    }
+
+    static def reorder(def id, def ids, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/score/" + id + "/reorder.json?ids=" + ids
+        return doPUT(URL,"",username,password)
+    }
+
+}
