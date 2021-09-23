@@ -39,6 +39,7 @@ import be.cytomine.project.Discipline
 import be.cytomine.project.Project
 import be.cytomine.project.ProjectDefaultLayer
 import be.cytomine.project.ProjectRepresentativeUser
+import be.cytomine.score.ImageScore
 import be.cytomine.search.SearchEngineFilter
 import be.cytomine.security.*
 import be.cytomine.social.AnnotationAction
@@ -2198,5 +2199,23 @@ class BasicInstanceBuilder {
             scoreProject = saveDomain(scoreProject)
         }
         scoreProject
+    }
+
+    static ImageScore getImageScore() {
+        def imageScore = ImageScore.findAllByImageInstanceAndUser(getImageInstance(), User.findByUsername(Infos.SUPERADMINLOGIN)).find{it.scoreValue.score == getScoreValue().score}
+        if (!imageScore) {
+            imageScore = new ImageScore(imageInstance: getImageInstance(), user: User.findByUsername(Infos.SUPERADMINLOGIN), scoreValue: getScoreValue())
+            imageScore = saveDomain(imageScore)
+        }
+        imageScore
+    }
+
+    static ImageScore getImageScoreNotExist(
+            ImageInstance imageInstance = getImageInstanceNotExist(getProjectNotExist(true), true),
+            ScoreValue scoreValue = getScoreValueNotExist(getScoreNotExist(true), true),
+            User user = User.findByUsername(Infos.SUPERADMINLOGIN),
+            boolean save = false) {
+        ImageScore imageScore = new ImageScore(imageInstance:imageInstance, scoreValue:scoreValue, user:user)
+        return save ? saveDomain(imageScore) : checkDomain(imageScore)
     }
 }

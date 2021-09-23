@@ -27,5 +27,12 @@ class ScoreUrlMappings {
         "/api/project/$id/score.$format"(controller:"restScore"){
             action = [GET: "listByProject"]
         }
+
+        "/api/imageinstance/$imageInstance/score/$score.$format"(controller:"restImageScore") {
+            action = [GET: "show"]
+        }
+        "/api/imageinstance/$imageInstance/score/$score/value/$value.$format"(controller:"restImageScore") {
+            action = [POST: "add", DELETE: "delete"]
+        }
     }
 }
