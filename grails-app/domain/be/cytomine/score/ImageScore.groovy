@@ -36,7 +36,7 @@ class ImageScore extends CytomineDomain implements Serializable {
     void checkAlreadyExist() {
         ImageScore.withNewSession {
             if (imageInstance && user && scoreValue) {
-                ImageScore scoreAlreadyExist = ImageScore.findAllByImageInstanceAndUser(imageInstance, user).find{it.scoreValue.score == score}
+                ImageScore scoreAlreadyExist = ImageScore.findAllByImageInstanceAndUser(imageInstance, user).find{it.scoreValue.score == scoreValue.score}
                 if (scoreAlreadyExist && (scoreAlreadyExist.id != id)) {
                     throw new AlreadyExistException("Score $scoreValue already exist in image $image !")
                 }

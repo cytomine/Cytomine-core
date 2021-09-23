@@ -61,6 +61,11 @@ class ImageScoreService extends ModelService {
         ImageScore.list()
     }
 
+    def listByImageInstanceAndUser(ImageInstance imageInstance, User user) {
+        def imageScores = ImageScore.findAllByImageInstanceAndUser(imageInstance, user)
+        imageScores
+    }
+
 
     /**
      * Add the new domain with JSON data

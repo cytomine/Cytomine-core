@@ -29,6 +29,11 @@ class ImageScoreAPI extends DomainAPI {
         return doGET(URL, username, password)
     }
 
+    static def list(Long idImageInstance, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/imageinstance/${idImageInstance}/image-score.json"
+        return doGET(URL, username, password)
+    }
+
 
     static def create(Long idImageInstance, Long idScore, Long idValue, String username, String password) {
         String URL = Infos.CYTOMINEURL + "api/imageinstance/${idImageInstance}/score/${idScore}/value/${idValue}.json"

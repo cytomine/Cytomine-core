@@ -65,6 +65,19 @@ class RestImageScoreController extends RestController{
     }
 
     /**
+     * List scores values for an image
+     */
+    @RestApiMethod(description="List scores values for an image")
+    @RestApiParams(params=[
+            @RestApiParam(name="imageInstance", type="long", paramType = RestApiParamType.PATH, description = "The image id"),
+    ])
+    def listByImageInstance() {
+        ImageInstance imageInstance = imageInstanceService.read(params.getLong("imageInstance"))
+        SecUser user = cytomineService.currentUser
+        responseSuccess(imageScoreService.listByImageInstanceAndUser(imageInstance, (User)user))
+    }
+
+    /**
      * Add an existing score to a project
      */
     @RestApiMethod(description="Add an existing score to a project")

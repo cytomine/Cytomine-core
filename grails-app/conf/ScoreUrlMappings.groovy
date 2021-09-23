@@ -29,10 +29,14 @@ class ScoreUrlMappings {
         }
 
         "/api/imageinstance/$imageInstance/score/$score.$format"(controller:"restImageScore") {
-            action = [GET: "show"]
+            action = [GET: "show", DELETE: "delete"]
         }
         "/api/imageinstance/$imageInstance/score/$score/value/$value.$format"(controller:"restImageScore") {
-            action = [POST: "add", DELETE: "delete"]
+            action = [POST: "add"]
+        }
+
+        "/api/imageinstance/$imageInstance/image-score.$format"(controller:"restImageScore") {
+            action = [GET: "listByImageInstance"]
         }
     }
 }

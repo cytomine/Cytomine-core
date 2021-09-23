@@ -19,6 +19,7 @@ import be.cytomine.Exception.CytomineException
 */
 
 import be.cytomine.command.*
+import be.cytomine.ontology.AlgoAnnotationTerm
 import be.cytomine.processing.*
 import be.cytomine.project.Project
 import be.cytomine.security.SecUser
@@ -63,6 +64,7 @@ class ScoreService extends ModelService {
     def list(Project project) {
         securityACLService.check(project.container(),READ)
         ScoreProject.findAllByProject(project).collect {it.score}
+
     }
 
     /**

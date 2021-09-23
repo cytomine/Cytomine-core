@@ -283,7 +283,7 @@ log4j = {
     }
 
     //UNCOMMENT THESE 2 LINES TO SEE SQL REQUEST AND THEIR PARAMETERS VALUES
-//    debug 'org.hibernate.SQL'
+    debug 'org.hibernate.SQL'
 //    trace 'org.hibernate.type'
 }
 

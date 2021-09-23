@@ -1,5 +1,8 @@
 package be.cytomine
 
+import be.cytomine.project.Project
+import be.cytomine.score.ScoreProject
+
 /*
 * Copyright (c) 2009-2021. Authors: see NOTICE file.
 *

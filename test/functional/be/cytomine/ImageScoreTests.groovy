@@ -53,6 +53,18 @@ class ImageScoreTests {
     }
 
 
+    void testListScoreImage() {
+        ImageScore imageScore = BasicInstanceBuilder.saveDomain(BasicInstanceBuilder.getImageScoreNotExist())
+        println ImageScore.getDataFromDomain(imageScore)
+        def result = ImageScoreAPI.list(imageScore.imageInstance.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert 1 == json.collection.size()
+        assert imageScore.id == json.collection[0].id
+    }
+
+
     void testAddScoreImageAlreadyExistChangeItsValue() {
         ImageScore imageScore = BasicInstanceBuilder.getImageScoreNotExist()
         imageScore = BasicInstanceBuilder.saveDomain(imageScore)

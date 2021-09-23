@@ -21,6 +21,7 @@ class Score extends CytomineDomain implements Serializable {
         id(generator: 'assigned', unique: true)
         sort "id"
         cache true
+        values fetch: 'join'
     }
 
     void checkAlreadyExist() {
@@ -55,6 +56,9 @@ class Score extends CytomineDomain implements Serializable {
         def returnArray = CytomineDomain.getDataFromDomain(domain)
         returnArray['name'] = domain?.name
         returnArray['values'] = domain?.values?.sort {a,b -> a.index <=> b.index}?.collect{ScoreValue.getDataFromDomain(it)}
+        if (!returnArray['values']) {
+            returnArray['values'] = []
+        }
         return returnArray
     }
 }

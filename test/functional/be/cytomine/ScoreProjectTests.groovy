@@ -17,6 +17,9 @@ package be.cytomine
 */
 
 import be.cytomine.processing.Job
+import be.cytomine.project.Project
+import be.cytomine.score.Score
+import be.cytomine.score.ScoreValue
 import be.cytomine.test.BasicInstanceBuilder
 import be.cytomine.test.Infos
 import be.cytomine.test.http.ScoreProjectAPI
@@ -41,11 +44,20 @@ class ScoreProjectTests {
      }
  
      void testListScoreByProject() {
-         ScoreProject scoreProject = BasicInstanceBuilder.getScoreProject()
-         def result = ScoreProjectAPI.listByProject(scoreProject.project.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+         Project project = BasicInstanceBuilder.getProjectNotExist(true)
+         Score score1 = BasicInstanceBuilder.getScoreNotExist(true)
+         ScoreValue score1Value1 = BasicInstanceBuilder.getScoreValueNotExist(score1, true)
+         ScoreValue score1Value2 = BasicInstanceBuilder.getScoreValueNotExist(score1, true)
+         Score score2 = BasicInstanceBuilder.getScoreNotExist(true)
+         ScoreValue score2Value1 = BasicInstanceBuilder.getScoreValueNotExist(score2, true)
+         ScoreProject score1Project = BasicInstanceBuilder.getScoreProjectNotExist(score1, project, true)
+         ScoreProject score2Project = BasicInstanceBuilder.getScoreProjectNotExist(score2, project, true)
+
+         def result = ScoreProjectAPI.listByProject(project.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
          assert 200 == result.code
          def json = JSON.parse(result.data)
          assert json.collection instanceof JSONArray
+         assert 2 == json.collection.size()
 
          result = ScoreProjectAPI.listByProject(-99,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
          assert 404 == result.code
