@@ -49,7 +49,9 @@ class RestAbstractImageController extends RestController {
     def list() {
         SecUser user = cytomineService.getCurrentUser()
         Project project = projectService.read(params.long("project"))
-        def result = abstractImageService.list(user, project, params.sort, params.order, params.long('max'), params.long('offset'), searchParameters)
+        def result
+        if(params.boolean("search")) result = abstractImageService.fullSearch(user, project, params.sort, params.order, params.long('max'), params.long('offset'), searchParameters)
+        else result = abstractImageService.list(user, project, params.sort, params.order, params.long('max'), params.long('offset'), searchParameters)
         responseSuccess([collection : result.data, size : result.total, offset: result.offset, perPage: result.perPage, totalPages: result.totalPages])
     }
 

@@ -77,6 +77,74 @@ class AbstractImageSearchTests {
 
     }
 
+    //search hv-ikt
+    void testGetSearchHVIKT(){
+        AbstractImage img = BasicInstanceBuilder.getAbstractImageNotExist(true)
+        img.originalFilename = "test"
+        img.save(flush: true)
+        img.refresh()
+        AbstractImage img2 = BasicInstanceBuilder.getAbstractImageNotExist(true)
+        img2.originalFilename = "space"
+        img2.save(flush: true)
+        img2.refresh()
+
+        def result = AbstractImageAPI.list(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        long size = json.size
+        assert size >= 2
+
+
+        def searchParameters = [[operator : "ilike", field : "search", value:"test with space"]]
+
+        result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert json.size == AbstractImage.findAllByOriginalFilenameIlike("test")
+                                .findAll {it.originalFilename.contains("with")}
+                                .findAll {it.originalFilename.contains("space")}.size()
+
+        searchParameters = [[operator : "ilike", field : "search", value:"test  space"]]
+
+        result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+            assert json.size == AbstractImage.findAllByOriginalFilenameIlike("test")
+                    .findAll {it.originalFilename.contains("space")}.size()
+
+        searchParameters = [[operator : "ilike", field : "search", value:"test_without_space"]]
+
+        result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert json.size == AbstractImage.countByOriginalFilename("test_without_space")
+        assert json.size == 0
+
+        searchParameters = [[operator : "ilike", field : "search", value:"sp*ce"]]
+
+        result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert json.size == AbstractImage.countByOriginalFilenameIlike("space")
+
+
+        assert false
+        /*searchParameters = [[operator : "in", field : "staining", value:Integer.MAX_VALUE]]
+
+        result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert json.size == AbstractImage.countByDeletedIsNull()
+
+*/
+    }
+
     //pagination
     void testListImagesInstanceByProject() {
         BasicInstanceBuilder.getAbstractImage()

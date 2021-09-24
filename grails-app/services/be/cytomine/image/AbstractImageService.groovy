@@ -18,6 +18,7 @@ package be.cytomine.image
 
 import be.cytomine.Exception.ConstraintException
 import be.cytomine.Exception.CytomineException
+import be.cytomine.Exception.CytomineMethodNotYetImplementedException
 import be.cytomine.Exception.ForbiddenException
 import be.cytomine.command.AddCommand
 import be.cytomine.command.Command
@@ -34,7 +35,10 @@ import be.cytomine.utils.JSONUtils
 import be.cytomine.utils.ModelService
 import be.cytomine.utils.Task
 import grails.converters.JSON
+import groovy.sql.GroovyResultSet
+import groovy.sql.Sql
 import org.codehaus.groovy.grails.web.json.JSONObject
+import org.springframework.util.ReflectionUtils
 
 import static org.springframework.security.acls.domain.BasePermission.READ
 import static org.springframework.security.acls.domain.BasePermission.WRITE
@@ -55,6 +59,7 @@ class AbstractImageService extends ModelService {
     def imageServerService
     def projectService
     def uploadedFileService
+    def dataSource
 
     def currentDomain() {
         return AbstractImage
@@ -127,6 +132,163 @@ class AbstractImageService extends ModelService {
             result.data = data
         }
         return result
+    }
+
+    def fullSearch(SecUser user, Project project = null, String sortColumn = null, String sortDirection = null, Long max  = 0, Long offset = 0, searchParameters = []) {
+        securityACLService.checkIsSameUser(user, cytomineService.currentUser)
+
+        println "fullSearch"
+        println searchParameters
+
+        String searchText = searchParameters.find { it.field.equals("search") }.values
+
+//TODO je dois lier au storage pour ne prendre que les image dont j'ai accès au storage
+        //comme au dessus, fait un list storage puis collect les id puis faire un JOIN sur les uf qui ont le storage id dans les ids storage
+        //        if(currentRoleServiceProxy.isAdminByNow(user)) { return tous les storages. ==> Mieux. ne fait pas le join sur les uf du coup. Prévoir un boolean isAdmin
+
+
+
+        /*createAlias("uploadedFile", "uf")
+        'in'("uf.storage.id", storages.collect{ it.id })
+        isNull("deleted")
+*/
+
+        String abstractImageAlias = "ai"
+
+        if (!sortColumn) sortColumn = "created"
+        if (!sortDirection) sortDirection = "asc"
+        /*if (sortColumn.equals("numberOfAnnotations")) sortColumn = "countImageAnnotations"
+        if (sortColumn.equals("numberOfJobAnnotations")) sortColumn = "countImageJobAnnotations"
+        if (sortColumn.equals("numberOfReviewedAnnotations")) sortColumn = "countImageReviewedAnnotations"
+        if (sortColumn.equals("name")) sortColumn = "instanceFilename"*/
+
+        String sortedProperty = ReflectionUtils.findField(AbstractImage, sortColumn) ? "${abstractImageAlias}." + sortColumn : null
+        //if (!sortedProperty) sortedProperty = ReflectionUtils.findField(AbstractImage, sortColumn) ? abstractImageAlias + "." + sortColumn : null
+        if (!sortedProperty) throw new CytomineMethodNotYetImplementedException("AbstractImage list sorted by $sortDirection is not implemented")
+        sortedProperty = fieldNameToSQL(sortedProperty)
+
+        /*def validatedSearchParameters = getDomainAssociatedSearchParameters(AbstractImage, searchParameters)
+
+        validatedSearchParameters.findAll { !it.property.contains(".") }.each {
+            it.property = "${abstractImageAlias}." + it.property
+        }
+        //validatedSearchParameters.findAll { it.property == "ui.instanceFilename" }.each { it.property = "name" }
+
+        //boolean joinAI = validatedSearchParameters.any {it.property.contains(abstractImageAlias + ".")} || sortedProperty.contains(abstractImageAlias + ".")
+
+        def sqlSearchConditions = searchParametersToSQLConstraints(validatedSearchParameters)
+
+        println "sqlSearchConditions"
+        println sqlSearchConditions
+*/
+
+
+
+/*        sqlSearchConditions = [
+                imageInstance: sqlSearchConditions.data.findAll {it.property.startsWith("$imageInstanceAlias.")}.collect { it.sql }.join(" AND "),
+                tags : sqlSearchConditions.data.findAll{it.property.startsWith("tda.")}.collect{it.sql}.join(" AND "),
+                parameters   : sqlSearchConditions.sqlParameters
+        ]
+*/
+
+        String select, from, where, search, sort
+        String request
+
+        select = "SELECT distinct $abstractImageAlias.* "
+        from = "FROM abstract_image $abstractImageAlias "
+        where = "WHERE ${abstractImageAlias}.deleted IS NULL "
+        search = ""
+        def mapParams = [:]
+
+        if(!searchText.isEmpty()) {
+            from += "LEFT OUTER JOIN description d ON ${abstractImageAlias}.id = d.domain_ident AND d.domain_class_name = 'be.cytomine.image.AbstractImage' "
+            from += "LEFT OUTER JOIN tag_domain_association tda ON ${abstractImageAlias}.id = tda.domain_ident AND tda.domain_class_name = 'be.cytomine.image.AbstractImage' "
+            from += "LEFT OUTER JOIN tag tag ON tag.id = tda.tag_id "
+
+            def searchTexts
+            if(searchText.contains(' ')) searchTexts = searchText.split(' ')
+            else searchTexts = [searchText]
+
+            searchTexts.eachWithIndex { Object entry, int i -> mapParams.put("parameter_"+i, '%'+entry+'%')}
+
+            search += " AND "
+            search += " ( "
+            search += "("+mapParams.keySet().collect {" ${abstractImageAlias}.original_filename ILIKE :${it} "}.join(" AND ")+")"
+            search += " OR "
+            search += "("+mapParams.keySet().collect {" tag.name ILIKE :${it} "}.join(" AND ")+")"
+            search += " OR "
+            search += "("+mapParams.keySet().collect {" d.data ILIKE :${it} "}.join(" AND ")+")"
+            search += " ) "
+        }
+
+        //TODO faire les parameter nommé car sinon injection SQL
+
+        /*if un des filtres est non nul
+        from += "LEFT OUTER JOIN hv_image_metadata hv ON ${abstractImageAlias}.id = hv.domain_ident AND hv.domain_class_name = 'be.cytomine.image.AbstractImage' "
+
+        //if labid est setté
+        search += " AND "
+        search += " hv.laboratory_id = ... "
+        search += " AND "
+        search += " hv.staining_id = ... "
+        search += " AND "
+        search += " hv.detection_id = ... "
+        */
+
+
+
+
+        sort = " ORDER BY " + sortedProperty
+        sort += (sortDirection.equals("desc")) ? " DESC " : " ASC "
+
+        request = select + from + where + search + sort
+        if (max > 0) request += " LIMIT $max"
+        if (offset > 0) request += " OFFSET $offset"
+
+
+        def sql = new Sql(dataSource)
+        def data = []
+
+        sql.eachRow(request, mapParams) {
+            def map = [:]
+
+            for(int i =1; i<=((GroovyResultSet) it).getMetaData().getColumnCount(); i++){
+                String key = ((GroovyResultSet) it).getMetaData().getColumnName(i)
+                String objectKey = key.replaceAll( "(_)([A-Za-z0-9])", { Object[] test -> test[2].toUpperCase() } )
+
+
+                map.putAt(objectKey, it[key])
+            }
+
+            map['created'] = map['created'].getTime()
+            map['deleted'] = map['deleted']?.getTime()
+            map['updated'] = map['updated']?.getTime()
+            map['uploadedFile'] = map['uploadedFileId']
+            map['sample'] = map['sampleId']
+            map['scanner'] = map['scannerId']
+
+            def line = AbstractImage.getDataFromDomain(AbstractImage.insertDataIntoDomain(map))
+            data << line
+        }
+        def size
+        request = "SELECT COUNT(DISTINCT ${abstractImageAlias}.id) " + from + where + search
+
+        sql.eachRow(request, mapParams) {
+            size = it.count
+        }
+        sql.close()
+
+        def result = [data:data, total:size]
+        max = (max > 0) ? max : Integer.MAX_VALUE
+        result.offset = offset
+        result.perPage = Math.min(max, result.total)
+        result.totalPages = Math.ceil(result.total / max)
+
+        return result
+
+
+
+
     }
 
     /**

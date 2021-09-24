@@ -31,6 +31,11 @@ class AbstractImageAPI extends DomainAPI {
         return doGET(URL, username, password)
     }
 
+    static def search(Integer max = 0, Integer offset = 0, def searchParameters = [], String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/abstractimage.json?search=true&${convertSearchParameters(searchParameters)}&max=$max&offset=$offset"
+        return doGET(URL, username, password)
+    }
+
     static def list(Long idProject, String username, String password) {
         String URL = Infos.CYTOMINEURL + "api/abstractimage.json?project=$idProject"
         return doGET(URL, username, password)
