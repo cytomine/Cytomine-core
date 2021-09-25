@@ -20,6 +20,7 @@ import be.cytomine.CytomineDomain
 import be.cytomine.Exception.CytomineException
 import be.cytomine.api.UrlApi
 import be.cytomine.image.acquisition.Instrument
+import be.cytomine.image.hv.HVMetadata
 import be.cytomine.laboratory.Sample
 import be.cytomine.security.SecUser
 import be.cytomine.utils.JSONUtils
@@ -84,6 +85,13 @@ class AbstractImage extends CytomineDomain implements Serializable {
     @RestApiObjectField(description = "The image owner", mandatory = false, defaultValue = "current user")
     SecUser user //owner
 
+    HVMetadata laboratory
+    HVMetadata staining
+    HVMetadata antibody
+    HVMetadata detection
+    HVMetadata dilution
+    HVMetadata instrument
+
     static belongsTo = Sample
 
     @RestApiObjectFields(params=[
@@ -128,6 +136,12 @@ class AbstractImage extends CytomineDomain implements Serializable {
         bitDepth(nullable: true, min: 1)
         colorspace(nullable: true)
         user(nullable: true)
+        laboratory(nullable: true)
+        staining(nullable: true)
+        antibody(nullable: true)
+        detection(nullable: true)
+        dilution(nullable: true)
+        instrument(nullable: true)
     }
 
     /**
@@ -162,6 +176,14 @@ class AbstractImage extends CytomineDomain implements Serializable {
         domain.magnification = JSONUtils.getJSONAttrInteger(json,'magnification',null)
         domain.bitDepth = JSONUtils.getJSONAttrInteger(json, 'bitDepth', null)
         domain.colorspace = JSONUtils.getJSONAttrStr(json, 'colorspace', false)
+
+        domain.laboratory = JSONUtils.getJSONAttrDomain(json,"laboratory",new HVMetadata(),false)
+        domain.staining = JSONUtils.getJSONAttrDomain(json,"staining",new HVMetadata(),false)
+        domain.antibody = JSONUtils.getJSONAttrDomain(json,"antibody",new HVMetadata(),false)
+        domain.detection = JSONUtils.getJSONAttrDomain(json,"detection",new HVMetadata(),false)
+        domain.dilution = JSONUtils.getJSONAttrDomain(json,"dilution",new HVMetadata(),false)
+        domain.instrument = JSONUtils.getJSONAttrDomain(json,"instrument",new HVMetadata(),false)
+
         return domain;
     }
 
@@ -199,6 +221,14 @@ class AbstractImage extends CytomineDomain implements Serializable {
         returnArray['thumb'] = UrlApi.getAbstractImageThumbUrlWithMaxSize(image ? (long)image?.id : null, 512)
         returnArray['preview'] = UrlApi.getAbstractImageThumbUrlWithMaxSize(image ? (long)image?.id : null, 1024)
         returnArray['macroURL'] = UrlApi.getAssociatedImage(image ? (long)image?.id : null, "macro", image?.uploadedFile?.contentType, 512)
+
+        returnArray['laboratory'] = image?.laboratory?.id
+        returnArray['staining'] = image?.staining?.id
+        returnArray['antibody'] = image?.antibody?.id
+        returnArray['detection'] = image?.detection?.id
+        returnArray['dilution'] = image?.laboratory?.id
+        returnArray['instrument'] = image?.instrument?.id
+
         returnArray
     }
 

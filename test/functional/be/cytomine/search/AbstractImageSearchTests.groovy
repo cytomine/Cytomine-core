@@ -1,6 +1,8 @@
 package be.cytomine.search
 
 import be.cytomine.image.AbstractImage
+import be.cytomine.image.hv.HVMetadata
+import be.cytomine.security.SecurityTestsAbstract
 
 /*
 * Copyright (c) 2009-2021. Authors: see NOTICE file.
@@ -79,12 +81,19 @@ class AbstractImageSearchTests {
 
     //search hv-ikt
     void testGetSearchHVIKT(){
+
+        HVMetadata staining = new HVMetadata(value:BasicInstanceBuilder.getRandomInteger(0,5555), type:HVMetadata.Type.STAINING).save()
+        HVMetadata antibody = new HVMetadata(value:BasicInstanceBuilder.getRandomInteger(0,5555), type:HVMetadata.Type.ANTIBODY).save()
+
+
         AbstractImage img = BasicInstanceBuilder.getAbstractImageNotExist(true)
         img.originalFilename = "test"
+        img.staining = staining
         img.save(flush: true)
         img.refresh()
         AbstractImage img2 = BasicInstanceBuilder.getAbstractImageNotExist(true)
         img2.originalFilename = "space"
+        img2.antibody = antibody
         img2.save(flush: true)
         img2.refresh()
 
@@ -133,16 +142,46 @@ class AbstractImageSearchTests {
         assert json.size == AbstractImage.countByOriginalFilenameIlike("space")
 
 
-        assert false
-        /*searchParameters = [[operator : "in", field : "staining", value:Integer.MAX_VALUE]]
+        searchParameters = [[operator : "in", field : "staining", value:staining.id]]
 
         result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
         json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
-        assert json.size == AbstractImage.countByDeletedIsNull()
+        assert json.size == 1
+        assert json.collection[0].originalFilename == "test"
 
-*/
+
+        searchParameters = [[operator : "in", field : "antibody", value:antibody.id]]
+
+        result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert json.size == 1
+        assert json.collection[0].originalFilename == "space"
+
+
+        searchParameters = [[operator : "in", field : "staining", value:staining.id], [operator : "in", field : "antibody", value:antibody.id]]
+
+        result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert json.size == 0
+
+
+        //test a "not admin"
+        def user1 = BasicInstanceBuilder.getUser(SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
+        BasicInstanceBuilder.getStorageNotExist(user1, true)
+        searchParameters = [[operator : "in", field : "staining", value:staining.id], [operator : "in", field : "antibody", value:antibody.id]]
+
+        result = AbstractImageAPI.search(0,0, searchParameters, SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert json.size == 0
+
     }
 
     //pagination

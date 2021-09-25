@@ -56,7 +56,7 @@ class HVMetadata extends CytomineDomain implements Serializable {
     }
 
     String toString() {
-        type+" "+name
+        type.toString()+" "+value
     }
 
     static HVMetadata insertDataIntoDomain(def json, def domain = new HVMetadata()) {
