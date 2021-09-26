@@ -263,8 +263,8 @@ class ImageInstance extends CytomineDomain implements Serializable {
         returnArray['antibodyValue'] = image?.antibody?.value
         returnArray['detection'] = image?.detection?.id
         returnArray['detectionValue'] = image?.detection?.value
-        returnArray['dilution'] = image?.laboratory?.id
-        returnArray['dilutionValue'] = image?.laboratory?.value
+        returnArray['dilution'] = image?.dilution?.id
+        returnArray['dilutionValue'] = image?.dilution?.value
         returnArray['instrument'] = image?.instrument?.id
         returnArray['instrumentValue'] = image?.instrument?.value
 
