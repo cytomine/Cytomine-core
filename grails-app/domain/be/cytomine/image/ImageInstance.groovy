@@ -20,6 +20,7 @@ import be.cytomine.CytomineDomain
 import be.cytomine.Exception.AlreadyExistException
 import be.cytomine.Exception.WrongArgumentException
 import be.cytomine.api.UrlApi
+import be.cytomine.image.hv.HVMetadata
 import be.cytomine.project.Project
 import be.cytomine.security.SecUser
 import be.cytomine.security.User
@@ -80,6 +81,13 @@ class ImageInstance extends CytomineDomain implements Serializable {
     @RestApiObjectField(description = "The number of frames per second", mandatory = false)
     Double fps
 
+    HVMetadata laboratory
+    HVMetadata staining
+    HVMetadata antibody
+    HVMetadata detection
+    HVMetadata dilution
+    HVMetadata instrument
+
     @RestApiObjectFields(params = [
             @RestApiObjectField(apiFieldName = "filename", description = "Similar to originalFilename", allowedType = "string", useForCreation = false),
             @RestApiObjectField(apiFieldName = "originalFilename", description = "Original filename", allowedType = "string", useForCreation = false),
@@ -120,6 +128,12 @@ class ImageInstance extends CytomineDomain implements Serializable {
         physicalSizeY nullable: true
         physicalSizeZ nullable: true
         fps nullable: true
+        laboratory(nullable: true)
+        staining(nullable: true)
+        antibody(nullable: true)
+        detection(nullable: true)
+        dilution(nullable: true)
+        instrument(nullable: true)
     }
 
     static mapping = {
@@ -180,6 +194,14 @@ class ImageInstance extends CytomineDomain implements Serializable {
                     "start=${domain.reviewStart} stop=${domain.reviewStop}")
         }
 
+
+        domain.laboratory = JSONUtils.getJSONAttrDomain(json,"laboratory",new HVMetadata(),false)
+        domain.staining = JSONUtils.getJSONAttrDomain(json,"staining",new HVMetadata(),false)
+        domain.antibody = JSONUtils.getJSONAttrDomain(json,"antibody",new HVMetadata(),false)
+        domain.detection = JSONUtils.getJSONAttrDomain(json,"detection",new HVMetadata(),false)
+        domain.dilution = JSONUtils.getJSONAttrDomain(json,"dilution",new HVMetadata(),false)
+        domain.instrument = JSONUtils.getJSONAttrDomain(json,"instrument",new HVMetadata(),false)
+
         domain
     }
 
@@ -232,6 +254,20 @@ class ImageInstance extends CytomineDomain implements Serializable {
         returnArray['thumb'] = UrlApi.getImageInstanceThumbUrlWithMaxSize(image?.id, 512)
         returnArray['preview'] = UrlApi.getImageInstanceThumbUrlWithMaxSize(image?.id, 1024)
         returnArray['macroURL'] = UrlApi.getAssociatedImageInstance(image?.id, "macro", image?.baseImage?.uploadedFile?.contentType, 512)
+
+        returnArray['laboratory'] = image?.laboratory?.id
+        returnArray['laboratoryValue'] = image?.laboratory?.value
+        returnArray['staining'] = image?.staining?.id
+        returnArray['stainingValue'] = image?.staining?.value
+        returnArray['antibody'] = image?.antibody?.id
+        returnArray['antibodyValue'] = image?.antibody?.value
+        returnArray['detection'] = image?.detection?.id
+        returnArray['detectionValue'] = image?.detection?.value
+        returnArray['dilution'] = image?.laboratory?.id
+        returnArray['dilutionValue'] = image?.laboratory?.value
+        returnArray['instrument'] = image?.instrument?.id
+        returnArray['instrumentValue'] = image?.instrument?.value
+
         return returnArray
     }
 

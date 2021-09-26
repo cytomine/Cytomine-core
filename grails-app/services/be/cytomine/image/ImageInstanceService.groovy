@@ -349,7 +349,10 @@ class ImageInstanceService extends ModelService {
         if(sortColumn.equals("blindedName")) sortColumn = "id"
         if(!sortedProperty) sortedProperty = ReflectionUtils.findField(AbstractImage, sortColumn) ? abstractImageAlias + "." + sortColumn : null
         if(!sortedProperty) sortedProperty = ReflectionUtils.findField(UploadedFile, sortColumn) ? mimeAlias + "." + sortColumn : null
-        if(!sortedProperty) throw new CytomineMethodNotYetImplementedException("ImageInstance list sorted by $sortedProperty is not implemented")
+        if(!sortedProperty) throw new CytomineMethodNotYetImplementedException("ImageInstance list sorted by $sortColumn is not implemented")
+
+        if(['staining','instrument','detection','dilution','laboratory','antibody'].contains(sortColumn)) sortedProperty = imageInstanceAlias+"."+sortColumn + "_id"
+
         sortedProperty = fieldNameToSQL(sortedProperty)
 
         def validatedSearchParameters = getDomainAssociatedSearchParameters(searchParameters, project.blindMode)
@@ -485,6 +488,13 @@ class ImageInstanceService extends ModelService {
             map['baseImage'] = map['baseImageId']
             map['project'] = map['projectId']
             map['user'] = map['userId']
+
+            map['antibody'] = map['antibodyId']
+            map['laboratory'] = map['laboratoryId']
+            map['staining'] = map['stainingId']
+            map['detection'] = map['detectionId']
+            map['dilution'] = map['dilutionId']
+            map['instrument'] = map['instrumentId']
 
             //TODO improve perf !
             def line = ImageInstance.getDataFromDomain(ImageInstance.insertDataIntoDomain(map))
@@ -662,6 +672,14 @@ class ImageInstanceService extends ModelService {
             at.setDomain(domain)
             attachedFileService.add(at.filename,at.data,it.key,at.domainIdent,at.domainClassName)
         }
+
+        domain.laboratory = domain.baseImage.laboratory
+        domain.staining = domain.baseImage.staining
+        domain.antibody = domain.baseImage.antibody
+        domain.detection = domain.baseImage.detection
+        domain.dilution = domain.baseImage.dilution
+        domain.instrument = domain.baseImage.instrument
+        domain.save(failOnError: true)
     }
 
     def beforeDelete(ImageInstance domain) {
