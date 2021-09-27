@@ -76,8 +76,12 @@ class ImageScoreService extends ModelService {
         return imageScores
     }
 
-    def statsGroupByImageInstances(Project project, String sortColumn, String sortDirection) {
+    def statsGroupByImageInstances(Project project, String sortColumn, String sortDirection, def searchFilter) {
         List<ImageInstance> imageInstanceList = ImageInstance.findAllByProject(project)
+        if (searchFilter && !searchFilter.isEmpty()) {
+            imageInstanceList = imageInstanceList.findAll { image -> return image?.baseImage?.filename?.toLowerCase()?.contains(searchFilter) }
+        }
+
         List<Score> scoreList = ScoreProject.findAllByProject(project).collect {it.score}
 
         def stats = new HashMap<Long, HashMap<String, Integer>>()
@@ -103,8 +107,10 @@ class ImageScoreService extends ModelService {
             Long imageInstanceId = it['ImageInstanceId']
             String scoreId = String.valueOf(it['ScoreId'])
 
-            Integer counter = stats.get(imageInstanceId).get(scoreId)
-            stats.get(imageInstanceId).put(scoreId, counter + 1)
+            if (stats.containsKey(imageInstanceId)) {
+                Integer counter = stats.get(imageInstanceId).get(scoreId)
+                stats.get(imageInstanceId).put(scoreId, counter + 1)
+            }
         }
         try {
             sql.close()
@@ -124,10 +130,16 @@ class ImageScoreService extends ModelService {
         return rows;
     }
 
-    def statsGroupBySecUser(Project project, String sortColumn, String sortDirection) {
+    def statsGroupBySecUser(Project project, String sortColumn, String sortDirection, def searchFilter) {
         List<User> userList = secUserService.listUsers(project, false, false)
+        if (searchFilter && !searchFilter.isEmpty()) {
+            userList = userList.findAll { user -> return (user?.username + user?.firstname + user?.lastname).toLowerCase()?.contains(searchFilter)
+            }
+        }
+
         def stats = new HashMap<Long, HashMap<String, Integer>>()
         List<Score> scoreList = ScoreProject.findAllByProject(project).collect {it.score}
+
 
         userList.each { user ->
             def initFields = User.getDataFromDomain(user)
@@ -150,8 +162,10 @@ class ImageScoreService extends ModelService {
             Long userId = it['userId']
             String scoreId = String.valueOf(it['ScoreId'])
 
-            Integer counter = stats.get(userId).get(scoreId)
-            stats.get(userId).put(scoreId, counter + 1)
+            if (stats.containsKey(userId)) {
+                Integer counter = stats.get(userId).get(scoreId)
+                stats.get(userId).put(scoreId, counter + 1)
+            }
         }
         try {
             sql.close()
