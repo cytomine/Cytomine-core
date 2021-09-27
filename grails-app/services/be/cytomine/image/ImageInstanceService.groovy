@@ -660,7 +660,7 @@ class ImageInstanceService extends ModelService {
         AttachedFile.findAllByDomainIdentAndDomainClassName(ai.id, ai.getClass().name).each {
             AttachedFile at = new AttachedFile(data: it.data, filename: it.filename)
             at.setDomain(domain)
-            attachedFileService.add(at.filename,at.data,at.domainIdent,at.domainClassName)
+            attachedFileService.add(at.filename,at.data,it.key,at.domainIdent,at.domainClassName)
         }
     }
 
