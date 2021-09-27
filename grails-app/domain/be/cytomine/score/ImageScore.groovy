@@ -16,6 +16,9 @@ class ImageScore extends CytomineDomain implements Serializable {
     @RestApiObjectField(description = "The score value")
     ScoreValue scoreValue
 
+    @RestApiObjectField(description = "The score")
+    Score score
+
     @RestApiObjectField(description = "The possible value of the score")
     ImageInstance imageInstance
 
@@ -24,6 +27,7 @@ class ImageScore extends CytomineDomain implements Serializable {
 
     static constraints = {
         scoreValue(nullable: false)
+        score(nullable: false)
         imageInstance(nullable: false)
         user(nullable: false)
     }
@@ -55,6 +59,7 @@ class ImageScore extends CytomineDomain implements Serializable {
         domain.id = JSONUtils.getJSONAttrLong(json, 'id', null)
         domain.imageInstance = JSONUtils.getJSONAttrDomain(json, "imageInstance", new ImageInstance(), true)
         domain.scoreValue = JSONUtils.getJSONAttrDomain(json, "scoreValue", new ScoreValue(), true)
+        domain.score = domain.scoreValue.score
         domain.user = JSONUtils.getJSONAttrDomain(json, "user", new User(), true)
         return domain;
     }
@@ -67,6 +72,7 @@ class ImageScore extends CytomineDomain implements Serializable {
     static def getDataFromDomain(def domain) {
         def returnArray = CytomineDomain.getDataFromDomain(domain)
         returnArray['imageInstance'] = domain?.imageInstance?.id
+        returnArray['score'] = domain?.score?.id
         returnArray['scoreValue'] = domain?.scoreValue?.id
         returnArray['scoreValueName'] = domain?.scoreValue?.value
         returnArray['user'] = domain?.user?.id

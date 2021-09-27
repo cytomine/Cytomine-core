@@ -30,6 +30,7 @@ import be.cytomine.ontology.ReviewedAnnotation
 import be.cytomine.ontology.Track
 import be.cytomine.ontology.UserAnnotation
 import be.cytomine.project.Project
+import be.cytomine.score.ScoreProject
 import be.cytomine.security.SecUser
 import be.cytomine.security.User
 import be.cytomine.social.AnnotationAction
@@ -345,14 +346,15 @@ class ImageInstanceService extends ModelService {
         if(sortColumn.equals("numberOfJobAnnotations")) sortColumn = "countImageJobAnnotations"
         if(sortColumn.equals("numberOfReviewedAnnotations")) sortColumn = "countImageReviewedAnnotations"
 
+        def scores = ScoreProject.findAllByProject(project)*.score
+
         String sortedProperty = ReflectionUtils.findField(ImageInstance, sortColumn) ? "${imageInstanceAlias}." + sortColumn : null
         if(sortColumn.equals("blindedName")) sortColumn = "id"
         if(!sortedProperty) sortedProperty = ReflectionUtils.findField(AbstractImage, sortColumn) ? abstractImageAlias + "." + sortColumn : null
         if(!sortedProperty) sortedProperty = ReflectionUtils.findField(UploadedFile, sortColumn) ? mimeAlias + "." + sortColumn : null
-        if(!sortedProperty) throw new CytomineMethodNotYetImplementedException("ImageInstance list sorted by $sortColumn is not implemented")
-
         if(['staining','instrument','detection','dilution','laboratory','antibody'].contains(sortColumn)) sortedProperty = imageInstanceAlias+"."+sortColumn + "_id"
-
+        if(!sortedProperty && scores*.name.contains(sortColumn)) sortedProperty = sortColumn+"_val.value"//scores.find {it.name == sortColumn}ReflectionUtils.findField(UploadedFile, sortColumn) ? mimeAlias + "." + sortColumn : null
+        if(!sortedProperty) throw new CytomineMethodNotYetImplementedException("ImageInstance list sorted by $sortColumn is not implemented")
         sortedProperty = fieldNameToSQL(sortedProperty)
 
         def validatedSearchParameters = getDomainAssociatedSearchParameters(searchParameters, project.blindMode)
@@ -442,6 +444,17 @@ class ImageInstanceService extends ModelService {
             select += ", COALESCE(${imageInstanceAlias}.instance_filename, ${abstractImageAlias}.original_filename) "
         }
 
+        if(!scores.isEmpty()){
+            Long currentUserId = cytomineService.currentUser.id
+            scores.each {score ->
+                String columnName = score.name
+                select += ", ${columnName}_val.value as ${columnName} "
+                from += "LEFT OUTER JOIN image_score ${columnName} ON ii.id = ${columnName}.image_instance_id AND ${columnName}.user_id = ${currentUserId} AND ${columnName}.score_id = ${score.id} "
+                from += "LEFT OUTER JOIN score_value ${columnName}_val ON ${columnName}.score_value_id = ${columnName}_val.id "
+            }
+        }
+
+
         sort = " ORDER BY " + sortedProperty
         sort += (sortDirection.equals("desc")) ? " DESC " : " ASC "
 
@@ -503,6 +516,10 @@ class ImageInstanceService extends ModelService {
             line.putAt('numberOfReviewedAnnotations', map.countImageReviewedAnnotations)
             line.putAt('projectBlind', map.projectBlind)
             line.putAt('projectName', map.projectName)
+            scores.each {score ->
+                String columnName = score.name
+                line.putAt(columnName, map[columnName])
+            }
             data << line
         }
 
