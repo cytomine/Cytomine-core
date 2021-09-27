@@ -868,6 +868,11 @@ class ImageInstanceService extends ModelService {
             it.property = "base_image_id"
             it.value = it.value.id
         }
+        validParameters.findAll { ['staining','instrument','detection','dilution','laboratory','antibody'].contains(it.property)}.each {
+            it.property = it.property+"_id"
+            it.value = it.value.id
+        }
+
         return validParameters
     }
 
