@@ -38,5 +38,18 @@ class ScoreUrlMappings {
         "/api/imageinstance/$imageInstance/image-score.$format"(controller:"restImageScore") {
             action = [GET: "listByImageInstance"]
         }
+
+        "/api/project/$project/image-score.$format"(controller:"restImageScore") {
+            action = [GET: "listByProject"]
+        }
+        "/api/project/$project/image-score/stats-group-by-image.$format"(controller:"restImageScore") {
+            action = [GET: "statsGroupByImageInstances"]
+        }
+        "/api/project/$project/image-score/stats-group-by-user.$format"(controller:"restImageScore") {
+            action = [GET: "statsGroupByUsers"]
+        }
+
+
+
     }
 }

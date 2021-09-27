@@ -59,6 +59,7 @@ class Score extends CytomineDomain implements Serializable {
         if (!returnArray['values']) {
             returnArray['values'] = []
         }
+        returnArray['kikou'] = 'lol'
         return returnArray
     }
 }

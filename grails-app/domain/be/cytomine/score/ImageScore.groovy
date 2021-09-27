@@ -31,6 +31,7 @@ class ImageScore extends CytomineDomain implements Serializable {
         id(generator: 'assigned', unique: true)
         sort "id"
         cache true
+        scoreValue fetch: 'join'
     }
 
     void checkAlreadyExist() {
@@ -67,6 +68,7 @@ class ImageScore extends CytomineDomain implements Serializable {
         def returnArray = CytomineDomain.getDataFromDomain(domain)
         returnArray['imageInstance'] = domain?.imageInstance?.id
         returnArray['scoreValue'] = domain?.scoreValue?.id
+        returnArray['scoreValueName'] = domain?.scoreValue?.value
         returnArray['user'] = domain?.user?.id
         returnArray['score'] = domain?.scoreValue?.score?.id
         return returnArray

@@ -1,6 +1,7 @@
 package be.cytomine.api.score
 
 import be.cytomine.api.RestController
+import be.cytomine.api.UrlApi
 import be.cytomine.image.ImageInstance
 
 /*
@@ -32,6 +33,8 @@ import org.restapidoc.annotation.RestApiParam
 import org.restapidoc.annotation.RestApiParams
 import org.restapidoc.pojo.RestApiParamType
 
+import java.text.SimpleDateFormat
+
 /**
  * Controller for score project link
  * A score may be used by some project
@@ -44,6 +47,7 @@ class RestImageScoreController extends RestController{
     def cytomineService
     def imageInstanceService
     def scoreService
+    def exportService
 
 
     /**
@@ -75,6 +79,121 @@ class RestImageScoreController extends RestController{
         ImageInstance imageInstance = imageInstanceService.read(params.getLong("imageInstance"))
         SecUser user = cytomineService.currentUser
         responseSuccess(imageScoreService.listByImageInstanceAndUser(imageInstance, (User)user))
+    }
+
+    /**
+     * List scores values for a project
+     */
+    @RestApiMethod(description="List scores values for a project")
+    @RestApiParams(params=[
+            @RestApiParam(name="project", type="long", paramType = RestApiParamType.PATH, description = "The project id"),
+    ])
+    def listByProject() {
+        Project project = projectService.read(params.getLong("project"))
+        SecUser user = cytomineService.currentUser
+        responseSuccess(imageScoreService.listByProjectAndUser(project, (User)user))
+    }
+
+    def statsGroupByImageInstances() {
+        String sortColumn = params.sort ? params.sort : "created"
+        String sortDirection = params.order ? params.order : "desc"
+        Project project = projectService.read(params.getLong("project"))
+        def stats = imageScoreService.statsGroupByImageInstances(project, sortColumn, sortDirection);
+        if (params.format!='json') {
+            downloadImageReport(stats, project)
+        } else {
+            responseSuccess(stats)
+        }
+    }
+
+
+    private downloadImageReport(def images, Project project) {
+        if (params?.format && params.format != "html") {
+            def exporterIdentifier = params.format;
+            if (exporterIdentifier == "xls") exporterIdentifier = "excel"
+            response.contentType = grailsApplication.config.grails.mime.types[params.format]
+            SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyyMMdd_hhmmss");
+            String datePrefix = simpleFormat.format(new Date())
+            response.setHeader("Content-disposition", "attachment; filename=${datePrefix}_images_scores.${params.format}")
+
+            def scores = ScoreProject.findAllByProject(project).collect { it.score }
+            scores.sort { it.name }
+
+            def exportResult = []
+            images.each { image ->
+                def data = [:]
+                data.id = image['id']
+                data.instanceFilename = image['instanceFilename']
+                scores.each { score ->
+                    data[String.valueOf(score.id)] = image[String.valueOf(score.id)]
+                }
+                exportResult.add(data)
+            }
+
+            List fields = ["id", "instanceFilename"]
+            scores.each {
+                fields << String.valueOf(it.id)
+            }
+            Map labels = ["id": "Id", "instanceFilename": "Filename"]
+            scores.each {
+                labels[String.valueOf(it.id)] = it.name
+            }
+
+            String title = "Scores by image"
+
+            exportService.export(exporterIdentifier, response.outputStream, exportResult, fields, labels, null, ["title": title, "csv.encoding": "UTF-8", "separator": ";"])
+        }
+    }
+
+    def statsGroupByUsers() {
+        String sortColumn = params.sort ? params.sort : "created"
+        String sortDirection = params.order ? params.order : "desc"
+        Project project = projectService.read(params.getLong("project"))
+        def stats = imageScoreService.statsGroupBySecUser(project, sortColumn, sortDirection)
+        if (params.format!='json') {
+            downloadUsersReport(stats, project)
+        } else {
+            responseSuccess(stats)
+        }
+    }
+
+    private downloadUsersReport(def users, Project project) {
+        if (params?.format && params.format != "html") {
+            def exporterIdentifier = params.format;
+            if (exporterIdentifier == "xls") exporterIdentifier = "excel"
+            response.contentType = grailsApplication.config.grails.mime.types[params.format]
+            SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyyMMdd_hhmmss");
+            String datePrefix = simpleFormat.format(new Date())
+            response.setHeader("Content-disposition", "attachment; filename=${datePrefix}_members_scores.${params.format}")
+
+            def scores = ScoreProject.findAllByProject(project).collect { it.score }
+            scores.sort { it.name }
+
+            def exportResult = []
+            users.each { user ->
+                def data = [:]
+                data.id = user['id']
+                data.username = user['username']
+                data.fullname = user['firstname'] + ' ' + user['lastname']
+                scores.each { score ->
+                    data[String.valueOf(score.id)] = user[String.valueOf(score.id)]
+                }
+                exportResult.add(data)
+            }
+
+            List fields = ["id", "username", "fullname"]
+            scores.each {
+                fields << String.valueOf(it.id)
+            }
+            Map labels = ["id": "Id", "username": "Username", "fullname": "Fullname"]
+            scores.each {
+                labels[String.valueOf(it.id)] = it.name
+            }
+
+            String title = "Scores by user"
+
+            exportService.export(exporterIdentifier, response.outputStream, exportResult, fields, labels, null, ["title": title, "csv.encoding": "UTF-8", "separator": ";"])
+        }
     }
 
     /**

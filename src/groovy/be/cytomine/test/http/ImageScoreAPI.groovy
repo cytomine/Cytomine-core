@@ -29,8 +29,34 @@ class ImageScoreAPI extends DomainAPI {
         return doGET(URL, username, password)
     }
 
-    static def list(Long idImageInstance, String username, String password) {
+    static def listByImage(Long idImageInstance, String username, String password) {
         String URL = Infos.CYTOMINEURL + "api/imageinstance/${idImageInstance}/image-score.json"
+        return doGET(URL, username, password)
+    }
+
+    static def listByProject(Long idProject, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/project/${idProject}/image-score.json"
+        return doGET(URL, username, password)
+    }
+
+
+    static def statsGroupByImage(Long idProject, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "/api/project/${idProject}/image-score/stats-group-by-image.json"
+        return doGET(URL, username, password)
+    }
+
+    static def statsGroupByImage(Long idProject, String format, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "/api/project/${idProject}/image-score/stats-group-by-image.${format}"
+        return doGET(URL, username, password)
+    }
+
+    static def statsGroupByUser(Long idProject, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "/api/project/${idProject}/image-score/stats-group-by-user.json"
+        return doGET(URL, username, password)
+    }
+
+    static def statsGroupByUser(Long idProject, String format, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "/api/project/${idProject}/image-score/stats-group-by-user.${format}"
         return doGET(URL, username, password)
     }
 
