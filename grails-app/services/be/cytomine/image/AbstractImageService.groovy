@@ -248,6 +248,7 @@ class AbstractImageService extends ModelService {
 
         def sql = new Sql(dataSource)
         def data = []
+        if(mapParams.isEmpty()) mapParams = []
 
         sql.eachRow(request, mapParams) {
             def map = [:]
