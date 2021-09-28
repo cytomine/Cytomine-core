@@ -162,6 +162,43 @@ class BootStrap {
         log.info "init table..."
         tableService.initTable()
 
+        if (!bootstrapUtilsService.checkSqlColumnExistence("attached_file", "key")) {
+            new Sql(dataSource).executeUpdate("ALTER TABLE attached_file ADD COLUMN key VARCHAR;")
+        }
+
+        if (!bootstrapUtilsService.checkSqlColumnExistence("abstract_image", "antibody_id")) {
+            new Sql(dataSource).executeUpdate("ALTER TABLE abstract_image ADD COLUMN antibody_id BIGINT;")
+            new Sql(dataSource).executeUpdate("ALTER TABLE abstract_image ADD COLUMN detection_id BIGINT;")
+            new Sql(dataSource).executeUpdate("ALTER TABLE abstract_image ADD COLUMN dilution_id BIGINT;")
+            new Sql(dataSource).executeUpdate("ALTER TABLE abstract_image ADD COLUMN instrument_id BIGINT;")
+            new Sql(dataSource).executeUpdate("ALTER TABLE abstract_image ADD COLUMN laboratory_id BIGINT;")
+            new Sql(dataSource).executeUpdate("ALTER TABLE abstract_image ADD COLUMN staining_id BIGINT;")
+
+            new Sql(dataSource).executeUpdate("ALTER TABLE abstract_image ADD CONSTRAINT fk_abs_img_meta1 FOREIGN KEY(antibody_id) REFERENCES hvmetadata (id);")
+            new Sql(dataSource).executeUpdate("ALTER TABLE abstract_image ADD CONSTRAINT fk_abs_img_meta2 FOREIGN KEY(detection_id) REFERENCES hvmetadata (id);")
+            new Sql(dataSource).executeUpdate("ALTER TABLE abstract_image ADD CONSTRAINT fk_abs_img_meta3 FOREIGN KEY(dilution_id) REFERENCES hvmetadata (id);")
+            new Sql(dataSource).executeUpdate("ALTER TABLE abstract_image ADD CONSTRAINT fk_abs_img_meta4 FOREIGN KEY(instrument_id) REFERENCES hvmetadata (id);")
+            new Sql(dataSource).executeUpdate("ALTER TABLE abstract_image ADD CONSTRAINT fk_abs_img_meta5 FOREIGN KEY(laboratory_id) REFERENCES hvmetadata (id);")
+            new Sql(dataSource).executeUpdate("ALTER TABLE abstract_image ADD CONSTRAINT fk_abs_img_meta6 FOREIGN KEY(staining_id) REFERENCES hvmetadata (id);")
+        }
+
+        if (!bootstrapUtilsService.checkSqlColumnExistence("image_instance", "antibody_id")) {
+            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance ADD COLUMN antibody_id BIGINT;")
+            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance ADD COLUMN detection_id BIGINT;")
+            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance ADD COLUMN dilution_id BIGINT;")
+            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance ADD COLUMN instrument_id BIGINT;")
+            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance ADD COLUMN laboratory_id BIGINT;")
+            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance ADD COLUMN staining_id BIGINT;")
+
+            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance ADD CONSTRAINT fk_abs_img_meta1 FOREIGN KEY(antibody_id) REFERENCES hvmetadata (id);")
+            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance ADD CONSTRAINT fk_abs_img_meta2 FOREIGN KEY(detection_id) REFERENCES hvmetadata (id);")
+            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance ADD CONSTRAINT fk_abs_img_meta3 FOREIGN KEY(dilution_id) REFERENCES hvmetadata (id);")
+            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance ADD CONSTRAINT fk_abs_img_meta4 FOREIGN KEY(instrument_id) REFERENCES hvmetadata (id);")
+            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance ADD CONSTRAINT fk_abs_img_meta5 FOREIGN KEY(laboratory_id) REFERENCES hvmetadata (id);")
+            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance ADD CONSTRAINT fk_abs_img_meta6 FOREIGN KEY(staining_id) REFERENCES hvmetadata (id);")
+        }
+
+
         log.info "init term service..."
         termService.initialize() //term service needs userservice and userservice needs termservice => init manualy at bootstrap
 
