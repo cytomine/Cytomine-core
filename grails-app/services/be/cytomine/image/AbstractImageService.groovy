@@ -25,6 +25,7 @@ import be.cytomine.command.Command
 import be.cytomine.command.DeleteCommand
 import be.cytomine.command.EditCommand
 import be.cytomine.command.Transaction
+import be.cytomine.image.hv.HVMetadata
 import be.cytomine.image.server.Storage
 import be.cytomine.laboratory.Sample
 import be.cytomine.project.Project
@@ -373,6 +374,20 @@ class AbstractImageService extends ModelService {
                 json = JSON.parse(it.encodeAsJSON())
                 json.instanceFilename = abstractImage.originalFilename
                 imageInstanceService.update(it, json)
+            }
+        }
+
+        ["laboratory", "staining", "antibody","detection", "dilution", "instrument"].each {
+            HVMetadata oldMetadata = JSONUtils.getJSONAttrDomain(attributes,it , new HVMetadata(), false)
+            boolean metadataUpdated = !oldMetadata.equals(abstractImage[it])
+            if(metadataUpdated) {
+                images = ImageInstance.findAllByBaseImage(image).findAll {ii ->
+                    ii[it] == oldMetadata
+                }.each {ii ->
+                    def json = JSON.parse(ii.encodeAsJSON())
+                    json[it] = abstractImage[it]?.id
+                    imageInstanceService.update(ii, json)
+                }
             }
         }
 
