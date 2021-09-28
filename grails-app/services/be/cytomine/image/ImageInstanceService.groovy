@@ -353,7 +353,7 @@ class ImageInstanceService extends ModelService {
         if(!sortedProperty) sortedProperty = ReflectionUtils.findField(AbstractImage, sortColumn) ? abstractImageAlias + "." + sortColumn : null
         if(!sortedProperty) sortedProperty = ReflectionUtils.findField(UploadedFile, sortColumn) ? mimeAlias + "." + sortColumn : null
         if(['staining','instrument','detection','dilution','laboratory','antibody'].contains(sortColumn)) sortedProperty = imageInstanceAlias+"."+sortColumn + "_id"
-        if(!sortedProperty && scores*.name.contains(sortColumn)) sortedProperty = sortColumn+"_val.value"//scores.find {it.name == sortColumn}ReflectionUtils.findField(UploadedFile, sortColumn) ? mimeAlias + "." + sortColumn : null
+        if(!sortedProperty && sortColumn.startsWith("score")) sortedProperty = sortColumn+"_index" //scores.find {it.name == sortColumn}ReflectionUtils.findField(UploadedFile, sortColumn) ? mimeAlias + "." + sortColumn : null
         if(!sortedProperty) throw new CytomineMethodNotYetImplementedException("ImageInstance list sorted by $sortColumn is not implemented")
         sortedProperty = fieldNameToSQL(sortedProperty)
 
@@ -447,8 +447,8 @@ class ImageInstanceService extends ModelService {
         if(!scores.isEmpty()){
             Long currentUserId = cytomineService.currentUser.id
             scores.each {score ->
-                String columnName = score.name
-                select += ", ${columnName}_val.value as ${columnName} "
+                String columnName = "score${score.id}"
+                select += ", ${columnName}_val.value as ${columnName}, ${columnName}_val.index as ${columnName}_index "
                 from += "LEFT OUTER JOIN image_score ${columnName} ON ii.id = ${columnName}.image_instance_id AND ${columnName}.user_id = ${currentUserId} AND ${columnName}.score_id = ${score.id} "
                 from += "LEFT OUTER JOIN score_value ${columnName}_val ON ${columnName}.score_value_id = ${columnName}_val.id "
             }
@@ -517,7 +517,7 @@ class ImageInstanceService extends ModelService {
             line.putAt('projectBlind', map.projectBlind)
             line.putAt('projectName', map.projectName)
             scores.each {score ->
-                String columnName = score.name
+                String columnName = "score${score.id}"
                 line.putAt(columnName, map[columnName])
             }
             data << line
