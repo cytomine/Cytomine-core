@@ -223,11 +223,17 @@ class AbstractImage extends CytomineDomain implements Serializable {
         returnArray['macroURL'] = UrlApi.getAssociatedImage(image ? (long)image?.id : null, "macro", image?.uploadedFile?.contentType, 512)
 
         returnArray['laboratory'] = image?.laboratory?.id
+        returnArray['laboratoryValue'] = image?.laboratory?.value
         returnArray['staining'] = image?.staining?.id
+        returnArray['stainingValue'] = image?.staining?.value
         returnArray['antibody'] = image?.antibody?.id
+        returnArray['antibodyValue'] = image?.antibody?.value
         returnArray['detection'] = image?.detection?.id
-        returnArray['dilution'] = image?.laboratory?.id
+        returnArray['detectionValue'] = image?.detection?.value
+        returnArray['dilution'] = image?.dilution?.id
+        returnArray['dilutionValue'] = image?.dilution?.value
         returnArray['instrument'] = image?.instrument?.id
+        returnArray['instrumentValue'] = image?.instrument?.value
 
         returnArray
     }
