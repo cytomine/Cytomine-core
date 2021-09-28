@@ -1,5 +1,6 @@
 package be.cytomine.score
 
+import be.cytomine.Exception.ConstraintException
 import be.cytomine.Exception.CytomineException
 
 /*
@@ -120,8 +121,9 @@ class ScoreService extends ModelService {
     }
 
     def deleteDependentScoreProject(Score score, Transaction transaction, Task task = null) {
-        ScoreProject.findAllByScore(score).each {
-            scoreProjectService.delete(it,transaction,null, false)
+        if  (!ScoreProject.findAllByScore(score).isEmpty()) {
+            throw new ConstraintException("This score ${score.name} cannot be deleted as it has already been insert " +
+                    "in projects " + ScoreProject.findAllByScore(score).collect{it.project.name})
         }
     }
 }
