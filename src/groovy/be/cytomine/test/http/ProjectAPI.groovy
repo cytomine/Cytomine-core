@@ -172,4 +172,13 @@ class ProjectAPI extends DomainAPI {
         String URL = Infos.CYTOMINEURL + "api/bounds/project.json"
         return doGET(URL, username, password)
     }
+
+    static def lock(Long id,String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/project/$id/lock"
+        return doPOST(URL, '',username, password)
+    }
+    static def unlock(Long id,String username, String password) {
+        String URL = Infos.CYTOMINEURL + "api/project/$id/lock"
+        return doDELETE(URL, username, password)
+    }
 }

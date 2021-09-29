@@ -1522,6 +1522,435 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
 
     }
 
+    void testLockedProject() {
+        // Init dataset
+
+        def simpleUsername = "simpleUserRO"
+        def adminUsername = "adminRO"
+        def password = "password"
+        def testUsername = "testUser"
+
+        //Create a project
+        Project project = BasicInstanceBuilder.getProjectNotExist(true)
+
+        project.mode = Project.EditingMode.LOCKED
+        BasicInstanceBuilder.saveDomain(project)
+
+        //Add a simple project user and a project admin
+        User simpleUser = BasicInstanceBuilder.getUser(simpleUsername,password)
+        User admin = BasicInstanceBuilder.getUser(adminUsername,password)
+
+        assert 403 == ProjectAPI.addUserProject(project.id,simpleUser.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
+        assert 403 == ProjectAPI.addAdminProject(project.id,admin.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
+
+        project.mode = Project.EditingMode.READ_ONLY
+        BasicInstanceBuilder.saveDomain(project)
+
+        assert 200 == ProjectAPI.addUserProject(project.id,simpleUser.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
+        assert 200 == ProjectAPI.addAdminProject(project.id,admin.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
+
+        project.mode = Project.EditingMode.LOCKED
+        BasicInstanceBuilder.saveDomain(project)
+
+
+        //create user test
+        User test = BasicInstanceBuilder.getUser(testUsername,password)
+
+
+        // Test as a project admin
+
+        //update project
+        assert 403 == ProjectAPI.update(project.id,project.encodeAsJSON(),adminUsername, password).code
+        // add & delete users
+        assert 403 == ProjectAPI.addUserProject(project.id,test.id,adminUsername,password).code
+        assert 403 == ProjectAPI.deleteUserProject(project.id,test.id,adminUsername,password).code
+        // add & delete admins
+        assert 403 == ProjectAPI.addAdminProject(project.id,test.id,adminUsername,password).code
+        assert 403 == ProjectAPI.deleteAdminProject(project.id,test.id,adminUsername,password).code
+        // add & delete representatives
+        def refToAdd = BasicInstanceBuilder.getProjectRepresentativeUserNotExist()
+        refToAdd.project = project
+        def result = ProjectRepresentativeUserAPI.create(refToAdd.encodeAsJSON(), adminUsername,password)
+        assert 403 == result.code
+        int idRef = result.data.id
+        assert 403 == ProjectRepresentativeUserAPI.delete(idRef, project.id, adminUsername,password).code
+
+        assert 200 == AnnotationDomainAPI.downloadDocumentByProject(project.id, simpleUser.id, null, null, adminUsername,password).code
+
+        // Test as simple user
+
+        //update project
+        assert 403 == ProjectAPI.update(project.id,project.encodeAsJSON(),simpleUsername, password).code
+        // add & delete users
+        assert 403 == ProjectAPI.addUserProject(project.id,test.id,simpleUsername,password).code
+        assert 403 == ProjectAPI.addUserProject(project.id,test.id,adminUsername,password).code
+        assert 403 == ProjectAPI.deleteUserProject(project.id,test.id,simpleUsername,password).code
+        // add & delete admins
+        assert 403 == ProjectAPI.addAdminProject(project.id,test.id,simpleUsername,password).code
+        assert 403 == ProjectAPI.addAdminProject(project.id,test.id,adminUsername,password).code
+        assert 403 == ProjectAPI.deleteAdminProject(project.id,test.id,simpleUsername,password).code
+        // add & delete representatives
+        refToAdd = BasicInstanceBuilder.getProjectRepresentativeUserNotExist()
+        refToAdd.project = project
+        assert 403 == ProjectRepresentativeUserAPI.create(refToAdd.encodeAsJSON(), simpleUsername,password).code
+        idRef = ProjectRepresentativeUserAPI.create(refToAdd.encodeAsJSON(), adminUsername,password).data.id
+        assert 403 == ProjectRepresentativeUserAPI.delete(idRef, project.id, simpleUsername,password).code
+
+        assert 200 == AnnotationDomainAPI.downloadDocumentByProject(project.id, simpleUser.id, null, null, adminUsername,password).code
+
+        assert 403 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(project, false).encodeAsJSON(),simpleUsername, password).code
+        assert 403 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(project, false).encodeAsJSON(),adminUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", project.class.name,project.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", project.class.name,project.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
+        assert 403 == PropertyAPI.create(project.id, "project" ,BasicInstanceBuilder.getProjectPropertyNotExist(project,false).encodeAsJSON(),simpleUsername,password).code
+        assert 403 == PropertyAPI.create(project.id, "project" ,BasicInstanceBuilder.getProjectPropertyNotExist(project,false).encodeAsJSON(),adminUsername,password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(project, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(project, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
+    }
+
+    void testLockedProjectWithImageDataAsContributor() {
+
+        def simpleUsername = "simpleUserRO"
+        def adminUsername = "adminRO"
+        def password = "password"
+
+        //Create a project
+        Project project = BasicInstanceBuilder.getProjectNotExist(true)
+
+        def data = initProjectDataSet(project, simpleUsername, adminUsername, password)
+
+        //super admin data
+        ImageInstance image = data.image
+        UserAnnotation annotation = data.annotation
+        Description description = data.description
+        Property property = data.property
+        AttachedFile attachedFile = data.attachedFile
+        TagDomainAssociation tda = data.tagDomainAssociation
+
+        //admin data
+        ImageInstance imageAdmin = data.imageAdmin
+        UserAnnotation annotationAdmin = data.annotationAdmin
+        Description descriptionAdmin = data.descriptionAdmin
+        Property propertyAdmin = data.propertyAdmin
+        AttachedFile attachedFileAdmin = data.attachedFileAdmin
+        TagDomainAssociation tdaAdmin = data.tagDomainAssociationAdmin
+
+        //simple user data
+        ImageInstance imageUser = data.imageUser
+        UserAnnotation annotationUser = data.annotationUser
+        Description descriptionUser = data.descriptionUser
+        Property propertyUser = data.propertyUser
+        AttachedFile attachedFileUser = data.attachedFileUser
+        TagDomainAssociation tdaUser = data.tagDomainAssociationUser
+
+        project.mode = Project.EditingMode.LOCKED
+        BasicInstanceBuilder.saveDomain(project)
+
+        //add,update, delete property (simple user data)
+        assert 403 == PropertyAPI.create(annotationUser.id, "annotation" ,BasicInstanceBuilder.getAnnotationPropertyNotExist(annotationUser,false).encodeAsJSON(),simpleUsername,password).code
+        assert 403 == PropertyAPI.update(propertyUser.id, propertyUser.domainIdent, "annotation" ,propertyUser.encodeAsJSON(), simpleUsername,password).code
+        assert 403 == PropertyAPI.delete(propertyUser.id, propertyUser.domainIdent, "annotation", simpleUsername, password).code
+
+        //add,update, delete property (admin data)
+        assert 403 == PropertyAPI.create(annotationAdmin.id, "annotation" ,BasicInstanceBuilder.getAnnotationPropertyNotExist(annotationAdmin,false).encodeAsJSON(),simpleUsername,password).code
+        assert 403 == PropertyAPI.update(propertyAdmin.id, propertyAdmin.domainIdent, "annotation" ,propertyAdmin.encodeAsJSON(), simpleUsername,password).code
+        assert 403 == PropertyAPI.delete(propertyAdmin.id, propertyAdmin.domainIdent, "annotation", simpleUsername, password).code
+
+        //add,update, delete property (superadmin data)
+        assert 403 == PropertyAPI.create(annotation.id, "annotation" ,BasicInstanceBuilder.getAnnotationPropertyNotExist(annotation,false).encodeAsJSON(),simpleUsername,password).code
+        assert 403 == PropertyAPI.update(property.id, property.domainIdent, "annotation" ,property.encodeAsJSON(), simpleUsername,password).code
+        assert 403 == PropertyAPI.delete(property.id, property.domainIdent, "annotation", simpleUsername, password).code
+
+        //add, update, delete description (simple user data)
+        assert 403 == DescriptionAPI.update(descriptionUser.domainIdent,descriptionUser.domainClassName,descriptionUser.encodeAsJSON(),simpleUsername, password).code
+        assert 403 == DescriptionAPI.delete(descriptionUser.domainIdent,descriptionUser.domainClassName,simpleUsername, password).code
+        assert 403 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(annotationUser, false).encodeAsJSON(),simpleUsername, password).code
+
+        //add, update, delete description (admin data)
+        assert 403 == DescriptionAPI.update(descriptionAdmin.domainIdent,descriptionAdmin.domainClassName,descriptionAdmin.encodeAsJSON(),simpleUsername, password).code
+        assert 403 == DescriptionAPI.delete(descriptionAdmin.domainIdent,descriptionAdmin.domainClassName,simpleUsername, password).code
+        assert 403 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(annotationAdmin, false).encodeAsJSON(),simpleUsername, password).code
+
+        //add, update, delete description (super admin data)
+        assert 403 == DescriptionAPI.update(description.domainIdent,description.domainClassName,description.encodeAsJSON(),simpleUsername, password).code
+        assert 403 == DescriptionAPI.delete(description.domainIdent,description.domainClassName,simpleUsername, password).code
+        assert 403 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(annotation, false).encodeAsJSON(),simpleUsername, password).code
+
+        //add, update, delete tag domain association (simple user data)
+        assert 403 == TagDomainAssociationAPI.delete(tdaUser.id,simpleUsername, password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationUser, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+
+        //add, update, delete description (admin data)
+        assert 403 == TagDomainAssociationAPI.delete(tdaAdmin.id, simpleUsername, password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationAdmin, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+
+        //add, update, delete description (super admin data)
+        assert 403 == TagDomainAssociationAPI.delete(tda.id, simpleUsername, password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotation, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+
+        //add, update, delete attached file (simple user data)
+        assert 403 == AttachedFileAPI.delete(attachedFileUser.id,simpleUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", annotationUser.class.name,annotationUser.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
+        //add, update, delete attached file (admin data)
+        assert 403 == AttachedFileAPI.delete(attachedFileAdmin.id, simpleUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", annotationAdmin.class.name,annotationAdmin.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
+        //add, update, delete attached file (super admin data)
+        assert 403 == AttachedFileAPI.delete(attachedFile.id, simpleUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", annotation.class.name,annotation.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
+
+        println "###"+image.id
+        //start reviewing image (simple user data)
+        assert 403 == ReviewedAnnotationAPI.markStartReview(imageUser.id,simpleUsername, password).code
+        //start reviewing image (admin data)
+        assert 403 == ReviewedAnnotationAPI.markStartReview(imageAdmin.id,simpleUsername, password).code
+        //start reviewing image (superadmin data)
+        assert 403 == ReviewedAnnotationAPI.markStartReview(image.id,simpleUsername, password).code
+
+        //add annotation on my layer
+        assert 403 == UserAnnotationAPI.create(BasicInstanceBuilder.getUserAnnotationNotExist(project,imageUser,imageUser.user,false).encodeAsJSON(),simpleUsername, password).code
+        //add annotation on other layers
+        assert 403 == UserAnnotationAPI.create(BasicInstanceBuilder.getUserAnnotationNotExist(project,image,image.user,false).encodeAsJSON(),simpleUsername, password).code
+        assert 403 == UserAnnotationAPI.create(BasicInstanceBuilder.getUserAnnotationNotExist(project,imageAdmin,imageAdmin.user,false).encodeAsJSON(),simpleUsername, password).code
+
+        //update, delete annotation (simple user data)
+        assert 403 == UserAnnotationAPI.update(annotationUser.id, annotationUser.encodeAsJSON(), simpleUsername, password).code
+        assert 403 == UserAnnotationAPI.delete(annotationUser.id,simpleUsername, password).code
+
+        //update, delete annotation (admin data)
+        assert 403 == UserAnnotationAPI.update(annotationAdmin.id, annotationAdmin.encodeAsJSON(), simpleUsername, password).code
+        assert 403 == UserAnnotationAPI.delete(annotationAdmin.id,simpleUsername, password).code
+
+        //update, delete annotation (super admin data)
+        assert 403 == UserAnnotationAPI.update(annotation.id, annotation.encodeAsJSON(), simpleUsername, password).code
+        assert 403 == UserAnnotationAPI.delete(annotation.id,simpleUsername, password).code
+
+        //add image instance
+        assert 403 == ImageInstanceAPI.create(BasicInstanceBuilder.getImageInstanceNotExist(project,false).encodeAsJSON(),simpleUsername, password).code
+
+        //update, delete image instance (simple user data)
+        assert 403 == ImageInstanceAPI.update(imageUser.id,imageUser.encodeAsJSON(),simpleUsername, password).code
+        assert 403 == ImageInstanceAPI.delete(imageUser, simpleUsername, password).code
+
+        //update, delete image instance (admin data)
+        assert 403 == ImageInstanceAPI.update(imageAdmin.id,imageAdmin.encodeAsJSON(),simpleUsername, password).code
+        assert 403 == ImageInstanceAPI.delete(imageAdmin, simpleUsername, password).code
+
+        //update, delete image instance (superadmin data)
+        assert 403 == ImageInstanceAPI.update(image.id,image.encodeAsJSON(),simpleUsername, password).code
+        assert 403 == ImageInstanceAPI.delete(image, simpleUsername, password).code
+    }
+
+    void testLockedProjectWithImageDataAsManager() {
+
+        def simpleUsername = "simpleUserRO"
+        def adminUsername = "adminRO"
+        def password = "password"
+
+        //Create a project
+        Project project = BasicInstanceBuilder.getProjectNotExist(true)
+
+
+        def data = initProjectDataSet(project, simpleUsername, adminUsername, password)
+
+        //super admin data
+        ImageInstance image = data.image
+        UserAnnotation annotation = data.annotation
+        Description description = data.description
+        Property property = data.property
+        AttachedFile attachedFile = data.attachedFile
+        TagDomainAssociation tda = data.tagDomainAssociation
+
+        //admin data
+        ImageInstance imageAdmin = data.imageAdmin
+        UserAnnotation annotationAdmin = data.annotationAdmin
+        Description descriptionAdmin = data.descriptionAdmin
+        Property propertyAdmin = data.propertyAdmin
+        AttachedFile attachedFileAdmin = data.attachedFileAdmin
+        TagDomainAssociation tdaAdmin = data.tagDomainAssociationAdmin
+
+        //simple user data
+        ImageInstance imageUser = data.imageUser
+        UserAnnotation annotationUser = data.annotationUser
+        Description descriptionUser = data.descriptionUser
+        Property propertyUser = data.propertyUser
+        AttachedFile attachedFileUser = data.attachedFileUser
+        TagDomainAssociation tdaUser = data.tagDomainAssociationUser
+
+
+        //Force project to Read and write
+        project.mode = Project.EditingMode.LOCKED
+        BasicInstanceBuilder.saveDomain(project)
+
+        //add,update, delete property (simple user data)
+        assert 403 == PropertyAPI.create(annotationUser.id, "annotation" ,BasicInstanceBuilder.getAnnotationPropertyNotExist(annotationUser,false).encodeAsJSON(),adminUsername,password).code
+        assert 403 == PropertyAPI.update(propertyUser.id, propertyUser.domainIdent, "annotation" ,propertyUser.encodeAsJSON(), adminUsername,password).code
+        assert 403 == PropertyAPI.delete(propertyUser.id, propertyUser.domainIdent, "annotation", adminUsername, password).code
+
+        //add,update, delete property (admin data)
+        assert 403 == PropertyAPI.create(annotationAdmin.id, "annotation" ,BasicInstanceBuilder.getAnnotationPropertyNotExist(annotationAdmin,false).encodeAsJSON(),adminUsername,password).code
+        assert 403 == PropertyAPI.update(propertyAdmin.id, propertyAdmin.domainIdent, "annotation" ,propertyAdmin.encodeAsJSON(), adminUsername,password).code
+        assert 403 == PropertyAPI.delete(propertyAdmin.id, propertyAdmin.domainIdent, "annotation", adminUsername, password).code
+
+        //add,update, delete property (superadmin data)
+        assert 403 == PropertyAPI.create(annotation.id, "annotation" ,BasicInstanceBuilder.getAnnotationPropertyNotExist(annotation,false).encodeAsJSON(),adminUsername,password).code
+        assert 403 == PropertyAPI.update(property.id, property.domainIdent, "annotation" ,property.encodeAsJSON(), adminUsername,password).code
+        assert 403 == PropertyAPI.delete(property.id, property.domainIdent, "annotation", adminUsername, password).code
+
+        //add, update, delete description (simple user data)
+        assert 403 == DescriptionAPI.update(descriptionUser.domainIdent,descriptionUser.domainClassName,descriptionUser.encodeAsJSON(),adminUsername, password).code
+        assert 403 == DescriptionAPI.delete(descriptionUser.domainIdent,descriptionUser.domainClassName,adminUsername, password).code
+        assert 403 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(annotationUser, false).encodeAsJSON(),adminUsername, password).code
+
+        //add, update, delete description (admin data)
+        assert 403 == DescriptionAPI.update(descriptionAdmin.domainIdent,descriptionAdmin.domainClassName,descriptionAdmin.encodeAsJSON(),adminUsername, password).code
+        assert 403 == DescriptionAPI.delete(descriptionAdmin.domainIdent,descriptionAdmin.domainClassName,adminUsername, password).code
+        assert 403 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(annotationAdmin, false).encodeAsJSON(),adminUsername, password).code
+
+        //add, update, delete description (super admin data)
+        assert 403 == DescriptionAPI.update(description.domainIdent,description.domainClassName,description.encodeAsJSON(),adminUsername, password).code
+        assert 403 == DescriptionAPI.delete(description.domainIdent,description.domainClassName,adminUsername, password).code
+        assert 403 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(annotation, false).encodeAsJSON(),adminUsername, password).code
+
+
+        //add, update, delete tag domain association (simple user data)
+        assert 403 == TagDomainAssociationAPI.delete(tdaUser.id,adminUsername, password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationUser, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
+
+        //add, update, delete tag domain association (admin data)
+        assert 403 == TagDomainAssociationAPI.delete(tdaAdmin.id, adminUsername, password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationAdmin, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
+
+        //add, update, delete tag domain association (super admin data)
+        assert 403 == TagDomainAssociationAPI.delete(tda.id, adminUsername, password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotation, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
+
+        //add, update, delete attached file (simple user data)
+        assert 403 == AttachedFileAPI.delete(attachedFileUser.id,adminUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", annotationUser.class.name,annotationUser.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
+        //add, update, delete attached file (admin data)
+        assert 403 == AttachedFileAPI.delete(attachedFileAdmin.id, adminUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", annotationAdmin.class.name,annotationAdmin.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
+        //add, update, delete attached file (super admin data)
+        assert 403 == AttachedFileAPI.delete(attachedFile.id, adminUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", annotation.class.name,annotation.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
+
+        println "###"+image.id
+        //start reviewing image (simple user data)
+        assert 403 == ReviewedAnnotationAPI.markStartReview(imageUser.id,adminUsername, password).code
+        assert 403 == ReviewedAnnotationAPI.markStopReview(imageUser.id,adminUsername, password).code
+        //start reviewing image (admin data)
+        assert 403 == ReviewedAnnotationAPI.markStartReview(imageAdmin.id,adminUsername, password).code
+        assert 403 == ReviewedAnnotationAPI.markStopReview(imageAdmin.id,adminUsername, password).code
+        //start reviewing image (superadmin data)
+        assert 403 == ReviewedAnnotationAPI.markStartReview(image.id,adminUsername, password).code
+        assert 403 == ReviewedAnnotationAPI.markStopReview(image.id,adminUsername, password).code
+
+
+
+        //add annotation on my layer
+        assert 403 == UserAnnotationAPI.create(BasicInstanceBuilder.getUserAnnotationNotExist(project,imageAdmin,imageAdmin.user,false).encodeAsJSON(),adminUsername, password).code
+        //add annotation on other layers
+        assert 403 == UserAnnotationAPI.create(BasicInstanceBuilder.getUserAnnotationNotExist(project,imageUser,imageUser.user,false).encodeAsJSON(),adminUsername, password).code
+        assert 403 == UserAnnotationAPI.create(BasicInstanceBuilder.getUserAnnotationNotExist(project,image,image.user,false).encodeAsJSON(),adminUsername, password).code
+
+        //update, delete annotation (simple user data)
+        assert 403 == UserAnnotationAPI.update(annotationUser.id, annotationUser.encodeAsJSON(), adminUsername, password).code
+        assert 403 == UserAnnotationAPI.delete(annotationUser.id,adminUsername, password).code
+
+        //update, delete annotation (admin data)
+        assert 403 == UserAnnotationAPI.update(annotationAdmin.id, annotationAdmin.encodeAsJSON(), adminUsername, password).code
+        assert 403 == UserAnnotationAPI.delete(annotationAdmin.id,adminUsername, password).code
+
+        //update, delete annotation (super admin data)
+        assert 403 == UserAnnotationAPI.update(annotation.id, annotation.encodeAsJSON(), adminUsername, password).code
+        assert 403 == UserAnnotationAPI.delete(annotation.id,adminUsername, password).code
+
+        //add image instance
+        assert 403 == ImageInstanceAPI.create(BasicInstanceBuilder.getImageInstanceNotExist(project,false).encodeAsJSON(),adminUsername, password).code
+
+        //update, delete image instance (simple user data)
+        assert 403 == ImageInstanceAPI.update(imageUser.id,imageUser.encodeAsJSON(),adminUsername, password).code
+        assert 403 == ImageInstanceAPI.delete(imageUser, adminUsername, password).code
+
+        //update, delete image instance (admin data)
+        assert 403 == ImageInstanceAPI.update(imageAdmin.id,imageAdmin.encodeAsJSON(), adminUsername, password).code
+        assert 403 == ImageInstanceAPI.delete(imageAdmin, adminUsername, password).code
+
+        //update, delete image instance (superadmin data)
+        assert 403 == ImageInstanceAPI.update(image.id,image.encodeAsJSON(), adminUsername, password).code
+        assert 403 == ImageInstanceAPI.delete(image, adminUsername, password).code
+    }
+
+    void testLockedProjectWithJobData() {
+        // Init dataset
+
+        def simpleUsername = "simpleUserRO"
+        def adminUsername = "adminRO"
+        def password = "password"
+
+        //Create a project
+        Project project = BasicInstanceBuilder.getProjectNotExist(true)
+
+        //Add a simple project user and a project admin
+        User simpleUser = BasicInstanceBuilder.getUser(simpleUsername,password)
+        User admin = BasicInstanceBuilder.getUser(adminUsername,password)
+        assert 200 == ProjectAPI.addUserProject(project.id,simpleUser.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
+        assert 200 == ProjectAPI.addAdminProject(project.id,admin.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
+
+        // data
+        Software software = BasicInstanceBuilder.getSoftwareNotExist(true);
+        Job job = BasicInstanceBuilder.getJobNotExist(true, software, project)
+        JobData jobData = BasicInstanceBuilder.getJobDataNotExist(job)
+        BasicInstanceBuilder.saveDomain(jobData)
+
+        //Force project to Read and write
+        project.mode = Project.EditingMode.LOCKED
+        BasicInstanceBuilder.saveDomain(project)
+
+        // Now Test as simple user
+
+        assert 403 == JobDataAPI.upload(jobData.id, new byte[5], simpleUsername, password).code
+        assert 403 == JobDataAPI.upload(jobData.id, new byte[5], adminUsername, password).code
+        assert 200 == JobDataAPI.download(jobData.id, simpleUsername, password).code
+        assert 403 == JobDataAPI.update(jobData.id, jobData.encodeAsJSON(), simpleUsername, password).code
+
+        assert 403 == JobDataAPI.create(BasicInstanceBuilder.getJobDataNotExist(job).encodeAsJSON(),simpleUsername, password).code
+        def result = JobDataAPI.create(BasicInstanceBuilder.getJobDataNotExist(job).encodeAsJSON(),adminUsername, password)
+        assert 403 == JobDataAPI.delete(result.data.id, simpleUsername, password).code
+
+        assert 403 == JobAPI.update(job.id, job.encodeAsJSON(), simpleUsername, password).code
+        assert 403 == JobAPI.create(BasicInstanceBuilder.getJobNotExist(false, software, project).encodeAsJSON(),simpleUsername, password).code
+        result = JobAPI.create(BasicInstanceBuilder.getJobNotExist(false, software, project).encodeAsJSON(),adminUsername, password)
+        assert 403 == JobAPI.delete(result.data.id, simpleUsername, password).code
+
+        assert 403 == SoftwareProjectAPI.create(BasicInstanceBuilder.getSoftwareProjectNotExist(software, project, false).encodeAsJSON(),simpleUsername, password).code
+        result = SoftwareProjectAPI.create(BasicInstanceBuilder.getSoftwareProjectNotExist(software, project, false).encodeAsJSON(),adminUsername, password)
+        assert 403 == SoftwareProjectAPI.delete(result.data.id, simpleUsername, password).code
+
+
+        // Now run test as a project admin
+
+        assert 403 == JobDataAPI.upload(jobData.id, new byte[5], adminUsername, password).code
+        assert 200 == JobDataAPI.download(jobData.id, adminUsername, password).code
+        assert 403 == JobDataAPI.update(jobData.id, jobData.encodeAsJSON(), adminUsername, password).code
+
+        result = JobDataAPI.create(BasicInstanceBuilder.getJobDataNotExist(job).encodeAsJSON(),adminUsername, password)
+        assert 403 == result.code
+        assert 403 == JobDataAPI.delete(result.data.id, adminUsername, password).code
+
+        assert 403 == JobAPI.update(job.id, job.encodeAsJSON(), adminUsername, password).code
+        result = JobAPI.create(BasicInstanceBuilder.getJobNotExist(false, software, project).encodeAsJSON(),adminUsername, password)
+        assert 403 == result.code
+        assert 403 == JobAPI.delete(result.data.id, adminUsername, password).code
+
+        result = SoftwareProjectAPI.create(BasicInstanceBuilder.getSoftwareProjectNotExist(BasicInstanceBuilder.getSoftwareNotExist(true), project, false).encodeAsJSON(),adminUsername, password)
+        assert 403 == result.code
+        assert 403 == SoftwareProjectAPI.delete(result.data.id, adminUsername, password).code
+
+    }
+
+
+
 
     private def initProjectDataSet(Project project, String simpleUsername, String adminUsername, String password){
 
