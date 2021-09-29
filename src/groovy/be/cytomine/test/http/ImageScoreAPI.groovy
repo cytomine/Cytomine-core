@@ -40,26 +40,10 @@ class ImageScoreAPI extends DomainAPI {
     }
 
 
-    static def statsGroupByImage(Long idProject, String username, String password) {
-        String URL = Infos.CYTOMINEURL + "/api/project/${idProject}/image-score/stats-group-by-image.json"
+    static def statsReport(Long idProject, String username, String password) {
+        String URL = Infos.CYTOMINEURL + "/api/project/${idProject}/image-score/stats-report.csv"
         return doGET(URL, username, password)
     }
-
-    static def statsGroupByImage(Long idProject, String format, String username, String password) {
-        String URL = Infos.CYTOMINEURL + "/api/project/${idProject}/image-score/stats-group-by-image.${format}"
-        return doGET(URL, username, password)
-    }
-
-    static def statsGroupByUser(Long idProject, String username, String password) {
-        String URL = Infos.CYTOMINEURL + "/api/project/${idProject}/image-score/stats-group-by-user.json"
-        return doGET(URL, username, password)
-    }
-
-    static def statsGroupByUser(Long idProject, String format, String username, String password) {
-        String URL = Infos.CYTOMINEURL + "/api/project/${idProject}/image-score/stats-group-by-user.${format}"
-        return doGET(URL, username, password)
-    }
-
 
     static def create(Long idImageInstance, Long idScore, Long idValue, String username, String password) {
         String URL = Infos.CYTOMINEURL + "api/imageinstance/${idImageInstance}/score/${idScore}/value/${idValue}.json"

@@ -2215,7 +2215,7 @@ class BasicInstanceBuilder {
             ScoreValue scoreValue = getScoreValueNotExist(getScoreNotExist(true), true),
             User user = User.findByUsername(Infos.SUPERADMINLOGIN),
             boolean save = false) {
-        ImageScore imageScore = new ImageScore(imageInstance:imageInstance, scoreValue:scoreValue, user:user)
+        ImageScore imageScore = new ImageScore(imageInstance:imageInstance, scoreValue:scoreValue, user:user, score: score)
         return save ? saveDomain(imageScore) : checkDomain(imageScore)
     }
 }

@@ -94,12 +94,9 @@ class RestImageScoreController extends RestController{
         responseSuccess(imageScoreService.listByProjectAndUser(project, (User)user))
     }
 
-    def statsGroupByImageInstances() {
-        String sortColumn = params.sort ? params.sort : "created"
-        String sortDirection = params.order ? params.order : "desc"
+    def statsReport() {
         Project project = projectService.read(params.getLong("project"))
-        def searchString = params['name[ilike]']
-        def stats = imageScoreService.statsGroupByImageInstances(project, sortColumn, sortDirection, searchString)
+        def stats = imageScoreService.statsReport(project)
         if (params.format!='json') {
             downloadImageReport(stats, project)
         } else {
@@ -108,93 +105,29 @@ class RestImageScoreController extends RestController{
     }
 
 
-    private downloadImageReport(def images, Project project) {
+    private downloadImageReport(def rows, Project project) {
         if (params?.format && params.format != "html") {
             def exporterIdentifier = params.format;
             if (exporterIdentifier == "xls") exporterIdentifier = "excel"
             response.contentType = grailsApplication.config.grails.mime.types[params.format]
             SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyyMMdd_hhmmss");
             String datePrefix = simpleFormat.format(new Date())
-            response.setHeader("Content-disposition", "attachment; filename=${datePrefix}_images_scores.${params.format}")
+            response.setHeader("Content-disposition", "attachment; filename=${datePrefix}_score_report.${params.format}")
 
             def scores = ScoreProject.findAllByProject(project).collect { it.score }
             scores.sort { it.name }
-
-            def exportResult = []
-            images.each { image ->
-                def data = [:]
-                data.id = image['id']
-                data.instanceFilename = image['instanceFilename']
-                scores.each { score ->
-                    data[String.valueOf(score.id)] = image[String.valueOf(score.id)]
-                }
-                exportResult.add(data)
-            }
-
-            List fields = ["id", "instanceFilename"]
+            List fields = ["imageId", "instanceFilename", "userId", "username"]
             scores.each {
                 fields << String.valueOf(it.id)
             }
-            Map labels = ["id": "Id", "instanceFilename": "Filename"]
+            Map labels = ["imageId": "Id", "instanceFilename": "Filename", "userId": "UserId", "username": "Username"]
             scores.each {
                 labels[String.valueOf(it.id)] = it.name
             }
 
-            String title = "Scores by image"
+            String title = "Scores report"
 
-            exportService.export(exporterIdentifier, response.outputStream, exportResult, fields, labels, null, ["title": title, "csv.encoding": "UTF-8", "separator": ";"])
-        }
-    }
-
-    def statsGroupByUsers() {
-        String sortColumn = params.sort ? params.sort : "created"
-        String sortDirection = params.order ? params.order : "desc"
-        Project project = projectService.read(params.getLong("project"))
-        def searchString = params['name[ilike]']
-        def stats = imageScoreService.statsGroupBySecUser(project, sortColumn, sortDirection, searchString)
-        if (params.format!='json') {
-            downloadUsersReport(stats, project)
-        } else {
-            responseSuccess(stats)
-        }
-    }
-
-    private downloadUsersReport(def users, Project project) {
-        if (params?.format && params.format != "html") {
-            def exporterIdentifier = params.format;
-            if (exporterIdentifier == "xls") exporterIdentifier = "excel"
-            response.contentType = grailsApplication.config.grails.mime.types[params.format]
-            SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyyMMdd_hhmmss");
-            String datePrefix = simpleFormat.format(new Date())
-            response.setHeader("Content-disposition", "attachment; filename=${datePrefix}_members_scores.${params.format}")
-
-            def scores = ScoreProject.findAllByProject(project).collect { it.score }
-            scores.sort { it.name }
-
-            def exportResult = []
-            users.each { user ->
-                def data = [:]
-                data.id = user['id']
-                data.username = user['username']
-                data.fullname = user['firstname'] + ' ' + user['lastname']
-                scores.each { score ->
-                    data[String.valueOf(score.id)] = user[String.valueOf(score.id)]
-                }
-                exportResult.add(data)
-            }
-
-            List fields = ["id", "username", "fullname"]
-            scores.each {
-                fields << String.valueOf(it.id)
-            }
-            Map labels = ["id": "Id", "username": "Username", "fullname": "Fullname"]
-            scores.each {
-                labels[String.valueOf(it.id)] = it.name
-            }
-
-            String title = "Scores by user"
-
-            exportService.export(exporterIdentifier, response.outputStream, exportResult, fields, labels, null, ["title": title, "csv.encoding": "UTF-8", "separator": ";"])
+            exportService.export(exporterIdentifier, response.outputStream, rows, fields, labels, null, ["title": title, "csv.encoding": "UTF-8", "separator": ";"])
         }
     }
 
