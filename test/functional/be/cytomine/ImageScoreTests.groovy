@@ -261,7 +261,7 @@ class ImageScoreTests {
     void testDeleteScoreImage() {
         ImageScore imageScore = BasicInstanceBuilder.getImageScoreNotExist()
         imageScore = BasicInstanceBuilder.saveDomain(imageScore)
-        def result = ImageScoreAPI.delete(imageScore.imageInstance.id, imageScore.scoreValue.score.id, imageScore.scoreValue.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        def result = ImageScoreAPI.delete(imageScore.imageInstance.id, imageScore.scoreValue.score.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
 
         result = ImageScoreAPI.show(imageScore.imageInstance.id, imageScore.scoreValue.score.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)

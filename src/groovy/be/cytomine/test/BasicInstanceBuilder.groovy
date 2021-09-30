@@ -2204,7 +2204,7 @@ class BasicInstanceBuilder {
     static ImageScore getImageScore() {
         def imageScore = ImageScore.findAllByImageInstanceAndUser(getImageInstance(), User.findByUsername(Infos.SUPERADMINLOGIN)).find{it.scoreValue.score == getScoreValue().score}
         if (!imageScore) {
-            imageScore = new ImageScore(imageInstance: getImageInstance(), user: User.findByUsername(Infos.SUPERADMINLOGIN), scoreValue: getScoreValue())
+            imageScore = new ImageScore(imageInstance: getImageInstance(), user: User.findByUsername(Infos.SUPERADMINLOGIN), scoreValue: getScoreValue(), score: scoreValue.score)
             imageScore = saveDomain(imageScore)
         }
         imageScore
