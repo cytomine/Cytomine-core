@@ -16,6 +16,7 @@ package be.cytomine.project
 * limitations under the License.
 */
 
+import be.cytomine.Exception.ConstraintException
 import be.cytomine.Exception.CytomineException
 import be.cytomine.Exception.ForbiddenException
 import be.cytomine.Exception.ObjectNotFoundException
@@ -732,6 +733,27 @@ class ProjectService extends ModelService {
 
     }
 
+    def lock(Project project) {
+        securityACLService.check(project,ADMINISTRATION)
+        SecUser currentUser = cytomineService.getCurrentUser()
+        def jsonNewData = JSON.parse(project.encodeAsJSON())
+        jsonNewData.mode = Project.EditingMode.LOCKED
+
+        return executeCommand(new EditCommand(user: currentUser),project, jsonNewData)
+    }
+
+    def unlock(Project project) {
+        if (!project.isLocked()) throw new ConstraintException("Project is already locked")
+        securityACLService.check(project,ADMINISTRATION)
+        SecUser currentUser = cytomineService.getCurrentUser()
+
+        String previousMode = JSON.parse(EditCommand.findAllByProject(project, [max: 1, sort: "created", order: "desc"])[0].data).previousProject.mode
+
+        def jsonNewData = JSON.parse(project.encodeAsJSON())
+        jsonNewData.mode = Project.EditingMode.valueOf(previousMode)
+
+        return executeCommand(new EditCommand(user: currentUser),project, jsonNewData)
+    }
 
 
     def afterAdd(Project domain, def response) {

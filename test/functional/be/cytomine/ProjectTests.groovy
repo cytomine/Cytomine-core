@@ -762,4 +762,22 @@ class ProjectTests  {
         assert !(json.blindedName instanceof JSONObject.Null)
     }
 
+    void testLockProject() {
+        def projectToAdd = BasicInstanceBuilder.getProjectNotExist()
+        projectToAdd.mode = Project.EditingMode.READ_ONLY
+        def result = ProjectAPI.create(projectToAdd.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        Project project = result.data
+
+        assert 400 == ProjectAPI.unlock(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD).code
+        assert 200 == ProjectAPI.lock(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD).code
+        result = ProjectAPI.show(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        assert JSON.parse(result.data).mode == Project.EditingMode.LOCKED.toString()
+        assert 200 == ProjectAPI.unlock(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD).code
+        result = ProjectAPI.show(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        assert JSON.parse(result.data).mode == Project.EditingMode.READ_ONLY.toString()
+    }
+
 }

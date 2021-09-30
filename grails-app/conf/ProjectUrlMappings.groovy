@@ -62,5 +62,9 @@ class ProjectUrlMappings {
         "/api/project/$id/invitation.$format" (controller: "restProject") {
             action = [POST:"inviteNewUser"]
         }
+
+        "/api/project/$id/lock.$format"(controller: "restProject") {
+            action = [POST: "lock", DELETE: "unlock"]
+        }
     }
 }

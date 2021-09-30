@@ -2038,4 +2038,31 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         return result
     }
 
+    void testLockProject() {
+        def simpleUsername = "simpleUserRO"
+        def adminUsername = "adminRO"
+        def password = "password"
+        //Create a project
+        Project project = BasicInstanceBuilder.getProjectNotExist(true)
+
+        //Add a simple project user and a project admin
+        User simpleUser = BasicInstanceBuilder.getUser(simpleUsername,password)
+        User admin = BasicInstanceBuilder.getUser(adminUsername,password)
+
+        assert 200 == ProjectAPI.addUserProject(project.id,simpleUser.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
+        assert 200 == ProjectAPI.addAdminProject(project.id,admin.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
+
+        assert 400 == ProjectAPI.unlock(project.id,simpleUsername,password).code
+        assert 400 == ProjectAPI.unlock(project.id,adminUsername,password).code
+
+        assert 403 == ProjectAPI.lock(project.id,simpleUsername,password).code
+        assert 200 == ProjectAPI.lock(project.id,adminUsername,password).code
+
+        assert 403 == ProjectAPI.unlock(project.id,simpleUsername,password).code
+        assert 200 == ProjectAPI.unlock(project.id,adminUsername,password).code
+
+        assert 200 == ProjectAPI.lock(project.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
+        assert 200 == ProjectAPI.unlock(project.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
+    }
+
 }

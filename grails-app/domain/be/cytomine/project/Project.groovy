@@ -32,7 +32,7 @@ import org.restapidoc.annotation.RestApiObjectFields
 class Project extends CytomineDomain implements Serializable {
 
     static enum EditingMode {
-        CLASSIC, RESTRICTED, READ_ONLY
+        CLASSIC, RESTRICTED, READ_ONLY, LOCKED
     }
 
     /**
@@ -97,9 +97,6 @@ class Project extends CytomineDomain implements Serializable {
      */
     @RestApiObjectField(description = "If true, search similar annotations on all project that share the same ontology",defaultValue = "true")
     boolean retrievalAllOntology = true
-
-    @RestApiObjectField(description = "If true, project is closed",mandatory = false)
-    boolean isClosed = false
 
     @RestApiObjectField(description = "If true, an user (which is not an administrator of the project) cannot see others users layers",mandatory = false)
     boolean hideUsersLayers = false
@@ -196,10 +193,11 @@ class Project extends CytomineDomain implements Serializable {
         domain.created = JSONUtils.getJSONAttrDate(json, 'created')
         domain.updated = JSONUtils.getJSONAttrDate(json, 'updated')
         domain.deleted = JSONUtils.getJSONAttrDate(json, "deleted")
-        domain.isClosed = JSONUtils.getJSONAttrBoolean(json, 'isClosed', false)
         domain.mode = EditingMode.CLASSIC;
         if(JSONUtils.getJSONAttrBoolean(json, 'isRestricted', false)) domain.mode = EditingMode.RESTRICTED;
         if(JSONUtils.getJSONAttrBoolean(json, 'isReadOnly', false)) domain.mode = EditingMode.READ_ONLY;
+        if(JSONUtils.getJSONAttrBoolean(json, 'isLocked', false)) domain.mode = EditingMode.LOCKED;
+        if(JSONUtils.getJSONAttrStr(json, 'mode', false)) domain.mode = EditingMode.valueOf(JSONUtils.getJSONAttrStr(json, 'mode', false));
 
         domain.hideUsersLayers = JSONUtils.getJSONAttrBoolean(json, 'hideUsersLayers', false)
         domain.hideAdminsLayers = JSONUtils.getJSONAttrBoolean(json, 'hideAdminsLayers', false)
@@ -240,14 +238,17 @@ class Project extends CytomineDomain implements Serializable {
         returnArray['numberOfReviewedAnnotations'] = domain?.countReviewedAnnotations
         returnArray['retrievalDisable'] = domain?.retrievalDisable
         returnArray['retrievalAllOntology'] = domain?.retrievalAllOntology
-        returnArray['isClosed'] = domain?.isClosed
 
+        returnArray['mode'] = domain?.mode.toString()
         returnArray['isReadOnly'] = false
         returnArray['isRestricted'] = false
+        returnArray['isLocked'] = false
         if(domain?.mode.equals(EditingMode.READ_ONLY)){
             returnArray['isReadOnly'] = true
         } else if(domain?.mode.equals(EditingMode.RESTRICTED)){
             returnArray['isRestricted'] = true
+        } else if(domain?.mode.equals(EditingMode.LOCKED)){
+            returnArray['isLocked'] = true
         }
         returnArray['hideUsersLayers'] = domain?.hideUsersLayers
         returnArray['hideAdminsLayers'] = domain?.hideAdminsLayers
@@ -278,9 +279,11 @@ class Project extends CytomineDomain implements Serializable {
 
 
     boolean canUpdateContent() {
-        return !mode.equals(EditingMode.READ_ONLY)
+        return !mode.equals(EditingMode.READ_ONLY) && !mode.equals(EditingMode.LOCKED)
     }
 
-
+    boolean isLocked() {
+        return mode.equals(EditingMode.LOCKED)
+    }
 
 }

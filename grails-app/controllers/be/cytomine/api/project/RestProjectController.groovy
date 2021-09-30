@@ -349,6 +349,27 @@ class RestProjectController extends RestController {
         responseSuccess(bounds)
     }
 
+    def lock() {
+        Project project = projectService.read(params.long('id'))
+        try {
+            def result = projectService.lock(project);
+            responseSuccess(result)
+        } catch (CytomineException e) {
+            log.error(e)
+            response([success: false, errors: e.msg], e.code)
+        }
+    }
+
+    def unlock() {
+        Project project = projectService.read(params.long('id'))
+        try {
+            def result = projectService.unlock(project);
+            responseSuccess(result)
+        } catch (CytomineException e) {
+            log.error(e)
+            response([success: false, errors: e.msg], e.code)
+        }
+    }
 
     private def findCommandHistory(List<Project> projects, SecUser user, Integer max, Integer offset,
                                    Boolean fullData, Long startDate, Long endDate) {
