@@ -76,6 +76,116 @@ class ImageScoreService extends ModelService {
         return imageScores
     }
 
+    def statsGroupByImageInstances(Project project, String sortColumn, String sortDirection, def searchFilter) {
+        List<ImageInstance> imageInstanceList = ImageInstance.findAllByProject(project)
+        if (searchFilter && !searchFilter.isEmpty()) {
+            imageInstanceList = imageInstanceList.findAll { image -> return image?.baseImage?.filename?.toLowerCase()?.contains(searchFilter) }
+        }
+
+        List<Score> scoreList = ScoreProject.findAllByProject(project).collect {it.score}
+
+        def stats = new HashMap<Long, HashMap<String, Integer>>()
+        imageInstanceList.each { imageInstance ->
+            def initFields = ImageInstance.getDataFromDomain(imageInstance)
+            scoreList.each { score ->
+                initFields[String.valueOf(score.id)] = 0
+            }
+            stats.putIfAbsent(imageInstance.id, initFields)
+        }
+
+
+
+        def request = "  select " +
+                "           image_instance.id as ImageInstanceId, " +
+                "           score_value.score_id as ScoreId " +
+                "        from image_score, image_instance, score_value\n" +
+                "        where image_score.image_instance_id = image_instance.id\n" +
+                "        and image_score.score_value_id  = score_value.id\n" +
+                "        and image_instance.project_id = ${project.id};"
+        def sql = new Sql(dataSource)
+        sql.eachRow(request) {
+            Long imageInstanceId = it['ImageInstanceId']
+            String scoreId = String.valueOf(it['ScoreId'])
+
+            if (stats.containsKey(imageInstanceId)) {
+                Integer counter = stats.get(imageInstanceId).get(scoreId)
+                stats.get(imageInstanceId).put(scoreId, counter + 1)
+            }
+        }
+        try {
+            sql.close()
+        }catch (Exception e) {}
+
+        def rows = new ArrayList(stats.values())
+        // score sort parameter is provided as String (name) while results column title is its id
+        Score scoreSortedColumn = scoreList.find {it.name.equals(sortColumn)}
+        if (scoreSortedColumn) {
+            sortColumn = scoreSortedColumn.id
+        }
+
+        rows.sort { it[sortColumn]}
+        if(sortDirection.equals("desc")) {
+            rows = rows.reverse()
+        }
+        return rows;
+    }
+
+    def statsGroupBySecUser(Project project, String sortColumn, String sortDirection, def searchFilter) {
+        List<User> userList = secUserService.listUsers(project, false, false)
+        if (searchFilter && !searchFilter.isEmpty()) {
+            userList = userList.findAll { user -> return (user?.username + user?.firstname + user?.lastname).toLowerCase()?.contains(searchFilter)
+            }
+        }
+
+        def stats = new HashMap<Long, HashMap<String, Integer>>()
+        List<Score> scoreList = ScoreProject.findAllByProject(project).collect {it.score}
+
+
+        userList.each { user ->
+            def initFields = User.getDataFromDomain(user)
+            scoreList.each { score ->
+                initFields[String.valueOf(score.id)] = 0
+            }
+            stats.putIfAbsent(user.id, initFields)
+        }
+
+
+        def request = "select sec_user.id as userId, score_value.score_id as ScoreId\n" +
+                "from sec_user, image_score, image_instance, score_value\n" +
+                "where sec_user.id = image_score.user_id\n" +
+                "and image_score.image_instance_id  = image_instance.id \n" +
+                "and score_value.id  = image_score.score_value_id \n" +
+                "and image_instance.project_id  = ${project.id};"
+
+        def sql = new Sql(dataSource)
+        sql.eachRow(request) {
+            Long userId = it['userId']
+            String scoreId = String.valueOf(it['ScoreId'])
+
+            if (stats.containsKey(userId)) {
+                Integer counter = stats.get(userId).get(scoreId)
+                stats.get(userId).put(scoreId, counter + 1)
+            }
+        }
+        try {
+            sql.close()
+        }catch (Exception e) {}
+
+
+        def rows = new ArrayList(stats.values())
+        // score sort parameter is provided as String (name) while results column title is its id
+        Score scoreSortedColumn = scoreList.find {it.name.equals(sortColumn)}
+        if (scoreSortedColumn) {
+            sortColumn = scoreSortedColumn.id
+        }
+
+        rows.sort { it[sortColumn]}
+        if(sortDirection.equals("desc")) {
+            rows = rows.reverse()
+        }
+        return rows;
+    }
+
     def statsReport(Project project) {
         List<ImageInstance> imageInstanceList = ImageInstance.findAllByProject(project)
         List<Score> scoreList = ScoreProject.findAllByProject(project).collect {it.score}

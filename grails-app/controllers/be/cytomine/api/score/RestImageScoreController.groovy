@@ -94,6 +94,32 @@ class RestImageScoreController extends RestController{
         responseSuccess(imageScoreService.listByProjectAndUser(project, (User)user))
     }
 
+    def statsGroupByImageInstances() {
+        String sortColumn = params.sort ? params.sort : "created"
+        String sortDirection = params.order ? params.order : "desc"
+        Project project = projectService.read(params.getLong("project"))
+        def searchString = params['name[ilike]']
+        def stats = imageScoreService.statsGroupByImageInstances(project, sortColumn, sortDirection, searchString)
+        if (params.format!='json') {
+            downloadImageReport(stats, project)
+        } else {
+            responseSuccess(stats)
+        }
+    }
+
+    def statsGroupByUsers() {
+        String sortColumn = params.sort ? params.sort : "created"
+        String sortDirection = params.order ? params.order : "desc"
+        Project project = projectService.read(params.getLong("project"))
+        def searchString = params['name[ilike]']
+        def stats = imageScoreService.statsGroupBySecUser(project, sortColumn, sortDirection, searchString)
+        if (params.format!='json') {
+            downloadUsersReport(stats, project)
+        } else {
+            responseSuccess(stats)
+        }
+    }
+
     def statsReport() {
         Project project = projectService.read(params.getLong("project"))
         def stats = imageScoreService.statsReport(project)
