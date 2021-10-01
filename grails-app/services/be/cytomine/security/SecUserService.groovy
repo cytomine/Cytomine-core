@@ -833,6 +833,7 @@ class SecUserService extends ModelService {
      */
     def addUserToProject(SecUser user, Project project, boolean admin) {
         securityACLService.check(project,ADMINISTRATION)
+        securityACLService.checkIsDomainNotLocked(project)
         log.info "service.addUserToProject"
         if (project) {
             log.info "addUserToProject project=" + project + " username=" + user?.username + " ADMIN=" + admin
@@ -864,6 +865,7 @@ class SecUserService extends ModelService {
         if (cytomineService.currentUser.id!=user.id) {
             securityACLService.check(project,ADMINISTRATION)
         }
+        securityACLService.checkIsDomainNotLocked(project)
         if (project) {
             log.info "deleteUserFromProject project=" + project?.id + " username=" + user?.username + " ADMIN=" + admin
             if(project.ontology) {

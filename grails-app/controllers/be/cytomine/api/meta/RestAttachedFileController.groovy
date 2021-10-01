@@ -129,6 +129,7 @@ class RestAttachedFileController extends RestController {
                 securityACLService.checkAtLeastOne(domainIdent, domainClassName, "containers", READ)
             } else if(recipientDomain instanceof Project || !recipientDomain.container() instanceof Project) {
                 securityACLService.check(domainIdent,domainClassName,"container",WRITE)
+                securityACLService.checkIsDomainNotLocked(domainIdent,domainClassName)
             } else {
                 securityACLService.checkFullOrRestrictedForOwner(domainIdent,domainClassName, "user")
             }
@@ -158,6 +159,7 @@ class RestAttachedFileController extends RestController {
             securityACLService.checkAtLeastOne(domainIdent, domainClassName, "containers", READ)
         } else if(recipientDomain instanceof Project || !recipientDomain.container() instanceof Project) {
             securityACLService.check(domainIdent,domainClassName,"container",WRITE)
+            securityACLService.checkIsDomainNotLocked(domainIdent,domainClassName)
         } else {
             securityACLService.checkFullOrRestrictedForOwner(domainIdent,domainClassName)
         }
@@ -178,6 +180,7 @@ class RestAttachedFileController extends RestController {
             securityACLService.checkAtLeastOne(domain.domainIdent, domain.domainClassName, "containers", READ)
         } else if(recipientDomain instanceof Project || !recipientDomain.container() instanceof Project) {
             securityACLService.check(domain.domainIdent,domain.domainClassName,"container",DELETE)
+            securityACLService.checkIsDomainNotLocked(domain.domainIdent,domain.domainClassName)
         } else {
             securityACLService.checkFullOrRestrictedForOwner(domain.domainIdent,domain.domainClassName, "user")
         }

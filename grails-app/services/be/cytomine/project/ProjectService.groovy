@@ -492,6 +492,7 @@ class ProjectService extends ModelService {
         taskService.updateTask(task,5,"Start editing project ${project.name}")
         SecUser currentUser = cytomineService.getCurrentUser()
         securityACLService.check(project.container(),WRITE)
+        securityACLService.checkIsDomainNotLocked(project)
         Ontology ontology = project.ontology
 
         if(ontology?.id != jsonNewData.ontology){

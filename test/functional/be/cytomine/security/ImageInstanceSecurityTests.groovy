@@ -261,12 +261,19 @@ class ImageInstanceSecurityTests extends SecurityTestsAbstract{
         image.project = project
         //check if admin user can access/update/delete
         result = ImageInstanceAPI.create(image.encodeAsJSON(),SecurityTestsAbstract.USERNAMEADMIN,SecurityTestsAbstract.PASSWORDADMIN)
+        assert 403 == result.code
+
+        ProjectAPI.unlock(project.id,SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
+
+        result = ImageInstanceAPI.create(image.encodeAsJSON(),SecurityTestsAbstract.USERNAMEADMIN,SecurityTestsAbstract.PASSWORDADMIN)
         assert 200 == result.code
         image = result.data
 
+        ProjectAPI.lock(project.id,SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
+
         assert (200 == ImageInstanceAPI.show(image.id,SecurityTestsAbstract.USERNAMEADMIN,SecurityTestsAbstract.PASSWORDADMIN).code)
-        assert (200 == ImageInstanceAPI.update(image.id,image.encodeAsJSON(),SecurityTestsAbstract.USERNAMEADMIN,SecurityTestsAbstract.PASSWORDADMIN).code)
-        assert (200 == ImageInstanceAPI.delete(image,SecurityTestsAbstract.USERNAMEADMIN,SecurityTestsAbstract.PASSWORDADMIN).code)
+        assert (403 == ImageInstanceAPI.update(image.id,image.encodeAsJSON(),SecurityTestsAbstract.USERNAMEADMIN,SecurityTestsAbstract.PASSWORDADMIN).code)
+        assert (403 == ImageInstanceAPI.delete(image,SecurityTestsAbstract.USERNAMEADMIN,SecurityTestsAbstract.PASSWORDADMIN).code)
     }
 
     void testImageInstanceSecurityForProjectAdminInLockedProject() {
@@ -290,13 +297,21 @@ class ImageInstanceSecurityTests extends SecurityTestsAbstract{
         ImageInstance image = BasicInstanceBuilder.getImageInstanceNotExist()
         image.project = project
 
+        ProjectAPI.lock(project.id,SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
+
         //check if user 2 can access/update/delete
+        result = ImageInstanceAPI.create(image.encodeAsJSON(),SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
+        assert 403 == result.code
+
+        ProjectAPI.unlock(project.id,SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
+
         result = ImageInstanceAPI.create(image.encodeAsJSON(),SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
         assert 200 == result.code
         image = result.data
         BasicInstanceBuilder.buildStorageImageServerLinkForImage(image.baseImage)
 
-        ProjectAPI.lock(project.encodeAsJSON(),SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
+        ProjectAPI.lock(project.id,SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
+
         assert (200 == ImageInstanceAPI.show(image.id,SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2).code)
         assert (403 == ImageInstanceAPI.delete(image,SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2).code)
         assert 403 == ImageInstanceAPI.create(image.encodeAsJSON(),SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2).code
@@ -327,13 +342,18 @@ class ImageInstanceSecurityTests extends SecurityTestsAbstract{
         ImageInstance image = BasicInstanceBuilder.getImageInstanceNotExist()
         image.project = project
 
+        ProjectAPI.lock(project.id,SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
+        result = ImageInstanceAPI.create(image.encodeAsJSON(),SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
+        assert 403 == result.code
+
+        ProjectAPI.unlock(project.id,SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
         //check if user 2 can access/update/delete
         result = ImageInstanceAPI.create(image.encodeAsJSON(),SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
         assert 200 == result.code
         image = result.data
         BasicInstanceBuilder.buildStorageImageServerLinkForImage(image.baseImage)
 
-        ProjectAPI.lock(project.encodeAsJSON(),SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
+        ProjectAPI.lock(project.id,SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
 
         result = ImageInstanceAPI.create(image.encodeAsJSON(),SecurityTestsAbstract.USERNAME2,SecurityTestsAbstract.PASSWORD2)
         assert 403 == result.code
@@ -356,7 +376,7 @@ class ImageInstanceSecurityTests extends SecurityTestsAbstract{
         assert 200 == result.code
         Project project = result.data
 
-        ProjectAPI.lock(project.encodeAsJSON(),SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
+        ProjectAPI.lock(project.id,SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
 
         //Add image instance to project
         ImageInstance image = BasicInstanceBuilder.getImageInstanceNotExist()

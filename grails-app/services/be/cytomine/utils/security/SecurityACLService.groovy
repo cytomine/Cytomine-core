@@ -124,6 +124,33 @@ class SecurityACLService {
 
     }
 
+    void checkIsDomainNotLocked(def id, Class className){
+        checkIsDomainNotLocked(id,className.getName())
+    }
+
+    void checkIsDomainNotLocked(def id, String className){
+        try {
+            def domain = Class.forName(className, false, Thread.currentThread().contextClassLoader).read(id)
+            if (domain) {
+                checkIsDomainNotLocked(domain)
+            } else {
+                throw new ObjectNotFoundException("ACL error: ${className} with id ${id} was not found! Unable to process auth checking")
+            }
+        } catch(IllegalArgumentException ex) {
+            throw new ObjectNotFoundException("ACL error: ${className} with id ${id} was not found! Unable to process auth checking")
+        }
+    }
+
+    void checkIsDomainNotLocked(CytomineDomain domain){
+        if (domain) {
+            boolean isLocked = domain.container().isLocked()
+            if(isLocked) {
+                throw new ForbiddenException("The project is in locked mode! You must unlock it first before modify it.")
+            }
+        } else {
+            throw new ObjectNotFoundException("ACL error: domain is null! Unable to process project auth checking")
+        }
+    }
 
     void checkisNotReadOnly(def id, Class className) {
         checkisNotReadOnly(id,className.getName())
@@ -153,6 +180,7 @@ class SecurityACLService {
             if(readOnly && !containerAdmin) {
                 throw new ForbiddenException("The project for this data is in readonly mode! You must be project manager to add, edit or delete this resource in a readonly project.")
             }
+            if(domain.container().isLocked()) throw new ForbiddenException("The project is in locked mode! You must unlock it first before modify it.")
 
         } else {
             throw new ObjectNotFoundException("ACL error: domain is null! Unable to process project auth checking")
@@ -180,6 +208,7 @@ class SecurityACLService {
     //check if the container (e.g. Project) has the minimal editing mode or is Admin. If not, exception will be thown
     void checkFullOrRestrictedForOwner(CytomineDomain domain, SecUser owner = null) {
         if (domain) {
+            if(domain.container().mode.equals(Project.EditingMode.LOCKED)) throw new ForbiddenException("You don't have the right to do this. The project is locked")
             if(domain.container().hasACLPermission(domain.container(),ADMINISTRATION)
                     || currentRoleServiceProxy.isAdminByNow(cytomineService.currentUser)) return;
             switch (domain.container().mode) {

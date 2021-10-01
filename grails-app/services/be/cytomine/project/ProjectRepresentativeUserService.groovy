@@ -78,6 +78,7 @@ class ProjectRepresentativeUserService extends ModelService {
         securityACLService.check(json.project,Project,WRITE)
         User user = User.get(json.user)
         Project project = Project.get(json.project)
+        securityACLService.checkIsDomainNotLocked(project)
         projectPermissionService.checkIsUserInProject(user, project)
         def result =  executeCommand(new AddCommand(user: user), null,json)
         return result
@@ -93,6 +94,7 @@ class ProjectRepresentativeUserService extends ModelService {
      */
     def delete(ProjectRepresentativeUser domain, Transaction transaction = null, Task task = null, boolean printMessage = true) {
         securityACLService.check(domain.getProject(),WRITE)
+        securityACLService.checkIsDomainNotLocked(domain.getProject())
         User user = domain.getUser()
         Command c = new DeleteCommand(user: user,transaction:transaction)
         return executeCommand(c,domain,null, task)

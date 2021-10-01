@@ -135,6 +135,7 @@ class TagDomainAssociationService extends ModelService {
                 securityACLService.checkFullOrRestrictedForOwner(domain, domain.user)
             } else if (domainClass.contains("Project")){
                 securityACLService.check(domain, WRITE)
+                securityACLService.checkIsDomainNotLocked(domain)
             } else {
                 securityACLService.checkFullOrRestrictedForOwner(domain)
             }

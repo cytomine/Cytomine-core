@@ -1533,8 +1533,7 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         //Create a project
         Project project = BasicInstanceBuilder.getProjectNotExist(true)
 
-        project.mode = Project.EditingMode.LOCKED
-        BasicInstanceBuilder.saveDomain(project)
+        ProjectAPI.lock(project.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD)
 
         //Add a simple project user and a project admin
         User simpleUser = BasicInstanceBuilder.getUser(simpleUsername,password)
@@ -1543,14 +1542,12 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         assert 403 == ProjectAPI.addUserProject(project.id,simpleUser.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
         assert 403 == ProjectAPI.addAdminProject(project.id,admin.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
 
-        project.mode = Project.EditingMode.READ_ONLY
-        BasicInstanceBuilder.saveDomain(project)
+        ProjectAPI.unlock(project.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD)
 
         assert 200 == ProjectAPI.addUserProject(project.id,simpleUser.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
         assert 200 == ProjectAPI.addAdminProject(project.id,admin.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
 
-        project.mode = Project.EditingMode.LOCKED
-        BasicInstanceBuilder.saveDomain(project)
+        ProjectAPI.lock(project.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD)
 
 
         //create user test
@@ -1572,7 +1569,14 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         refToAdd.project = project
         def result = ProjectRepresentativeUserAPI.create(refToAdd.encodeAsJSON(), adminUsername,password)
         assert 403 == result.code
+
+        ProjectAPI.unlock(project.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD)
+
+        result = ProjectRepresentativeUserAPI.create(refToAdd.encodeAsJSON(), adminUsername,password)
+        assert 200 == result.code
         int idRef = result.data.id
+
+        ProjectAPI.lock(project.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD)
         assert 403 == ProjectRepresentativeUserAPI.delete(idRef, project.id, adminUsername,password).code
 
         assert 200 == AnnotationDomainAPI.downloadDocumentByProject(project.id, simpleUser.id, null, null, adminUsername,password).code
@@ -1593,7 +1597,6 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         refToAdd = BasicInstanceBuilder.getProjectRepresentativeUserNotExist()
         refToAdd.project = project
         assert 403 == ProjectRepresentativeUserAPI.create(refToAdd.encodeAsJSON(), simpleUsername,password).code
-        idRef = ProjectRepresentativeUserAPI.create(refToAdd.encodeAsJSON(), adminUsername,password).data.id
         assert 403 == ProjectRepresentativeUserAPI.delete(idRef, project.id, simpleUsername,password).code
 
         assert 200 == AnnotationDomainAPI.downloadDocumentByProject(project.id, simpleUser.id, null, null, adminUsername,password).code
@@ -1777,9 +1780,7 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         TagDomainAssociation tdaUser = data.tagDomainAssociationUser
 
 
-        //Force project to Read and write
-        project.mode = Project.EditingMode.LOCKED
-        BasicInstanceBuilder.saveDomain(project)
+        ProjectAPI.lock(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
 
         //add,update, delete property (simple user data)
         assert 403 == PropertyAPI.create(annotationUser.id, "annotation" ,BasicInstanceBuilder.getAnnotationPropertyNotExist(annotationUser,false).encodeAsJSON(),adminUsername,password).code
@@ -1837,11 +1838,26 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         println "###"+image.id
         //start reviewing image (simple user data)
         assert 403 == ReviewedAnnotationAPI.markStartReview(imageUser.id,adminUsername, password).code
-        assert 403 == ReviewedAnnotationAPI.markStopReview(imageUser.id,adminUsername, password).code
         //start reviewing image (admin data)
         assert 403 == ReviewedAnnotationAPI.markStartReview(imageAdmin.id,adminUsername, password).code
-        assert 403 == ReviewedAnnotationAPI.markStopReview(imageAdmin.id,adminUsername, password).code
         //start reviewing image (superadmin data)
+        assert 403 == ReviewedAnnotationAPI.markStartReview(image.id,adminUsername, password).code
+
+        ProjectAPI.unlock(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+
+        assert 200 == ReviewedAnnotationAPI.markStartReview(imageUser.id,adminUsername, password).code
+        assert 200 == ReviewedAnnotationAPI.markStartReview(imageAdmin.id,adminUsername, password).code
+        assert 200 == ReviewedAnnotationAPI.markStartReview(image.id,adminUsername, password).code
+
+        ProjectAPI.lock(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+
+        //stop reviewing image (simple user data)
+        assert 403 == ReviewedAnnotationAPI.markStartReview(imageUser.id,adminUsername, password).code
+        assert 403 == ReviewedAnnotationAPI.markStopReview(imageUser.id,adminUsername, password).code
+        //stop reviewing image (admin data)
+        assert 403 == ReviewedAnnotationAPI.markStartReview(imageAdmin.id,adminUsername, password).code
+        assert 403 == ReviewedAnnotationAPI.markStopReview(imageAdmin.id,adminUsername, password).code
+        //stop reviewing image (superadmin data)
         assert 403 == ReviewedAnnotationAPI.markStartReview(image.id,adminUsername, password).code
         assert 403 == ReviewedAnnotationAPI.markStopReview(image.id,adminUsername, password).code
 
@@ -1903,29 +1919,31 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         JobData jobData = BasicInstanceBuilder.getJobDataNotExist(job)
         BasicInstanceBuilder.saveDomain(jobData)
 
-        //Force project to Read and write
-        project.mode = Project.EditingMode.LOCKED
-        BasicInstanceBuilder.saveDomain(project)
+        ProjectAPI.lock(project.id, Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD)
 
         // Now Test as simple user
 
         assert 403 == JobDataAPI.upload(jobData.id, new byte[5], simpleUsername, password).code
         assert 403 == JobDataAPI.upload(jobData.id, new byte[5], adminUsername, password).code
+
+        ProjectAPI.unlock(project.id, Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD)
+        assert 200 == JobDataAPI.upload(jobData.id, new byte[5], adminUsername, password).code
+        def softwareProject = SoftwareProjectAPI.create(BasicInstanceBuilder.getSoftwareProjectNotExist(software, project, false).encodeAsJSON(),adminUsername, password).data
+        ProjectAPI.lock(project.id, Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD)
+
         assert 200 == JobDataAPI.download(jobData.id, simpleUsername, password).code
         assert 403 == JobDataAPI.update(jobData.id, jobData.encodeAsJSON(), simpleUsername, password).code
 
         assert 403 == JobDataAPI.create(BasicInstanceBuilder.getJobDataNotExist(job).encodeAsJSON(),simpleUsername, password).code
-        def result = JobDataAPI.create(BasicInstanceBuilder.getJobDataNotExist(job).encodeAsJSON(),adminUsername, password)
-        assert 403 == JobDataAPI.delete(result.data.id, simpleUsername, password).code
+        assert 403 == JobDataAPI.create(BasicInstanceBuilder.getJobDataNotExist(job).encodeAsJSON(),adminUsername, password).code
+        assert 403 == JobDataAPI.delete(jobData.id, simpleUsername, password).code
 
         assert 403 == JobAPI.update(job.id, job.encodeAsJSON(), simpleUsername, password).code
         assert 403 == JobAPI.create(BasicInstanceBuilder.getJobNotExist(false, software, project).encodeAsJSON(),simpleUsername, password).code
-        result = JobAPI.create(BasicInstanceBuilder.getJobNotExist(false, software, project).encodeAsJSON(),adminUsername, password)
-        assert 403 == JobAPI.delete(result.data.id, simpleUsername, password).code
+        assert 403 == JobAPI.delete(job.id, simpleUsername, password).code
 
         assert 403 == SoftwareProjectAPI.create(BasicInstanceBuilder.getSoftwareProjectNotExist(software, project, false).encodeAsJSON(),simpleUsername, password).code
-        result = SoftwareProjectAPI.create(BasicInstanceBuilder.getSoftwareProjectNotExist(software, project, false).encodeAsJSON(),adminUsername, password)
-        assert 403 == SoftwareProjectAPI.delete(result.data.id, simpleUsername, password).code
+        assert 403 == SoftwareProjectAPI.delete(softwareProject.id, simpleUsername, password).code
 
 
         // Now run test as a project admin
@@ -1934,18 +1952,15 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         assert 200 == JobDataAPI.download(jobData.id, adminUsername, password).code
         assert 403 == JobDataAPI.update(jobData.id, jobData.encodeAsJSON(), adminUsername, password).code
 
-        result = JobDataAPI.create(BasicInstanceBuilder.getJobDataNotExist(job).encodeAsJSON(),adminUsername, password)
-        assert 403 == result.code
-        assert 403 == JobDataAPI.delete(result.data.id, adminUsername, password).code
+        assert 403 == JobDataAPI.create(BasicInstanceBuilder.getJobDataNotExist(job).encodeAsJSON(),adminUsername, password).code
+        assert 403 == JobDataAPI.delete(jobData.id, adminUsername, password).code
 
         assert 403 == JobAPI.update(job.id, job.encodeAsJSON(), adminUsername, password).code
-        result = JobAPI.create(BasicInstanceBuilder.getJobNotExist(false, software, project).encodeAsJSON(),adminUsername, password)
-        assert 403 == result.code
-        assert 403 == JobAPI.delete(result.data.id, adminUsername, password).code
+        assert 403 == JobAPI.create(BasicInstanceBuilder.getJobNotExist(false, software, project).encodeAsJSON(),adminUsername, password).code
+        assert 403 == JobAPI.delete(job.id, adminUsername, password).code
 
-        result = SoftwareProjectAPI.create(BasicInstanceBuilder.getSoftwareProjectNotExist(BasicInstanceBuilder.getSoftwareNotExist(true), project, false).encodeAsJSON(),adminUsername, password)
-        assert 403 == result.code
-        assert 403 == SoftwareProjectAPI.delete(result.data.id, adminUsername, password).code
+        assert 403 == SoftwareProjectAPI.create(BasicInstanceBuilder.getSoftwareProjectNotExist(BasicInstanceBuilder.getSoftwareNotExist(true), project, false).encodeAsJSON(),adminUsername, password).code
+        assert 403 == SoftwareProjectAPI.delete(softwareProject.id, adminUsername, password).code
 
     }
 

@@ -221,6 +221,10 @@ abstract class CytomineDomain  implements Comparable,Serializable{
         return true
     }
 
+    boolean isLocked() {
+        return false
+    }
+
     String encodeAsJSON() {
         return (this as JSON).toString()
     }

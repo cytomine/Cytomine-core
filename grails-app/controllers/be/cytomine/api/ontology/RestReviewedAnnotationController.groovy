@@ -219,6 +219,7 @@ class RestReviewedAnnotationController extends RestController {
                 if (cytomineService.currentUser != image.reviewUser) {
                     throw new WrongArgumentException("Review can only be validate or stop by "+image.reviewUser.username)
                 }
+                securityACLService.checkIsDomainNotLocked(image)
 
                 if(isCancel) {
                     if(image.reviewStop) {
