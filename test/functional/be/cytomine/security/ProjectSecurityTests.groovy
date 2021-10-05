@@ -2078,6 +2078,11 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
 
         assert 200 == ProjectAPI.lock(project.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
         assert 200 == ProjectAPI.unlock(project.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
+
+        assert 200 == ProjectAPI.lock(project.id,adminUsername,password).code
+        assert 403 == ProjectAPI.delete(project.id,simpleUsername,password).code
+        assert 403 == ProjectAPI.delete(project.id,adminUsername,password).code
+        assert 403 == ProjectAPI.delete(project.id,Infos.SUPERADMINLOGIN,Infos.SUPERADMINPASSWORD).code
     }
 
 }
