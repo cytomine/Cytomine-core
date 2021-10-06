@@ -17,7 +17,7 @@
 class DescriptionUrlMappings {
 
     static mappings = {
-        /* Job */
+        /* Description */
         "/api/description.$format"(controller:"restDescription"){
             action = [GET: "list",POST:"add"]
         }

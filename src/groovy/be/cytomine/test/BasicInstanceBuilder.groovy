@@ -40,6 +40,7 @@ import be.cytomine.project.Project
 import be.cytomine.project.ProjectDefaultLayer
 import be.cytomine.project.ProjectRepresentativeUser
 import be.cytomine.score.ImageScore
+import be.cytomine.score.ScoringDescription
 import be.cytomine.search.SearchEngineFilter
 import be.cytomine.security.*
 import be.cytomine.social.AnnotationAction
@@ -1678,6 +1679,11 @@ class BasicInstanceBuilder {
 
     static Description getDescriptionNotExist(CytomineDomain domain,boolean save = false) {
         Description description = new Description(domainClassName: domain.class.name, domainIdent: domain.id, data: "A description for this domain!")
+        save ? saveDomain(description) : checkDomain(description)
+    }
+
+    static ScoringDescription getScoringDescriptionNotExist(CytomineDomain domain, User user, boolean save = false) {
+        ScoringDescription description = new ScoringDescription(domainClassName: domain.class.name, domainIdent: domain.id, data: "A description for this domain!", user: user)
         save ? saveDomain(description) : checkDomain(description)
     }
 

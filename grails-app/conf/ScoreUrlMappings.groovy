@@ -52,7 +52,12 @@ class ScoreUrlMappings {
             action = [GET: "statsReport"]
         }
 
-
+        "/api/scoring-description.$format"(controller:"restScoringDescription"){
+            action = [GET: "list",POST:"add"]
+        }
+        "/api/domain/$domainClassName/$domainIdent/scoring-description.$format"(controller:"restScoringDescription"){
+            action = [GET:"showByDomain",POST:"add",PUT:"update", DELETE:"delete"]
+        }
 
     }
 }
