@@ -286,6 +286,7 @@ class ImageConsultationService extends ModelService {
     def resumeByUserAndProject(Long userId, Long projectId) {
         Project project = projectService.read(projectId)
         securityACLService.check(project,READ)
+        securityACLService.checkAdmin(cytomineService.currentUser)
 
         // groupByImageId et get last imagename et imagethumb et
         def db = mongo.getDB(noSQLCollectionService.getDatabaseName())

@@ -855,6 +855,8 @@ class RestUserController extends RestController {
     ])
     def listUsersWithLastActivity() {
 
+        securityACLService.checkAdmin(cytomineService.currentUser)
+
         //asc = 1; desc = -1
         int order = 1;
         boolean sorted = false;
@@ -1024,7 +1026,11 @@ class RestUserController extends RestController {
 
         SecUser user = secUserService.get(params.long('user'))
         Project project = projectService.read(params.long('project'))
-        securityACLService.checkIsSameUserOrAdminContainer(project,user, cytomineService.currentUser)
+        try {
+            securityACLService.checkIsSameUser(user, cytomineService.currentUser)
+        } catch(ForbiddenException) {
+            securityACLService.checkAdmin(cytomineService.currentUser)
+        }
 
         result["firstConnection"] = PersistentProjectConnection.findAllByUserAndProject(user.id, project.id, [sort: 'created', order: 'asc', max: 1])[0]?.created
         result["lastConnection"] = PersistentProjectConnection.findAllByUserAndProject(user.id, project.id, [sort: 'created', order: 'desc', max: 1])[0]?.created

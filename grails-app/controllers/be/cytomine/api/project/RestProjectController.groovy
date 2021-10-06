@@ -293,6 +293,7 @@ class RestProjectController extends RestController {
         Boolean fullData = params.getBoolean('fullData')
         Long startDate = params.long("startDate")
         Long endDate = params.long("endDate")
+        project ? securityACLService.checkAdmin(cytomineService.currentUser) : securityACLService.checkIsSameUser(user, cytomineService.currentUser)
         List<Project> projects = project ? [project] : projectService.list(cytomineService.currentUser)
         response(findCommandHistory(projects, user, max, offset, fullData, startDate, endDate))
     }

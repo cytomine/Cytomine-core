@@ -185,6 +185,7 @@ class StatsController extends RestController {
         }
 
         securityACLService.check(project,READ)
+        securityACLService.checkAdmin(cytomineService.currentUser)
 
         int daysRange = params.daysRange != null ? params.getInt('daysRange') : 1
         boolean accumulate = params.accumulate != null ? params.getBoolean('accumulate') : true
@@ -218,6 +219,7 @@ class StatsController extends RestController {
         }
 
         securityACLService.check(project,READ)
+        securityACLService.checkAdmin(cytomineService.currentUser)
 
         int daysRange = params.daysRange != null ? params.getInt('daysRange') : 1
         boolean accumulate = params.accumulate != null ? params.getBoolean('accumulate') : true
@@ -251,6 +253,7 @@ class StatsController extends RestController {
         }
 
         securityACLService.check(project,READ)
+        securityACLService.checkAdmin(cytomineService.currentUser)
 
         int daysRange = params.daysRange != null ? params.getInt('daysRange') : 1
         boolean accumulate = params.accumulate != null ? params.getBoolean('accumulate') : true
@@ -329,6 +332,7 @@ class StatsController extends RestController {
     def statConnectionsEvolution() {
         Project project = Project.read(params.project)
         securityACLService.check(project, READ)
+        securityACLService.checkAdmin(cytomineService.currentUser)
 
         int daysRange = params.daysRange != null ? params.getInt('daysRange') : 1
         Date startDate = params.startDate ? new Date(params.long("startDate")) : null
@@ -349,6 +353,7 @@ class StatsController extends RestController {
     def statImageConsultationsEvolution() {
         Project project = Project.read(params.project)
         securityACLService.check(project, READ)
+        securityACLService.checkAdmin(cytomineService.currentUser)
 
         int daysRange = params.daysRange != null ? params.getInt('daysRange') : 1
         Date startDate = params.startDate ? new Date(params.long("startDate")) : null
@@ -370,6 +375,7 @@ class StatsController extends RestController {
     def statAnnotationActionsEvolution() {
         Project project = Project.read(params.project)
         securityACLService.check(project, READ)
+        securityACLService.checkAdmin(cytomineService.currentUser)
 
         int daysRange = params.daysRange != null ? params.getInt('daysRange') : 1
         Date startDate = params.startDate ? new Date(params.long("startDate")) : null
