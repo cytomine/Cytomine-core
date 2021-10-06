@@ -77,7 +77,7 @@ class ImageScoreService extends ModelService {
     }
 
     def statsGroupByImageInstances(Project project, String sortColumn, String sortDirection, def searchFilter) {
-        List<ImageInstance> imageInstanceList = ImageInstance.findAllByProject(project)
+        List<ImageInstance> imageInstanceList = ImageInstance.findAllByProjectAndDeletedIsNull(project)
         if (searchFilter && !searchFilter.isEmpty()) {
             imageInstanceList = imageInstanceList.findAll { image -> return image?.baseImage?.filename?.toLowerCase()?.contains(searchFilter) }
         }
@@ -101,7 +101,8 @@ class ImageScoreService extends ModelService {
                 "        from image_score, image_instance, score_value\n" +
                 "        where image_score.image_instance_id = image_instance.id\n" +
                 "        and image_score.score_value_id  = score_value.id\n" +
-                "        and image_instance.project_id = ${project.id};"
+                "        and image_instance.project_id = ${project.id}" +
+                "        and image_instance.deleted is null;"
         def sql = new Sql(dataSource)
         sql.eachRow(request) {
             Long imageInstanceId = it['ImageInstanceId']
@@ -155,7 +156,8 @@ class ImageScoreService extends ModelService {
                 "where sec_user.id = image_score.user_id\n" +
                 "and image_score.image_instance_id  = image_instance.id \n" +
                 "and score_value.id  = image_score.score_value_id \n" +
-                "and image_instance.project_id  = ${project.id};"
+                "and image_instance.project_id  = ${project.id}" +
+                "and image_instance.deleted is null;"
 
         def sql = new Sql(dataSource)
         sql.eachRow(request) {
@@ -187,7 +189,7 @@ class ImageScoreService extends ModelService {
     }
 
     def statsReport(Project project) {
-        List<ImageInstance> imageInstanceList = ImageInstance.findAllByProject(project)
+        List<ImageInstance> imageInstanceList = ImageInstance.findAllByProjectAndDeletedIsNull(project)
         List<Score> scoreList = ScoreProject.findAllByProject(project).collect {it.score}
         scoreList.sort { it.name }
         List<User> userList = secUserService.listUsers(project, false, false)
@@ -202,6 +204,7 @@ class ImageScoreService extends ModelService {
                 "        where image_score.image_instance_id = image_instance.id\n" +
                 "        and image_score.score_value_id  = score_value.id\n" +
                 "        and image_instance.project_id = ${project.id}\n" +
+                "        and image_instance.deleted is null\n" +
                 "        order by ImageInstanceId, UserId, ScoreId;"
         def sql = new Sql(dataSource)
         sql.eachRow(request) {

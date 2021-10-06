@@ -85,6 +85,9 @@ class ImageScoreTests {
         ImageInstance imageWithAllScoreExeptScore3 = BasicInstanceBuilder.getImageInstanceNotExist(project, true)
         ImageInstance imageWithSomeScore = BasicInstanceBuilder.getImageInstanceNotExist(project, true)
         ImageInstance imageWithNoScore = BasicInstanceBuilder.getImageInstanceNotExist(project, true)
+        ImageInstance imageDeleted = BasicInstanceBuilder.getImageInstanceNotExist(project, true)
+        imageDeleted.setDeleted(new Date());
+        imageDeleted = BasicInstanceBuilder.saveDomain(imageDeleted)
 
         Score score1 = BasicInstanceBuilder.getScoreNotExist(true)
         ScoreValue score1Value1 = BasicInstanceBuilder.getScoreValueNotExist(score1, true)
@@ -112,7 +115,7 @@ class ImageScoreTests {
         assert 200 == result.code
         def json = JSON.parse(result.data)
         assert json.collection instanceof JSONArray
-        assert 3 == json.collection.size() // 3 image instance
+        assert 3 == json.collection.size() // 4 image instance ; but 1 is deleted
         def imageRowWithAllScores =  json.collection.find{it.id == imageWithAllScoreExeptScore3.id}
         assert imageRowWithAllScores != null
         assert 2 == imageRowWithAllScores[String.valueOf(score1.id)]
@@ -138,10 +141,13 @@ class ImageScoreTests {
 
     }
 
+
     void testStatsImageScoreGroupByUserByProject() {
         Project project = BasicInstanceBuilder.getProjectNotExist(true)
         ImageInstance image = BasicInstanceBuilder.getImageInstanceNotExist(project, true)
         ImageInstance anotherImage = BasicInstanceBuilder.getImageInstanceNotExist(project, true)
+        ImageInstance imageDeleted = BasicInstanceBuilder.getImageInstanceNotExist(project, true)
+
 
         Score score1 = BasicInstanceBuilder.getScoreNotExist(true)
         ScoreValue score1Value1 = BasicInstanceBuilder.getScoreValueNotExist(score1, true)
@@ -173,6 +179,11 @@ class ImageScoreTests {
         BasicInstanceBuilder.getImageScoreNotExist(anotherImage, score2Value1, userWithSomeScore, true)
         BasicInstanceBuilder.getImageScoreNotExist(anotherImage, score3Value1, userWithSomeScore, true)
 
+        BasicInstanceBuilder.getImageScoreNotExist(imageDeleted, score1Value2, userWithAllScoreExeptScore3, true)
+
+        imageDeleted.setDeleted(new Date());
+        imageDeleted = BasicInstanceBuilder.saveDomain(imageDeleted)
+
 
         def result = ImageScoreAPI.statsGroupByUser(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -182,7 +193,7 @@ class ImageScoreTests {
 
         def userRowWithAllScores =  json.collection.find{it.id == userWithAllScoreExeptScore3.id}
         assert userRowWithAllScores != null
-        assert 2 == userRowWithAllScores[String.valueOf(score1.id)]
+        assert 2 == userRowWithAllScores[String.valueOf(score1.id)] // only 2 because the third image is deleted
         assert 2 == userRowWithAllScores[String.valueOf(score2.id)]
         assert 0 == userRowWithAllScores[String.valueOf(score3.id)]
 
