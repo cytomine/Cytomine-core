@@ -120,6 +120,8 @@ class CustomUIController extends RestController {
                 result[it.key] = it.value
             }
         }
+        result['project-activities-tab']["ADMIN_PROJECT"] = false
+        result['project-activities-tab']["CONTRIBUTOR_PROJECT"] = false
         return result
     }
 
