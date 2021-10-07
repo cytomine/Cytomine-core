@@ -638,7 +638,9 @@ class ImageInstanceService extends ModelService {
         Property.findAllByDomainIdent(domain.id).each {it.delete(flush:true)}
         Property.findAllByDomainIdentAndDomainClassName(ai.id, ai.getClass().name).each {
             if(! (it.key.startsWith("cytomine.") || it.key.startsWith("mimeType") || it.key.startsWith("openslide.") ||
-                    it.key.startsWith("hamamatsu.") || it.key.startsWith("tiff.") || it.key.startsWith("JFIF.") || it.key.startsWith("File."))){
+                    it.key.startsWith("hamamatsu.") || it.key.startsWith("tiff.") || it.key.startsWith("JFIF.") ||
+                    it.key.startsWith("File.")  || it.key.startsWith("EXIF.") || it.key.startsWith("mirax.") ||
+                    it.key.startsWith("XMP.") || it.key.startsWith("ventana.") || it.key.startsWith("ExifTool.") )){
                 Property p= new Property(key: it.key, value: it.value)
                 p.setDomain(domain)
                 propertyService.add(JSON.parse(p.encodeAsJSON()))
