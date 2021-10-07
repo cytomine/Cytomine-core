@@ -135,6 +135,9 @@ class BootStrap {
         if (!bootstrapUtilsService.checkSqlColumnExistence("sec_user", "language")) {
             new Sql(dataSource).executeUpdate("ALTER TABLE sec_user ADD COLUMN language VARCHAR;")
         }
+        if (bootstrapUtilsService.checkSqlColumnExistence("project", "is_closed")) {
+            new Sql(dataSource).executeUpdate("ALTER TABLE project DROP COLUMN is_closed CASCADE;")
+        }
 
         def test = SSLContext.getDefault().getSupportedSSLParameters()
         test.setProtocols(["TLSv1.2"] as String[]);
