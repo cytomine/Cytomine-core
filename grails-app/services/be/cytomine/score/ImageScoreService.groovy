@@ -109,8 +109,10 @@ class ImageScoreService extends ModelService {
             String scoreId = String.valueOf(it['ScoreId'])
 
             if (stats.containsKey(imageInstanceId)) {
-                Integer counter = stats.get(imageInstanceId).get(scoreId)
-                stats.get(imageInstanceId).put(scoreId, counter + 1)
+                if(stats.get(imageInstanceId).containsKey(scoreId)) {
+                    Integer counter = stats.get(imageInstanceId).get(scoreId);
+                    stats.get(imageInstanceId).put(scoreId, counter + 1);
+                }
             }
         }
         try {
@@ -165,8 +167,10 @@ class ImageScoreService extends ModelService {
             String scoreId = String.valueOf(it['ScoreId'])
 
             if (stats.containsKey(userId)) {
-                Integer counter = stats.get(userId).get(scoreId)
-                stats.get(userId).put(scoreId, counter + 1)
+                if(stats.get(userId).containsKey(scoreId)) {
+                    Integer counter = stats.get(userId).get(scoreId)
+                    stats.get(userId).put(scoreId, counter + 1)
+                }
             }
         }
         try {
