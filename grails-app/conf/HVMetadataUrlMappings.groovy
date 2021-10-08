@@ -25,7 +25,7 @@ class HVMetadataUrlMappings {
         }
 
         "/api/laboratory.$format"(controller: "restHVMetadata") {
-            action = [GET: "listLaboratory"]
+            action = [GET: "listLaboratory", POST: "addLaboratory"]
         }
         "/api/laboratory/$id.$format"(controller: "restHVMetadata") {
             action = [DELETE: "delete"]

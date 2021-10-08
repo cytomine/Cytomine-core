@@ -44,6 +44,11 @@ class RestHVMetadataController extends RestController {
         json.type = HVMetadata.Type.STAINING.toString()
         add(hvMetadataService, json)
     }
+    def addLaboratory() {
+        def json = request.JSON
+        json.type = HVMetadata.Type.LABORATORY.toString()
+        add(hvMetadataService, json)
+    }
     def addAntibody() {
         def json = request.JSON
         json.type = HVMetadata.Type.ANTIBODY.toString()
