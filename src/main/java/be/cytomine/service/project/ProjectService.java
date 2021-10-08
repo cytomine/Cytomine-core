@@ -1,5 +1,6 @@
 package be.cytomine.service.project;
 
+import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.acl.*;
 import be.cytomine.domain.command.CommandHistory;
 import be.cytomine.domain.command.CommandHistory_;
@@ -10,8 +11,18 @@ import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.ontology.UserAnnotation_;
 import be.cytomine.domain.project.*;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.WrongArgumentException;
+import be.cytomine.repository.command.CommandHistoryRepository;
+import be.cytomine.repository.project.ProjectRepository;
+import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.service.CurrentUserService;
+import be.cytomine.service.ModelService;
 import be.cytomine.service.security.SecurityACLService;
+import be.cytomine.utils.CommandResponse;
+import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.Task;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +34,64 @@ import javax.persistence.Tuple;
 import javax.persistence.criteria.*;
 import java.util.*;
 
+import static org.springframework.security.acls.domain.BasePermission.READ;
+
 @Service
 @RequiredArgsConstructor
-public class ProjectService {
+public class ProjectService extends ModelService {
+
+    private final CommandHistoryRepository commandHistoryRepository;
+
+    private final CurrentUserService currentUserService;
+
+    private final ProjectRepository projectRepository;
 
     private final EntityManager em;
 
     private final SecurityACLService securityACLService;
+
+    public Optional<Project> read(Long id) {
+        Optional<Project> project = projectRepository.findById(id);
+        project.ifPresent(value -> securityACLService.check(value, READ));
+        return project;
+    }
+
+    public List<Project> readMany(Collection<Long> ids) {
+        List<Project> projects = projectRepository.findAllById(ids);
+        for (Project project : projects) {
+            securityACLService.check(project, READ);
+        }
+        return projects;
+    }
+
+    /**
+     * List last project opened by user
+     * If the user has less than "max" project opened, add last created project to complete list
+     */
+    public List<LastOpenedProject> listLastOpened(User user, Long offset, Long max) {
+        // TODO:
+        throw new RuntimeException("TODO");
+    }
+
+
+
+    List<Project> listByOntology(Ontology ontology) {
+        return projectRepository.findAllProjectForUserByOntology(currentUserService.getCurrentUsername(),ontology);
+    }
+
+//    List<Software> listBySoftware(Software software) {
+//        // TODO:
+//        throw new RuntimeException("TODO");
+//    }
+
+
+    List<CommandHistory> lastAction(Project project, int max) {
+        securityACLService.check(project, READ);
+        return commandHistoryRepository.findAllByProject(project, PageRequest.of(0, max, Sort.by("created").descending()));
+    }
+
+
+
 
     public List<Project> list() {
         ProjectSearchExtension searchExtension = ProjectSearchExtension.builder()
@@ -271,6 +333,36 @@ public class ProjectService {
     }
 
 
+    @Override
+    public CommandResponse add(JsonObject jsonObject) {
+        return null;
+    }
+
+    @Override
+    public Class currentDomain() {
+        return Project.class;
+    }
+
+    @Override
+    public CytomineDomain createFromJSON(JsonObject json) {
+        return null;
+    }
+
+    @Override
+    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData) {
+        return null;
+    }
+
+    @Override
+    public CommandResponse delete(CytomineDomain domain, Task task, boolean printMessage) {
+        return null;
+    }
+
+    @Override
+    public void checkDoNotAlreadyExist(CytomineDomain domain) {
+
+    }
+
 
     // working code for ontologies
 
@@ -344,4 +436,12 @@ class ProjectSearchExtension {
 //    Boolean withDescription;
 
     boolean withCurrentUserRoles;
+}
+
+@Data
+@AllArgsConstructor
+class LastOpenedProject {
+    Long id;
+    Date date;
+    boolean opened;
 }

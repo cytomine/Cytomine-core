@@ -46,6 +46,8 @@ dependencies {
 	implementation "commons-codec:commons-codec:1.6"
 
 	implementation 'org.springframework.security:spring-security-acl'
+
+	annotationProcessor('org.hibernate:hibernate-jpamodelgen')
 }
 
 test {

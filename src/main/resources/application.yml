@@ -10,7 +10,12 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
   # Replace by 'prod, faker' to add the faker context and have sample data loaded in production
   #liquibase:
   #  contexts: prod
 
+server:
+  port: 8088

@@ -15,6 +15,10 @@ import javax.validation.constraints.Size;
 @DiscriminatorValue("be.cytomine.security.UserJob")
 public class UserJob extends SecUser {
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = true)
+    protected User user;
+
     public UserJob() {
         super();
     }
