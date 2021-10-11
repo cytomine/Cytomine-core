@@ -256,6 +256,7 @@ class ImageScoreService extends ModelService {
         securityACLService.check(imageInstance.container(), READ)
         SecUser currentUser = cytomineService.getCurrentUser()
         securityACLService.checkIsSameUser(currentUser, SecUser.get(json.user))
+        securityACLService.checkisNotReadOnly(imageInstance.container())
         ScoreValue scoreValue = ScoreValue.read(json.scoreValue)
         if (!scoreValue) {
             throw new ObjectNotFoundException("Score value ${json.scoreValue} not found")
@@ -281,6 +282,7 @@ class ImageScoreService extends ModelService {
     def delete(ImageScore domain, Transaction transaction = null, Task task = null, boolean printMessage = true) {
         SecUser currentUser = cytomineService.getCurrentUser()
         securityACLService.checkIsSameUser(currentUser, domain.user)
+        securityACLService.checkisNotReadOnly(domain.imageInstance.container())
         Command c = new DeleteCommand(user: currentUser, transaction: transaction)
         return executeCommand(c, domain, null)
     }

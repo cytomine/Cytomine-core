@@ -27,6 +27,7 @@ import be.cytomine.security.User
 import be.cytomine.test.BasicInstanceBuilder
 import be.cytomine.test.Infos
 import be.cytomine.test.http.ImageScoreAPI
+import be.cytomine.test.http.ProjectAPI
 import be.cytomine.test.http.ScoreProjectAPI
 import grails.converters.JSON
 import org.codehaus.groovy.grails.web.json.JSONArray
@@ -277,5 +278,36 @@ class ImageScoreTests {
 
         result = ImageScoreAPI.show(imageScore.imageInstance.id, imageScore.scoreValue.score.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 404 == result.code
+    }
+
+    
+    void testAddScoreImageInReadOnlyProject() {
+        ImageScore imageScore = BasicInstanceBuilder.getImageScoreNotExist()
+        imageScore.imageInstance.project.mode = Project.EditingMode.READ_ONLY
+        BasicInstanceBuilder.saveDomain(imageScore.imageInstance.project)
+        User user = BasicInstanceBuilder.getUser()
+        ProjectAPI.addUserProject(imageScore.imageInstance.project.id, user.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+
+        def result = ImageScoreAPI.create(imageScore.imageInstance.id, imageScore.scoreValue.score.id, imageScore.scoreValue.id, "BasicUser", "password")
+        assert 403 == result.code
+    }
+
+    void testDeleteScoreImageInReadOnlyProject() {
+        Project project = BasicInstanceBuilder.getProject()
+        project.mode = Project.EditingMode.READ_ONLY
+        BasicInstanceBuilder.saveDomain(project)
+        User user = BasicInstanceBuilder.getUser()
+        ProjectAPI.addUserProject(project.id, user.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+
+        ImageScore imageScore = BasicInstanceBuilder.getImageScoreNotExist()
+        imageScore.imageInstance = BasicInstanceBuilder.getImageInstanceNotExist(project, true)
+        imageScore.user = user
+        imageScore = BasicInstanceBuilder.saveDomain(imageScore)
+
+        def result = ImageScoreAPI.delete(imageScore.imageInstance.id, imageScore.scoreValue.score.id, "BasicUser", "password")
+        assert 403 == result.code
+
+        result = ImageScoreAPI.show(imageScore.imageInstance.id, imageScore.scoreValue.score.id, "BasicUser", "password")
+        assert 200 == result.code
     }
 }
