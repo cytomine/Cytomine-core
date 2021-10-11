@@ -22,6 +22,7 @@ import be.cytomine.score.Score
 import be.cytomine.score.ScoreValue
 import be.cytomine.test.BasicInstanceBuilder
 import be.cytomine.test.Infos
+import be.cytomine.test.http.ProjectAPI
 import be.cytomine.test.http.ScoreProjectAPI
 import grails.converters.JSON
 import org.codehaus.groovy.grails.web.json.JSONArray
@@ -122,9 +123,32 @@ class ScoreProjectTests {
          def showResult = ScoreProjectAPI.show(id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
          assert 404 == showResult.code
      }
- 
+
      void testDeleteScoreProjectNotExist() {
          def result = ScoreProjectAPI.delete(-99, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
          assert 404 == result.code
      }
+
+
+    void testAddScoreProjectInLockedProject() {
+        def project = BasicInstanceBuilder.getProjectNotExist(true)
+        ProjectAPI.lock(project.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        def scoreProjectToAdd = BasicInstanceBuilder.getScoreProjectNotExist()
+        scoreProjectToAdd.project = project
+        def result = ScoreProjectAPI.create(scoreProjectToAdd.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 403 == result.code
+    }
+
+    void testDeleteScoreProjectInLockedProject() {
+        def scoreProjectToDelete = BasicInstanceBuilder.getScoreProjectNotExist(BasicInstanceBuilder.getScoreNotExist(true),BasicInstanceBuilder.getProjectNotExist(true),true)
+        def id = scoreProjectToDelete.id
+
+        ProjectAPI.lock(scoreProjectToDelete.project.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+
+        def result = ScoreProjectAPI.delete(id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 403 == result.code
+
+        def showResult = ScoreProjectAPI.show(id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == showResult.code
+    }
 }

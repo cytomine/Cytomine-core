@@ -72,6 +72,7 @@ class ScoreProjectService extends ModelService{
      */
     def add(def json) throws CytomineException {
         securityACLService.check(json.project,Project, ADMINISTRATION)
+        securityACLService.checkIsDomainNotLocked(json.project,Project)
         SecUser currentUser = cytomineService.getCurrentUser()
         json.user = currentUser.id
         synchronized (this.getClass()) {
