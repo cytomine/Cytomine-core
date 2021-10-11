@@ -310,4 +310,23 @@ class ImageScoreTests {
         result = ImageScoreAPI.show(imageScore.imageInstance.id, imageScore.scoreValue.score.id, "BasicUser", "password")
         assert 200 == result.code
     }
+
+
+    void testAddScoreImageInLockedProject() {
+        ImageScore imageScore = BasicInstanceBuilder.getImageScoreNotExist()
+        ProjectAPI.lock(imageScore.imageInstance.project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        def result = ImageScoreAPI.create(imageScore.imageInstance.id, imageScore.scoreValue.score.id, imageScore.scoreValue.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 403 == result.code
+    }
+
+    void testDeleteScoreImageInLockedProject() {
+        ImageScore imageScore = BasicInstanceBuilder.getImageScoreNotExist()
+        imageScore = BasicInstanceBuilder.saveDomain(imageScore)
+        ProjectAPI.lock(imageScore.imageInstance.project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        def result = ImageScoreAPI.delete(imageScore.imageInstance.id, imageScore.scoreValue.score.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 403 == result.code
+
+        result = ImageScoreAPI.show(imageScore.imageInstance.id, imageScore.scoreValue.score.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+    }
 }
