@@ -1,6 +1,7 @@
 package be.cytomine.domain.command;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.security.SecUser;
 import be.cytomine.service.ModelService;
 import be.cytomine.utils.CommandResponse;
 import lombok.Data;
@@ -13,6 +14,15 @@ import javax.persistence.Transient;
 @Entity
 @DiscriminatorValue("be.cytomine.command.DeleteCommand")
 public class DeleteCommand extends Command {
+
+
+
+    public DeleteCommand(SecUser currentUser, Transaction transaction) {
+        this.user = currentUser;
+        this.transaction = transaction;
+    }
+
+    public DeleteCommand() {}
 
     @Transient
     Object backup;

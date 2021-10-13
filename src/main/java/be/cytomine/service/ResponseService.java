@@ -64,4 +64,13 @@ public class ResponseService {
         return commandResponse;
     }
 
+    public Map<String, Object> createResponseData(Boolean success, String messageKey, HashMap<String, Object> callback, boolean printMessage) {
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("success", success);
+        params.put("message", messageSource.getMessage(messageKey, new Object[]{}, Locale.ENGLISH));
+        params.put("callback", callback);
+        params.put("printMessage", printMessage);
+        return params;
+    }
+
 }

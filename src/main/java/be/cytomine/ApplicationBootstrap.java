@@ -2,6 +2,7 @@ package be.cytomine;
 
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
+import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.AdminProjectView;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
@@ -20,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @Order(0)
@@ -44,19 +47,37 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
     public void onApplicationEvent(ApplicationReadyEvent event) {
         log.info("ApplicationListener#onApplicationEvent()");
         log.info("ONTOLOGIES");
-        for (Ontology ontology : ontologyRepository.findAll()) {
+        for (Ontology ontology : ontologyRepository.findAll().stream().filter(x-> x.getId()==11867l).collect(Collectors.toSet())) {
+
             log.info("ontology = " + ontology.getName());
+
+            for (Map<String, Object> stringObjectMap : ontology.tree()) {
+                log.info("      term = " + stringObjectMap);
+            }
+            log.info("****************************************");
+            log.info("****************************************");
+            log.info("****************************************");
+            log.info("****************************************");
+            log.info("****************************************");
+            for (Term term : ontology.getTerms()) {
+
+                    log.info("      ontology = " + ontology.getId());
+                    log.info("      term = " + term);
+                    log.info("          children = " + term.children());
+                    log.info("          parent = " + term.parent().orElse(null));
+            }
+
         }
 
 
-        List<AdminProjectView> admins = entityManager.createQuery("SELECT v FROM AdminProjectView v", AdminProjectView.class).getResultList();
-        for (AdminProjectView admin : admins) {
-            log.info("AdminProjectView = " + admin.getId() + " vs " + admin.getUserId());
-        }
-
-
-                log.info("PROJECTS");
-        projectService.list();
+//        List<AdminProjectView> admins = entityManager.createQuery("SELECT v FROM AdminProjectView v", AdminProjectView.class).getResultList();
+//        for (AdminProjectView admin : admins) {
+//            log.info("AdminProjectView = " + admin.getId() + " vs " + admin.getUserId());
+//        }
+//
+//
+//        log.info("PROJECTS");
+//        projectService.list();
 
 //        for (SecUser user : secUserRepository.findAll()) {
 //            log.info("User " + user.humanUsername());

@@ -1,6 +1,7 @@
 package be.cytomine.domain.command;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.service.ModelService;
@@ -41,30 +42,11 @@ public class AddCommand extends Command {
         fillCommandInfo(newDomain, (String)response.getData().get("message"));
         if (newDomain != null) {
             CytomineDomain container = newDomain.container();
-            // TODO
-//            if(container && container instanceof Project) {
-//                super.setProject(container);
-//            }
+            if(container!=null && container instanceof Project) {
+                super.setProject((Project)container);
+            }
         }
 
         return response;
     }
-
-//    /**
-//     * Process an undo op
-//     * @return Message
-//     */
-//    def undo() {
-//        initService()
-//        return service.destroy(JSON.parse(data), printMessage)
-//    }
-//
-//    /**
-//     * Process a redo op
-//     * @return Message
-//     */
-//    def redo() {
-//        initService()
-//        return service.create(JSON.parse(data), printMessage)
-//    }
 }

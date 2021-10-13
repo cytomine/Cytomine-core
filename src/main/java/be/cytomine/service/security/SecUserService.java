@@ -1,10 +1,7 @@
 package be.cytomine.service.security;
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.command.AddCommand;
-import be.cytomine.domain.command.Command;
-import be.cytomine.domain.command.DeleteCommand;
-import be.cytomine.domain.command.EditCommand;
+import be.cytomine.domain.command.*;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.*;
@@ -82,7 +79,7 @@ public class SecUserService extends ModelService {
      * @param printMessage Flag if client will print or not confirm message
      * @return Response structure (code, old domain,..)
      */
-    public CommandResponse delete(CytomineDomain domain, Task task, boolean printMessage) { //TODO: Transaction transaction,
+    public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         //SecUser currentUser = cytomineService.getCurrentUser() //TODO
 //        if(domain.algo()) {
 //            Job job = ((UserJob)domain).job
@@ -92,7 +89,7 @@ public class SecUserService extends ModelService {
 //            securityACLService.checkAdmin(currentUser)
 //            securityACLService.checkIsNotSameUser(domain,currentUser)
 //        }
-        Command c = new DeleteCommand(); //TODO : ,transaction:transaction
+        Command c = new DeleteCommand(getCurrentUser(), transaction);
         return executeCommand(c,domain,null);
     }
 

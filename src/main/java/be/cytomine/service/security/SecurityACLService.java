@@ -34,6 +34,38 @@ public class SecurityACLService {
 
     private final AclRepository aclRepository;
 
+    public void check(Long id, String className, Permission permission) {
+        try {
+            check(id, Class.forName(className),permission);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Cannot check ACL for class " + className);
+        }
+    }
+
+    public void check(Long id, Class className, Permission permission) {
+        try {
+            CytomineDomain domain = (CytomineDomain)entityManager.find(className, id);
+            if (domain!=null) {
+                check(domain,permission);
+            } else {
+                throw new ObjectNotFoundException("ACL error: " + className + " with id "+ id + " was not found! Unable to process auth checking");
+            }
+        } catch(IllegalArgumentException ex) {
+            throw new ObjectNotFoundException("ACL error: " + className + " with id "+ id + " was not found! Unable to process auth checking");
+        }
+
+    }
+
+//    public void check(Long id, Class className, String method, Permission permission) {
+//        CytomineDomain domain = (CytomineDomain)entityManager.find(className, id);
+//        if (domain!=null) {
+//            def containerObject = simpleObject."$method"()
+//            check(containerObject,permission)
+//        } else {
+//            throw new ObjectNotFoundException("ACL error: ${className} with id ${id} was not found! Unable to process auth checking")
+//        }
+//    }
+
     public void check(CytomineDomain domain, Permission permission) {
         if (domain!=null) {
             if (!checkPermission(domain.container(), permission, currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
@@ -128,7 +160,11 @@ public class SecurityACLService {
         }
     }
 
-
+    public void checkAdmin(SecUser user) {
+        if (!currentRoleService.isAdminByNow(user)) {
+            throw new ForbiddenException("You don't have the right to read this resource! You must be admin!");
+        }
+    }
 
 
 

@@ -4,7 +4,9 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.ValidationError;
 import be.cytomine.domain.command.Command;
 import be.cytomine.domain.command.DeleteCommand;
+import be.cytomine.domain.command.Transaction;
 import be.cytomine.exceptions.*;
+import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
@@ -18,6 +20,8 @@ import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Map;
 
+import static org.springframework.security.acls.domain.BasePermission.READ;
+
 @Transactional
 @Slf4j
 public abstract class ModelService<T extends CytomineDomain> {
@@ -27,6 +31,9 @@ public abstract class ModelService<T extends CytomineDomain> {
 
     @Autowired
     ResponseService responseService;
+
+    @Autowired
+    SecurityACLService securityACLService;
 
 //    @Autowired
 //    ResponseService responseService;
@@ -60,6 +67,10 @@ public abstract class ModelService<T extends CytomineDomain> {
         }
 
         try {
+            if (newObject.getId()!=null && !entityManager.contains(newObject)) {
+                // entity is detached, merge it in the session
+                newObject = entityManager.merge(newObject);
+            }
             entityManager.persist(newObject);
             entityManager.flush();
         }
@@ -68,7 +79,7 @@ public abstract class ModelService<T extends CytomineDomain> {
             newObject = entityManager.merge(newObject);
         }
         catch(Exception e) {
-            throw new WrongArgumentException("Cannot persists object");
+            throw new WrongArgumentException("Cannot persists object:" + e);
         }
     }
 
@@ -100,7 +111,7 @@ public abstract class ModelService<T extends CytomineDomain> {
      * Get the name of the service (project,...)
      */
     public String getServiceName() {
-        return this.getClass().getName();
+        return this.getClass().getSimpleName();
     }
 
     public CommandResponse executeCommand(Command c, CytomineDomain domain, JsonObject json) {
@@ -277,11 +288,11 @@ public abstract class ModelService<T extends CytomineDomain> {
         if (domain == null) {
             throw new ObjectNotFoundException(currentDomain() + " " + json.get("id") + " not found");
         }
-//        def container = domain.container() //TODO
-//        if (container) {
-//            //we only check security if container is defined
-//            securityACLService.check(container,READ)
-//        }
+        CytomineDomain container = domain.container();
+        if (container!=null) {
+            //we only check security if container is defined
+            securityACLService.check(container,READ);
+        }
         return domain;
     }
 
@@ -336,7 +347,7 @@ public abstract class ModelService<T extends CytomineDomain> {
 
     public abstract CommandResponse update(CytomineDomain domain, JsonObject jsonNewData);
 
-    public abstract CommandResponse delete(CytomineDomain domain, Task task, boolean printMessage);
+    public abstract CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage);
 
     public abstract void checkDoNotAlreadyExist(CytomineDomain domain);
 

@@ -1,6 +1,7 @@
 package be.cytomine.domain.command;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.service.ModelService;
@@ -18,10 +19,10 @@ import javax.validation.constraints.NotNull;
         discriminatorType = DiscriminatorType.STRING)
 public abstract class Command extends CytomineDomain {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGen")
-    @SequenceGenerator(name = "myGen", sequenceName = "hibernate_sequence", allocationSize=1)
-    protected Long id;
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGen")
+//    @SequenceGenerator(name = "myGen", sequenceName = "hibernate_sequence", allocationSize=1)
+//    protected Long id;
 
     /**
      * JSON string with relevant field data
@@ -35,29 +36,26 @@ public abstract class Command extends CytomineDomain {
     @Transient
     protected JsonObject json; //TODO: support json array
 
-//    @Transient
-//    boolean delete = false //with soft delete, editcommand has flag delete
-
     @Transient
     protected CytomineDomain domain;
-
 
     /**
      * User who launch command
      */
-    @NotNull
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = true)
     protected SecUser user;
 
-//    @Column(nullable = true)
-//    protected Transaction transaction; //TODO
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "transaction_id", nullable = true)
+    protected Transaction transaction;
 
     /**
      * Project concerned by command
      */
-//    @Column(nullable = true) //TODO
-//    protected Project project;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "project_id", nullable = true)
+    protected Project project;
 
     /**
      * Flag that indicate that the message will be show or not for undo/redo
@@ -86,7 +84,7 @@ public abstract class Command extends CytomineDomain {
      * If command is save on undo stack, refuse undo
      * Usefull for project delete (cannot undo)
      */
-    protected Boolean refuseUndo = false;
+    protected boolean refuseUndo = false;
 
 
     public String toString() {

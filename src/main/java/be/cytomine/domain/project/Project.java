@@ -47,23 +47,23 @@ public class Project extends CytomineDomain {
 
     private Boolean areImagesDownloadable = false;
 
-    private Long countAnnotations;
+    private long countAnnotations;
 
-    private Long countJobAnnotations;
+    private long countJobAnnotations;
 
-    private Long countImages;
+    private long countImages;
 
-    Long countReviewedAnnotations;
+    private long countReviewedAnnotations;
 
-    boolean retrievalDisable = false;
+    private boolean retrievalDisable = false;
 
-    boolean retrievalAllOntology = true;
+    private boolean retrievalAllOntology = true;
 
-    boolean isClosed = false;
+    private boolean isClosed = false;
 
-    boolean hideUsersLayers = false;
+    private boolean hideUsersLayers = false;
 
-    boolean hideAdminsLayers = false;
+    private boolean hideAdminsLayers = false;
 
     @Enumerated(EnumType.STRING)
     EditingMode mode = EditingMode.CLASSIC;
@@ -136,5 +136,9 @@ public class Project extends CytomineDomain {
 
     public boolean canUpdateContent() {
         return !mode.equals(EditingMode.READ_ONLY);
+    }
+
+    public CytomineDomain container() {
+        return this;
     }
 }

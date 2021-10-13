@@ -5,6 +5,7 @@ import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import javax.validation.ConstraintViolation;
@@ -19,8 +20,9 @@ import java.util.stream.Collectors;
 public abstract class CytomineDomain {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGen")
-    @SequenceGenerator(name = "myGen", sequenceName = "hibernate_sequence", allocationSize=1)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGenerator")
+    //@SequenceGenerator(name = "myGen", sequenceName = "hibernate_sequence", allocationSize=1)
+    @GenericGenerator(name = "myGenerator", strategy = "be.cytomine.config.CustomIdentifierGenerator")
     protected Long id;
 
     protected Date created;

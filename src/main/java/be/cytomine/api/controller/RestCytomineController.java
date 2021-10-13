@@ -3,10 +3,12 @@ package be.cytomine.api.controller;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.exceptions.CytomineException;
 import be.cytomine.service.ModelService;
+import be.cytomine.service.command.TransactionService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
 import java.util.ArrayList;
@@ -16,6 +18,9 @@ import java.util.Map;
 
 @Slf4j
 public abstract class RestCytomineController {
+
+    @Autowired
+    private TransactionService transactionService;
 
 //    /**
 //     * Response a successful HTTP message
@@ -140,7 +145,7 @@ public abstract class RestCytomineController {
     public ResponseEntity<String> delete(ModelService service, JsonObject json, Task task) {
         try {
             CytomineDomain domain =  service.retrieve(json);
-            CommandResponse result = service.delete(domain, task,true); // transactionService.start() TODO
+            CommandResponse result = service.delete(domain, transactionService.start(), task,true);
             return responseSuccess(result);
         } catch (CytomineException e) {
             log.error(e.toString());

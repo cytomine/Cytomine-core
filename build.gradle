@@ -48,6 +48,8 @@ dependencies {
 	implementation 'org.springframework.security:spring-security-acl'
 
 	annotationProcessor('org.hibernate:hibernate-jpamodelgen')
+
+	testImplementation 'org.assertj:assertj-core:3.4.1'
 }
 
 test {

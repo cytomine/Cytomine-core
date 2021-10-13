@@ -4,6 +4,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.acl.*;
 import be.cytomine.domain.command.CommandHistory;
 import be.cytomine.domain.command.CommandHistory_;
+import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.meta.*;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.Ontology_;
@@ -354,7 +355,7 @@ public class ProjectService extends ModelService {
     }
 
     @Override
-    public CommandResponse delete(CytomineDomain domain, Task task, boolean printMessage) {
+    public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         return null;
     }
 

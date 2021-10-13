@@ -2,6 +2,7 @@ package be.cytomine.domain.command;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
@@ -22,7 +23,7 @@ public class CommandHistory extends CytomineDomain {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = true)
-    protected User user;
+    protected SecUser user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = true)
@@ -33,6 +34,35 @@ public class CommandHistory extends CytomineDomain {
 
     @Column(nullable = false)
     protected String prefixAction;
+
+    public CommandHistory() {
+
+    }
+
+    public CommandHistory(Command command) {
+        this.setCommand(command);
+        this.setPrefixAction("");
+        this.setProject(command.getProject());
+        this.setUser(command.getUser());
+        this.setMessage(command.getActionMessage());
+    }
+
+    public CommandHistory(UndoStackItem undoStackItem) {
+        this.setCommand(undoStackItem.getCommand());
+        this.setPrefixAction("UNDO");
+        this.setProject(undoStackItem.getCommand().getProject());
+        this.setUser(undoStackItem.getUser());
+        this.setMessage(undoStackItem.getCommand().getActionMessage());
+    }
+
+    public CommandHistory(RedoStackItem redoStackItem) {
+        this.setCommand(redoStackItem.getCommand());
+        this.setPrefixAction("REDO");
+        this.setProject(redoStackItem.getCommand().getProject());
+        this.setUser(redoStackItem.getUser());
+        this.setMessage(redoStackItem.getCommand().getActionMessage());
+    }
+
 
 
 

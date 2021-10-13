@@ -13,6 +13,10 @@ import java.util.Map;
 
 public class JsonObject extends HashMap<String, Object> {
 
+    public boolean isMissing(String key) {
+        return !this.containsKey(key) || this.get(key)==null;
+    }
+
     public static JsonObject of(String key, Object value) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.put(key, value);
@@ -65,6 +69,15 @@ public class JsonObject extends HashMap<String, Object> {
         }
     }
 
+    public static JsonObject toJsonObject(String json) {
+        try {
+            return new ObjectMapper().readValue(json, new TypeReference<JsonObject>(){});
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public String getJSONAttrStr(String attr) {
         return getJSONAttrStr(attr, false, null);
     }
@@ -98,6 +111,10 @@ public class JsonObject extends HashMap<String, Object> {
         } else {
             return defaultValue;
         }
+    }
+
+    public Long getJSONAttrLong(String attr) {
+        return getJSONAttrLong(attr, -1L);
     }
 
     public Boolean getJSONAttrBoolean(String attr, Boolean defaultValue) {
