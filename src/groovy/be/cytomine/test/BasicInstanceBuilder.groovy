@@ -888,6 +888,7 @@ class BasicInstanceBuilder {
         if (!image) {
             image = new AbstractImage(uploadedFile: getUploadedFile(), originalFilename:"originalFilename", width: 16000, height: 16000, depth: 5, duration: 2, channels: 3)
         }
+        image.setDeleted(null)
         image = saveDomain(image)
         //saveDomain(new StorageAbstractImage(storage : getStorage(), abstractImage : image))
         saveDomain(new AbstractSlice(uploadedFile: image.uploadedFile, image: image, mime: getMime(),  channel: 0, zStack: 0, time: 0))

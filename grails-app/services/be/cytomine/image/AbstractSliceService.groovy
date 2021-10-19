@@ -29,6 +29,7 @@ class AbstractSliceService extends ModelService {
         AbstractSlice slice = AbstractSlice.read(id)
         if (slice) {
             securityACLService.checkAtLeastOne(slice, READ)
+            checkDeleted(slice)
         }
         slice
     }
@@ -37,18 +38,19 @@ class AbstractSliceService extends ModelService {
         AbstractSlice slice = AbstractSlice.findByImageAndChannelAndZStackAndTime(image, c, z, t)
         if (slice) {
             securityACLService.checkAtLeastOne(slice, READ)
+            checkDeleted(slice)
         }
         slice
     }
 
     def list(AbstractImage image) {
         securityACLService.check(image, READ)
-        AbstractSlice.findAllByImage(image)
+        AbstractSlice.findAllByImageAndDeletedIsNull(image)
     }
 
     def list(UploadedFile uploadedFile) {
         securityACLService.check(uploadedFile, READ)
-        AbstractSlice.findAllByUploadedFile(uploadedFile)
+        AbstractSlice.findAllByUploadedFileAndDeletedIsNull(uploadedFile)
     }
 
     def add(def json) {
