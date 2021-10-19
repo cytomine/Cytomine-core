@@ -17,11 +17,14 @@ package be.cytomine
 */
 
 import be.cytomine.image.ImageInstance
+import be.cytomine.image.SliceInstance
 import be.cytomine.image.UploadedFile
 import be.cytomine.image.server.Storage
 import be.cytomine.security.User
 import be.cytomine.test.BasicInstanceBuilder
 import be.cytomine.test.Infos
+import be.cytomine.test.http.AbstractImageAPI
+import be.cytomine.test.http.ImageInstanceAPI
 import be.cytomine.test.http.UploadedFileAPI
 import be.cytomine.utils.UpdateData
 import grails.converters.JSON
@@ -207,6 +210,24 @@ class UploadedFileTests {
 
         assert 403 == result.code
     }
+
+    void testDeleteUploadedFileUsedToBeLinkWithProject() {
+        def uploadedfileToDelete = BasicInstanceBuilder.getUploadedFileNotExist(true)
+        ImageInstance img = BasicInstanceBuilder.getImageInstanceNotExist(BasicInstanceBuilder.getProjectNotExist(true),true)
+        img.baseImage.uploadedFile = uploadedfileToDelete
+        SliceInstance sliceInstance = BasicInstanceBuilder.getSliceInstanceNotExist(img, true)
+        assert img.baseImage.save(flush: true)!= null
+        def id = uploadedfileToDelete.id
+        Infos.addUserRight(User.findByUsername(Infos.ANOTHERLOGIN), uploadedfileToDelete.storage)
+
+
+        def result = ImageInstanceAPI.delete(img, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+
+        result = UploadedFileAPI.delete(id, Infos.ANOTHERLOGIN, Infos.ANOTHERPASSWORD)
+        assert 200 == result.code
+    }
+
 
     void testDeleteUploadedFileNotExist() {
         def result = UploadedFileAPI.delete(-99, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)

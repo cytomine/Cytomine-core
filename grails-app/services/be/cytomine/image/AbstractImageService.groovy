@@ -69,6 +69,7 @@ class AbstractImageService extends ModelService {
         AbstractImage abstractImage = AbstractImage.read(id)
         if(abstractImage) {
             securityACLService.checkAtLeastOne(abstractImage, READ)
+            checkDeleted(abstractImage)
         }
         abstractImage
     }
@@ -77,6 +78,7 @@ class AbstractImageService extends ModelService {
         AbstractImage abstractImage = AbstractImage.get(id)
         if(abstractImage) {
             securityACLService.checkAtLeastOne(abstractImage, READ)
+            checkDeleted(abstractImage)
         }
         abstractImage
     }
@@ -447,13 +449,23 @@ class AbstractImageService extends ModelService {
      * @param printMessage Flag if client will print or not confirm message
      * @return Response structure (code, old domain,..)
      */
-    def delete(AbstractImage domain, Transaction transaction = null, Task task = null, boolean printMessage = true) {
+    def delete(AbstractImage domain, Transaction transaction = null, Task task = null, boolean printMessage = true, boolean deleteUploadFileLink = false) {
         securityACLService.checkAtLeastOne(domain,WRITE)
 
         if (!isUsed(domain.id)) {
-            SecUser currentUser = cytomineService.getCurrentUser()
-            Command c = new DeleteCommand(user: currentUser,transaction:transaction)
-            return executeCommand(c,domain,null)
+            def jsonNewData = JSON.parse(domain.encodeAsJSON())
+            jsonNewData.deleted = new Date().time
+            Command c = new EditCommand(user: cytomineService.currentUser)
+            c.delete = true
+            log.info "abstract image delete (soft)"
+            def response = executeCommand(c,domain,jsonNewData)
+            if (deleteUploadFileLink) {
+                // has to be done after the command otherwise fails on security check (uploadedfile null => container null)
+                domain.refresh()
+                domain.uploadedFile = null
+                domain.save(flush:true)
+            }
+            return response
         } else{
             def instances = ImageInstance.findAllByBaseImageAndDeletedIsNull(domain)
             throw new ForbiddenException("Abstract Image has instances in active projects : " +
@@ -481,7 +493,8 @@ class AbstractImageService extends ModelService {
 
     def abstractSliceService
     def deleteDependentAbstractSlice(AbstractImage ai, Transaction transaction, Task task = null) {
-        def slices = AbstractSlice.findAllByImage(ai)
+        log.info "abstract image deleteDependentAbstractSlice"
+        def slices = AbstractSlice.findAllByImageAndDeletedIsNotNull(ai)
         slices.each {
             abstractSliceService.delete(it, transaction, task)
         }

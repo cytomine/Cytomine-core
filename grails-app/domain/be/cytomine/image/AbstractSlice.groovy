@@ -62,6 +62,7 @@ class AbstractSlice extends CytomineDomain implements Serializable {
     }
 
     static constraints = {
+        uploadedFile nullable: true // ALTER TABLE public.abstract_slice ALTER COLUMN uploaded_file_id DROP NOT NULL;
     }
 
     void checkAlreadyExist() {
@@ -78,7 +79,7 @@ class AbstractSlice extends CytomineDomain implements Serializable {
         domain.updated = JSONUtils.getJSONAttrDate(json,'updated')
         domain.deleted = JSONUtils.getJSONAttrDate(json, "deleted")
 
-        domain.uploadedFile = JSONUtils.getJSONAttrDomain(json, "uploadedFile", new UploadedFile(), true)
+        domain.uploadedFile = JSONUtils.getJSONAttrDomain(json, "uploadedFile", new UploadedFile(), false)
         domain.image = JSONUtils.getJSONAttrDomain(json, "image", new AbstractImage(), true)
         domain.mime = JSONUtils.getJSONAttrDomain(json,"mime",new Mime(),'mimeType','String',true)
 

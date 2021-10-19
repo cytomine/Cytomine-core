@@ -1,5 +1,7 @@
 package be.cytomine.image
 
+import be.cytomine.annotations.DependencyOrder
+
 /*
 * Copyright (c) 2009-2021. Authors: see NOTICE file.
 *
@@ -257,16 +259,21 @@ class UploadedFileService extends ModelService {
         return [domain.id, domain.filename]
     }
 
+    @DependencyOrder(order = 10)
     def deleteDependentAbstractImage(UploadedFile uploadedFile, Transaction transaction,Task task=null) {
+        log.info "deleteDependentAbstractImage"
         AbstractImage.findAllByUploadedFile(uploadedFile).each {
-            abstractImageService.delete(it, transaction, task, false)
+            abstractImageService.delete(it, transaction, task, false, true)
         }
     }
 
     def abstractSliceService
+
+    @DependencyOrder(order = 20)
     def deleteDependentAbstractSlice(UploadedFile uploadedFile, Transaction transaction, Task task = null) {
+        log.info "deleteDependentAbstractSlice"
         AbstractSlice.findAllByUploadedFile(uploadedFile).each {
-            abstractSliceService.delete(it, transaction, task, false)
+            abstractSliceService.delete(it, transaction, task, false, true)
         }
     }
 

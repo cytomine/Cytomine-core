@@ -9,6 +9,7 @@ import be.cytomine.command.Transaction
 import be.cytomine.security.SecUser
 import be.cytomine.utils.ModelService
 import be.cytomine.utils.Task
+import grails.converters.JSON
 
 import static org.springframework.security.acls.domain.BasePermission.READ
 import static org.springframework.security.acls.domain.BasePermission.WRITE
@@ -66,15 +67,26 @@ class AbstractSliceService extends ModelService {
         executeCommand(c, slice, json)
     }
 
-    def delete(AbstractSlice slice, Transaction transaction = null, Task task = null, boolean printMessage = true) {
+    def delete(AbstractSlice slice, Transaction transaction = null, Task task = null, boolean printMessage = true, boolean deleteUploadedFileLink = false) {
         securityACLService.checkAtLeastOne(slice, READ)
         SecUser currentUser = cytomineService.getCurrentUser()
-        Command c = new DeleteCommand(user: currentUser, transaction: transaction)
-        executeCommand(c, slice, null)
+        def jsonNewData = JSON.parse(slice.encodeAsJSON())
+        jsonNewData.deleted = new Date().time
+        Command c = new EditCommand(user: currentUser)
+        c.delete = true
+        log.info "abstract slice delete (soft)"
+        def response = executeCommand(c,slice,jsonNewData)
+        if (deleteUploadedFileLink) {
+            // has to be done after the command otherwise fails on security check (uploadedfile null => container null)
+            slice.refresh()
+            slice.uploadedFile = null
+            slice.save(flush:true)
+        }
+        return response
     }
 
     def deleteDependentSliceInstance(AbstractSlice slice, Transaction transaction,Task task=null) {
-        def images = SliceInstance.findAllByBaseSlice(slice);
+        def images = SliceInstance.findAllByBaseSliceAndDeletedIsNull(slice);
         if(!images.isEmpty()) {
             throw new ConstraintException("This slice $slice cannot be deleted as it has already been insert " +
                     "in projects " + images.collect{it.project.name})

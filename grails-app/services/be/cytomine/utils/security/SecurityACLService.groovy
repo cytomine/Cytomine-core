@@ -57,7 +57,9 @@ class SecurityACLService {
         def simpleObject =  Class.forName(className, false, Thread.currentThread().contextClassLoader).read(id)
         if (simpleObject) {
             def containerObjects = simpleObject."$method"()
-            if(containerObjects.size() == 0) throw new ForbiddenException("ACL error: ${className} with id ${id}. Cannot find any related object to check permission")
+            if(containerObjects.size() == 0) {
+                throw new ForbiddenException("ACL error: ${className} with id ${id}. Cannot find any related object to check permission")
+            }
             def atLeastOne = containerObjects.find {
                 it.checkPermission(permission,currentRoleServiceProxy.isAdminByNow(cytomineService.currentUser))
             }

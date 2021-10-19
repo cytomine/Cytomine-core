@@ -145,7 +145,7 @@ class AbstractImage extends CytomineDomain implements Serializable {
 
         domain.originalFilename = JSONUtils.getJSONAttrStr(json,'originalFilename')
 
-        domain.uploadedFile = JSONUtils.getJSONAttrDomain(json, "uploadedFile", new UploadedFile(), true)
+        domain.uploadedFile = JSONUtils.getJSONAttrDomain(json, "uploadedFile", new UploadedFile(), false)
 
         domain.height = JSONUtils.getJSONAttrInteger(json,'height',null)
         domain.width = JSONUtils.getJSONAttrInteger(json,'width',null)
@@ -275,6 +275,6 @@ class AbstractImage extends CytomineDomain implements Serializable {
      * @return Container of this domain
      */
     public CytomineDomain container() {
-        uploadedFile.container()
+        uploadedFile?.container()
     }
 }
