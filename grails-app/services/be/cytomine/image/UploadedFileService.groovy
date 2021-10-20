@@ -1,7 +1,5 @@
 package be.cytomine.image
 
-import be.cytomine.annotations.DependencyOrder
-
 /*
 * Copyright (c) 2009-2021. Authors: see NOTICE file.
 *
@@ -18,6 +16,8 @@ import be.cytomine.annotations.DependencyOrder
 * limitations under the License.
 */
 
+import be.cytomine.CytomineDomain
+import be.cytomine.annotations.DependencyOrder
 import be.cytomine.api.UrlApi
 import be.cytomine.command.AddCommand
 import be.cytomine.command.Command
@@ -89,6 +89,12 @@ class UploadedFileService extends ModelService {
         def validatedSearchParameters = getDomainAssociatedSearchParameters(UploadedFile, searchParameters)
         validatedSearchParameters.findAll { !it.property.contains(".") }.each {
             it.property = "uf." + it.property
+        }
+        validatedSearchParameters.each {
+            if(it.value instanceof CytomineDomain) {
+                it.value = it.value.id
+                it.property = it.property+'_id'
+            }
         }
 
         def sqlSearchConditions = searchParametersToSQLConstraints(validatedSearchParameters)
