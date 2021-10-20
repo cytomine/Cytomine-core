@@ -41,6 +41,10 @@ public abstract class ModelService<T extends CytomineDomain> {
     @Autowired
     ApplicationContext applicationContext;
 
+//    @Autowired
+//    TaskService taskService;
+//
+    @Autowired
     CommandService commandService;
 //    def responseService
 
@@ -101,9 +105,9 @@ public abstract class ModelService<T extends CytomineDomain> {
      * Add command info for the new domain concerned by the command
      */
     CytomineDomain fillDomainWithData(CytomineDomain object, JsonObject json) {
-        CytomineDomain domain = (CytomineDomain)entityManager.find(object.getClass(), retrieveLongId(json));
+        CytomineDomain domain = entityManager.find(object.getClass(), retrieveLongId(json));
         domain.buildDomainFromJson(json, this.entityManager);
-        domain.setId((Long)json.get("id"));
+        domain.setId(json.getJSONAttrLong("id"));
         return domain;
     }
 
@@ -133,13 +137,14 @@ public abstract class ModelService<T extends CytomineDomain> {
      * Execute command with JSON data
      */
     public CommandResponse executeCommand(Command c, Task task) {
-        log.info("Command " + c.getClass());
+        log.info("Command " + c.getClass() + " " + c.getDomain());
         if(c instanceof DeleteCommand) {
             CytomineDomain domainToDelete = c.getDomain();
             //Create a backup (for 'undo' op)
             //We create before for deleteCommand to keep data from HasMany inside json (data will be deleted later)
-            Object backup = domainToDelete.getDataFromDomain(domainToDelete).toJsonString();
+            Object backup = domainToDelete.toJSON();
             ((DeleteCommand) c).setBackup(backup);
+            this.deleteDependencies(domainToDelete, c.getTransaction(), task);
             //remove all dependent domains
 
             // TODO: delete dependency mechanism
@@ -222,12 +227,12 @@ public abstract class ModelService<T extends CytomineDomain> {
      * @param printMessage Flag to specify if confirmation message must be show in client
      * @return Response structure (status, object data,...)
      */
-    CommandResponse edit(JsonObject json, boolean printMessage) {
+    public CommandResponse edit(JsonObject json, boolean printMessage) {
         //Rebuilt previous state of object that was previoulsy edited
         try {
             return edit(fillDomainWithData(((CytomineDomain)currentDomain().getDeclaredConstructor().newInstance()), json), printMessage);
         } catch (Exception e) {
-            throw new RuntimeException("Cannot cread instance of object");
+            throw new ObjectNotFoundException("Cannot create instance of object: " + json + " Exception " + e);
         }
     }
 
@@ -353,5 +358,14 @@ public abstract class ModelService<T extends CytomineDomain> {
 
     public EntityManager getEntityManager() {
         return entityManager;
+    }
+
+    public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
+        return;
+    }
+
+    public void updateTask(Task task, int index, int numberOfDirectDependence) {
+        //taskService.updateTask(task, (int)((double)index/(double)numberOfDirectDependence)*100, "")
+        // TODO
     }
 }

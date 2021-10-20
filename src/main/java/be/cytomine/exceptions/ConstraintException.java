@@ -21,27 +21,20 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * User: lrollus
  * Date: 17/11/11
- * This exception means that the object was not found on DB
- * It correspond to the HTTP code 404
+ * This exception means that a domain already exist in database
+ * For exemple: we try to add a project with same name
+ * It correspond to the HTTP code 409 (Conflict)
  */
 @Slf4j
-public class ObjectNotFoundException extends CytomineException {
+public class ConstraintException extends CytomineException {
 
+    public static int CODE = 400;
     /**
      * Message map with this exception
      * @param message Message
      */
-    public ObjectNotFoundException(String message) {
-        super(message,404);
-        log.warn(message);
-    }
-
-    public ObjectNotFoundException(String objectType, String objectId) {
-        super(objectType + " " + objectId,404);
-        log.warn(super.getMessage());
-    }
-
-    public ObjectNotFoundException(String objectType, Long objectId) {
-        this(objectType, String.valueOf(objectId));
+    public ConstraintException(String message) {
+        super(message,CODE);
+        log.info(message);
     }
 }

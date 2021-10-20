@@ -1,6 +1,7 @@
 package be.cytomine.domain.command;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.service.ModelService;
 import be.cytomine.utils.ClassUtils;
@@ -30,7 +31,7 @@ public class EditCommand extends Command {
     protected void fillCommandInfo(CytomineDomain newObject, String oldObject, String message) {
         HashMap<String, Object> paramsData = new HashMap<String, Object>();
         paramsData.put("previous" + ClassUtils.getClassName(newObject), JsonObject.toObject(oldObject));
-        paramsData.put("new" + ClassUtils.getClassName(newObject), newObject);
+        paramsData.put("new" + ClassUtils.getClassName(newObject), newObject.toJsonObject());
         data = JsonObject.toJsonString(paramsData);
         actionMessage = message;
     }
@@ -39,7 +40,7 @@ public class EditCommand extends Command {
      * Get domain name
      * @return domaine name
      */
-    String domainName() {
+    public String domainName() {
         String domain = serviceName.replace("Service", "");
         return domain.substring(0, 1).toUpperCase() + domain.substring(1);
     }
@@ -54,31 +55,12 @@ public class EditCommand extends Command {
         String oldDomain = updatedDomain.toJSON();
         updatedDomain.buildDomainFromJson(json, service.getEntityManager());
         //Init command info TODO
-//        CytomineDomain container = updatedDomain?.container()
-//        if(container && container instanceof Project) {
-//            super.setProject(container)
-//        }
+        CytomineDomain container = updatedDomain.container();
+        if(container!=null && container instanceof Project) {
+            super.setProject((Project)container);
+        }
         CommandResponse response = service.edit(updatedDomain, printMessage);
         fillCommandInfo(updatedDomain, oldDomain, (String)response.getData().get("message"));
         return response;
     }
-//TODO
-//    /**
-//     * Process an undo op
-//     * @return Message
-//     */
-//    def undo() {
-//        initService()
-//        return service.edit(JSON.parse(data).get("previous" + domainName()), printMessage)
-//    }
-//
-//    /**
-//     * Process a redo op
-//     * @return Message
-//     */
-//    def redo() {
-//        initService()
-//        return service.edit(JSON.parse(data).get("new" + domainName()), printMessage)
-//    }
-
 }

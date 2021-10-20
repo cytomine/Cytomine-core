@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 @Entity
@@ -16,17 +17,21 @@ public class RelationTerm extends CytomineDomain implements Serializable {
     public static String PARENT = "parent";
     public static String SYNONYM = "synonyme";
 
+    @NotNull
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "relation_id", nullable = false)
     private Relation relation;
 
+    @NotNull
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "term1_id", nullable = false)
     private Term term1;
 
+    @NotNull
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "term2_id", nullable = false)
     private Term term2;
+
 
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
@@ -39,6 +44,8 @@ public class RelationTerm extends CytomineDomain implements Serializable {
         relationTerm.updated = json.getJSONAttrDate("updated");
         return relationTerm;
     }
+
+
 
     public static JsonObject getDataFromDomain(CytomineDomain domain) {
         JsonObject returnArray = CytomineDomain.getDataFromDomain(domain);
@@ -76,4 +83,12 @@ public class RelationTerm extends CytomineDomain implements Serializable {
         return term1.container();
     }
 
+    @Override
+    public String toString() {
+        return "RelationTerm{" +
+                "relation=" + relation +
+                ", term1=" + term1 +
+                ", term2=" + term2 +
+                '}';
+    }
 }

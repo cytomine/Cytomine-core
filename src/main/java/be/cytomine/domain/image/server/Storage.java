@@ -25,15 +25,15 @@ public class Storage extends CytomineDomain {
     @JoinColumn(name = "user_id", nullable = true)
     protected User user;
 
-    @PrePersist
-    public void beforeCreate() {
-        super.beforeInsert();
-    }
-
-    @PreUpdate
-    public void beforeUpdate() {
-        super.beforeUpdate();
-    }
+//    @PrePersist
+//    public void beforeCreate() {
+//        super.beforeInsert();
+//    }
+//
+//    @PreUpdate
+//    public void beforeUpdate() {
+//        super.beforeUpdate();
+//    }
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         Storage storage = (Storage)this;

@@ -104,6 +104,11 @@ public class CurrentRoleService {
         return authorities.contains("ROLE_ADMIN") || authorities.contains("ROLE_SUPER_ADMIN");
     }
 
+    public boolean isUserByNow(SecUser user) {
+        Set<String> authorities = findCurrentAuthorities(user);
+        return authorities.contains("ROLE_USER");
+    }
+
     boolean hasCurrentUserAdminRole(SecUser user) {
         Set<String> authorities = findRealRole(user).stream().map(SecRole::getAuthority).collect(Collectors.toSet());
         return authorities.contains("ROLE_ADMIN") || authorities.contains("ROLE_SUPER_ADMIN");

@@ -1,11 +1,15 @@
 package be.cytomine.domain;
 
+import be.cytomine.domain.security.Language;
 import be.cytomine.domain.security.User;
 import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.GenericGenerator;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import javax.validation.ConstraintViolation;
@@ -17,6 +21,7 @@ import java.util.stream.Collectors;
 
 @Data
 @MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
 public abstract class CytomineDomain {
 
     @Id
@@ -25,8 +30,10 @@ public abstract class CytomineDomain {
     @GenericGenerator(name = "myGenerator", strategy = "be.cytomine.config.CustomIdentifierGenerator")
     protected Long id;
 
+    @CreatedDate
     protected Date created;
 
+    @LastModifiedDate
     protected Date updated;
 
     @Version
@@ -49,15 +56,6 @@ public abstract class CytomineDomain {
         return Objects.hash(id);
     }
 
-    public void beforeInsert() {
-        if (created!=null) {
-            created = new Date();
-        }
-    }
-
-    public void beforeUpdate() {
-        updated = new Date();
-    }
 
     public static JsonObject getDataFromDomain(CytomineDomain domain) {
         JsonObject jsonObject = new JsonObject();

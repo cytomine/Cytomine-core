@@ -2,15 +2,18 @@ package be.cytomine.service.security;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.server.Storage;
+import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.security.AclRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
+import be.cytomine.service.PermissionService;
 import be.cytomine.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.acls.model.Permission;
@@ -33,6 +36,10 @@ public class SecurityACLService {
     private final CurrentRoleService currentRoleService;
 
     private final AclRepository aclRepository;
+
+    private final OntologyRepository ontologyRepository;
+
+    private final PermissionService permissionService;
 
     public void check(Long id, String className, Permission permission) {
         try {
@@ -83,7 +90,7 @@ public class SecurityACLService {
      * @return true if user has this permission on current domain
      */
     boolean checkPermission(CytomineDomain domain, Permission permission, boolean isAdmin) {
-        boolean right = hasACLPermission(domain, permission) || isAdmin;
+        boolean right = permissionService.hasACLPermission(domain, permission) || isAdmin;
         return right;
     }
 
@@ -100,18 +107,8 @@ public class SecurityACLService {
 //        return false;
 //    }
 
-    boolean hasACLPermission(CytomineDomain domain, Permission permission) {
-        List<Integer> masks = getPermissionInACL(domain,currentUserService.getCurrentUsername());
-        return masks.stream().max(Integer::compare).orElse(-1) >= permission.getMask();
-    }
 
-    List<Integer> getPermissionInACL(CytomineDomain domain, User user) {
-         return aclRepository.listMaskForUsers(domain.getId(), user.humanUsername());
-    }
 
-    List<Integer> getPermissionInACL(CytomineDomain domain, String username) {
-        return aclRepository.listMaskForUsers(domain.getId(), username);
-    }
 
 
     public List<Storage> getStorageList(SecUser user, boolean adminByPass) {
@@ -147,6 +144,19 @@ public class SecurityACLService {
     }
 
 
+    public List<Ontology> getOntologyList(SecUser user) {
+        if (currentRoleService.isAdminByNow(user)) return ontologyRepository.findAll();
+        Query query = entityManager.createQuery(
+                "select distinct ontology "+
+                        "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid,  Ontology as ontology "+
+                        "where aclObjectId.objectId = ontology.id " +
+                        "and aclEntry.aclObjectIdentity = aclObjectId.id "+
+                        "and aclEntry.sid = aclSid.id and aclSid.sid like '"+user.getUsername() +"'");
+        List<Ontology> ontologies = query.getResultList();
+        return ontologies;
+    }
+
+
     public void checkIsCurrentUserSameUser(SecUser user) {
         checkIsSameUser(user, currentUserService.getCurrentUser());
     }
@@ -162,7 +172,13 @@ public class SecurityACLService {
 
     public void checkAdmin(SecUser user) {
         if (!currentRoleService.isAdminByNow(user)) {
-            throw new ForbiddenException("You don't have the right to read this resource! You must be admin!");
+            throw new ForbiddenException("You don't have the right to perform this action! You must be admin!");
+        }
+    }
+
+    public void checkUser(SecUser user) {
+        if (!currentRoleService.isAdminByNow(user) && !currentRoleService.isUserByNow(user)) {
+            throw new ForbiddenException("You don't have the right to perform this action! You must be user!");
         }
     }
 

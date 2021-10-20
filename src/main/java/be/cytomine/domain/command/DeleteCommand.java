@@ -1,6 +1,7 @@
 package be.cytomine.domain.command;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.service.ModelService;
 import be.cytomine.utils.CommandResponse;
@@ -40,14 +41,12 @@ public class DeleteCommand extends Command {
         //Retrieve domain to delete it
         CytomineDomain oldDomain = domain;
         //Init command info
-        // TODO
-//        CytomineDomain container = oldDomain?.container()
-//        if(container && container instanceof Project && linkProject) {
-//            super.setProject(container)
-//        }
+        CytomineDomain container = oldDomain.container();
+        if(container!=null && container instanceof Project && linkProject) {
+            super.setProject((Project)container);
+        }
         CommandResponse response = service.destroy(oldDomain, printMessage);
         fillCommandInfoJSON(backup.toString(), response.getData().get("message").toString());
         return response;
     }
-
 }

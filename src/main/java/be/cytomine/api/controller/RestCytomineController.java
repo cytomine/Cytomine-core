@@ -11,10 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 public abstract class RestCytomineController {
@@ -80,6 +77,15 @@ public abstract class RestCytomineController {
     protected String convertObjectToJSON(Object o) {
         return JsonObject.toJsonString(o);
     }
+
+    protected String convertCytomineDomainToJSON(CytomineDomain cytomineDomain) {
+        return cytomineDomain.toJSON();
+    }
+
+    protected JsonObject response(List<? extends CytomineDomain> list, Map<String,String> params) {
+        return responseList(convertCytomineDomainListToJSON(list), params);
+    }
+
 
     protected List<JsonObject> convertCytomineDomainListToJSON(List<? extends CytomineDomain> list) {
         List<JsonObject> results = new ArrayList<>();
@@ -171,10 +177,18 @@ public abstract class RestCytomineController {
      * @param id Domain id
      */
     public static JsonObject responseNotFound(String className, String id) {
+        return responseNotFound(className, Map.of("id", id));
+    }
+
+    public static JsonObject responseNotFound(String className, Map<String, Object> filters) {
         log.info("responseNotFound $className $id");
-        log.error(className + " Id " + id + " does not exist");
+        log.error(className + " with filter " + filters + " does not exist");
         JsonObject jsonObject = new JsonObject();
-        jsonObject.put("errors", Map.of("message",  className + " not found with id : " + id));
+        jsonObject.put("errors", Map.of("message",  className + " not found with filters : " + filters));
         return jsonObject;
+    }
+
+    public static JsonObject responseNotFound(String className, Long id) {
+        return responseNotFound(className, String.valueOf(id));
     }
 }

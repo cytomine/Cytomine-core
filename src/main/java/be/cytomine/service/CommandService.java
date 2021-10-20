@@ -162,8 +162,12 @@ public class CommandService {
         ModelService modelService = loadCorrespondingModelService(command);
         if (command instanceof AddCommand) {
             return modelService.destroy(JsonObject.toJsonObject(command.getData()), command.isPrintMessage());
+        } else if (command instanceof EditCommand) {
+            return modelService.edit(JsonObject.toJsonObject(command.getData()).extractProperty("previous" + ((EditCommand) command).domainName()), command.isPrintMessage());
+        } else if (command instanceof DeleteCommand) {
+            return modelService.create(JsonObject.toJsonObject(command.getData()), command.isPrintMessage());
         }
-        throw new RuntimeException("not yet implemented (editcommand/deletecommand UNDO)");
+        throw new RuntimeException("not yet implemented");
     }
 
     private List<CommandResponse> undo(UndoStackItem undoItem, SecUser user) {
@@ -229,8 +233,12 @@ public class CommandService {
         ModelService modelService = loadCorrespondingModelService(command);
         if (command instanceof AddCommand) {
             return modelService.create(JsonObject.toJsonObject(command.getData()), command.isPrintMessage());
+        } else if (command instanceof EditCommand) {
+            return modelService.edit(JsonObject.toJsonObject(command.getData()).extractProperty("new" + ((EditCommand) command).domainName()), command.isPrintMessage());
+        } else if (command instanceof DeleteCommand) {
+            return modelService.destroy(JsonObject.toJsonObject(command.getData()), command.isPrintMessage());
         }
-        throw new RuntimeException("not yet implemented (editcommand/deletecommand REDO)");
+        throw new RuntimeException("not yet implemented");
     }
 
     private List<CommandResponse> redo(RedoStackItem redoItem, SecUser user) {
@@ -254,7 +262,7 @@ public class CommandService {
             for (RedoStackItem redoStack : redoStacks) {
                 //Redo each command from the same transaction
                 result = performRedo(redoStack.getCommand());
-                moveToUndoStack(redoItem);
+                moveToUndoStack(redoStack);
                 results.add(result);
             }
         }
@@ -273,6 +281,9 @@ public class CommandService {
         CommandHistory commandHistory = new CommandHistory(firstUndoStack);
         entityManager.persist(commandHistory);
 
+        if (entityManager.contains(firstUndoStack)) {
+            entityManager.remove(firstUndoStack);
+        }
         entityManager.flush();
     }
 
@@ -288,7 +299,9 @@ public class CommandService {
         CommandHistory commandHistory = new CommandHistory(lastRedoStack);
         entityManager.persist(commandHistory);
         //delete the redo item
-        entityManager.remove(lastRedoStack);
+        if (entityManager.contains(lastRedoStack)) {
+            entityManager.remove(lastRedoStack);
+        }
         entityManager.flush();
     }
 }

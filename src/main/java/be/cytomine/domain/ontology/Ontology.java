@@ -30,21 +30,21 @@ public class Ontology extends CytomineDomain {
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy="ontology")
 //    @JoinColumn(referencedColumnName = "ontology_id", nullable = true)
-    protected Set<Project> projects;
+    protected Set<Project> projects = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy="ontology")
 //    @JoinColumn(referencedColumnName = "ontology_id", nullable = true)
-    protected Set<Term> terms;
+    protected Set<Term> terms = new HashSet<>();
 
-    @PrePersist
-    public void beforeCreate() {
-        super.beforeInsert();
-    }
-
-    @PreUpdate
-    public void beforeUpdate() {
-        super.beforeUpdate();
-    }
+//    @PrePersist
+//    public void beforeCreate() {
+//        super.beforeInsert();
+//    }
+//
+//    @PreUpdate
+//    public void beforeUpdate() {
+//        super.beforeUpdate();
+//    }
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         Ontology ontology = (Ontology)this;
@@ -62,7 +62,7 @@ public class Ontology extends CytomineDomain {
         returnArray.put("name", ontology.getName());
         returnArray.put("user", ontology.getUserId());
         returnArray.put("title", ontology.getName());
-        returnArray.put("attr",Map.of("id", ontology.getId(), "type", ontology.getClass()));
+        returnArray.put("attr",JsonObject.of("id", ontology.getId(), "type", ontology.getClass()));
         returnArray.put("data",ontology.getName());
         returnArray.put("isFolder",true);
         returnArray.put("key",ontology.getId());

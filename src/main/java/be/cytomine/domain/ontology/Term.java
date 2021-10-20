@@ -9,6 +9,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,15 +40,15 @@ public class Term extends CytomineDomain {
 
     private String color;
 
-    @PrePersist
-    public void beforeCreate() {
-        super.beforeInsert();
-    }
-
-    @PreUpdate
-    public void beforeUpdate() {
-        super.beforeUpdate();
-    }
+//    @PrePersist
+//    public void beforeCreate() {
+//        super.beforeInsert();
+//    }
+//
+//    @PreUpdate
+//    public void beforeUpdate() {
+//        super.beforeUpdate();
+//    }
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         Term term = this;
@@ -107,6 +108,10 @@ public class Term extends CytomineDomain {
 
     public CytomineDomain container() {
         return ontology.container();
+    }
+
+    public Map<String, Object> getCallBack() {
+        return Map.of("ontologyID", this.ontology.getId());
     }
 
     @Override

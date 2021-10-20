@@ -49,7 +49,7 @@ public class RelationTermService extends ModelService {
     /**
      * Get a relation term
      */
-    Optional<RelationTerm> find(Relation relation, Term term1, Term term2) {
+    public Optional<RelationTerm> find(Relation relation, Term term1, Term term2) {
         securityACLService.check(term1.container(),READ);
         securityACLService.check(term2.container(),READ);
         return relationTermRepository.findByRelationAndTerm1AndTerm2(relation, term1, term2);
@@ -61,7 +61,7 @@ public class RelationTermService extends ModelService {
      * @param position Term position in relation (term x PARENT term y => term x position 1, term y position 2)
      * @return Relation term list
      */
-    List<RelationTerm> list(Term term, String position) {
+    public List<RelationTerm> list(Term term, String position) {
         securityACLService.check(term.container(),READ);
         return position.equals("1") ? relationTermRepository.findAllByTerm1(term) : relationTermRepository.findAllByTerm2(term);
     }
@@ -71,7 +71,7 @@ public class RelationTermService extends ModelService {
      * @param term Term filter
      * @return Relation term list
      */
-    List<RelationTerm> list(Term term) {
+    public List<RelationTerm> list(Term term) {
         securityACLService.check(term.container(),READ);
         return relationTermRepository.findAllByTerm(term);
     }

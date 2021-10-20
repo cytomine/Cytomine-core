@@ -2,6 +2,8 @@ package be.cytomine.service.security;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
+import be.cytomine.domain.ontology.Ontology;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.*;
@@ -14,16 +16,17 @@ import be.cytomine.utils.Task;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+
+import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Service
 @RequiredArgsConstructor
 public class SecUserService extends ModelService {
 
     private final SecUserRepository secUserRepository;
+
+    private final SecurityACLService securityACLService;
 
     public Optional<SecUser> read(Long id) {
         return secUserRepository.findById(id);
@@ -40,6 +43,43 @@ public class SecUserService extends ModelService {
 
     public Optional<SecUser> findByUsername(String username) {
         return secUserRepository.findByUsernameLikeIgnoreCase(username);
+    }
+
+    public List<SecUser> listAdmins(Project project) {
+        return listAdmins(project, true);
+    }
+
+    public List<SecUser> listAdmins(Project project, boolean checkPermission) {
+        if (checkPermission) {
+            securityACLService.check(project,READ);
+        }
+        return secUserRepository.findAllAdminsByProjectId(project.getId());
+    }
+
+    public List<SecUser> listUsers(Project project) {
+        return listUsers(project, false, true);
+    }
+
+    public List<SecUser> listUsers(Project project, boolean showUserJob, boolean checkPermission) {
+        if (checkPermission) {
+            securityACLService.check(project,READ);
+        }
+        List<SecUser> users = secUserRepository.findAllUsersByProjectId(project.getId());
+
+        if(showUserJob) {
+            //TODO:: should be optim (see method head comment)
+//            List<Job> allJobs = Job.findAllByProject(project, [sort: 'created', order: 'desc'])
+//
+//            allJobs.each { job ->
+//                    def userJob = UserJob.findByJob(job);
+//                if (userJob) {
+//                    userJob.username = job.software.name + " " + job.created
+//                    users << userJob
+//                }
+//            }
+            throw new RuntimeException("Not yet implemented (showUserJob)");
+        }
+        return users;
     }
 
     /**

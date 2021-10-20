@@ -40,15 +40,15 @@ public class RedoStackItem extends CytomineDomain {
         this.transaction = firstUndoStack.getTransaction();
     }
 
-    @PrePersist
-    public void beforeCreate() {
-        super.beforeInsert();
-    }
-
-    @PreUpdate
-    public void beforeUpdate() {
-        super.beforeUpdate();
-    }
+//    @PrePersist
+//    public void beforeCreate() {
+//        super.beforeInsert();
+//    }
+//
+//    @PreUpdate
+//    public void beforeUpdate() {
+//        super.beforeUpdate();
+//    }
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         throw new RuntimeException("Not supported");

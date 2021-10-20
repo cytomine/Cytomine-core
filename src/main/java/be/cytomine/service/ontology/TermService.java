@@ -69,14 +69,11 @@ public class TermService extends ModelService {
 
     public List<Term> list(Ontology ontology) {
         securityACLService.check(ontology.container(),READ);
-        Relation parent = relationRepository.getParent();
-        return termRepository.findAllLeafTerms(ontology, parent);
+        return termRepository.findAllByOntology(ontology);
     }
 
     public List<Term> list(Project project) {
-        // TODO: inconsistencies (GRAILS: list by onto = leaf ; list by project = all
         securityACLService.check(project,READ);
-        Relation parent = relationRepository.getParent();
         return termRepository.findAllByOntology(project.getOntology());
     }
 
@@ -112,7 +109,7 @@ public class TermService extends ModelService {
      */
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData) {
-        securityACLService.check((Term)domain.container(),WRITE);
+        securityACLService.check(domain.container(),WRITE);
         SecUser currentUser = currentUserService.getCurrentUser();
         return executeCommand(new EditCommand(currentUser), domain,jsonNewData);
     }
@@ -154,6 +151,7 @@ public class TermService extends ModelService {
         return Arrays.asList(String.valueOf(term.getId()), term.getName());
     }
 
+    @Override
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         deleteDependentRelationTerm((Term)domain, transaction, task);
     }

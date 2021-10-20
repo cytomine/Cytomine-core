@@ -23,15 +23,15 @@ public class UserJob extends SecUser {
         super();
     }
 
-    @PrePersist
-    public void beforeCreate() {
-        super.beforeInsert();
-    }
-
-    @PreUpdate
-    public void beforeUpdate() {
-        super.beforeUpdate();
-    }
+//    @PrePersist
+//    public void beforeCreate() {
+//        super.beforeInsert();
+//    }
+//
+//    @PreUpdate
+//    public void beforeUpdate() {
+//        super.beforeUpdate();
+//    }
 
     @Override
     public String toJSON() {

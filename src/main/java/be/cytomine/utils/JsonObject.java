@@ -13,9 +13,24 @@ import java.util.Map;
 
 public class JsonObject extends HashMap<String, Object> {
 
+    public JsonObject() {
+
+    }
+
+    public JsonObject(Map<String, Object> data) {
+        super(data);
+    }
+
     public boolean isMissing(String key) {
         return !this.containsKey(key) || this.get(key)==null;
     }
+
+
+    public JsonObject withChange(String key, Object value) {
+        this.put(key, value);
+        return this;
+    }
+
 
     public static JsonObject of(String key, Object value) {
         JsonObject jsonObject = new JsonObject();
@@ -26,6 +41,12 @@ public class JsonObject extends HashMap<String, Object> {
     public static JsonObject of(String key, Object value, String key2, Object value2) {
         JsonObject jsonObject = of(key, value);
         jsonObject.put(key2, value2);
+        return jsonObject;
+    }
+
+    public static JsonObject of(String key, Object value, String key2, Object value2, String key3, Object value3) {
+        JsonObject jsonObject = of(key, value, key2, value2);
+        jsonObject.put(key3, value3);
         return jsonObject;
     }
 
@@ -174,6 +195,8 @@ public class JsonObject extends HashMap<String, Object> {
     }
 
 
-
-
+    public JsonObject extractProperty(String key) {
+        Map<String, Object> values = (Map<String, Object>)this.get(key);
+        return new JsonObject(values);
+    }
 }

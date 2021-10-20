@@ -43,4 +43,5 @@ public interface ProjectRepository extends JpaRepository<Project, Long>  {
     }
 
 
+    List<Project> findAllByOntology(Ontology ontology);
 }

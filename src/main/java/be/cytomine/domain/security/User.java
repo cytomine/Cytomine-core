@@ -65,13 +65,11 @@ public class User extends SecUser {
 
     @PrePersist
     public void beforeCreate() {
-        super.beforeInsert();
         language = Language.ENGLISH;
     }
 
     @PreUpdate
     public void beforeUpdate() {
-        super.beforeUpdate();
         if (newPassword!=null) {
             password = newPassword;
             passwordExpired = false;
