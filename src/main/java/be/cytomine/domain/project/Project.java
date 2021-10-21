@@ -8,6 +8,8 @@ import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
@@ -15,7 +17,8 @@ import javax.persistence.*;
 import java.util.Set;
 
 @Entity
-@Data
+@Getter
+@Setter
 public class Project extends CytomineDomain {
 
     static enum EditingMode {

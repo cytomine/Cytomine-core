@@ -33,12 +33,13 @@ public class Term extends CytomineDomain {
     private Ontology ontology;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "term1")
-    private Set<RelationTerm> relationsLeft;
+    private Set<RelationTerm> relationsLeft = new HashSet<>();
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "term2")
-    private Set<RelationTerm> relationsRight;
+    private Set<RelationTerm> relationsRight  = new HashSet<>();
 
     private String color;
+
 
 //    @PrePersist
 //    public void beforeCreate() {

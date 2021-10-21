@@ -118,7 +118,7 @@ public class Ontology extends CytomineDomain {
         t.put("data",term.getName());
         t.put("color",term.getColor());
         t.put("class",term.getClass());
-        t.put("parent",term.parent().orElse(null));
+        t.put("parent",term.parent().map(Term::getId).orElse(null));
         t.put("attr",Map.of("id", term.getId(), "type", term.getClass()));
         t.put("checked", false);
 
