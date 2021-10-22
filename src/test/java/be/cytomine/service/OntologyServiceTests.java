@@ -1,0 +1,304 @@
+package be.cytomine.service;
+
+import be.cytomine.BasicInstanceBuilder;
+import be.cytomine.CytomineCoreApplication;
+import be.cytomine.domain.ontology.Ontology;
+import be.cytomine.domain.ontology.RelationTerm;
+import be.cytomine.domain.ontology.Term;
+import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.SecUser;
+import be.cytomine.exceptions.AlreadyExistException;
+import be.cytomine.exceptions.WrongArgumentException;
+import be.cytomine.repository.ontology.OntologyRepository;
+import be.cytomine.repository.ontology.RelationTermRepository;
+import be.cytomine.repository.ontology.TermRepository;
+import be.cytomine.service.command.TransactionService;
+import be.cytomine.service.ontology.OntologyService;
+import be.cytomine.service.ontology.TermService;
+import be.cytomine.service.security.SecurityACLService;
+import be.cytomine.utils.CommandResponse;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import javax.transaction.Transactional;
+
+import java.util.List;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.springframework.security.acls.domain.BasePermission.*;
+
+@SpringBootTest(classes = CytomineCoreApplication.class)
+@AutoConfigureMockMvc
+@WithMockUser(authorities = "ROLE_SUPER_ADMIN", username = "superadmin")
+@Transactional
+public class OntologyServiceTests {
+
+    @Autowired
+    OntologyService ontologyService;
+
+    @Autowired
+    OntologyRepository ontologyRepository;
+
+    @Autowired
+    BasicInstanceBuilder builder;
+
+    @Autowired
+    CommandService commandService;
+
+    @Autowired
+    TransactionService transactionService;
+
+    @Autowired
+    RelationTermRepository relationTermRepository;
+
+    @Autowired
+    TermRepository termRepository;
+
+    @Autowired
+    PermissionService permissionService;
+
+    @Autowired
+    SecurityACLService securityACLService;
+
+    @Test
+    void list_all_ontology_with_success() {
+        Ontology ontology = builder.given_an_ontology();
+        assertThat(ontology).isIn(ontologyService.list());
+    }
+
+    @Test
+    void get_ontology_with_success() {
+        Ontology ontology = builder.given_an_ontology();
+        assertThat(ontology).isEqualTo(ontologyService.get(ontology.getId()));
+    }
+
+    @Test
+    void get_unexisting_ontology_return_null() {
+        assertThat(ontologyService.get(0L)).isNull();
+    }
+
+    @Test
+    void find_ontology_with_success() {
+        Ontology ontology = builder.given_an_ontology();
+        assertThat(ontologyService.find(ontology.getId()).isPresent());
+        assertThat(ontology).isEqualTo(ontologyService.find(ontology.getId()).get());
+    }
+
+    @Test
+    void find_unexisting_ontology_return_empty() {
+        assertThat(ontologyService.find(0L)).isEmpty();
+    }
+
+
+    @Test
+    void list_light_ontology() {
+        Ontology ontology = builder.given_an_ontology();
+        assertThat(ontologyService.listLight().stream().anyMatch(json -> json.get("id").equals(ontology.getId()))).isTrue();
+    }
+
+    @Test
+    void add_valid_ontology_with_success() {
+        Ontology ontology = BasicInstanceBuilder.given_a_not_persisted_ontology();
+
+        CommandResponse commandResponse = ontologyService.add(ontology.toJsonObject());
+
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        assertThat(ontologyService.find(commandResponse.getObject().getId())).isPresent();
+        Ontology created = ontologyService.find(commandResponse.getObject().getId()).get();
+        assertThat(created.getName()).isEqualTo(ontology.getName());
+    }
+
+    @Test
+    void add_ontology_with_null_name_fail() {
+        Ontology ontology = BasicInstanceBuilder.given_a_not_persisted_ontology();
+        ontology.setName("");
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
+            ontologyService.add(ontology.toJsonObject());
+        });
+    }
+
+
+    @Test
+    void undo_redo_ontology_creation_with_success() {
+        Ontology ontology = BasicInstanceBuilder.given_a_not_persisted_ontology();
+        CommandResponse commandResponse = ontologyService.add(ontology.toJsonObject());
+        assertThat(ontologyService.find(commandResponse.getObject().getId())).isPresent();
+        System.out.println("id = " + commandResponse.getObject().getId() + " name = " + ontology.getName());
+
+        commandService.undo();
+
+        assertThat(ontologyService.find(commandResponse.getObject().getId())).isEmpty();
+
+        commandService.redo();
+
+        assertThat(ontologyService.find(commandResponse.getObject().getId())).isPresent();
+
+    }
+
+    @Test
+    void redo_ontology_creation_fail_if_ontology_already_exist() {
+        Ontology ontology = BasicInstanceBuilder.given_a_not_persisted_ontology();
+        CommandResponse commandResponse = ontologyService.add(ontology.toJsonObject());
+        assertThat(ontologyService.find(commandResponse.getObject().getId())).isPresent();
+        System.out.println("id = " + commandResponse.getObject().getId() + " name = " + ontology.getName());
+
+        commandService.undo();
+
+        assertThat(ontologyService.find(commandResponse.getObject().getId())).isEmpty();
+
+        Ontology ontologyWithSameName = BasicInstanceBuilder.given_a_not_persisted_ontology();
+        ontologyWithSameName.setName(ontology.getName());
+        builder.persistAndReturn(ontologyWithSameName);
+
+        // re-create a ontology with a name that already exist in this ontology
+        Assertions.assertThrows(AlreadyExistException.class, () -> {
+            commandService.redo();
+        });
+    }
+
+    @Test
+    void edit_valid_ontology_with_success() {
+        Ontology ontology = builder.given_an_ontology();
+
+        CommandResponse commandResponse = ontologyService.update(ontology, ontology.toJsonObject().withChange("name", "NEW NAME"));
+
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        assertThat(ontologyService.find(commandResponse.getObject().getId())).isPresent();
+        Ontology edited = ontologyService.find(commandResponse.getObject().getId()).get();
+        assertThat(edited.getName()).isEqualTo("NEW NAME");
+    }
+
+    @Test
+    void undo_redo_ontology_edition_with_success() {
+        Ontology ontology = builder.given_an_ontology();
+        ontology.setName("OLD NAME");
+        ontology = builder.persistAndReturn(ontology);
+
+        ontologyService.update(ontology, ontology.toJsonObject().withChange("name", "NEW NAME"));
+
+        assertThat(ontologyRepository.getById(ontology.getId()).getName()).isEqualTo("NEW NAME");
+
+        commandService.undo();
+
+        assertThat(ontologyRepository.getById(ontology.getId()).getName()).isEqualTo("OLD NAME");
+
+        commandService.redo();
+
+        assertThat(ontologyRepository.getById(ontology.getId()).getName()).isEqualTo("NEW NAME");
+
+    }
+
+    @Test
+    void delete_ontology_with_success() {
+        Ontology ontology = builder.given_an_ontology();
+
+        CommandResponse commandResponse = ontologyService.delete(ontology, null, null, true);
+
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        assertThat(ontologyService.find(ontology.getId()).isEmpty());
+    }
+
+    @Test
+    void delete_ontology_with_dependencies_with_success() {
+        Ontology ontology = builder.given_an_ontology();
+        Term term1 = builder.given_a_term(ontology);
+        Term term2 = builder.given_a_term(ontology);
+        RelationTerm relationTerm = builder.given_a_relation_term(term1, term2);
+
+        CommandResponse commandResponse = ontologyService.delete(ontology, null, null, true);
+
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        assertThat(ontologyService.find(ontology.getId()).isEmpty());
+    }
+
+
+    @Test
+    void undo_redo_ontology_deletion_with_success() {
+        Ontology ontology = builder.given_an_ontology();
+
+        ontologyService.delete(ontology, null, null, true);
+
+        assertThat(ontologyService.find(ontology.getId()).isEmpty());
+
+        commandService.undo();
+
+        assertThat(ontologyService.find(ontology.getId()).isPresent());
+
+        commandService.redo();
+
+        assertThat(ontologyService.find(ontology.getId()).isEmpty());
+    }
+
+    @Test
+    void undo_redo_ontology_deletion_restore_dependencies() {
+        Ontology ontology = builder.given_an_ontology();
+        Term term1 = builder.given_a_term(ontology);
+        Term term2 = builder.given_a_term(ontology);
+        RelationTerm relationTerm = builder.given_a_relation_term(term1, term2);
+
+        CommandResponse commandResponse = ontologyService.delete(ontology, transactionService.start(), null, true);
+
+        assertThat(ontologyService.find(ontology.getId()).isEmpty());
+        assertThat(relationTermRepository.findById(relationTerm.getId())).isEmpty();
+        assertThat(termRepository.findById(term1.getId())).isEmpty();
+        assertThat(termRepository.findById(term2.getId())).isEmpty();
+        commandService.undo();
+
+        assertThat(ontologyService.find(ontology.getId()).isPresent());
+        assertThat(relationTermRepository.findById(relationTerm.getId())).isPresent();
+        assertThat(termRepository.findById(term1.getId())).isPresent();
+        assertThat(termRepository.findById(term2.getId())).isPresent();
+
+        commandService.redo();
+
+        assertThat(ontologyService.find(ontology.getId()).isEmpty());
+        assertThat(relationTermRepository.findById(relationTerm.getId())).isEmpty();
+        assertThat(termRepository.findById(term1.getId())).isEmpty();
+        assertThat(termRepository.findById(term2.getId())).isEmpty();
+
+        commandService.undo();
+
+        assertThat(ontologyService.find(ontology.getId()).isPresent());
+        assertThat(relationTermRepository.findById(relationTerm.getId())).isPresent();
+        assertThat(termRepository.findById(term1.getId())).isPresent();
+        assertThat(termRepository.findById(term2.getId())).isPresent();
+
+        commandService.redo();
+
+        assertThat(ontologyService.find(ontology.getId()).isEmpty());
+        assertThat(relationTermRepository.findById(relationTerm.getId())).isEmpty();
+        assertThat(termRepository.findById(term1.getId())).isEmpty();
+        assertThat(termRepository.findById(term2.getId())).isEmpty();
+    }
+
+    @Test
+    void determine_rights_for_users_admin_in_project() {
+        Ontology ontology = builder.given_an_ontology();
+        Project project = builder.given_a_project_with_ontology(ontology);
+        SecUser userAdminInProject = builder.given_a_user();
+        SecUser userNotAdminInProject = builder.given_a_user();
+        SecUser userNotInProject = builder.given_a_user();
+
+        permissionService.addPermission(project, userAdminInProject.getUsername(), ADMINISTRATION);
+        permissionService.addPermission(project, userNotAdminInProject.getUsername(), WRITE);
+
+        ontologyService.determineRightsForUsers(ontology, List.of(userAdminInProject, userNotAdminInProject, userNotInProject));
+
+        assertThat(permissionService.hasACLPermission(ontology, userAdminInProject.getUsername(), ADMINISTRATION)).isTrue();
+
+        assertThat(permissionService.hasACLPermission(ontology, userNotAdminInProject.getUsername(), ADMINISTRATION)).isFalse();
+        assertThat(permissionService.hasACLPermission(ontology, userNotAdminInProject.getUsername(), READ)).isTrue();
+
+        assertThat(permissionService.hasACLPermission(ontology, userNotInProject.getUsername(), ADMINISTRATION)).isFalse();
+        assertThat(permissionService.hasACLPermission(ontology, userNotInProject.getUsername(), READ)).isFalse();
+
+    }
+}
