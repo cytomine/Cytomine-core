@@ -9,7 +9,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import javax.persistence.EntityManager;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class JsonObject extends HashMap<String, Object> {
 
@@ -122,6 +124,35 @@ public class JsonObject extends HashMap<String, Object> {
         }
     }
 
+    public Double getJSONAttrDouble(String attr, Double defaultValue) {
+        if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
+            try {
+                return Double.parseDouble(this.get(attr).toString());
+            } catch (Exception e) {
+                return defaultValue;
+            }
+        } else {
+            return defaultValue;
+        }
+    }
+
+    public Integer getJSONAttrInteger(String attr, Integer defaultValue) {
+        if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
+            try {
+                return Integer.parseInt(this.get(attr).toString());
+            } catch (Exception e) {
+                return defaultValue;
+            }
+        } else {
+            return defaultValue;
+        }
+    }
+
+    public Integer getJSONAttrInteger(String attr) {
+        return getJSONAttrInteger(attr, -1);
+    }
+
+
     public Long getJSONAttrLong(String attr, Long defaultValue) {
         if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
             try {
@@ -198,5 +229,13 @@ public class JsonObject extends HashMap<String, Object> {
     public JsonObject extractProperty(String key) {
         Map<String, Object> values = (Map<String, Object>)this.get(key);
         return new JsonObject(values);
+    }
+
+    public List<Long> getJSONAttrListLong(String attr) {
+        if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
+            return (List<Long>)((List)this.get(attr)).stream().map(x -> Long.parseLong(String.valueOf(x))).collect(Collectors.toList());
+        } else {
+            return null;
+        }
     }
 }

@@ -16,8 +16,9 @@ import java.util.HashMap;
 @DiscriminatorValue("be.cytomine.command.EditCommand")
 public class EditCommand extends Command {
 
-    public EditCommand(SecUser currentUser) {
+    public EditCommand(SecUser currentUser, Transaction transaction) {
         this.user = currentUser;
+        this.transaction = transaction;
     }
 
     public EditCommand() {}

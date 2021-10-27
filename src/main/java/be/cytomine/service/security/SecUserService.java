@@ -105,10 +105,10 @@ public class SecUserService extends ModelService {
      * @param jsonNewData New domain datas
      * @return  Response structure (new domain data, old domain data..)
      */
-    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData) {
+    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         //SecUser currentUser = cytomineService.getCurrentUser()
         //securityACLService.checkIsCreator(user,currentUser)
-        return executeCommand(new EditCommand(),domain, jsonNewData);
+        return executeCommand(new EditCommand(null, null),domain, jsonNewData);
     }
 
     /**

@@ -1,6 +1,7 @@
 package be.cytomine.domain;
 
 import be.cytomine.domain.security.Language;
+import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.JsonObject;
@@ -95,11 +96,19 @@ public abstract class CytomineDomain {
         return null;
     }
 
-    public abstract String toJSON();
+    public SecUser userDomainCreator() {
+        return null;
+    }
 
     public abstract JsonObject toJsonObject();
 
     public Map<String, Object> getCallBack() {
         return Map.of();
     }
+
+    public String toJSON() {
+        return toJsonObject().toJsonString();
+    }
+
+
 }

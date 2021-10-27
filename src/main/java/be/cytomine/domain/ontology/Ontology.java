@@ -47,7 +47,7 @@ public class Ontology extends CytomineDomain {
 //    }
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
-        Ontology ontology = (Ontology)this;
+        Ontology ontology = this;
         ontology.id = json.getJSONAttrLong("id",null);
         ontology.name = json.getJSONAttrStr("name");
         ontology.user = (User)json.getJSONAttrDomain(entityManager, "user", new User(), true);

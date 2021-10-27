@@ -91,10 +91,10 @@ public class OntologyService extends ModelService {
     }
 
     @Override
-    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData) {
+    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         securityACLService.check(domain,WRITE);
         SecUser currentUser = currentUserService.getCurrentUser();
-        return executeCommand(new EditCommand(currentUser), domain,jsonNewData);
+        return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
     }
 
     @Override

@@ -50,6 +50,8 @@ dependencies {
 	annotationProcessor('org.hibernate:hibernate-jpamodelgen')
 
 	testImplementation 'org.assertj:assertj-core:3.4.1'
+
+	implementation 'org.apache.commons:commons-text:1.9'
 }
 
 test {

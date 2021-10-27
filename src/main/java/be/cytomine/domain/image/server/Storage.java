@@ -62,4 +62,8 @@ public class Storage extends CytomineDomain {
     public JsonObject toJsonObject() {
         return getDataFromDomain(this);
     }
+
+    public CytomineDomain container() {
+        return this;
+    }
 }

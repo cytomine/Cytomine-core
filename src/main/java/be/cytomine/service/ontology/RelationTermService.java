@@ -118,7 +118,7 @@ public class RelationTermService extends ModelService {
     }
 
     @Override
-    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData) {
+    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         throw new RuntimeException("Update is not implemented for Relation Term");
     }
 

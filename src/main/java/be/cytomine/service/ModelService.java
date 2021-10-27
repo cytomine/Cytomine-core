@@ -10,13 +10,17 @@ import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
+import be.cytomine.utils.filters.SearchParameterEntry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ReflectionUtils;
 
 import javax.persistence.EntityManager;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -349,8 +353,12 @@ public abstract class ModelService<T extends CytomineDomain> {
         return null;
     }
 
+    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData) {
+        return update(domain, jsonNewData, null);
+    }
 
-    public abstract CommandResponse update(CytomineDomain domain, JsonObject jsonNewData);
+
+    public abstract CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction);
 
     public abstract CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage);
 
@@ -368,4 +376,5 @@ public abstract class ModelService<T extends CytomineDomain> {
         //taskService.updateTask(task, (int)((double)index/(double)numberOfDirectDependence)*100, "")
         // TODO
     }
+
 }

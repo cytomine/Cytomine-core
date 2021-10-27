@@ -1,4 +1,4 @@
-package be.cytomine.service;
+package be.cytomine.service.ontology;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
@@ -12,6 +12,8 @@ import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.ontology.RelationTermRepository;
 import be.cytomine.repository.ontology.TermRepository;
+import be.cytomine.service.CommandService;
+import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.ontology.OntologyService;
 import be.cytomine.service.ontology.TermService;

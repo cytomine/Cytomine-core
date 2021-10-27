@@ -1,0 +1,275 @@
+package be.cytomine.domain.image;
+
+import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.SecUser;
+import be.cytomine.exceptions.WrongArgumentException;
+import be.cytomine.utils.JsonObject;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+
+import javax.persistence.*;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import java.util.Date;
+import java.util.Optional;
+
+@Entity
+@Getter
+@Setter
+@Table(uniqueConstraints = @UniqueConstraint(columnNames = {"base_image_id", "project_id" }))
+public class ImageInstance extends CytomineDomain {
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    private AbstractImage baseImage;
+
+    @ManyToOne
+    private Project project;
+
+    @ManyToOne
+    private SecUser user; //owner
+
+    private String instanceFilename;
+
+    private Integer countImageAnnotations;
+
+    private Integer countImageJobAnnotations;
+
+    private Integer countImageReviewedAnnotations;
+
+    private Date reviewStart;
+
+    private Date reviewStop;
+
+    @ManyToOne
+    private SecUser reviewUser;
+
+    private Integer magnification;
+
+    @Column(name = "physical_size_x")
+    private Double physicalSizeX;
+
+    @Column(name = "physical_size_y")
+    private Double physicalSizeY;
+
+    @Column(name = "physical_size_z")
+    private Double physicalSizeZ;
+
+    private Double fps;
+
+    public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
+        return buildDomainFromJson(this, json, entityManager);
+    }
+
+    public CytomineDomain buildDomainFromJson(ImageInstance imageInstance, JsonObject json, EntityManager entityManager) {
+        imageInstance.id = json.getJSONAttrLong("id",null);
+        imageInstance.created = json.getJSONAttrDate("created");
+        imageInstance.updated = json.getJSONAttrDate("updated");
+
+        imageInstance.user = (SecUser) json.getJSONAttrDomain(entityManager, "user", new SecUser(), false);
+        imageInstance.baseImage = (AbstractImage) json.getJSONAttrDomain(entityManager, "baseImage", new AbstractImage(), false);
+        imageInstance.project = (Project) json.getJSONAttrDomain(entityManager, "project", new Project(), false);
+
+        imageInstance.instanceFilename = json.getJSONAttrStr("instanceFilename", false);
+
+        imageInstance.reviewStart = json.getJSONAttrDate("reviewStart");
+        imageInstance.reviewStop = json.getJSONAttrDate("reviewStart");
+        imageInstance.reviewUser = (SecUser) json.getJSONAttrDomain(entityManager, "reviewUser", new SecUser(), false);
+
+        imageInstance.magnification = json.getJSONAttrInteger("magnification", null);
+        imageInstance.physicalSizeX = json.getJSONAttrDouble("physicalSizeX", null);
+        imageInstance.physicalSizeY = json.getJSONAttrDouble("physicalSizeY", null);
+        imageInstance.physicalSizeZ = json.getJSONAttrDouble("physicalSizeZ", null);
+        imageInstance.fps = json.getJSONAttrDouble("fps", null);
+
+        //Check review constraint
+        if ((imageInstance.reviewUser == null && imageInstance.reviewStart != null)
+                || (imageInstance.reviewUser != null && imageInstance.reviewStart == null)
+                || (imageInstance.reviewStart == null && imageInstance.reviewStop != null)) {
+            throw new WrongArgumentException("Review data are not valid: user= " + this.reviewUser + "start= " + this.reviewStart + " , stop= " + this.reviewStop);
+        }
+
+        return imageInstance;
+    }
+
+
+    public static JsonObject getDataFromDomain(CytomineDomain domain) {
+        JsonObject returnArray = CytomineDomain.getDataFromDomain(domain);
+        ImageInstance imageInstance = (ImageInstance)domain;
+        returnArray.put("baseImage", imageInstance.getBaseImageId());
+        returnArray.put("project", imageInstance.getProjectId());
+        returnArray.put("user", imageInstance.getUserId());
+
+        returnArray.put("instanceFilename", imageInstance.getBlindInstanceFilename());
+        returnArray.put("originalFilename", imageInstance.getBlindOriginalFilename());
+        returnArray.put("filename", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getFilename).orElse(null));
+        returnArray.put("blindedName", imageInstance.getBlindedName());
+        returnArray.put("path", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getPath).orElse(null));
+        returnArray.put("contentType", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getUploadedFile).map(UploadedFile::getContentType).orElse(null));
+
+        returnArray.put("width", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getWidth).orElse(null));
+        returnArray.put("height", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getHeight).orElse(null));
+        returnArray.put("depth", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getDepth).orElse(null));  // /!!\ Breaking API : image?.baseImage?.getZoomLevels()?.max
+        returnArray.put("duration", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getDuration).orElse(null));
+        returnArray.put("channels", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getChannels).orElse(null));
+
+        returnArray.put("physicalSizeX", imageInstance.getPhysicalSizeX());
+        returnArray.put("physicalSizeY", imageInstance.getPhysicalSizeY());
+        returnArray.put("physicalSizeZ", imageInstance.getPhysicalSizeZ());
+
+        returnArray.put("fps", imageInstance.getFps());
+        returnArray.put("zoom", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getZoomLevels).orElse(null));
+
+        returnArray.put("magnification", imageInstance.getMagnification());
+
+        returnArray.put("bitDepth", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getBitDepth).orElse(null));
+        returnArray.put("colorspace", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getColorspace).orElse(null));
+
+
+        returnArray.put("reviewStart", Optional.ofNullable(imageInstance.getReviewStart()).map(x -> String.valueOf(x.getTime())).orElse(null));
+        returnArray.put("reviewStop", Optional.ofNullable(imageInstance.getReviewStop()).map(x -> String.valueOf(x.getTime())).orElse(null));
+        returnArray.put("reviewUser", Optional.ofNullable(imageInstance.getReviewUser()).map(SecUser::getId).orElse(null));
+
+
+        returnArray.put("reviewed", imageInstance.isReviewed());
+        returnArray.put("inReview", imageInstance.isInReviewMode());
+
+        returnArray.put("numberOfAnnotations", imageInstance.countImageAnnotations);
+        returnArray.put("numberOfJobAnnotations", imageInstance.countImageJobAnnotations);
+        returnArray.put("numberOfReviewedAnnotations", imageInstance.countImageReviewedAnnotations);
+//
+//        returnArray["thumb"] = UrlApi.getImageInstanceThumbUrlWithMaxSize(image?.id, 512)
+//        returnArray["preview"] = UrlApi.getImageInstanceThumbUrlWithMaxSize(image?.id, 1024)
+//        returnArray["macroURL"] = UrlApi.getAssociatedImageInstance(image?.id, "macro", image?.baseImage?.uploadedFile?.contentType, 512)
+
+        return returnArray;
+    }
+
+    private Long getBaseImageId() {
+        return Optional.ofNullable(this.getBaseImage()).map(CytomineDomain::getId).orElse(null);
+    }
+
+    private Long getProjectId() {
+        return Optional.ofNullable(this.getProject()).map(CytomineDomain::getId).orElse(null);
+    }
+
+    private Long getUserId() {
+        return Optional.ofNullable(this.getUser()).map(CytomineDomain::getId).orElse(null);
+    }
+
+
+//
+//    def getSliceCoordinates() {
+//        return this.baseImage?.getSliceCoordinates()
+//    }
+//
+//    def getReferenceSliceCoordinate() {
+//        return this.baseImage?.getReferenceSliceCoordinate()
+//    }
+//
+//    def getReferenceSlice() {
+//        def base = this.baseImage?.getReferenceSlice()
+//        return SliceInstance.findByBaseSliceAndImage(base, this)
+//    }
+
+    /**
+     * Flag to control if image is beeing review, and not yet validated
+     * @return True if image is review but not validate, otherwise false
+     */
+    public boolean isInReviewMode() {
+        return (reviewStart != null && reviewUser != null && reviewStop == null);
+    }
+
+    /**
+     * Flag to control if image is validated
+     * @return True if review user has validate this image
+     */
+    public boolean isReviewed() {
+        return (reviewStop != null);
+    }
+
+    /**
+     * Get the container domain for this domain (usefull for security)
+     * @return Container of this domain
+     */
+    public CytomineDomain container() {
+        return project.container();
+    }
+
+    /**
+     * Return domain user (annotation user, image user...)
+     * By default, a domain has no user.
+     * You need to override userDomainCreator() in domain class
+     * @return Domain user
+     */
+    @Override
+    public SecUser userDomainCreator() {
+        return user;
+    }
+
+    @Override
+    public JsonObject toJsonObject() {
+        return getDataFromDomain(this);
+    }
+
+    public String getBlindOriginalFilename() {
+        if (Optional.ofNullable(project).map(Project::getBlindMode).orElse(false)) {
+            return String.valueOf(baseImage.getId());
+        }
+        return baseImage.getOriginalFilename();
+    }
+
+    public String getBlindInstanceFilename() {
+        if (Optional.ofNullable(project).map(Project::getBlindMode).orElse(false)) {
+            return String.valueOf(baseImage.getId());
+        } else if (instanceFilename!=null && !instanceFilename.trim().isBlank()) {
+            return instanceFilename;
+        } else {
+            return baseImage.getOriginalFilename();
+        }
+    }
+
+    public String getBlindedName(){
+        if(Optional.ofNullable(project).map(Project::getBlindMode).orElse(false)) {
+            return String.valueOf(baseImage.getId());
+        }
+        return null;
+    }
+
+    public Double getPhysicalSizeX() {
+        if (physicalSizeX != null && physicalSizeX != 0) {
+            return physicalSizeX;
+        }
+        return baseImage.getPhysicalSizeX();
+    }
+
+    public Double getPhysicalSizeY() {
+        if (physicalSizeY != null && physicalSizeY != 0) {
+            return physicalSizeY;
+        }
+        return baseImage.getPhysicalSizeY();
+    }
+
+    public Double getPhysicalSizeZ() {
+        if (physicalSizeZ != null && physicalSizeZ != 0) {
+            return physicalSizeZ;
+        }
+        return baseImage.getPhysicalSizeZ();
+    }
+
+    public Double getFps() {
+        if (fps != null && fps != 0) {
+            return fps;
+        }
+        return baseImage.getFps();
+    }
+
+    public Integer getMagnification() {
+        if (magnification != null && magnification != 0) {
+            return magnification;
+        }
+        return baseImage.getMagnification();
+    }
+
+}
