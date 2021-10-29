@@ -208,32 +208,6 @@ public class AbstractImage extends CytomineDomain {
         return getDataFromDomain(this);
     }
 
-//    def hasProfile() {
-//        return CompanionFile.countByImageAndType(this, "HDF5") as Boolean
-//    }
 
-//    def getSliceCoordinates() {
-//        def slices = AbstractSlice.findAllByImage(this)
-//
-//        return [
-//        channels: slices.collect { it.channel }.unique().sort(),
-//                zStacks: slices.collect { it.zStack }.unique().sort(),
-//                times: slices.collect { it.time }.unique().sort()
-//        ]
-//    }
-//
-//    def getReferenceSliceCoordinate() {
-//        def coordinates = getSliceCoordinates()
-//        return [
-//        channel: coordinates.channels[(int) Math.floor(coordinates.channels.size() / 2)],
-//                zStack: coordinates.zStacks[(int) Math.floor(coordinates.zStacks.size() / 2)],
-//                time: coordinates.times[(int) Math.floor(coordinates.times.size() / 2)],
-//        ]
-//    }
-//
-//    def getReferenceSlice() {
-//        def coord = getReferenceSliceCoordinate()
-//        return AbstractSlice.findByImageAndChannelAndZStackAndTime(this, coord.channel, coord.zStack, coord.time)
-//    }
 
 }

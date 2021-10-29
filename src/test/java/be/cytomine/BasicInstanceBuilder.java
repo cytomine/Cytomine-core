@@ -1,5 +1,8 @@
 package be.cytomine;
 
+import be.cytomine.authorization.AbstractAuthorizationTest;
+import be.cytomine.domain.image.AbstractImage;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.middleware.ImageServer;
@@ -8,8 +11,11 @@ import be.cytomine.domain.ontology.Relation;
 import be.cytomine.domain.ontology.RelationTerm;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.SecUserSecRole;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.repository.security.SecRoleRepository;
+import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.PermissionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +35,14 @@ import static org.springframework.security.acls.domain.BasePermission.ADMINISTRA
 @Transactional
 public class BasicInstanceBuilder {
 
+    public static final String ROLE_SUPER_ADMIN = "ROLE_SUPER_ADMIN";
+
+    public static final String ROLE_ADMIN = "ROLE_ADMIN";
+
+    public static final String ROLE_USER = "ROLE_USER";
+
+    public static final String ROLE_GUEST = "ROLE_GUEST";
+
     EntityManager em;
 
     TransactionTemplate transactionTemplate;
@@ -37,10 +51,15 @@ public class BasicInstanceBuilder {
 
     PermissionService permissionService;
 
+    SecRoleRepository secRoleRepository;
+
     private static User defaultUser;
 
-    public BasicInstanceBuilder(EntityManager em, TransactionTemplate transactionTemplate, UserRepository userRepository, PermissionService permissionService) {
+    public BasicInstanceBuilder(EntityManager em, TransactionTemplate transactionTemplate, UserRepository userRepository, PermissionService permissionService, SecRoleRepository secRoleRepository) {
         this.em = em;
+        this.userRepository = userRepository;
+        this.permissionService = permissionService;
+        this.secRoleRepository = secRoleRepository;
         this.transactionTemplate = transactionTemplate;
         this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
@@ -48,8 +67,6 @@ public class BasicInstanceBuilder {
                 given_default_user();
             }
         });
-        this.userRepository = userRepository;
-        this.permissionService = permissionService;
     }
 
     public User given_default_user() {
@@ -60,7 +77,21 @@ public class BasicInstanceBuilder {
     }
 
     public User given_a_user() {
-        return persistAndReturn(given_a_user_not_persisted());
+        return given_a_user(randomString());
+    }
+
+    public User given_a_user(String username) {
+        User user = persistAndReturn(given_a_user_not_persisted());
+        user.setUsername(username);
+        addRole(user, ROLE_USER);
+        return user;
+    }
+
+    public void addRole(User user, String authority) {
+        SecUserSecRole secUserSecRole = new SecUserSecRole();
+        secUserSecRole.setSecUser(user);
+        secUserSecRole.setSecRole(secRoleRepository.getByAuthority(authority));
+        em.persist(secUserSecRole);
     }
 
     public User given_superadmin() {
@@ -179,17 +210,26 @@ public class BasicInstanceBuilder {
     }
 
     public Storage given_a_storage() {
-        Storage storage = given_a_not_persisted_storage();
-        return persistAndReturn(storage);
+        return given_a_storage(given_superadmin());
     }
 
-    public Storage given_a_not_persisted_storage() {
-        Storage storage = new Storage();
-        storage.setName(randomString());
-        storage.setUser(given_superadmin());
+    public Storage given_a_storage(User user) {
+        Storage storage = given_a_not_persisted_storage();
+        storage.setUser(user);
         storage = persistAndReturn(storage);
         permissionService.addPermission(storage, storage.getUser().getUsername(), ADMINISTRATION, storage.getUser());
         return storage;
+    }
+
+    public Storage given_a_not_persisted_storage(User user) {
+        Storage storage = new Storage();
+        storage.setName(randomString());
+        storage.setUser(user);
+        return storage;
+    }
+
+    public Storage given_a_not_persisted_storage() {
+        return given_a_not_persisted_storage(given_superadmin());
     }
 
     private static String randomString() {
@@ -210,4 +250,30 @@ public class BasicInstanceBuilder {
         return imageServer;
     }
 
+    public AbstractImage given_an_abstract_image() {
+        AbstractImage imageServer = given_a_not_persisted_abstract_image();
+        return persistAndReturn(imageServer);
+    }
+
+    public AbstractImage given_a_not_persisted_abstract_image() {
+        AbstractImage image = new AbstractImage();
+        image.setUploadedFile(given_a_uploaded_file());
+        image.setOriginalFilename(randomString());
+        return image;
+    }
+
+
+    public ImageInstance given_an_image_instance(AbstractImage abstractImage, Project project) {
+        ImageInstance imageInstance = given_a_not_persisted_image_instance(abstractImage, project);
+        return persistAndReturn(imageInstance);
+    }
+
+    public ImageInstance given_a_not_persisted_image_instance(AbstractImage abstractImage, Project project) {
+        ImageInstance image = new ImageInstance();
+        image.setBaseImage(abstractImage);
+        image.setProject(project);
+        image.setUser(given_superadmin());
+        return image;
+    }
+    
 }

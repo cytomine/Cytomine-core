@@ -2,6 +2,7 @@ package be.cytomine.repository.image;
 
 
 import be.cytomine.domain.image.AbstractImage;
+import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.project.Project;
 import org.springframework.data.domain.Page;
@@ -15,23 +16,19 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
  * Spring Data JPA repository for the abstract image entity.
  */
 @Repository
-public interface AbstractImageRepository extends JpaRepository<AbstractImage, Long>, JpaSpecificationExecutor<AbstractImage> {
+public interface AbstractSliceRepository extends JpaRepository<AbstractSlice, Long>, JpaSpecificationExecutor<AbstractSlice> {
 
-    @Override
-    @EntityGraph(attributePaths = {"uploadedFile"})
-    Page<AbstractImage> findAll(@Nullable Specification<AbstractImage> spec, Pageable pageable);
+    List<AbstractSlice> findAllByImage(AbstractImage abstractImage);
 
-
-    List<AbstractImage> findAllByUploadedFile(UploadedFile uploadedFile);
-
-    @Query(value = "SELECT DISTINCT ii.baseImage.id FROM ImageInstance ii WHERE ii.project = :project")
-    Set<Long> findAllIdsByProject(Project project);
+    List<AbstractSlice> findAllByUploadedFile(UploadedFile uploadedFile);
 
 
+    Optional<AbstractSlice> findByImageAndChannelAndZStackAndTime(AbstractImage image, Integer channel, Integer zStack, Integer time);
 }

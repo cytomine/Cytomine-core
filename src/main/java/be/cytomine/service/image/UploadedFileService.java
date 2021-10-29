@@ -253,7 +253,7 @@ public class UploadedFileService extends ModelService {
             currentUser = ((UserJob)currentUser).getUser();
         }
         securityACLService.checkUser(currentUser);
-        if (json.isMissing("storage")) {
+        if (!json.isMissing("storage")) {
             securityACLService.check(json.getJSONAttrLong("storage"), Storage.class, WRITE);
         }
         return executeCommand(new AddCommand(currentUser),null, json);

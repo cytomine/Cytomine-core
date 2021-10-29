@@ -1,6 +1,8 @@
 package be.cytomine.service.security;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.image.AbstractImage;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
@@ -9,6 +11,7 @@ import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.security.AclRepository;
 import be.cytomine.service.CurrentRoleService;
@@ -23,6 +26,11 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
+import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +48,8 @@ public class SecurityACLService {
     private final OntologyRepository ontologyRepository;
 
     private final PermissionService permissionService;
+
+    private final ImageInstanceRepository imageInstanceRepository;
 
     public void check(Long id, String className, Permission permission) {
         try {
@@ -59,6 +69,17 @@ public class SecurityACLService {
             }
         } catch(IllegalArgumentException ex) {
             throw new ObjectNotFoundException("ACL error: " + className + " with id "+ id + " was not found! Unable to process auth checking");
+        }
+
+    }
+
+    public void checkIsAdminContainer(CytomineDomain domain, SecUser currentUser) {
+        if (domain!=null) {
+            if (!checkPermission(domain.container(), ADMINISTRATION, currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
+                throw new ForbiddenException("You don't have the right to do this. You must be the creator or the container admin");
+            }
+        } else {
+            throw new ObjectNotFoundException("ACL error: domain is null! Unable to process project auth checking");
         }
 
     }
@@ -108,7 +129,19 @@ public class SecurityACLService {
 //    }
 
 
-
+    public boolean hasRightToReadAbstractImageWithProject(AbstractImage image) {
+        if(currentRoleService.isAdminByNow(currentUserService.getCurrentUser())) {
+            return true;
+        }
+        List<ImageInstance> imageInstances = imageInstanceRepository.findAllByBaseImage(image);
+        Set<Project> projects = imageInstances.stream().map(ImageInstance::getProject).collect(Collectors.toSet());
+        for(Project project : projects) {
+            if(permissionService.hasACLPermission(project,READ)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 
     public List<Storage> getStorageList(SecUser user, boolean adminByPass) {

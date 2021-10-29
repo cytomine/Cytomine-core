@@ -47,6 +47,9 @@ public class SQLSearchParameter {
     }
 
 
+
+
+
     public static Object convertSearchParameter(Class type, Object parameter, EntityManager entityManager){
 
         if(parameter == null || parameter.equals("null")) {
@@ -210,7 +213,7 @@ public class SQLSearchParameter {
         return searchParameters;
     }
 
-    protected static String fieldNameToSQL(String field) {
+    public static String fieldNameToSQL(String field) {
         String regex = "([a-z])([A-Z]+)";
         String replacement = "$1_$2";
         return field.replaceAll(regex, replacement).toLowerCase();

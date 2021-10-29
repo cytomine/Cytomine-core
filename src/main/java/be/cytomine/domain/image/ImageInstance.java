@@ -19,6 +19,8 @@ import java.util.Optional;
 @Getter
 @Setter
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"base_image_id", "project_id" }))
+@DiscriminatorColumn(name = "class")
+@DiscriminatorValue("be.cytomine.image.ImageInstance")
 public class ImageInstance extends CytomineDomain {
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -32,11 +34,11 @@ public class ImageInstance extends CytomineDomain {
 
     private String instanceFilename;
 
-    private Integer countImageAnnotations;
+    private Long countImageAnnotations = 0L;
 
-    private Integer countImageJobAnnotations;
+    private Long countImageJobAnnotations = 0L;
 
-    private Integer countImageReviewedAnnotations;
+    private Long countImageReviewedAnnotations = 0L;
 
     private Date reviewStart;
 

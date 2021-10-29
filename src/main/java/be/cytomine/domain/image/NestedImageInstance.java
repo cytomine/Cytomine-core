@@ -5,16 +5,14 @@ import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Entity;
-import javax.persistence.EntityManager;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Optional;
 
 @Entity
 @Getter
 @Setter
+@DiscriminatorValue("be.cytomine.image.NestedImageInstance")
 public class NestedImageInstance extends ImageInstance {
 
     @NotNull

@@ -1,5 +1,6 @@
 package be.cytomine.exceptions;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * User: lrollus
@@ -22,7 +23,7 @@ public abstract class CytomineException extends RuntimeException {
     /**
      * Values of the exception
      */
-    public LinkedHashMap<Object, Object> values;
+    public Map<Object, Object> values;
 
     /**
      * Message map with this exception
@@ -30,9 +31,9 @@ public abstract class CytomineException extends RuntimeException {
      * @param code Http code
      */
     public CytomineException(String msg, int code) {
-        this(msg,code,new LinkedHashMap<Object, Object>());
+        this(msg,code,new Map<Object, Object>());
     }
-    public CytomineException(String msg, int code, LinkedHashMap<Object, Object> values) {
+    public CytomineException(String msg, int code, Map<Object, Object> values) {
         this.msg=msg;
         this.code = code;
         this.values = values;
