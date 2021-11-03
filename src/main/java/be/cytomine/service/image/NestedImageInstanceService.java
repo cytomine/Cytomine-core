@@ -3,15 +3,13 @@ package be.cytomine.service.image;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.CompanionFile;
-import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.image.NestedImageInstance;
 import be.cytomine.domain.image.UploadedFile;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.AlreadyExistException;
-import be.cytomine.exceptions.ConstraintException;
-import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.repository.image.CompanionFileRepository;
-import be.cytomine.repository.image.CompanionFileRepository;
+import be.cytomine.repository.image.NestedImageInstanceRepository;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
@@ -20,15 +18,17 @@ import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
+import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -39,51 +39,43 @@ import static org.springframework.security.acls.domain.BasePermission.WRITE;
 @Service
 @Transactional
 @AllArgsConstructor
-public class CompanionFileService extends ModelService {
+public class NestedImageInstanceService extends ModelService {
 
     private CurrentUserService currentUserService;
 
     private SecurityACLService securityACLService;
 
-    private CompanionFileRepository companionFileRepository;
+    private NestedImageInstanceRepository nestedImageInstanceRepository;
 
 
     @Override
     public Class currentDomain() {
-        return CompanionFile.class;
+        return NestedImageInstance.class;
     }
 
     @Override
     public CytomineDomain createFromJSON(JsonObject json) {
-        return new CompanionFile().buildDomainFromJson(json, getEntityManager());
+        return new NestedImageInstance().buildDomainFromJson(json, getEntityManager());
     }
 
-    public Optional<CompanionFile> find(Long id) {
-        Optional<CompanionFile> companionFile = companionFileRepository.findById(id);
-        companionFile.ifPresent(cf -> {
-            if (!securityACLService.hasRightToReadAbstractImageWithProject(cf.getImage())) {
-                securityACLService.check(cf.container(),READ);
-            }
+    public Optional<NestedImageInstance> find(Long id) {
+        Optional<NestedImageInstance> nestedImageInstance = nestedImageInstanceRepository.findById(id);
+        nestedImageInstance.ifPresent(cf -> {
+            securityACLService.check(cf.container(),READ);
         });
-        return companionFile;
+        return nestedImageInstance;
     }
 
-    public CompanionFile get(Long id) {
+    public NestedImageInstance get(Long id) {
         return find(id).orElse(null);
     }
 
-    public List<CompanionFile> list(AbstractImage image) {
-        if (!securityACLService.hasRightToReadAbstractImageWithProject(image)) {
-            securityACLService.check(image.container(),READ);
-        }
-        return companionFileRepository.findAllByImage(image);
+    public List<NestedImageInstance> list(ImageInstance image) {
+        securityACLService.check(image.container(),READ);
+        return nestedImageInstanceRepository.findAllByParent(image).stream().sorted(
+                DateUtils.descCreatedComparator()
+        ).collect(Collectors.toList());
     }
-
-    public List<CompanionFile> list(UploadedFile uploadedFile) {
-        securityACLService.check(uploadedFile, READ);
-        return companionFileRepository.findAllByUploadedFile(uploadedFile);
-    }
-
 
     /**
      * Add the new domain with JSON data
@@ -92,10 +84,11 @@ public class CompanionFileService extends ModelService {
      */
     public CommandResponse add(JsonObject json) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkUser(currentUser);
-
-        return executeCommand(new AddCommand(currentUser),null, json);
-
+        securityACLService.check(json.getJSONAttrLong("project"), Project.class, READ);
+        securityACLService.checkIsNotReadOnly(json.getJSONAttrLong("project"), Project.class);
+        synchronized (this.getClass()) {
+            return executeCommand(new AddCommand(currentUser),null, json);
+        }
     }
 
     /**
@@ -107,7 +100,10 @@ public class CompanionFileService extends ModelService {
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.check(domain.container(),WRITE);
+        securityACLService.check(domain.container(),READ);
+        securityACLService.check(jsonNewData.getJSONAttrLong("project"),Project.class,READ);
+        securityACLService.checkIsNotReadOnly(domain.container());
+        securityACLService.checkIsNotReadOnly(jsonNewData.getJSONAttrLong("project"),Project.class);
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
     }
 
@@ -122,26 +118,25 @@ public class CompanionFileService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkUser(currentUser);
-        securityACLService.check(domain.container(),WRITE);
-
+        securityACLService.check(domain.container(),READ);
+        securityACLService.checkIsNotReadOnly(domain.container());
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }
 
     @Override
     public void checkDoNotAlreadyExist(CytomineDomain domain) {
-        // TODO: with new session?
-        Optional<CompanionFile> file = companionFileRepository.findByImageAndUploadedFile(((CompanionFile)domain).getImage(), ((CompanionFile)domain).getUploadedFile());
-        if (file.isPresent() && !Objects.equals(file.get().getId(), domain.getId())) {
-            throw new AlreadyExistException("Companion file already exists for AbstractImage " + ((CompanionFile)domain).getImage());
+        NestedImageInstance nestedImageInstance = (NestedImageInstance)domain;
+        Optional<NestedImageInstance> imageAlreadyExist = nestedImageInstanceRepository.findByBaseImageAndParentAndProject(nestedImageInstance.getBaseImage(), nestedImageInstance.getParent(), nestedImageInstance.getProject());
+        if (imageAlreadyExist.isPresent() && (imageAlreadyExist.get().getId() != nestedImageInstance.getId())) {
+            throw new AlreadyExistException("Nested Image " + nestedImageInstance.getBaseImage().getOriginalFilename() + " already map with image " + nestedImageInstance.getParentId() + "in project " + nestedImageInstance.getProject().getName());
         }
     }
 
 
     @Override
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
-        return List.of(domain.getId(), ((CompanionFile)domain).getOriginalFilename());
+        return List.of(domain.getId(), ((NestedImageInstance)domain).getBaseImage().getOriginalFilename(), ((NestedImageInstance)domain).getProject().getName());
     }
 
 }

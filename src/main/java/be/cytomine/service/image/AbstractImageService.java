@@ -7,7 +7,6 @@ import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.domain.security.UserJob;
 import be.cytomine.dto.SliceCoordinate;
 import be.cytomine.dto.SliceCoordinates;
 import be.cytomine.exceptions.*;
@@ -16,7 +15,6 @@ import be.cytomine.repository.image.AbstractImageRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
-import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.*;
@@ -29,13 +27,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.Query;
-import javax.persistence.Tuple;
-import javax.persistence.TupleElement;
-import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Join;
 import javax.transaction.Transactional;
-import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -54,8 +47,6 @@ public class AbstractImageService extends ModelService {
 
     private SecurityACLService securityACLService;
 
-    private PermissionService permissionService;
-
     private AbstractImageRepository abstractImageRepository;
 
     private ImageInstanceRepository imageInstanceRepository;
@@ -72,11 +63,11 @@ public class AbstractImageService extends ModelService {
 
     private CompanionFileService companionFileService;
 
-    private AttachedFileService attachedFileService;
-
-    private AttachedFileRepository attachedFileRepository;
-
-    private AttachedFileService attachedFileService;
+//    private AttachedFileService attachedFileService;
+//
+//    private AttachedFileRepository attachedFileRepository;
+//
+//    private AttachedFileService attachedFileService;
 
     private NestedImageInstanceRepository nestedImageInstanceRepository;
 
@@ -108,7 +99,7 @@ public class AbstractImageService extends ModelService {
     }
 
 
-    public SecUser findImageUploaded(Long abstractImageId) {
+    public SecUser findImageUploader(Long abstractImageId) {
         AbstractImage abstractImage = find(abstractImageId).orElseThrow(() -> new ObjectNotFoundException("AbstractImage", abstractImageId));
         return Optional.ofNullable(abstractImage.getUploadedFile()).map(UploadedFile::getUser).orElse(null);
     }
@@ -118,8 +109,12 @@ public class AbstractImageService extends ModelService {
      */
     public boolean isAbstractImageUsed(Long abstractImageId) {
         AbstractImage domain = find(abstractImageId).orElseThrow(() -> new ObjectNotFoundException("AbstractImage", abstractImageId));
-        boolean usedByImageInstance = imageInstanceRepository.findAllByBaseImage(domain).size() != 0;
-        boolean usedByNestedFile = companionFileRepository.findAllByImage(domain).size() != 0;
+        return isAbstractImageUsed(domain);
+    }
+
+    private boolean isAbstractImageUsed(AbstractImage abstractImage) {
+        boolean usedByImageInstance = imageInstanceRepository.existsByBaseImage(abstractImage);
+        boolean usedByNestedFile = companionFileRepository.existsByImage(abstractImage);
 
         return usedByImageInstance || usedByNestedFile;
     }
@@ -127,12 +122,13 @@ public class AbstractImageService extends ModelService {
     /**
      * Returns the list of all the unused abstract images
      */
+    // TODO: bad perf!
     public List<AbstractImage> listUnused() {
-        return list().getContent().stream().filter(x -> !isAbstractImageUsed(x.getId())).collect(Collectors.toList());
+        return list().getContent().stream().filter(x -> !isAbstractImageUsed(x)).collect(Collectors.toList());
     }
 
     public Page<AbstractImage> list() {
-        return list(null, List.of(), Pageable.unpaged());
+        return list(null, new ArrayList<>(), Pageable.unpaged());
     }
 
     public Page<AbstractImage> list(Project project, List<SearchParameterEntry> searchParameters, Pageable pageable) {
@@ -282,32 +278,7 @@ public class AbstractImageService extends ModelService {
         return companionFileRepository.countByImageAndType(image, "HDF5")>0;
     }
 
-    public SliceCoordinates getSliceCoordinates(AbstractImage image) {
-        List<AbstractSlice> slices = abstractSliceRepository.findAllByImage(image);
-        SliceCoordinates sliceCoordinates = new SliceCoordinates(
-                slices.stream().map(AbstractSlice::getChannel).distinct().sorted().collect(Collectors.toList()),
-                slices.stream().map(AbstractSlice::getZStack).distinct().sorted().collect(Collectors.toList()),
-                slices.stream().map(AbstractSlice::getTime).distinct().sorted().collect(Collectors.toList()),
-            );
-        return sliceCoordinates;
-    }
 
-
-    public SliceCoordinate getReferenceSliceCoordinate(AbstractImage image) {
-        SliceCoordinates sliceCoordinates = getSliceCoordinates(image);
-        SliceCoordinate referenceSliceCoordinates = new SliceCoordinate(
-                sliceCoordinates.getChannels().get((int) Math.floor(sliceCoordinates.getChannels().size()/2)),
-                sliceCoordinates.getZStacks().get((int) Math.floor(sliceCoordinates.getZStacks().size()/2)),
-                sliceCoordinates.getTimes().get((int) Math.floor(sliceCoordinates.getTimes().size()/2))
-                );
-        return referenceSliceCoordinates;
-    }
-
-    public AbstractSlice getReferenceSlice(AbstractImage abstractImage) {
-        SliceCoordinate sliceCoordinate = getReferenceSliceCoordinate(abstractImage);
-        return abstractSliceRepository.findByImageAndChannelAndZStackAndTime(abstractImage, sliceCoordinate.getChannel(), sliceCoordinate.getZStack(), sliceCoordinate.getTime())
-                .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", "image:" + abstractImage.getId() + "," + sliceCoordinate.getChannel()+ ":" + sliceCoordinate.getZStack() + ":" + sliceCoordinate.getTime()));
-    }
 
     /**
      * Get all image servers for an image id
@@ -336,7 +307,7 @@ public class AbstractImageService extends ModelService {
     private void  deleteDependentAbstractSlice(AbstractImage ai, Transaction transaction, Task task) {
         List<AbstractSlice> slices = abstractSliceRepository.findAllByImage(ai);
         for (AbstractSlice slice : slices) {
-            abstractSliceService.delete(slice, transaction, task);
+            abstractSliceService.delete(slice, transaction, task, false);
         }
 
     }
@@ -353,15 +324,16 @@ public class AbstractImageService extends ModelService {
     private void deleteDependentCompanionFile (AbstractImage ai, Transaction transaction, Task task) {
         List<CompanionFile> companionFiles = companionFileRepository.findAllByImage(ai);
         for (CompanionFile companionFile : companionFiles) {
-            companionFileService.delete(companionFile, transaction, task);
+            companionFileService.delete(companionFile, transaction, task, false);
         }
     }
 
     private void deleteDependentAttachedFile(AbstractImage ai, Transaction transaction,Task task)  {
-        List<AttachedFile> attachedFiles = attachedFileRepository.findAllByImage(ai);
-        for (AttachedFile attachedFile : attachedFiles) {
-            attachedFileService.delete(attachedFile, transaction, task);
-        }
+        //TODO
+//        List<AttachedFile> attachedFiles = attachedFileRepository.findAllByImage(ai);
+//        for (AttachedFile attachedFile : attachedFiles) {
+//            attachedFileService.delete(attachedFile, transaction, task);
+//        }
     }
 
     private void  deleteDependentNestedImageInstance(AbstractImage ai, Transaction transaction,Task task) {

@@ -29,6 +29,6 @@ public interface AbstractSliceRepository extends JpaRepository<AbstractSlice, Lo
 
     List<AbstractSlice> findAllByUploadedFile(UploadedFile uploadedFile);
 
-
+    @Query("SELECT asl FROM AbstractSlice asl WHERE asl.image = :image AND asl.channel = :channel  AND asl.zStack = :zStack AND asl.time = :time")
     Optional<AbstractSlice> findByImageAndChannelAndZStackAndTime(AbstractImage image, Integer channel, Integer zStack, Integer time);
 }

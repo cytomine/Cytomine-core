@@ -5,6 +5,7 @@ import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
+import be.cytomine.domain.project.EditingMode;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
@@ -24,8 +25,10 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -156,8 +159,8 @@ public class SecurityACLService {
                 "select distinct storage "+
                         "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid,  Storage as storage "+
                         "where aclObjectId.objectId = storage.id " +
-                        "and aclEntry.aclObjectIdentity = aclObjectId.id "+
-                        "and aclEntry.sid = aclSid.id and aclSid.sid like '"+user.getUsername() +"'" + (StringUtils.isNotBlank(searchString)? " and lower(storage.name) like '%" + searchString.toLowerCase() + "%'" : ""));
+                        "and aclEntry.aclObjectIdentity = aclObjectId "+
+                        "and aclEntry.sid = aclSid and aclSid.sid like '"+user.getUsername() +"'" + (StringUtils.isNotBlank(searchString)? " and lower(storage.name) like '%" + searchString.toLowerCase() + "%'" : ""));
         List<Storage> storages = query.getResultList();
         return storages;
     }
@@ -170,8 +173,8 @@ public class SecurityACLService {
                 "select distinct aclSid.sid "+
                         "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid,  Project as project "+
                         "where aclObjectId.objectId = project.id " +
-                        "and aclEntry.aclObjectIdentity = aclObjectId.id "+
-                        "and aclEntry.sid = aclSid.id and project.id = " + project.getId());
+                        "and aclEntry.aclObjectIdentity = aclObjectId "+
+                        "and aclEntry.sid = aclSid and project.id = " + project.getId());
         List<String> usernames = query.getResultList();
         return usernames;
     }
@@ -183,8 +186,8 @@ public class SecurityACLService {
                 "select distinct ontology "+
                         "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid,  Ontology as ontology "+
                         "where aclObjectId.objectId = ontology.id " +
-                        "and aclEntry.aclObjectIdentity = aclObjectId.id "+
-                        "and aclEntry.sid = aclSid.id and aclSid.sid like '"+user.getUsername() +"'");
+                        "and aclEntry.aclObjectIdentity = aclObjectId "+
+                        "and aclEntry.sid = aclSid and aclSid.sid like '"+user.getUsername() +"'");
         List<Ontology> ontologies = query.getResultList();
         return ontologies;
     }
@@ -215,6 +218,126 @@ public class SecurityACLService {
         }
     }
 
+    public void checkIsNotReadOnly(Long id, Class className) {
+        checkIsNotReadOnly(id,className.getName());
+    }
 
+
+    public void checkIsNotReadOnly(Long id, String className) {
+        try {
+            CytomineDomain domain = (CytomineDomain)entityManager.find(Class.forName(className), id);
+            if (domain!=null) {
+                checkIsNotReadOnly(domain);
+            } else {
+                throw new ObjectNotFoundException("ACL error: " + className + " with id "+ id + " was not found! Unable to process auth checking");
+            }
+        } catch(IllegalArgumentException | ClassNotFoundException ex) {
+            throw new ObjectNotFoundException("ACL error: " + className + " with id "+ id + " was not found! Unable to process auth checking");
+        }
+
+    }
+
+
+    //check if the container (e.g. Project) is not in readonly. If in readonly, only admins can edit this.
+    public void checkIsNotReadOnly(CytomineDomain domain) {
+        if (domain!=null) {
+            boolean readOnly = !domain.container().canUpdateContent();
+            boolean containerAdmin = permissionService.hasACLPermission(domain.container(),ADMINISTRATION);
+            if(readOnly && !containerAdmin) {
+                throw new ForbiddenException("The project for this data is in readonly mode! You must be project manager to add, edit or delete this resource in a readonly project.");
+            }
+        } else {
+            throw new ObjectNotFoundException("ACL error: domain is null! Unable to process project auth checking");
+        }
+    }
+
+
+
+
+    public void checkFullOrRestrictedForOwner(Long id, Class className, String owner) {
+        checkFullOrRestrictedForOwner(id,className.getName(), owner);
+    }
+
+
+    public void checkFullOrRestrictedForOwner(Long id, String className, String owner) {
+        try {
+            CytomineDomain domain = (CytomineDomain)entityManager.find(Class.forName(className), id);
+            if (domain!=null) {
+                checkFullOrRestrictedForOwner(domain, (owner!=null && objectHasProperty(domain, owner) ? (SecUser) fieldValue(domain.getClass(), domain, owner) : null));
+            } else {
+                throw new ObjectNotFoundException("ACL error: " + className + " with id "+ id + " was not found! Unable to process auth checking");
+            }
+        } catch(IllegalArgumentException | ClassNotFoundException ex) {
+            throw new ObjectNotFoundException("ACL error: " + className + " with id "+ id + " was not found! Unable to process auth checking");
+        }
+    }
+
+    //check if the container (e.g. Project) has the minimal editing mode or is Admin. If not, exception will be thown
+    public void checkFullOrRestrictedForOwner(CytomineDomain domain, SecUser owner) {
+        if (domain!=null) {
+            if(permissionService.hasACLPermission(domain.container(),ADMINISTRATION)
+                    || currentRoleService.isAdminByNow(currentUserService.getCurrentUser())) return;
+            switch (((Project)domain.container()).getMode()) {
+                case CLASSIC :
+                    return;
+                case RESTRICTED :
+                    if(owner!=null) {
+                        if (!Objects.equals(owner.getId(), currentUserService.getCurrentUser().getId())) {
+                            throw new ForbiddenException("You don't have the right to do this. You must be the creator or the container admin");
+                        }
+                    } else {
+                        throw new ForbiddenException("The project for this data is in "+((Project)domain.container()).getMode().name() +" mode! You must be project manager to add, edit or delete this resource.");
+                    }
+                    break;
+                case READ_ONLY :
+                    throw new ForbiddenException("The project for this data is in "+((Project)domain.container()).getMode().name()+" mode! You must be project manager to add, edit or delete this resource.");
+                default :
+                    throw new ObjectNotFoundException("ACL error: project editing mode is unknown! Unable to process project auth checking");
+
+            }
+        } else {
+            throw new ObjectNotFoundException("ACL error: domain is null! Unable to process project auth checking");
+        }
+    }
+
+    private Object fieldValue(Class<?> type, Object object, String propertyName){
+        Field field = null;
+        try {
+            field = type.getField(propertyName);
+            return field.get(object);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new ForbiddenException("Cannot extract owner from class " + type + " => " + e);
+        }
+
+    }
+
+
+    private Boolean objectHasProperty(Object obj, String propertyName){
+        List<Field> properties = getAllFields(obj);
+        for(Field field : properties){
+            if(field.getName().equalsIgnoreCase(propertyName)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static List<Field> getAllFields(Object obj){
+        List<Field> fields = new ArrayList<Field>();
+        getAllFieldsRecursive(fields, obj.getClass());
+        return fields;
+    }
+
+    private static List<Field> getAllFieldsRecursive(List<Field> fields, Class<?> type) {
+        for (Field field: type.getDeclaredFields()) {
+            fields.add(field);
+        }
+
+        if (type.getSuperclass() != null) {
+            fields = getAllFieldsRecursive(fields, type.getSuperclass());
+        }
+
+        return fields;
+    }
 
 }

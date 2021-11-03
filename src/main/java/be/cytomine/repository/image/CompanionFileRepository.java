@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -17,7 +18,11 @@ public interface CompanionFileRepository extends JpaRepository<CompanionFile, Lo
 
     List<CompanionFile> findAllByImage(AbstractImage abstractImage);
 
+    boolean existsByImage(AbstractImage abstractImage);
+
     List<CompanionFile> findAllByUploadedFile(UploadedFile uploadedFile);
+
+    Optional<CompanionFile> findByImageAndUploadedFile(AbstractImage abstractImage, UploadedFile uploadedFile);
 
     int countByImageAndType(AbstractImage image, String type);
 }

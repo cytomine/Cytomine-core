@@ -21,10 +21,6 @@ import java.util.Set;
 @Setter
 public class Project extends CytomineDomain {
 
-    static enum EditingMode {
-        CLASSIC, RESTRICTED, READ_ONLY
-    }
-
     private String name;
 
     @ManyToOne(fetch = FetchType.EAGER)

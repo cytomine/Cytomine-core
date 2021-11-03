@@ -61,40 +61,29 @@ public class ImageInstanceService extends ModelService {
 
     private SecurityACLService securityACLService;
 
-    private PermissionService permissionService;
-
     private ImageInstanceRepository ImageInstanceRepository;
 
     private ImageInstanceRepository imageInstanceRepository;
 
-    private TransactionService transactionService;
-
-    private ImageInstanceService imageInstanceService;
-
-    private CompanionFileRepository companionFileRepository;
-
     private AbstractSliceRepository abstractSliceRepository;
 
-    private AbstractSliceService abstractSliceService;
-
-    private CompanionFileService companionFileService;
-
-    private AttachedFileService attachedFileService;
-
-    private AttachedFileRepository attachedFileRepository;
-
-    private AttachedFileService attachedFileService;
+    private SliceInstanceService sliceInstanceService;
 
     private NestedImageInstanceRepository nestedImageInstanceRepository;
 
-    private AbstractImageService abstractImageService;
-
     private SliceInstanceRepository sliceInstanceRepository;
+
+    private SliceCoordinatesService sliceCoordinatesService;
 
 
     @Override
     public Class currentDomain() {
         return ImageInstance.class;
+    }
+
+    @Override
+    public CytomineDomain createFromJSON(JsonObject json) {
+        return new ImageInstance().buildDomainFromJson(json, getEntityManager());
     }
 
 
@@ -687,11 +676,9 @@ public class ImageInstanceService extends ModelService {
 //
 
 
-
-
     public SliceInstance getReferenceSlice(Long id) {
         ImageInstance image = find(id).orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
-        AbstractSlice abstractSlice = abstractImageService.getReferenceSlice(image.getBaseImage());
+        AbstractSlice abstractSlice = sliceCoordinatesService.getReferenceSlice(image.getBaseImage());
         return sliceInstanceRepository.findByBaseSliceAndImage(abstractSlice, image).orElse(null);
     }
 
@@ -703,354 +690,33 @@ public class ImageInstanceService extends ModelService {
     public CommandResponse add(JsonObject json) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(json.getJSONAttrLong("project"), Project.class, READ);
-        securityACLService.checkisNotReadOnly(json.getJSONAttrLong("project"), Project.class);
+        securityACLService.checkIsNotReadOnly(json.getJSONAttrLong("project"), Project.class);
 
         json.put("user", currentUser.getId());
-
-
-        Optional<ImageInstance> alreadyExist =
-                imageInstanceRepository.findByProjectIdAndBaseImageId(json.getJSONAttrLong("project"), json.getJSONAttrLong("baseImage"));
-
-        if (alreadyExist.isPresent()) {
-
-        } else {
-
-        }
-
-
         return executeCommand(new AddCommand(currentUser),null, json);
 
     }
 
-
-    /**
-     * Add the new domain with JSON data
-     * @param json New domain data
-     * @return Response structure (created domain data,..)
-     */
-    def add(def json) {
-
-
-        def project = Project.read(json.project)
-        def baseImage = AbstractImage.read(json.baseImage)
-        def alreadyExist = ImageInstance.findByProjectAndBaseImage(project, baseImage)
-
-        if (alreadyExist && alreadyExist.checkDeleted()) {
-            //Image was previously deleted, restore it
-            def jsonNewData = JSON.parse(alreadyExist.encodeAsJSON())
-            jsonNewData.deleted = null
-            Command c = new EditCommand(user: currentUser)
-            return executeCommand(c, alreadyExist, jsonNewData)
-        }
-        else {
-            Command c = new AddCommand(user: currentUser)
-            return executeCommand(c, null, json)
-        }
-    }
-
-    def afterAdd(ImageInstance domain, def response) {
-        def abstractSlices = AbstractSlice.findAllByImage(domain.baseImage)
-        abstractSlices.each {
-            new SliceInstance(baseSlice: it, image: domain, project: domain.project).save()
-        }
-    }
-
-    def beforeDelete(ImageInstance domain) {
-        SliceInstance.findAllByImage(domain).each { it.delete() }
-    }
-
-    /**
-     * Update this domain with new data from json
-     * @param domain Domain to update
-     * @param jsonNewData New domain datas
-     * @return Response structure (new domain data, old domain data..)
-     */
-    def update(ImageInstance domain, def jsonNewData) {
-        securityACLService.check(domain.container(), READ)
-        securityACLService.check(jsonNewData.project, Project, READ)
-        securityACLService.checkFullOrRestrictedForOwner(domain.container(), domain.user)
-        securityACLService.checkisNotReadOnly(domain.container())
-        securityACLService.checkisNotReadOnly(jsonNewData.project, Project)
-        def attributes = JSON.parse(domain.encodeAsJSON())
-        SecUser currentUser = cytomineService.getCurrentUser()
-        Command c = new EditCommand(user: currentUser)
-
-        def res = executeCommand(c, domain, jsonNewData)
-        ImageInstance imageInstance = res.object
-
-        Double resolutionX = JSONUtils.getJSONAttrDouble(attributes, "physicalSizeX", null)
-        Double resolutionY = JSONUtils.getJSONAttrDouble(attributes, "physicalSizeY", null)
-
-        boolean resolutionUpdated = (resolutionX != imageInstance.physicalSizeX) || (resolutionY != imageInstance.physicalSizeY)
-
-        if (resolutionUpdated) {
-            def annotations
-            annotations = UserAnnotation.findAllByImage(imageInstance)
-            annotations.each {
-                def json = JSON.parse(it.encodeAsJSON())
-                userAnnotationService.update(it, json)
-            }
-
-            annotations = AlgoAnnotation.findAllByImage(imageInstance)
-            annotations.each {
-                def json = JSON.parse(it.encodeAsJSON())
-                algoAnnotationService.update(it, json)
-            }
-
-            annotations = ReviewedAnnotation.findAllByImage(imageInstance)
-            annotations.each {
-                def json = JSON.parse(it.encodeAsJSON())
-                reviewedAnnotationService.update(it, json)
-            }
-        }
-        return res
-    }
-
-    /**
-     * Delete this domain
-     * @param domain Domain to delete
-     * @param transaction Transaction link with this command
-     * @param task Task for this command
-     * @param printMessage Flag if client will print or not confirm message
-     * @return Response structure (code, old domain,..)
-     */
-    def delete(ImageInstance domain, Transaction transaction = null, Task task = null, boolean printMessage = true) {
-        securityACLService.checkFullOrRestrictedForOwner(domain.container(), domain.user)
-        SecUser currentUser = cytomineService.getCurrentUser()
-//        Command c = new DeleteCommand(user: currentUser, transaction: transaction)
-//        return executeCommand(c, domain, null)
-
-        //We don't delete domain, we juste change a flag
-        def jsonNewData = JSON.parse(domain.encodeAsJSON())
-        jsonNewData.deleted = new Date().time
-        Command c = new EditCommand(user: currentUser)
-        c.delete = true
-        return executeCommand(c,domain,jsonNewData)
-    }
-
-    def deleteDependentAlgoAnnotation(ImageInstance image, Transaction transaction, Task task = null) {
-        AlgoAnnotation.findAllByImage(image).each {
-            algoAnnotationService.delete(it, transaction)
-        }
-    }
-
-    def deleteDependentReviewedAnnotation(ImageInstance image, Transaction transaction, Task task = null) {
-        ReviewedAnnotation.findAllByImage(image).each {
-            reviewedAnnotationService.delete(it, transaction, null, false)
-        }
-    }
-
-    def deleteDependentUserAnnotation(ImageInstance image, Transaction transaction, Task task = null) {
-        UserAnnotation.findAllByImage(image).each {
-            userAnnotationService.delete(it, transaction, null, false)
-        }
-    }
-
-    def deleteDependentAnnotationAction(ImageInstance image, Transaction transaction, Task task = null) {
-        AnnotationAction.findAllByImage(image).each {
-            it.delete()
-        }
-    }
-
-    def deleteDependentLastUserPosition(ImageInstance image, Transaction transaction, Task task = null) {
-        LastUserPosition.findAllByImage(image).each {
-            it.delete()
-        }
-    }
-
-    def deleteDependentPersistentUserPosition(ImageInstance image, Transaction transaction, Task task = null) {
-        PersistentUserPosition.findAllByImage(image).each {
-            it.delete()
-        }
-    }
-
-    def deleteDependentPersistentImageConsultation(ImageInstance image, Transaction transaction, Task task = null) {
-        PersistentImageConsultation.findAllByImage(image.id).each {
-            it.delete()
-        }
-    }
-
-    def deleteDependentProperty(ImageInstance image, Transaction transaction, Task task = null) {
-        Property.findAllByDomainIdent(image.id).each {
-            propertyService.delete(it, transaction, null, false)
+    protected void afterAdd(CytomineDomain domain, CommandResponse response) {
+        List<AbstractSlice> abstractSlices = abstractSliceRepository.findAllByImage(((ImageInstance)domain).getBaseImage());
+        for (AbstractSlice abstractSlice : abstractSlices) {
+            SliceInstance sliceInstance = new SliceInstance();
+            sliceInstance.setBaseSlice(abstractSlice);
+            sliceInstance.setImage((ImageInstance)domain);
+            sliceInstance.setProject(((ImageInstance)domain).getProject());
+            sliceInstanceRepository.save(sliceInstance);
         }
 
     }
 
-    def deleteDependentNestedImageInstance(ImageInstance image, Transaction transaction, Task task = null) {
-        NestedImageInstance.findAllByParent(image).each {
-            it.delete(flush: true)
-        }
-    }
-
-    def sliceInstanceService
-    def deleteDependentSliceInstance(ImageInstance image, Transaction transaction, Task task = null) {
-        SliceInstance.findAllByImage(image).each {
-            sliceInstanceService.delete(it, transaction, task)
-        }
-    }
-
-    def trackService
-    def deleteDependentTrack(ImageInstance image, Transaction transaction, Task task = null) {
-        Track.findAllByImage(image).each {
-            trackService.delete(it, transaction, task)
-        }
-    }
-
-    def getStringParamsI18n(def domain) {
-        return [domain.id, domain.blindInstanceFilename, domain.project.name]
-    }
-
-    private def getDomainAssociatedSearchParameters(ArrayList searchParameters, boolean blinded) {
-
-        for (def parameter : searchParameters){
-            if(parameter.field.equals("name") || parameter.field.equals("instanceFilename")){
-                parameter.field = blinded ? "blindedName" : "instanceFilename"
-            }
-            if(parameter.field.equals("numberOfJobAnnotations")) parameter.field = "countImageJobAnnotations"
-            if(parameter.field.equals("numberOfReviewedAnnotations")) parameter.field = "countImageReviewedAnnotations"
-            if(parameter.field.equals("numberOfAnnotations")) parameter.field = "countImageAnnotations"
-        }
-
-
-        def validParameters = getDomainAssociatedSearchParameters(ImageInstance, searchParameters)
-
-        String abstractImageAlias = "ai"
-        String imageInstanceAlias = "ii"
-        validParameters.addAll(getDomainAssociatedSearchParameters(AbstractImage, searchParameters).collect {[operator:it.operator, property:abstractImageAlias+"."+it.property, value:it.value]})
-        validParameters.addAll(getDomainAssociatedSearchParameters(UploadedFile, searchParameters).collect {[operator:it.operator, property:"mime."+it.property, value:it.value]})
-
-        loop:for (def parameter : searchParameters){
-            String property
-            switch(parameter.field) {
-                case "tag" :
-                    property = "tda.tag_id"
-                    parameter.values = convertSearchParameter(Long.class, parameter.values)
-                    break
-                default:
-                    continue loop
-            }
-            validParameters << [operator: parameter.operator, property: property, value: parameter.values]
-        }
-
-        if(searchParameters.size() > 0){
-            log.debug "The following search parameters have not been validated: "+searchParameters
-        }
-
-        validParameters.findAll { it.property.equals("baseImage") }.each {
-            it.property = "base_image_id"
-            it.value = it.value.id
-        }
-        return validParameters
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    public SecUser findImageUploaded(Long ImageInstanceId) {
-        ImageInstance ImageInstance = find(ImageInstanceId).orElseThrow(() -> new ObjectNotFoundException("ImageInstance", ImageInstanceId));
-        return Optional.ofNullable(ImageInstance.getUploadedFile()).map(UploadedFile::getUser).orElse(null);
-    }
-
-    /**
-     * Check if some instances of this image exists and are still active
-     */
-    public boolean isImageInstanceUsed(Long ImageInstanceId) {
-        ImageInstance domain = find(ImageInstanceId).orElseThrow(() -> new ObjectNotFoundException("ImageInstance", ImageInstanceId));
-        boolean usedByImageInstance = imageInstanceRepository.findAllByBaseImage(domain).size() != 0;
-        boolean usedByNestedFile = companionFileRepository.findAllByImage(domain).size() != 0;
-
-        return usedByImageInstance || usedByNestedFile;
-    }
-
-    /**
-     * Returns the list of all the unused abstract images
-     */
-    public List<ImageInstance> listUnused() {
-        return list().getContent().stream().filter(x -> !isImageInstanceUsed(x.getId())).collect(Collectors.toList());
-    }
-
-    public Page<ImageInstance> list() {
-        return list(null, List.of(), Pageable.unpaged());
-    }
-
-    public Page<ImageInstance> list(Project project, List<SearchParameterEntry> searchParameters, Pageable pageable) {
-        List<SearchParameterEntry> validSearchParameters = SQLSearchParameter.getDomainAssociatedSearchParameters(ImageInstance.class, searchParameters, getEntityManager());
-
-        Specification<ImageInstance> specification = SpecificationBuilder.getSpecificationFromFilters(validSearchParameters);
-
-        if (!currentRoleService.isAdminByNow(currentUserService.getCurrentUser())) {
-            List<Storage> storages = securityACLService.getStorageList(currentUserService.getCurrentUser(), false);
-            Specification<ImageInstance> filterStorages = (root, query, criteriaBuilder) -> {
-                    Join<ImageInstance, UploadedFile> uploadedFileJoin = root.join(ImageInstance_.uploadedFile);
-                    return criteriaBuilder.in(uploadedFileJoin.get("storage")).value(storages);
-            };
-            specification = specification.and(filterStorages);
-        }
-        Page<ImageInstance> images = ImageInstanceRepository.findAll(specification, pageable);
-
-        if (project != null) {
-            //TODO: could be possible to include in specification (using join)
-            if (pageable.isPaged()) {
-                throw new WrongArgumentException("Pagination not supported with 'project' parameter");
-            } else {
-                HashSet<Long> ids = new HashSet<>(ImageInstanceRepository.findAllIdsByProject(project));
-                images = new PageImpl<>(images.getContent().stream().filter(x -> ids.contains(x.getId())).collect(Collectors.toList()));
-
-            }
-        }
-
-        return images;
-    }
-
-
-
-    @Override
-    public CytomineDomain createFromJSON(JsonObject json) {
-        return new ImageInstance().buildDomainFromJson(json, getEntityManager());
-    }
-
-    @Override
-    public void checkDoNotAlreadyExist(CytomineDomain domain) {
+    protected void beforeDelete(CytomineDomain domain, CommandResponse response) {
+        List<SliceInstance> sliceInstances = sliceInstanceRepository.findAllByImage((ImageInstance)domain);
+        sliceInstanceRepository.deleteAll(sliceInstances);
 
     }
 
 
-    /**
-     * Add the new domain with JSON data
-     * @param json New domain data
-     * @return Response structure (created domain data,..)
-     */
-    public CommandResponse add(JsonObject json) {
-        transactionService.start();
-        SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkUser(currentUser);
 
-        if (!json.isMissing("uploadedFile")) {
-            //TODO: ???
-        }
-        return executeCommand(new AddCommand(currentUser),null, json);
-
-    }
 
     /**
      * Update this domain with new data from json
@@ -1061,64 +727,48 @@ public class ImageInstanceService extends ModelService {
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.check(domain.container(),WRITE);
+        securityACLService.check(domain.container(), READ);
+        securityACLService.check(jsonNewData.getJSONAttrLong("project"), Project.class, READ);
+        securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((ImageInstance)domain).getUser());
+        securityACLService.checkIsNotReadOnly(domain.container());
+        securityACLService.checkIsNotReadOnly(jsonNewData.getJSONAttrLong("project"), Project.class);
 
-        JsonObject versionBeforeUpdate = domain.toJsonObject();
-
+        JsonObject attributes = domain.toJsonObject();
         CommandResponse commandResponse = executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
-        ImageInstance ImageInstance = (ImageInstance)commandResponse.getObject();
 
-        Integer magnification = versionBeforeUpdate.getJSONAttrInteger("magnification",null);
-        Double physicalSizeX = versionBeforeUpdate.getJSONAttrDouble("physicalSizeX",null);
+        ImageInstance imageInstance = (ImageInstance)commandResponse.getObject();
 
-        boolean magnificationUpdated = !Objects.equals(magnification, ImageInstance.getMagnification());
-        boolean physicalSizeXUpdated = !Objects.equals(physicalSizeX, ImageInstance.getPhysicalSizeX());
+        Double resolutionX = attributes.getJSONAttrDouble("physicalSizeX", null);
+        Double resolutionY = attributes.getJSONAttrDouble("physicalSizeY", null);
 
-        List<ImageInstance> images = new ArrayList<>();
-        if(physicalSizeXUpdated && magnificationUpdated ) {
-            if(physicalSizeX!= null && magnification!= null) {
-                images.addAll(imageInstanceRepository.findAllByBaseImage(ImageInstance, x -> physicalSizeX.equals(x.getPhysicalSizeX()) && magnification.equals(x.getMagnification())));
-            } else if(physicalSizeX!= null) {
-                images.addAll(imageInstanceRepository.findAllByBaseImage(ImageInstance, x -> physicalSizeX.equals(x.getPhysicalSizeX()) && x.getMagnification()==null));
-            } else if(magnification!= null) {
-                images.addAll(imageInstanceRepository.findAllByBaseImage(ImageInstance, x -> magnification.equals(x.getMagnification()) && x.getPhysicalSizeX()==null));
-            } else {
-                images.addAll(imageInstanceRepository.findAllByBaseImage(ImageInstance, x -> x.getMagnification()==null && x.getPhysicalSizeX()==null));
-            }
-            for (ImageInstance image : images) {
-                JsonObject json = image.toJsonObject();
-                json.put("physicalSizeX", ImageInstance.getPhysicalSizeX());
-                json.put("magnification", ImageInstance.getMagnification());
-                imageInstanceService.update(image, json);
-            }
-        } else if (physicalSizeXUpdated) {
-            if(physicalSizeX!= null) {
-                images.addAll(imageInstanceRepository.findAllByBaseImage(ImageInstance, x -> physicalSizeX.equals(x.getPhysicalSizeX()) ));
-            } else {
-                images.addAll(imageInstanceRepository.findAllByBaseImage(ImageInstance, x -> x.getPhysicalSizeX()==null));
-            }
+        boolean resolutionUpdated = (!Objects.equals(resolutionX, imageInstance.getPhysicalSizeX())) || (!Objects.equals(resolutionY, imageInstance.getPhysicalSizeY()));
 
-            for (ImageInstance image : images) {
-                JsonObject json = image.toJsonObject();
-                json.put("physicalSizeX", ImageInstance.getPhysicalSizeX());
-                imageInstanceService.update(image, json);
-            }
+        if (resolutionUpdated) {
+            // TODO: update annotations:
+//            def annotations
+//            annotations = UserAnnotation.findAllByImage(imageInstance)
+//            annotations.each {
+//                def json = JSON.parse(it.encodeAsJSON())
+//                userAnnotationService.update(it, json)
+//            }
+//
+//            annotations = AlgoAnnotation.findAllByImage(imageInstance)
+//            annotations.each {
+//                def json = JSON.parse(it.encodeAsJSON())
+//                algoAnnotationService.update(it, json)
+//            }
+//
+//            annotations = ReviewedAnnotation.findAllByImage(imageInstance)
+//            annotations.each {
+//                def json = JSON.parse(it.encodeAsJSON())
+//                reviewedAnnotationService.update(it, json)
+//            }
+
         }
-        if(magnificationUpdated) {
-            if(magnification!= null) {
-                images.addAll(imageInstanceRepository.findAllByBaseImage(ImageInstance, x -> magnification.equals(x.getMagnification()) ));
-            } else {
-                images.addAll(imageInstanceRepository.findAllByBaseImage(ImageInstance, x -> x.getMagnification()==null));
-            }
 
-            for (ImageInstance image : images) {
-                JsonObject json = image.toJsonObject();
-                json.put("magnification", ImageInstance.getMagnification());
-                imageInstanceService.update(image, json);
-            }
-        }
         return commandResponse;
     }
+
 
     /**
      * Delete this domain
@@ -1131,114 +781,122 @@ public class ImageInstanceService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkUser(currentUser);
-        securityACLService.check(domain.container(),WRITE);
+        securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((ImageInstance)domain).getUser());
 
-        if (!isImageInstanceUsed(domain.getId())) {
-            Command c = new DeleteCommand(currentUser, transaction);
-            return executeCommand(c,domain, null);
-        } else {
-            List<ImageInstance> instances = imageInstanceRepository.findAllByBaseImage((ImageInstance) domain);
-            throw new ForbiddenException("Abstract Image has instances in active projects : " +
-                    instances.stream().map(x -> x.getProject().getName()).collect(Collectors.joining(",")) +
-                    " with the following names : " +
-                    instances.stream().map(x -> x.getInstanceFilename()).distinct().collect(Collectors.joining(",")),
-                    Map.of("projectNames", instances.stream().map(x -> x.getProject().getName()).collect(Collectors.toList()), "imageNames", instances.stream().map(x -> x.getInstanceFilename()).distinct().collect(Collectors.toList())));
+        Command c = new DeleteCommand(currentUser, transaction);
+        return executeCommand(c,domain, null);
+    }
+
+    @Override
+    public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
+        ImageInstance imageInstance = (ImageInstance)domain;
+        deleteDependentAlgoAnnotation(imageInstance, transaction, task);
+        deleteDependentReviewedAnnotation(imageInstance, transaction, task);
+        deleteDependentUserAnnotation(imageInstance, transaction, task);
+        deleteDependentAnnotationAction(imageInstance, transaction, task);
+        deleteDependentLastUserPosition(imageInstance, transaction, task);
+        deleteDependentPersistentUserPosition(imageInstance, transaction, task);
+        deleteDependentPersistentImageConsultation(imageInstance, transaction, task);
+        deleteDependentProperty(imageInstance, transaction, task);
+        deleteDependentNestedImageInstance(imageInstance, transaction, task);
+        deleteDependentSliceInstance(imageInstance, transaction, task);
+        deleteDependentTrack(imageInstance, transaction, task);
+    }
+
+    private void deleteDependentAlgoAnnotation(ImageInstance image, Transaction transaction, Task task) {
+        //TODO:
+//        AlgoAnnotation.findAllByImage(image).each {
+//            algoAnnotationService.delete(it, transaction)
+//        }
+    }
+
+    private void deleteDependentReviewedAnnotation(ImageInstance image, Transaction transaction, Task task) {
+        //TODO:
+//        ReviewedAnnotation.findAllByImage(image).each {
+//            reviewedAnnotationService.delete(it, transaction)
+//        }
+    }
+
+    private void deleteDependentUserAnnotation(ImageInstance image, Transaction transaction, Task task) {
+        //TODO:
+//        UserAnnotation.findAllByImage(image).each {
+//            userAnnotationService.delete(it, transaction)
+//        }
+    }
+
+
+
+    private void deleteDependentAnnotationAction(ImageInstance image, Transaction transaction, Task task) {
+        //TODO:
+//        AnnotationAction.findAllByImage(image).each {
+//            it.delete()
+//        }
+    }
+
+    private void deleteDependentLastUserPosition(ImageInstance image, Transaction transaction, Task task) {
+        //TODO:
+//        LastUserPosition.findAllByImage(image).each {
+//            it.delete()
+//        }
+    }
+
+    private void deleteDependentPersistentUserPosition(ImageInstance image, Transaction transaction, Task task) {
+        //TODO:
+//        PersistentUserPosition.findAllByImage(image).each {
+//            it.delete()
+//        }
+    }
+
+    private void deleteDependentPersistentImageConsultation(ImageInstance image, Transaction transaction, Task task) {
+        //TODO:
+//        PersistentImageConsultation.findAllByImage(image).each {
+//            it.delete()
+//        }
+    }
+
+    private void deleteDependentProperty(ImageInstance image, Transaction transaction, Task task) {
+        //TODO:
+//        Property.findAllByDomainIdent(image.id).each {
+//            propertyService.delete(it, transaction, null, false)
+//        }
+    }
+
+
+    private void deleteDependentNestedImageInstance(ImageInstance image, Transaction transaction, Task task) {
+        List<NestedImageInstance> nestedImageInstances = nestedImageInstanceRepository.findAllByParent(image);
+        for (NestedImageInstance nestedImageInstance : nestedImageInstances) {
+            nestedImageInstanceRepository.delete(nestedImageInstance);
         }
-
-
-    }
-
-    private boolean hasProfile(ImageInstance image) {
-        return companionFileRepository.countByImageAndType(image, "HDF5")>0;
-    }
-
-    private SliceCoordinates getSliceCoordinates(ImageInstance image) {
-        List<AbstractSlice> slices = abstractSliceRepository.findAllByImage(image);
-        SliceCoordinates sliceCoordinates = new SliceCoordinates(
-                slices.stream().map(AbstractSlice::getChannel).distinct().sorted().collect(Collectors.toList()),
-                slices.stream().map(AbstractSlice::getZStack).distinct().sorted().collect(Collectors.toList()),
-                slices.stream().map(AbstractSlice::getTime).distinct().sorted().collect(Collectors.toList()),
-            );
-        return sliceCoordinates;
     }
 
 
-    private SliceCoordinate getReferenceSliceCoordinate(ImageInstance image) {
-        SliceCoordinates sliceCoordinates = getSliceCoordinates(image);
-        SliceCoordinate referenceSliceCoordinates = new SliceCoordinate(
-                sliceCoordinates.getChannels().get((int) Math.floor(sliceCoordinates.getChannels().size()/2)),
-                sliceCoordinates.getZStacks().get((int) Math.floor(sliceCoordinates.getZStacks().size()/2)),
-                sliceCoordinates.getTimes().get((int) Math.floor(sliceCoordinates.getTimes().size()/2))
-                );
-        return referenceSliceCoordinates;
+
+    private void deleteDependentSliceInstance(ImageInstance image, Transaction transaction, Task task) {
+        List<SliceInstance> slices = sliceInstanceRepository.findAllByImage(image);
+        for (SliceInstance slice : slices) {
+            sliceInstanceService.delete(slice, transaction, task, false);
+        }
     }
 
-    private AbstractSlice getReferenceSlice(ImageInstance ImageInstance) {
-        SliceCoordinate sliceCoordinate = getReferenceSliceCoordinate(ImageInstance);
-        return abstractSliceRepository.findByImageAndChannelAndZStackAndTime(ImageInstance, sliceCoordinate.getChannel(), sliceCoordinate.getZStack(), sliceCoordinate.getTime())
-                .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", "image:" + ImageInstance.getId() + "," + sliceCoordinate.getChannel()+ ":" + sliceCoordinate.getZStack() + ":" + sliceCoordinate.getTime()));
+    private void deleteDependentTrack(ImageInstance image, Transaction transaction, Task task) {
+        //TODO:
+//        Track.findAllByImage(image).each {
+//            trackService.delete(it, transaction, task)
+//        }
     }
-
-    /**
-     * Get all image servers for an image id
-     */
-//    @Deprecated
-//    List<String> imageServers(Long ImageInstanceId) {
-//        ImageInstance image = find(ImageInstanceId).orElseThrow(() -> new ObjectNotFoundException("ImageInstance", ImageInstanceId));
-//        AbstractSlice slice = getReferenceSlice();
-//        return [imageServersURLs : [slice?.uploadedFile?.imageServer?.url + "/slice/tile?zoomify=" + slice?.path]]
-//    }
 
     @Override
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
-        return List.of(domain.getId(), ((ImageInstance)domain).getOriginalFilename());
-    }
-
-    public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
-        deleteDependentAbstractSlice((ImageInstance)domain, transaction, task);
-        deleteDependentImageInstance((ImageInstance)domain, transaction, task);
-        deleteDependentCompanionFile((ImageInstance)domain, transaction, task);
-        deleteDependentAttachedFile((ImageInstance)domain, transaction, task);
-        deleteDependentNestedImageInstance((ImageInstance)domain, transaction, task);
+        return List.of(domain.getId(), ((ImageInstance)domain).getBlindInstanceFilename(), ((ImageInstance)domain).getProject().getName());
     }
 
 
-    private void  deleteDependentAbstractSlice(ImageInstance ai, Transaction transaction, Task task) {
-        List<AbstractSlice> slices = abstractSliceRepository.findAllByImage(ai);
-        for (AbstractSlice slice : slices) {
-            abstractSliceService.delete(slice, transaction, task);
-        }
-
-    }
-
-    private void deleteDependentImageInstance(ImageInstance ai, Transaction transaction,Task task) {
-        List<ImageInstance> images = imageInstanceRepository.findAllByBaseImage(ai);
-        if(!images.isEmpty()) {
-            throw new ConstraintException("This image $ai cannot be deleted as it has already been insert " +
-                    "in projects " + images.stream().map(x -> x.getProject().getName()).collect(Collectors.joining(",")));
-        }
-    }
-
-
-    private void deleteDependentCompanionFile (ImageInstance ai, Transaction transaction, Task task) {
-        List<CompanionFile> companionFiles = companionFileRepository.findAllByImage(ai);
-        for (CompanionFile companionFile : companionFiles) {
-            companionFileService.delete(companionFile, transaction, task);
-        }
-    }
-
-    private void deleteDependentAttachedFile(ImageInstance ai, Transaction transaction,Task task)  {
-        List<AttachedFile> attachedFiles = attachedFileRepository.findAllByImage(ai);
-        for (AttachedFile attachedFile : attachedFiles) {
-            attachedFileService.delete(attachedFile, transaction, task);
-        }
-    }
-
-    private void  deleteDependentNestedImageInstance(ImageInstance ai, Transaction transaction,Task task) {
-        List<NestedImageInstance> nestedImageInstances = nestedImageInstanceRepository.findAllByBaseImage(ai);
-        for(NestedImageInstance nestedImageInstance : nestedImageInstances) {
-            nestedImageInstanceRepository.delete(nestedImageInstance);
+    @Override
+    public void checkDoNotAlreadyExist(CytomineDomain domain) {
+        // TODO: with new session?
+        Optional<ImageInstance> imageAlreadyExist = imageInstanceRepository.findByProjectAndBaseImage(((ImageInstance)domain).getProject(), ((ImageInstance)domain).getBaseImage());
+        if (imageAlreadyExist.isPresent() && (!Objects.equals(imageAlreadyExist.get().getId(), domain.getId()))) {
+            throw new AlreadyExistException("Image " + ((ImageInstance)domain).getBaseImage().getOriginalFilename() + " already map with project " + ((ImageInstance)domain).getProject().getName());
         }
     }
 }

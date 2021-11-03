@@ -74,7 +74,7 @@ public class AbstractImage extends CytomineDomain {
 
         abstractImage.originalFilename = json.getJSONAttrStr("originalFilename");
 
-        abstractImage.uploadedFile = (UploadedFile) json.getJSONAttrDomain(entityManager, "uploadedFile", new UploadedFile(), false);
+        abstractImage.uploadedFile = (UploadedFile) json.getJSONAttrDomain(entityManager, "uploadedFile", new UploadedFile(), true);
 
         abstractImage.height = json.getJSONAttrInteger("height", null);
         abstractImage.width = json.getJSONAttrInteger("width", null);
@@ -92,7 +92,7 @@ public class AbstractImage extends CytomineDomain {
         abstractImage.colorspace = json.getJSONAttrStr("colorspace", false);
 
 
-        return uploadedFile;
+        return abstractImage;
     }
 
     public static JsonObject getDataFromDomain(CytomineDomain domain) {
@@ -173,13 +173,13 @@ public class AbstractImage extends CytomineDomain {
         List<String> dimensions = new ArrayList<>();
         dimensions.add("X");
         dimensions.add("Y");
-        if (channels > 1) {
+        if (channels!=null && channels > 1) {
             dimensions.add("C");
         }
-        if (depth > 1) {
+        if (depth!=null && depth > 1) {
             dimensions.add("Z");
         }
-        if (duration > 1) {
+        if (duration!=null && duration > 1) {
             dimensions.add("T");
         }
         return String.join("", dimensions);

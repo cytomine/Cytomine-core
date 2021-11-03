@@ -110,5 +110,8 @@ public abstract class CytomineDomain {
         return toJsonObject().toJsonString();
     }
 
+    public boolean canUpdateContent() {
+        return true;
+    }
 
 }

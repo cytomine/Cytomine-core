@@ -3,37 +3,20 @@ package be.cytomine.service.image;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.*;
-import be.cytomine.domain.image.server.Storage;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.dto.SliceCoordinate;
-import be.cytomine.dto.SliceCoordinates;
 import be.cytomine.exceptions.*;
+import be.cytomine.repository.image.*;
 import be.cytomine.repository.image.AbstractSliceRepository;
-import be.cytomine.repository.image.AbstractSliceRepository;
-import be.cytomine.repository.image.CompanionFileRepository;
-import be.cytomine.repository.image.ImageInstanceRepository;
-import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
-import be.cytomine.service.PermissionService;
-import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
-import be.cytomine.utils.filters.SQLSearchParameter;
-import be.cytomine.utils.filters.SearchParameterEntry;
-import be.cytomine.utils.filters.SpecificationBuilder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.criteria.Join;
 import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -49,25 +32,9 @@ public class AbstractSliceService extends ModelService {
 
     private CurrentUserService currentUserService;
 
-    private CurrentRoleService currentRoleService;
-
     private SecurityACLService securityACLService;
 
-    private PermissionService permissionService;
-
     private AbstractSliceRepository abstractSliceRepository;
-
-    private ImageInstanceRepository imageInstanceRepository;
-
-    private TransactionService transactionService;
-
-    private ImageInstanceService imageInstanceService;
-
-    private CompanionFileRepository companionFileRepository;
-
-    private AbstractSliceRepository abstractSliceRepository;
-
-    private AbstractSliceService abstractSliceService;
 
     private SliceInstanceRepository sliceInstanceRepository;
 
