@@ -59,6 +59,9 @@ class SecUser extends CytomineDomain implements Serializable {
     @RestApiObjectField(description = "The way this user was created.")
     String origin
 
+    @RestApiObjectField(description = "True if user is authorized to use api key for authentication")
+    Boolean apiEnabled = false
+
     @RestApiObjectFields(params=[
             @RestApiObjectField(apiFieldName = "algo", description = "If true, user is a userjob",allowedType = "boolean",useForCreation = false)
     ])
@@ -72,6 +75,7 @@ class SecUser extends CytomineDomain implements Serializable {
         privateKey (nullable : true, blank : false)
         origin (blank : false, nullable: true)
         id unique: true
+        apiEnabled nullable: true
     }
 
     static mapping = {
@@ -91,6 +95,7 @@ class SecUser extends CytomineDomain implements Serializable {
         returnArray['username'] = domain?.username
         returnArray['origin'] = domain?.origin
         returnArray['algo'] = domain?.algo()
+        returnArray['apiEnabled'] = domain?.apiEnabled==null ? false: domain?.apiEnabled
         returnArray
     }
 

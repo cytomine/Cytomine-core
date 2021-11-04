@@ -19,6 +19,7 @@ package be.cytomine.test
 import org.apache.commons.io.IOUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.apache.http.Header
 import org.apache.http.HttpEntity
 import org.apache.http.HttpHost
 import org.apache.http.HttpResponse
@@ -114,6 +115,22 @@ class HttpClient {
         client.getCredentialsProvider().setCredentials(AuthScope.ANY, creds)
     }
 
+    void connect(String url) {
+        log.debug("Connection to " + url)
+        URL = new URL(url)
+        if(url.substring(0,8).equals("https://")){
+            targetHost = new HttpHost(URL.getHost(), 443, "https");
+        } else {
+            targetHost = new HttpHost(URL.getHost(), URL.getPort());
+        }
+        InsecureHttpClientFactory ssl = new InsecureHttpClientFactory()
+        client = ssl.buildHttpClient() //new DefaultHttpClient();
+        localcontext = new BasicHttpContext();
+        HttpParams params = client.getParams()
+        HttpConnectionParams.setConnectionTimeout(params, timeout)
+        HttpConnectionParams.setSoTimeout(params, timeout)
+    }
+
     void connect(String url, int port) {
         log.debug("Connection to " + url + " with port " + port )
         URL = new URL(url)
@@ -189,6 +206,15 @@ class HttpClient {
     void get() {
         log.info("Get " + URL.toString())
         HttpGet httpGet = new HttpGet(URL.toString());
+        response = client.execute(targetHost, httpGet, localcontext);
+    }
+
+    void get(Map<String, String> headers) {
+        log.info("Get " + URL.toString())
+        HttpGet httpGet = new HttpGet(URL.toString());
+        for(Map.Entry<String, String> header : headers.entrySet()) {
+            httpGet.addHeader(header.key, header.value);
+        }
         response = client.execute(targetHost, httpGet, localcontext);
     }
 
