@@ -17,7 +17,9 @@ package cytomine.web
 */
 
 import be.cytomine.security.AuthWithToken
+import be.cytomine.security.SecRole
 import be.cytomine.security.SecUser
+import be.cytomine.security.SecUserSecRole
 import be.cytomine.security.User
 import be.cytomine.utils.SecurityUtils
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -88,6 +90,16 @@ class APIAuthentificationFilters implements javax.servlet.Filter {
             if (!user) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
                 return false
+            }
+
+            if (user && (!user.apiEnabled)) {
+                def superAdmin = SecRole.findByAuthority("ROLE_SUPER_ADMIN")
+                if(!SecUserSecRole.findBySecUserAndSecRole(user,superAdmin)) {
+                    log.warn("user " + user.humanUsername() + " has tried to authenticate using api key but is not authorize to do that")
+                    return false;
+                } else {
+                    log.warn("user " + user.humanUsername() + " is superadmin with apiEnabled disabled. Please enable apiEnabled for this user in order to improve performance")
+                }
             }
 
             String signature = SecurityUtils.generateKeys(request.getMethod(),content_md5, content_type,date,queryString,path,user)

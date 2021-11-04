@@ -142,6 +142,7 @@ class User extends SecUser {
         if (domain.getPublicKey() == null || domain.getPrivateKey() == null || json.publicKey == "" || json.privateKey == "") {
             domain.generateKeys()
         }
+        domain.apiEnabled = JSONUtils.getJSONAttrBoolean(json,'apiEnabled', true)
         return domain;
     }    
 
