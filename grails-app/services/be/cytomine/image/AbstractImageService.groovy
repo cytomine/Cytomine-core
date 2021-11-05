@@ -386,7 +386,11 @@ class AbstractImageService extends ModelService {
                 }.each {ii ->
                     def json = JSON.parse(ii.encodeAsJSON())
                     json[it] = abstractImage[it]?.id
-                    imageInstanceService.update(ii, json)
+                    try{
+                        imageInstanceService.update(ii, json)
+                    } catch(ForbiddenException e){
+                        log.info("Cannot modify HV metadata in image where project is locked")
+                    }
                 }
             }
         }
