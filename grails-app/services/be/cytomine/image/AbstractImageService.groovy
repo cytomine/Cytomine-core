@@ -140,7 +140,7 @@ class AbstractImageService extends ModelService {
     def fullSearch(SecUser user, Project project = null, String sortColumn = null, String sortDirection = null, Long max  = 0, Long offset = 0, searchParameters = []) {
         securityACLService.checkIsSameUser(user, cytomineService.currentUser)
 
-        String searchText = searchParameters.find { it.field.equals("search") }?.values
+        String searchText = searchParameters.find { it.field.equals("searchText") }?.values
 
         String abstractImageAlias = "ai"
 
