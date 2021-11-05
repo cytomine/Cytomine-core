@@ -738,7 +738,7 @@ class ProjectService extends ModelService {
         securityACLService.check(project,ADMINISTRATION)
         SecUser currentUser = cytomineService.getCurrentUser()
         def jsonNewData = JSON.parse(project.encodeAsJSON())
-        jsonNewData.mode = Project.EditingMode.LOCKED
+        jsonNewData.isLocked = true//Project.EditingMode.LOCKED
 
         return executeCommand(new EditCommand(user: currentUser),project, jsonNewData)
     }
@@ -748,10 +748,12 @@ class ProjectService extends ModelService {
         securityACLService.check(project,ADMINISTRATION)
         SecUser currentUser = cytomineService.getCurrentUser()
 
-        String previousMode = JSON.parse(EditCommand.findAllByProject(project, [max: 1, sort: "created", order: "desc"])[0].data).previousProject.mode
-
+        def previousProject = JSON.parse(EditCommand.findAllByProject(project, [max: 1, sort: "created", order: "desc"])[0].data).previousProject
         def jsonNewData = JSON.parse(project.encodeAsJSON())
-        jsonNewData.mode = Project.EditingMode.valueOf(previousMode)
+
+        jsonNewData.isRestricted = previousProject.isRestricted
+        jsonNewData.isReadOnly = previousProject.isReadOnly
+        jsonNewData.isLocked = previousProject.isLocked
 
         return executeCommand(new EditCommand(user: currentUser),project, jsonNewData)
     }

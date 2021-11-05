@@ -197,7 +197,6 @@ class Project extends CytomineDomain implements Serializable {
         if(JSONUtils.getJSONAttrBoolean(json, 'isRestricted', false)) domain.mode = EditingMode.RESTRICTED;
         if(JSONUtils.getJSONAttrBoolean(json, 'isReadOnly', false)) domain.mode = EditingMode.READ_ONLY;
         if(JSONUtils.getJSONAttrBoolean(json, 'isLocked', false)) domain.mode = EditingMode.LOCKED;
-        if(JSONUtils.getJSONAttrStr(json, 'mode', false)) domain.mode = EditingMode.valueOf(JSONUtils.getJSONAttrStr(json, 'mode', false));
 
         domain.hideUsersLayers = JSONUtils.getJSONAttrBoolean(json, 'hideUsersLayers', false)
         domain.hideAdminsLayers = JSONUtils.getJSONAttrBoolean(json, 'hideAdminsLayers', false)

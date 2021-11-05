@@ -402,6 +402,34 @@ class ProjectTests  {
 
     }
 
+    void testEditProjectEditionMode() {
+
+        def project = BasicInstanceBuilder.getProjectNotExist(true)
+        def data = JSON.parse(project.encodeAsJSON())
+        data.isReadOnly = true
+        def result = ProjectAPI.update(project.id, data.toString(),Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        assert json instanceof JSONObject
+        int idProject = json.project.id
+        def showResult = ProjectAPI.show(idProject, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        json = JSON.parse(showResult.data)
+        BasicInstanceBuilder.compare(data.mapNew, json)
+        assert json.mode == "READ_ONLY"
+
+        data = json
+        data.isReadOnly = false
+        data.isRestricted = true
+        result = ProjectAPI.update(project.id, data.toString(),Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json instanceof JSONObject
+        idProject = json.project.id
+        showResult = ProjectAPI.show(idProject, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        json = JSON.parse(showResult.data)
+        assert json.mode == "RESTRICTED"
+    }
+
     void testDeleteProject() {
         def projectToDelete = BasicInstanceBuilder.getProjectNotExist(true)
 
