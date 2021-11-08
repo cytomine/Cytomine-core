@@ -198,7 +198,7 @@ class ImageScoreService extends ModelService {
         scoreList.sort { it.name }
         List<User> userList = secUserService.listUsers(project, false, false)
 
-        Map<String, String> map = new HashMap<>();
+        Map<String, String> scores = new HashMap<>();
         def request = "  select " +
                 "           image_instance.id as ImageInstanceId, " +
                 "           image_score.user_id as UserId," +
@@ -212,8 +212,17 @@ class ImageScoreService extends ModelService {
                 "        order by ImageInstanceId, UserId, ScoreId;"
         def sql = new Sql(dataSource)
         sql.eachRow(request) {
-            println it
-            map.put(it['ImageInstanceId'] + "_" + it['UserId'] + "_" + it['ScoreId'], it['Value'])
+            scores.put(it['ImageInstanceId'] + "_" + it['UserId'] + "_" + it['ScoreId'], it['Value'])
+        }
+        try {
+            sql.close()
+        }catch (Exception e) {}
+
+        Map<String, String> consensus = new HashMap<>();
+        request = request.replaceAll("image_score", "consensus_score")
+        sql = new Sql(dataSource)
+        sql.eachRow(request) {
+            consensus.put(it['ImageInstanceId'] + "_" + it['ScoreId'], it['Value'])
         }
         try {
             sql.close()
@@ -229,11 +238,17 @@ class ImageScoreService extends ModelService {
                 row.put("userId", user.id)
                 row.put("username", user.username)
                 scoreList.each { score ->
-                    def result = map.get(image.id + "_" + user.id + "_" + score.id)
+                    def result = scores.get(image.id + "_" + user.id + "_" + score.id)
                     if (result) {
                         row.put(String.valueOf(score.id), result)
                     } else {
                         row.put(String.valueOf(score.id), '')
+                    }
+                    def resultConsensus = consensus.get(image.id + "_" + score.id)
+                    if (resultConsensus) {
+                        row.put("consensus" + String.valueOf(score.id), resultConsensus)
+                    } else {
+                        row.put("consensus" + String.valueOf(score.id), '')
                     }
                 }
                 rows.add(row)

@@ -62,6 +62,7 @@ import org.springframework.dao.DataRetrievalFailureException
 import be.cytomine.score.Score
 import be.cytomine.score.ScoreProject
 import be.cytomine.score.ScoreValue
+import be.cytomine.score.ConsensusScore
 
 /**
  * Created by IntelliJ IDEA.
@@ -2221,7 +2222,26 @@ class BasicInstanceBuilder {
             ScoreValue scoreValue = getScoreValueNotExist(getScoreNotExist(true), true),
             User user = User.findByUsername(Infos.SUPERADMINLOGIN),
             boolean save = false) {
-        ImageScore imageScore = new ImageScore(imageInstance:imageInstance, scoreValue:scoreValue, user:user, score: score)
+        ImageScore imageScore = new ImageScore(imageInstance:imageInstance, scoreValue:scoreValue, user:user, score: scoreValue.score)
         return save ? saveDomain(imageScore) : checkDomain(imageScore)
+    }
+
+
+    static ConsensusScore getConsensusScore() {
+        def consensusScore = ConsensusScore.findAllByImageInstance(getImageInstance()).find{it.scoreValue.score == getScoreValue().score}
+        if (!consensusScore) {
+            consensusScore = new ConsensusScore(imageInstance: getImageInstance(), user: User.findByUsername(Infos.SUPERADMINLOGIN), scoreValue: getScoreValue(), score: scoreValue.score)
+            consensusScore = saveDomain(consensusScore)
+        }
+        consensusScore
+    }
+
+    static ConsensusScore getConsensusScoreNotExist(
+            ImageInstance imageInstance = getImageInstanceNotExist(getProjectNotExist(true), true),
+            ScoreValue scoreValue = getScoreValueNotExist(getScoreNotExist(true), true),
+            User user = User.findByUsername(Infos.SUPERADMINLOGIN),
+            boolean save = false) {
+        ConsensusScore consensusScore = new ConsensusScore(imageInstance:imageInstance, scoreValue:scoreValue, user:user, score: scoreValue.score)
+        return save ? saveDomain(consensusScore) : checkDomain(consensusScore)
     }
 }

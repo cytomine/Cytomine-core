@@ -137,10 +137,12 @@ class RestImageScoreController extends RestController{
             List fields = ["imageId", "instanceFilename", "userId", "username"]
             scores.each {
                 fields << String.valueOf(it.id)
+                fields << "consensus" + String.valueOf(it.id)
             }
             Map labels = ["imageId": "Id", "instanceFilename": "Filename", "userId": "UserId", "username": "Username"]
             scores.each {
                 labels[String.valueOf(it.id)] = it.name
+                labels["consensus"+String.valueOf(it.id)] = "consensus " + it.name
             }
 
             String title = "Scores report"

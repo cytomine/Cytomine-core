@@ -52,6 +52,23 @@ class ScoreUrlMappings {
             action = [GET: "statsReport"]
         }
 
+
+
+        "/api/imageinstance/$imageInstance/consensus/$score.$format"(controller:"restConsensusScore") {
+            action = [GET: "show", DELETE: "delete"]
+        }
+        "/api/imageinstance/$imageInstance/consensus/$score/value/$value.$format"(controller:"restConsensusScore") {
+            action = [POST: "add"]
+        }
+
+        "/api/imageinstance/$imageInstance/consensus-score.$format"(controller:"restConsensusScore") {
+            action = [GET: "listByImageInstance"]
+        }
+        "/api/project/$project/consensus-score/stats-group-by-image.$format"(controller:"restConsensusScore") {
+            action = [GET: "consensusGroupByImageInstances"]
+        }
+
+
         "/api/scoring-description.$format"(controller:"restScoringDescription"){
             action = [GET: "list",POST:"add"]
         }

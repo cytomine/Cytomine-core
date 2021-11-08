@@ -449,8 +449,13 @@ class ImageInstanceService extends ModelService {
             scores.each {score ->
                 String columnName = "score${score.id}"
                 select += ", ${columnName}_val.value as ${columnName}, ${columnName}_val.index as ${columnName}_index "
+
                 from += "LEFT OUTER JOIN image_score ${columnName} ON ii.id = ${columnName}.image_instance_id AND ${columnName}.user_id = ${currentUserId} AND ${columnName}.score_id = ${score.id} "
                 from += "LEFT OUTER JOIN score_value ${columnName}_val ON ${columnName}.score_value_id = ${columnName}_val.id "
+
+                select += ", consensus_${columnName}_val.value as consensus_${columnName}, consensus_${columnName}_val.index as consensus_${columnName}_index "
+                from += "LEFT OUTER JOIN consensus_score consensus_${columnName} ON ii.id = consensus_${columnName}.image_instance_id AND consensus_${columnName}.score_id = ${score.id} "
+                from += "LEFT OUTER JOIN score_value consensus_${columnName}_val ON consensus_${columnName}.score_value_id = consensus_${columnName}_val.id "
             }
         }
 
@@ -519,6 +524,8 @@ class ImageInstanceService extends ModelService {
             scores.each {score ->
                 String columnName = "score${score.id}"
                 line.putAt(columnName, map[columnName])
+                String consensusColumnName = "consensusScore${score.id}"
+                line.putAt(consensusColumnName, map[consensusColumnName])
             }
             data << line
         }
