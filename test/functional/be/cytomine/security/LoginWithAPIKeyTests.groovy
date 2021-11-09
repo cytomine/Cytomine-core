@@ -47,8 +47,7 @@ class LoginWithAPIKeyTests extends SecurityTestsAbstract {
         client.get(headers)
         int code = client.getResponseCode()
         String response = client.getResponseData()
-        client.disconnect();
-        println response
+        client.disconnect()
         assert 200 == code
         assert JSON.parse(response)["username"]=="user1"
     }
@@ -66,8 +65,7 @@ class LoginWithAPIKeyTests extends SecurityTestsAbstract {
         client.get(headers)
         int code = client.getResponseCode()
         String response = client.getResponseData()
-        client.disconnect();
-        println response
+        client.disconnect()
         assert 401 == code
     }
 
@@ -84,10 +82,26 @@ class LoginWithAPIKeyTests extends SecurityTestsAbstract {
         client.get(headers)
         int code = client.getResponseCode()
         String response = client.getResponseData()
-        client.disconnect();
-        println response
+        client.disconnect()
         assert 200 == code
         assert JSON.parse(response)["username"]=="testapikey"
+    }
+
+    void testDefaultAPIKeyValidityForNewUser() {
+        User user1 = BasicInstanceBuilder.getUserNotExist()
+        def result = UserAPI.create(user1.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        user1 = result.data
+        String URL = Infos.CYTOMINEURL + "/api/user/current.json"
+        HttpClient client = new HttpClient();
+        client.connect(URL)
+
+        def headers  = generateSignature(user1, "GET", URL, "", "application/json,*/*")
+        headers.put("accept", "application/json,*/*")
+        client.get(headers)
+        int code = client.getResponseCode()
+        client.disconnect()
+        assert 401 == code
     }
 
     void testLoginWithBadAPIKey() {
@@ -103,8 +117,7 @@ class LoginWithAPIKeyTests extends SecurityTestsAbstract {
         client.get(headers)
         int code = client.getResponseCode()
         String response = client.getResponseData()
-        client.disconnect();
-        println response
+        client.disconnect()
         assert 401 == code
     }
 
@@ -149,26 +162,5 @@ class LoginWithAPIKeyTests extends SecurityTestsAbstract {
         Date today = Calendar.getInstance().getTime();
         return new SimpleDateFormat("%E, %d %M %Y %H:%M:%S +0000").format(today);
     }
-
-//    private static String generateKeys(String method, String content_md5, String content_type, String date, String queryString, String path, String privateKey) throws NoSuchAlgorithmException, InvalidKeyException, UnsupportedEncodingException {
-//        String canonicalHeaders = method + "\n" + content_md5 + "\n" + content_type + "\n" + date + "\n";
-//        String canonicalExtensionHeaders = "";
-//        String canonicalResource = path + queryString;
-//        String messageToSign = canonicalHeaders + canonicalExtensionHeaders + canonicalResource;
-//
-//        String key = privateKey;
-//        SecretKeySpec signingKey = new SecretKeySpec(key.getBytes(), "HmacSHA1");
-//        // get an hmac_sha1 Mac instance and initialize with the signing key
-//        Mac mac = Mac.getInstance("HmacSHA1");
-//        mac.init(signingKey);
-//        // compute the hmac on input data bytes
-//        byte[] rawHmac = mac.doFinal(new String(messageToSign.getBytes(), "UTF-8").getBytes());
-//
-//        // base64-encode the hmac
-//        byte[] signatureBytes = Base64.encodeBase64(rawHmac);
-//
-//        String signature = new String(signatureBytes);
-//        return signature;
-//    }
 
 }
