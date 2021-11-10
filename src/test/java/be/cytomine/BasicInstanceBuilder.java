@@ -1,9 +1,7 @@
 package be.cytomine;
 
 import be.cytomine.authorization.AbstractAuthorizationTest;
-import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.image.UploadedFile;
+import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.Ontology;
@@ -14,6 +12,7 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUserSecRole;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.repository.image.MimeRepository;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
@@ -27,6 +26,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
@@ -53,13 +53,22 @@ public class BasicInstanceBuilder {
 
     SecRoleRepository secRoleRepository;
 
+    MimeRepository mimeRepository;
+
     private static User defaultUser;
 
-    public BasicInstanceBuilder(EntityManager em, TransactionTemplate transactionTemplate, UserRepository userRepository, PermissionService permissionService, SecRoleRepository secRoleRepository) {
+    public BasicInstanceBuilder(
+            EntityManager em,
+            TransactionTemplate transactionTemplate,
+            UserRepository userRepository,
+            PermissionService permissionService,
+            SecRoleRepository secRoleRepository,
+            MimeRepository mimeRepository) {
         this.em = em;
         this.userRepository = userRepository;
         this.permissionService = permissionService;
         this.secRoleRepository = secRoleRepository;
+        this.mimeRepository = mimeRepository;
         this.transactionTemplate = transactionTemplate;
         this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
@@ -268,6 +277,10 @@ public class BasicInstanceBuilder {
         return persistAndReturn(imageInstance);
     }
 
+    public ImageInstance given_a_not_persisted_image_instance() {
+        return given_a_not_persisted_image_instance(given_an_abstract_image(), given_a_project());
+    }
+
     public ImageInstance given_a_not_persisted_image_instance(AbstractImage abstractImage, Project project) {
         ImageInstance image = new ImageInstance();
         image.setBaseImage(abstractImage);
@@ -275,5 +288,94 @@ public class BasicInstanceBuilder {
         image.setUser(given_superadmin());
         return image;
     }
-    
+
+    public ImageInstance given_an_image_instance() {
+        ImageInstance imageInstance = given_an_image_instance(given_an_abstract_image(), given_a_project());
+        return persistAndReturn(imageInstance);
+    }
+
+    public AbstractSlice given_an_abstract_slice() {
+        return given_an_abstract_slice(given_an_abstract_image(), given_a_uploaded_file());
+    }
+
+    public AbstractSlice given_an_abstract_slice(AbstractImage abstractImage, int c, int z, int t) {
+        AbstractSlice slice = given_a_not_persisted_abstract_slice(abstractImage, given_a_uploaded_file());
+        slice.setChannel(c);
+        slice.setZStack(z);
+        slice.setTime(t);
+        return persistAndReturn(slice);
+    }
+
+    public AbstractSlice given_an_abstract_slice(AbstractImage abstractImage, UploadedFile uploadedFile) {
+        return persistAndReturn(given_a_not_persisted_abstract_slice(abstractImage, uploadedFile));
+    }
+
+    public AbstractSlice given_a_not_persisted_abstract_slice() {
+        return given_a_not_persisted_abstract_slice(given_an_abstract_image(), given_a_uploaded_file());
+    }
+
+    public AbstractSlice given_a_not_persisted_abstract_slice(AbstractImage abstractImage, UploadedFile uploadedFile) {
+        AbstractSlice slice = new AbstractSlice();
+        slice.setImage(abstractImage);
+        slice.setUploadedFile(uploadedFile);
+        slice.setMime(given_a_mime());
+        slice.setChannel(0);
+        slice.setZStack(0);
+        slice.setTime(0);
+        return slice;
+    }
+
+    public SliceInstance given_a_slice_instance() {
+        return given_a_slice_instance(given_an_image_instance(), 0, 0, 0);
+    }
+
+    public SliceInstance given_a_slice_instance(ImageInstance imageInstance, int c, int z, int t) {
+        AbstractSlice abstractSlice = given_an_abstract_slice(imageInstance.getBaseImage(), c, z, t);
+        return persistAndReturn(given_a_not_persisted_slice_instance(imageInstance, abstractSlice));
+    }
+
+    public SliceInstance given_a_slice_instance(ImageInstance imageInstance, AbstractSlice abstractSlice) {
+        return persistAndReturn(given_a_not_persisted_slice_instance(imageInstance, abstractSlice));
+    }
+
+    public SliceInstance given_a_not_persisted_slice_instance() {
+        return given_a_not_persisted_slice_instance(given_an_image_instance(), given_an_abstract_slice());
+    }
+
+    public SliceInstance given_a_not_persisted_slice_instance(ImageInstance imageInstance, AbstractSlice abstractSlice) {
+        SliceInstance slice = new SliceInstance();
+        slice.setImage(imageInstance);
+        slice.setProject(imageInstance.getProject());
+        slice.setBaseSlice(abstractSlice);
+        return slice;
+    }
+
+
+    public Mime given_a_mime() {
+        Optional<Mime> optionalMime = mimeRepository.findByMimeType("image/pyrtiff");
+        if (optionalMime.isPresent()) {
+            return optionalMime.get();
+        } else {
+            Mime mime = new Mime();
+            mime.setExtension("tif");
+            mime.setMimeType("image/pyrtiff");
+            return persistAndReturn(mime);
+        }
+    }
+
+    public NestedImageInstance given_a_nested_image_instance() {
+        return persistAndReturn(given_a_not_persisted_nested_image_instance());
+    }
+
+    public NestedImageInstance given_a_not_persisted_nested_image_instance() {
+        ImageInstance parent = given_an_image_instance();
+        NestedImageInstance nestedImageInstance = new NestedImageInstance();
+        nestedImageInstance.setBaseImage(given_an_abstract_image());
+        nestedImageInstance.setProject(parent.getProject());
+        nestedImageInstance.setUser(given_superadmin());
+        nestedImageInstance.setParent(parent);
+        nestedImageInstance.setX(1);
+        nestedImageInstance.setY(2);
+        return nestedImageInstance;
+    }
 }

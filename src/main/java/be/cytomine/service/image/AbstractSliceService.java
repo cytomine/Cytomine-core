@@ -38,7 +38,6 @@ public class AbstractSliceService extends ModelService {
 
     private SliceInstanceRepository sliceInstanceRepository;
 
-
     @Override
     public Class currentDomain() {
         return AbstractSlice.class;
@@ -49,23 +48,6 @@ public class AbstractSliceService extends ModelService {
         return Optional.ofNullable(abstractSlice.getUploadedFile()).map(UploadedFile::getUser).orElse(null);
     }
 
-
-    @Override
-    public CytomineDomain createFromJSON(JsonObject json) {
-        return new AbstractSlice().buildDomainFromJson(json, getEntityManager());
-    }
-
-    @Override
-    public void checkDoNotAlreadyExist(CytomineDomain domain) {
-        //TODO: withNewSession
-        AbstractSlice abstractSlice = ((AbstractSlice)domain);
-        abstractSliceRepository.findByImageAndChannelAndZStackAndTime(abstractSlice.getImage(), abstractSlice.getChannel(), abstractSlice.getZStack(), abstractSlice.getTime()).ifPresent(slice -> {
-            if (!Objects.equals(slice.getId(), abstractSlice.getId())) {
-                throw new AlreadyExistException("AbstractSlice (C:" + abstractSlice.getChannel() + ", Z:" + abstractSlice.getZStack() + ", T:" + abstractSlice.getTime() + ") already exists for AbstractImage " + abstractSlice.getImage().getId());
-            }
-        });
-
-    }
 
     public Optional<AbstractSlice> find(Long id) {
         Optional<AbstractSlice> abstractSlice = abstractSliceRepository.findById(id);
@@ -157,5 +139,22 @@ public class AbstractSliceService extends ModelService {
         }
     }
 
+
+    @Override
+    public CytomineDomain createFromJSON(JsonObject json) {
+        return new AbstractSlice().buildDomainFromJson(json, getEntityManager());
+    }
+
+    @Override
+    public void checkDoNotAlreadyExist(CytomineDomain domain) {
+        //TODO: withNewSession
+        AbstractSlice abstractSlice = ((AbstractSlice)domain);
+        abstractSliceRepository.findByImageAndChannelAndZStackAndTime(abstractSlice.getImage(), abstractSlice.getChannel(), abstractSlice.getZStack(), abstractSlice.getTime()).ifPresent(slice -> {
+            if (!Objects.equals(slice.getId(), abstractSlice.getId())) {
+                throw new AlreadyExistException("AbstractSlice (C:" + abstractSlice.getChannel() + ", Z:" + abstractSlice.getZStack() + ", T:" + abstractSlice.getTime() + ") already exists for AbstractImage " + abstractSlice.getImage().getId());
+            }
+        });
+
+    }
 
 }

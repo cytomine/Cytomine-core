@@ -9,6 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import java.util.Optional;
 
 @Entity
 @Getter
@@ -40,7 +41,7 @@ public class AbstractSlice extends CytomineDomain {
 
         abstractSlice.uploadedFile = (UploadedFile) json.getJSONAttrDomain(entityManager, "uploadedFile", new UploadedFile(), false);
         abstractSlice.image = (AbstractImage) json.getJSONAttrDomain(entityManager, "image", new AbstractImage(), true);
-        abstractSlice.mime = (Mime) json.getJSONAttrDomain(entityManager, "mime", new Mime(), true);
+        abstractSlice.mime = (Mime) json.getJSONAttrDomain(entityManager, "mime", new Mime(), "mimeType", "String", true);
 
         
         abstractSlice.channel = json.getJSONAttrInteger("channel", 0);
@@ -89,7 +90,9 @@ public class AbstractSlice extends CytomineDomain {
     }
 
     public Integer getRank() {
-        return this.channel + this.image.getChannels() * (this.zStack + this.image.getDepth() * this.time);
+        return this.channel +
+                Optional.ofNullable(this.image.getChannels()).orElse(0) *
+                        (this.zStack + Optional.ofNullable(this.image.getDepth()).orElse(0) * this.time);
     }
 
     @Override

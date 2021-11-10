@@ -31,8 +31,8 @@ public interface ImageInstanceRepository extends JpaRepository<ImageInstance, Lo
         return findAllByBaseImage(abstractImage).stream().filter(predicate).collect(Collectors.toList());
     }
 
-    @Query(value = "SELECT a.id FROM image_instance a WHERE project_id=#:project.id AND parent_id IS NULL", nativeQuery = true)
-    List<Long> getAllImageId(Project project);
+    @Query(value = "SELECT a.id FROM image_instance a WHERE project_id=:projectId AND parent_id IS NULL", nativeQuery = true)
+    List<Long> getAllImageId(Long projectId);
 
     @Query(value = "SELECT a FROM image_instance a WHERE project_id=:projectId AND base_image_id=:baseImageId AND parent_id IS NULL", nativeQuery = true)
     Optional<ImageInstance> findByProjectIdAndBaseImageId(Long projectId, Long baseImageId);

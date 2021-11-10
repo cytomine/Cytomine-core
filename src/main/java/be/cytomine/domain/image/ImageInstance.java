@@ -219,7 +219,7 @@ public class ImageInstance extends CytomineDomain {
         if (Optional.ofNullable(project).map(Project::getBlindMode).orElse(false)) {
             return String.valueOf(baseImage.getId());
         }
-        return baseImage.getOriginalFilename();
+        return Optional.ofNullable(baseImage).map(AbstractImage::getOriginalFilename).orElse(null);
     }
 
     public String getBlindInstanceFilename() {
@@ -228,7 +228,7 @@ public class ImageInstance extends CytomineDomain {
         } else if (instanceFilename!=null && !instanceFilename.trim().isBlank()) {
             return instanceFilename;
         } else {
-            return baseImage.getOriginalFilename();
+            return Optional.ofNullable(baseImage).map(AbstractImage::getOriginalFilename).orElse(null);
         }
     }
 
@@ -243,35 +243,35 @@ public class ImageInstance extends CytomineDomain {
         if (physicalSizeX != null && physicalSizeX != 0) {
             return physicalSizeX;
         }
-        return baseImage.getPhysicalSizeX();
+        return Optional.ofNullable(baseImage).map(AbstractImage::getPhysicalSizeX).orElse(null);
     }
 
     public Double getPhysicalSizeY() {
         if (physicalSizeY != null && physicalSizeY != 0) {
             return physicalSizeY;
         }
-        return baseImage.getPhysicalSizeY();
+        return Optional.ofNullable(baseImage).map(AbstractImage::getPhysicalSizeY).orElse(null);
     }
 
     public Double getPhysicalSizeZ() {
         if (physicalSizeZ != null && physicalSizeZ != 0) {
             return physicalSizeZ;
         }
-        return baseImage.getPhysicalSizeZ();
+        return Optional.ofNullable(baseImage).map(AbstractImage::getPhysicalSizeZ).orElse(null);
     }
 
     public Double getFps() {
         if (fps != null && fps != 0) {
             return fps;
         }
-        return baseImage.getFps();
+        return Optional.ofNullable(baseImage).map(AbstractImage::getFps).orElse(null);
     }
 
     public Integer getMagnification() {
         if (magnification != null && magnification != 0) {
             return magnification;
         }
-        return baseImage.getMagnification();
+        return Optional.ofNullable(baseImage).map(AbstractImage::getMagnification).orElse(null);
     }
 
 }

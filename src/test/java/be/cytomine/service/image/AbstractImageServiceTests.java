@@ -15,8 +15,10 @@ import be.cytomine.service.CommandService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.search.UploadedFileSearchParameter;
 import be.cytomine.utils.CommandResponse;
+import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.filters.SearchOperation;
 import be.cytomine.utils.filters.SearchParameterEntry;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +58,12 @@ public class AbstractImageServiceTests {
 
     @Autowired
     TransactionService transactionService;
+
+    @Autowired
+    EntityManager entityManager;
+
+    @Autowired
+    ImageInstanceService imageInstanceService;
 
     @Test
     void list_all_image_by_filters() {
@@ -123,5 +132,231 @@ public class AbstractImageServiceTests {
         assertThat(images.getContent()).contains(abstractImageFromUserStorage);
         assertThat(images.getContent()).doesNotContain(abstractImageFromAnotherStorage);
     }
+
+    @Test
+    void get_uploaded_file_by_user() {
+        AbstractImage abstractImage = builder.given_an_abstract_image();
+        assertThat(abstractImage).isEqualTo(abstractImageService.get(abstractImage.getId()));
+    }
+
+    @Test
+    void get_unexisting_abstractImage_return_null() {
+        AssertionsForClassTypes.assertThat(abstractImageService.get(0L)).isNull();
+    }
+
+    @Test
+    void find_abstractImage_with_success() {
+        AbstractImage abstractImage = builder.given_an_abstract_image();
+        AssertionsForClassTypes.assertThat(abstractImageService.find(abstractImage.getId()).isPresent());
+        assertThat(abstractImage).isEqualTo(abstractImageService.find(abstractImage.getId()).get());
+    }
+
+    @Test
+    void find_unexisting_abstractImage_return_empty() {
+        AssertionsForClassTypes.assertThat(abstractImageService.find(0L)).isEmpty();
+    }
+
+
+    @Test
+    void detect_if_unused_abstract_image_is_unused() {
+        AbstractImage abstractImage = builder.given_an_abstract_image();
+        assertThat(abstractImageService.isAbstractImageUsed(abstractImage.getId())).isFalse();
+    }
+
+    @Test
+    void detect_if_used_abstract_image_is_used() {
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        assertThat(abstractImageService.isAbstractImageUsed(imageInstance.getBaseImage().getId())).isTrue();
+    }
+
+    @Test
+    void detect_if_unused_abstract_image_is_in_unused_list() {
+        AbstractImage abstractImage = builder.given_an_abstract_image();
+        assertThat(abstractImageService.listUnused()).contains(abstractImage);
+    }
+
+    @Test
+    void detect_if_used_abstract_image_is_missing_from_unused_list() {
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        assertThat(abstractImageService.listUnused()).doesNotContain(imageInstance.getBaseImage());
+    }
+
+
+    @Test
+    void add_valid_abstract_image_with_success() {
+        AbstractImage abstractImage = builder.given_a_not_persisted_abstract_image();
+
+        CommandResponse commandResponse = abstractImageService.add(abstractImage.toJsonObject());
+
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        AssertionsForClassTypes.assertThat(abstractImageService.find(commandResponse.getObject().getId())).isPresent();
+        AbstractImage created = abstractImageService.find(commandResponse.getObject().getId()).get();
+    }
+
+    @Test
+    void add_valid_abstract_image_with_null_uploaded_file_fails() {
+        AbstractImage abstractImage = builder.given_a_not_persisted_abstract_image();
+        abstractImage.setUploadedFile(null);
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
+            abstractImageService.add(abstractImage.toJsonObject());
+        });
+    }
+
+    @Test
+    void add_valid_abstract_image_with_bad_num_field_width() {
+        AbstractImage abstractImage = builder.given_a_not_persisted_abstract_image();
+        abstractImage.setWidth(0);
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
+            abstractImageService.add(abstractImage.toJsonObject());
+        });
+    }
+
+    @Test
+    void add_valid_abstract_image_with_bad_num_field_height() {
+        AbstractImage abstractImage = builder.given_a_not_persisted_abstract_image();
+        abstractImage.setHeight(0);
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
+            abstractImageService.add(abstractImage.toJsonObject());
+        });
+    }
+
+    @Test
+    void add_valid_abstract_image_with_bad_num_field_depth() {
+        AbstractImage abstractImage = builder.given_a_not_persisted_abstract_image();
+        abstractImage.setDepth(0);
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
+            abstractImageService.add(abstractImage.toJsonObject());
+        });
+    }
+
+    @Test
+    void add_valid_abstract_image_with_bad_num_field_duration() {
+        AbstractImage abstractImage = builder.given_a_not_persisted_abstract_image();
+        abstractImage.setDuration(0);
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
+            abstractImageService.add(abstractImage.toJsonObject());
+        });
+    }
+
+    @Test
+    void add_valid_abstract_image_with_bad_num_field_channels() {
+        AbstractImage abstractImage = builder.given_a_not_persisted_abstract_image();
+        abstractImage.setChannels(0);
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
+            abstractImageService.add(abstractImage.toJsonObject());
+        });
+    }
+
+    @Test
+    void add_valid_abstract_image_with_bad_num_field_bitDepth() {
+        AbstractImage abstractImage = builder.given_a_not_persisted_abstract_image();
+        abstractImage.setBitDepth(0);
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
+            abstractImageService.add(abstractImage.toJsonObject());
+        });
+    }
+
+    @Test
+    void edit_abstract_image_with_success() {
+        AbstractImage abstractImage = builder.given_a_not_persisted_abstract_image();
+        abstractImage.setHeight(10000);
+        abstractImage.setWidth(1000);
+        abstractImage.setDuration(1);
+        abstractImage.setOriginalFilename("OLDNAME");
+        abstractImage = builder.persistAndReturn(abstractImage);
+
+        JsonObject jsonObject = abstractImage.toJsonObject();
+        jsonObject.put("height", 90000);
+        jsonObject.put("width", 9000);
+        jsonObject.put("duration", 2);
+        jsonObject.put("originalFilename", "NEWNAME");
+
+        CommandResponse commandResponse = abstractImageService.edit(jsonObject, true);
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        AssertionsForClassTypes.assertThat(abstractImageService.find(commandResponse.getObject().getId())).isPresent();
+        AbstractImage updated = abstractImageService.find(commandResponse.getObject().getId()).get();
+
+        assertThat(updated.getHeight()).isEqualTo(90000);
+        assertThat(updated.getWidth()).isEqualTo(9000);
+        assertThat(updated.getDuration()).isEqualTo(2);
+        assertThat(updated.getOriginalFilename()).isEqualTo("NEWNAME");
+    }
+
+    @Test
+    void edit_abstract_image_magnification() {
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        AbstractImage abstractImage = imageInstance.getBaseImage();
+
+        assertThat(imageInstance.getPhysicalSizeX()).isEqualTo(abstractImage.getPhysicalSizeX());
+        assertThat(imageInstance.getMagnification()).isEqualTo(abstractImage.getMagnification());
+
+        JsonObject jsonObject = abstractImage.toJsonObject();
+        jsonObject.put("physicalSizeX", 2.5d);
+        jsonObject.put("magnification", 20);
+
+        CommandResponse commandResponse = abstractImageService.update(abstractImage, jsonObject);
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        AssertionsForClassTypes.assertThat(abstractImageService.find(commandResponse.getObject().getId())).isPresent();
+        AbstractImage updated = abstractImageService.find(commandResponse.getObject().getId()).get();
+        entityManager.refresh(abstractImage);
+
+        assertThat(updated.getPhysicalSizeX()).isEqualTo(2.5);
+        assertThat(updated.getMagnification()).isEqualTo(20);
+
+        entityManager.refresh(imageInstance);
+
+        assertThat(imageInstance.getPhysicalSizeX()).isEqualTo(2.5);
+        assertThat(imageInstance.getMagnification()).isEqualTo(20);
+
+        jsonObject = imageInstance.toJsonObject();
+        jsonObject.put("magnification", 40);
+
+        commandResponse = imageInstanceService.update(imageInstance, jsonObject);
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+
+        entityManager.refresh(imageInstance);
+
+        assertThat(imageInstance.getPhysicalSizeX()).isEqualTo(2.5);
+        assertThat(imageInstance.getMagnification()).isEqualTo(40);
+
+        jsonObject = abstractImage.toJsonObject();
+        jsonObject.put("physicalSizeX", 6);
+        jsonObject.put("magnification", 10);
+
+        commandResponse = abstractImageService.update(abstractImage, jsonObject);
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+
+        assertThat(abstractImage.getPhysicalSizeX()).isEqualTo(6);
+        assertThat(abstractImage.getMagnification()).isEqualTo(10);
+
+        entityManager.refresh(imageInstance);
+
+        assertThat(imageInstance.getPhysicalSizeX()).isEqualTo(6);
+        assertThat(imageInstance.getMagnification()).isEqualTo(40);
+
+    }
+
+    @Test
+    void delete_abstract_image_with_success() {
+        AbstractImage abstractImage = builder.given_an_abstract_image();
+
+        CommandResponse commandResponse = abstractImageService.delete(abstractImage, null, null, true);
+
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        AssertionsForClassTypes.assertThat(abstractImageService.find(abstractImage.getId()).isEmpty());
+    }
+
+    @Test
+    void delete_uploadedFile_with_dependencies_with_success() {
+        fail("not yet implemented");
+    }
+
+
 
 }

@@ -41,11 +41,8 @@ public class SliceInstance extends CytomineDomain implements Serializable {
     }
 
     public static JsonObject getDataFromDomain(CytomineDomain domain) {
-        JsonObject returnArray = ImageInstance.getDataFromDomain(domain);
+        JsonObject returnArray = CytomineDomain.getDataFromDomain(domain);
         SliceInstance sliceInstance = (SliceInstance) domain;
-        
-        
-        
         returnArray.put("uploadedFile", Optional.ofNullable(sliceInstance.baseSlice).map(AbstractSlice::getUploadedFileId).orElse(null));
 
         returnArray.put("imageServerUrl", sliceInstance.getImageServerUrl());

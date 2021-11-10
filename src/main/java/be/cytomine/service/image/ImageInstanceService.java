@@ -18,10 +18,7 @@ import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.utils.CommandResponse;
-import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.SQLUtils;
-import be.cytomine.utils.Task;
+import be.cytomine.utils.*;
 import be.cytomine.utils.filters.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -99,7 +96,7 @@ public class ImageInstanceService extends ModelService {
 
     public List<Long> getAllImageId(Project project) {
         securityACLService.check(project, READ);
-        return imageInstanceRepository.getAllImageId(project);
+        return imageInstanceRepository.getAllImageId(project.getId());
     }
 
     private List<SearchParameterEntry> getDomainAssociatedSearchParameters(List<SearchParameterEntry> searchParameters, boolean blinded) {
@@ -216,8 +213,8 @@ public class ImageInstanceService extends ModelService {
         String request;
 
         select = "SELECT distinct " + imageInstanceAlias + ".* ";
-        from = "FROM user_image "+ imageInstanceAlias;
-        where = "WHERE user_image_id = " + user.getId();
+        from = "FROM user_image "+ imageInstanceAlias + " ";
+        where = "WHERE user_image_id = " + user.getId() + " ";
         search = "";
 
         if (!imageInstanceCondition.isBlank()) {
@@ -398,8 +395,8 @@ public class ImageInstanceService extends ModelService {
         String request;
 
         select = "SELECT distinct " + imageInstanceAlias + ".* ";
-        from = "FROM image_instance " + imageInstanceAlias;
-        where = "WHERE "  + imageInstanceAlias + ".project_id = " + project.getId() + " AND imageInstanceAlias.parent_id IS NULL";
+        from = "FROM image_instance " + imageInstanceAlias + " ";
+        where = "WHERE "  + imageInstanceAlias + ".project_id = " + project.getId() + " AND " + imageInstanceAlias +".parent_id IS NULL ";
         search = "";
 
         if (!imageInstanceCondition.isBlank()) {
@@ -510,7 +507,7 @@ public class ImageInstanceService extends ModelService {
             results = lightResult;
         }
 
-        Page<Map<String, Object>> page = new PageImpl<>(results, PageRequest.of(offset.intValue(), max.intValue()), count);
+        Page<Map<String, Object>> page = new PageImpl<>(results, PageUtils.buildPage(offset, max), count);
         return page;
 
     }
