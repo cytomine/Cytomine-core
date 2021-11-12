@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION beforeInsertUserAnnotation() RETURNS TRIGGER AS \$incUserAnnBefore\$
+CREATE OR REPLACE FUNCTION beforeInsertUserAnnotation() RETURNS TRIGGER AS $incUserAnnBefore$
         DECLARE
 currentImage  image_instance%ROWTYPE;
             currentProject  project%ROWTYPE;

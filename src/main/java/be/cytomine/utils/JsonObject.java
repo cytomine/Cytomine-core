@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -211,7 +212,10 @@ public class JsonObject extends HashMap<String, Object> {
             if(column.equals("id")) {
                 domainRead = entityManager.find(domain.getClass(), Long.parseLong(this.get(attr).toString()));
             } else {
-                throw new RuntimeException("Only retrieving domain from id is supported! Not yet supported");
+                String request = "SELECT d FROM " + domain.getClass().getName() + " d WHERE " + column + " = :value";
+                Query query = entityManager.createQuery(request, domain.getClass());
+                query.setParameter("value", convertValue(this.get(attr), columnType));
+                domainRead = (CytomineDomain)query.getResultList().get(0);
             }
             if (domainRead == null) {
                 throw new WrongArgumentException(attr + " was not found with id: " + this.get(attr));
@@ -225,6 +229,16 @@ public class JsonObject extends HashMap<String, Object> {
         }
     }
 
+    static public Object convertValue(Object value, String type) {
+        if(value.equals("null")) {
+            return null;
+        }else if (type.equals("String")) {
+            return value.toString();
+        } else if (type.equals("Long")) {
+            return Long.parseLong(value.toString());
+        }
+        throw new ServerException("Type " + type + " not supported! See cytominedomain class");
+    }
 
     public JsonObject extractProperty(String key) {
         Map<String, Object> values = (Map<String, Object>)this.get(key);

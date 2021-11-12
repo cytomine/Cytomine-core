@@ -20,4 +20,14 @@ public interface SecRoleRepository extends JpaRepository<SecRole, Long>, JpaSpec
 
     SecRole getByAuthority(String authority);
 
+    Optional<SecRole> findByAuthority(String authority);
+
+    default SecRole createIfNotExist(String authority) {
+        return findByAuthority(authority).orElseGet(() -> {
+            SecRole role = new SecRole();
+            role.setAuthority(authority);
+            return save(role);
+        });
+    }
+
 }

@@ -99,7 +99,7 @@ public class BasicInstanceBuilder {
     public void addRole(User user, String authority) {
         SecUserSecRole secUserSecRole = new SecUserSecRole();
         secUserSecRole.setSecUser(user);
-        secUserSecRole.setSecRole(secRoleRepository.getByAuthority(authority));
+        secUserSecRole.setSecRole(secRoleRepository.findByAuthority(authority).orElseThrow(() -> new ObjectNotFoundException("authority " + authority + " does not exists")));
         em.persist(secUserSecRole);
     }
 

@@ -10,9 +10,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ImageServerRepository extends JpaRepository<ImageServer, Long>  {
 
-
+    Optional<ImageServer> findByUrl(String url);
 }

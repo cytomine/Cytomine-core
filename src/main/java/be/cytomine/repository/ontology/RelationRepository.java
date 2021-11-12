@@ -17,4 +17,14 @@ public interface RelationRepository extends JpaRepository<Relation, Long>, JpaSp
     default Relation getParent() {
         return getByName(RelationTerm.PARENT);
     }
+
+    default Relation createIfNotExist(String name) {
+        Relation relation = getByName(name);
+        if (relation==null) {
+            relation = new Relation();
+            relation.setName(name);
+            relation = save(relation);
+        }
+        return relation;
+    }
 }
