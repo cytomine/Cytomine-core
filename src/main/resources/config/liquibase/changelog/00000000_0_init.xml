@@ -25,8 +25,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-2">
         <createTable tableName="keyword">
             <column autoIncrement="true" name="nid" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="keyword_pkey"/>
@@ -35,8 +33,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-3">
         <createTable tableName="processing_server">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="processing_server_pkey"/>
@@ -68,8 +64,6 @@
             </column>
             <column name="working_directory" type="VARCHAR(255)"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-4">
         <createTable tableName="version">
             <column autoIncrement="true" name="nid" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="version_pkey"/>
@@ -81,8 +75,6 @@
             <column name="minor" type="INTEGER"/>
             <column name="patch" type="INTEGER"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-5">
         <createTable tableName="undo_stack_item">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="undo_stack_item_pkey"/>
@@ -104,8 +96,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-6">
         <createTable tableName="image_instance">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="image_instance_pkey"/>
@@ -148,8 +138,6 @@
             <column name="x" type="INTEGER"/>
             <column name="y" type="INTEGER"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-7">
         <createTable tableName="shared_annotation">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="shared_annotation_pkey"/>
@@ -171,8 +159,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-8">
         <createTable tableName="command">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="command_pkey"/>
@@ -205,8 +191,6 @@
             </column>
             <column name="link_project" type="BOOLEAN"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-9">
         <createTable tableName="command_history">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="command_history_pkey"/>
@@ -231,8 +215,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-10">
         <createTable tableName="redo_stack_item">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="redo_stack_item_pkey"/>
@@ -251,8 +233,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-11">
         <createTable tableName="acl_object_identity">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="acl_object_identity_pkey"/>
@@ -269,8 +249,6 @@
             <column name="owner_sid" type="BIGINT"/>
             <column name="parent_object" type="BIGINT"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-12">
         <createTable tableName="acl_entry">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="acl_entry_pkey"/>
@@ -297,8 +275,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-13">
         <createTable tableName="acl_sid">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="acl_sid_pkey"/>
@@ -310,8 +286,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-14">
         <createTable tableName="storage">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="storage_pkey"/>
@@ -329,8 +303,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-15">
         <createTable tableName="sample">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="sample_pkey"/>
@@ -345,8 +317,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-16">
         <createTable tableName="abstract_image">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="abstract_image_pkey"/>
@@ -375,8 +345,6 @@
             <column name="user_id" type="BIGINT"/>
             <column name="width" type="INTEGER"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-17">
         <createTable tableName="abstract_slice">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="abstract_slice_pkey"/>
@@ -406,8 +374,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-18">
         <createTable tableName="slice_instance">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="slice_instance_pkey"/>
@@ -428,8 +394,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-19">
         <createTable tableName="property">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="property_pkey"/>
@@ -453,8 +417,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-20">
         <createTable tableName="attached_file">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="attached_file_pkey"/>
@@ -481,8 +443,6 @@
                 <constraints nullable="true"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-21">
         <createTable tableName="description">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="description_pkey"/>
@@ -503,8 +463,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-22">
         <createTable tableName="annotation_index">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="annotation_index_pkey"/>
@@ -523,8 +481,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-23">
         <createTable tableName="annotation_term">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="annotation_term_pkey"/>
@@ -545,8 +501,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-24">
         <createTable tableName="algo_annotation_term">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="algo_annotation_term_pkey"/>
@@ -573,8 +527,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-25">
         <createTable tableName="relation_term">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="relation_term_pkey"/>
@@ -595,8 +547,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-26">
         <createTable tableName="term">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="term_pkey"/>
@@ -618,8 +568,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-27">
         <createTable tableName="track">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="track_pkey"/>
@@ -643,8 +591,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-28">
         <createTable tableName="annotation_track">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="annotation_track_pkey"/>
@@ -668,8 +614,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-29">
         <createTable tableName="sec_user">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="sec_user_pkey"/>
@@ -716,8 +660,6 @@
             </column>
             <column name="lastname" type="VARCHAR(255)"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-30">
         <createTable tableName="job">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="job_pkey"/>
@@ -753,8 +695,6 @@
             </column>
             <column name="name" type="VARCHAR(255)"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-31">
         <createTable tableName="job_parameter">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="job_parameter_pkey"/>
@@ -773,8 +713,6 @@
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
             <column name="value" type="VARCHAR(5000)"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-32">
         <createTable tableName="software_parameter">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="software_parameter_pkey"/>
@@ -812,8 +750,6 @@
             <column name="uri_sort_attribut" type="VARCHAR(255)"/>
             <column name="value_key" type="VARCHAR(255)"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-33">
         <createTable tableName="software_project">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="software_project_pkey"/>
@@ -831,8 +767,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-34">
         <createTable tableName="user_group">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="user_group_pkey"/>
@@ -850,8 +784,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-35">
         <createTable tableName="auth_with_token">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="auth_with_token_pkey"/>
@@ -869,8 +801,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-36">
         <createTable tableName="project">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="project_pkey"/>
@@ -923,8 +853,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-38">
         <createTable tableName="tag">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="tag_pkey"/>
@@ -942,8 +870,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-39">
         <createTable tableName="amqp_queue_config_instance">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="amqp_queue_config_instance_pkey"/>
@@ -962,8 +888,6 @@
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
             <column name="value" type="VARCHAR(255)"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-40">
         <createTable tableName="mime">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="mime_pkey"/>
@@ -981,8 +905,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-41">
         <createTable tableName="job_data">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="job_data_pkey"/>
@@ -1006,8 +928,6 @@
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
             <column name="value_id" type="BIGINT"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-42">
         <createTable tableName="job_data_binary_value">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="job_data_binary_value_pkey"/>
@@ -1017,8 +937,6 @@
             </column>
             <column name="data" type="BYTEA"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-43">
         <createTable tableName="parameter_constraint">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="parameter_constraint_pkey"/>
@@ -1039,8 +957,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-44">
         <createTable tableName="software_parameter_constraint">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="software_parameter_constraint_pkey"/>
@@ -1059,8 +975,6 @@
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
             <column name="value" type="VARCHAR(255)"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-45">
         <createTable tableName="consensus_score">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="consensus_score_pkey"/>
@@ -1084,8 +998,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-46">
         <createTable tableName="score_value">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="score_value_pkey"/>
@@ -1104,8 +1016,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-47">
         <createTable tableName="image_filter">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="image_filter_pkey"/>
@@ -1124,8 +1034,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-48">
         <createTable tableName="image_filter_project">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="image_filter_project_pkey"/>
@@ -1143,8 +1051,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-49">
         <createTable tableName="search_engine_filter">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="search_engine_filter_pkey"/>
@@ -1165,8 +1071,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-50">
         <createTable tableName="source">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="source_pkey"/>
@@ -1184,8 +1088,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-51">
         <createTable tableName="project_default_layer">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="project_default_layer_pkey"/>
@@ -1206,8 +1108,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-52">
         <createTable tableName="software">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="software_pkey"/>
@@ -1230,14 +1130,10 @@
             <column name="source_path" type="VARCHAR(255)"/>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-53">
         <createTable tableName="project_project">
             <column name="project_retrieval_projects_id" type="BIGINT"/>
             <column name="project_id" type="BIGINT"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-54">
         <createTable tableName="image_group">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="image_group_pkey"/>
@@ -1255,8 +1151,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-55">
         <createTable tableName="image_sequence">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="image_sequence_pkey"/>
@@ -1286,8 +1180,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-56">
         <createTable tableName="transaction">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="transaction_pkey"/>
@@ -1299,8 +1191,6 @@
             <column name="deleted" type="TIMESTAMP WITHOUT TIME ZONE"/>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-57">
         <createTable tableName="acl_class">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="acl_class_pkey"/>
@@ -1309,8 +1199,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-58">
         <createTable tableName="group">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="group_pkey"/>
@@ -1326,8 +1214,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-59">
         <createTable tableName="project_representative_user">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="project_representative_user_pkey"/>
@@ -1345,8 +1231,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-60">
         <createTable tableName="ontology">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="ontology_pkey"/>
@@ -1364,8 +1248,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-61">
         <createTable tableName="annotation_filter">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="annotation_filter_pkey"/>
@@ -1386,16 +1268,12 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-62">
         <createTable tableName="shared_annotation_user">
             <column name="shared_annotation_receivers_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
             <column name="user_id" type="BIGINT"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-63">
         <createTable tableName="tag_domain_association">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="tag_domain_association_pkey"/>
@@ -1416,8 +1294,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-64">
         <createTable tableName="imaging_server">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="imaging_server_pkey"/>
@@ -1432,20 +1308,14 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-65">
         <createTable tableName="annotation_filter_term">
             <column name="annotation_filter_terms_id" type="BIGINT"/>
             <column name="term_id" type="BIGINT"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-67">
         <createTable tableName="reviewed_annotation_term">
             <column name="reviewed_annotation_terms_id" type="BIGINT"/>
             <column name="term_id" type="BIGINT"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-68">
         <createTable tableName="discipline">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="discipline_pkey"/>
@@ -1460,8 +1330,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-69">
         <createTable tableName="forgot_password_token">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="forgot_password_token_pkey"/>
@@ -1479,8 +1347,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-70">
         <createTable tableName="score">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="score_pkey"/>
@@ -1495,8 +1361,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-71">
         <createTable tableName="sec_role">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="sec_role_pkey"/>
@@ -1511,8 +1375,6 @@
             <column name="deleted" type="TIMESTAMP WITHOUT TIME ZONE"/>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-72">
         <createTable tableName="sec_user_sec_role">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="sec_user_sec_role_pkey"/>
@@ -1530,8 +1392,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-73">
         <createTable tableName="storage_abstract_image">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="storage_abstract_image_pkey"/>
@@ -1549,8 +1409,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-74">
         <createTable tableName="relation">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="relation_pkey"/>
@@ -1565,8 +1423,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-75">
         <createTable tableName="amqp_queue">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="amqp_queue_pkey"/>
@@ -1587,8 +1443,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-76">
         <createTable tableName="image_server">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="image_server_pkey"/>
@@ -1610,8 +1464,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-77">
         <createTable tableName="image_server_storage">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="image_server_storage_pkey"/>
@@ -1626,8 +1478,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-78">
         <createTable tableName="software_user_repository">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="software_user_repository_pkey"/>
@@ -1649,14 +1499,10 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-80">
         <createTable tableName="annotation_filter_sec_user">
             <column name="annotation_filter_users_id" type="BIGINT"/>
             <column name="sec_user_id" type="BIGINT"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-81">
         <createTable tableName="mime_image_server">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="mime_image_server_pkey"/>
@@ -1674,8 +1520,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-83">
         <createTable tableName="news">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="news_pkey"/>
@@ -1696,8 +1540,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-84">
         <createTable tableName="instrument">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="instrument_pkey"/>
@@ -1715,8 +1557,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-85">
         <createTable tableName="image_score">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="image_score_pkey"/>
@@ -1740,8 +1580,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-86">
         <createTable tableName="companion_file">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="companion_file_pkey"/>
@@ -1769,8 +1607,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-87">
         <createTable tableName="image_grouphdf5">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="image_grouphdf5_pkey"/>
@@ -1794,8 +1630,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-88">
         <createTable tableName="job_template_annotation">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="job_template_annotation_pkey"/>
@@ -1816,8 +1650,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-89">
         <createTable tableName="score_project">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="score_project_pkey"/>
@@ -1835,8 +1667,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-90">
         <createTable tableName="configuration">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="configuration_pkey"/>
@@ -1857,8 +1687,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-91">
         <createTable tableName="message_broker_server">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="message_broker_server_pkey"/>
@@ -1879,68 +1707,34 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-94">
         <addForeignKeyConstraint baseColumnNames="config_id" baseTableName="amqp_queue_config_instance" constraintName="fk_1fanxk0y2ei162u635t7xei1q" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="amqp_queue_config" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-95">
         <addUniqueConstraint columnNames="name" constraintName="uk_mrfl7ovhfydr8i27vjw8aoy5m" tableName="amqp_queue_config"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-96">
         <addUniqueConstraint columnNames="key" constraintName="uk_13bwk73aypkhryokrboje4i2g" tableName="keyword"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-97">
         <addForeignKeyConstraint baseColumnNames="processing_server_id" baseTableName="job" constraintName="fk_7o2q73awvcf3128k3fdrbv1it" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="processing_server" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-98">
         <addForeignKeyConstraint baseColumnNames="amqp_queue_id" baseTableName="processing_server" constraintName="fk_e0bfykpq1hcokbha6kpds0jhh" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="amqp_queue" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-99">
         <addForeignKeyConstraint baseColumnNames="default_processing_server_id" baseTableName="software" constraintName="fk_h1h797soh6wjy7fvjpv79hs2y" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="processing_server" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-100">
         <addUniqueConstraint columnNames="name" constraintName="uk_3rqggmm8it0ldmh26ku7jgert" tableName="processing_server"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-101">
         <createIndex indexName="undostackitem_user_index" tableName="undo_stack_item">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-102">
         <createIndex indexName="undo_stack_item_command_id_index" tableName="undo_stack_item">
             <column name="command_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-103">
         <addForeignKeyConstraint baseColumnNames="transaction_id" baseTableName="undo_stack_item" constraintName="fk_60f4l0y7u8uoxsv5cchj3riec" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="transaction" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-104">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="undo_stack_item" constraintName="fk_jr534eqd2uu2on33bk33srbp0" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-105">
         <addForeignKeyConstraint baseColumnNames="command_id" baseTableName="undo_stack_item" constraintName="fk_sg0k3d3hy3aou7lcmhlx51w08" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="command" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-106">
         <createIndex indexName="image_instance_created_index" tableName="image_instance">
             <column name="created"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-107">
         <createIndex indexName="image_instance_base_image_id_index" tableName="image_instance">
             <column name="base_image_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-108">
         <createIndex indexName="image_instance_project_id_index" tableName="image_instance">
             <column name="project_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-109">
         <createIndex indexName="image_instance_user_id_index" tableName="image_instance">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-110">
         <createView fullDefinition="false" viewName="user_image">SELECT image_instance.id,
             image_instance.version,
             image_instance.base_image_id,
@@ -1982,113 +1776,53 @@
             JOIN acl_entry ON (((acl_entry.sid = acl_sid.id) AND (acl_entry.acl_object_identity = acl_object_identity.id) AND (acl_entry.mask &gt;= 1))))
             WHERE ((image_instance.deleted IS NULL) AND (image_instance.parent_id IS NULL))
             GROUP BY image_instance.id, project.id, sec_user.id, abstract_image.id;</createView>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-111">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="image_instance" constraintName="fk_6fgy0dijeaoewaksl7rlf3ijo" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-112">
         <addForeignKeyConstraint baseColumnNames="review_user_id" baseTableName="image_instance" constraintName="fk_6wk4ly5mawowa6ch7xic325ba" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-113">
         <addForeignKeyConstraint baseColumnNames="image_id" baseTableName="image_sequence" constraintName="fk_8o73teg65qjkmhbgw99i95v3u" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_instance" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-114">
         <addForeignKeyConstraint baseColumnNames="parent_id" baseTableName="image_instance" constraintName="fk_af23mb7legfv8w5bm2ayah96o" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_instance" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-115">
         <addForeignKeyConstraint baseColumnNames="image_id" baseTableName="slice_instance" constraintName="fk_hwgns4jo7dc2l89p6xiyimfcv" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_instance" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-116">
         <addForeignKeyConstraint baseColumnNames="base_image_id" baseTableName="image_instance" constraintName="fk_lrrjj2y0tf8xispggbjevkksi" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="abstract_image" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-117">
         <addForeignKeyConstraint baseColumnNames="image_id" baseTableName="track" constraintName="fk_o34jw8ofqrx19528fpwtvwq7w" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_instance" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-118">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="image_instance" constraintName="fk_tc70uewrdpmbnryjl2ev12b9s" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-119">
         <addUniqueConstraint columnNames="project_id, base_image_id" constraintName="unique_base_image_id" tableName="image_instance"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-120">
         <addForeignKeyConstraint baseColumnNames="sender_id" baseTableName="shared_annotation" constraintName="fk_qwi8kxyv6j1aod3teoxapwuu0" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-121">
         <addForeignKeyConstraint baseColumnNames="shared_annotation_receivers_id" baseTableName="shared_annotation_user" constraintName="fk_sqen5jpdhl9utcwm7ob7u4puh" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="shared_annotation" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-122">
         <createIndex indexName="command_user_id_index" tableName="command">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-123">
         <createIndex indexName="command_project_id_index" tableName="command">
             <column name="project_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-124">
         <createIndex indexName="command_created_index" tableName="command">
             <column name="created"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-125">
         <addForeignKeyConstraint baseColumnNames="transaction_id" baseTableName="command" constraintName="fk_71sexwlgqwurbshptap75oyd8" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="transaction" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-126">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="command" constraintName="fk_dno1qx2pstqia5ihw5e2b0602" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-127">
         <addForeignKeyConstraint baseColumnNames="command_id" baseTableName="redo_stack_item" constraintName="fk_mjskbsj8dd60bknr4wutd4e0b" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="command" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-128">
         <addForeignKeyConstraint baseColumnNames="command_id" baseTableName="command_history" constraintName="fk_roscror71ixgs06th1kk9l61g" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="command" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-129">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="command" constraintName="fk_rt3b167jqhxuwq675fx6y2iyi" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-130">
         <createIndex indexName="command_history_project_id_index" tableName="command_history">
             <column name="project_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-131">
         <createIndex indexName="command_history_user_id_index" tableName="command_history">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-132">
         <createIndex indexName="command_history_created_index" tableName="command_history">
             <column name="created"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-133">
         <createIndex indexName="command_history_command_id_index" tableName="command_history">
             <column name="command_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-134">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="command_history" constraintName="fk_94paw4mm2k7y0r70b0d461r3l" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-135">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="command_history" constraintName="fk_oua15nsfqgbr0v8hvg5o604lh" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-136">
         <createIndex indexName="redo_stack_item_command_id_index" tableName="redo_stack_item">
             <column name="command_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-137">
         <addForeignKeyConstraint baseColumnNames="transaction_id" baseTableName="redo_stack_item" constraintName="fk_7pmi3w78wfvbbnv0jhvktnpw7" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="transaction" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-138">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="redo_stack_item" constraintName="fk_g6suxxfck342d2ofkb4dwvtay" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-139">
         <createIndex indexName="acl_object_identity_object_id_identity_index" tableName="acl_object_identity">
             <column name="object_id_identity"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-140">
         <createView fullDefinition="false" viewName="user_project">SELECT DISTINCT project.id,
             project.version,
             project.are_images_downloadable,
@@ -2116,8 +1850,6 @@
             acl_sid,
             acl_entry
             WHERE ((project.id = acl_object_identity.object_id_identity) AND ((acl_sid.sid)::text = (sec_user.username)::text) AND (acl_entry.sid = acl_sid.id) AND (acl_entry.acl_object_identity = acl_object_identity.id) AND (sec_user.user_id IS NULL) AND (acl_entry.mask &gt;= 1) AND (project.deleted IS NULL));</createView>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-141">
         <createView fullDefinition="false" viewName="admin_project">SELECT DISTINCT project.id,
             project.version,
             project.are_images_downloadable,
@@ -2145,8 +1877,6 @@
             acl_sid,
             acl_entry
             WHERE ((project.id = acl_object_identity.object_id_identity) AND ((acl_sid.sid)::text = (sec_user.username)::text) AND (acl_entry.sid = acl_sid.id) AND (acl_entry.acl_object_identity = acl_object_identity.id) AND (sec_user.user_id IS NULL) AND (acl_entry.mask &gt;= 16) AND (project.deleted IS NULL));</createView>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-142">
         <createView fullDefinition="false" viewName="creator_project">SELECT DISTINCT project.id,
             project.version,
             project.are_images_downloadable,
@@ -2173,586 +1903,264 @@
             sec_user,
             acl_sid
             WHERE ((project.id = acl_object_identity.object_id_identity) AND ((acl_sid.sid)::text = (sec_user.username)::text) AND (acl_object_identity.owner_sid = acl_sid.id) AND (sec_user.user_id IS NULL) AND (project.deleted IS NULL));</createView>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-143">
         <addForeignKeyConstraint baseColumnNames="object_id_class" baseTableName="acl_object_identity" constraintName="fk_6c3ugmk053uy27bk2sred31lf" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="acl_class" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-144">
         <addForeignKeyConstraint baseColumnNames="parent_object" baseTableName="acl_object_identity" constraintName="fk_6oap2k8q5bl33yq3yffrwedhf" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="acl_object_identity" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-145">
         <addForeignKeyConstraint baseColumnNames="acl_object_identity" baseTableName="acl_entry" constraintName="fk_fhuoesmjef3mrv0gpja4shvcr" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="acl_object_identity" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-146">
         <addForeignKeyConstraint baseColumnNames="owner_sid" baseTableName="acl_object_identity" constraintName="fk_nxv5we2ion9fwedbkge7syoc3" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="acl_sid" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-147">
         <addUniqueConstraint columnNames="object_id_class, object_id_identity" constraintName="unique_object_id_identity" tableName="acl_object_identity"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-148">
         <createIndex indexName="acl_entry_acl_object_identity_index" tableName="acl_entry">
             <column name="acl_object_identity"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-149">
         <createIndex indexName="acl_entry_sid_index" tableName="acl_entry">
             <column name="sid"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-150">
         <addForeignKeyConstraint baseColumnNames="sid" baseTableName="acl_entry" constraintName="fk_i6xyfccd4y3wlwhgwpo4a9rm1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="acl_sid" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-151">
         <addUniqueConstraint columnNames="acl_object_identity, ace_order" constraintName="unique_ace_order" tableName="acl_entry"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-152">
         <createIndex indexName="acl_sid_sid_index" tableName="acl_sid">
             <column name="sid"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-153">
         <addUniqueConstraint columnNames="sid, principal" constraintName="unique_principal" tableName="acl_sid"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-154">
         <createIndex indexName="storage_user_id_index" tableName="storage">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-155">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="storage" constraintName="fk_1i4jiuo3n7io1cc4ilu2s38mc" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-156">
         <addForeignKeyConstraint baseColumnNames="storage_id" baseTableName="storage_abstract_image" constraintName="fk_c8tmdpqj8hq1yxh09tlc5wkth" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="storage" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-157">
         <addForeignKeyConstraint baseColumnNames="storage_id" baseTableName="image_server_storage" constraintName="fk_nlstfudl6nhhlf5fr2qnvki7r" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="storage" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-158">
         <createIndex indexName="sample_created_index" tableName="sample">
             <column name="created"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-159">
         <addForeignKeyConstraint baseColumnNames="sample_id" baseTableName="source" constraintName="fk_48nw8m8i0x2m71897wi7cwwta" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sample" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-160">
         <addForeignKeyConstraint baseColumnNames="sample_id" baseTableName="abstract_image" constraintName="fk_fg6xbsax3enl5wx0w2jg69aj6" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sample" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-161">
         <addUniqueConstraint columnNames="name" constraintName="uk_a5hea3xlyin6etsaelmekjrbe" tableName="sample"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-162">
         <createIndex indexName="abstract_image_created_index" tableName="abstract_image">
             <column name="created"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-163">
         <createIndex indexName="abstract_image_sample_id_index" tableName="abstract_image">
             <column name="sample_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-164">
         <createIndex indexName="abstract_image_uploaded_file_id_index" tableName="abstract_image">
             <column name="uploaded_file_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-165">
         <createIndex indexName="abstract_image_user_id_index" tableName="abstract_image">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-166">
         <addForeignKeyConstraint baseColumnNames="image_id" baseTableName="abstract_slice" constraintName="fk_eixfhdky51jgjel5qwsg7mhqj" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="abstract_image" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-167">
         <addForeignKeyConstraint baseColumnNames="scanner_id" baseTableName="abstract_image" constraintName="fk_md4br11eaxdfd5qtj6uistld1" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="instrument" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-168">
         <addForeignKeyConstraint baseColumnNames="abstract_image_id" baseTableName="storage_abstract_image" constraintName="fk_nx135s1gql4c3f97c9h29iunr" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="abstract_image" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-169">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="abstract_image" constraintName="fk_rp6913vdgv2itjspso27dsd4p" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-170">
         <addForeignKeyConstraint baseColumnNames="image_id" baseTableName="companion_file" constraintName="fk_sj3yu7f4i18htv5yhwkwhg9d3" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="abstract_image" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-171">
         <createIndex indexName="abstract_slice_uploaded_file_id_index" tableName="abstract_slice">
             <column name="uploaded_file_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-172">
         <createIndex indexName="abstract_slice_image_id_index" tableName="abstract_slice">
             <column name="image_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-173">
         <addForeignKeyConstraint baseColumnNames="mime_id" baseTableName="abstract_slice" constraintName="fk_1v05hrtjnvce5jyomlmtit7sk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="mime" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-174">
         <addForeignKeyConstraint baseColumnNames="base_slice_id" baseTableName="slice_instance" constraintName="fk_kotwdsgccim3q30f5yigbcr38" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="abstract_slice" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-175">
         <createIndex indexName="slice_instance_base_slice_id_index" tableName="slice_instance">
             <column name="base_slice_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-176">
         <addForeignKeyConstraint baseColumnNames="slice_id" baseTableName="annotation_track" constraintName="fk_af2j9gu3x7bwisrjaa3my3efw" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="slice_instance" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-177">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="slice_instance" constraintName="fk_ajcae7y95op8hhilef528q16o" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-178">
         <addForeignKeyConstraint baseColumnNames="slice_id" baseTableName="annotation_index" constraintName="fk_q00ycisk5ula612n81sfx3ud2" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="slice_instance" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-179">
         <createIndex indexName="property_domain_ident_index" tableName="property">
             <column name="domain_ident"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-180">
         <createIndex indexName="property_key_index" tableName="property">
             <column name="key"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-181">
         <createIndex indexName="attached_file_domain_ident_index" tableName="attached_file">
             <column name="domain_ident"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-182">
         <createIndex indexName="description_domain_ident_index" tableName="description">
             <column name="domain_ident"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-183">
         <createIndex indexName="annotation_index_slice_id_index" tableName="annotation_index">
             <column name="slice_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-184">
         <createIndex indexName="annotation_index_user_id_index" tableName="annotation_index">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-185">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="annotation_index" constraintName="fk_kba5x5ktp61txg1wpagqibsok" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-186">
         <createIndex indexName="annotation_term_user_annotation_id_index" tableName="annotation_term">
             <column name="user_annotation_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-187">
         <createIndex indexName="annotation_term_term_id_index" tableName="annotation_term">
             <column name="term_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-188">
         <createIndex indexName="annotation_term_user_id_index" tableName="annotation_term">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-189">
         <addForeignKeyConstraint baseColumnNames="term_id" baseTableName="annotation_term" constraintName="fk_bi28rym47sc6lgrkq6j1jxfsy" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="term" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-190">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="annotation_term" constraintName="fk_fr6po0ubgm4steust2cck5raa" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-191">
         <createIndex indexName="algo_annotation_term_annotation_ident_index" tableName="algo_annotation_term">
             <column name="annotation_ident"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-192">
         <createIndex indexName="algo_annotation_term_project_id_index" tableName="algo_annotation_term">
             <column name="project_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-193">
         <createIndex indexName="algo_annotation_term_rate_index" tableName="algo_annotation_term">
             <column name="rate"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-194">
         <createIndex indexName="algo_annotation_term_term_id_index" tableName="algo_annotation_term">
             <column name="term_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-195">
         <createIndex indexName="algo_annotation_term_user_job_id_index" tableName="algo_annotation_term">
             <column name="user_job_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-196">
         <addForeignKeyConstraint baseColumnNames="user_job_id" baseTableName="algo_annotation_term" constraintName="fk_947bqk8gupy5a4waijcu8tttm" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-197">
         <addForeignKeyConstraint baseColumnNames="term_id" baseTableName="algo_annotation_term" constraintName="fk_n2t11iv92sah6ps4vc54bu8yv" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="term" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-198">
         <addForeignKeyConstraint baseColumnNames="expected_term_id" baseTableName="algo_annotation_term" constraintName="fk_pkgsjc6gcojxrkp7k6jj2bqjg" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="term" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-199">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="algo_annotation_term" constraintName="fk_suqs8shw69cacl2n8m99t0hwh" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-200">
         <createIndex indexName="relation_term_relation_id_index" tableName="relation_term">
             <column name="relation_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-201">
         <createIndex indexName="relation_term_term1_id_index" tableName="relation_term">
             <column name="term1_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-202">
         <createIndex indexName="relation_term_term2_id_index" tableName="relation_term">
             <column name="term2_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-203">
         <addForeignKeyConstraint baseColumnNames="term1_id" baseTableName="relation_term" constraintName="fk_9d0uksavo6y85hpv9ikfg6v65" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="term" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-204">
         <addForeignKeyConstraint baseColumnNames="relation_id" baseTableName="relation_term" constraintName="fk_dmkntgxxdj62k5da59k5bi4gk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="relation" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-205">
         <addForeignKeyConstraint baseColumnNames="term2_id" baseTableName="relation_term" constraintName="fk_r6384f0rfuqensgxjx2207jl7" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="term" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-206">
         <createIndex indexName="term_ontology_id_index" tableName="term">
             <column name="ontology_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-207">
         <addForeignKeyConstraint baseColumnNames="term_id" baseTableName="annotation_filter_term" constraintName="fk_9bvjpw5mgysdncgqxtg3emce2" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="term" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-208">
         <addForeignKeyConstraint baseColumnNames="term_id" baseTableName="reviewed_annotation_term" constraintName="fk_9ihc892kdbdl59mfps7g538ok" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="term" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-209">
         <addForeignKeyConstraint baseColumnNames="ontology_id" baseTableName="term" constraintName="fk_9yffaq04vokeans3ey8sir31w" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="ontology" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-210">
         <createIndex indexName="track_image_id_index" tableName="track">
             <column name="image_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-211">
         <createIndex indexName="track_project_id_index" tableName="track">
             <column name="project_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-212">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="track" constraintName="fk_a57b9oiv8h43nn21xl8pwu86e" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-213">
         <addForeignKeyConstraint baseColumnNames="track_id" baseTableName="annotation_track" constraintName="fk_qjjkidc52v6pallcu0p343ppe" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="track" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-214">
         <createIndex indexName="annotation_track_track_id_index" tableName="annotation_track">
             <column name="track_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-215">
         <createIndex indexName="annotation_track_slice_id_index" tableName="annotation_track">
             <column name="slice_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-216">
         <createIndex indexName="annotation_track_annotation_ident_index" tableName="annotation_track">
             <column name="annotation_ident"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-217">
         <createIndex indexName="sec_user_job_id_index" tableName="sec_user">
             <column name="job_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-218">
         <createIndex indexName="sec_user_user_id_index" tableName="sec_user">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-219">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="tag" constraintName="fk_151ooxskkpn49blwsh7mjwysx" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-220">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="search_engine_filter" constraintName="fk_4668esumub0lfceei21d3mokn" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-221">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="ontology" constraintName="fk_7o34a7pexlcdiabh6avwb8gds" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-222">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="shared_annotation_user" constraintName="fk_8465xk0vtu2eo78jhwk2evp6g" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-223">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="auth_with_token" constraintName="fk_8fipmhm3xcpkeotckesl7pii" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-224">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="forgot_password_token" constraintName="fk_9s1okjmlql64mh55l9ehjlkmh" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-225">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="annotation_filter" constraintName="fk_a6fivveivhj68xn0bp4vm7sfl" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-226">
         <addForeignKeyConstraint baseColumnNames="job_id" baseTableName="sec_user" constraintName="fk_brnml18s8o4tjt2qu4yn3tycb" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="job" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-227">
         <addForeignKeyConstraint baseColumnNames="sec_user_id" baseTableName="sec_user_sec_role" constraintName="fk_f1eew3u65ajs3e50xvacwgron" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-228">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="sec_user" constraintName="fk_g5inaeadj5iqiwddmky1pcir2" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-229">
         <addForeignKeyConstraint baseColumnNames="sec_user_id" baseTableName="annotation_filter_sec_user" constraintName="fk_geipe23f9a46kkpur8sk88383" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-230">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="news" constraintName="fk_l4y0pyrfrk6c7egnf41thnfph" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-231">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_group" constraintName="fk_mps81qti05d9he0y66y5jt845" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-232">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="project_representative_user" constraintName="fk_pbag6k4n4xyema08sw2yleut9" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-233">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="project_default_layer" constraintName="fk_tmom8yydh4f43qvfl4i485gb2" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-234">
         <addUniqueConstraint columnNames="public_key" constraintName="uk_orqbsamoket434rnhtt6ic46r" tableName="sec_user"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-235">
         <createIndex indexName="job_project_id_index" tableName="job">
             <column name="project_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-236">
         <createIndex indexName="job_software_id_index" tableName="job">
             <column name="software_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-237">
         <createIndex indexName="job_processing_server_id_index" tableName="job">
             <column name="processing_server_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-238">
         <addForeignKeyConstraint baseColumnNames="software_id" baseTableName="job" constraintName="fk_55s2532t84kfjb46dm49e18lh" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="software" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-239">
         <addForeignKeyConstraint baseColumnNames="job_id" baseTableName="job_data" constraintName="fk_d829oem8lngvemljcmfuktqqm" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="job" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-240">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="job" constraintName="fk_q8j917t7g0bw0jqspxsqksd8d" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-241">
         <addForeignKeyConstraint baseColumnNames="job_id" baseTableName="job_parameter" constraintName="fk_quais1rfnay2kdb76nqipvcor" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="job" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-242">
         <addForeignKeyConstraint baseColumnNames="job_template_id" baseTableName="job_template_annotation" constraintName="fk_suxjddbxh6niehsgkej1byd1i" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="job" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-243">
         <createIndex indexName="job_parameter_job_id_index" tableName="job_parameter">
             <column name="job_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-244">
         <createIndex indexName="job_parameter_software_parameter_id_index" tableName="job_parameter">
             <column name="software_parameter_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-245">
         <addForeignKeyConstraint baseColumnNames="software_parameter_id" baseTableName="job_parameter" constraintName="fk_jeqigdnlw5f7ylk4cvudnr73" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="software_parameter" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-246">
         <createIndex indexName="software_parameter_software_id_index" tableName="software_parameter">
             <column name="software_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-247">
         <addForeignKeyConstraint baseColumnNames="software_id" baseTableName="software_parameter" constraintName="fk_6tyh4gkgfg7hdq4eba51fkgu7" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="software" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-248">
         <addForeignKeyConstraint baseColumnNames="software_parameter_id" baseTableName="software_parameter_constraint" constraintName="fk_bmw9mo6802ugois8mmb56322f" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="software_parameter" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-249">
         <createIndex indexName="software_project_software_id_index" tableName="software_project">
             <column name="software_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-250">
         <createIndex indexName="software_project_project_id_index" tableName="software_project">
             <column name="project_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-251">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="software_project" constraintName="fk_cspa983xvkp2sel4lmlgoo4dr" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-252">
         <addForeignKeyConstraint baseColumnNames="software_id" baseTableName="software_project" constraintName="fk_sy20a2uj4raaj32avpx3c8nsv" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="software" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-253">
         <createIndex indexName="user_group_user_id_index" tableName="user_group">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-254">
         <createIndex indexName="user_group_group_id_index" tableName="user_group">
             <column name="group_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-255">
         <addForeignKeyConstraint baseColumnNames="group_id" baseTableName="user_group" constraintName="fk_789v3ejjs9uj5vu1ufexj2tbv" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="group" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-256">
         <createIndex indexName="auth_with_token_user_id_index" tableName="auth_with_token">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-257">
         <createIndex indexName="auth_with_token_token_key_index" tableName="auth_with_token">
             <column name="token_key"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-258">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="project_default_layer" constraintName="fk_4uaxr9mro5kcb0apuyjmsmc4p" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-259">
         <addForeignKeyConstraint baseColumnNames="project_retrieval_projects_id" baseTableName="project_project" constraintName="fk_5aryiqcm0tpxdtbn220rmdio6" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-260">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="project_representative_user" constraintName="fk_7hmjj6g0xxyw1trmlwf2x4ogc" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-261">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="annotation_filter" constraintName="fk_7xxsjya2swvuwfbe8kxshvxdw" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-262">
         <addForeignKeyConstraint baseColumnNames="discipline_id" baseTableName="project" constraintName="fk_9pgiq5w5hfpqi65owpewc3wkp" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="discipline" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-263">
         <addForeignKeyConstraint baseColumnNames="ontology_id" baseTableName="project" constraintName="fk_c3xcld4mvmddp7q2je6d437tc" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="ontology" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-264">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="project_project" constraintName="fk_ehckrfvasgu5bn8p292f87iyx" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-265">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="image_group" constraintName="fk_pii947c8taadk9csgm9bfggt3" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-266">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="image_filter_project" constraintName="fk_q2eaays0nr0a00cdkahiekobh" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-267">
         <addUniqueConstraint columnNames="name" constraintName="uk_3k75vvu7mevyvvb5may5lj8k7" tableName="project"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-268">
         <addForeignKeyConstraint baseColumnNames="tag_id" baseTableName="tag_domain_association" constraintName="fk_85ph9yvqxucw6x8ngk198s05s" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="tag" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-269">
         <addForeignKeyConstraint baseColumnNames="queue_id" baseTableName="amqp_queue_config_instance" constraintName="fk_kd7etbkq6r32b1w8vnt8ywgwr" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="amqp_queue" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-270">
         <addForeignKeyConstraint baseColumnNames="mime_id" baseTableName="mime_image_server" constraintName="fk_iqf8h0fh14kbmyge41fgaas8b" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="mime" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-271">
         <addUniqueConstraint columnNames="mime_type" constraintName="uk_8xpof8ejct6l0j7xg71co30wl" tableName="mime"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-272">
         <addForeignKeyConstraint baseColumnNames="value_id" baseTableName="job_data" constraintName="fk_220nw7q94pw1vn4jcwn4ib57h" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="job_data_binary_value" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-273">
         <addForeignKeyConstraint baseColumnNames="parameter_constraint_id" baseTableName="software_parameter_constraint" constraintName="fk_2kr7g52ehhuavyh6fcvuh5io9" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="parameter_constraint" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-274">
         <addForeignKeyConstraint baseColumnNames="score_value_id" baseTableName="consensus_score" constraintName="fk_3gwk7r66egbi1vs13u32aasfh" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="score_value" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-275">
         <addForeignKeyConstraint baseColumnNames="score_id" baseTableName="consensus_score" constraintName="fk_bo1t8l51uq2yi7trwrln8sjn4" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="score" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-276">
         <addForeignKeyConstraint baseColumnNames="score_id" baseTableName="score_value" constraintName="fk_jxqmarg7uusbfc3q1vn51sxqf" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="score" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-277">
         <addForeignKeyConstraint baseColumnNames="score_value_id" baseTableName="image_score" constraintName="fk_py4dtmohp9m6yicklt2f9l54b" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="score_value" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-278">
         <addForeignKeyConstraint baseColumnNames="image_filter_id" baseTableName="image_filter_project" constraintName="fk_3o01hjbh1h2pi57p3m87yt60m" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_filter" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-279">
         <addForeignKeyConstraint baseColumnNames="imaging_server_id" baseTableName="image_filter" constraintName="fk_8vxvssocyopn3ekmc1n4c5jnn" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="imaging_server" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-280">
         <addForeignKeyConstraint baseColumnNames="software_user_repository_id" baseTableName="software" constraintName="fk_elvfdq78s67rejx0phjfurp69" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="software_user_repository" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-281">
         <addForeignKeyConstraint baseColumnNames="image_group_id" baseTableName="image_sequence" constraintName="fk_5pcxdt1xkyaax3ewupaepkufa" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_group" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-282">
         <addForeignKeyConstraint baseColumnNames="group_id" baseTableName="image_grouphdf5" constraintName="fk_s1wtmpm1kg90q32h39jsk9li0" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_group" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-283">
         <addUniqueConstraint columnNames="class" constraintName="uk_iy7ua5fso3il3u3ymoc4uf35w" tableName="acl_class"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-284">
         <addUniqueConstraint columnNames="name" constraintName="uk_oy92ak6u4rmbq75jgb14npht7" tableName="group"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-285">
         <addUniqueConstraint columnNames="name" constraintName="uk_pber6ij6n37dx73gt6pnpu1yc" tableName="ontology"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-286">
         <addForeignKeyConstraint baseColumnNames="annotation_filter_terms_id" baseTableName="annotation_filter_term" constraintName="fk_rpt4hj53gph9lvaapoygjf38n" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="annotation_filter" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-287">
         <addForeignKeyConstraint baseColumnNames="annotation_filter_users_id" baseTableName="annotation_filter_sec_user" constraintName="fk_s612xe9fe2awtoyu3i9cf4mkd" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="annotation_filter" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-288">
         <addUniqueConstraint columnNames="url" constraintName="uk_34fu6c264ka5wtn9m1mc9qv8l" tableName="imaging_server"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-289">
         <addUniqueConstraint columnNames="name" constraintName="uk_rnn0tdmuxc8yr34ric2yhjbid" tableName="discipline"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-290">
         <addForeignKeyConstraint baseColumnNames="score_id" baseTableName="image_score" constraintName="fk_nwh1gjr7vud2i3v97h9d498px" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="score" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-291">
         <addForeignKeyConstraint baseColumnNames="score_id" baseTableName="score_project" constraintName="fk_teed5y0yhs78m4mtpf99gfs1p" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="score" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-292">
         <addUniqueConstraint columnNames="name" constraintName="uk_pafo6p1mjw7h9s6aic7ndb5ew" tableName="score"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-293">
         <addForeignKeyConstraint baseColumnNames="sec_role_id" baseTableName="sec_user_sec_role" constraintName="fk_bshvqhdx8h9mb4rrbo1ahnp7q" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_role" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-294">
         <addUniqueConstraint columnNames="authority" constraintName="uk_oah023x2ltqw09mdue7w0mcxb" tableName="sec_role"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-295">
         <addUniqueConstraint columnNames="name" constraintName="uk_t3kmot8kxmuws6vj2etsp4ih5" tableName="relation"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-296">
         <addUniqueConstraint columnNames="name" constraintName="uk_4xh6udtlhrdr373f8ad060kxn" tableName="amqp_queue"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-297">
         <addUniqueConstraint columnNames="exchange" constraintName="uk_70b340wewu6ygx5gaowcfeoot" tableName="amqp_queue"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-298">
         <addForeignKeyConstraint baseColumnNames="image_server_id" baseTableName="image_server_storage" constraintName="fk_eeljdeqkardecnhmluhc0omnj" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_server" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-299">
         <addForeignKeyConstraint baseColumnNames="image_server_id" baseTableName="mime_image_server" constraintName="fk_rq7n6544wcycp6bn6btas7nqd" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_server" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-300">
         <addUniqueConstraint columnNames="key" constraintName="uk_5wejhym1uspe4klluscbwo9r" tableName="configuration"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-301">
         <addUniqueConstraint columnNames="name" constraintName="uk_qd8nvmlgro9wc7yvvkfr9iump" tableName="message_broker_server"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-302">
         <createSequence cacheSize="1" cycle="false" dataType="bigint" incrementBy="1" maxValue="9223372036854775807" minValue="1" sequenceName="hibernate_sequence" startValue="1"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-303">
         <createTable tableName="algo_annotation">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="algo_annotation_pkey"/>
@@ -2789,8 +2197,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-304">
         <createTable tableName="retrieval_server">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="retrieval_server_pkey"/>
@@ -2814,8 +2220,6 @@
             </column>
             <column name="username" type="VARCHAR(255)"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-305">
         <createTable tableName="reviewed_annotation">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="reviewed_annotation_pkey"/>
@@ -2861,8 +2265,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-306">
         <createTable tableName="roi_annotation">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="roi_annotation_pkey"/>
@@ -2896,8 +2298,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-307">
         <createTable tableName="scoring_description">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="scoring_description_pkey"/>
@@ -2921,8 +2321,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-308">
         <createTable tableName="task">
             <column name="id" type="BIGINT"/>
             <column name="progress" type="BIGINT"/>
@@ -2930,15 +2328,11 @@
             <column name="user_id" type="BIGINT"/>
             <column name="print_in_activity" type="BOOLEAN"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-309">
         <createTable tableName="task_comment">
             <column name="task_id" type="BIGINT"/>
             <column name="comment" type="VARCHAR(255)"/>
             <column name="timestamp" type="BIGINT"/>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-310">
         <createTable tableName="uploaded_file">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="uploaded_file_pkey"/>
@@ -2976,8 +2370,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-311">
         <createTable tableName="user_annotation">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="user_annotation_pkey"/>
@@ -3014,188 +2406,94 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-312">
         <createIndex indexName="algo_annotation_created_index" tableName="algo_annotation">
             <column name="created"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-313">
         <createIndex indexName="algo_annotation_image_id_index" tableName="algo_annotation">
             <column name="image_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-314">
         <createIndex indexName="algo_annotation_location_index" tableName="algo_annotation">
             <column name="location"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-315">
         <createIndex indexName="algo_annotation_project_id_index" tableName="algo_annotation">
             <column name="project_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-316">
         <createIndex indexName="algo_annotation_slice_id_index" tableName="algo_annotation">
             <column name="slice_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-317">
         <createIndex indexName="algo_annotation_user_id_index" tableName="algo_annotation">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-318">
         <createIndex indexName="reviewed_annotation_image_id_index" tableName="reviewed_annotation">
             <column name="image_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-319">
         <createIndex indexName="reviewed_annotation_location_index" tableName="reviewed_annotation">
             <column name="location"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-320">
         <createIndex indexName="reviewed_annotation_project_id_index" tableName="reviewed_annotation">
             <column name="project_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-321">
         <createIndex indexName="reviewed_annotation_slice_id_index" tableName="reviewed_annotation">
             <column name="slice_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-322">
         <createIndex indexName="reviewed_annotation_user_id_index" tableName="reviewed_annotation">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-323">
         <createIndex indexName="uploaded_file_l_tree_index" tableName="uploaded_file">
             <column name="l_tree"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-324">
         <createIndex indexName="uploaded_file_parent_id_index" tableName="uploaded_file">
             <column name="parent_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-325">
         <createIndex indexName="uploaded_file_storage_id_index" tableName="uploaded_file">
             <column name="storage_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-326">
         <createIndex indexName="uploaded_file_user_id_index" tableName="uploaded_file">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-327">
         <createIndex indexName="user_annotation_created_index" tableName="user_annotation">
             <column name="created"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-328">
         <createIndex indexName="user_annotation_image_id_index" tableName="user_annotation">
             <column name="image_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-329">
         <createIndex indexName="user_annotation_location_index" tableName="user_annotation">
             <column name="location"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-330">
         <createIndex indexName="user_annotation_project_id_index" tableName="user_annotation">
             <column name="project_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-331">
         <createIndex indexName="user_annotation_slice_id_index" tableName="user_annotation">
             <column name="slice_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-332">
         <createIndex indexName="user_annotation_user_id_index" tableName="user_annotation">
             <column name="user_id"/>
         </createIndex>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-333">
         <addForeignKeyConstraint baseColumnNames="slice_id" baseTableName="algo_annotation" constraintName="fk_1qdju4knrk7toobg7n0ivltt4" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="slice_instance" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-334">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="algo_annotation" constraintName="fk_27qlqf6575ldhghmfapwbfy1b" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-335">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="uploaded_file" constraintName="fk_2i0u11nairnbqcxiihykjfrd6" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-336">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="reviewed_annotation" constraintName="fk_30svf5sownvmphoaycl110lsv" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-337">
         <addForeignKeyConstraint baseColumnNames="review_user_id" baseTableName="reviewed_annotation" constraintName="fk_5f7mc0q3prv1iw7m8y189puu9" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-338">
         <addForeignKeyConstraint baseColumnNames="slice_id" baseTableName="roi_annotation" constraintName="fk_71fxrf96p4gdjapic407c4ln9" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="slice_instance" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-339">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="roi_annotation" constraintName="fk_7jcom8790cdmsiidhphwdr53c" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-340">
         <addForeignKeyConstraint baseColumnNames="uploaded_file_id" baseTableName="abstract_image" constraintName="fk_9dirkh1o5a34eyqyko0b8fet9" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="uploaded_file" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-341">
         <addForeignKeyConstraint baseColumnNames="image_id" baseTableName="algo_annotation" constraintName="fk_9eqqx7n2f3kbh4a4ogxy8rbk8" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_instance" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-342">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="reviewed_annotation" constraintName="fk_cvaa1jfp32huoau3ldn1so0pk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-343">
         <addForeignKeyConstraint baseColumnNames="storage_id" baseTableName="uploaded_file" constraintName="fk_ednveec54vgvlnjew6in5b5oa" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="storage" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-344">
         <addForeignKeyConstraint baseColumnNames="image_id" baseTableName="roi_annotation" constraintName="fk_eeaivtb750v2bmkk3f1gvyh52" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_instance" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-345">
         <addForeignKeyConstraint baseColumnNames="slice_id" baseTableName="user_annotation" constraintName="fk_g0e6mvitmag5jghdq5t3arg0u" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="slice_instance" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-346">
         <addForeignKeyConstraint baseColumnNames="reviewed_annotation_terms_id" baseTableName="reviewed_annotation_term" constraintName="fk_g1rqdsqh8o7uam53gbw88639o" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="reviewed_annotation" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-347">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_annotation" constraintName="fk_hey8qie1qqqmijq65n3er7udm" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-348">
         <addForeignKeyConstraint baseColumnNames="user_annotation_id" baseTableName="annotation_term" constraintName="fk_itea7ffu4d5f61o3r9bejj79a" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="user_annotation" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-349">
         <addForeignKeyConstraint baseColumnNames="image_id" baseTableName="user_annotation" constraintName="fk_j2b8vqjqbpqmw5g3rb3emupw9" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_instance" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-350">
         <addForeignKeyConstraint baseColumnNames="image_server_id" baseTableName="uploaded_file" constraintName="fk_jy7rfc162x2am5l8llgvcgv89" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_server" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-351">
         <addForeignKeyConstraint baseColumnNames="image_id" baseTableName="reviewed_annotation" constraintName="fk_n6p8xu8qcpsqk3ix8x8qb673q" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_instance" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-352">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="user_annotation" constraintName="fk_nxgwfb0fg47xtctst2lefat2y" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-353">
         <addForeignKeyConstraint baseColumnNames="uploaded_file_id" baseTableName="abstract_slice" constraintName="fk_ofu9h6te8gghbjdmqh24so6cl" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="uploaded_file" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-354">
         <addForeignKeyConstraint baseColumnNames="uploaded_file_id" baseTableName="companion_file" constraintName="fk_pa1j55xx7lx1q5dkegsu2kvii" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="uploaded_file" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-355">
         <addForeignKeyConstraint baseColumnNames="parent_id" baseTableName="uploaded_file" constraintName="fk_r7h853sqa7vwt5rm9nk1gw67q" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="uploaded_file" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-356">
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="algo_annotation" constraintName="fk_s3yhotmnvw0mu2a01yyeved8o" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-357">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="roi_annotation" constraintName="fk_skvm9rulcag79vbil8mpgo8en" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
-    </changeSet>
-    <changeSet author="lrollus (generated)" id="1636385276500-358">
         <addForeignKeyConstraint baseColumnNames="slice_id" baseTableName="reviewed_annotation" constraintName="fk_t57p1fkwwbsl8mspqas7scl7l" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="slice_instance" validate="true"/>
     </changeSet>
 </databaseChangeLog>
