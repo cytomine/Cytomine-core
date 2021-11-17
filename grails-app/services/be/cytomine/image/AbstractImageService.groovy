@@ -139,59 +139,16 @@ class AbstractImageService extends ModelService {
     def fullSearch(SecUser user, Project project = null, String sortColumn = null, String sortDirection = null, Long max  = 0, Long offset = 0, searchParameters = []) {
         securityACLService.checkIsSameUser(user, cytomineService.currentUser)
 
-        println "fullSearch"
-        println searchParameters
-
-        String searchText = searchParameters.find { it.field.equals("search") }.values
-
-//TODO je dois lier au storage pour ne prendre que les image dont j'ai accès au storage
-        //comme au dessus, fait un list storage puis collect les id puis faire un JOIN sur les uf qui ont le storage id dans les ids storage
-        //        if(currentRoleServiceProxy.isAdminByNow(user)) { return tous les storages. ==> Mieux. ne fait pas le join sur les uf du coup. Prévoir un boolean isAdmin
-
-
-
-        /*createAlias("uploadedFile", "uf")
-        'in'("uf.storage.id", storages.collect{ it.id })
-        isNull("deleted")
-*/
+        String searchText = searchParameters.find { it.field.equals("searchText") }?.values
 
         String abstractImageAlias = "ai"
 
         if (!sortColumn) sortColumn = "created"
         if (!sortDirection) sortDirection = "asc"
-        /*if (sortColumn.equals("numberOfAnnotations")) sortColumn = "countImageAnnotations"
-        if (sortColumn.equals("numberOfJobAnnotations")) sortColumn = "countImageJobAnnotations"
-        if (sortColumn.equals("numberOfReviewedAnnotations")) sortColumn = "countImageReviewedAnnotations"
-        if (sortColumn.equals("name")) sortColumn = "instanceFilename"*/
 
         String sortedProperty = ReflectionUtils.findField(AbstractImage, sortColumn) ? "${abstractImageAlias}." + sortColumn : null
-        //if (!sortedProperty) sortedProperty = ReflectionUtils.findField(AbstractImage, sortColumn) ? abstractImageAlias + "." + sortColumn : null
         if (!sortedProperty) throw new CytomineMethodNotYetImplementedException("AbstractImage list sorted by $sortDirection is not implemented")
         sortedProperty = fieldNameToSQL(sortedProperty)
-
-        /*def validatedSearchParameters = getDomainAssociatedSearchParameters(AbstractImage, searchParameters)
-
-        validatedSearchParameters.findAll { !it.property.contains(".") }.each {
-            it.property = "${abstractImageAlias}." + it.property
-        }
-        //validatedSearchParameters.findAll { it.property == "ui.instanceFilename" }.each { it.property = "name" }
-
-        //boolean joinAI = validatedSearchParameters.any {it.property.contains(abstractImageAlias + ".")} || sortedProperty.contains(abstractImageAlias + ".")
-
-        def sqlSearchConditions = searchParametersToSQLConstraints(validatedSearchParameters)
-
-        println "sqlSearchConditions"
-        println sqlSearchConditions
-*/
-
-
-
-/*        sqlSearchConditions = [
-                imageInstance: sqlSearchConditions.data.findAll {it.property.startsWith("$imageInstanceAlias.")}.collect { it.sql }.join(" AND "),
-                tags : sqlSearchConditions.data.findAll{it.property.startsWith("tda.")}.collect{it.sql}.join(" AND "),
-                parameters   : sqlSearchConditions.sqlParameters
-        ]
-*/
 
         String select, from, where, search, sort
         String request
@@ -202,7 +159,7 @@ class AbstractImageService extends ModelService {
         search = ""
         def mapParams = [:]
 
-        if(!searchText.isEmpty()) {
+        if(searchText && !searchText.isEmpty()) {
             from += "LEFT OUTER JOIN description d ON ${abstractImageAlias}.id = d.domain_ident AND d.domain_class_name = 'be.cytomine.image.AbstractImage' "
             from += "LEFT OUTER JOIN tag_domain_association tda ON ${abstractImageAlias}.id = tda.domain_ident AND tda.domain_class_name = 'be.cytomine.image.AbstractImage' "
             from += "LEFT OUTER JOIN tag tag ON tag.id = tda.tag_id "
@@ -223,20 +180,14 @@ class AbstractImageService extends ModelService {
             search += " ) "
         }
 
-        //TODO faire les parameter nommé car sinon injection SQL
 
-        /*if un des filtres est non nul
-        from += "LEFT OUTER JOIN hv_image_metadata hv ON ${abstractImageAlias}.id = hv.domain_ident AND hv.domain_class_name = 'be.cytomine.image.AbstractImage' "
-
-        //if labid est setté
-        search += " AND "
-        search += " hv.laboratory_id = ... "
-        search += " AND "
-        search += " hv.staining_id = ... "
-        search += " AND "
-        search += " hv.detection_id = ... "
-        */
-
+        if(!currentRoleServiceProxy.isAdminByNow(user)) {
+            List<Long> storages = securityACLService.getStorageList(cytomineService.currentUser, false).collect{it.id}
+            if(!storages.isEmpty()) {
+                from += "LEFT OUTER JOIN uploaded_file uf ON uf.id = ai.uploaded_file_id "
+                where += " AND uf.storage_id IN (${storages.join(",")}) "
+            }
+        }
 
 
 
@@ -288,10 +239,6 @@ class AbstractImageService extends ModelService {
         result.totalPages = Math.ceil(result.total / max)
 
         return result
-
-
-
-
     }
 
     /**
