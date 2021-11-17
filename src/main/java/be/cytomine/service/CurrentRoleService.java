@@ -96,6 +96,10 @@ public class CurrentRoleService {
         return findCurrentRole(user).stream().map(SecRole::getAuthority).collect(Collectors.toSet());
     }
 
+    public Set<String> findRealAuthorities(SecUser user) {
+        return findRealRole(user).stream().map(SecRole::getAuthority).collect(Collectors.toSet());
+    }
+
     /**
      * Check if user is admin (with admin session opened)
      */
@@ -108,6 +112,25 @@ public class CurrentRoleService {
         Set<String> authorities = findCurrentAuthorities(user);
         return authorities.contains("ROLE_USER");
     }
+
+    public boolean isGuestByNow(SecUser user) {
+        Set<String> authorities = findCurrentAuthorities(user);
+        return authorities.contains("ROLE_GUEST");
+    }
+
+    /**
+     * Check if user is admin (with admin session closed or opened)
+     */
+    public boolean isAdmin(SecUser user) {
+        return findRealAuthorities(user).contains("ROLE_ADMIN");
+    }
+    public boolean isUser(SecUser user) {
+        return findRealAuthorities(user).contains("ROLE_USER");
+    }
+    public boolean isGuest(SecUser user) {
+        return findRealAuthorities(user).contains("ROLE_GUEST");
+    }
+
 
     boolean hasCurrentUserAdminRole(SecUser user) {
         Set<String> authorities = findRealRole(user).stream().map(SecRole::getAuthority).collect(Collectors.toSet());

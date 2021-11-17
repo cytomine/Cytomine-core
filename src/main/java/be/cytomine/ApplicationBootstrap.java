@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 @EnableConfigurationProperties({LiquibaseProperties.class,ApplicationConfiguration.class})
+@Transactional
 class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent> {
 
     private final SecUserRepository secUserRepository;
@@ -72,55 +73,12 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
     Dataset dataset;
 
     @Override
-    @Transactional
     public void onApplicationEvent(ApplicationReadyEvent event) {
         log.info("ApplicationListener#onApplicationEvent()");
-        log.info("ONTOLOGIES");
-        for (Ontology ontology : ontologyRepository.findAll().stream().filter(x-> x.getId()==11867l).collect(Collectors.toSet())) {
-
-            log.info("ontology = " + ontology.getName());
-
-            for (Map<String, Object> stringObjectMap : ontology.tree()) {
-                log.info("      term = " + stringObjectMap);
-            }
-            log.info("****************************************");
-            log.info("****************************************");
-            log.info("****************************************");
-            log.info("****************************************");
-            log.info("****************************************");
-            for (Term term : ontology.getTerms()) {
-
-                    log.info("      ontology = " + ontology.getId());
-                    log.info("      term = " + term);
-                    log.info("          children = " + term.children());
-                    log.info("          parent = " + term.parent().orElse(null));
-            }
-
-        }
-
-
-//        List<AdminProjectView> admins = entityManager.createQuery("SELECT v FROM AdminProjectView v", AdminProjectView.class).getResultList();
-//        for (AdminProjectView admin : admins) {
-//            log.info("AdminProjectView = " + admin.getId() + " vs " + admin.getUserId());
-//        }
-//
-//
-//        log.info("PROJECTS");
-//        projectService.list();
-
-//        for (SecUser user : secUserRepository.findAll()) {
-//            log.info("User " + user.humanUsername());
-//        }
-//
-//        for (Storage storage : storageRepository.findAll()) {
-//            log.info("Storage " + storage.getName() + " for user " + (storage.getUser()!=null ? storage.getUser().getUsername() : null));
-//        }
-//
-//        log.info(aclRepository.listMaskForUsers(90L, "admin").toString());
+        init();
     }
 
-
-    private void init() {
+    public void init() {
 
         // TODO: print config
         log.info ("#############################################################################");
@@ -173,8 +131,8 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
         if (applicationConfiguration.getRabbitMQPrivateKey()!=null && applicationConfiguration.getRabbitMQPrivateKey()!=null) {
             secUserRepository.findByUsernameLikeIgnoreCase("rabbitmq")
                     .ifPresent(user -> {
-                        user.setPrivateKey(applicationConfiguration.getImageServerPrivateKey());
-                        user.setPublicKey(applicationConfiguration.getImageServerPublicKey());
+                        user.setPrivateKey(applicationConfiguration.getRabbitMQPrivateKey());
+                        user.setPublicKey(applicationConfiguration.getRabbitMQPublicKey());
                             secUserRepository.save(user);
                     });
         }

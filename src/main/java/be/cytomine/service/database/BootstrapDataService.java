@@ -84,11 +84,15 @@ public class BootstrapDataService {
         bootstrapUtilsService.createMime("bif", "openslide/bif");
         bootstrapUtilsService.createMime("tif", "openslide/ventana");
         bootstrapUtilsService.createMime("tif", "philips/tif");
-        
-        
+
+        bootstrapUtilsService.createRole("ROLE_USER");
+        bootstrapUtilsService.createRole("ROLE_ADMIN");
+        bootstrapUtilsService.createRole("ROLE_SUPER_ADMIN");
+        bootstrapUtilsService.createRole("ROLE_GUEST");
+
+        bootstrapUtilsService.createUser("admin", "Just an", "Admin", dataset.ADMINEMAIL, dataset.ADMINPASSWORD,  List.of("ROLE_USER", "ROLE_ADMIN"));
         bootstrapUtilsService.createUser("ImageServer1", "Image", "Server", dataset.ADMINEMAIL, RandomStringUtils.random(32).toUpperCase(), List.of("ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN"));
         bootstrapUtilsService.createUser("superadmin", "Super", "Admin", dataset.ADMINEMAIL, dataset.ADMINPASSWORD,  List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
-        bootstrapUtilsService.createUser("admin", "Just an", "Admin", dataset.ADMINEMAIL, dataset.ADMINPASSWORD,  List.of("ROLE_USER", "ROLE_ADMIN"));
         bootstrapUtilsService.createUser("rabbitmq", "rabbitmq", "user", dataset.ADMINEMAIL, RandomStringUtils.random(32).toUpperCase(),  List.of("ROLE_USER", "ROLE_SUPER_ADMIN"));
         bootstrapUtilsService.createUser("monitoring", "Monitoring", "Monitoring", dataset.ADMINEMAIL, RandomStringUtils.random(32).toUpperCase(),  List.of("ROLE_USER","ROLE_SUPER_ADMIN"));
 
@@ -101,11 +105,11 @@ public class BootstrapDataService {
         bootstrapUtilsService.createConfigurations("notification_smtp_host", applicationConfiguration.getNotification().getSmtpHost(), ConfigurationReadingRole.ADMIN);
         bootstrapUtilsService.createConfigurations("notification_smtp_port", applicationConfiguration.getNotification().getSmtpPort(), ConfigurationReadingRole.ADMIN);
 
-        SecUser admin = secUserRepository.findByUsernameLikeIgnoreCase("admin")
-                .orElseThrow(() -> new ObjectNotFoundException("admin user does not exists"));
-        admin.setPrivateKey(applicationConfiguration.getAdminPrivateKey());
-        admin.setPublicKey(applicationConfiguration.getAdminPublicKey());
-        secUserRepository.save(admin);
+//        SecUser admin = secUserRepository.findByUsernameLikeIgnoreCase("admin")
+//                .orElseThrow(() -> new ObjectNotFoundException("admin user does not exists"));
+//        admin.setPrivateKey(applicationConfiguration.getAdminPrivateKey());
+//        admin.setPublicKey(applicationConfiguration.getAdminPublicKey());
+//        secUserRepository.save(admin);
 
         changeUserKeys("admin", applicationConfiguration.getAdminPrivateKey(), applicationConfiguration.getAdminPublicKey());
         changeUserKeys("superadmin", applicationConfiguration.getSuperAdminPrivateKey(), applicationConfiguration.getSuperAdminPublicKey());

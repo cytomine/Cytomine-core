@@ -209,7 +209,10 @@ public class JsonObject extends HashMap<String, Object> {
     public CytomineDomain getJSONAttrDomain(EntityManager entityManager, String attr, CytomineDomain domain, String column, String columnType, boolean mandatory) {
         if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
             CytomineDomain domainRead;
-            if(column.equals("id")) {
+
+            if (this.get(attr) instanceof CytomineDomain) {
+                return (CytomineDomain)this.get(attr);
+            } else if(column.equals("id")) {
                 domainRead = entityManager.find(domain.getClass(), Long.parseLong(this.get(attr).toString()));
             } else {
                 String request = "SELECT d FROM " + domain.getClass().getName() + " d WHERE " + column + " = :value";

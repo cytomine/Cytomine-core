@@ -69,7 +69,7 @@ public class SecurityUtils {
     public static boolean isAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null &&
-                getAuthorities(authentication).noneMatch("ANONYMOUS"::equals);
+                getAuthorities(authentication).noneMatch("ROLE_ANONYMOUS"::equals);
     }
 
     /**
@@ -140,12 +140,12 @@ public class SecurityUtils {
 
     public static void reauthenticate(ApplicationContext applicationContext, final String username, final String password) {
         UserDetailsService userDetailsService = getBean(applicationContext,"userDetailsService");
-        UserCache userCache = getBean(applicationContext,"userCache");
+        //UserCache userCache = getBean(applicationContext,"userCache");
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
                 userDetails, password == null ? userDetails.getPassword() : password, userDetails.getAuthorities()));
-        userCache.removeUserFromCache(username);
+        //userCache.removeUserFromCache(username);
     }
 
     private static <T> T getBean(ApplicationContext applicationContext, final String name) {

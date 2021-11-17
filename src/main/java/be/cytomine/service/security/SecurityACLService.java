@@ -218,6 +218,13 @@ public class SecurityACLService {
         }
     }
 
+    public void checkGuest(SecUser user) {
+        // TODO: optimize this
+        if (!currentRoleService.isAdminByNow(user) && !currentRoleService.isUserByNow(user) && !currentRoleService.isGuestByNow(user)) {
+            throw new ForbiddenException("You don't have the right to perform this action! You must be guest!");
+        }
+    }
+
     public void checkIsNotReadOnly(Long id, Class className) {
         checkIsNotReadOnly(id,className.getName());
     }

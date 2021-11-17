@@ -22,7 +22,7 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
 
     Optional<SecUser> findByUsernameLikeIgnoreCase(String username);
 
-//    Optional<SecUser> findByEmailLikeIgnoreCase(String email);
+    Optional<SecUser> findByPublicKey(String publicKey);
 
 //    Optional<SecUser> findByPublicKeyAndEnabled(String publicKey, Boolean enabled);
 

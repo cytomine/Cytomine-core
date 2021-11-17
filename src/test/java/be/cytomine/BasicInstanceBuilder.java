@@ -17,7 +17,9 @@ import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.PermissionService;
+import be.cytomine.service.database.BootstrapDataService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.acls.model.Permission;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
@@ -55,6 +57,8 @@ public class BasicInstanceBuilder {
 
     MimeRepository mimeRepository;
 
+    ApplicationBootstrap applicationBootstrap;
+
     private static User defaultUser;
 
     public BasicInstanceBuilder(
@@ -63,13 +67,16 @@ public class BasicInstanceBuilder {
             UserRepository userRepository,
             PermissionService permissionService,
             SecRoleRepository secRoleRepository,
-            MimeRepository mimeRepository) {
+            MimeRepository mimeRepository,
+            ApplicationBootstrap applicationBootstrap) {
+        applicationBootstrap.init();
         this.em = em;
         this.userRepository = userRepository;
         this.permissionService = permissionService;
         this.secRoleRepository = secRoleRepository;
         this.mimeRepository = mimeRepository;
         this.transactionTemplate = transactionTemplate;
+
         this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
@@ -191,6 +198,14 @@ public class BasicInstanceBuilder {
         project.setOntology(null);
         project.setCountAnnotations(0);
         return project;
+    }
+
+    public void addUserToProject(Project project, String username, Permission permission) {
+        permissionService.addPermission(project, username, permission);
+    }
+
+    public void addUserToProject(Project project, String username) {
+        permissionService.addPermission(project, username, ADMINISTRATION);
     }
 
     public <T> T persistAndReturn(T instance) {

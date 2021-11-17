@@ -14,7 +14,7 @@ public class SQLUtils {
     }
 
     public static String toCamelCase( String text, boolean capitalized ) {
-        return CaseUtils.toCamelCase(text, capitalized);
+        return CaseUtils.toCamelCase(text, capitalized, new char[]{'_'});
     }
 
 

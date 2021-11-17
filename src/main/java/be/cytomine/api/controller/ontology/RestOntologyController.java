@@ -34,7 +34,7 @@ public class RestOntologyController extends RestCytomineController {
      * List all ontology visible for the current user
      * For each ontology, print the terms tree
      */
-    @GetMapping("/ontology")
+    @GetMapping("/ontology.json")
     public ResponseEntity<JsonObject> list(
             @RequestParam Map<String,String> allParams
     ) {

@@ -7,7 +7,6 @@ import be.cytomine.service.security.SecUserService;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +27,7 @@ public class RestUserController extends RestCytomineController {
     ) {
         log.debug("REST request to get User : {}", id);
 
-        Optional<SecUser> user = secUserService.read(id);
+        Optional<SecUser> user = secUserService.find(id);
         if (user.isEmpty()) {
             user = secUserService.findByUsername(id);
         }
@@ -49,7 +48,7 @@ public class RestUserController extends RestCytomineController {
     ) {
         log.debug("REST request to get current User");
 
-        Optional<SecUser> user = secUserService.readCurrentUser();
+        Optional<SecUser> user = secUserService.findCurrentUser();
         //TODO: admin, user, guest, adminByNow...
         return user.map( secUser -> {
             JsonObject object = User.getDataFromDomain(secUser);
@@ -81,6 +80,16 @@ public class RestUserController extends RestCytomineController {
         log.debug("REST request to delete User: {}", id);
         return delete(secUserService, JsonObject.of("id", Long.parseLong(id)), null);
     }
+
+
+
+//    @GetMapping("/project/{id}/user.json")
+//    public ResponseEntity<String> showByProject(
+//            @PathVariable String id
+//    ) {
+//        log.debug("REST request to get project users : {}", id);
+//        secUserService.li
+//    }
 
 
 }

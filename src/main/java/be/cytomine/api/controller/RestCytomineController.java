@@ -9,6 +9,7 @@ import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 
 import java.util.*;
@@ -61,9 +62,18 @@ public abstract class RestCytomineController {
 
     }
 
+    protected JsonObject responseList(Page page, Map<String,String> params) {
+        Integer offset = params.get("offset") != null ? Integer.parseInt(params.get("offset")) : 0;
+        Integer max = (params.get("max") != null && Integer.parseInt(params.get("max"))!=0) ? Integer.parseInt(params.get("max")) : Integer.MAX_VALUE;
+        return JsonObject.of("collection", page.getContent(), "offset", offset, "perPage", Math.min(max, page.getTotalElements()), "size", page.getTotalElements(), "totalPages", Math.ceil(page.getTotalElements()/max));
+    }
+
 //    protected ResponseEntity<String> response(Map<String, Object> response, int code) {
 //        return ResponseEntity.status(code).body(convertObjectToJSON(response));
 //    }
+    protected ResponseEntity<JsonObject> responseSuccess(Page page, Map<String,String> params) {
+        return ResponseEntity.status(200).body(responseList(page, params));
+    }
 
     protected ResponseEntity<String> response(Map<String, Object> response, int code) {
         return ResponseEntity.status(code).body(convertObjectToJSON(response));

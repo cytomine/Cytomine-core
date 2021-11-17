@@ -1,7 +1,7 @@
 spring:
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:postgresql://localhost:5442/docker
+    url: jdbc:postgresql://localhost:5433/docker
     username: docker
     password: docker
     hikari:

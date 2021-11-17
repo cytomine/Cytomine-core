@@ -5,6 +5,7 @@ import be.cytomine.domain.acl.*;
 import be.cytomine.domain.command.CommandHistory;
 import be.cytomine.domain.command.CommandHistory_;
 import be.cytomine.domain.command.Transaction;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.meta.*;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.Ontology_;
@@ -19,27 +20,31 @@ import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
+import be.cytomine.service.search.ProjectSearchExtension;
 import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.utils.CommandResponse;
-import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.Task;
+import be.cytomine.utils.*;
+import be.cytomine.utils.filters.SQLSearchParameter;
 import be.cytomine.utils.filters.SearchParameterEntry;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import be.cytomine.utils.filters.SearchParameterProcessed;
+import lombok.*;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.persistence.Tuple;
+import javax.persistence.TupleElement;
 import javax.persistence.criteria.*;
+import javax.transaction.Transactional;
+import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ProjectService extends ModelService {
 
     private final CommandHistoryRepository commandHistoryRepository;
@@ -48,11 +53,9 @@ public class ProjectService extends ModelService {
 
     private final ProjectRepository projectRepository;
 
-    private final EntityManager em;
-
     private final SecurityACLService securityACLService;
 
-    public Optional<Project> read(Long id) {
+    public Optional<Project> find(Long id) {
         Optional<Project> project = projectRepository.findById(id);
         project.ifPresent(value -> securityACLService.check(value, READ));
         return project;
@@ -90,6 +93,253 @@ public class ProjectService extends ModelService {
     List<CommandHistory> lastAction(Project project, int max) {
         securityACLService.check(project, READ);
         return commandHistoryRepository.findAllByProject(project, PageRequest.of(0, max, Sort.by("created").descending()));
+    }
+
+    public Page<Map<String, Object>> list(SecUser user, ProjectSearchExtension projectSearchExtension, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
+        if (user==null) {
+            securityACLService.checkAdmin(currentUserService.getCurrentUser());
+        } else {
+            securityACLService.checkGuest(user);
+        }
+
+        for (SearchParameterEntry parameter : searchParameters){
+            if(parameter.getProperty().equals("numberOfImages")){
+                parameter.setProperty("countImages");
+            }
+            if(parameter.getProperty().equals("numberOfJobAnnotations")) {
+                parameter.setProperty("countJobAnnotations");
+            }
+            if(parameter.getProperty().equals("numberOfReviewedAnnotations")) {
+                parameter.setProperty("countReviewedAnnotations");
+            }
+            if(parameter.getProperty().equals("numberOfAnnotations")) {
+                parameter.setProperty("countAnnotations");
+            }
+            if(parameter.getProperty().equals("ontology")) {
+                parameter.setProperty("ontology_id");
+            }
+        }
+        if (sortColumn.equals("lastActivity") && !projectSearchExtension.isWithLastActivity()) {
+            throw new WrongArgumentException("Cannot sort on lastActivity without argument withLastActivity");
+        }
+        if (sortColumn.equals("membersCount") && !projectSearchExtension.isWithMembersCount()) {
+            throw new WrongArgumentException("Cannot sort on membersCount without argument withMembersCount");
+        }
+
+        List<SearchParameterEntry> validParameters = SQLSearchParameter.getDomainAssociatedSearchParameters(Project.class, searchParameters, getEntityManager());
+        validParameters.forEach(searchParameterEntry -> searchParameterEntry.setProperty("p."+searchParameterEntry.getProperty()));
+
+        for (SearchParameterEntry parameter : searchParameters){
+            String property;
+            switch(parameter.getProperty()) {
+                case "ontology_id" :
+                    property = "ontology.id";
+                    parameter.setValue(SQLSearchParameter.convertSearchParameter(Long.class, parameter.getValue(), getEntityManager()));
+                    validParameters.add(new SearchParameterEntry(property, parameter.getOperation(), parameter.getValue()));
+                    break;
+                case "membersCount" :
+                    property = "members.member_count";
+                    parameter.setValue(SQLSearchParameter.convertSearchParameter(Long.class, parameter.getValue(), getEntityManager()));
+                    validParameters.add(new SearchParameterEntry(property, parameter.getOperation(), parameter.getValue()));
+                    break;
+                case "tag" :
+                    property = "tda.tag_id";
+                    parameter.setValue(SQLSearchParameter.convertSearchParameter(Long.class, parameter.getValue(), getEntityManager()));
+                    validParameters.add(new SearchParameterEntry(property, parameter.getOperation(), parameter.getValue()));
+                    break;
+                default:
+                    continue;
+            }
+        }
+
+        SearchParameterProcessed sqlSearchConditions = SQLSearchParameter.searchParametersToSQLConstraints(validParameters);
+
+        String project = sqlSearchConditions.getData().stream().filter(x -> x.getProperty().startsWith("p.")).map(x -> x.getSql()).collect(Collectors.joining(" AND "));
+        String ontology = sqlSearchConditions.getData().stream().filter(x -> x.getProperty().startsWith("ontology.")).map(x -> x.getSql()).collect(Collectors.joining(" AND "));
+        String members = sqlSearchConditions.getData().stream().filter(x -> x.getProperty().startsWith("members.")).map(x -> x.getSql()).collect(Collectors.joining(" AND "));
+        String tags = sqlSearchConditions.getData().stream().filter(x -> x.getProperty().startsWith("t.")).map(x -> x.getSql()).collect(Collectors.joining(" AND "));
+
+        if (!members.isBlank() && !projectSearchExtension.isWithMembersCount()) {
+            throw new WrongArgumentException("Cannot search on members attributes without argument withMembersCount");
+        }
+
+        String select, from, where, search, sort;
+        String request;
+
+        if (user!=null) {
+            select = "SELECT DISTINCT p.* ";
+            from = "FROM project p " +
+                    "JOIN acl_object_identity as aclObjectId ON aclObjectId.object_id_identity = p.id " +
+                    "JOIN acl_entry as aclEntry ON aclEntry.acl_object_identity = aclObjectId.id " +
+                    "JOIN acl_sid as aclSid ON aclEntry.sid = aclSid.id ";
+            where = "WHERE aclSid.sid like '"+user.getUsername()+"' and p.deleted is null ";
+        }
+        else {
+            select = "SELECT DISTINCT(p.id), p.* ";
+            from = "FROM project p ";
+            where = "WHERE p.deleted is null ";
+        }
+        select += ", ontology.name as ontology_name, ontology.id as ontology ";
+        from += "LEFT OUTER JOIN ontology ON p.ontology_id = ontology.id ";
+        select += ", discipline.name as discipline_name, discipline.id as discipline ";
+        from += "LEFT OUTER JOIN discipline ON p.discipline_id = discipline.id ";
+
+        search = "";sort = "";
+        if(!project.isBlank()){
+            search +=" AND ";
+            search += project;
+        }
+
+        if(!ontology.isBlank()){
+            search +=" AND ";
+            search += ontology;
+        }
+
+        if(!tags.isBlank()){
+            from += "LEFT OUTER JOIN tag_domain_association t ON p.id = t.domain_ident AND t.domain_class_name = 'be.cytomine.project.Project' "; //TODO: change class path
+            search +=" AND ";
+            search += tags;
+        }
+
+
+        if(projectSearchExtension.isWithLastActivity()) {
+            select += ", activities.max_date ";
+            from += "LEFT OUTER JOIN " +
+                    "( SELECT  project_id, MAX(created) max_date " +
+                    "  FROM command_history " +
+                    "  GROUP BY project_id " +
+                    ") activities ON p.id = activities.project_id ";
+        }
+        if(projectSearchExtension.isWithMembersCount()) {
+            select += ", members.member_count ";
+            from += "LEFT OUTER JOIN " +
+                    " ( SELECT aclObjectId.object_id_identity as project_id, COUNT(DISTINCT secUser.id) as member_count " +
+                    "   FROM acl_object_identity as aclObjectId, acl_entry as aclEntry, acl_sid as aclSid, sec_user as secUser " +
+                    "   WHERE aclEntry.acl_object_identity = aclObjectId.id and aclEntry.sid = aclSid.id and aclSid.sid = secUser.username and secUser.class = 'be.cytomine.security.User' " +
+                    "   GROUP BY aclObjectId.object_id_identity " +
+                    ") members ON p.id = members.project_id ";
+
+            if(!members.isBlank()){
+                search +=" AND ";
+                search += members;
+            }
+        }
+        if (projectSearchExtension.isWithDescription()) {
+            select += ", d.data as description ";
+            from += "LEFT OUTER JOIN description d ON d.domain_ident = p.id ";
+        }
+        if(projectSearchExtension.isWithCurrentUserRoles()) {
+            SecUser currentUser = currentUserService.getCurrentUser(); // cannot use user param because it is set to null if user connected as admin
+            select += ", (admin_project.id IS NOT NULL) AS is_admin, (repr.id IS NOT NULL) AS is_representative ";
+            from += "LEFT OUTER JOIN admin_project " +
+                    "ON admin_project.id = p.id AND admin_project.user_id = " + currentUser.getId() + " " +
+                    "LEFT OUTER JOIN project_representative_user repr " +
+                    "ON repr.project_id = p.id AND repr.user_id = " + currentUser.getId() + " ";
+
+            SearchParameterEntry searchedRole = searchParameters.stream().filter(x -> x.getProperty().equals("currentUserRole")).findFirst().orElse(null);
+            if(searchedRole!=null) {
+                String value = ((String)searchedRole.getValue());
+                if(value.contains("manager") && value.contains("contributor")){} // nothing because null or not null
+                else if(value.contains("manager")) {
+                    search += " AND admin_project.id IS NOT NULL  ";
+                }
+                else if(value.contains("contributor")) {
+                    search += " AND admin_project.id IS NULL  ";
+                }
+            }
+
+        }
+
+
+        switch(sortColumn) {
+            case "currentUserRole" :
+                if(projectSearchExtension.isWithCurrentUserRoles()) {
+                    sortColumn="is_representative "+((sortDirection.equals("desc")) ? " DESC " : " ASC ")+", is_admin";
+                }
+                break;
+            case "membersCount" :
+                if(projectSearchExtension.isWithMembersCount()) {
+                    sortColumn="members.member_count";
+                }
+                break;
+            case "lastActivity" :
+                if(projectSearchExtension.isWithLastActivity()) {
+                    sortColumn="activities.max_date";
+                }
+                break;
+            case "name":
+            case "numberOfImages":
+            case "numberOfAnnotations":
+            case "numberOfJobAnnotations":
+            case "numberOfReviewedAnnotations":
+                String regex = "([a-z])([A-Z]+)";
+                String replacement = "$1_$2";
+                sortColumn ="p."+sortColumn.replaceAll("numberOf", "count").replaceAll(regex, replacement).toLowerCase();
+                break;
+        }
+
+        sort = " ORDER BY "+sortColumn;
+        sort += (sortDirection.equals("desc")) ? " DESC " : " ASC ";
+        sort += (sortDirection.equals("desc")) ? " NULLS LAST " : " NULLS FIRST ";
+
+        request = select + from + where + search + sort;
+
+        if (max > 0) {
+            request += " LIMIT " + max;
+        }
+        if (offset > 0) {
+            request += " OFFSET " + offset;
+        }
+
+
+        Query query = getEntityManager().createQuery(request, Tuple.class);
+        Map<String, Object> mapParams = sqlSearchConditions.getSqlParameters();
+        for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
+            query.setParameter(entry.getKey(), entry.getValue());
+        }
+        List<Tuple> resultList = query.getResultList();
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (Tuple rowResult : resultList) {
+            JsonObject result = new JsonObject();
+            for (TupleElement<?> element : rowResult.getElements()) {
+                Object value = rowResult.get(element.getAlias());
+                if (value instanceof BigInteger) {
+                    value = ((BigInteger)value).longValue();
+                }
+                String alias = SQLUtils.toCamelCase(element.getAlias());
+                result.put(alias, value);
+            }
+            result.computeIfPresent("created", (k, v) -> ((Date)v).getTime());
+            result.computeIfPresent("updated", (k, v) -> ((Date)v).getTime());
+            Ontology eagerOntology = new Ontology();
+            eagerOntology.setId((Long)result.get("ontology"));
+            eagerOntology.setName((String)result.get("ontologyName"));
+            result.put("ontology", eagerOntology);
+            JsonObject object = Project.getDataFromDomain(new Project().buildDomainFromJson(result, getEntityManager()));
+            object.put("numberOfImages", result.get("countImages"));
+            object.put("numberOfAnnotations", result.get("countAnnotations"));
+            object.put("numberOfJobAnnotations", result.get("countJobAnnotations"));
+
+            if(projectSearchExtension.isWithLastActivity()) {
+                object.put("lastActivity", result.get("maxDate"));
+            }
+            if(projectSearchExtension.isWithMembersCount()) {
+                object.put("membersCount", result.get("memberCount")==null ? 0 : result.get("memberCount"));
+            }
+            if (projectSearchExtension.isWithDescription()) {
+                object.put("description", result.get("description")==null ? "" : result.get("description"));
+            }
+            if(projectSearchExtension.isWithCurrentUserRoles()) {
+                object.put("currentUserRoles", JsonObject.of("admin", result.get("isAdmin"), "representative", result.get("isRepresentative")));
+            }
+            results.add(object);
+        }
+        request = "SELECT COUNT(DISTINCT p.id) " + from + where + search;
+        query = getEntityManager().createNativeQuery(request);
+        long count = ((BigInteger)query.getResultList().get(0)).longValue();
+        Page<Map<String, Object>> page = new PageImpl<>(results, PageUtils.buildPage(offset, max), count);
+        return page;
+
     }
 
 
@@ -412,20 +662,6 @@ class ProjectSearchParameter {
 
 }
 
-
-
-@Data
-@Builder
-class ProjectSearchExtension {
-
-    boolean withMembersCount;
-
-    boolean withLastActivity;
-
-//    Boolean withDescription;
-
-    boolean withCurrentUserRoles;
-}
 
 @Data
 @AllArgsConstructor

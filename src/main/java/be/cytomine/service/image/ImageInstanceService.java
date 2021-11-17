@@ -303,7 +303,7 @@ public class ImageInstanceService extends ModelService {
             result.put("reviewUser", result.get("reviewUserId"));
             result.put("baseImage", result.get("baseImageId"));
             result.put("project", result.get("projectId"));
-
+            // TODO: select N + 1 => see projectService (eagerOntology to load domain directly without fetching database)
             JsonObject object = ImageInstance.getDataFromDomain(new ImageInstance().buildDomainFromJson(result, entityManager));
             object.put("projectBlind", result.get("projectBlind"));
             object.put("projectName", result.get("projectName"));
@@ -311,9 +311,9 @@ public class ImageInstanceService extends ModelService {
         }
 
         request = "SELECT COUNT(DISTINCT " + imageInstanceAlias + ".id) " + from + where + search;
-        query = getEntityManager().createNativeQuery(request, Long.class);
-        int count = query.getFirstResult();
-        Page<Map<String, Object>> page = new PageImpl<>(results, PageRequest.of(offset.intValue(), max.intValue()), count);
+        query = getEntityManager().createNativeQuery(request);
+        long count = ((BigInteger)query.getResultList().get(0)).longValue();
+        Page<Map<String, Object>> page = new PageImpl<>(results, PageUtils.buildPage(offset, max), count);        // TODO: working? otherwise look in projectservice as  getFirstResult seems to return 0...
         return page;
 
     }
@@ -496,8 +496,8 @@ public class ImageInstanceService extends ModelService {
         }
 
         request = "SELECT COUNT(DISTINCT " + imageInstanceAlias + ".id) " + from + where + search;
-        query = getEntityManager().createNativeQuery(request, Long.class);
-        int count = query.getFirstResult();
+        query = getEntityManager().createNativeQuery(request);
+        long count = ((BigInteger)query.getResultList().get(0)).longValue();
 
         if(light) {
             List<Map<String,Object>> lightResult = new ArrayList<>();
@@ -507,7 +507,7 @@ public class ImageInstanceService extends ModelService {
             results = lightResult;
         }
 
-        Page<Map<String, Object>> page = new PageImpl<>(results, PageUtils.buildPage(offset, max), count);
+        Page<Map<String, Object>> page = new PageImpl<>(results, PageUtils.buildPage(offset, max), count);        // TODO: working? otherwise look in projectservice as  getFirstResult seems to return 0...
         return page;
 
     }

@@ -103,11 +103,8 @@ public class BootstrapUtilsService {
     @Autowired
     private ParameterConstraintRepository parameterConstraintRepository;
 
-    public void createRoles() {
-        secRoleRepository.createIfNotExist("ROLE_USER");
-        secRoleRepository.createIfNotExist("ROLE_ADMIN");
-        secRoleRepository.createIfNotExist("ROLE_SUPER_ADMIN");
-        secRoleRepository.createIfNotExist("ROLE_GUEST");
+    public void createRole(String role) {
+        secRoleRepository.createIfNotExist(role);
     }
 
     public void createUser(String username, String firstname, String lastname, String email, String password, List<String> roles) {
@@ -207,7 +204,7 @@ public class BootstrapUtilsService {
            imageServer.setUrl(url);
            imageServer.setBasePath(basePath);
            imageServer.setAvailable(true);
-           imageServerRepository.save(imageServer);
+           entityManager.persist(imageServer);
            for (Mime mime : mimeRepository.findAll()) {
                MimeImageServer mimeImageServer = new MimeImageServer();
                mimeImageServer.setImageServer(imageServer);
