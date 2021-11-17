@@ -102,14 +102,6 @@ class BootstrapOldVersionService {
     }
 
 
-    def initv3_2_1() {
-        log.info "Migration to V3.2.1"
-        new Sql(dataSource).executeUpdate("DROP VIEW user_image;")
-        bootstrapUtilsService.dropSqlColumn("abstract_image", "resolution")
-        bootstrapUtilsService.dropSqlColumn("image_instance", "resolution")
-        tableService.initTable()
-    }
-
     def initv3_2_0() {
         log.info "Migration to V3.2.0"
         def sql = new Sql(dataSource)
@@ -535,6 +527,8 @@ class BootstrapOldVersionService {
 //        sql.executeUpdate("delete from abstract_image where id not in (select image_id from abstract_slice);")
         sql.executeUpdate("UPDATE image_instance ii SET deleted = NOW() WHERE NOT EXISTS(SELECT 1 FROM slice_instance si WHERE si.image_id = ii.id);")
         sql.executeUpdate("UPDATE abstract_image ai SET deleted = NOW() WHERE NOT EXISTS(SELECT 1 FROM abstract_slice asl WHERE asl.image_id = ai.id);")
+        bootstrapUtilsService.dropSqlColumn("abstract_image", "resolution")
+        bootstrapUtilsService.dropSqlColumn("image_instance", "resolution")
 
         /****** COUNTERS ******/
         log.info "Migration of counters"
@@ -592,6 +586,11 @@ class BootstrapOldVersionService {
 //                "where attached_file.domain_ident = description.domain_ident " +
 //                "and attached_file.domain_class_name = 'be.cytomine.project.Project';")
 
+
+        /****** ATTACHED FILE ******/
+        if (!bootstrapUtilsService.checkSqlColumnExistence("attached_file", "key")) {
+            new Sql(dataSource).executeUpdate("ALTER TABLE attached_file ADD COLUMN key VARCHAR;")
+        }
 
         /****** VIEWS ******/
         log.info "Regeneration of DB views"
