@@ -98,9 +98,6 @@ class Project extends CytomineDomain implements Serializable {
     @RestApiObjectField(description = "If true, search similar annotations on all project that share the same ontology",defaultValue = "true")
     boolean retrievalAllOntology = true
 
-    @RestApiObjectField(description = "If true, project is closed",mandatory = false)
-    boolean isClosed = false
-
     @RestApiObjectField(description = "If true, an user (which is not an administrator of the project) cannot see others users layers",mandatory = false)
     boolean hideUsersLayers = false
 
@@ -196,7 +193,6 @@ class Project extends CytomineDomain implements Serializable {
         domain.created = JSONUtils.getJSONAttrDate(json, 'created')
         domain.updated = JSONUtils.getJSONAttrDate(json, 'updated')
         domain.deleted = JSONUtils.getJSONAttrDate(json, "deleted")
-        domain.isClosed = JSONUtils.getJSONAttrBoolean(json, 'isClosed', false)
         domain.mode = EditingMode.CLASSIC;
         if(JSONUtils.getJSONAttrBoolean(json, 'isRestricted', false)) domain.mode = EditingMode.RESTRICTED;
         if(JSONUtils.getJSONAttrBoolean(json, 'isReadOnly', false)) domain.mode = EditingMode.READ_ONLY;
@@ -240,7 +236,6 @@ class Project extends CytomineDomain implements Serializable {
         returnArray['numberOfReviewedAnnotations'] = domain?.countReviewedAnnotations
         returnArray['retrievalDisable'] = domain?.retrievalDisable
         returnArray['retrievalAllOntology'] = domain?.retrievalAllOntology
-        returnArray['isClosed'] = domain?.isClosed
 
         returnArray['isReadOnly'] = false
         returnArray['isRestricted'] = false
