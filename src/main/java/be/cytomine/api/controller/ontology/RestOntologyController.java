@@ -43,14 +43,14 @@ public class RestOntologyController extends RestCytomineController {
         return ResponseEntity.ok(light ? responseList(ontologyService.listLight(),allParams) : response(ontologyService.list(),allParams));
     }
 
-    @GetMapping("/ontology/{id}")
+    @GetMapping("/ontology/{id}.json")
     public ResponseEntity<String> show(
             @PathVariable Long id
     ) {
         log.debug("REST request to get Ontology : {}", id);
         return ontologyService.find(id)
                 .map( ontology -> ResponseEntity.ok(convertCytomineDomainToJSON(ontology)))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseNotFound("Ontology", id).toJsonString()));
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseNotFound("Ontology", id).toJsonString()));
     }
 
 

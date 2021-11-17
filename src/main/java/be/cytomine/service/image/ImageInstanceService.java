@@ -318,7 +318,7 @@ public class ImageInstanceService extends ModelService {
 
     }
 
-    public Page<Map<String, Object>> list(Project project, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset, boolean light) {
+    public Page<Map<String, Object>> list(Project project, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Integer max, Integer offset, boolean light) {
         securityACLService.check(project, READ);
 
         String imageInstanceAlias = "ii";
@@ -492,7 +492,7 @@ public class ImageInstanceService extends ModelService {
             object.put("numberOfReviewedAnnotations", result.get("countImageReviewedAnnotations"));
             object.put("projectBlind", result.get("projectBlind"));
             object.put("projectName", result.get("projectName"));
-            results.add(result);
+            results.add(object);
         }
 
         request = "SELECT COUNT(DISTINCT " + imageInstanceAlias + ".id) " + from + where + search;

@@ -4,6 +4,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.WrongArgumentException;
+import be.cytomine.service.UrlApi;
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
 import lombok.Getter;
@@ -141,12 +142,14 @@ public class ImageInstance extends CytomineDomain {
         returnArray.put("numberOfJobAnnotations", imageInstance.countImageJobAnnotations);
         returnArray.put("numberOfReviewedAnnotations", imageInstance.countImageReviewedAnnotations);
 //
-//        returnArray["thumb"] = UrlApi.getImageInstanceThumbUrlWithMaxSize(image?.id, 512)
-//        returnArray["preview"] = UrlApi.getImageInstanceThumbUrlWithMaxSize(image?.id, 1024)
-//        returnArray["macroURL"] = UrlApi.getAssociatedImageInstance(image?.id, "macro", image?.baseImage?.uploadedFile?.contentType, 512)
+        returnArray.put("thumb", UrlApi.getImageInstanceThumbUrlWithMaxSize(imageInstance.id, 512, "png"));
+        returnArray.put("preview", UrlApi.getImageInstanceThumbUrlWithMaxSize(imageInstance.id, 1024, "png"));
+        returnArray.put("macroURL", UrlApi.getAssociatedImageInstance(imageInstance.id, "macro", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getUploadedFile).map(UploadedFile::getContentType).orElse(null), 512, "png"));
 
         return returnArray;
     }
+
+
 
     private Long getBaseImageId() {
         return Optional.ofNullable(this.getBaseImage()).map(CytomineDomain::getId).orElse(null);

@@ -31,7 +31,7 @@ public class TestApplication {
 
     @Bean
     public InitializingBean init() {
-
+            // TODO: do not run twice in dev
         return () -> {
             log.info("Running cytomine core TEST");
             applicationBootstrap.init();

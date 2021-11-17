@@ -292,7 +292,7 @@ public class ProjectService extends ModelService {
         }
 
 
-        Query query = getEntityManager().createQuery(request, Tuple.class);
+        Query query = getEntityManager().createNativeQuery(request, Tuple.class);
         Map<String, Object> mapParams = sqlSearchConditions.getSqlParameters();
         for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
             query.setParameter(entry.getKey(), entry.getValue());

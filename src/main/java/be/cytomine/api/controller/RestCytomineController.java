@@ -37,14 +37,14 @@ public abstract class RestCytomineController {
 //        }
 //    }
 
-
-
     protected JsonObject responseList(List list, Map<String,String> params) {
+        return responseList(list, Integer.parseInt(params.get("offset")), Integer.parseInt(params.get("max")));
+    }
 
-        Boolean datatables = (params.get("datatables") != null);
+    protected JsonObject responseList(List list, Integer offsetParameter, Integer maxParameter) {
 
-        Integer offset = params.get("offset") != null ? Integer.parseInt(params.get("offset")) : 0;
-        Integer max = (params.get("max") != null && Integer.parseInt(params.get("max"))!=0) ? Integer.parseInt(params.get("max")) : Integer.MAX_VALUE;
+        Integer offset = offsetParameter != null ? offsetParameter : 0;
+        Integer max = (maxParameter != null && maxParameter!=0) ? maxParameter : Integer.MAX_VALUE;
 
         List subList;
         if (offset >= list.size()) {
@@ -53,18 +53,19 @@ public abstract class RestCytomineController {
             int maxForCollection = Math.min(list.size() - offset, max);
             subList = list.subList(offset,offset + maxForCollection);
         }
-
-        if (datatables) {
-            return JsonObject.of("aaData", subList, "sEcho", params.get("sEcho") , "iTotalRecords", list.size(), "iTotalDisplayRecords", list.size());
-        } else {
-            return JsonObject.of("collection", subList, "offset", offset, "perPage", Math.min(max, list.size()), "size", list.size(), "totalPages", Math.ceil(list.size()/max));
-        }
+        return JsonObject.of("collection", subList, "offset", offset, "perPage", Math.min(max, list.size()), "size", list.size(), "totalPages", Math.ceil(list.size()/max));
 
     }
 
     protected JsonObject responseList(Page page, Map<String,String> params) {
-        Integer offset = params.get("offset") != null ? Integer.parseInt(params.get("offset")) : 0;
-        Integer max = (params.get("max") != null && Integer.parseInt(params.get("max"))!=0) ? Integer.parseInt(params.get("max")) : Integer.MAX_VALUE;
+        // TODO: should we need params if we have page
+        return responseList(page, Integer.parseInt(params.get("offset")), Integer.parseInt(params.get("max")));
+    }
+
+    protected JsonObject responseList(Page page, Integer offsetParameter, Integer maxParameter) {
+        // TODO: should we need params if we have page
+        Integer offset = offsetParameter != null ? offsetParameter : 0;
+        Integer max = (maxParameter != null && maxParameter!=0) ? maxParameter : Integer.MAX_VALUE;
         return JsonObject.of("collection", page.getContent(), "offset", offset, "perPage", Math.min(max, page.getTotalElements()), "size", page.getTotalElements(), "totalPages", Math.ceil(page.getTotalElements()/max));
     }
 

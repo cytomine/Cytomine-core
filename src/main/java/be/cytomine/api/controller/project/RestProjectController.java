@@ -70,7 +70,7 @@ public class RestProjectController extends RestCytomineController {
         log.debug("REST request to get project : {}", id);
         return projectService.find(id)
                 .map( ontology -> ResponseEntity.ok(convertCytomineDomainToJSON(ontology)))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseNotFound("Project", id).toJsonString()));
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseNotFound("Project", id).toJsonString()));
     }
 
 
@@ -91,5 +91,19 @@ public class RestProjectController extends RestCytomineController {
     }
 
 
+    @PostMapping("/project/{id}/userconnection.json")
+    public ResponseEntity<String> userconnection(
+            @PathVariable Long id
+    ) {
+        log.debug("REST request to list project {}", id);
+        // TODO: implement...
+
+
+        return ResponseEntity.status(200).body(
+            "{\"class\":\"be.cytomine.social.PersistentProjectConnection\",\"id\":7255896,\"created\":\"1637155883674\",\"updated\":null,\"deleted\":null,\"user\":6399285,\"project\":6447795,\"time\":null,\"os\":\"Linux\",\"browser\":\"chrome\",\"browserVersion\":\"95.0.4638\",\"countViewedImages\":null,\"countCreatedAnnotations\":null}"
+        );
+
+
+    }
 
 }

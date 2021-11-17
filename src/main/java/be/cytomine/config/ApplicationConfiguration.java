@@ -57,4 +57,6 @@ public class ApplicationConfiguration {
 
     private String softwareSources;
 
+    private Boolean useHTTPInternally;
+
 }

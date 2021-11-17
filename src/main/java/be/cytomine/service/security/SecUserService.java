@@ -243,6 +243,7 @@ public class SecUserService extends ModelService {
     }
 
     public Page<Map<String, Object>> listUsersByProject(Project project, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
+        securityACLService.check(project,READ);
         // migration from grails: parameter boolean withProjectRole is always true
         Optional<SearchParameterEntry> onlineUserSearch = searchParameters.stream().filter(x -> x.getProperty().equals("status") && x.getValue().equals("online")).findFirst();
         Optional<SearchParameterEntry> multiSearch = searchParameters.stream().filter(x -> x.getProperty().equals("fullName")).findFirst();

@@ -9,6 +9,7 @@ import be.cytomine.repository.image.server.StorageRepository;
 import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.security.AclRepository;
 import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.service.UrlApi;
 import be.cytomine.service.database.BootstrapDataService;
 import be.cytomine.service.database.BootstrapUtilsService;
 import be.cytomine.service.database.SequenceService;
@@ -109,7 +110,9 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
         log.info ("#############################################################################");
         log.info ("#############################################################################");
         log.info ("#############################################################################");
-
+        UrlApi.setServerURL(applicationConfiguration.getUseHTTPInternally() ?
+                applicationConfiguration.getServerURL().replace("https", "http") : applicationConfiguration.getServerURL()
+        );
 
         if (EnvironmentUtils.isTest(environment)) {
             bootstrapDataService.initData();

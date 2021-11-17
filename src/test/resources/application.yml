@@ -38,6 +38,7 @@ application:
   rabbitMQPrivateKey: rabbitMQPrivateKey
   rabbitMQPublicKey: rabbitMQPublicKey
   softwareSources: softwareSources/
+  useHTTPInternally: true
 
   cytomine:
     defaultLanguage: ENGLISH
