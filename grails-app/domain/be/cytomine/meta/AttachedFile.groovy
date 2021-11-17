@@ -41,6 +41,8 @@ class AttachedFile extends CytomineDomain {
     @RestApiObjectField(description = "File name with ext")
     String filename
 
+    String key
+
     @RestApiObjectFields(params=[
         @RestApiObjectField(apiFieldName = "url", description = "URL to get this file",allowedType = "string",useForCreation = false)
     ])
@@ -48,6 +50,7 @@ class AttachedFile extends CytomineDomain {
 
     static constraints = {
         domainClassName(nullable: false, blank:  false)
+        key(nullable: true)
     }
     static mapping = {
         id generator: "assigned"
@@ -84,6 +87,7 @@ class AttachedFile extends CytomineDomain {
         returnArray['domainClassName'] = domain?.domainClassName
         returnArray['url'] = "/api/attachedfile/${domain?.id}/download"
         returnArray['filename'] = domain?.filename
+        returnArray['key'] = domain?.key
         return returnArray
     }
 }

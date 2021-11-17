@@ -110,6 +110,7 @@ class RestAttachedFileController extends RestController {
         log.info "Upload attached file"
         Long domainIdent = params.long("domainIdent")
         String domainClassName = params.get("domainClassName")
+        String key = params.get("key")
 
         if(request instanceof AbstractMultipartHttpServletRequest) {
             def f = ((AbstractMultipartHttpServletRequest) request).getFile('files[]')
@@ -131,7 +132,7 @@ class RestAttachedFileController extends RestController {
             } else {
                 securityACLService.checkFullOrRestrictedForOwner(domainIdent,domainClassName, "user")
             }
-            def result = attachedFileService.add(filename,f.getBytes(),domainIdent,domainClassName)
+            def result = attachedFileService.add(filename,f.getBytes(),key,domainIdent,domainClassName)
             responseSuccess(result)
         } else {
             responseError(new WrongArgumentException("No File attached"))
@@ -147,6 +148,7 @@ class RestAttachedFileController extends RestController {
         log.info "Upload attached file"
         Long domainIdent = params.long("domainIdent")
         String domainClassName = params.get("domainClassName")
+        String key = params.get("key")
         def upload = params.image
         String filename = upload.getOriginalFilename()
         log.info "Upload $filename for domain $domainClassName $domainIdent"
@@ -159,7 +161,7 @@ class RestAttachedFileController extends RestController {
         } else {
             securityACLService.checkFullOrRestrictedForOwner(domainIdent,domainClassName)
         }
-        def result = attachedFileService.add(filename,upload.getBytes(),domainIdent,domainClassName)
+        def result = attachedFileService.add(filename,upload.getBytes(),key,domainIdent,domainClassName)
 
         responseSuccess(result)
 

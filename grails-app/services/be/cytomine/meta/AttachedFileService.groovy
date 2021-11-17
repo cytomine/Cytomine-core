@@ -51,12 +51,13 @@ class AttachedFileService extends ModelService {
         AttachedFile.read(id)
     }
 
-    def add(String filename,byte[] data,Long domainIdent,String domainClassName) {
+    def add(String filename,byte[] data, String key, Long domainIdent,String domainClassName) {
         AttachedFile file = new AttachedFile()
         file.domainIdent =  domainIdent
         file.domainClassName = domainClassName
         file.filename = filename
         file.data = data
+        file.key = key
         saveDomain(file)
         file
     }
