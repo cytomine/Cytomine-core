@@ -47,6 +47,7 @@ class Version {
         Integer minor = Integer.parseInt(semantic.split("\\.")[1])
         Integer patch = Integer.parseInt(semantic.split("\\.")[2])
         Version version = new Version(deployed: new Date(), major:major, minor:minor, patch:patch)
+        if(major == 0 && minor == 0 && patch == 0) throw new NumberFormatException()
 
         log.info "Last version was ${actual}. Actual version will be $semantic ($version)"
 
