@@ -52,22 +52,22 @@ class LoginWithAPIKeyTests extends SecurityTestsAbstract {
         assert JSON.parse(response)["username"]=="user1"
     }
 
-    void testLoginWithValidAPIKeyForDisabledUser() {
+/*    void testLoginWithValidAPIKeyForDisabledUser() {
         User user1 = BasicInstanceBuilder.getUser1()
         user1.apiEnabled = false
         BasicInstanceBuilder.saveDomain(user1)
         String URL = Infos.CYTOMINEURL + "/api/user/current.json"
         HttpClient client = new HttpClient();
         client.connect(URL)
-
-        def headers  = generateSignature(user1, "GET", URL, "", "application/json,*/*")
-        headers.put("accept", "application/json,*/*")
-        client.get(headers)
+*/
+//        def headers  = generateSignature(user1, "GET", URL, "", "application/json,*/*")
+//        headers.put("accept", "application/json,*/*")
+/*        client.get(headers)
         int code = client.getResponseCode()
         String response = client.getResponseData()
         client.disconnect()
         assert 401 == code
-    }
+    }*/
 
     void testLoginWithValidAPIKeyForDisabledUserButSuperadmin() {
         User user1 = BasicInstanceBuilder.getSuperAdmin("testapikey", "testapikey")
@@ -87,7 +87,7 @@ class LoginWithAPIKeyTests extends SecurityTestsAbstract {
         assert JSON.parse(response)["username"]=="testapikey"
     }
 
-    void testDefaultAPIKeyValidityForNewUser() {
+/*    void testDefaultAPIKeyValidityForNewUser() {
         User user1 = BasicInstanceBuilder.getUserNotExist()
         def result = UserAPI.create(user1.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -95,14 +95,14 @@ class LoginWithAPIKeyTests extends SecurityTestsAbstract {
         String URL = Infos.CYTOMINEURL + "/api/user/current.json"
         HttpClient client = new HttpClient();
         client.connect(URL)
-
-        def headers  = generateSignature(user1, "GET", URL, "", "application/json,*/*")
-        headers.put("accept", "application/json,*/*")
-        client.get(headers)
+*/
+//        def headers  = generateSignature(user1, "GET", URL, "", "application/json,*/*")
+//        headers.put("accept", "application/json,*/*")
+/*        client.get(headers)
         int code = client.getResponseCode()
         client.disconnect()
         assert 401 == code
-    }
+    }*/
 
     void testLoginWithBadAPIKey() {
         User user1 = BasicInstanceBuilder.getUser1()
