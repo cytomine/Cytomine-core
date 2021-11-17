@@ -811,21 +811,21 @@ class BasicInstanceBuilder {
     }
 
     static AttachedFile getAttachedFileNotExist(String file,boolean save = false) {
-        def attachedFile = new AttachedFile()
-        def project = getProjectNotExist(true)
-        attachedFile.domainClassName = project.class.name
-        attachedFile.domainIdent = project.id
-        File f = new File(file)
-        attachedFile.filename = f.name
-        attachedFile.data = f.bytes
-        save ? saveDomain(attachedFile) : checkDomain(attachedFile)
+        return getAttachedFileNotExist(file, new File(file).name, save)
     }
 
     static AttachedFile getAttachedFileNotExist(String file, String filename, boolean save = false) {
-        def attachedFile = new AttachedFile()
         def project = getProjectNotExist(true)
-        attachedFile.domainClassName = project.class.name
-        attachedFile.domainIdent = project.id
+        return getAttachedFileNotExist(file, filename, project, save)
+    }
+
+    static AttachedFile getAttachedFileNotExist(CytomineDomain domain, boolean save = false) {
+        return getAttachedFileNotExist("test/functional/be/cytomine/utils/simpleFile.txt", "simpleFile.txt", domain, save)
+    }
+
+    static AttachedFile getAttachedFileNotExist(String file, String filename, CytomineDomain domain, boolean save = false) {
+        def attachedFile = new AttachedFile()
+        attachedFile.setDomain(domain)
         File f = new File(file)
         attachedFile.filename = filename
         attachedFile.data = f.bytes
@@ -1379,8 +1379,12 @@ class BasicInstanceBuilder {
     }
 
     static TagDomainAssociation getTagDomainAssociationNotExist(boolean save  = false) {
+        return getTagDomainAssociationNotExist(getProjectNotExist(true), save)
+    }
+
+    static TagDomainAssociation getTagDomainAssociationNotExist(CytomineDomain domain, boolean save  = false) {
         TagDomainAssociation association = new TagDomainAssociation(tag: getTagNotExist(true))
-        association.setDomain(getProjectNotExist(true))
+        association.setDomain(domain)
         save? saveDomain(association) : checkDomain(association)
     }
 
@@ -1857,7 +1861,7 @@ class BasicInstanceBuilder {
             abstractImage.width = 25088
             abstractImage.height = 37888
             abstractImage.magnification = 8
-            abstractImage.resolution = 0.65d
+            abstractImage.physicalSizeX = 0.65d
             abstractImage.originalFilename = "test01.jpg"
             abstractImage.user = user
             abstractImage.uploadedFile = uploadedFile

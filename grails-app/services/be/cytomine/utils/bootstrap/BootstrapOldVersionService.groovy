@@ -102,6 +102,14 @@ class BootstrapOldVersionService {
     }
 
 
+    def initv3_2_1() {
+        log.info "Migration to V3.2.1"
+        new Sql(dataSource).executeUpdate("DROP VIEW user_image;")
+        bootstrapUtilsService.dropSqlColumn("abstract_image", "resolution")
+        bootstrapUtilsService.dropSqlColumn("image_instance", "resolution")
+        tableService.initTable()
+    }
+
     def initv3_2_0() {
         log.info "Migration to V3.2.0"
         def sql = new Sql(dataSource)
@@ -260,9 +268,7 @@ class BootstrapOldVersionService {
 
         if (!bootstrapUtilsService.checkSqlColumnExistence("abstract_image", "physical_sizex") &&
                 bootstrapUtilsService.checkSqlColumnExistence("abstract_image", "resolution")) {
-            new Sql(dataSource).executeUpdate("ALTER TABLE abstract_image ADD COLUMN IF NOT EXISTS physical_sizex double precision;")
-            new Sql(dataSource).executeUpdate("UPDATE abstract_image SET physical_sizex = resolution;")
-            //bootstrapUtilsService.renameSqlColumn("abstract_image", "resolution","physical_sizex")
+            bootstrapUtilsService.renameSqlColumn("abstract_image", "resolution","physical_sizex")
         }
 
         if (bootstrapUtilsService.checkSqlColumnExistence("abstract_image", "physical_sizex")) {
@@ -303,9 +309,7 @@ class BootstrapOldVersionService {
         /****** IMAGE INSTANCE ******/
         if (!bootstrapUtilsService.checkSqlColumnExistence("image_instance", "physical_sizex") &&
                 bootstrapUtilsService.checkSqlColumnExistence("image_instance", "resolution")) {
-            new Sql(dataSource).executeUpdate("ALTER TABLE image_instance ADD COLUMN IF NOT EXISTS physical_sizex double precision;")
-            new Sql(dataSource).executeUpdate("UPDATE image_instance SET physical_sizex = resolution;")
-            //bootstrapUtilsService.renameSqlColumn("image_instance", "resolution","physical_sizex")
+            bootstrapUtilsService.renameSqlColumn("image_instance", "resolution","physical_sizex")
         }
 
         if (bootstrapUtilsService.checkSqlColumnExistence("image_instance", "physical_sizex")) {

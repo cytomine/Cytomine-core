@@ -335,7 +335,7 @@ class SecurityACLService {
     }
 
     public def checkIsSameUser(SecUser user,SecUser currentUser) {
-        boolean sameUser = (user.id == currentUser.id)
+        boolean sameUser = (user?.id == currentUser.id)
         sameUser |= currentRoleServiceProxy.isAdminByNow(currentUser)
         sameUser |= (currentUser instanceof UserJob && user.id==((UserJob)currentUser).user.id)
         if (!sameUser) {

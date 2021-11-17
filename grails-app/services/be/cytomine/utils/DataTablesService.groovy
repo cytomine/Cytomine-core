@@ -32,6 +32,7 @@ class DataTablesService {
     def securityACLService
     def currentRoleServiceProxy
 
+    @Deprecated
     def process(params, domain, restrictions, returnFields, project) {
         params.max = params['length'] ? params['length'] as int : 10;
         params.offset = params.start ? params.start as int : 0;
@@ -73,8 +74,6 @@ class DataTablesService {
                         data = it.baseImage.width
                     }else if(property.equals("height")) {
                         data = it.baseImage.height
-                    }else if(property.equals("resolution")) {
-                        data = it.baseImage.resolution
                     }else if(property.equals("magnification")) {
                         data = it.baseImage.magnification
                     }else {

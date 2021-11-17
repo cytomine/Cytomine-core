@@ -99,7 +99,7 @@ class ReportService {
 
         def annotations = annotationListingService.listGeneric(al)
 
-
+        Set<Long> annotationsAlreadyFetched = new HashSet<>();
         annotations.each { annotation ->
             def data = [:]
             data.id = annotation.id
@@ -116,6 +116,7 @@ class ReportService {
             data.cropURL = UrlApi.getCompleteAnnotationCropDrawedWithAnnotationId(annotation.id)
             data.cropGOTO = UrlApi.getAnnotationURL(annotation.project, annotation.image, annotation.id)
             exportResult.add(data)
+            annotationsAlreadyFetched.add(annotation.id)
             annotation.term.each{termNameUsed << termsName.get(it)}
             userNameUsed << annotation.creator
         }
@@ -125,23 +126,26 @@ class ReportService {
             annotations = annotationListingService.listGeneric(al)
 
             annotations.each { annotation ->
-                def data = [:]
-                data.id = annotation.id
-                data.perimeterUnit = annotation.perimeterUnit
-                data.areaUnit = annotation.areaUnit
-                data.area = annotation.area
-                data.perimeter = annotation.perimeter
-                data.XCentroid = String.format("%.2f", (float) annotation.centroid.x)
-                data.YCentroid = String.format("%.2f", (float) annotation.centroid.y)
-                data.image = annotation.image
-                data.filename = annotation.instanceFilename
-                data.user = annotation.creator
-                data.term = annotation.term.collect{termsName.get(it)}.join(", ")
-                data.cropURL = UrlApi.getCompleteAnnotationCropDrawedWithAnnotationId(annotation.id)
-                data.cropGOTO = UrlApi.getAnnotationURL(annotation.project, annotation.image, annotation.id)
-                exportResult.add(data)
-                annotation.term.each{termNameUsed << termsName.get(it)}
-                userNameUsed << annotation.creator
+                if (!annotationsAlreadyFetched.contains(annotation.id)) {
+                    def data = [:]
+                    data.id = annotation.id
+                    data.perimeterUnit = annotation.perimeterUnit
+                    data.areaUnit = annotation.areaUnit
+                    data.area = annotation.area
+                    data.perimeter = annotation.perimeter
+                    data.XCentroid = String.format("%.2f", (float) annotation.centroid.x)
+                    data.YCentroid = String.format("%.2f", (float) annotation.centroid.y)
+                    data.image = annotation.image
+                    data.filename = annotation.instanceFilename
+                    data.user = annotation.creator
+                    data.term = annotation.term.collect{termsName.get(it)}.join(", ")
+                    data.cropURL = UrlApi.getCompleteAnnotationCropDrawedWithAnnotationId(annotation.id)
+                    data.cropGOTO = UrlApi.getAnnotationURL(annotation.project, annotation.image, annotation.id)
+                    exportResult.add(data)
+                    annotationsAlreadyFetched.add(annotation.id)
+                    annotation.term.each{termNameUsed << termsName.get(it)}
+                    userNameUsed << annotation.creator
+                }
             }
         }
 
@@ -155,23 +159,26 @@ class ReportService {
             annotations = annotationListingService.listGeneric(al)
 
             annotations.each { annotation ->
-                def data = [:]
-                data.id = annotation.id
-                data.perimeterUnit = annotation.perimeterUnit
-                data.areaUnit = annotation.areaUnit
-                data.area = annotation.area
-                data.perimeter = annotation.perimeter
-                data.XCentroid = String.format("%.2f", (float) annotation.centroid.x)
-                data.YCentroid = String.format("%.2f", (float) annotation.centroid.y)
-                data.image = annotation.image
-                data.filename = annotation.instanceFilename
-                data.user = annotation.creator
-                data.term = annotation.term.collect{termsName.get(it)}.join(", ")
-                data.cropURL = UrlApi.getCompleteAnnotationCropDrawedWithAnnotationId(annotation.id)
-                data.cropGOTO = UrlApi.getAnnotationURL(annotation.project, annotation.image, annotation.id)
-                exportResult.add(data)
-                annotation.term.each{termNameUsed << termsName.get(it)}
-                userNameUsed << annotation.creator
+                if (!annotationsAlreadyFetched.contains(annotation.id)) {
+                    def data = [:]
+                    data.id = annotation.id
+                    data.perimeterUnit = annotation.perimeterUnit
+                    data.areaUnit = annotation.areaUnit
+                    data.area = annotation.area
+                    data.perimeter = annotation.perimeter
+                    data.XCentroid = String.format("%.2f", (float) annotation.centroid.x)
+                    data.YCentroid = String.format("%.2f", (float) annotation.centroid.y)
+                    data.image = annotation.image
+                    data.filename = annotation.instanceFilename
+                    data.user = annotation.creator
+                    data.term = annotation.term.collect { termsName.get(it) }.join(", ")
+                    data.cropURL = UrlApi.getCompleteAnnotationCropDrawedWithAnnotationId(annotation.id)
+                    data.cropGOTO = UrlApi.getAnnotationURL(annotation.project, annotation.image, annotation.id)
+                    exportResult.add(data)
+                    annotationsAlreadyFetched.add(annotation.id)
+                    annotation.term.each { termNameUsed << termsName.get(it) }
+                    userNameUsed << annotation.creator
+                }
             }
 
             termNameUsed << "no term"

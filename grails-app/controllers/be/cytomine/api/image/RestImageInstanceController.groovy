@@ -58,11 +58,8 @@ class RestImageInstanceController extends RestController {
     def annotationListingService
     def cytomineService
     def taskService
-    def annotationIndexService
-    def descriptionService
     def propertyService
     def securityACLService
-    def imageGroupService
     def imageServerService
     def statsService
 
@@ -209,121 +206,6 @@ class RestImageInstanceController extends RestController {
     }
 
     def dataSource
-    /**
-     * Get all image id from project
-     */
-//    public def getInfo(String id) {
-//
-//        //better perf with sql request
-//        String request = "SELECT a.id, a.version,a.deleted FROM image_instance a WHERE id = $id"
-//        def data = []
-//        def sql = new Sql(dataSource)
-//        sql.eachRow(request) {
-//            data << it[0] + ", " + it[1] + ", " + it[2]
-//        }
-//        try {
-//            sql.close()
-//        }catch (Exception e) {}
-//        return data
-//    }
-
-//    @RestApiMethod(description="Copy image metadata (description, properties...) from an image to another one")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The image that get the data"),
-//            @RestApiParam(name="based", type="long", paramType = RestApiParamType.QUERY, description = "The image source for the data")
-//    ])
-//    @RestApiResponseObject(objectIdentifier = "empty")
-//    def copyMetadata() {
-//        try {
-//            ImageInstance based = imageInstanceService.read(params.long('based'))
-//            ImageInstance image = imageInstanceService.read(params.long('id'))
-//            if(image && based) {
-//                securityACLService.checkIsAdminContainer(image.project,cytomineService.currentUser)
-//
-//                Description.findAllByDomainIdent(based.id).each { description ->
-//                    def json = JSON.parse(description.encodeAsJSON())
-//                    json.domainIdent = image.id
-//                    descriptionService.add(json)
-//                }
-//
-//                Property.findAllByDomainIdent(based.id).each { property ->
-//                    def json = JSON.parse(property.encodeAsJSON())
-//                    json.domainIdent = image.id
-//                    propertyService.add(json)
-//                }
-//
-//                responseSuccess([])
-//            } else if(!based) {
-//                responseNotFound("ImageInstance",params.based)
-//            }else if(!image) {
-//                responseNotFound("ImageInstance",params.id)
-//            }
-//        } catch (CytomineException e) {
-//            log.error(e)
-//            response([success: false, errors: e.msg], e.code)
-//        }
-//
-//    }
-
-    /**
-     * Check if an abstract image is already map with one or more projects
-     * If true, send an array with item {imageinstanceId,layerId,layerName,projectId, projectName, admin}
-     */
-//    @RestApiMethod(description="Get, for an image instance, all the project having the same abstract image with the same layer (user)", listing = true)
-//    @RestApiResponseObject(objectIdentifier =  "[project_sharing_same_image]")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The image that get the data"),
-//            @RestApiParam(name="project", type="long", paramType = RestApiParamType.QUERY, description = "The image source for the data")
-//    ])
-//    def retrieveSameImageOtherProject() {
-//        try {
-//            ImageInstance image = imageInstanceService.read(params.long('id'))
-//            Project project = projectService.read(params.long('project'))
-//            if(image) {
-//                securityACLService.checkIsAdminContainer(image.project,cytomineService.currentUser)
-//                def layers =  imageInstanceService.getLayersFromAbstractImage(image.baseImage,image, projectService.list(cytomineService.currentUser).collect{it.id},secUserService.listUsers(image.project).collect{it.id},project)
-//                responseSuccess(layers)
-//            } else {
-//                responseNotFound("Abstract Image",params.id)
-//            }
-//        } catch (CytomineException e) {
-//            log.error(e)
-//            response([success: false, errors: e.msg], e.code)
-//        }
-//    }
-
-
-    /**
-     * Copy all annotation (and dedepency: term, description, property,..) to the new image
-     * Params must be &layers=IMAGEINSTANCE1_USER1,IMAGE_INSTANCE1_USER2,... which will add annotation
-     * from user/image from another project.
-     */
-//    @RestApiMethod(description="Copy all annotation (and term, desc, property,...) from an image to another image", listing = true)
-//    @RestApiResponseObject(objectIdentifier = "[copy_annotation_image]")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The image that get the data"),
-//            @RestApiParam(name="task", type="long", paramType = RestApiParamType.QUERY, description = "(Optional) The id of task that will be update during the request processing"),
-//            @RestApiParam(name="giveMe", type="boolean", paramType = RestApiParamType.QUERY, description = "If true, copy all annotation on the current user layer. If false or not mentioned, copy all anotation on the same layer as the source image"),
-//            @RestApiParam(name="layers", type="list (x1_y1,x2_y2,...)", paramType = RestApiParamType.QUERY, description = "List of couple 'idimage_iduser'")
-//    ])
-//    def copyAnnotationFromSameAbstractImage() {
-//        try {
-//            ImageInstance image = imageInstanceService.read(params.long('id'))
-//            securityACLService.checkIsAdminContainer(image.project,cytomineService.currentUser)
-//            Task task = taskService.read(params.getLong("task"))
-//            Boolean giveMe = params.boolean("giveMe")
-//            log.info "task ${task} is find for id = ${params.getLong("task")}"
-//            def layers = params.layers? params.layers.split(",") : ""
-//            if(image && layers) {
-//                responseSuccess(imageInstanceService.copyLayers(image,layers,secUserService.listUsers(image.project).collect{it.id},task,cytomineService.currentUser,giveMe))
-//            } else {
-//                responseNotFound("Abstract Image",params.id)
-//            }
-//        } catch (CytomineException e) {
-//            log.error(e)
-//            response([success: false, errors: e.msg], e.code)
-//        }
-//    }
 
     @RestApiMethod(description="Get a small image (thumb) for a specific image", extensions=["png", "jpg"])
     @RestApiParams(params=[
@@ -605,7 +487,7 @@ class RestImageInstanceController extends RestController {
         bounds.put("width", [min : abstractImages.min{it.width}?.width, max : abstractImages.max{it.width}?.width])
         bounds.put("height", [min : abstractImages.min{it.height}?.height, max : abstractImages.max{it.height}?.height])
         bounds.put("magnification", [list : images.collect{it.magnification}.unique(), min : bounds["magnification"]?.min, max : bounds["magnification"]?.max])
-        bounds.put("resolution", [list : images.collect{it.physicalSizeX}.unique(), min : bounds["resolution"]?.min, max : bounds["resolution"]?.max])
+        bounds.put("resolution", [list : images.collect{it.physicalSizeX}.unique(), min : bounds["physicalSizeX"]?.min, max : bounds["physicalSizeX"]?.max])
         bounds.put("format", [list : abstractImages.collect{it?.uploadedFile?.contentType}.unique()])
         bounds.put("mimeType", [list : abstractImages.collect{it?.uploadedFile?.contentType}.unique()])
 

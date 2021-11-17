@@ -163,6 +163,7 @@ class AbstractImageService extends ModelService {
      * @return  Response structure (new domain data, old domain data..)
      */
     def update(AbstractImage image,def jsonNewData) throws CytomineException {
+
         securityACLService.checkAtLeastOne(image,WRITE)
         SecUser currentUser = cytomineService.getCurrentUser()
         def attributes = JSON.parse(image.encodeAsJSON())
@@ -170,42 +171,45 @@ class AbstractImageService extends ModelService {
         AbstractImage abstractImage = res.object
 
         Integer magnification = JSONUtils.getJSONAttrInteger(attributes,'magnification',null)
-        Double resolution = JSONUtils.getJSONAttrDouble(attributes,"resolution",null)
+        Double physicalSizeX = JSONUtils.getJSONAttrDouble(attributes,"physicalSizeX",null)
 
         boolean magnificationUpdated = magnification != abstractImage.magnification
-        boolean resolutionUpdated = resolution != abstractImage.resolution
+        boolean physicalSizeXUpdated = physicalSizeX != abstractImage.physicalSizeX
+        log.info("magnificationUpdated=$magnificationUpdated")
+        log.info("physicalSizeXUpdated=$physicalSizeXUpdated")
+        log.info("magnification=$magnification")
+        log.info("physicalSizeX=$physicalSizeX")
 
         def images = []
-        if(resolutionUpdated && magnificationUpdated ) {
-            if(resolution!= null && magnification!= null) {
-                images.addAll(ImageInstance.findAllByBaseImageAndResolutionAndMagnification(image,resolution, magnification))
-            } else if(resolution!= null) {
-                images.addAll(ImageInstance.findAllByBaseImageAndResolutionAndMagnificationIsNull(image,resolution))
+        if(physicalSizeXUpdated && magnificationUpdated ) {
+            if(physicalSizeX!= null && magnification!= null) {
+                images.addAll(ImageInstance.findAllByBaseImageAndPhysicalSizeXAndMagnification(image,physicalSizeX, magnification))
+            } else if(physicalSizeX!= null) {
+                images.addAll(ImageInstance.findAllByBaseImageAndPhysicalSizeXAndMagnificationIsNull(image,physicalSizeX))
             } else if(magnification!= null) {
-                images.addAll(ImageInstance.findAllByBaseImageAndResolutionIsNullAndMagnification(image,magnification))
+                images.addAll(ImageInstance.findAllByBaseImageAndPhysicalSizeXIsNullAndMagnification(image,magnification))
             } else {
-                images.addAll(ImageInstance.findAllByBaseImageAndResolutionIsNullAndMagnificationIsNull(image))
+                images.addAll(ImageInstance.findAllByBaseImageAndPhysicalSizeXIsNullAndMagnificationIsNull(image))
             }
-
             images.each {
                 def json = JSON.parse(it.encodeAsJSON())
-                json.resolution = abstractImage.resolution
+                json.physicalSizeX = abstractImage.physicalSizeX
                 json.magnification = abstractImage.magnification
                 imageInstanceService.update(it, json)
             }
         }
         //ii with same res & magn than ai were updated so we will fetch only ii with same res and different magn
-        if(resolutionUpdated) {
+        if(physicalSizeXUpdated) {
             images = []
-            if(resolution!= null) {
-                images.addAll(ImageInstance.findAllByBaseImageAndResolution(image,resolution))
+            if(physicalSizeX!= null) {
+                images.addAll(ImageInstance.findAllByBaseImageAndPhysicalSizeX(image,physicalSizeX))
             } else {
-                images.addAll(ImageInstance.findAllByBaseImageAndResolutionIsNull(image))
+                images.addAll(ImageInstance.findAllByBaseImageAndPhysicalSizeXIsNull(image))
             }
 
             images.each {
                 def json = JSON.parse(it.encodeAsJSON())
-                json.resolution = abstractImage.resolution
+                json.physicalSizeX = abstractImage.physicalSizeX
                 imageInstanceService.update(it, json)
             }
 

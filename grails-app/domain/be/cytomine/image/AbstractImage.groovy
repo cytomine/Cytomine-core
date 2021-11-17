@@ -74,10 +74,6 @@ class AbstractImage extends CytomineDomain implements Serializable {
     @RestApiObjectField(description = "The image max zoom")
     Integer magnification
 
-    // TODO: Remove - replaced by physical size X and Y
-    @RestApiObjectField(description = "The image resolution (microm per pixel)")
-    Double resolution
-
     @RestApiObjectField(description = "The image bit depth (bits per channel)")
     // TODO: should be named bit per color (bpc) <> bit per pixel (bpp) = bit depth
     Integer bitDepth
@@ -128,7 +124,6 @@ class AbstractImage extends CytomineDomain implements Serializable {
         physicalSizeY(nullable: true)
         physicalSizeZ(nullable: true)
         fps(nullable: true)
-        resolution(nullable: true)
         magnification(nullable: true)
         bitDepth(nullable: true, min: 1)
         colorspace(nullable: true)
@@ -165,7 +160,6 @@ class AbstractImage extends CytomineDomain implements Serializable {
         domain.scanner = JSONUtils.getJSONAttrDomain(json,"scanner",new Instrument(),false)
         domain.sample = JSONUtils.getJSONAttrDomain(json,"sample",new Sample(),false)
         domain.magnification = JSONUtils.getJSONAttrInteger(json,'magnification',null)
-        domain.resolution = JSONUtils.getJSONAttrDouble(json,'resolution',null)
         domain.bitDepth = JSONUtils.getJSONAttrInteger(json, 'bitDepth', null)
         domain.colorspace = JSONUtils.getJSONAttrStr(json, 'colorspace', false)
         return domain;
@@ -199,7 +193,6 @@ class AbstractImage extends CytomineDomain implements Serializable {
 
         returnArray['zoom'] = image?.getZoomLevels()
 
-        returnArray['resolution'] = image?.resolution
         returnArray['magnification'] = image?.magnification
         returnArray['bitDepth'] = image?.bitDepth
         returnArray['colorspace'] = image?.colorspace

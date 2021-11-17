@@ -75,7 +75,8 @@ class UploadedFileAPI extends DomainAPI {
         return doGET(URL, username, password)
     }
     static def searchWithName(String name, String username, String password) {
-        String URL = Infos.CYTOMINEURL + "api/uploadedfile.json?onlyRootsWithDetails=true&originalFilename[ilike]="+name
+        def searchParameters = [[operator : "ilike", field : "originalFilename", value:name]]
+        String URL = Infos.CYTOMINEURL + "api/uploadedfile.json?onlyRootsWithDetails=true&${convertSearchParameters(searchParameters)}"
         return doGET(URL, username, password)
     }
 

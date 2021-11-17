@@ -103,6 +103,7 @@ class RestAbstractImageController extends RestController {
         @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The image id")
     ])
     def update() {
+        log.info("update image (controller)")
         update(abstractImageService, request.JSON)
     }
 

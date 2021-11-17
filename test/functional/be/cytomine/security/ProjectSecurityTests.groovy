@@ -18,7 +18,9 @@ package be.cytomine.security
 
 import be.cytomine.image.ImageInstance
 import be.cytomine.image.SliceInstance
+import be.cytomine.meta.AttachedFile
 import be.cytomine.meta.Property
+import be.cytomine.meta.TagDomainAssociation
 import be.cytomine.ontology.UserAnnotation
 import be.cytomine.processing.Job
 import be.cytomine.processing.JobData
@@ -177,7 +179,7 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
 
     }
 
-    void testProjectSecurityForGhestUser() {
+    void testProjectSecurityForGuestUser() {
 
         //Get user1
         User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
@@ -297,6 +299,17 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         assert 403 == ProjectRepresentativeUserAPI.delete(idRef, project.id, simpleUsername,password).code
 
         assert 200 == AnnotationDomainAPI.downloadDocumentByProject(project.id, simpleUser.id, null, null, adminUsername,password).code
+
+
+        //Description stick to Edition mode, other metadata not. To fix
+        assert 200 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(project, false).encodeAsJSON(),simpleUsername, password).code
+        assert 409 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(project, false).encodeAsJSON(),adminUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", project.class.name,project.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", project.class.name,project.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
+        assert 403 == PropertyAPI.create(project.id, "project" ,BasicInstanceBuilder.getProjectPropertyNotExist(project,false).encodeAsJSON(),simpleUsername,password).code
+        assert 200 == PropertyAPI.create(project.id, "project" ,BasicInstanceBuilder.getProjectPropertyNotExist(project,false).encodeAsJSON(),adminUsername,password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(project, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(project, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
     }
 
     void testClassicProjectWithImageDataAsContributor() {
@@ -319,18 +332,24 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         UserAnnotation annotation = data.annotation
         Description description = data.description
         Property property = data.property
+        AttachedFile attachedFile = data.attachedFile
+        TagDomainAssociation tda = data.tagDomainAssociation
 
         //admin data
         ImageInstance imageAdmin = data.imageAdmin
         UserAnnotation annotationAdmin = data.annotationAdmin
         Description descriptionAdmin = data.descriptionAdmin
         Property propertyAdmin = data.propertyAdmin
+        AttachedFile attachedFileAdmin = data.attachedFileAdmin
+        TagDomainAssociation tdaAdmin = data.tagDomainAssociationAdmin
 
         //simple user data
         ImageInstance imageUser = data.imageUser
         UserAnnotation annotationUser = data.annotationUser
         Description descriptionUser = data.descriptionUser
         Property propertyUser = data.propertyUser
+        AttachedFile attachedFileUser = data.attachedFileUser
+        TagDomainAssociation tdaUser = data.tagDomainAssociationUser
 
 
         //add,update, delete property (simple user data)
@@ -362,6 +381,28 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         assert 200 == DescriptionAPI.update(description.domainIdent,description.domainClassName,description.encodeAsJSON(),simpleUsername, password).code
         assert 200 == DescriptionAPI.delete(description.domainIdent,description.domainClassName,simpleUsername, password).code
         assert 200 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(annotation, false).encodeAsJSON(),simpleUsername, password).code
+
+        //add, update, delete tag domain association (simple user data)
+        assert 200 == TagDomainAssociationAPI.delete(tdaUser.id,simpleUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationUser, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+
+        //add, update, delete tag domain association (admin data)
+        assert 200 == TagDomainAssociationAPI.delete(tdaAdmin.id, simpleUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationAdmin, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+
+        //add, update, delete tag domain association (super admin data)
+        assert 200 == TagDomainAssociationAPI.delete(tda.id, simpleUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotation, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+
+        //add, update, delete attached file (simple user data)
+        assert 200 == AttachedFileAPI.delete(attachedFileUser.id,simpleUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", annotationUser.class.name,annotationUser.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
+        //add, update, delete attached file (admin data)
+        assert 200 == AttachedFileAPI.delete(attachedFileAdmin.id, simpleUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", annotationAdmin.class.name,annotationAdmin.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
+        //add, update, delete attached file (super admin data)
+        assert 200 == AttachedFileAPI.delete(attachedFile.id, simpleUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", annotation.class.name,annotation.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
 
         println "###"+image.id
         //start reviewing image (simple user data)
@@ -429,18 +470,24 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         UserAnnotation annotation = data.annotation
         Description description = data.description
         Property property = data.property
+        AttachedFile attachedFile = data.attachedFile
+        TagDomainAssociation tda = data.tagDomainAssociation
 
         //admin data
         ImageInstance imageAdmin = data.imageAdmin
         UserAnnotation annotationAdmin = data.annotationAdmin
         Description descriptionAdmin = data.descriptionAdmin
         Property propertyAdmin = data.propertyAdmin
+        AttachedFile attachedFileAdmin = data.attachedFileAdmin
+        TagDomainAssociation tdaAdmin = data.tagDomainAssociationAdmin
 
         //simple user data
         ImageInstance imageUser = data.imageUser
         UserAnnotation annotationUser = data.annotationUser
         Description descriptionUser = data.descriptionUser
         Property propertyUser = data.propertyUser
+        AttachedFile attachedFileUser = data.attachedFileUser
+        TagDomainAssociation tdaUser = data.tagDomainAssociationUser
 
 
         //add,update, delete property (simple user data)
@@ -472,6 +519,28 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         assert 200 == DescriptionAPI.update(description.domainIdent,description.domainClassName,description.encodeAsJSON(),adminUsername, password).code
         assert 200 == DescriptionAPI.delete(description.domainIdent,description.domainClassName,adminUsername, password).code
         assert 200 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(annotation, false).encodeAsJSON(),adminUsername, password).code
+
+        //add, update, delete tag domain association (simple user data)
+        assert 200 == TagDomainAssociationAPI.delete(tdaUser.id,adminUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationUser, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
+
+        //add, update, delete description (admin data)
+        assert 200 == TagDomainAssociationAPI.delete(tdaAdmin.id, adminUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationAdmin, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
+
+        //add, update, delete description (super admin data)
+        assert 200 == TagDomainAssociationAPI.delete(tda.id, adminUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotation, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
+
+        //add, update, delete attached file (simple user data)
+        assert 200 == AttachedFileAPI.delete(attachedFileUser.id,adminUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", annotationUser.class.name,annotationUser.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
+        //add, update, delete attached file (admin data)
+        assert 200 == AttachedFileAPI.delete(attachedFileAdmin.id, adminUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", annotationAdmin.class.name,annotationAdmin.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
+        //add, update, delete attached file (super admin data)
+        assert 200 == AttachedFileAPI.delete(attachedFile.id, adminUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", annotation.class.name,annotation.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
 
 
         println "###"+image.id
@@ -659,6 +728,16 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         assert 403 == ProjectRepresentativeUserAPI.delete(idRef, project.id, simpleUsername,password).code
 
         assert 200 == AnnotationDomainAPI.downloadDocumentByProject(project.id, simpleUser.id, null, null, adminUsername,password).code
+
+        //Description check if not readonly mode, other metadata stick to Write permission. To fix
+        assert 200 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(project, false).encodeAsJSON(),simpleUsername, password).code
+        assert 409 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(project, false).encodeAsJSON(),adminUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", project.class.name,project.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", project.class.name,project.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
+        assert 403 == PropertyAPI.create(project.id, "project" ,BasicInstanceBuilder.getProjectPropertyNotExist(project,false).encodeAsJSON(),simpleUsername,password).code
+        assert 200 == PropertyAPI.create(project.id, "project" ,BasicInstanceBuilder.getProjectPropertyNotExist(project,false).encodeAsJSON(),adminUsername,password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(project, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(project, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
     }
 
     void testRestrictedProjectWithImageDataAsContributor() {
@@ -681,18 +760,24 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         UserAnnotation annotation = data.annotation
         Description description = data.description
         Property property = data.property
+        AttachedFile attachedFile = data.attachedFile
+        TagDomainAssociation tda = data.tagDomainAssociation
 
         //admin data
         ImageInstance imageAdmin = data.imageAdmin
         UserAnnotation annotationAdmin = data.annotationAdmin
         Description descriptionAdmin = data.descriptionAdmin
         Property propertyAdmin = data.propertyAdmin
+        AttachedFile attachedFileAdmin = data.attachedFileAdmin
+        TagDomainAssociation tdaAdmin = data.tagDomainAssociationAdmin
 
         //simple user data
         ImageInstance imageUser = data.imageUser
         UserAnnotation annotationUser = data.annotationUser
         Description descriptionUser = data.descriptionUser
         Property propertyUser = data.propertyUser
+        AttachedFile attachedFileUser = data.attachedFileUser
+        TagDomainAssociation tdaUser = data.tagDomainAssociationUser
 
 
         //add,update, delete property (simple user data)
@@ -725,6 +810,29 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         assert 403 == DescriptionAPI.update(description.domainIdent,description.domainClassName,description.encodeAsJSON(),simpleUsername, password).code
         assert 403 == DescriptionAPI.delete(description.domainIdent,description.domainClassName,simpleUsername, password).code
         assert 403 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(annotation, false).encodeAsJSON(),simpleUsername, password).code*/
+
+
+        //add, update, delete tag domain association (simple user data)
+        assert 200 == TagDomainAssociationAPI.delete(tdaUser.id,simpleUsername, password).code //TODO fix should be 403
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationUser, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+
+        //add, update, delete tag domain association (admin data)
+        assert 403 == TagDomainAssociationAPI.delete(tdaAdmin.id, simpleUsername, password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationAdmin, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+
+        //add, update, delete tag domain association (super admin data)
+        assert 403 == TagDomainAssociationAPI.delete(tda.id, simpleUsername, password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotation, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+
+        //add, update, delete attached file (simple user data)
+        assert 200 == AttachedFileAPI.delete(attachedFileUser.id,simpleUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", annotationUser.class.name,annotationUser.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
+        //add, update, delete attached file (admin data)
+        assert 403 == AttachedFileAPI.delete(attachedFileAdmin.id, simpleUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", annotationAdmin.class.name,annotationAdmin.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
+        //add, update, delete attached file (super admin data)
+        assert 403 == AttachedFileAPI.delete(attachedFile.id, simpleUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", annotation.class.name,annotation.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
 
         //TODO check these
         println "###"+image.id
@@ -790,18 +898,24 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         UserAnnotation annotation = data.annotation
         Description description = data.description
         Property property = data.property
+        AttachedFile attachedFile = data.attachedFile
+        TagDomainAssociation tda = data.tagDomainAssociation
 
         //admin data
         ImageInstance imageAdmin = data.imageAdmin
         UserAnnotation annotationAdmin = data.annotationAdmin
         Description descriptionAdmin = data.descriptionAdmin
         Property propertyAdmin = data.propertyAdmin
+        AttachedFile attachedFileAdmin = data.attachedFileAdmin
+        TagDomainAssociation tdaAdmin = data.tagDomainAssociationAdmin
 
         //simple user data
         ImageInstance imageUser = data.imageUser
         UserAnnotation annotationUser = data.annotationUser
         Description descriptionUser = data.descriptionUser
         Property propertyUser = data.propertyUser
+        AttachedFile attachedFileUser = data.attachedFileUser
+        TagDomainAssociation tdaUser = data.tagDomainAssociationUser
 
 
         //add,update, delete property (simple user data)
@@ -834,6 +948,28 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         assert 200 == DescriptionAPI.delete(description.domainIdent,description.domainClassName,adminUsername, password).code
         assert 200 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(annotation, false).encodeAsJSON(),adminUsername, password).code
 
+
+        //add, update, delete tag domain association (simple user data)
+        assert 200 == TagDomainAssociationAPI.delete(tdaUser.id,adminUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationUser, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
+
+        //add, update, delete tag domain association (admin data)
+        assert 200 == TagDomainAssociationAPI.delete(tdaAdmin.id, adminUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationAdmin, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
+
+        //add, update, delete tag domain association (super admin data)
+        assert 200 == TagDomainAssociationAPI.delete(tda.id, adminUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotation, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
+
+        //add, update, delete attached file (simple user data)
+        assert 200 == AttachedFileAPI.delete(attachedFileUser.id,adminUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", annotationUser.class.name,annotationUser.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
+        //add, update, delete attached file (admin data)
+        assert 200 == AttachedFileAPI.delete(attachedFileAdmin.id, adminUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", annotationAdmin.class.name,annotationAdmin.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
+        //add, update, delete attached file (super admin data)
+        assert 200 == AttachedFileAPI.delete(attachedFile.id, adminUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", annotation.class.name,annotation.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
 
         println "###"+image.id
         //start reviewing image (simple user data)
@@ -1028,6 +1164,15 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         assert 403 == ProjectRepresentativeUserAPI.delete(idRef, project.id, simpleUsername,password).code
 
         assert 200 == AnnotationDomainAPI.downloadDocumentByProject(project.id, simpleUser.id, null, null, adminUsername,password).code
+
+        assert 403 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(project, false).encodeAsJSON(),simpleUsername, password).code
+        assert 200 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(project, false).encodeAsJSON(),adminUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", project.class.name,project.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", project.class.name,project.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
+        assert 403 == PropertyAPI.create(project.id, "project" ,BasicInstanceBuilder.getProjectPropertyNotExist(project,false).encodeAsJSON(),simpleUsername,password).code
+        assert 200 == PropertyAPI.create(project.id, "project" ,BasicInstanceBuilder.getProjectPropertyNotExist(project,false).encodeAsJSON(),adminUsername,password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(project, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(project, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
     }
 
     void testReadOnlyProjectWithImageDataAsContributor() {
@@ -1050,18 +1195,24 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         UserAnnotation annotation = data.annotation
         Description description = data.description
         Property property = data.property
+        AttachedFile attachedFile = data.attachedFile
+        TagDomainAssociation tda = data.tagDomainAssociation
 
         //admin data
         ImageInstance imageAdmin = data.imageAdmin
         UserAnnotation annotationAdmin = data.annotationAdmin
         Description descriptionAdmin = data.descriptionAdmin
         Property propertyAdmin = data.propertyAdmin
+        AttachedFile attachedFileAdmin = data.attachedFileAdmin
+        TagDomainAssociation tdaAdmin = data.tagDomainAssociationAdmin
 
         //simple user data
         ImageInstance imageUser = data.imageUser
         UserAnnotation annotationUser = data.annotationUser
         Description descriptionUser = data.descriptionUser
         Property propertyUser = data.propertyUser
+        AttachedFile attachedFileUser = data.attachedFileUser
+        TagDomainAssociation tdaUser = data.tagDomainAssociationUser
 
 
         //add,update, delete property (simple user data)
@@ -1093,6 +1244,28 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         assert 403 == DescriptionAPI.update(description.domainIdent,description.domainClassName,description.encodeAsJSON(),simpleUsername, password).code
         assert 403 == DescriptionAPI.delete(description.domainIdent,description.domainClassName,simpleUsername, password).code
         assert 403 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(annotation, false).encodeAsJSON(),simpleUsername, password).code
+
+        //add, update, delete tag domain association (simple user data)
+        assert 403 == TagDomainAssociationAPI.delete(tdaUser.id,simpleUsername, password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationUser, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+
+        //add, update, delete description (admin data)
+        assert 403 == TagDomainAssociationAPI.delete(tdaAdmin.id, simpleUsername, password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationAdmin, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+
+        //add, update, delete description (super admin data)
+        assert 403 == TagDomainAssociationAPI.delete(tda.id, simpleUsername, password).code
+        assert 403 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotation, false).encodeAsJSON(),project.class.name, project.id, simpleUsername, password).code
+
+        //add, update, delete attached file (simple user data)
+        assert 403 == AttachedFileAPI.delete(attachedFileUser.id,simpleUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", annotationUser.class.name,annotationUser.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
+        //add, update, delete attached file (admin data)
+        assert 403 == AttachedFileAPI.delete(attachedFileAdmin.id, simpleUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", annotationAdmin.class.name,annotationAdmin.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
+        //add, update, delete attached file (super admin data)
+        assert 403 == AttachedFileAPI.delete(attachedFile.id, simpleUsername, password).code
+        assert 403 == AttachedFileAPI.upload("test", annotation.class.name,annotation.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),simpleUsername, password).code
 
         println "###"+image.id
         //start reviewing image (simple user data)
@@ -1157,18 +1330,24 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         UserAnnotation annotation = data.annotation
         Description description = data.description
         Property property = data.property
+        AttachedFile attachedFile = data.attachedFile
+        TagDomainAssociation tda = data.tagDomainAssociation
 
         //admin data
         ImageInstance imageAdmin = data.imageAdmin
         UserAnnotation annotationAdmin = data.annotationAdmin
         Description descriptionAdmin = data.descriptionAdmin
         Property propertyAdmin = data.propertyAdmin
+        AttachedFile attachedFileAdmin = data.attachedFileAdmin
+        TagDomainAssociation tdaAdmin = data.tagDomainAssociationAdmin
 
         //simple user data
         ImageInstance imageUser = data.imageUser
         UserAnnotation annotationUser = data.annotationUser
         Description descriptionUser = data.descriptionUser
         Property propertyUser = data.propertyUser
+        AttachedFile attachedFileUser = data.attachedFileUser
+        TagDomainAssociation tdaUser = data.tagDomainAssociationUser
 
 
         //add,update, delete property (simple user data)
@@ -1201,6 +1380,28 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         assert 200 == DescriptionAPI.delete(description.domainIdent,description.domainClassName,adminUsername, password).code
         assert 200 == DescriptionAPI.create(project.id,project.class.name,BasicInstanceBuilder.getDescriptionNotExist(annotation, false).encodeAsJSON(),adminUsername, password).code
 
+
+        //add, update, delete tag domain association (simple user data)
+        assert 200 == TagDomainAssociationAPI.delete(tdaUser.id,adminUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationUser, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
+
+        //add, update, delete tag domain association (admin data)
+        assert 200 == TagDomainAssociationAPI.delete(tdaAdmin.id, adminUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationAdmin, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
+
+        //add, update, delete tag domain association (super admin data)
+        assert 200 == TagDomainAssociationAPI.delete(tda.id, adminUsername, password).code
+        assert 200 == TagDomainAssociationAPI.create(BasicInstanceBuilder.getTagDomainAssociationNotExist(annotation, false).encodeAsJSON(),project.class.name, project.id, adminUsername, password).code
+
+        //add, update, delete attached file (simple user data)
+        assert 200 == AttachedFileAPI.delete(attachedFileUser.id,adminUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", annotationUser.class.name,annotationUser.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
+        //add, update, delete attached file (admin data)
+        assert 200 == AttachedFileAPI.delete(attachedFileAdmin.id, adminUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", annotationAdmin.class.name,annotationAdmin.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
+        //add, update, delete attached file (super admin data)
+        assert 200 == AttachedFileAPI.delete(attachedFile.id, adminUsername, password).code
+        assert 200 == AttachedFileAPI.upload("test", annotation.class.name,annotation.id,new File("test/functional/be/cytomine/utils/simpleFile.txt"),adminUsername, password).code
 
         println "###"+image.id
         //start reviewing image (simple user data)
@@ -1343,11 +1544,17 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         Description description = BasicInstanceBuilder.getDescriptionNotExist(annotation,true)
         //Create a property
         Property property = BasicInstanceBuilder.getAnnotationPropertyNotExist(annotation,true)
+        //Create an attached file
+        AttachedFile attachedFile = BasicInstanceBuilder.getAttachedFileNotExist(annotation,true)
+        //Create a tag
+        TagDomainAssociation tda = BasicInstanceBuilder.getTagDomainAssociationNotExist(annotation,true)
 
         result.image = image
         result.annotation = annotation
         result.description = description
         result.property = property
+        result.attachedFile = attachedFile
+        result.tagDomainAssociation = tda
 
         /*admin data*/
         //Create an annotation (by admin)
@@ -1362,11 +1569,17 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         Description descriptionAdmin = BasicInstanceBuilder.getDescriptionNotExist(annotationAdmin,true)
         //Create a property
         Property propertyAdmin = BasicInstanceBuilder.getAnnotationPropertyNotExist(annotationAdmin,true)
+        //Create an attached file
+        AttachedFile attachedFileAdmin = BasicInstanceBuilder.getAttachedFileNotExist(annotationAdmin,true)
+        //Create a tag
+        TagDomainAssociation tdaAdmin = BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationAdmin,true)
 
         result.imageAdmin = imageAdmin
         result.annotationAdmin = annotationAdmin
         result.descriptionAdmin = descriptionAdmin
         result.propertyAdmin = propertyAdmin
+        result.attachedFileAdmin = attachedFileAdmin
+        result.tagDomainAssociationAdmin = tdaAdmin
 
         /*simple user data*/
         //Create an annotation (by user)
@@ -1381,11 +1594,17 @@ class ProjectSecurityTests extends SecurityTestsAbstract {
         Description descriptionUser = BasicInstanceBuilder.getDescriptionNotExist(annotationUser,true)
         //Create a property
         Property propertyUser = BasicInstanceBuilder.getAnnotationPropertyNotExist(annotationUser,true)
+        //Create an attached file
+        AttachedFile attachedFileUser = BasicInstanceBuilder.getAttachedFileNotExist(annotationUser,true)
+        //Create a tag
+        TagDomainAssociation tdaUser = BasicInstanceBuilder.getTagDomainAssociationNotExist(annotationUser,true)
 
         result.imageUser = imageUser
         result.annotationUser = annotationUser
         result.descriptionUser = descriptionUser
         result.propertyUser = propertyUser
+        result.attachedFileUser = attachedFileUser
+        result.tagDomainAssociationUser = tdaUser
 
         return result
     }

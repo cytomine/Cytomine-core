@@ -144,6 +144,7 @@ class SharedAnnotationTests  {
         sharedAnnotation.annotationIdent = idAnnotation
 
         json = JSON.parse((String)sharedAnnotation.encodeAsJSON())
+        json.subject = "subject for test mail"
 
         result = AnnotationCommentAPI.create(sharedAnnotation.annotationIdent,sharedAnnotation.annotationClassName,json.toString(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -170,6 +171,7 @@ class SharedAnnotationTests  {
         sharedAnnotation.annotationIdent = idAnnotation
 
         json = JSON.parse((String)sharedAnnotation.encodeAsJSON())
+        json.subject = "subject for test mail"
 
         result = AnnotationCommentAPI.create(sharedAnnotation.annotationIdent,sharedAnnotation.annotationClassName,json.toString(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code

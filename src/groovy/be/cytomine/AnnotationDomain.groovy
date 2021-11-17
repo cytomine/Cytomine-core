@@ -198,7 +198,7 @@ abstract class AnnotationDomain extends CytomineDomain implements Serializable {
     }
 
     def computeGIS() {
-        if (this.image.resolution == null) {
+        if (this.image.physicalSizeX == null) {
             area = Math.round(this.location.getArea())
             areaUnit = GisUtils.PIXELS2v
 
@@ -206,10 +206,10 @@ abstract class AnnotationDomain extends CytomineDomain implements Serializable {
             perimeterUnit = GisUtils.PIXELv
         }
         else {
-            area = this.location.getArea() * image.resolution * image.resolution
+            area = this.location.getArea() * image.physicalSizeX * image.physicalSizeX
             areaUnit = GisUtils.MICRON2v
 
-            perimeter = this.location.getLength() * image.resolution / 1000
+            perimeter = this.location.getLength() * image.physicalSizeX / 1000
             perimeterUnit = GisUtils.MMv
         }
     }

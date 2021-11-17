@@ -52,16 +52,6 @@ class ImageInstanceUrlMappings {
         }
 
 
-//        "/api/imageinstance/$id/sameimagedata.$format"(controller :"restImageInstance") {
-//            action = [GET:"retrieveSameImageOtherProject"]
-//        }
-//        "/api/imageinstance/$id/copyimagedata.$format"(controller :"restImageInstance") {
-//            action = [POST:"copyAnnotationFromSameAbstractImage"]
-//        }
-//        "/api/imageinstance/$id/copymetadata.$format"(controller :"restImageInstance") {
-//            action = [POST:"copyMetadata"]
-//        }
-
         "/api/imageinstance/$idImage/nested.$format"(controller: "restNestedImageInstance"){
             action = [POST:"add", GET : "listByImageInstance"]
         }

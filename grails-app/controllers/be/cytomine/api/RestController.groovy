@@ -422,7 +422,7 @@ class RestController {
                         value = "%$value%"
 
                     def sqlOperator = (operator == SEARCH_PARAM_EQUALS) ? "=" : operator
-                    searchParameters << [operator: operator, field: field, value: value, sqlOperator: sqlOperator]
+                    searchParameters << [operator: operator, field: field, values: value, sqlOperator: sqlOperator]
                 }
             }
         }

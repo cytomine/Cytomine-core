@@ -90,6 +90,7 @@ class NotificationService {
                 null,
                 (String[]) users.collect{it.getEmail()},
                 null,
+                null,
                 "Cytomine : a new image is available",
                 message.toString(),
                 attachments)
@@ -114,16 +115,15 @@ class NotificationService {
                 null,
                 (String[]) [guestUser.getEmail()],
                 null,
+                null,
                 mailTitle,
-                welcomeMessage,
-                null)
+                welcomeMessage)
     }
 
     def notifyShareAnnotation(User sender, def receiversEmail, def request, def attachments, def cid) {
         String subject = request.subject
         String shareMessage = renderService.createShareMessage([
                 from: request.from,
-                to: request.to,
                 comment: request.comment,
                 annotationURL: request.annotationURL,
                 shareAnnotationURL : request.shareAnnotationURL,
@@ -136,8 +136,9 @@ class NotificationService {
 
         cytomineMailService.send(
                 cytomineMailService.NO_REPLY_EMAIL,
+                [sender.getEmail()] as String[],
+                null,
                 receiversEmail,
-                sender.getEmail(),
                 subject,
                 shareMessage,
                 attachments)
@@ -154,7 +155,8 @@ class NotificationService {
         cytomineMailService.send(
                 cytomineMailService.NO_REPLY_EMAIL,
                 (String[]) [user.getEmail()],
-                "",
+                null,
+                null,
                 "Cytomine : your username is $user.username",
                 message)
     }
@@ -173,9 +175,9 @@ class NotificationService {
         cytomineMailService.send(
                 cytomineMailService.NO_REPLY_EMAIL,
                 (String[]) [user.getEmail()],
-                "",
+                null,
+                null,
                 "Cytomine : reset your password",
-                message,
-                null)
+                message)
     }
 }

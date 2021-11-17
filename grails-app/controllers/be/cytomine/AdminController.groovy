@@ -61,7 +61,8 @@ class AdminController extends RestController {
             cytomineMailService.send(
                     cytomineMailService.NO_REPLY_EMAIL,
                     (String[]) [user.email],
-                    "",
+                    null,
+                    null,
                     "test mail : ok",
                     "This is a test of the mail sending feature of the Cytomine instance ${grailsApplication.config.grails.serverURL}")
             response([message : "success"], 200)

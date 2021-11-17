@@ -239,25 +239,25 @@ class AbstractImageTests {
         ii.baseImage = ai
         BasicInstanceBuilder.saveDomain(ii)
 
-        assert ii.resolution == ai.resolution
+        assert ii.physicalSizeX == ai.physicalSizeX
         assert ii.magnification == ai.magnification
 
         def updatedImage = JSON.parse((String)ai.encodeAsJSON())
-        updatedImage.resolution = 2.5d
+        updatedImage.physicalSizeX = 2.5d
         updatedImage.magnification = 20
         def result = AbstractImageAPI.update(ai.id, updatedImage.toString(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
         def json = JSON.parse(result.data)
         assert json instanceof JSONObject
 
-        //assert json.abstractimage.resolution == 2.5
+        assert json.abstractimage.physicalSizeX == 2.5
         assert json.abstractimage.magnification == 20
         updatedImage = json.abstractimage
 
         result = ImageInstanceAPI.show(ii.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         json = JSON.parse(result.data)
         assert json instanceof JSONObject
-        //assert json.resolution == 2.5
+        assert json.physicalSizeX == 2.5
         assert json.magnification == 20
 
         json.magnification = 40
@@ -267,17 +267,17 @@ class AbstractImageTests {
         json = JSON.parse(result.data)
         assert json instanceof JSONObject
 
-        //assert json.imageinstance.resolution == 2.5
+        assert json.imageinstance.physicalSizeX == 2.5
         assert json.imageinstance.magnification == 40
 
-        updatedImage.resolution = 6
+        updatedImage.physicalSizeX = 6
         updatedImage.magnification = 10
         result = AbstractImageAPI.update(ai.id, updatedImage.toString(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
         json = JSON.parse(result.data)
         assert json instanceof JSONObject
 
-        assert json.abstractimage.resolution == 6
+        assert json.abstractimage.physicalSizeX == 6
         assert json.abstractimage.magnification == 10
 
 
@@ -286,7 +286,7 @@ class AbstractImageTests {
         json = JSON.parse(result.data)
         assert json instanceof JSONObject
 
-        //assert json.resolution == 6
+        assert json.physicalSizeX == 6
         assert json.magnification == 40
     }
 

@@ -68,9 +68,6 @@ class ImageInstance extends CytomineDomain implements Serializable {
     @RestApiObjectField(description = "The image max zoom")
     Integer magnification
 
-    @RestApiObjectField(description = "The image resolution (microm per pixel)")
-    Double resolution
-
     @RestApiObjectField(description = "Physical size of a pixel along X axis", mandatory = false)
     Double physicalSizeX
 
@@ -119,7 +116,6 @@ class ImageInstance extends CytomineDomain implements Serializable {
         reviewUser nullable: true
         instanceFilename nullable: true
         magnification nullable: true
-        resolution nullable: true
         physicalSizeX nullable: true
         physicalSizeY nullable: true
         physicalSizeZ nullable: true
@@ -219,8 +215,6 @@ class ImageInstance extends CytomineDomain implements Serializable {
         returnArray['fps'] = image?.fps
 
         returnArray['zoom'] = image?.baseImage?.getZoomLevels()
-
-        returnArray['resolution'] = image?.resolution
         returnArray['magnification'] = image?.magnification
         returnArray['bitDepth'] = image?.baseImage?.bitDepth
         returnArray['colorspace'] = image?.baseImage?.colorspace
