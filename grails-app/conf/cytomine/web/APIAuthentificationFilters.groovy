@@ -92,7 +92,7 @@ class APIAuthentificationFilters implements javax.servlet.Filter {
                 return false
             }
 
-            if (user && (!user.apiEnabled)) {
+            /*if (user && (!user.apiEnabled)) {
                 def superAdmin = SecRole.findByAuthority("ROLE_SUPER_ADMIN")
                 if(!SecUserSecRole.findBySecUserAndSecRole(user,superAdmin)) {
                     log.warn("user " + user.humanUsername() + " has tried to authenticate using api key but is not authorize to do that")
@@ -100,7 +100,7 @@ class APIAuthentificationFilters implements javax.servlet.Filter {
                 } else {
                     log.warn("user " + user.humanUsername() + " is superadmin with apiEnabled disabled. Please enable apiEnabled for this user in order to improve performance")
                 }
-            }
+            }*/
 
             String signature = SecurityUtils.generateKeys(request.getMethod(),content_md5, content_type,date,queryString,path,user)
             if (authorizationSign == signature) {
