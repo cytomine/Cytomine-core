@@ -138,6 +138,7 @@ class BootStrap {
         if (bootstrapUtilsService.checkSqlColumnExistence("project", "is_closed")) {
             new Sql(dataSource).executeUpdate("ALTER TABLE project DROP COLUMN is_closed CASCADE;")
         }
+        bootstrapUtilsService.updateSqlColumnConstraint("abstract_slice", "uploaded_file_id", "DROP NOT NULL")
 
         def test = SSLContext.getDefault().getSupportedSSLParameters()
         test.setProtocols(["TLSv1.2"] as String[]);
