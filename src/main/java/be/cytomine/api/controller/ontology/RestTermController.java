@@ -1,8 +1,6 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.project.ProjectRepository;
@@ -15,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -34,7 +31,7 @@ public class RestTermController extends RestCytomineController {
             @RequestParam Map<String,String> allParams
     ) {
         log.debug("REST request to list terms");
-        return ResponseEntity.ok(response(termService.list(),allParams));
+        return ResponseEntity.ok(buildJson(termService.list(),allParams));
     }
 
     @GetMapping("/term/{id}")
@@ -44,7 +41,7 @@ public class RestTermController extends RestCytomineController {
         log.debug("REST request to get Term : {}", id);
         return termService.find(id)
                 .map( term -> ResponseEntity.ok(convertCytomineDomainToJSON(term)))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseNotFound("Term", id).toJsonString()));
+                .orElseGet(() -> responseNotFound("Term", id));
     }
 
 
@@ -91,7 +88,7 @@ public class RestTermController extends RestCytomineController {
     ) {
         log.debug("REST request to list terms for ontology {}", id);
         return ontologyRepository.findById(id)
-                .map( ontology -> ResponseEntity.ok(response(termService.list(ontology),allParams)))
+                .map( ontology -> ResponseEntity.ok(buildJson(termService.list(ontology),allParams)))
                 .orElseThrow(() -> new ObjectNotFoundException("Ontology", id));
     }
 
@@ -102,7 +99,7 @@ public class RestTermController extends RestCytomineController {
     ) {
         log.debug("REST request to list terms for project {}", id);
         return projectRepository.findById(id)
-                .map( ontology -> ResponseEntity.ok(response(termService.list(ontology),allParams)))
+                .map( ontology -> ResponseEntity.ok(buildJson(termService.list(ontology),allParams)))
                 .orElseThrow(() -> new ObjectNotFoundException("Ontology", id));
     }
 }

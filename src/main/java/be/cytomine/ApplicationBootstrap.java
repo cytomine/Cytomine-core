@@ -110,8 +110,10 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
         log.info ("#############################################################################");
         log.info ("#############################################################################");
         log.info ("#############################################################################");
-        UrlApi.setServerURL(applicationConfiguration.getUseHTTPInternally() ?
-                applicationConfiguration.getServerURL().replace("https", "http") : applicationConfiguration.getServerURL()
+
+        UrlApi.setServerURL(
+                applicationConfiguration.getServerURL(),
+                applicationConfiguration.getUseHTTPInternally()
         );
 
         if (EnvironmentUtils.isTest(environment)) {

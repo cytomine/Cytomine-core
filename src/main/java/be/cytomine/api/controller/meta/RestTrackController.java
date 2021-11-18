@@ -15,17 +15,17 @@ import java.util.Map;
 @RequestMapping("/api")
 @Slf4j
 @RequiredArgsConstructor
-public class RestTagController extends RestCytomineController {
+public class RestTrackController extends RestCytomineController {
 
     private final TermService termService;
 
 
-    @GetMapping("/tag.json")
-    public ResponseEntity<JsonObject> list(
-            @RequestParam Map<String,String> allParams
+    @GetMapping("/imageinstance/{id}/track.json")
+    public ResponseEntity<JsonObject> listByImageInstance(
+            @PathVariable Long id
     ) {
         log.debug("REST request to list tags");
         // TODO: implement...
-        return ResponseEntity.ok(buildJson(List.of(),allParams));
+        return responseSuccess(List.of());
     }
 }

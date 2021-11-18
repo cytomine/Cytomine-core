@@ -30,7 +30,7 @@ public class UploadedFile extends CytomineDomain implements Serializable {
     @JoinColumn(name = "user_id", nullable = true)
     private SecUser user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "storage_id", nullable = true)
     private Storage storage;
 
@@ -45,7 +45,7 @@ public class UploadedFile extends CytomineDomain implements Serializable {
 
     private String ext;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "image_server_id", nullable = true)
     private ImageServer imageServer;
 
@@ -116,10 +116,10 @@ public class UploadedFile extends CytomineDomain implements Serializable {
     }
 
     String getPath() {
-        if (contentType.equals("virtual/stack") || storage == null) {
+        if (contentType.equals("virtual/stack") || user == null) {
             return null;
         }
-        return Paths.get(imageServer.getBasePath(), String.valueOf(storage.getId()), filename).toString();
+        return Paths.get(imageServer.getBasePath(), String.valueOf(user.getId()), filename).toString();
     }
 
     @PrePersist
@@ -152,8 +152,8 @@ public class UploadedFile extends CytomineDomain implements Serializable {
         return this.getImageServer()!=null ? this.getImageServer().getUrl() : null;
     }
 
-    public String getImageServerInternalUrl(boolean useHTTPInternally) {
-        return this.getImageServer()!=null ? this.getImageServer().getInternalUrl(useHTTPInternally) : null;
+    public String getImageServerInternalUrl() {
+        return this.getImageServer()!=null ? this.getImageServer().getInternalUrl() : null;
     }
 
 }

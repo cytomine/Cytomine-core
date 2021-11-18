@@ -1,6 +1,7 @@
 package be.cytomine.domain.middleware;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.service.UrlApi;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
@@ -68,8 +69,8 @@ public class ImageServer extends CytomineDomain {
         return this;
     }
 
-    public String getInternalUrl(boolean useHTTPInternally) {
-        return useHTTPInternally ? this.url.replace("https", "http") : this.url;
+    public String getInternalUrl() {
+        return UrlApi.isUsingHttpInternally() ? this.url.replace("https", "http") : this.url;
     }
 
 }

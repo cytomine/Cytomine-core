@@ -70,7 +70,7 @@ public class RestProjectController extends RestCytomineController {
         log.debug("REST request to get project : {}", id);
         return projectService.find(id)
                 .map( ontology -> ResponseEntity.ok(convertCytomineDomainToJSON(ontology)))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseNotFound("Project", id).toJsonString()));
+                .orElseGet(() -> responseNotFound("Project", id));
     }
 
 

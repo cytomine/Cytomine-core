@@ -675,15 +675,20 @@ public class ImageInstanceService extends ModelService {
 
     public SliceInstance getReferenceSlice(Long id) {
         ImageInstance image = find(id).orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
-        AbstractSlice abstractSlice = sliceCoordinatesService.getReferenceSlice(image.getBaseImage());
-        return sliceInstanceRepository.findByBaseSliceAndImage(abstractSlice, image).orElse(null);
+        return getReferenceSlice(image);
     }
 
-    /**
-     * Add the new domain with JSON data
-     * @param json New domain data
-     * @return Response structure (created domain data,..)
-     */
+    public SliceInstance getReferenceSlice(ImageInstance imageInstance) {
+        AbstractSlice abstractSlice = sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage());
+        return sliceInstanceRepository.findByBaseSliceAndImage(abstractSlice, imageInstance).orElse(null);
+    }
+
+
+        /**
+         * Add the new domain with JSON data
+         * @param json New domain data
+         * @return Response structure (created domain data,..)
+         */
     public CommandResponse add(JsonObject json) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(json.getJSONAttrLong("project"), Project.class, READ);

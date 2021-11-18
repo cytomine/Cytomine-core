@@ -31,7 +31,7 @@ public interface SliceInstanceRepository extends JpaRepository<SliceInstance, Lo
     Optional<SliceInstance> findByCZT(ImageInstance imageInstance, int c, int z, int t);
 
     @Query("SELECT si " +
-            "FROM SliceInstance si INNER JOIN FETCH si.baseSlice as bs " +
+            "FROM SliceInstance si INNER JOIN FETCH si.baseSlice as bs INNER JOIN bs.uploadedFile uf " +
             "WHERE si.image = :imageInstance " +
             "ORDER BY " +
             "   si.baseSlice.channel ASC, " +

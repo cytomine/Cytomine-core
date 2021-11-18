@@ -1,7 +1,6 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.service.ontology.OntologyService;
@@ -40,7 +39,7 @@ public class RestOntologyController extends RestCytomineController {
     ) {
         log.debug("REST request to list ontologys");
         boolean light = allParams.containsKey("light") && Boolean.parseBoolean(allParams.get("light"));
-        return ResponseEntity.ok(light ? responseList(ontologyService.listLight(),allParams) : response(ontologyService.list(),allParams));
+        return ResponseEntity.ok(light ? buildJsonList(ontologyService.listLight(),allParams) : buildJson(ontologyService.list(),allParams));
     }
 
     @GetMapping("/ontology/{id}.json")
@@ -50,7 +49,7 @@ public class RestOntologyController extends RestCytomineController {
         log.debug("REST request to get Ontology : {}", id);
         return ontologyService.find(id)
                 .map( ontology -> ResponseEntity.ok(convertCytomineDomainToJSON(ontology)))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseNotFound("Ontology", id).toJsonString()));
+                .orElseGet(() -> responseNotFound("Ontology", id));
     }
 
 

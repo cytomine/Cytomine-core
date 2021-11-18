@@ -26,7 +26,7 @@ server:
 
 
 application:
-  serverURL: http://localhost:8080
+  serverURL: http://localhost-core
   adminPassword: adminPassword
   adminEmail: adminEmail@adminEmail.com
   adminPrivateKey: adminPrivateKey

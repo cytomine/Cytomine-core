@@ -9,10 +9,17 @@ public class UrlApi {
 
     private static String serverUrl = "http://localhost:8090";
 
+    private static boolean httpInternally = false;
+
     private static final List<String> formatsWithMacro = List.of("openslide/ndpi", "openslide/vms", "openslide/mrxs", "openslide/svs", "openslide/scn", "ventana/bif", "ventana/tif", "philips/tif");
 
-    public static void setServerURL(String url) {
-        serverUrl = url;
+    public static void setServerURL(String url, Boolean useHTTPInternally) {
+        serverUrl = useHTTPInternally ? url.replace("https", "http") : url;
+        httpInternally = useHTTPInternally;
+    }
+
+    public static boolean isUsingHttpInternally() {
+        return httpInternally;
     }
 
     public static String getAbstractImageThumbUrl(Long idImage, String format) {

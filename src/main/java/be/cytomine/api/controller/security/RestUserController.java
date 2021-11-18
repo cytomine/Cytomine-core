@@ -7,7 +7,6 @@ import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.project.ProjectService;
-import be.cytomine.service.search.ProjectSearchExtension;
 import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.utils.JsonObject;
@@ -20,8 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
-
-import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @RestController
 @RequestMapping("/api")
@@ -54,7 +51,7 @@ public class RestUserController extends RestCytomineController {
 //            object.put("user", authMaps.get("user"));
 //            object.put("guest", authMaps.get("guest"));
             return ResponseEntity.ok(convertObjectToJSON(object));
-        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseNotFound("User", id).toJsonString()));
+        }).orElseGet(() -> responseNotFound("User", id));
     }
 
     @GetMapping("/user/current.{ext}")
@@ -67,7 +64,7 @@ public class RestUserController extends RestCytomineController {
         return user.map( secUser -> {
             JsonObject object = User.getDataFromDomain(secUser);
             return ResponseEntity.ok(convertObjectToJSON(object));
-        }).orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseNotFound("User", "current").toJsonString()));
+        }).orElseGet(() -> responseNotFound("User", "current"));
     }
 
 

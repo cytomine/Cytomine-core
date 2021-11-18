@@ -3,20 +3,16 @@ package be.cytomine.api.controller.security;
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
-import be.cytomine.exceptions.ServerException;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.StorageService;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -38,7 +34,7 @@ public class RestStorageController extends RestCytomineController {
         SecUser user = secUserService.getCurrentUser();
         List<Storage> storages = storageService.list(user, searchString);
         // TODO: sort
-        return ResponseEntity.ok(responseList(convertCytomineDomainListToJSON(storages), allParams));
+        return ResponseEntity.ok(buildJsonList(convertCytomineDomainListToJSON(storages), allParams));
     }
 
 }

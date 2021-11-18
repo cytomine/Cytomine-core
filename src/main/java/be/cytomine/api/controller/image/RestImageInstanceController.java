@@ -1,17 +1,15 @@
 package be.cytomine.api.controller.image;
 
 import be.cytomine.api.controller.RestCytomineController;
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.repository.ontology.OntologyRepository;
-import be.cytomine.repository.project.ProjectRepository;
+import be.cytomine.service.dto.ThumbParameter;
 import be.cytomine.service.image.ImageInstanceService;
-import be.cytomine.service.ontology.OntologyService;
+import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.project.ProjectService;
-import be.cytomine.service.utils.TaskService;
-import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -30,6 +27,8 @@ public class RestImageInstanceController extends RestCytomineController {
     private final ProjectService projectService;
 
     private final ImageInstanceService imageInstanceService;
+
+    private final ImageServerService imageServerService;
 
     @GetMapping("/project/{id}/imageinstance.json")
     public ResponseEntity<String> listByProject(
@@ -48,7 +47,7 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("Project", id));
 
         if (light) {
-            return ResponseEntity.ok(responseList(imageInstanceService.listLight(project), offset, max).toJsonString());
+            return ResponseEntity.ok(buildJsonList(imageInstanceService.listLight(project), offset, max).toJsonString());
         } else if (tree) {
             // TODO!
             throw new CytomineMethodNotYetImplementedException("");
@@ -57,8 +56,53 @@ public class RestImageInstanceController extends RestCytomineController {
             throw new CytomineMethodNotYetImplementedException("");
         } else {
             // TODO: retrieve searchParameters
-            return ResponseEntity.ok(responseList(imageInstanceService.list(project, new ArrayList<>(), sortColumn, sortDirection, max, offset, false), offset, max).toJsonString());
+            return ResponseEntity.ok(buildJsonList(imageInstanceService.list(project, new ArrayList<>(), sortColumn, sortDirection, max, offset, false), offset, max).toJsonString());
         }
+    }
+
+
+    @GetMapping("/imageinstance/{id}/sliceinstance/reference.json")
+    public ResponseEntity<String> getReferenceSlice(
+            @PathVariable Long id
+    ) {
+        log.debug("REST request get reference sliceinstance for imageinstance {}", id);
+        SliceInstance sliceInstance = imageInstanceService.getReferenceSlice(id);
+        if (sliceInstance != null) {
+            return responseSuccess(sliceInstance);
+        } else {
+            return responseNotFound("SliceInstance", "ImageInstance", id);
+        }
+    }
+
+    @GetMapping("/imageinstance/{id}/thumb.{format}")
+    public void thumb(
+            @PathVariable Long id,
+            @PathVariable String format,
+            @RequestParam(defaultValue = "false", required = false) Boolean refresh,
+            @RequestParam(defaultValue = "512", required = false) Integer maxSize,
+            @RequestParam(defaultValue = "", required = false) String colormap,
+            @RequestParam(defaultValue = "false", required = false) Boolean inverse,
+            @RequestParam(defaultValue = "0", required = false) Double contrast,
+            @RequestParam(defaultValue = "0", required = false) Double gamma,
+            @RequestParam(defaultValue = "0", required = false) String bits
+
+    ) {
+        log.debug("REST request get image {} thumb {}", id, format);
+        ThumbParameter thumbParameter = new ThumbParameter();
+        thumbParameter.setFormat(format);
+        thumbParameter.setMaxSize(maxSize);
+        thumbParameter.setColormap(colormap);
+        thumbParameter.setInverse(inverse);
+        thumbParameter.setContrast(contrast);
+        thumbParameter.setGamma(gamma);
+        thumbParameter.setMaxBits(bits.equals("max"));
+        thumbParameter.setBits(!bits.equals("max") ? Integer.parseInt(bits): -1);
+        thumbParameter.setRefresh(refresh);
+
+        responseByteArray(imageServerService.thumb(
+                imageInstanceService.find(id).orElseThrow(() -> new ObjectNotFoundException("ImageInstance")),
+                thumbParameter), format
+        );
     }
 
 
@@ -85,7 +129,7 @@ public class RestImageInstanceController extends RestCytomineController {
         log.debug("REST request to get Ontology : {}", id);
         return imageInstanceService.find(id)
                 .map( imageInstance -> ResponseEntity.ok(convertCytomineDomainToJSON(imageInstance)))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseNotFound("imageInstance", id).toJsonString()));
+                .orElse(responseNotFound("imageInstance", id));
     }
 
 }

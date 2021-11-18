@@ -4,12 +4,9 @@ import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.ontology.Relation;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.ontology.RelationRepository;
 import be.cytomine.repository.ontology.TermRepository;
-import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.service.ontology.RelationTermService;
-import be.cytomine.service.ontology.TermService;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +43,7 @@ public class RestRelationTermController extends RestCytomineController {
             throw new ObjectNotFoundException("'i' must be 1 or 2. Current value is " + i);
         }
         return termRepository.findById(id)
-                .map( term -> ResponseEntity.ok(response(relationTermService.list(term, String.valueOf(i)),allParams)))
+                .map( term -> ResponseEntity.ok(buildJson(relationTermService.list(term, String.valueOf(i)),allParams)))
                 .orElseThrow(() -> new ObjectNotFoundException("Term", id));
     }
 
@@ -60,7 +57,7 @@ public class RestRelationTermController extends RestCytomineController {
     ) {
         log.debug("REST request to list terms");
         return termRepository.findById(id)
-                .map( term -> ResponseEntity.ok(response(relationTermService.list(term),allParams)))
+                .map( term -> ResponseEntity.ok(buildJson(relationTermService.list(term),allParams)))
                 .orElseThrow(() -> new ObjectNotFoundException("Term", id));
     }
 
@@ -92,7 +89,7 @@ public class RestRelationTermController extends RestCytomineController {
 
         return relationTermService.find(relation, term1, term2)
                 .map( term -> ResponseEntity.ok(convertCytomineDomainToJSON(term)))
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseNotFound("Relation Term", Map.of("Relation", idRelation, "Term", idTerm1, "Term2", idTerm2)).toJsonString()));
+                .orElseGet(() -> responseNotFound("Relation Term", Map.of("Relation", idRelation, "Term", idTerm1, "Term2", idTerm2)));
     }
 
 
