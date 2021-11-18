@@ -674,6 +674,7 @@ class ImageInstanceService extends ModelService {
             if(! (it.key.startsWith("cytomine.") || it.key.startsWith("mimeType") || it.key.startsWith("openslide.") ||
                     it.key.startsWith("hamamatsu.") || it.key.startsWith("tiff.") || it.key.startsWith("JFIF.") ||
                     it.key.startsWith("File.")  || it.key.startsWith("EXIF.") || it.key.startsWith("mirax.") ||
+                    it.key.startsWith("aperio.")  ||
                     it.key.startsWith("XMP.") || it.key.startsWith("ventana.") || it.key.startsWith("ExifTool.") ||
                     it.key.startsWith("MakerNotes.") || it.key.startsWith("PNG.") || it.key.startsWith("MPF.")
             )){
