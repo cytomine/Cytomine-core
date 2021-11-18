@@ -405,6 +405,7 @@ class AbstractImageService extends ModelService {
             Command c = new EditCommand(user: cytomineService.currentUser)
             c.delete = true
             log.info "abstract image delete (soft)"
+            this.deleteDependentAbstractSlice(domain, transaction, task , deleteUploadFileLink)
             def response = executeCommand(c,domain,jsonNewData)
             if (deleteUploadFileLink) {
                 // has to be done after the command otherwise fails on security check (uploadedfile null => container null)
@@ -439,11 +440,11 @@ class AbstractImageService extends ModelService {
     }
 
     def abstractSliceService
-    def deleteDependentAbstractSlice(AbstractImage ai, Transaction transaction, Task task = null) {
+    def deleteDependentAbstractSlice(AbstractImage ai, Transaction transaction, Task task = null, boolean deleteUploadedFileLink = false) {
         log.info "abstract image deleteDependentAbstractSlice"
-        def slices = AbstractSlice.findAllByImageAndDeletedIsNotNull(ai)
+        def slices = AbstractSlice.findAllByImageAndDeletedIsNull(ai)
         slices.each {
-            abstractSliceService.delete(it, transaction, task)
+            abstractSliceService.delete(it, transaction, task, true, deleteUploadedFileLink )
         }
     }
 
