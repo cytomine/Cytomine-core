@@ -4,8 +4,7 @@ import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.service.security.SecUserService;
-import be.cytomine.service.security.StorageService;
-import be.cytomine.utils.JsonObject;
+import be.cytomine.service.image.server.StorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +24,7 @@ public class RestStorageController extends RestCytomineController {
     private final StorageService storageService;
 
     @GetMapping("/storage")
-    public ResponseEntity<JsonObject> list(
+    public ResponseEntity<String> list(
             @RequestParam(required = false, defaultValue = "") String searchString,
             @RequestParam Map<String,String> allParams
     ) {
@@ -34,7 +33,7 @@ public class RestStorageController extends RestCytomineController {
         SecUser user = secUserService.getCurrentUser();
         List<Storage> storages = storageService.list(user, searchString);
         // TODO: sort
-        return ResponseEntity.ok(buildJsonList(convertCytomineDomainListToJSON(storages), allParams));
+        return responseSuccess(storages);
     }
 
 }

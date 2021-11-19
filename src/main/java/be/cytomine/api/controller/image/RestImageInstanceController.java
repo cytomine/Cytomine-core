@@ -10,6 +10,7 @@ import be.cytomine.service.dto.ThumbParameter;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.project.ProjectService;
+import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -36,8 +37,8 @@ public class RestImageInstanceController extends RestCytomineController {
             @RequestParam(value = "light", defaultValue = "false", required = false) Boolean light,
             @RequestParam(value = "tree", defaultValue = "false", required = false) Boolean tree,
             @RequestParam(value = "withLastActivity", defaultValue = "false", required = false) Boolean withLastActivity,
-            @RequestParam(value = "sortColumn", defaultValue = "created", required = false) String sortColumn,
-            @RequestParam(value = "sortDirection", defaultValue = "desc", required = false) String sortDirection,
+            @RequestParam(value = "sort", defaultValue = "created", required = false) String sort,
+            @RequestParam(value = "order", defaultValue = "desc", required = false) String order,
             @RequestParam(value = "offset", defaultValue = "0", required = false) Integer offset,
             @RequestParam(value = "max", defaultValue = "0", required = false) Integer max
 
@@ -47,7 +48,7 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("Project", id));
 
         if (light) {
-            return ResponseEntity.ok(buildJsonList(imageInstanceService.listLight(project), offset, max).toJsonString());
+            return responseSuccess(imageInstanceService.listLight(project), offset, max);
         } else if (tree) {
             // TODO!
             throw new CytomineMethodNotYetImplementedException("");
@@ -56,7 +57,7 @@ public class RestImageInstanceController extends RestCytomineController {
             throw new CytomineMethodNotYetImplementedException("");
         } else {
             // TODO: retrieve searchParameters
-            return ResponseEntity.ok(buildJsonList(imageInstanceService.list(project, new ArrayList<>(), sortColumn, sortDirection, max, offset, false), offset, max).toJsonString());
+            return responseSuccess(imageInstanceService.list(project, new ArrayList<>(), sort, order, max, offset, false), offset, max);
         }
     }
 
@@ -96,7 +97,7 @@ public class RestImageInstanceController extends RestCytomineController {
         thumbParameter.setContrast(contrast);
         thumbParameter.setGamma(gamma);
         thumbParameter.setMaxBits(bits.equals("max"));
-        thumbParameter.setBits(!bits.equals("max") ? Integer.parseInt(bits): -1);
+        thumbParameter.setBits(!bits.equals("max") ? Integer.parseInt(bits): 0);
         thumbParameter.setRefresh(refresh);
 
         responseByteArray(imageServerService.thumb(
@@ -113,7 +114,6 @@ public class RestImageInstanceController extends RestCytomineController {
         log.debug("REST request to list projects bounds");
         // TODO: implement...
 
-
         return ResponseEntity.status(200).body(
                "{\"channel\":{\"min\":null,\"max\":null},\"countImageAnnotations\":{\"min\":0,\"max\":99999},\"countImageJobAnnotations\":{\"min\":0,\"max\":99999},\"countImageReviewedAnnotations\":{\"min\":0,\"max\":99999},\"created\":{\"min\":\"1691582770212\",\"max\":\"1605232995654\"},\"deleted\":{\"min\":null,\"max\":null},\"instanceFilename\":{\"min\":\"15H26535 CD8_07.12.2020_11.06.32.mrxs\",\"max\":\"VE0CD5700003EF_2020-11-04_11_36_38.scn\"},\"magnification\":{\"list\":[20,40],\"min\":20,\"max\":40},\"resolution\":{\"list\":[0.12499998807907104,0.25,0.49900001287460327],\"min\":0.25,\"max\":0.49900001287460327},\"reviewStart\":{\"min\":null,\"max\":null},\"reviewStop\":{\"min\":null,\"max\":null},\"updated\":{\"min\":null,\"max\":null},\"zIndex\":{\"min\":null,\"max\":null},\"width\":{\"min\":46000,\"max\":106259},\"height\":{\"min\":32914,\"max\":306939},\"format\":{\"list\":[\"mrxs\",\"scn\",\"svs\"]},\"mimeType\":{\"list\":[\"openslide/mrxs\",\"openslide/scn\",\"openslide/svs\"]}}"
         );
@@ -128,8 +128,8 @@ public class RestImageInstanceController extends RestCytomineController {
     ) {
         log.debug("REST request to get Ontology : {}", id);
         return imageInstanceService.find(id)
-                .map( imageInstance -> ResponseEntity.ok(convertCytomineDomainToJSON(imageInstance)))
-                .orElse(responseNotFound("imageInstance", id));
+                .map(this::responseSuccess)
+                .orElseGet(() -> responseNotFound("imageInstance", id));
     }
 
 }

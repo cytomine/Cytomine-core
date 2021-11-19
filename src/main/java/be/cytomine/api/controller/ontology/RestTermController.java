@@ -27,11 +27,10 @@ public class RestTermController extends RestCytomineController {
     private final ProjectRepository projectRepository;
 
     @GetMapping("/term")
-    public ResponseEntity<JsonObject> list(
-            @RequestParam Map<String,String> allParams
+    public ResponseEntity<String> list(
     ) {
         log.debug("REST request to list terms");
-        return ResponseEntity.ok(buildJson(termService.list(),allParams));
+        return responseSuccess(termService.list());
     }
 
     @GetMapping("/term/{id}")
@@ -40,7 +39,7 @@ public class RestTermController extends RestCytomineController {
     ) {
         log.debug("REST request to get Term : {}", id);
         return termService.find(id)
-                .map( term -> ResponseEntity.ok(convertCytomineDomainToJSON(term)))
+                .map(this::responseSuccess)
                 .orElseGet(() -> responseNotFound("Term", id));
     }
 
@@ -82,24 +81,22 @@ public class RestTermController extends RestCytomineController {
 
 
     @GetMapping("/ontology/{id}/term")
-    public ResponseEntity<JsonObject> listByOntology(
-            @PathVariable Long id,
-            @RequestParam Map<String,String> allParams
+    public ResponseEntity<String> listByOntology(
+            @PathVariable Long id
     ) {
         log.debug("REST request to list terms for ontology {}", id);
         return ontologyRepository.findById(id)
-                .map( ontology -> ResponseEntity.ok(buildJson(termService.list(ontology),allParams)))
+                .map( ontology -> responseSuccess(termService.list(ontology)))
                 .orElseThrow(() -> new ObjectNotFoundException("Ontology", id));
     }
 
     @GetMapping("/project/{id}/term")
-    public ResponseEntity<JsonObject> listByProject(
-            @PathVariable Long id,
-            @RequestParam Map<String,String> allParams
+    public ResponseEntity<String> listByProject(
+            @PathVariable Long id
     ) {
         log.debug("REST request to list terms for project {}", id);
         return projectRepository.findById(id)
-                .map( ontology -> ResponseEntity.ok(buildJson(termService.list(ontology),allParams)))
+                .map( ontology -> responseSuccess(termService.list(ontology)))
                 .orElseThrow(() -> new ObjectNotFoundException("Ontology", id));
     }
 }

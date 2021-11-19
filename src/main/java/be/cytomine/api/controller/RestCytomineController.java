@@ -99,17 +99,58 @@ public abstract class RestCytomineController {
 //    protected ResponseEntity<String> response(Map<String, Object> response, int code) {
 //        return ResponseEntity.status(code).body(convertObjectToJSON(response));
 //    }
-    protected ResponseEntity<JsonObject> responseSuccess(Page page, Map<String,String> params) {
-        return ResponseEntity.status(200).body(buildJsonList(page, params));
+
+    protected ResponseEntity<String> responseSuccess(Page page) {
+        RequestParams requestParams = retrieveRequestParam();
+        requestParams.putIfAbsent("offset", "0");
+        requestParams.putIfAbsent("max", "0");
+        return ResponseEntity.status(200).body(buildJsonList(page, requestParams).toJsonString());
     }
 
-    protected ResponseEntity<JsonObject> responseSuccess(List<? extends CytomineDomain> list) {
-        return ResponseEntity.status(200).body(buildJsonList(convertCytomineDomainListToJSON(list))); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
+    protected ResponseEntity<String> responseSuccess(Page page, Integer offsetParameter, Integer maxParameter) {
+        return ResponseEntity.status(200).body(buildJsonList(page, offsetParameter, maxParameter).toJsonString());
+    }
+
+    protected ResponseEntity<String> responseSuccess(Page page, Map<String,String> params) {
+        return ResponseEntity.status(200).body(buildJsonList(page, params).toJsonString());
+    }
+
+    public ResponseEntity<String> responseSuccess(List list, Integer offsetParameter, Integer maxParameter) {
+        if (list.isEmpty() || list.get(0) instanceof CytomineDomain) {
+            return responseSuccessDomainList((List<? extends CytomineDomain>) list, offsetParameter, maxParameter);
+        } else {
+            return responseSuccessGenericList(list, offsetParameter, maxParameter);
+        }
+    }
+
+    public ResponseEntity<String> responseSuccess(List list) {
+        return responseSuccess(list, 0, 0);
+    }
+
+    private ResponseEntity<String> responseSuccessDomainList(List<? extends CytomineDomain> list) {
+        return responseSuccessDomainList(list, 0, 0);
+    }
+
+    private ResponseEntity<String> responseSuccessDomainList(List<? extends CytomineDomain> list, Integer offsetParameter, Integer maxParameter) {
+        return ResponseEntity.status(200).body(buildJsonList(convertCytomineDomainListToJSON(list), offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
+    }
+
+    private ResponseEntity<String> responseSuccessGenericList(List list) {
+        return responseSuccessGenericList(list, 0, 0);
+    }
+
+    private ResponseEntity<String> responseSuccessGenericList(List list, Integer offsetParameter, Integer maxParameter) {
+        return ResponseEntity.status(200).body(buildJsonList(list, offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
     }
 
     protected ResponseEntity<String> responseSuccess(CytomineDomain response) {
         return ResponseEntity.status(200).body(response.toJSON());
     }
+
+    protected ResponseEntity<String> responseSuccess(JsonObject response) {
+        return ResponseEntity.status(200).body(response.toJsonString());
+    }
+
 
     protected ResponseEntity<String> buildJson(CytomineDomain response, int code) {
         return ResponseEntity.status(code).body(response.toJSON());
@@ -128,6 +169,12 @@ public abstract class RestCytomineController {
         return JsonObject.toJsonString(o);
     }
 
+    protected String convertObjectToJsonObject(Object o) {
+        return JsonObject.toJsonString(o);
+    }
+
+
+
     protected String convertCytomineDomainToJSON(CytomineDomain cytomineDomain) {
         return cytomineDomain.toJSON();
     }
@@ -144,6 +191,14 @@ public abstract class RestCytomineController {
         }
         return results;
     }
+
+//    protected List<JsonObject> convertObjectToJSON(List list) {
+//        List<JsonObject> results = new ArrayList<>();
+//        for (Object o : list) {
+//            results.add(convertObjectToJSON(o));
+//        }
+//        return results;
+//    }
 
     protected String convertListToJSON(List o) {
         return JsonObject.toJsonString(o);

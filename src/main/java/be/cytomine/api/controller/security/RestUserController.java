@@ -1,11 +1,13 @@
 package be.cytomine.api.controller.security;
 
 import be.cytomine.api.controller.RestCytomineController;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
+import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.service.security.SecUserService;
@@ -32,6 +34,8 @@ public class RestUserController extends RestCytomineController {
 
     private final CurrentUserService currentUserService;
 
+    private final ImageInstanceService imageInstanceService;
+
     @GetMapping("/user/{id}")
     public ResponseEntity<String> getUser(
             @PathVariable String id
@@ -50,7 +54,7 @@ public class RestUserController extends RestCytomineController {
 //            object.put("admin", authMaps.get("admin"));
 //            object.put("user", authMaps.get("user"));
 //            object.put("guest", authMaps.get("guest"));
-            return ResponseEntity.ok(convertObjectToJSON(object));
+            return responseSuccess(object);
         }).orElseGet(() -> responseNotFound("User", id));
     }
 
@@ -63,7 +67,7 @@ public class RestUserController extends RestCytomineController {
         //TODO: admin, user, guest, adminByNow...
         return user.map( secUser -> {
             JsonObject object = User.getDataFromDomain(secUser);
-            return ResponseEntity.ok(convertObjectToJSON(object));
+            return responseSuccess(object);
         }).orElseGet(() -> responseNotFound("User", "current"));
     }
 
@@ -97,7 +101,7 @@ public class RestUserController extends RestCytomineController {
      * For each ontology, print the terms tree
      */
     @GetMapping("/project/{id}/user.json")
-    public ResponseEntity<JsonObject> list(
+    public ResponseEntity<String> list(
             @PathVariable Long id,
             @RequestParam(value = "showJob", defaultValue = "false", required = false) Boolean showJob,
             @RequestParam(value = "withLastImage", defaultValue = "false", required = false) Boolean withLastImage,
@@ -106,8 +110,7 @@ public class RestUserController extends RestCytomineController {
             @RequestParam(value = "sortColumn", defaultValue = "created", required = false) String sortColumn,
             @RequestParam(value = "sortDirection", defaultValue = "desc", required = false) String sortDirection,
             @RequestParam(value = "offset", defaultValue = "0", required = false) Long offset,
-            @RequestParam(value = "max", defaultValue = "0", required = false) Long max,
-            @RequestParam Map<String,String> allParams
+            @RequestParam(value = "max", defaultValue = "0", required = false) Long max
     ) {
         log.debug("REST request to list user from project {}", id);
         Project project = projectService.find(id)
@@ -121,11 +124,28 @@ public class RestUserController extends RestCytomineController {
 
         // TODO: retrieve search parameter
         return responseSuccess(
-                secUserService.listUsersExtendedByProject(project, userSearchExtension, new ArrayList<>(), sortColumn, sortDirection, max, offset), allParams
+                secUserService.listUsersExtendedByProject(project, userSearchExtension, new ArrayList<>(), sortColumn, sortDirection, max, offset)
         );
 
         //return responseSuccess(projectService.list(user, projectSearchExtension, new ArrayList<>(), "created", "desc", 0L, 0L), allParams);
     }
+
+
+    @GetMapping("/project/{id}/userlayer.json")
+    public ResponseEntity<String> showLayerByProject(
+            @PathVariable Long id,
+            @RequestParam(value = "image", required = false) Long idImage
+    ) {
+        log.debug("REST request to list user layers from project {}", id);
+        Project project = projectService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("Project", id));
+        ImageInstance image  = imageInstanceService.find(idImage).orElse(null);
+
+        return responseSuccess(secUserService.listLayers(project, image));
+
+    }
+
+
 
 //    @RestApiMethod(description="Get all project users. Online flag may be set to get only online users", listing = true)
 //    @RestApiParams(params=[

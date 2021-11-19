@@ -27,7 +27,7 @@ public class RestCompanionFileController extends RestCytomineController {
     private final CompanionFileService companionFileService;
 
     @GetMapping("/abstractimage/{id}/companionfile.json")
-    public ResponseEntity<JsonObject> listByAbstractImage(
+    public ResponseEntity<String> listByAbstractImage(
             @PathVariable Long id
     ) {
         log.debug("REST request to list companion file for abstract image {}", id);

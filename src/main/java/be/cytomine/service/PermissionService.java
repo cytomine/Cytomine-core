@@ -42,6 +42,10 @@ public class PermissionService {
         return hasACLPermission(domain, currentUserService.getCurrentUsername(), permission);
     }
 
+    public boolean hasACLPermission(CytomineDomain domain, Permission permission, boolean isAdmin) {
+        return isAdmin || hasACLPermission(domain, currentUserService.getCurrentUsername(), permission);
+    }
+
     List<Integer> getPermissionInACL(CytomineDomain domain, User user) {
         return aclRepository.listMaskForUsers(domain.getId(), user.humanUsername());
     }

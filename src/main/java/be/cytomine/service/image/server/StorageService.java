@@ -1,4 +1,4 @@
-package be.cytomine.service.security;
+package be.cytomine.service.image.server;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
@@ -12,6 +12,7 @@ import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
+import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

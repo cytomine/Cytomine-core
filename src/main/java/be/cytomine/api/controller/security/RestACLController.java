@@ -43,7 +43,7 @@ public class RestACLController extends RestCytomineController {
             if(domainClassName!=null && domainIdent!=null && user!=null) {
                 //CytomineDomain domain = retrieveCytomineDomain(domainClassName,Long.parseLong(domainIdent));
                 SecUser secUser = entityManager.find(SecUser.class, Long.parseLong(user));
-                return ResponseEntity.ok(convertListToJSON(aclAuthService.get(Long.parseLong(domainIdent),secUser)));
+                return responseSuccess(aclAuthService.get(Long.parseLong(domainIdent),secUser));
             } else {
                 throw new ObjectNotFoundException("Request not valid: domainClassName="+ domainClassName + ", domainIdent= " + domainIdent + ", user=" + user);
             }

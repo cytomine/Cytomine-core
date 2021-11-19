@@ -28,12 +28,19 @@ public class RestSliceInstanceController extends RestCytomineController {
     private final ImageInstanceService imageInstanceService;
 
     @GetMapping("/imageinstance/{id}/sliceinstance.json")
-    public ResponseEntity<JsonObject> listByImageInstance(
-            @PathVariable Long id
-    ) {
+    public ResponseEntity<String> listByImageInstance(@PathVariable Long id) {
         log.debug("REST request to list sliceinstance for imageinstance {}", id);
         ImageInstance imageInstance = imageInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
         return responseSuccess(sliceInstanceService.list(imageInstance));
+    }
+
+
+    @GetMapping("/sliceinstance/{id}.json")
+    public ResponseEntity<String> show(@PathVariable Long id) {
+        log.debug("REST request to get slice instance : {}", id);
+        return sliceInstanceService.find(id)
+                .map(this::responseSuccess)
+                .orElseGet(() -> responseNotFound("SliceInstance", id));
     }
 }

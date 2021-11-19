@@ -21,11 +21,11 @@ public class RestTagController extends RestCytomineController {
 
 
     @GetMapping("/tag.json")
-    public ResponseEntity<JsonObject> list(
+    public ResponseEntity<String> list(
             @RequestParam Map<String,String> allParams
     ) {
         log.debug("REST request to list tags");
         // TODO: implement...
-        return ResponseEntity.ok(buildJson(List.of(),allParams));
+        return responseSuccess(List.of());
     }
 }

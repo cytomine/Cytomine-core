@@ -1,4 +1,4 @@
-package be.cytomine.api.controller.meta;
+package be.cytomine.api.controller.social;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.service.ontology.TermService;
@@ -15,17 +15,17 @@ import java.util.Map;
 @RequestMapping("/api")
 @Slf4j
 @RequiredArgsConstructor
-public class RestTrackController extends RestCytomineController {
+public class RestUserPositionController extends RestCytomineController {
 
     private final TermService termService;
 
 
-    @GetMapping("/imageinstance/{id}/track.json")
-    public ResponseEntity<String> listByImageInstance(
-            @PathVariable Long id
+    @PostMapping("/sliceinstance/{id}/position.json")
+    public ResponseEntity<String> list(
+            Long id
     ) {
-        log.debug("REST request to list tags");
+        log.debug("REST request add user position for sliceinstance {id}");
         // TODO: implement...
-        return responseSuccess(List.of());
+        return responseSuccess(new JsonObject());
     }
 }

@@ -32,7 +32,7 @@ public class RestRelationTermController extends RestCytomineController {
      * List all relation for a specific term and position
      */
     @GetMapping("/relation/term/{i}/{id}")
-    public ResponseEntity<JsonObject> listByTerm(
+    public ResponseEntity<String> listByTerm(
             @PathVariable Long id,
             @PathVariable Integer i,
             @RequestParam Map<String,String> allParams
@@ -43,7 +43,7 @@ public class RestRelationTermController extends RestCytomineController {
             throw new ObjectNotFoundException("'i' must be 1 or 2. Current value is " + i);
         }
         return termRepository.findById(id)
-                .map( term -> ResponseEntity.ok(buildJson(relationTermService.list(term, String.valueOf(i)),allParams)))
+                .map( term -> responseSuccess(relationTermService.list(term, String.valueOf(i))))
                 .orElseThrow(() -> new ObjectNotFoundException("Term", id));
     }
 
@@ -51,13 +51,13 @@ public class RestRelationTermController extends RestCytomineController {
      * List all relation for a specific term and position
      */
     @GetMapping("/relation/term/{id}")
-    public ResponseEntity<JsonObject> listByTermAll(
+    public ResponseEntity<String> listByTermAll(
             @PathVariable Long id,
             @RequestParam Map<String,String> allParams
     ) {
         log.debug("REST request to list terms");
         return termRepository.findById(id)
-                .map( term -> ResponseEntity.ok(buildJson(relationTermService.list(term),allParams)))
+                .map( term -> responseSuccess(relationTermService.list(term)))
                 .orElseThrow(() -> new ObjectNotFoundException("Term", id));
     }
 
@@ -88,7 +88,7 @@ public class RestRelationTermController extends RestCytomineController {
                 orElseThrow(() -> new ObjectNotFoundException("Term", idTerm2));
 
         return relationTermService.find(relation, term1, term2)
-                .map( term -> ResponseEntity.ok(convertCytomineDomainToJSON(term)))
+                .map(this::responseSuccess)
                 .orElseGet(() -> responseNotFound("Relation Term", Map.of("Relation", idRelation, "Term", idTerm1, "Term2", idTerm2)));
     }
 

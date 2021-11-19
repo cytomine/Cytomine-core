@@ -38,12 +38,14 @@ public class RestProjectController extends RestCytomineController {
      * For each ontology, print the terms tree
      */
     @GetMapping("/project.json")
-    public ResponseEntity<JsonObject> list(
+    public ResponseEntity<String> list(
             @RequestParam(value = "withMembersCount", defaultValue = "false", required = false) Boolean withMembersCount,
             @RequestParam(value = "withLastActivity", defaultValue = "false", required = false) Boolean withLastActivity,
             @RequestParam(value = "withDescription", defaultValue = "false", required = false) Boolean withDescription,
             @RequestParam(value = "withCurrentUserRoles", defaultValue = "false", required = false) Boolean withCurrentUserRoles,
-            @RequestParam Map<String,String> allParams
+            @RequestParam(value = "sort", defaultValue = "created", required = false) String sort,
+            @RequestParam(value = "order", defaultValue = "desc", required = false) String order
+
     ) {
         log.debug("REST request to list projects");
         SecUser user = currentUserService.getCurrentUser();
@@ -59,7 +61,7 @@ public class RestProjectController extends RestCytomineController {
         projectSearchExtension.setWithDescription(withDescription);
         projectSearchExtension.setWithCurrentUserRoles(withCurrentUserRoles);
         // TODO: parse searchParameterEntry
-        return responseSuccess(projectService.list(user, projectSearchExtension, new ArrayList<>(), "created", "desc", 0L, 0L), allParams);
+        return responseSuccess(projectService.list(user, projectSearchExtension, new ArrayList<>(), sort, order, 0L, 0L));
     }
 
 
@@ -69,7 +71,7 @@ public class RestProjectController extends RestCytomineController {
     ) {
         log.debug("REST request to get project : {}", id);
         return projectService.find(id)
-                .map( ontology -> ResponseEntity.ok(convertCytomineDomainToJSON(ontology)))
+                .map(this::responseSuccess)
                 .orElseGet(() -> responseNotFound("Project", id));
     }
 

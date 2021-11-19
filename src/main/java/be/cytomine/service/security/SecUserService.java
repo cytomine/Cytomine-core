@@ -2,7 +2,7 @@ package be.cytomine.service.security;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
-import be.cytomine.domain.ontology.Ontology;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
@@ -13,7 +13,8 @@ import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
-import be.cytomine.service.search.ProjectSearchExtension;
+import be.cytomine.service.PermissionService;
+import be.cytomine.service.dto.JobLayerDTO;
 import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SearchParameterEntry;
@@ -30,6 +31,7 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Service
@@ -45,6 +47,8 @@ public class SecUserService extends ModelService {
     private final CurrentUserService currentUserService;
 
     private final CurrentRoleService currentRoleService;
+
+    private final PermissionService permissionService;
 
     public Optional<SecUser> find(Long id) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
@@ -455,6 +459,44 @@ public class SecUserService extends ModelService {
             throw new AlreadyExistException("User "+user.getUsername() + " already exist!");
         }
     }
+
+    /**
+     * List all layers from a project
+     * Each user has its own layer
+     * If project has private layer, just get current user layer
+     */
+    public List<JsonObject> listLayers(Project project, ImageInstance image) {
+        SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.check(project, READ, currentUser);
+
+        List<SecUser> humanAdmins = listAdmins(project);
+        List<SecUser> humanUsers = listUsers(project);
+
+        List<JsonObject> humanUsersFormatted = humanUsers.stream().map(SecUser::toJsonObject).collect(Collectors.toList());
+
+        List<JsonObject> layersFormatted = new ArrayList<>();
+
+        if (permissionService.hasACLPermission(project, ADMINISTRATION, currentRoleService.isAdminByNow(currentUser))
+                || (!project.isHideAdminsLayers() && !project.isHideUsersLayers())) {
+            layersFormatted.addAll(humanUsersFormatted);
+        } else if(project.isHideAdminsLayers() && !project.isHideUsersLayers()) {
+            Set<Long> humanAdminsIds = humanAdmins.stream().map(CytomineDomain::getId).collect(Collectors.toSet());
+            layersFormatted.addAll(humanUsersFormatted.stream()
+                    .filter(x -> !humanAdminsIds.contains(x.getJSONAttrLong("id"))).collect(Collectors.toList()));
+        } else if(!project.isHideAdminsLayers() && project.isHideUsersLayers()) {
+            layersFormatted.addAll(humanAdmins.stream().map(SecUser::toJsonObject).collect(Collectors.toList()));
+        }
+
+        if (humanUsers.contains(currentUser) && layersFormatted.stream().noneMatch(x -> x.getJSONAttrLong("id").equals(currentUser.getId()))) {
+            layersFormatted.add(currentUser.toJsonObject());
+        }
+
+        if (image!=null) {
+            layersFormatted.addAll(secUserRepository.findAllUserJob(image.getId(), image.getProject().getId()).stream().map(JobLayerDTO::getDataFromDomain).collect(Collectors.toList()));
+        }
+        return layersFormatted;
+    }
+
 
 
 }

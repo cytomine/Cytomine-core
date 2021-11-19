@@ -34,12 +34,12 @@ public class RestOntologyController extends RestCytomineController {
      * For each ontology, print the terms tree
      */
     @GetMapping("/ontology.json")
-    public ResponseEntity<JsonObject> list(
+    public ResponseEntity<String> list(
             @RequestParam Map<String,String> allParams
     ) {
         log.debug("REST request to list ontologys");
         boolean light = allParams.containsKey("light") && Boolean.parseBoolean(allParams.get("light"));
-        return ResponseEntity.ok(light ? buildJsonList(ontologyService.listLight(),allParams) : buildJson(ontologyService.list(),allParams));
+        return responseSuccess(light ? ontologyService.listLight() : ontologyService.list());
     }
 
     @GetMapping("/ontology/{id}.json")
@@ -48,7 +48,7 @@ public class RestOntologyController extends RestCytomineController {
     ) {
         log.debug("REST request to get Ontology : {}", id);
         return ontologyService.find(id)
-                .map( ontology -> ResponseEntity.ok(convertCytomineDomainToJSON(ontology)))
+                .map(this::responseSuccess)
                 .orElseGet(() -> responseNotFound("Ontology", id));
     }
 

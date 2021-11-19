@@ -21,14 +21,14 @@ public class RestPropertyController extends RestCytomineController {
 
 
     @GetMapping("/annotation/property/key.json")
-    public ResponseEntity<JsonObject> listKeyForAnnotation() {
+    public ResponseEntity<String> listKeyForAnnotation() {
         log.debug("REST request to list property key");
         // TODO: implement...
         return responseSuccess(List.of());
     }
 
     @GetMapping("/domain/{domainClassName}/{domainIdent}/property.json")
-    public ResponseEntity<JsonObject> listByDomain(
+    public ResponseEntity<String> listByDomain(
             @PathVariable String domainClassName,
             @PathVariable String domainIdent
     ) {

@@ -96,15 +96,18 @@ public class SecurityACLService {
 //            throw new ObjectNotFoundException("ACL error: ${className} with id ${id} was not found! Unable to process auth checking")
 //        }
 //    }
-
-    public void check(CytomineDomain domain, Permission permission) {
+    public void check(CytomineDomain domain, Permission permission, SecUser currentUser) {
         if (domain!=null) {
-            if (!checkPermission(domain.container(), permission, currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
+            if (!checkPermission(domain.container(), permission, currentRoleService.isAdminByNow(currentUser))) {
                 throw new ForbiddenException("You don't have the right to read or modify this resource! "  + domain.getClass() + " " + domain.getId());
             }
         } else {
             throw new ObjectNotFoundException("ACL error: domain is null! Unable to process project auth checking");
         }
+    }
+
+    public void check(CytomineDomain domain, Permission permission) {
+        check(domain, permission, currentUserService.getCurrentUser());
 
     }
 
