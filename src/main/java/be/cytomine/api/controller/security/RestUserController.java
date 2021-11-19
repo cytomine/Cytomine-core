@@ -36,7 +36,7 @@ public class RestUserController extends RestCytomineController {
 
     private final ImageInstanceService imageInstanceService;
 
-    @GetMapping("/user/{id}")
+    @GetMapping("/user/{id}.json")
     public ResponseEntity<String> getUser(
             @PathVariable String id
     ) {
@@ -58,7 +58,7 @@ public class RestUserController extends RestCytomineController {
         }).orElseGet(() -> responseNotFound("User", id));
     }
 
-    @GetMapping("/user/current.{ext}")
+    @GetMapping("/user/current.json")
     public ResponseEntity<String> getCurrentUser(
     ) {
         log.debug("REST request to get current User");
@@ -75,13 +75,13 @@ public class RestUserController extends RestCytomineController {
     /**
      * Add a new user
      */
-    @PostMapping("/user")
+    @PostMapping("/user.json")
     public ResponseEntity<String> createUser(@RequestBody JsonObject json) {
         log.debug("REST request to save User : " + json);
         return add(secUserService, json);
     }
 
-    @PutMapping("/user/{id}")
+    @PutMapping("/user/{id}.json")
     public ResponseEntity<String> updateUser(@PathVariable String id, @RequestBody JsonObject json) {
         log.debug("REST request to update User : {}", id);
         return update(secUserService, json);
@@ -90,7 +90,7 @@ public class RestUserController extends RestCytomineController {
     /**
      * Delete the "login" User.
      */
-    @DeleteMapping("/user/{id}")
+    @DeleteMapping("/user/{id}.json")
     public ResponseEntity<String> deleteUser(@PathVariable String id) {
         log.debug("REST request to delete User: {}", id);
         return delete(secUserService, JsonObject.of("id", Long.parseLong(id)), null);

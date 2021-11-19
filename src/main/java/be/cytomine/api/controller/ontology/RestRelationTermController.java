@@ -31,7 +31,7 @@ public class RestRelationTermController extends RestCytomineController {
     /**
      * List all relation for a specific term and position
      */
-    @GetMapping("/relation/term/{i}/{id}")
+    @GetMapping("/relation/term/{i}/{id}.json")
     public ResponseEntity<String> listByTerm(
             @PathVariable Long id,
             @PathVariable Integer i,
@@ -50,7 +50,7 @@ public class RestRelationTermController extends RestCytomineController {
     /**
      * List all relation for a specific term and position
      */
-    @GetMapping("/relation/term/{id}")
+    @GetMapping("/relation/term/{id}.json")
     public ResponseEntity<String> listByTermAll(
             @PathVariable Long id,
             @RequestParam Map<String,String> allParams
@@ -65,7 +65,7 @@ public class RestRelationTermController extends RestCytomineController {
     /**
      * Check if a relation exist with term1 and term2
      */
-    @GetMapping("/relation/parent/term1/{idTerm1}/term2/{idTerm2}")
+    @GetMapping("/relation/parent/term1/{idTerm1}/term2/{idTerm2}.json")
     public ResponseEntity<String> show(
             @PathVariable Long idTerm1,
             @PathVariable Long idTerm2
@@ -73,7 +73,7 @@ public class RestRelationTermController extends RestCytomineController {
         return show(relationRepository.getParent().getId(), idTerm1, idTerm2);
     }
 
-    @GetMapping("/relation/{idRelation}/term1/{idTerm1}/term2/{idTerm2}")
+    @GetMapping("/relation/{idRelation}/term1/{idTerm1}/term2/{idTerm2}.json")
     public ResponseEntity<String> show(
             @PathVariable Long idRelation,
             @PathVariable Long idTerm1,
@@ -96,7 +96,7 @@ public class RestRelationTermController extends RestCytomineController {
     /**
      * Add a new relation with two terms
      */
-    @PostMapping("/relation/{id}/term")
+    @PostMapping("/relation/{id}/term.json")
     public ResponseEntity<String> add(@RequestBody JsonObject json) {
         log.debug("REST request to save Term : " + json);
         if (json.isMissing("relation")) {
@@ -108,7 +108,7 @@ public class RestRelationTermController extends RestCytomineController {
     /**
      * Delete a relation between two terms
      */
-    @DeleteMapping("/relation/parent/term1/{idTerm1}/term2/{idTerm2}")
+    @DeleteMapping("/relation/parent/term1/{idTerm1}/term2/{idTerm2}.json")
     public ResponseEntity<String> delete(
             @PathVariable Long idTerm1,
             @PathVariable Long idTerm2
@@ -119,7 +119,7 @@ public class RestRelationTermController extends RestCytomineController {
     /**
      * Delete a relation between two terms
      */
-    @DeleteMapping("/relation/{idRelation}/term1/{idTerm1}/term2/{idTerm2}")
+    @DeleteMapping("/relation/{idRelation}/term1/{idTerm1}/term2/{idTerm2}.json")
     public ResponseEntity<String> delete(
             @PathVariable Long idRelation,
             @PathVariable Long idTerm1,

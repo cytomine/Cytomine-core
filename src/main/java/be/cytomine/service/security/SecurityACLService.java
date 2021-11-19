@@ -155,17 +155,22 @@ public class SecurityACLService {
     }
 
     public List<Storage> getStorageList(SecUser user, boolean adminByPass, String searchString) {
-        // adminByPass TODO
-        // userjob.user TODO
+        Query query;
+        if (adminByPass && currentRoleService.isAdminByNow(user)) {
+            query = entityManager.createQuery("select storage from Storage as storage");
+        } else {
+            while (user instanceof UserJob) {
+                user = ((UserJob) user).getUser();
+            }
+            query = entityManager.createQuery(
+                    "select distinct storage "+
+                            "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid,  Storage as storage "+
+                            "where aclObjectId.objectId = storage.id " +
+                            "and aclEntry.aclObjectIdentity = aclObjectId "+
+                            "and aclEntry.sid = aclSid and aclSid.sid like '"+user.getUsername() +"'" + (StringUtils.isNotBlank(searchString)? " and lower(storage.name) like '%" + searchString.toLowerCase() + "%'" : ""));
 
-        Query query = entityManager.createQuery(
-                "select distinct storage "+
-                        "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid,  Storage as storage "+
-                        "where aclObjectId.objectId = storage.id " +
-                        "and aclEntry.aclObjectIdentity = aclObjectId "+
-                        "and aclEntry.sid = aclSid and aclSid.sid like '"+user.getUsername() +"'" + (StringUtils.isNotBlank(searchString)? " and lower(storage.name) like '%" + searchString.toLowerCase() + "%'" : ""));
-        List<Storage> storages = query.getResultList();
-        return storages;
+        }
+        return (List<Storage>) query.getResultList();
     }
 
     public List<String> getProjectUsers(Project project) {

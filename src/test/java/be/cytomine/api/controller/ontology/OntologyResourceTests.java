@@ -1,4 +1,4 @@
-package be.cytomine.api.controller;
+package be.cytomine.api.controller.ontology;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
@@ -42,7 +42,7 @@ public class OntologyResourceTests {
     @Transactional
     public void list_all_ontologies() throws Exception {
         Ontology ontology = builder.given_an_ontology();
-        restOntologyControllerMockMvc.perform(get("/api/ontology"))
+        restOntologyControllerMockMvc.perform(get("/api/ontology.json"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
@@ -54,7 +54,7 @@ public class OntologyResourceTests {
     @Transactional
     public void list_all_ontologies_light() throws Exception {
         Ontology ontology = builder.given_an_ontology();
-        restOntologyControllerMockMvc.perform(get("/api/ontology").param("light", "true"))
+        restOntologyControllerMockMvc.perform(get("/api/ontology.json").param("light", "true"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
@@ -82,7 +82,7 @@ public class OntologyResourceTests {
         em.refresh(child2);
         em.refresh(directChild);
 
-        restOntologyControllerMockMvc.perform(get("/api/ontology/{id}", ontology.getId()))
+        restOntologyControllerMockMvc.perform(get("/api/ontology/{id}.json", ontology.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(ontology.getId().intValue()))
@@ -131,7 +131,7 @@ public class OntologyResourceTests {
     @Transactional
     public void add_valid_ontology() throws Exception {
         Ontology ontology = BasicInstanceBuilder.given_a_not_persisted_ontology();
-        restOntologyControllerMockMvc.perform(post("/api/ontology")
+        restOntologyControllerMockMvc.perform(post("/api/ontology.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ontology.toJSON()))
                 .andDo(print())
@@ -152,7 +152,7 @@ public class OntologyResourceTests {
     public void add_ontology_refused_if_already_exists() throws Exception {
         Ontology ontology = BasicInstanceBuilder.given_a_not_persisted_ontology();
         builder.persistAndReturn(ontology);
-        restOntologyControllerMockMvc.perform(post("/api/ontology")
+        restOntologyControllerMockMvc.perform(post("/api/ontology.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ontology.toJSON()))
                 .andDo(print())
@@ -165,7 +165,7 @@ public class OntologyResourceTests {
     public void add_ontology_refused_if_name_not_set() throws Exception {
         Ontology ontology = BasicInstanceBuilder.given_a_not_persisted_ontology();
         ontology.setName(null);
-        restOntologyControllerMockMvc.perform(post("/api/ontology")
+        restOntologyControllerMockMvc.perform(post("/api/ontology.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ontology.toJSON()))
                 .andDo(print())
@@ -177,7 +177,7 @@ public class OntologyResourceTests {
     @Transactional
     public void edit_valid_ontology() throws Exception {
         Ontology ontology = builder.given_an_ontology();
-        restOntologyControllerMockMvc.perform(put("/api/ontology/{id}", ontology.getId())
+        restOntologyControllerMockMvc.perform(put("/api/ontology/{id}.json", ontology.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ontology.toJSON()))
                 .andDo(print())
@@ -193,11 +193,27 @@ public class OntologyResourceTests {
 
     }
 
+
+    @Test
+    @Transactional
+    public void fail_when_editing_ontology_does_not_exists() throws Exception {
+        Ontology ontology = builder.given_an_ontology();
+        em.remove(ontology);
+        restOntologyControllerMockMvc.perform(put("/api/ontology/{id}.json", 0)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(ontology.toJSON()))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errors").exists());
+
+    }
+
     @Test
     @Transactional
     public void delete_ontology() throws Exception {
         Ontology ontology = builder.given_an_ontology();
-        restOntologyControllerMockMvc.perform(delete("/api/ontology/{id}", ontology.getId())
+        restOntologyControllerMockMvc.perform(delete("/api/ontology/{id}.json", ontology.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ontology.toJSON()))
                 .andDo(print())
@@ -210,6 +226,17 @@ public class OntologyResourceTests {
                 .andExpect(jsonPath("$.command").exists())
                 .andExpect(jsonPath("$.ontology.id").exists())
                 .andExpect(jsonPath("$.ontology.name").value(ontology.getName()));
+    }
+
+    @Test
+    @Transactional
+    public void fail_when_delete_ontology_not_exists() throws Exception {
+        restOntologyControllerMockMvc.perform(delete("/api/ontology/{id}.json", 0)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errors").exists());
     }
 
     @Test

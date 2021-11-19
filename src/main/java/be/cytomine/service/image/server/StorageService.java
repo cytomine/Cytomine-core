@@ -43,23 +43,12 @@ public class StorageService extends ModelService {
 
     private final PermissionService permissionService;
 
+    public List<Storage> list() {
+        return securityACLService.getStorageList(currentUserService.getCurrentUser(), true);
+    }
+
     public List<Storage> list(SecUser user, String searchString) {
         return securityACLService.getStorageList(user, false, searchString);
-    }
-
-
-    public void initUserStorage(final SecUser user) {
-        log.info ("create storage for " + user.getUsername());
-        final SecUser finalUser = user;
-        SecurityUtils.doWithAuth(applicationContext, user.getUsername(), () -> createStorage(finalUser));
-//                {
-//                Command c = new AddCommand(user);
-//                executeCommand(c,null, JsonObject.of("name", user.getUsername() + " storage", "user", user.getId()));
-//        });
-    }
-
-    public CommandResponse createStorage(SecUser user) {
-        return executeCommand(new AddCommand(user),null, JsonObject.of("name", user.getUsername() + " storage", "user", user.getId()));
     }
 
     public Optional<Storage> find(Long id) {
@@ -83,16 +72,6 @@ public class StorageService extends ModelService {
         json.put("user", currentRoleService.isAdminByNow(currentUser) ? json.get("user") : currentUser.getId());
         return executeCommand(new AddCommand(currentUser),null, json);
 
-    }
-
-    @Override
-    public Class currentDomain() {
-        return Storage.class;
-    }
-
-    @Override
-    public CytomineDomain createFromJSON(JsonObject json) {
-        return new Storage().buildDomainFromJson(json, getEntityManager());
     }
 
     protected void afterAdd(CytomineDomain domain, CommandResponse response) {
@@ -123,6 +102,7 @@ public class StorageService extends ModelService {
         return commandResponse;
     }
 
+
     /**
      * Delete this domain
      * @param domain Domain to delete
@@ -138,6 +118,28 @@ public class StorageService extends ModelService {
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }
+
+    public void initUserStorage(final SecUser user) {
+        log.info ("create storage for " + user.getUsername());
+        final SecUser finalUser = user;
+        SecurityUtils.doWithAuth(applicationContext, user.getUsername(), () -> createStorage(finalUser));
+    }
+
+    public CommandResponse createStorage(SecUser user) {
+        return executeCommand(new AddCommand(user),null, JsonObject.of("name", user.getUsername() + " storage", "user", user.getId()));
+    }
+
+
+    @Override
+    public Class currentDomain() {
+        return Storage.class;
+    }
+
+    @Override
+    public CytomineDomain createFromJSON(JsonObject json) {
+        return new Storage().buildDomainFromJson(json, getEntityManager());
+    }
+
 
     @Override
     public void checkDoNotAlreadyExist(CytomineDomain domain) {

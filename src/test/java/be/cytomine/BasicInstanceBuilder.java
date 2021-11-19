@@ -245,7 +245,7 @@ public class BasicInstanceBuilder {
         return storage;
     }
 
-    public Storage given_a_not_persisted_storage(User user) {
+    public static Storage given_a_not_persisted_storage(User user) {
         Storage storage = new Storage();
         storage.setName(randomString());
         storage.setUser(user);

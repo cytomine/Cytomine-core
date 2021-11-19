@@ -53,19 +53,19 @@ public class RestOntologyController extends RestCytomineController {
     }
 
 
-    @PostMapping("/ontology")
+    @PostMapping("/ontology.json")
     public ResponseEntity<String> add(@RequestBody JsonObject json) {
         log.debug("REST request to save Ontology : " + json);
         return add(ontologyService, json);
     }
 
-    @PutMapping("/ontology/{id}")
+    @PutMapping("/ontology/{id}.json")
     public ResponseEntity<String> edit(@PathVariable String id, @RequestBody JsonObject json) {
         log.debug("REST request to edit Ontology : " + id);
         return update(ontologyService, json);
     }
 
-    @DeleteMapping("/ontology/{id}")
+    @DeleteMapping("/ontology/{id}.json")
     public ResponseEntity<String> delete(@PathVariable String id, @RequestParam(required = false) Long task) {
         log.debug("REST request to delete Ontology : " + id);
         Task existingTask = taskService.get(task);

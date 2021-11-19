@@ -1,4 +1,4 @@
-package be.cytomine.api.controller;
+package be.cytomine.api.controller.ontology;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
@@ -47,7 +47,7 @@ public class TermResourceTests {
     @Transactional
     public void list_all_terms() throws Exception {
         Term term = builder.given_a_term();
-        restTermControllerMockMvc.perform(get("/api/term"))
+        restTermControllerMockMvc.perform(get("/api/term.json"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
@@ -62,7 +62,7 @@ public class TermResourceTests {
         Term parent = builder.given_a_term(term.getOntology());
         builder.given_a_relation_term(parent, term);
         em.refresh(term);
-        restTermControllerMockMvc.perform(get("/api/term/{id}", term.getId()))
+        restTermControllerMockMvc.perform(get("/api/term/{id}.json", term.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(term.getId().intValue()))
@@ -78,7 +78,7 @@ public class TermResourceTests {
     @Transactional
     public void list_terms_by_ontology() throws Exception {
         Term term = builder.given_a_term();
-        restTermControllerMockMvc.perform(get("/api/ontology/{id}/term", term.getOntology().getId()))
+        restTermControllerMockMvc.perform(get("/api/ontology/{id}/term.json", term.getOntology().getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
@@ -90,7 +90,7 @@ public class TermResourceTests {
     public void list_terms_by_project() throws Exception {
         Term term = builder.given_a_term();
         Project project = builder.given_a_project_with_ontology(term.getOntology());
-        restTermControllerMockMvc.perform(get("/api/project/{id}/term", project.getId()))
+        restTermControllerMockMvc.perform(get("/api/project/{id}/term.json", project.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
@@ -101,7 +101,7 @@ public class TermResourceTests {
     @Transactional
     public void add_valid_term() throws Exception {
         Term term = BasicInstanceBuilder.given_a_not_persisted_term(builder.given_an_ontology());
-        restTermControllerMockMvc.perform(post("/api/term")
+        restTermControllerMockMvc.perform(post("/api/term.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
                 .andDo(print())
@@ -152,7 +152,7 @@ public class TermResourceTests {
     public void add_term_refused_if_already_exists() throws Exception {
         Term term = BasicInstanceBuilder.given_a_not_persisted_term(builder.given_an_ontology());
         builder.persistAndReturn(term);
-        restTermControllerMockMvc.perform(post("/api/term")
+        restTermControllerMockMvc.perform(post("/api/term.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
                 .andDo(print())
@@ -165,7 +165,7 @@ public class TermResourceTests {
     @Transactional
     public void add_term_refused_if_ontology_not_set() throws Exception {
         Term term = BasicInstanceBuilder.given_a_not_persisted_term(null);
-        restTermControllerMockMvc.perform(post("/api/term")
+        restTermControllerMockMvc.perform(post("/api/term.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
                 .andDo(print())
@@ -179,7 +179,7 @@ public class TermResourceTests {
     public void add_term_refused_if_name_not_set() throws Exception {
         Term term = BasicInstanceBuilder.given_a_not_persisted_term(builder.given_an_ontology());
         term.setName(null);
-        restTermControllerMockMvc.perform(post("/api/term")
+        restTermControllerMockMvc.perform(post("/api/term.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
                 .andDo(print())
@@ -191,7 +191,7 @@ public class TermResourceTests {
     @Transactional
     public void edit_valid_term() throws Exception {
         Term term = builder.given_a_term();
-        restTermControllerMockMvc.perform(put("/api/term/{id}", term.getId())
+        restTermControllerMockMvc.perform(put("/api/term/{id}.json", term.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
                 .andDo(print())
@@ -209,11 +209,27 @@ public class TermResourceTests {
 
     }
 
+
+    @Test
+    @Transactional
+    public void edit_term_not_exists_fails() throws Exception {
+        Term term = builder.given_a_term();
+        em.remove(term);
+        restTermControllerMockMvc.perform(put("/api/term/{id}.json", 0)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(term.toJSON()))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errors").exists());
+
+    }
+
     @Test
     @Transactional
     public void delete_term() throws Exception {
         Term term = builder.given_a_term();
-        restTermControllerMockMvc.perform(delete("/api/term/{id}", term.getId())
+        restTermControllerMockMvc.perform(delete("/api/term/{id}.json", term.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
                 .andDo(print())
@@ -231,4 +247,17 @@ public class TermResourceTests {
 
     }
 
+    @Test
+    @Transactional
+    public void delete_term_not_exist_fails() throws Exception {
+        Term term = builder.given_a_term();
+        restTermControllerMockMvc.perform(delete("/api/term/{id}.json", 0)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(term.toJSON()))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errors").exists());
+
+    }
 }

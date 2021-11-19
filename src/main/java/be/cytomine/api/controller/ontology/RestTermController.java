@@ -26,14 +26,14 @@ public class RestTermController extends RestCytomineController {
 
     private final ProjectRepository projectRepository;
 
-    @GetMapping("/term")
+    @GetMapping("/term.json")
     public ResponseEntity<String> list(
     ) {
         log.debug("REST request to list terms");
         return responseSuccess(termService.list());
     }
 
-    @GetMapping("/term/{id}")
+    @GetMapping("/term/{id}.json")
     public ResponseEntity<String> show(
             @PathVariable Long id
     ) {
@@ -50,7 +50,7 @@ public class RestTermController extends RestCytomineController {
      * @param json JSON with Term data
      * @return Response map with .code = http response code and .data.term = new created Term
      */
-    @PostMapping("/term")
+    @PostMapping("/term.json")
     public ResponseEntity<String> add(@RequestBody JsonObject json) {
         log.debug("REST request to save Term : " + json);
         return add(termService, json);
@@ -62,7 +62,7 @@ public class RestTermController extends RestCytomineController {
      * @param json JSON with the new Term data
      * @return Response map with .code = http response code and .data.newTerm = new created Term and  .data.oldTerm = old term value
      */
-    @PutMapping("/term/{id}")
+    @PutMapping("/term/{id}.json")
     public ResponseEntity<String> edit(@PathVariable String id, @RequestBody JsonObject json) {
         log.debug("REST request to edit Term : " + id);
         return update(termService, json);
@@ -73,14 +73,14 @@ public class RestTermController extends RestCytomineController {
      * @param id Term id
      * @return Response map with .code = http response code and .data.term = deleted term value
      */
-    @DeleteMapping("/term/{id}")
+    @DeleteMapping("/term/{id}.json")
     public ResponseEntity<String> delete(@PathVariable String id) {
         log.debug("REST request to delete Term : " + id);
         return delete(termService, JsonObject.of("id", id), null);
     }
 
 
-    @GetMapping("/ontology/{id}/term")
+    @GetMapping("/ontology/{id}/term.json")
     public ResponseEntity<String> listByOntology(
             @PathVariable Long id
     ) {
@@ -90,7 +90,7 @@ public class RestTermController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("Ontology", id));
     }
 
-    @GetMapping("/project/{id}/term")
+    @GetMapping("/project/{id}/term.json")
     public ResponseEntity<String> listByProject(
             @PathVariable Long id
     ) {

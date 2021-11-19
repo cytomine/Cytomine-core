@@ -37,7 +37,7 @@ public class UserResourceTests {
     public void it_shows_existing_user_by_id_with_success() throws Exception {
         User user = given_a_user();
 
-        restUserControllerMockMvc.perform(get("/api/user/{id}", user.getId()))
+        restUserControllerMockMvc.perform(get("/api/user/{id}.json", user.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(user.getId()))
                 .andExpect(jsonPath("$.username").value(user.getUsername()))
@@ -61,7 +61,7 @@ public class UserResourceTests {
     public void it_shows_existing_user_by_username_with_success() throws Exception {
         User user = given_a_user();
 
-        restUserControllerMockMvc.perform(get("/api/user/{id}", user.getUsername()))
+        restUserControllerMockMvc.perform(get("/api/user/{id}.json", user.getUsername()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(user.getId()))
                 .andExpect(jsonPath("$.username").value(user.getUsername()))
@@ -74,7 +74,7 @@ public class UserResourceTests {
     public void it_hides_sensible_user_fields() throws Exception {
         User user = given_a_user();
 
-        restUserControllerMockMvc.perform(get("/api/user/{id}", user.getId()))
+        restUserControllerMockMvc.perform(get("/api/user/{id}.json", user.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(user.getId()))
                 .andExpect(jsonPath("$.password").doesNotExist())
@@ -84,7 +84,7 @@ public class UserResourceTests {
     @Test
     @Transactional
     public void it_fails_to_show_unexisting_user() throws Exception {
-        restUserControllerMockMvc.perform(get("/api/user/{id}", -1))
+        restUserControllerMockMvc.perform(get("/api/user/{id}.json", -1))
                 .andExpect(status().isNotFound());
     }
 
@@ -98,7 +98,7 @@ public class UserResourceTests {
         JsonObject json = User.getDataFromDomain(user);
         json.put("password", "abracAdabra"); //password is removed from json generation
 
-        restUserControllerMockMvc.perform(post("/api/user")
+        restUserControllerMockMvc.perform(post("/api/user.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.toJsonString()))
                 .andDo(print())
@@ -138,7 +138,7 @@ public class UserResourceTests {
         User user = given_a_user();
         user.setLastname("NewLastname");
         user.setEmail(UUID.randomUUID() + "@newmail.com");
-        restUserControllerMockMvc.perform(put("/api/user/{id}", user.getId())
+        restUserControllerMockMvc.perform(put("/api/user/{id}.json", user.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(user.toJSON()))
                 .andDo(print())
@@ -155,14 +155,14 @@ public class UserResourceTests {
 
         User user = given_a_user();
 
-        restUserControllerMockMvc.perform(delete("/api/user/{id}", user.getId())
+        restUserControllerMockMvc.perform(delete("/api/user/{id}.json", user.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(user.toJSON()))
                 .andDo(print())
                 .andExpect(status().isOk());
 
 
-        restUserControllerMockMvc.perform(get("/api/user/{id}", user.getId()))
+        restUserControllerMockMvc.perform(get("/api/user/{id}.json", user.getId()))
                 .andExpect(status().isNotFound());
 
     }
@@ -172,7 +172,7 @@ public class UserResourceTests {
     private void then_it_return_this_status_when_creating_user(User user, int status) throws Exception {
         JsonObject json = User.getDataFromDomain(user);
         json.put("password", "abracAdabra"); //password is removed from json generation
-        restUserControllerMockMvc.perform(post("/api/user")
+        restUserControllerMockMvc.perform(post("/api/user.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.toJsonString()))
                 .andDo(print())
