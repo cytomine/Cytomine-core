@@ -27,6 +27,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.acls.domain.BasePermission;
+import org.springframework.security.acls.model.Permission;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -105,5 +107,36 @@ public class TermAuthorizationTest extends CRUDAuthorizationTest {
     protected void when_i_delete_domain() {
         Term termToDelete = builder.given_a_term(term.getOntology());
         termService.delete(termToDelete, null, null, true);
+    }
+
+    @Override
+    protected Optional<Permission> minimalPermissionForCreate() {
+        return Optional.of(BasePermission.WRITE);
+    }
+
+    @Override
+    protected Optional<Permission> minimalPermissionForDelete() {
+        return Optional.of(BasePermission.DELETE);
+    }
+
+    @Override
+    protected Optional<Permission> minimalPermissionForEdit() {
+        return Optional.of(BasePermission.WRITE);
+    }
+
+
+    @Override
+    protected Optional<String> minimalRoleForCreate() {
+        return Optional.of("ROLE_USER");
+    }
+
+    @Override
+    protected Optional<String> minimalRoleForDelete() {
+        return Optional.of("ROLE_USER");
+    }
+
+    @Override
+    protected Optional<String> minimalRoleForEdit() {
+        return Optional.of("ROLE_USER");
     }
 }

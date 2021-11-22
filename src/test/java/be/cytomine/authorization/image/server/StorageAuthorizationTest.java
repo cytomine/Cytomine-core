@@ -1,10 +1,12 @@
-package be.cytomine.authorization.ontology;
+package be.cytomine.authorization.image.server;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.authorization.CRUDAuthorizationTest;
+import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.service.PermissionService;
+import be.cytomine.service.image.server.StorageService;
 import be.cytomine.service.ontology.OntologyService;
 import be.cytomine.service.security.SecurityACLService;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,17 +22,24 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
 @AutoConfigureMockMvc
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @Transactional
-public class OntologyAuthorizationTest extends CRUDAuthorizationTest {
+public class StorageAuthorizationTest extends CRUDAuthorizationTest {
+
+    // We need more flexibility:
 
 
-    private Ontology ontology = null;
+
+
+
+
+    private Storage storage = null;
 
     @Autowired
-    OntologyService ontologyService;
+    StorageService storageService;
 
     @Autowired
     BasicInstanceBuilder builder;
@@ -43,78 +52,51 @@ public class OntologyAuthorizationTest extends CRUDAuthorizationTest {
 
     @BeforeEach
     public void before() throws Exception {
-        if (ontology == null) {
-            ontology = builder.given_an_ontology();
+        if (storage == null) {
+            storage = builder.given_a_storage();
             initUser();
-            initACL(ontology);
+            initACL(storage);
         }
     }
 
     @Test
     @WithMockUser(username = SUPERADMIN)
-    public void admin_can_list_ontologies() {
-        assertThat(ontologyService.list()).contains(ontology);
+    public void admin_can_list_storages() {
+        assertThat(storageService.list()).contains(storage);
+        Storage anotherStorage = builder.given_a_storage();
+        assertThat(storageService.list()).contains(anotherStorage);
     }
 
     @Test
     @WithMockUser(username = USER_ACL_READ)
-    public void user_with_at_least_read_permission_can_list_ontologies(){
-        assertThat(ontologyService.list()).contains(ontology);
+    public void user_cannot_list_all_storages(){
+        expectOK (() -> storageService.list());
+        Storage anotherStorage = builder.given_a_storage();
+        assertThat(storageService.list()).doesNotContain(anotherStorage);
     }
 
-    @Test
-    @WithMockUser(username = USER_NO_ACL)
-    public void user_no_acl_cannot_list_ontologies(){
-        assertThat(ontologyService.list()).doesNotContain(ontology);
-    }
-
-
-    // **************
-    // OVERRIDE
-    // **************
-//    @Override
-//    @Test
-//    @WithMockUser(username = USER_ACL_DELETE)
-//    public void user_with_delete_permission_can_delete_domain() {
-//        expectForbidden (() -> when_i_delete_domain());
-//        // Only ACL ADMIN can delete ontologies
-//    }
-    @Override
-    @Test
-    @WithMockUser(username = USER_NO_ACL)
-    public void user_without_permission_add_domain() {
-        expectOK (() -> when_i_add_domain());
-        // User with no ACL can create an ontology
-    }
-    @Override
-    @Test
-    @WithMockUser(username = USER_ACL_READ)
-    public void user_with_read_permission_add_domain() {
-        expectOK (() -> when_i_add_domain());
-        // User with READ permission can create another ontology
-    }
 
 
 
     @Override
     public void when_i_get_domain() {
-        ontologyService.get(ontology.getId());
+        storageService.get(storage.getId());
     }
 
     @Override
     protected void when_i_add_domain() {
-        ontologyService.add(BasicInstanceBuilder.given_a_not_persisted_ontology().toJsonObject());
+        storageService.add(builder.given_a_not_persisted_storage().toJsonObject());
     }
 
     @Override
     public void when_i_edit_domain() {
-        ontologyService.update(ontology, ontology.toJsonObject());
+        storageService.update(storage, storage.toJsonObject());
     }
 
     @Override
     protected void when_i_delete_domain() {
-        Ontology ontologyToDelete = ontology;
-        ontologyService.delete(ontologyToDelete, null, null, true);
+        Storage storageToDelete = storage;
+        storageService.delete(storageToDelete, null, null, true);
     }
 
     @Override
@@ -124,12 +106,12 @@ public class OntologyAuthorizationTest extends CRUDAuthorizationTest {
 
     @Override
     protected Optional<Permission> minimalPermissionForDelete() {
-        return Optional.of(BasePermission.DELETE);
+        return Optional.of(ADMINISTRATION);
     }
 
     @Override
     protected Optional<Permission> minimalPermissionForEdit() {
-        return Optional.of(BasePermission.WRITE);
+        return Optional.of(ADMINISTRATION);
     }
 
 

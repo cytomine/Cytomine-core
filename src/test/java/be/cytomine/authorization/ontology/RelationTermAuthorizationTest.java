@@ -15,8 +15,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.acls.domain.BasePermission;
+import org.springframework.security.acls.model.Permission;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @AutoConfigureMockMvc
 @SpringBootTest(classes = CytomineCoreApplication.class)
@@ -86,5 +90,35 @@ public class RelationTermAuthorizationTest extends CRDAuthorizationTest {
     protected void when_i_delete_domain() {
         RelationTerm termToDelete = builder.given_a_relation_term(relationTerm.getRelation(), relationTerm.getTerm1(), builder.given_a_term(relationTerm.getTerm1().getOntology()));
         relationTermService.delete(termToDelete, null, null, true);
+    }
+    @Override
+    protected Optional<Permission> minimalPermissionForCreate() {
+        return Optional.of(BasePermission.WRITE);
+    }
+
+    @Override
+    protected Optional<Permission> minimalPermissionForDelete() {
+        return Optional.of(BasePermission.DELETE);
+    }
+
+    @Override
+    protected Optional<Permission> minimalPermissionForEdit() {
+        return Optional.of(BasePermission.WRITE);
+    }
+
+
+    @Override
+    protected Optional<String> minimalRoleForCreate() {
+        return Optional.of("ROLE_USER");
+    }
+
+    @Override
+    protected Optional<String> minimalRoleForDelete() {
+        return Optional.of("ROLE_USER");
+    }
+
+    @Override
+    protected Optional<String> minimalRoleForEdit() {
+        return Optional.of("ROLE_USER");
     }
 }
