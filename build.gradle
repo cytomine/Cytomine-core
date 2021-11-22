@@ -53,6 +53,8 @@ dependencies {
 	testImplementation 'org.assertj:assertj-core:3.4.1'
 
 	implementation 'org.apache.commons:commons-text:1.9'
+
+	testImplementation 'com.github.tomakehurst:wiremock:1.58'
 }
 
 test {
