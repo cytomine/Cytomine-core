@@ -3,7 +3,7 @@ package be.cytomine.service.dto;
 import lombok.Data;
 
 @Data
-public class ThumbParameter {
+public class ImageParameter {
 
     private String format;
 

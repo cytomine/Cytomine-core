@@ -19,22 +19,22 @@ public class TestApplication {
     @Autowired
     private ApplicationBootstrap applicationBootstrap;
 
-    public static void main(String[] args) throws Exception {
-        TestApplication testApplication = new TestApplication();
-        testApplication.start();
-    }
-
-    public void start() throws Exception {
-        log.info("Starting cytomine core TEST");
-        applicationBootstrap.init();
-    }
+//    public static void main(String[] args) throws Exception {
+//        TestApplication testApplication = new TestApplication();
+//        testApplication.start();
+//    }
+//
+//    public void start() throws Exception {
+//        log.info("Starting cytomine core TEST");
+//        applicationBootstrap.init();
+//    }
 
     @Bean
     public InitializingBean init() {
             // TODO: do not run twice in dev
         return () -> {
             log.info("Running cytomine core TEST");
-            applicationBootstrap.init();
+            //applicationBootstrap.init();
         };
     }
 }

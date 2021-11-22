@@ -63,6 +63,8 @@ public class AbstractImageService extends ModelService {
 
     private CompanionFileService companionFileService;
 
+    private UploadedFileRepository uploadedFileRepository;
+
 //    private AttachedFileService attachedFileService;
 //
 //    private AttachedFileRepository attachedFileRepository;
@@ -94,12 +96,20 @@ public class AbstractImageService extends ModelService {
         return abstractImage;
     }
 
+    public Optional<AbstractImage> findByUploadedFile(Long id) {
+        UploadedFile uploadedFile = uploadedFileRepository.findById(id)
+                .orElseThrow(() -> new ObjectNotFoundException("UploadedFile", id));
+        Optional<AbstractImage> abstractImage = abstractImageRepository.findAllByUploadedFile(uploadedFile).stream().findAny();
+        abstractImage.ifPresent(image -> securityACLService.check(image.container(),READ));
+        return abstractImage;
+    }
+
     public AbstractImage get(Long id) {
         return find(id).orElse(null);
     }
 
 
-    public SecUser findImageUploader(Long abstractImageId) {
+    public SecUser getImageUploader(Long abstractImageId) {
         AbstractImage abstractImage = find(abstractImageId).orElseThrow(() -> new ObjectNotFoundException("AbstractImage", abstractImageId));
         return Optional.ofNullable(abstractImage.getUploadedFile()).map(UploadedFile::getUser).orElse(null);
     }
@@ -148,7 +158,7 @@ public class AbstractImageService extends ModelService {
 
         if (project != null) {
             //TODO: could be possible to include in specification (using join)
-            if (pageable.isPaged()) {
+            if (pageable.isPaged() && (pageable.getPageSize()!=Integer.MAX_VALUE)) {
                 throw new WrongArgumentException("Pagination not supported with 'project' parameter");
             } else {
                 HashSet<Long> ids = new HashSet<>(abstractImageRepository.findAllIdsByProject(project));

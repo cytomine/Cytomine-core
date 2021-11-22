@@ -226,6 +226,11 @@ public class SecurityACLService {
         }
     }
 
+
+    public void checkGuest() {
+        checkGuest(currentUserService.getCurrentUser());
+    }
+
     public void checkGuest(SecUser user) {
         // TODO: optimize this
         if (!currentRoleService.isAdminByNow(user) && !currentRoleService.isUserByNow(user) && !currentRoleService.isGuestByNow(user)) {

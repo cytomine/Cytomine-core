@@ -18,6 +18,11 @@ public class UrlApi {
         httpInternally = useHTTPInternally;
     }
 
+    public static String getServerUrl() {
+        return serverUrl;
+    }
+
+
     public static boolean isUsingHttpInternally() {
         return httpInternally;
     }

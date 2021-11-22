@@ -1,19 +1,16 @@
 package be.cytomine.api.controller.image;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.service.dto.ThumbParameter;
+import be.cytomine.service.dto.ImageParameter;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.project.ProjectService;
-import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -89,7 +86,7 @@ public class RestImageInstanceController extends RestCytomineController {
 
     ) {
         log.debug("REST request get image {} thumb {}", id, format);
-        ThumbParameter thumbParameter = new ThumbParameter();
+        ImageParameter thumbParameter = new ImageParameter();
         thumbParameter.setFormat(format);
         thumbParameter.setMaxSize(maxSize);
         thumbParameter.setColormap(colormap);

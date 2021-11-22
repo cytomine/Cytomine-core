@@ -9,10 +9,16 @@ import be.cytomine.service.ModelService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.OffsetBasedPageRequest;
 import be.cytomine.utils.Task;
+import be.cytomine.utils.filters.SearchParameterEntry;
+import be.cytomine.utils.filters.SearchParametersUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -57,6 +63,36 @@ public abstract class RestCytomineController {
 //        }
 //    }
 
+    protected Pageable retrievePageable() {
+        RequestParams requestParams = retrieveRequestParam();
+        requestParams.putIfAbsent("offset", "0");
+        requestParams.putIfAbsent("max", "0");
+        requestParams.putIfAbsent("sort", "created");
+        requestParams.putIfAbsent("order", "desc");
+
+        Sort sort = Sort.by(requestParams.get("sort")).ascending();
+        if (requestParams.get("order").equals("desc")) {
+            sort = Sort.by(requestParams.get("sort")).descending();
+        }
+
+        int realMax = requestParams.get("max").equals("0") ? Integer.MAX_VALUE : Integer.parseInt(requestParams.get("max"));
+//        int pageIndex =  Math.floor(Double.parseDouble(requestParams.get("offset")) / (double)realMax);
+//
+//        return PageRequest.of(
+//                pageIndex,
+//                realMax,
+//                sort);
+
+        return new OffsetBasedPageRequest(Long.parseLong(requestParams.get("offset")), realMax, sort);
+    }
+
+
+
+    protected List<SearchParameterEntry> retrieveSearchParameters() {
+        return SearchParametersUtils.getSearchParameters(retrieveRequestParam());
+    }
+
+
     protected JsonObject buildJsonList(List list) {
         RequestParams requestParams = retrieveRequestParam();
         requestParams.putIfAbsent("offset", "0");
@@ -80,7 +116,7 @@ public abstract class RestCytomineController {
             int maxForCollection = Math.min(list.size() - offset, max);
             subList = list.subList(offset,offset + maxForCollection);
         }
-        return JsonObject.of("collection", subList, "offset", offset, "perPage", Math.min(max, list.size()), "size", list.size(), "totalPages", Math.ceil(list.size()/max));
+        return JsonObject.of("collection", subList, "offset", offset, "perPage", Math.min(max, list.size()), "size", list.size(), "totalPages", Math.ceil((double)list.size()/(double)max));
 
     }
 
@@ -91,9 +127,13 @@ public abstract class RestCytomineController {
 
     protected JsonObject buildJsonList(Page page, Integer offsetParameter, Integer maxParameter) {
         // TODO: should we need params if we have page
+        List finalContent = page.getContent();
+        if (page.getContent().size() > 0 && page.getContent().get(0) instanceof CytomineDomain) {
+            finalContent = convertCytomineDomainListToJSON(page.getContent());
+        }
         Integer offset = offsetParameter != null ? offsetParameter : 0;
         Integer max = (maxParameter != null && maxParameter!=0) ? maxParameter : Integer.MAX_VALUE;
-        return JsonObject.of("collection", page.getContent(), "offset", offset, "perPage", Math.min(max, page.getTotalElements()), "size", page.getTotalElements(), "totalPages", Math.ceil(page.getTotalElements()/max));
+        return JsonObject.of("collection", finalContent, "offset", offset, "perPage", Math.min(max, page.getContent().size()), "size", page.getTotalElements(), "totalPages", Math.ceil((double)page.getTotalElements()/(double)max));
     }
 
 //    protected ResponseEntity<String> response(Map<String, Object> response, int code) {

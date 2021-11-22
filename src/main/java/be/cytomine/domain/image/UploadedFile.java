@@ -115,7 +115,7 @@ public class UploadedFile extends CytomineDomain implements Serializable {
         return UploadedFileStatus.findByCode(status).map(Enum::name).orElse(null);
     }
 
-    String getPath() {
+    public String getPath() {
         if (contentType.equals("virtual/stack") || user == null) {
             return null;
         }
