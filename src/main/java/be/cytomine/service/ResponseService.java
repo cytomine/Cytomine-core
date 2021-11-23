@@ -55,7 +55,7 @@ public class ResponseService {
         params.put("message", message);
         params.put("callback", paramsCallback);
         params.put("printMessage", printMessage);
-        params.put(objectName.toLowerCase(), JsonObject.toObject(object.toJSON()));     //Project.getDataFromDomain(object)
+        params.put(objectName.toLowerCase(), JsonObject.toMap(object.toJSON()));     //Project.getDataFromDomain(object)
 
         CommandResponse commandResponse = new CommandResponse();
         commandResponse.setData(params);

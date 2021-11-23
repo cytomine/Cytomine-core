@@ -84,7 +84,7 @@ public class JsonObject extends HashMap<String, Object> {
         }
     }
 
-    public static Map<String, Object> toObject(String json) {
+    public static Map<String, Object> toMap(String json) {
         try {
             return new ObjectMapper().readValue(json, new TypeReference<Map<String, Object>>(){});
         } catch (JsonProcessingException e) {
@@ -92,6 +92,17 @@ public class JsonObject extends HashMap<String, Object> {
             return null;
         }
     }
+
+    public static <T> T toObject(String json, Class<? extends T> c) {
+        try {
+            return new ObjectMapper().readValue(json, c);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
 
     public static List<Map<String, Object>> toObjectList(String json) {
         try {

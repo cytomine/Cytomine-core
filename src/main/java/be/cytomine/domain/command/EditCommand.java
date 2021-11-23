@@ -31,7 +31,7 @@ public class EditCommand extends Command {
      */
     protected void fillCommandInfo(CytomineDomain newObject, String oldObject, String message) {
         HashMap<String, Object> paramsData = new HashMap<String, Object>();
-        paramsData.put("previous" + ClassUtils.getClassName(newObject), JsonObject.toObject(oldObject));
+        paramsData.put("previous" + ClassUtils.getClassName(newObject), JsonObject.toMap(oldObject));
         paramsData.put("new" + ClassUtils.getClassName(newObject), newObject.toJsonObject());
         data = JsonObject.toJsonString(paramsData);
         actionMessage = message;

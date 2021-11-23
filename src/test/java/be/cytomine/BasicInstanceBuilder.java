@@ -315,6 +315,7 @@ public class BasicInstanceBuilder {
 
     public AbstractSlice given_an_abstract_slice(AbstractImage abstractImage, int c, int z, int t) {
         AbstractSlice slice = given_a_not_persisted_abstract_slice(abstractImage, given_a_uploaded_file());
+        slice.setMime(given_a_mime(abstractImage.getContentType()));
         slice.setChannel(c);
         slice.setZStack(z);
         slice.setTime(t);
@@ -376,6 +377,10 @@ public class BasicInstanceBuilder {
             mime.setMimeType("image/pyrtiff");
             return persistAndReturn(mime);
         }
+    }
+
+    public Mime given_a_mime(String mimeType) {
+        return mimeRepository.findByMimeType(mimeType).orElseThrow(() -> new ObjectNotFoundException("MimeTYpe", mimeType));
     }
 
     public NestedImageInstance given_a_nested_image_instance() {

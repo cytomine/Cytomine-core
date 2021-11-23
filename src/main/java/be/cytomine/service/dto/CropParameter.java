@@ -11,7 +11,7 @@ public class CropParameter {
 
     private String location;
 
-    private boolean complete;
+    private Boolean complete;
 
     private Integer maxSize;
 
@@ -19,19 +19,19 @@ public class CropParameter {
 
     private Double increaseArea;
 
-    private boolean safe;
+    private Boolean safe;
 
-    private boolean square;
+    private Boolean square;
 
     private String type;
 
-    private boolean draw;
+    private Boolean draw;
 
-    private boolean mask;
+    private Boolean mask;
 
-    private boolean alphaMask;
+    private Boolean alphaMask;
 
-    private boolean drawScaleBar;
+    private Boolean drawScaleBar;
 
     private double resolution;
 
@@ -39,23 +39,23 @@ public class CropParameter {
 
     private String colormap;
 
-    private boolean inverse;
+    private Boolean inverse;
 
     private double contrast;
 
     private double gamma;
 
-    private int bits;
+    private Integer bits;
 
-    private boolean maxBits;
+    private Boolean maxBits;
 
-    private int alpha;
+    private Integer alpha;
 
-    private int thickness;
+    private Integer thickness;
 
     private String color;
 
-    private int jpegQuality;
+    private Integer jpegQuality;
 
     private BoundariesCropParameter boundaries;
 
