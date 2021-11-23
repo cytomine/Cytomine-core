@@ -9,7 +9,12 @@ public class HttpUtils {
 
     public static String getContentFromUrl(String url) throws IOException {
         Scanner s = new Scanner(new URL(url).openStream());
-        String data = s.toString();
-        return data;
+        StringBuffer data = new StringBuffer();
+        while(s.hasNext()) {
+            data.append(s.next());
+        }
+        return data.toString();
     }
+
+
 }

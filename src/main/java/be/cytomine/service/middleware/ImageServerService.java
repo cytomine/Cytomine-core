@@ -4,8 +4,6 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.middleware.ImageServer;
-import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.InvalidRequestException;
 import be.cytomine.repository.middleware.ImageServerRepository;
@@ -15,31 +13,27 @@ import be.cytomine.service.UrlApi;
 import be.cytomine.service.dto.*;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.utils.CommandResponse;
-import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.StringUtils;
-import be.cytomine.utils.Task;
+import be.cytomine.service.utils.SimplifyGeometryService;
+import be.cytomine.utils.*;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static be.cytomine.utils.HttpUtils.getContentFromUrl;
-import static org.springframework.security.acls.domain.BasePermission.*;
 
 @Slf4j
 @Service
@@ -57,6 +51,8 @@ public class ImageServerService extends ModelService {
 
     private final CurrentUserService currentUserService;
 
+    private final SimplifyGeometryService simplifyGeometryService;
+
     public ImageServer get(Long id) {
         securityACLService.checkGuest();
         return find(id).orElse(null);
@@ -72,16 +68,19 @@ public class ImageServerService extends ModelService {
         return imageServerRepository.findAll();
     }
 
-    public Long storageSpace(ImageServer imageServer) throws IOException {
-        return Long.parseLong(getContentFromUrl(imageServer.getInternalUrl() + "/storage/size.json"));
+    public StorageStats storageSpace(ImageServer imageServer) throws IOException {
+        return JsonObject.toObject(getContentFromUrl(imageServer.getInternalUrl() + "/storage/size.json"), StorageStats.class);
     }
 
     public String downloadUri(UploadedFile uploadedFile) throws IOException {
         if (uploadedFile.getPath()==null || uploadedFile.getPath().trim().equals("")) {
             throw new InvalidRequestException("Uploaded file has no valid path.");
         }
-        return uploadedFile.getImageServer().getUrl() +"/image/download"
-                + makeParameterUrl(Map.of("fif", uploadedFile.getPath(), "mimeType", uploadedFile.getContentType()));
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+        parameters.put("fif", uploadedFile.getPath());
+        parameters.put("mimeType", uploadedFile.getContentType());
+        return uploadedFile.getImageServer().getUrl() +"/image/download?"
+                + makeParameterUrl(parameters);
 
     }
 
@@ -93,16 +92,16 @@ public class ImageServerService extends ModelService {
         return downloadUri(companionFile.getUploadedFile());
     }
 
-    public List<Map<String, Object>> properties(AbstractImage image) throws IOException {
+    public Map<String, Object> properties(AbstractImage image) throws IOException {
         String server = retrieveImageServerInternalUrl(image);
-        Map<String, Object> parameters = retrieveImageServerParameters(image);
-        String content = getContentFromUrl(server + "/image/properties.json" + makeParameterUrl(parameters));
-        return JsonObject.toObjectList(content);
+        LinkedHashMap<String, Object> parameters = retrieveImageServerParameters(image);
+        String content = getContentFromUrl(server + "/image/properties.json?" + makeParameterUrl(parameters));
+        return JsonObject.toMap(content);
     }
 
     public Map<String, Object> profile(AbstractImage image) throws IOException {
         String server = retrieveImageServerInternalUrl(image);
-        Map<String, Object> parameters = new HashMap<>();
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
         parameters.put("mimeType", image.getUploadedFile().getContentType());
         parameters.put("abstractImage", image.getId());
         parameters.put("uploadedFileParent", image.getUploadedFile().getId());
@@ -110,7 +109,7 @@ public class ImageServerService extends ModelService {
         parameters.put("core", UrlApi.getServerUrl());
 
         String string = new String(makeRequest("POST", server, "/image/properties.json", parameters));
-        return JsonObject.toObject(string);
+        return JsonObject.toMap(string);
     }
 
 //TODO!!!!!!!
@@ -125,8 +124,8 @@ public class ImageServerService extends ModelService {
 
     public Map<String, Object> associated(AbstractImage image) throws IOException {
         String server = retrieveImageServerInternalUrl(image);
-        Map<String, Object> parameters = retrieveImageServerParameters(image);
-        String content = getContentFromUrl(server + ("/image/associated.json"+ makeParameterUrl(parameters)));
+        LinkedHashMap<String, Object> parameters = retrieveImageServerParameters(image);
+        String content = getContentFromUrl(server + ("/image/associated.json?"+ makeParameterUrl(parameters)));
         return JsonObject.toJsonObject(content);
     }
 
@@ -141,7 +140,7 @@ public class ImageServerService extends ModelService {
 
     public byte[]  label(AbstractImage image, LabelParameter params) {
         String server = retrieveImageServerInternalUrl(image);
-        Map<String, Object> parameters = retrieveImageServerParameters(image);
+        LinkedHashMap<String, Object> parameters = retrieveImageServerParameters(image);
         String format = checkFormat(params.getFormat(), List.of("jpg", "png"));
         parameters.put("maxSize", params.getMaxSize());
         parameters.put("label", params.getLabel());
@@ -158,7 +157,7 @@ public class ImageServerService extends ModelService {
 
     public byte[] thumb(AbstractSlice slice, ImageParameter params) {
         String imageServerInternalUrl = retrieveImageServerInternalUrl(slice);
-        Map<String, Object> parameters = retrieveImageServerParameters(slice);
+        LinkedHashMap<String, Object> parameters = retrieveImageServerParameters(slice);
 
         String format = checkFormat(params.getFormat(), List.of("jpg", "png"));
         parameters.put("maxSize", params.getMaxSize());
@@ -166,24 +165,24 @@ public class ImageServerService extends ModelService {
         parameters.put("inverse", params.getInverse());
         parameters.put("contrast", params.getContrast());
         parameters.put("gamma", params.getGamma());
-        parameters.put("bits", params.getMaxBits() ? Optional.ofNullable(slice.getImage().getBitDepth()).orElse(8) : params.getBits());
+        parameters.put("bits", params.getMaxBits()!=null && params.getMaxBits()? Optional.ofNullable(slice.getImage()).map(AbstractImage::getBitDepth).orElse(8) : params.getBits());
 
         return makeRequest(imageServerInternalUrl,"/slice/thumb." + format, parameters);
     }
 
 // TODO!!!!!!!!
-
+//
 //    def crop(AnnotationDomain annotation, def params, def urlOnly = false, def parametersOnly = false) {
 //        params.geometry = annotation.location
 //        crop(annotation.slice, params, urlOnly, parametersOnly)
 //    }
+//
 
 
 
-
-    public byte[] crop(AbstractSlice slice, CropParameter cropParameter) throws UnsupportedEncodingException {
+    public byte[] crop(AbstractSlice slice, CropParameter cropParameter) throws UnsupportedEncodingException, ParseException {
         String server = retrieveImageServerInternalUrl(slice);
-        Map<String, Object> parameters = cropParameters(slice, cropParameter);
+        LinkedHashMap<String, Object> parameters = cropParameters(slice, cropParameter);
         String format;
         if (parameters.get("type").equals("alphaMask")) {
             format = checkFormat(cropParameter.getFormat(), List.of("png"));
@@ -193,9 +192,9 @@ public class ImageServerService extends ModelService {
         return makeRequest(server, "/slice/crop." + format, parameters);
     }
 
-    public String cropUrl(AbstractSlice slice, CropParameter cropParameter) throws UnsupportedEncodingException {
+    public String cropUrl(AbstractSlice slice, CropParameter cropParameter) throws UnsupportedEncodingException, ParseException {
         String server = retrieveImageServerInternalUrl(slice);
-        Map<String, Object> parameters = cropParameters(slice, cropParameter);
+        LinkedHashMap<String, Object> parameters = cropParameters(slice, cropParameter);
         String format;
         if (parameters.get("type").equals("alphaMask")) {
             format = checkFormat(cropParameter.getFormat(), List.of("png"));
@@ -206,27 +205,27 @@ public class ImageServerService extends ModelService {
 
     }
 
-    public Map<String,Object> cropParameters(AbstractSlice slice, CropParameter cropParameter) {
-        Map<String, Object> parameters = retrieveImageServerParameters(slice);
-        
-        String geometry = cropParameter.getGeometry();
+    public LinkedHashMap<String,Object> cropParameters(AbstractSlice slice, CropParameter cropParameter) throws ParseException {
+        LinkedHashMap<String, Object> parameters = retrieveImageServerParameters(slice);
+
+        Object geometry = cropParameter.getGeometry();
         if (StringUtils.isBlank(cropParameter.getGeometry()) && StringUtils.isNotBlank(cropParameter.getLocation())) {
             geometry = new WKTReader().read(cropParameter.getLocation());
         }
         // In the window service, boundaries are already set and do not correspond to geometry/location boundaries
         BoundariesCropParameter boundaries = cropParameter.getBoundaries();
-        if (boundaries==null && StringUtils.isNotBlank(geometry)) {
-            boundaries = GeometryUtils.getGeometryBoundaries(geometry);
+        if (boundaries==null && geometry!=null) {
+            boundaries = GeometryUtils.getGeometryBoundaries((Geometry)geometry);
         }
         parameters.put("topLeftX", boundaries.getTopLeftX());
         parameters.put("topLeftY", boundaries.getTopLeftY());
         parameters.put("width", boundaries.getWidth());
         parameters.put("height", boundaries.getHeight());
-                
-        if (cropParameter.isComplete() && StringUtils.isNotBlank(geometry)) {
-            parameters.put("location", simplifyGeometryService.reduceGeometryPrecision(geometry).toText());
-        } else if (StringUtils.isNotBlank(geometry)) {
-            parameters.put("location", simplifyGeometryService.simplifyPolygonForCrop(geometry);
+
+        if (cropParameter.getComplete()!=null && cropParameter.getComplete() && geometry!=null) {
+            parameters.put("location", simplifyGeometryService.reduceGeometryPrecision((Geometry)geometry).toText());
+        } else if (geometry!=null) {
+            parameters.put("location", simplifyGeometryService.simplifyPolygonForCrop((Geometry)geometry).toText());
         }
 
         parameters.put("imageWidth", slice.getImage().getWidth());
@@ -234,19 +233,19 @@ public class ImageServerService extends ModelService {
         parameters.put("maxSize", cropParameter.getMaxSize());
         parameters.put("zoom", (cropParameter.getMaxSize()!=null ? cropParameter.getZoom() : null));
         parameters.put("increaseArea", cropParameter.getIncreaseArea());
-        parameters.put("safe", cropParameter.isSafe());
-        parameters.put("square", cropParameter.isSquare());
+        parameters.put("safe", cropParameter.getSafe());
+        parameters.put("square", cropParameter.getSquare());
 
         parameters.put("type", checkType(cropParameter, List.of("crop", "draw", "mask", "alphaMask")));
 
 
 
-        parameters.put("drawScaleBar", cropParameter.isDrawScaleBar());
-        parameters.put("resolution",(cropParameter.isDrawScaleBar()) ? cropParameter.getResolution() : null);
-        parameters.put("magnification",(cropParameter.isDrawScaleBar()) ? cropParameter.getMagnification() : null);
+        parameters.put("drawScaleBar", cropParameter.getDrawScaleBar());
+        parameters.put("resolution",(cropParameter.getDrawScaleBar()!=null && cropParameter.getDrawScaleBar()) ? cropParameter.getResolution() : null);
+        parameters.put("magnification",(cropParameter.getDrawScaleBar() !=null && cropParameter.getDrawScaleBar()) ? cropParameter.getMagnification() : null);
 
         parameters.put("colormap", cropParameter.getColormap());
-        parameters.put("inverse", cropParameter.isInverse());
+        parameters.put("inverse", cropParameter.getInverse());
         parameters.put("contrast", cropParameter.getContrast());
         parameters.put("gamma", cropParameter.getGamma());
         parameters.put("bits", cropParameter.getBits());
@@ -259,11 +258,11 @@ public class ImageServerService extends ModelService {
     }
 
 
-    public String windowUrl(AbstractSlice slice, WindowParameter params) throws UnsupportedEncodingException {
+    public String windowUrl(AbstractSlice slice, WindowParameter params) throws UnsupportedEncodingException, ParseException {
         return cropUrl(slice, extractCropParameter(slice, params));
     }
 
-    public byte[] window(AbstractSlice slice, WindowParameter params) throws UnsupportedEncodingException {
+    public byte[] window(AbstractSlice slice, WindowParameter params) throws UnsupportedEncodingException, ParseException {
         return crop(slice, extractCropParameter(slice, params));
     }
 
@@ -302,11 +301,11 @@ public class ImageServerService extends ModelService {
 
 
 
-    private byte[] makeRequest(String imageServerInternalUrl, String path, Map<String, Object> parameters) {
+    private byte[] makeRequest(String imageServerInternalUrl, String path, LinkedHashMap<String, Object> parameters) {
         return makeRequest("GET", imageServerInternalUrl, path,parameters);
     }
 
-    private byte[] makeRequest(String httpMethod, String imageServerInternalUrl, String path, Map<String, Object> parameters)  {
+    private byte[] makeRequest(String httpMethod, String imageServerInternalUrl, String path, LinkedHashMap<String, Object> parameters)  {
 
         parameters = filterParameters(parameters);
         String parameterUrl = "";
@@ -318,10 +317,10 @@ public class ImageServerService extends ModelService {
             HttpClient httpClient = HttpClient.newBuilder()
                     .version(HttpClient.Version.HTTP_1_1)
                     .build();
-        if ((fullUrl).length() > GET_URL_MAX_LENGTH && (httpMethod==null || httpMethod.equals("GET"))) {
+        if ((fullUrl).length() < GET_URL_MAX_LENGTH && (httpMethod==null || httpMethod.equals("GET"))) {
             HttpRequest request = HttpRequest.newBuilder()
                     .GET()
-                    .uri(URI.create(fullUrl + "?" + parameterUrl))
+                    .uri(URI.create(fullUrl))
                     .setHeader("Content-Type", "application/x-www-form-urlencoded")
                     .build();
 
@@ -344,7 +343,7 @@ public class ImageServerService extends ModelService {
     }
 
 
-    private static String makeParameterUrl(Map<String, Object> parameters) throws UnsupportedEncodingException {
+    private static String makeParameterUrl(LinkedHashMap<String, Object> parameters) throws UnsupportedEncodingException {
         parameters = filterParameters(parameters);
         StringJoiner joiner = new StringJoiner("&");
         for (Map.Entry<String, Object> entry : parameters.entrySet()) {
@@ -362,9 +361,14 @@ public class ImageServerService extends ModelService {
     }
 
 
-    private static Map<String, Object> filterParameters(Map<String, Object> parameters) {
-        return parameters.entrySet().stream().filter(it -> it.getValue() != null && !it.getValue().equals(""))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    private static LinkedHashMap<String, Object> filterParameters(LinkedHashMap<String, Object> parameters) {
+        LinkedHashMap<String, Object> processed = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+            if (entry.getValue()!=null && !entry.getValue().toString().equals("")) {
+                processed.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return processed;
     }
 
 
@@ -378,11 +382,11 @@ public class ImageServerService extends ModelService {
     private static String checkType(CropParameter params, List<String> accepted) {
         if (params.getType()!=null && accepted.contains(params.getType())) {
             return params.getType();
-        } else if (params.getDraw()) {
+        } else if (params.getDraw()!=null && params.getDraw()) {
             return "draw";
-        } else if (params.getMask()) {
+        } else if (params.getMask()!=null && params.getMask()) {
             return "mask";
-        } else if (params.getAlphaMask()) {
+        } else if (params.getAlphaMask()!=null && params.getAlphaMask()) {
             return "alphaMask";
         } else {
             return "crop";
@@ -399,11 +403,14 @@ public class ImageServerService extends ModelService {
         return image.getImageServerInternalUrl();
     }
 
-    private static Map<String, Object> retrieveImageServerParameters(AbstractImage image) {
+    private static LinkedHashMap<String, Object> retrieveImageServerParameters(AbstractImage image) {
         if (image.getPath()==null) {
             throw new InvalidRequestException("Abstract image has no valid path.");
         }
-        return new HashMap<>(Map.of("fif", image.getPath(), "mimeType", image.getUploadedFile().getContentType()));
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+        parameters.put("fif", image.getPath());
+        parameters.put("mimeType", image.getUploadedFile().getContentType());
+        return parameters;
     }
 
 
@@ -416,11 +423,14 @@ public class ImageServerService extends ModelService {
         return slice.getImageServerInternalUrl();
     }
 
-    private static Map<String, Object> retrieveImageServerParameters(AbstractSlice slice) {
+    private static LinkedHashMap<String, Object> retrieveImageServerParameters(AbstractSlice slice) {
         if (slice.getPath()==null) {
             throw new InvalidRequestException("Abstract slice has no valid path.");
         }
-        return new HashMap<>(Map.of("fif", slice.getPath(), "mimeType", slice.getMimeType()));
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+        parameters.put("fif", slice.getPath());
+        parameters.put("mimeType", slice.getMimeType());
+        return parameters;
     }
 
 
