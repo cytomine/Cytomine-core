@@ -1,8 +1,10 @@
 package be.cytomine;
 
 import be.cytomine.authorization.AbstractAuthorizationTest;
+import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
+import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.Relation;
@@ -397,5 +399,18 @@ public class BasicInstanceBuilder {
         nestedImageInstance.setX(1);
         nestedImageInstance.setY(2);
         return nestedImageInstance;
+    }
+
+
+    public Property given_a_property(CytomineDomain cytomineDomain, String key, String value) {
+        return persistAndReturn(given_a_not_persisted_property(cytomineDomain, key, value));
+    }
+
+    public Property given_a_not_persisted_property(CytomineDomain cytomineDomain, String key, String value) {
+        Property property = new Property();
+        property.setDomain(cytomineDomain);
+        property.setKey(key);
+        property.setValue(value);
+        return property;
     }
 }

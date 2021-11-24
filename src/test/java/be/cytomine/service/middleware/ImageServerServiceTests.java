@@ -13,14 +13,13 @@ import be.cytomine.repository.image.server.StorageRepository;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
-import be.cytomine.service.dto.CropParameter;
-import be.cytomine.service.dto.ImageParameter;
-import be.cytomine.service.dto.LabelParameter;
-import be.cytomine.service.dto.StorageStats;
+import be.cytomine.service.dto.*;
 import be.cytomine.service.image.server.StorageService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
+import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.vividsolutions.jts.io.ParseException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
@@ -34,6 +33,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import javax.transaction.Transactional;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.List;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -63,7 +64,8 @@ public class ImageServerServiceTests {
     public static void afterAll() {
         try {
             wireMockServer.stop();
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
     }
 
     @Test
@@ -128,10 +130,10 @@ public class ImageServerServiceTests {
         image.getUploadedFile().setContentType("openslide/mrxs");
 
         assertThat(imageServerService.downloadUri(image))
-                .isEqualTo("http://localhost:8888/image/download?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs");
+                .isEqualTo("http://localhost:8888/image/download?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs");
 
         assertThat(imageServerService.downloadUri(image.getUploadedFile()))
-                .isEqualTo("http://localhost:8888/image/download?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs");
+                .isEqualTo("http://localhost:8888/image/download?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs");
 
     }
 
@@ -145,7 +147,7 @@ public class ImageServerServiceTests {
 
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/properties.json?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs"))
+        stubFor(get(urlEqualTo("/image/properties.json?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs"))
                 .willReturn(
                         aResponse().withBody("{\"File.BitsPerSample\":\"8\",\"File.ColorComponents\":\"3\",\"" +
                                 "File.Comment\":\"Intel(R) JPEG Library, version 1,5,4,36\",\"File.EncodingProcess\":\"Baseline DCT, Huffman coding\"," +
@@ -183,7 +185,7 @@ public class ImageServerServiceTests {
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("openslide/mrxs");
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/associated.json?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs"))
+        stubFor(get(urlEqualTo("/image/associated.json?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs"))
                 .willReturn(
                         aResponse().withBody("[\"macro\",\"thumbnail\",\"label\"]")
                 )
@@ -201,55 +203,20 @@ public class ImageServerServiceTests {
         image.getUploadedFile().setContentType("openslide/mrxs");
         configureFor("localhost", 8888);
 
-        stubFor(get(urlEqualTo("/image/nested.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512&label=macro"))
+        stubFor(get(urlEqualTo("/image/nested.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512&label=macro"))
                 .willReturn(
-                        aResponse().withBody(new byte[]{0,1,2,3})
+                        aResponse().withBody(new byte[]{0, 1, 2, 3})
                 )
         );
         LabelParameter labelParameter = new LabelParameter();
         labelParameter.setMaxSize(512);
         labelParameter.setLabel("macro");
         labelParameter.setFormat("png");
-        assertThat(imageServerService.label(image,labelParameter)).isEqualTo(new byte[]{0,1,2,3});
+        assertThat(imageServerService.label(image, labelParameter)).isEqualTo(new byte[]{0, 1, 2, 3});
     }
 
     @Test
     void get_thumb_for_abstract_image() throws IOException {
-        AbstractImage image = builder.given_an_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
-        image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
-
-        AbstractSlice slice = builder.given_an_abstract_slice(image, 0,0,0);
-        slice.setUploadedFile(image.getUploadedFile());
-
-        configureFor("localhost", 8888);
-
-        stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=256"))
-                .willReturn(
-                        aResponse().withBody(new byte[]{0,1,2,3})
-                )
-        );
-        ImageParameter imageParameter = new ImageParameter();
-        imageParameter.setMaxSize(256);
-        imageParameter.setFormat("png");
-        assertThat(imageServerService.thumb(slice, imageParameter)).isEqualTo(new byte[]{0,1,2,3});
-
-        stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512"))
-                .willReturn(
-                        aResponse().withBody(new byte[]{0,1,2,3,4,5,6})
-                )
-        );
-
-        imageParameter.setMaxSize(512);
-        imageParameter.setFormat("png");
-        assertThat(imageServerService.thumb(slice, imageParameter)).isEqualTo(new byte[]{0,1,2,3,4,5,6});
-    }
-
-
-    @Test
-    void get_crop_for_abstract_image() throws IOException, ParseException {
         AbstractImage image = builder.given_an_abstract_image();
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
@@ -261,7 +228,44 @@ public class ImageServerServiceTests {
 
         configureFor("localhost", 8888);
 
-        stubFor(get(urlEqualTo("slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=crop"))
+        stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=256"))
+                .willReturn(
+                        aResponse().withBody(new byte[]{0, 1, 2, 3})
+                )
+        );
+        ImageParameter imageParameter = new ImageParameter();
+        imageParameter.setMaxSize(256);
+        imageParameter.setFormat("png");
+        assertThat(imageServerService.thumb(slice, imageParameter)).isEqualTo(new byte[]{0, 1, 2, 3});
+
+        stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512"))
+                .willReturn(
+                        aResponse().withBody(new byte[]{0, 1, 2, 3, 4, 5, 6})
+                )
+        );
+
+        imageParameter.setMaxSize(512);
+        imageParameter.setFormat("png");
+        assertThat(imageServerService.thumb(slice, imageParameter)).isEqualTo(new byte[]{0, 1, 2, 3, 4, 5, 6});
+    }
+
+
+    @Test
+    void get_crop_for_abstract_image() throws IOException, ParseException {
+        AbstractImage image = builder.given_an_abstract_image();
+        image.setWidth(109240);
+        image.setHeight(220696);
+        image.getUploadedFile().getImageServer().setBasePath("/data/images");
+        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
+        image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        image.getUploadedFile().setContentType("openslide/mrxs");
+
+        AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
+        slice.setUploadedFile(image.getUploadedFile());
+
+        configureFor("localhost", 8888);
+        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=crop";
+        stubFor(get(urlEqualTo(url))
                 .willReturn(
                         aResponse().withBody(new byte[]{0, 1, 2, 3})
                 )
@@ -270,6 +274,48 @@ public class ImageServerServiceTests {
         CropParameter cropParameter = new CropParameter();
         cropParameter.setLocation("POLYGON((1 1,50 10,50 50,10 50,1 1))");
         cropParameter.setFormat("png");
-        assertThat(imageServerService.crop(slice, cropParameter)).isEqualTo(new byte[]{0, 1, 2, 3});
+        byte[] crop = imageServerService.crop(slice, cropParameter);
+        //List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
+        assertThat(crop).isEqualTo(new byte[]{0, 1, 2, 3});
+
     }
+
+
+    @Test
+    void get_window_for_abstract_image() throws UnsupportedEncodingException, ParseException {
+
+        AbstractImage image = builder.given_an_abstract_image();
+        image.setWidth(109240);
+        image.setHeight(220696);
+        image.getUploadedFile().getImageServer().setBasePath("/data/images");
+        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
+        image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        image.getUploadedFile().setContentType("openslide/mrxs");
+
+        AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
+        slice.setUploadedFile(image.getUploadedFile());
+
+        configureFor("localhost", 8888);
+        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
+        stubFor(get(urlEqualTo(url))
+                .willReturn(
+                        aResponse().withBody(new byte[]{0, 10, 20})
+                )
+        );
+
+        WindowParameter windowParameter = new WindowParameter();
+        windowParameter.setX(10);
+        windowParameter.setY(20);
+        windowParameter.setW(30);
+        windowParameter.setH(40);
+        windowParameter.setFormat("png");
+        byte[] crop = imageServerService.window(slice, windowParameter);
+        //List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
+        assertThat(crop).isEqualTo(new byte[]{0, 10, 20});
+
+        windowParameter.setFormat("jpg");
+        assertThat(imageServerService.windowUrl(slice, windowParameter))
+                .isEqualTo("http://localhost:8888/slice/crop.jpg?fif=%2Fdata%2Fimages%2F78%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop");
+    }
+
 }
