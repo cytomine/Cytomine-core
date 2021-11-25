@@ -39,6 +39,11 @@ public class UrlApi {
         return serverUrl + "/api/imageinstance/"+idImage+"/thumb."+format+"?maxSize=" + maxSize;
     }
 
+    public static String getAbstractImageThumbUrlWithMaxSize(Long idAbstractImage, Integer maxSize, String format) {
+        return serverUrl+"/api/abstractimage/"+idAbstractImage+"/thumb."+format+"?maxSize=" + maxSize;
+    }
+
+
 
     public static String getAssociatedImageInstance(Long id, String label, String contentType, Integer maxSize, String format) {
 
@@ -49,4 +54,13 @@ public class UrlApi {
         return serverUrl + "/api/imageinstance/" + id + "/associated/" + label +"." + format + size;
     }
 
+
+    public static String getAssociatedImage(Long idAbstractImage, String label, String contentType, Integer maxSize, String format) {
+
+        if("macro".equals(label) && contentType!=null && !formatsWithMacro.contains(contentType)) {
+            return null;
+        }
+        String size = maxSize!=null && maxSize!=0 ? "?maxWidth=" + maxSize : "";
+        return serverUrl + "/api/abstractimage/" + idAbstractImage + "/associated/" + label +"." + format + size;
+    }
 }

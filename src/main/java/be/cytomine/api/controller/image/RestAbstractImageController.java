@@ -2,6 +2,7 @@ package be.cytomine.api.controller.image;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.AbstractImage;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -353,18 +354,10 @@ public class RestAbstractImageController extends RestCytomineController {
 
 
 
-    @GetMapping("/abstractimage/{id}/download")
-    public RedirectView download(@PathVariable Long id) throws IOException {
-        log.debug("REST request to get available associated images");
-        AbstractImage abstractImage = abstractImageService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
-        String url = imageServerService.downloadUri(abstractImage);
-        return new RedirectView(url);
-    }
 
 
     @PostMapping("/abstractimage/{id}/properties/clear.json")
-    public ResponseEntity<String> clearProperties(@PathVariable Long id) {
+    public ResponseEntity<String> clearPeroperties(@PathVariable Long id) {
         log.debug("REST request to get available associated images");
         AbstractImage abstractImage = abstractImageService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
@@ -390,6 +383,17 @@ public class RestAbstractImageController extends RestCytomineController {
         imagePropertiesService.extractUseful(abstractImage);
         return responseSuccess(new JsonObject());
     }
+
+    @GetMapping("/abstractimage/{id}/download")
+    public RedirectView download(@PathVariable Long id) throws IOException {
+        log.debug("REST request to download image instance");
+        AbstractImage abstractImage = abstractImageService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
+        // TODO: in abstract image, there is no check fos download auth!?
+        String url = imageServerService.downloadUri(abstractImage);
+        return new RedirectView(url);
+    }
+
 //
 //    // TODO: imageserver by abstract image is deprecated in server
 //    @GetMapping("/abstractimage/{id}/imageServers.json")

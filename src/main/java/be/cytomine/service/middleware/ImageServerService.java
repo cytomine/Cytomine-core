@@ -6,6 +6,7 @@ import be.cytomine.domain.image.*;
 import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.InvalidRequestException;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.middleware.ImageServerRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
@@ -122,14 +123,14 @@ public class ImageServerService extends ModelService {
 //    }
 
 
-    public Map<String, Object> associated(AbstractImage image) throws IOException {
+    public List<String> associated(AbstractImage image) throws IOException {
         String server = retrieveImageServerInternalUrl(image);
         LinkedHashMap<String, Object> parameters = retrieveImageServerParameters(image);
         String content = getContentFromUrl(server + ("/image/associated.json?"+ makeParameterUrl(parameters)));
-        return JsonObject.toJsonObject(content);
+        return JsonObject.toStringList(content);
     }
 
-    public Map<String, Object> associated(ImageInstance image) throws IOException {
+    public List<String> associated(ImageInstance image) throws IOException {
         return associated(image.getBaseImage());
     }
 
@@ -201,7 +202,7 @@ public class ImageServerService extends ModelService {
         } else {
             format = checkFormat(cropParameter.getFormat(), List.of("jpg", "png", "tiff"));
         }
-        return server + "/slice/crop." + format + makeParameterUrl(parameters);
+        return server + "/slice/crop." + format + "?" + makeParameterUrl(parameters);
 
     }
 
@@ -288,17 +289,9 @@ public class ImageServerService extends ModelService {
 
         CropParameter cropParameter = new CropParameter();
         cropParameter.setBoundaries(boundariesCropParameter);
+        cropParameter.setFormat(params.getFormat());
         return cropParameter;
     }
-
-
-
-
-
-
-
-
-
 
 
     private byte[] makeRequest(String imageServerInternalUrl, String path, LinkedHashMap<String, Object> parameters) {
@@ -375,6 +368,9 @@ public class ImageServerService extends ModelService {
     private static String checkFormat(String format, List<String> accepted) {
         if (accepted==null) {
             accepted = List.of("jpg");
+        }
+        if (format==null) {
+            throw new WrongArgumentException("Format must be specified");
         }
         return (!accepted.contains(format)) ? accepted.get(0) : format;
     }

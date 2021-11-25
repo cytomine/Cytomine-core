@@ -5,6 +5,7 @@ import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.UserJob;
+import be.cytomine.service.UrlApi;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,6 +16,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Entity
@@ -122,9 +124,10 @@ public class AbstractImage extends CytomineDomain {
         returnArray.put("magnification", abstractImage.getMagnification());
         returnArray.put("bitDepth", abstractImage.getBitDepth());
         returnArray.put("colorspace", abstractImage.getColorspace());
-//        returnArray['thumb'] = UrlApi.getAbstractImageThumbUrlWithMaxSize(image ? (long)image?.id : null, 512)
-//        returnArray['preview'] = UrlApi.getAbstractImageThumbUrlWithMaxSize(image ? (long)image?.id : null, 1024)
-//        returnArray['macroURL'] = UrlApi.getAssociatedImage(image ? (long)image?.id : null, "macro", image?.uploadedFile?.contentType, 512)
+        returnArray.put("thumb", UrlApi.getAbstractImageThumbUrlWithMaxSize(abstractImage.id, 512, "png"));
+        returnArray.put("preview", UrlApi.getAbstractImageThumbUrlWithMaxSize(abstractImage.id, 1024, "png"));
+        returnArray.put("macroURL", UrlApi.getAssociatedImage(abstractImage.id, "macro", Optional.ofNullable(abstractImage.getUploadedFile()).map(UploadedFile::getContentType).orElse(null), 512, "png"));
+
         return returnArray;
     }
 

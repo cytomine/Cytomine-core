@@ -33,17 +33,17 @@ public class CropParameter {
 
     private Boolean drawScaleBar;
 
-    private double resolution;
+    private Double resolution;
 
-    private double magnification;
+    private Double magnification;
 
     private String colormap;
 
     private Boolean inverse;
 
-    private double contrast;
+    private Double contrast;
 
-    private double gamma;
+    private Double gamma;
 
     private Integer bits;
 

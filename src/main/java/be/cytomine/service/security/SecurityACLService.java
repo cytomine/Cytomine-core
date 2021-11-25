@@ -76,6 +76,10 @@ public class SecurityACLService {
 
     }
 
+    public void checkIsAdminContainer(CytomineDomain domain) {
+        checkIsAdminContainer(domain, currentUserService.getCurrentUser());
+    }
+
     public void checkIsAdminContainer(CytomineDomain domain, SecUser currentUser) {
         if (domain!=null) {
             if (!checkPermission(domain.container(), ADMINISTRATION, currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {

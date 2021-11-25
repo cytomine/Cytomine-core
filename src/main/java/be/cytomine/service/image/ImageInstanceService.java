@@ -20,12 +20,12 @@ import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.*;
+import liquibase.pro.packaged.J;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.hibernate.Session;
+import org.hibernate.query.NativeQuery;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
@@ -49,6 +49,8 @@ import static org.springframework.security.acls.domain.BasePermission.WRITE;
 @Transactional
 @AllArgsConstructor
 public class ImageInstanceService extends ModelService {
+
+    private static List<String> ABSTRACT_IMAGE_COLUMNS_FOR_SEARCH = List.of("width", "height");
 
     private EntityManager entityManager;
 
@@ -92,6 +94,20 @@ public class ImageInstanceService extends ModelService {
 
     public ImageInstance get(Long id) {
         return find(id).orElse(null);
+    }
+
+
+    public Optional<ImageInstance> next(ImageInstance imageInstance) {
+        return ImageInstanceRepository.findTopByProjectAndCreatedLessThanOrderByCreatedDesc(imageInstance.getProject(), imageInstance.getCreated());
+    }
+
+    public Optional<ImageInstance> previous(ImageInstance imageInstance) {
+        return ImageInstanceRepository.findTopByProjectAndCreatedGreaterThanOrderByCreatedAsc(imageInstance.getProject(), imageInstance.getCreated());
+    }
+
+    public List<ImageInstance> listByProject(Project project) {
+        securityACLService.check(project, READ);
+        return imageInstanceRepository.findAllByProject(project);
     }
 
     public List<Long> getAllImageId(Project project) {
@@ -152,8 +168,11 @@ public class ImageInstanceService extends ModelService {
         return validParameters;
     }
 
+    public Page<Map<String, Object>> list(SecUser user, List<SearchParameterEntry> searchParameters) {
+        return list(user, searchParameters, "created", "desc", 0L, 0L);
+    }
 
-    public Page<Map<String, Object>> list(User user, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
+    public Page<Map<String, Object>> list(SecUser user, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
         securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
 
         String imageInstanceAlias = "ui";
@@ -241,9 +260,9 @@ public class ImageInstanceService extends ModelService {
                 operation = "==";
             }
             search += "AND ( (NOT project_blind AND " + imageInstanceAlias + ".instance_filename " + operation + " :name) " +
-                    "  OR (project_blind AND NOT user_project_manager AND base_image_id::text " + operation + " :name) " +
-                    "  OR (project_blind AND user_project_manager AND (base_image_id::text " + operation + ":name " +
-                    "  OR "+ imageInstanceAlias + ".instance_filename " + operation + ":name)))";
+                    "  OR (project_blind AND NOT user_project_manager AND CAST(base_image_id as text) " + operation + " :name) " +
+                    "  OR (project_blind AND user_project_manager AND CAST(base_image_id as text) " + operation + " :name " +
+                    "  OR "+ imageInstanceAlias + ".instance_filename " + operation + " :name))";
         }
 
         if (search.contains(imageInstanceAlias + ".instance_filename") || sortedProperty.contains(imageInstanceAlias + ".instance_filename")) {
@@ -263,7 +282,7 @@ public class ImageInstanceService extends ModelService {
 
 
         if (joinAI) {
-            select += ", " + abstractImageAlias + ".* ";
+            select += ", " + ABSTRACT_IMAGE_COLUMNS_FOR_SEARCH.stream().map(x -> abstractImageAlias + "." + x).collect(Collectors.joining(",")) + " ";
             from += "JOIN abstract_image " + abstractImageAlias +" ON "  + abstractImageAlias + ".id = " + imageInstanceAlias + ".base_image_id ";
         }
 
@@ -275,7 +294,8 @@ public class ImageInstanceService extends ModelService {
             request += " OFFSET " + offset;
         }
 
-        Query query = getEntityManager().createNativeQuery(request, Tuple.class);
+        Session session = entityManager.unwrap(Session.class);
+        NativeQuery query = session.createNativeQuery(request, Tuple.class);
         Map<String, Object> mapParams = sqlSearchConditions.getSqlParameters();
         if(nameSearch!=null){
             mapParams.put("name", nameSearch.getValue());
@@ -283,7 +303,7 @@ public class ImageInstanceService extends ModelService {
         for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
             query.setParameter(entry.getKey(), entry.getValue());
         }
-        List<Tuple> resultList = query.getResultList();
+        List<Tuple> resultList = query.list();
         List<Map<String, Object>> results = new ArrayList<>();
         for (Tuple rowResult : resultList) {
             JsonObject result = new JsonObject();
@@ -311,14 +331,21 @@ public class ImageInstanceService extends ModelService {
         }
 
         request = "SELECT COUNT(DISTINCT " + imageInstanceAlias + ".id) " + from + where + search;
-        query = getEntityManager().createNativeQuery(request);
+        query = session.createNativeQuery(request);
+        for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
+            query.setParameter(entry.getKey(), entry.getValue());
+        }
         long count = ((BigInteger)query.getResultList().get(0)).longValue();
         Page<Map<String, Object>> page = new PageImpl<>(results, PageUtils.buildPage(offset, max), count);        // TODO: working? otherwise look in projectservice as  getFirstResult seems to return 0...
         return page;
 
     }
 
-    public Page<Map<String, Object>> list(Project project, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Integer max, Integer offset, boolean light) {
+    public Page<Map<String, Object>> list(Project project, List<SearchParameterEntry> searchParameters) {
+        return list(project, searchParameters, "created", "desc", 0L, 0L, false);
+    }
+
+    public Page<Map<String, Object>> list(Project project, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long offset, Long max,  boolean light) {
         securityACLService.check(project, READ);
 
         String imageInstanceAlias = "ii";
@@ -363,7 +390,7 @@ public class ImageInstanceService extends ModelService {
         boolean manager = false;
         for (SearchParameterEntry parameter : searchParameters){
             if(parameter.getProperty().equals("blindedName")){
-                parameter.setProperty("ai.id");
+                parameter.setProperty("ii.baseImageId");
                 blindedNameSearch = parameter;
                 break;
             }
@@ -383,7 +410,7 @@ public class ImageInstanceService extends ModelService {
 
         if(blindedNameSearch!=null) {
             joinAI = true;
-            blindedNameSearch = (SearchParameterEntry)blindedNameSearch.getValue();
+            blindedNameSearch = ((SearchParameterEntry)blindedNameSearch);
 
             try{
                 securityACLService.checkIsAdminContainer(project, currentUserService.getCurrentUser());
@@ -419,10 +446,10 @@ public class ImageInstanceService extends ModelService {
 
         if(blindedNameSearch!=null && manager) {
             search +=" AND ";
-            search += "("+abstractImageAlias+".id::text ILIKE :name OR  "+ imageInstanceAlias + ".instance_filename ILIKE :name ) ";
+            search += "CAST ("+imageInstanceAlias+".base_image_id AS text) ILIKE :name OR  "+ imageInstanceAlias + ".instance_filename ILIKE :name ) ";
         } else if(blindedNameSearch!=null){
             search +=" AND ";
-            search += abstractImageAlias+".id::text ILIKE :name ";
+            search += "CAST ( "+imageInstanceAlias+".base_image_id AS text) ILIKE :name ";
         }
 
         if (search.contains(imageInstanceAlias + ".instance_filename") || sortedProperty.contains(imageInstanceAlias + ".instance_filename")) {
@@ -440,7 +467,7 @@ public class ImageInstanceService extends ModelService {
         sort += (sortDirection.equals("desc")) ? " DESC " : " ASC ";
 
         if (joinAI) {
-            select += ", " + abstractImageAlias + ".* ";
+            select += ", " + ABSTRACT_IMAGE_COLUMNS_FOR_SEARCH.stream().map(x -> abstractImageAlias + "." + x).collect(Collectors.joining(",")) + " ";
             from += "JOIN abstract_image "+ abstractImageAlias + " ON " + abstractImageAlias + ".id = " + imageInstanceAlias + ".base_image_id ";
         }
         if (joinMime) {
@@ -497,6 +524,9 @@ public class ImageInstanceService extends ModelService {
 
         request = "SELECT COUNT(DISTINCT " + imageInstanceAlias + ".id) " + from + where + search;
         query = getEntityManager().createNativeQuery(request);
+        for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
+            query.setParameter(entry.getKey(), entry.getValue());
+        }
         long count = ((BigInteger)query.getResultList().get(0)).longValue();
 
         if(light) {
@@ -515,7 +545,7 @@ public class ImageInstanceService extends ModelService {
 
 
 
-    public List<Map<String, Object>> listLight(User user) {
+    public List<Map<String, Object>> listLight(SecUser user) {
         securityACLService.checkIsSameUser(user,currentUserService.getCurrentUser());
         boolean isAdmin = currentRoleService.isAdminByNow(user);
         String request = "select * from user_image where user_image_id = :id order by instance_filename";
@@ -583,26 +613,33 @@ public class ImageInstanceService extends ModelService {
 //        return data
 //    }
 
-        // TODO:
-//    def listTree(Project project, Long max  = 0, Long offset = 0) {
-//        securityACLService.check(project, READ)
-//
-//        def children = []
-//        def images = list(project, null, null, [], max, offset)
-//        images.data.each { image ->
-//                children << [id: image.id, key: image.id, title: image.instanceFilename, isFolder: false, children: []]
-//        }
-//        def tree = [:]
-//        tree.isFolder = true
-//        tree.hideCheckbox = true
-//        tree.name = project.getName()
-//        tree.title = project.getName()
-//        tree.key = project.getId()
-//        tree.id = project.getId()
-//        tree.children = children
-//        tree.size = images.total
-//        return tree
-//    }
+
+
+    public JsonObject listTree(Project project, Long offset, Long max) {
+        securityACLService.check(project, READ);
+        List<JsonObject> children = new ArrayList<>();
+        Page<Map<String, Object>> images = list(project, new ArrayList<>(), null, null, offset, max, false);
+        for (Map<String, Object> image : images.getContent()) {
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.put("id", image.get("id"));
+            jsonObject.put("key", image.get("id"));
+            jsonObject.put("title", image.get("instanceFilename"));
+            jsonObject.put("isFolder", false);
+            jsonObject.put("children", new ArrayList<>());
+            children.add(jsonObject);
+        }
+
+        JsonObject tree =new JsonObject();
+        tree.put("isFolder", true);
+        tree.put("hideCheckbox", true);
+        tree.put("name", project.getName());
+        tree.put("title", project.getName());
+        tree.put("key", project.getId());
+        tree.put("id", project.getId());
+        tree.put("children", children);
+        tree.put("size", images.getTotalElements());
+        return tree;
+    }
 
 
 
@@ -783,6 +820,7 @@ public class ImageInstanceService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.check(domain.container(), READ);
         securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((ImageInstance)domain).getUser());
 
         Command c = new DeleteCommand(currentUser, transaction);

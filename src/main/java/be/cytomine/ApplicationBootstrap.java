@@ -25,6 +25,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -73,6 +74,9 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
     @Autowired
     Dataset dataset;
 
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
         log.info("ApplicationListener#onApplicationEvent()");
@@ -80,6 +84,12 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
     }
 
     public void init() {
+
+        SecUser secUser = secUserRepository.findByUsernameLikeIgnoreCase("admin").orElse(null);
+        if (secUser!=null) {
+            secUser.setPassword(passwordEncoder.encode("password"));
+        }
+        secUserRepository.save(secUser);
 
         // TODO: print config
         log.info ("#############################################################################");

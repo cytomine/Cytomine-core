@@ -1,6 +1,7 @@
 package be.cytomine.api;
 
 
+import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.utils.JsonObject;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,14 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(jsonObject.toJsonString());
     }
 
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<?> handleException(ForbiddenException exception) {
+        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()));
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(jsonObject.toJsonString());
+    }
 
 
 }

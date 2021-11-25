@@ -63,12 +63,17 @@ public abstract class RestCytomineController {
 //        }
 //    }
 
-    protected Pageable retrievePageable() {
+    protected RequestParams retrievePageableParameters() {
         RequestParams requestParams = retrieveRequestParam();
         requestParams.putIfAbsent("offset", "0");
         requestParams.putIfAbsent("max", "0");
         requestParams.putIfAbsent("sort", "created");
         requestParams.putIfAbsent("order", "desc");
+        return requestParams;
+    }
+
+    protected Pageable retrievePageable() {
+        RequestParams requestParams = retrievePageableParameters();
 
         Sort sort = Sort.by(requestParams.get("sort")).ascending();
         if (requestParams.get("order").equals("desc")) {
@@ -93,18 +98,18 @@ public abstract class RestCytomineController {
     }
 
 
-    protected JsonObject buildJsonList(List list) {
+    private JsonObject buildJsonList(List list) {
         RequestParams requestParams = retrieveRequestParam();
         requestParams.putIfAbsent("offset", "0");
         requestParams.putIfAbsent("max", "0");
         return buildJsonList(list, Integer.parseInt(requestParams.get("offset")), Integer.parseInt(requestParams.get("max")));
     }
 
-    protected JsonObject buildJsonList(List list, Map<String,String> params) {
+    private JsonObject buildJsonList(List list, Map<String,String> params) {
         return buildJsonList(list, Integer.parseInt(params.get("offset")), Integer.parseInt(params.get("max")));
     }
 
-    protected JsonObject buildJsonList(List list, Integer offsetParameter, Integer maxParameter) {
+    private JsonObject buildJsonList(List list, Integer offsetParameter, Integer maxParameter) {
 
         Integer offset = offsetParameter != null ? offsetParameter : 0;
         Integer max = (maxParameter != null && maxParameter!=0) ? maxParameter : Integer.MAX_VALUE;
@@ -120,12 +125,12 @@ public abstract class RestCytomineController {
 
     }
 
-    protected JsonObject buildJsonList(Page page, Map<String,String> params) {
+    private JsonObject buildJsonList(Page page, Map<String,String> params) {
         // TODO: should we need params if we have page
         return buildJsonList(page, Integer.parseInt(params.get("offset")), Integer.parseInt(params.get("max")));
     }
 
-    protected JsonObject buildJsonList(Page page, Integer offsetParameter, Integer maxParameter) {
+    private JsonObject buildJsonList(Page page, Integer offsetParameter, Integer maxParameter) {
         // TODO: should we need params if we have page
         List finalContent = page.getContent();
         if (page.getContent().size() > 0 && page.getContent().get(0) instanceof CytomineDomain) {
@@ -141,9 +146,22 @@ public abstract class RestCytomineController {
 //    }
 
     protected ResponseEntity<String> responseSuccess(Page page) {
+        return responseSuccess(page, false);
+    }
+
+    protected ResponseEntity<String> responseSuccess(Page page, boolean isFilterRequired) {
         RequestParams requestParams = retrieveRequestParam();
         requestParams.putIfAbsent("offset", "0");
         requestParams.putIfAbsent("max", "0");
+        if(isFilterRequired) {
+            if (!page.getContent().isEmpty() && page.getContent().get(0) instanceof Map) {
+                for (Object o : page.getContent()) {
+                    filterOneElement((Map<String,Object>)o);
+                }
+            } else if(!page.getContent().isEmpty()) {
+                throw new CytomineMethodNotYetImplementedException("Filter is not working with this class type " + page.getContent().get(0).getClass());
+            }
+        }
         return ResponseEntity.status(200).body(buildJsonList(page, requestParams).toJsonString());
     }
 
@@ -155,16 +173,38 @@ public abstract class RestCytomineController {
         return ResponseEntity.status(200).body(buildJsonList(page, params).toJsonString());
     }
 
-    public ResponseEntity<String> responseSuccess(List list, Integer offsetParameter, Integer maxParameter) {
+    public ResponseEntity<String> responseSuccess(List list, Integer offsetParameter, Integer maxParameter, boolean isFilterRequired) {
+        List filtered = list;
+        if (isFilterRequired) {
+            filtered = new ArrayList();
+            if (!list.isEmpty() && list.get(0) instanceof CytomineDomain) {
+                for (Object o : list) {
+                    JsonObject jsonObject = ((CytomineDomain) o).toJsonObject();
+                    filterOneElement(jsonObject);
+                    filtered.add(jsonObject);
+                }
+            }else if (!list.isEmpty() && list.get(0) instanceof Map) {
+                for (Object o : list) {
+                    Map json = (Map)o;
+                    filterOneElement(json);
+                    filtered.add(json);
+                }
+            }
+        }
+
         if (list.isEmpty() || list.get(0) instanceof CytomineDomain) {
-            return responseSuccessDomainList((List<? extends CytomineDomain>) list, offsetParameter, maxParameter);
+            return responseSuccessDomainList((List<? extends CytomineDomain>) filtered, offsetParameter, maxParameter);
         } else {
-            return responseSuccessGenericList(list, offsetParameter, maxParameter);
+            return responseSuccessGenericList(filtered, offsetParameter, maxParameter);
         }
     }
 
     public ResponseEntity<String> responseSuccess(List list) {
-        return responseSuccess(list, 0, 0);
+        return responseSuccess(list, false);
+    }
+
+    public ResponseEntity<String> responseSuccess(List list, boolean isFilterRequired) {
+        return responseSuccess(list, 0, 0, isFilterRequired);
     }
 
     private ResponseEntity<String> responseSuccessDomainList(List<? extends CytomineDomain> list) {
@@ -175,6 +215,7 @@ public abstract class RestCytomineController {
         return ResponseEntity.status(200).body(buildJsonList(convertCytomineDomainListToJSON(list), offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
     }
 
+
     private ResponseEntity<String> responseSuccessGenericList(List list) {
         return responseSuccessGenericList(list, 0, 0);
     }
@@ -183,11 +224,28 @@ public abstract class RestCytomineController {
         return ResponseEntity.status(200).body(buildJsonList(list, offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
     }
 
+    protected ResponseEntity<String> responseSuccess(CytomineDomain response, boolean isFilterRequired) {
+        JsonObject json = response.toJsonObject();
+        if (isFilterRequired) {
+            filterOneElement(json);
+        }
+        return ResponseEntity.status(200).body(json.toJsonString());
+    }
+
+
+
     protected ResponseEntity<String> responseSuccess(CytomineDomain response) {
         return ResponseEntity.status(200).body(response.toJSON());
     }
 
     protected ResponseEntity<String> responseSuccess(JsonObject response) {
+        return responseSuccess(response, false);
+    }
+
+    protected ResponseEntity<String> responseSuccess(JsonObject response, boolean isFilterRequired) {
+        if (isFilterRequired) {
+            filterOneElement(response);
+        }
         return ResponseEntity.status(200).body(response.toJsonString());
     }
 
@@ -213,13 +271,15 @@ public abstract class RestCytomineController {
         return JsonObject.toJsonString(o);
     }
 
+    protected void filterOneElement(Map<String, Object> element) {
 
+    }
 
     protected String convertCytomineDomainToJSON(CytomineDomain cytomineDomain) {
         return cytomineDomain.toJSON();
     }
 
-    protected JsonObject buildJson(List<? extends CytomineDomain> list, Map<String,String> params) {
+    protected JsonObject buildJson(List<? extends CytomineDomain> list, Map<String,String> params, boolean isFilterRequired) {
         return buildJsonList(convertCytomineDomainListToJSON(list), params);
     }
 

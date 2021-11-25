@@ -16,4 +16,20 @@ public class RequestParams extends HashMap<String, String> {
     public boolean isValue(String key, String value) {
         return !isNull(key) && get(key).equals(value);
     }
+
+    public Long getOffset() {
+        return Long.parseLong(get("offset"));
+    }
+
+    public Long getMax() {
+        return Long.parseLong(get("max"));
+    }
+
+    public String getSort() {
+        return get("sort");
+    }
+
+    public String getOrder() {
+        return get("order");
+    }
 }

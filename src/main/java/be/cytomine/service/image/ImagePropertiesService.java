@@ -1,21 +1,42 @@
 package be.cytomine.service.image;
 
 import be.cytomine.domain.image.AbstractImage;
+import be.cytomine.domain.meta.Property;
+import be.cytomine.repository.meta.PropertyRepository;
+import be.cytomine.service.middleware.ImageServerService;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ReflectionUtils;
 
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
+@Slf4j
 public class ImagePropertiesService {
 
+    @Autowired
+    PropertyRepository propertyRepository;
 
-    static List<ImagePropertiesValue> KEYS = keys();
+    @Autowired
+    ImageServerService imageServerService;
+
+    @Autowired
+    EntityManager entityManager;
+
+    public static List<ImagePropertiesValue> KEYS = keys();
     
     
     static List<ImagePropertiesValue> keys() {
@@ -41,53 +62,52 @@ public class ImagePropertiesService {
             );
     }
 
-    //TODO: :-)
+    public void clear(AbstractImage image) {
+        List<String> propertyKeys = keys().stream().map(x -> x.getName()).collect(Collectors.toList());
+        propertyRepository.deleteAllByDomainIdentAndKeyIn(image.getId(), propertyKeys);
+    }
 
-//    @Transactional
-//    public void clear(AbstractImage image) {
-//        List<String> propertyKeys = keys().stream().map(x -> x.getName()).collect(Collectors.toList());
-//        Property.findAllByDomainIdentAndKeyInList(image.id, propertyKeys)?.each {
-//            it.delete()
-//        }
-//    }
-//
-//    def populate(AbstractImage image) {
-//        try {
-//            def properties = imageServerService.properties(image)
-//            properties.each {
-//                String key = it?.key?.toString()?.trim()
-//                String value = it?.value?.toString()?.trim()
-//                if (key && value) {
-//                    def property = Property.findByDomainIdentAndKey(image.id, key)
-//                    if (!property) {
-//                        log.info("New property: $key => $value for abstract image $image")
-//                        property = new Property(key: key, value: value, domainIdent: image.id, domainClassName: image.class.name)
-//                        property.save(failOnError: true)
-//                    }
-//                }
-//            }
-//        } catch(Exception e) {
-//            log.error(e)
-//        }
-//    }
-//
-//    def extractUseful(AbstractImage image) {
-//        keys().each { k, v ->
-//                def property = Property.findByDomainIdentAndKey(image.id, v.name)
-//            if (property)
-//                image[k] = v.parser(property.value)
-//            else
-//                log.info "No property ${v.name} for abstract image $image"
-//
-//            image.save(flush: true, failOnError: true)
-//        }
-//    }
-//
-//    def regenerate(AbstractImage image) {
-//        clear(image)
-//        populate(image)
-//        extractUseful(image)
-//    }
+
+
+    public void populate(AbstractImage image) throws IOException {
+        Map<String, Object> properties = imageServerService.properties(image);
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            String key = entry.getKey().trim();
+            String value = entry.getValue()!=null? entry.getValue().toString().trim() : null;
+            if (value!=null) {
+                Optional<Property> optionalProperty = propertyRepository.findByDomainIdentAndKey(image.getId(), key);
+                if (optionalProperty.isEmpty()) {
+                    Property property = new Property();
+                    property.setKey(key);
+                    property.setValue(value);
+                    property.setDomainIdent(image.getId());
+                    property.setDomainClassName(image.getClass().getName());
+                    propertyRepository.save(property);
+                }
+            }
+        }
+    }
+
+    public void extractUseful(AbstractImage image) throws IOException, IllegalAccessException {
+        for (ImagePropertiesValue key : keys()) {
+            Property property = propertyRepository.findByDomainIdentAndKey(image.getId(), key.getName()).orElse(null);
+            if (property!=null) {
+                Field field = ReflectionUtils.findField(AbstractImage.class, key.getKey());
+                field.setAccessible(true);
+                field.set(image, key.getParser().apply(property.getValue()));
+            } else {
+                log.info("No property " + key.getName() + " for abstract image " + image.getId());
+            }
+
+        }
+        entityManager.persist(image);
+    }
+
+    public void regenerate(AbstractImage image) throws IOException, IllegalAccessException {
+        clear(image);
+        populate(image);
+        extractUseful(image);
+    }
 }
 
 
