@@ -238,6 +238,10 @@ public abstract class RestCytomineController {
         return ResponseEntity.status(200).body(response.toJSON());
     }
 
+    protected ResponseEntity<String> responseSuccess(String response) {
+        return ResponseEntity.status(200).body(response);
+    }
+
     protected ResponseEntity<String> responseSuccess(JsonObject response) {
         return responseSuccess(response, false);
     }

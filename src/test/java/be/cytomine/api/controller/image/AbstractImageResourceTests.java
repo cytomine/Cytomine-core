@@ -419,7 +419,7 @@ public class AbstractImageResourceTests {
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}.json", 0))
                 .andDo(print())
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errors.message").value("toto"));
+                .andExpect(jsonPath("$.errors.message").exists());
     }
 
     @Test

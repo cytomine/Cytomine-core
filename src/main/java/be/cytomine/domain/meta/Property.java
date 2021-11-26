@@ -79,6 +79,12 @@ public class Property extends CytomineDomain {
         throw new CytomineMethodNotYetImplementedException("todo :/");
         //return retrieveCytomineDomain()?.container();
 
+        //thow an exception in this method. Make these kind of objects implement PartialContainer interface
+        // returning id/classname of parent. In ACL security, read the real container
+
+        // return a object implementing an interface?
+        // Problem: if class name = abstract image => we expect storage
+
         // throw an exception that could be catched to read the real domain?
     }
 }

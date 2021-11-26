@@ -124,7 +124,7 @@ public class SliceInstanceService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.check(domain.container(),READ);
+        securityACLService.check(domain.container(),READ); // TODO?????
         securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((SliceInstance)domain).getImage().getUser());
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);

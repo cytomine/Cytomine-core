@@ -227,9 +227,9 @@ public class BasicInstanceBuilder {
         uploadedFile.setUser(given_superadmin());
         uploadedFile.setFilename(randomString());
         uploadedFile.setOriginalFilename(randomString());
-        uploadedFile.setExt("tiff");
+        uploadedFile.setExt("tif");
         uploadedFile.setImageServer(given_an_image_server());
-        uploadedFile.setContentType("tiff/type");
+        uploadedFile.setContentType("image/pyrtiff");
         uploadedFile.setSize(100L);
         uploadedFile.setParent(null);
         return uploadedFile;
@@ -294,6 +294,10 @@ public class BasicInstanceBuilder {
         return persistAndReturn(imageInstance);
     }
 
+    public ImageInstance given_a_not_persisted_image_instance(Project project) {
+        return given_a_not_persisted_image_instance(given_an_abstract_image(), project);
+    }
+
     public ImageInstance given_a_not_persisted_image_instance() {
         return given_a_not_persisted_image_instance(given_an_abstract_image(), given_a_project());
     }
@@ -306,13 +310,22 @@ public class BasicInstanceBuilder {
         return image;
     }
 
+    public ImageInstance given_an_image_instance(Project project) {
+        ImageInstance imageInstance = given_an_image_instance(given_an_abstract_image(), project);
+        return persistAndReturn(imageInstance);
+    }
+
     public ImageInstance given_an_image_instance() {
         ImageInstance imageInstance = given_an_image_instance(given_an_abstract_image(), given_a_project());
         return persistAndReturn(imageInstance);
     }
 
     public AbstractSlice given_an_abstract_slice() {
-        return given_an_abstract_slice(given_an_abstract_image(), given_a_uploaded_file());
+        AbstractImage abstractImage = given_an_abstract_image();
+        UploadedFile uploadedFile = given_a_uploaded_file();
+        uploadedFile.setStorage(abstractImage.getUploadedFile().getStorage());
+        persistAndReturn(uploadedFile);
+        return given_an_abstract_slice(abstractImage, uploadedFile);
     }
 
     public AbstractSlice given_an_abstract_slice(AbstractImage abstractImage, int c, int z, int t) {
@@ -412,5 +425,20 @@ public class BasicInstanceBuilder {
         property.setKey(key);
         property.setValue(value);
         return property;
+    }
+
+    public CompanionFile given_a_companion_file(AbstractImage abstractImage) {
+        return persistAndReturn(given_a_not_persisted_companion_file(abstractImage));
+    }
+
+    public CompanionFile given_a_not_persisted_companion_file(AbstractImage abstractImage) {
+        CompanionFile companionFile = new CompanionFile();
+        companionFile.setImage(abstractImage);
+        companionFile.setUploadedFile(abstractImage.getUploadedFile());
+        companionFile.setFilename(randomString());
+        companionFile.setOriginalFilename(randomString());
+        companionFile.setType(companionFile.getImage().getContentType());
+        companionFile.setProgress(50);
+        return companionFile;
     }
 }

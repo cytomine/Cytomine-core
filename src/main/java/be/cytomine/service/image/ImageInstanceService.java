@@ -17,6 +17,7 @@ import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
+import be.cytomine.service.dto.ImageInstanceBounds;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.*;
@@ -113,6 +114,13 @@ public class ImageInstanceService extends ModelService {
     public List<Long> getAllImageId(Project project) {
         securityACLService.check(project, READ);
         return imageInstanceRepository.getAllImageId(project.getId());
+    }
+
+    public ImageInstanceBounds computeBounds(Project project) {
+        securityACLService.check(project, READ);
+        ImageInstanceBounds imageInstanceBounds = new ImageInstanceBounds();
+        imageInstanceRepository.findAllByProject(project).forEach(imageInstanceBounds::submit);
+        return imageInstanceBounds;
     }
 
     private List<SearchParameterEntry> getDomainAssociatedSearchParameters(List<SearchParameterEntry> searchParameters, boolean blinded) {
