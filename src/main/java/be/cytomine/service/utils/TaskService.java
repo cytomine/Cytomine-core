@@ -23,7 +23,9 @@ public class TaskService {
         return taskRepository.getTaskById(id);
     }
 
-
+    public void updateTask(Task task, String comment) {
+        //TODO
+    }
 
 
 

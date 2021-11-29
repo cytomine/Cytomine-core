@@ -8,7 +8,7 @@ spring:
       poolName: Hikari
       auto-commit: false
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database-platform: be.cytomine.config.CustomPostgreSQLDialect
     show-sql: false
     properties:
       hibernate:

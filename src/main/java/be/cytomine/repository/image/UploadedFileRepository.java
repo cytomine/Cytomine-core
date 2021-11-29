@@ -55,6 +55,10 @@ public interface UploadedFileRepository extends JpaRepository<UploadedFile, Long
                 pageable);
     }
 
+    Integer countByParent(UploadedFile domain);
+
+    List<UploadedFile> findAllByParent(UploadedFile uploadedFile);
+
 //
 //    @Query(value = "SELECT uf.* " +
 //            "FROM uploaded_file uf " +

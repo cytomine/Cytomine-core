@@ -63,4 +63,9 @@ public class UrlApi {
         String size = maxSize!=null && maxSize!=0 ? "?maxWidth=" + maxSize : "";
         return serverUrl + "/api/abstractimage/" + idAbstractImage + "/associated/" + label +"." + format + size;
     }
+
+
+    public static String getAbstractSliceThumbUrl(Long idSlice, String format) {
+        return serverUrl + "/api/abstractslice/" + idSlice + "/thumb." + format;
+    }
 }

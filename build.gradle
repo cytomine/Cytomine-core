@@ -35,6 +35,8 @@ dependencies {
 	implementation "com.zaxxer:HikariCP"
 	implementation "org.postgresql:postgresql"
 
+	implementation 'com.vladmihalcea:hibernate-types-55:2.14.0'
+
 	implementation "org.hibernate.validator:hibernate-validator:6.1.6.Final"
 
 	implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.10.4"

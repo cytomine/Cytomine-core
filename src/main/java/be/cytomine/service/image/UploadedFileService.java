@@ -2,9 +2,7 @@ package be.cytomine.service.image;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
-import be.cytomine.domain.image.AbstractSlice;
-import be.cytomine.domain.image.UploadedFile;
-import be.cytomine.domain.image.UploadedFileStatus;
+import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.Term;
@@ -12,14 +10,18 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
+import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.AbstractImageRepository;
+import be.cytomine.repository.image.AbstractSliceRepository;
+import be.cytomine.repository.image.CompanionFileRepository;
 import be.cytomine.repository.image.UploadedFileRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.UrlApi;
 import be.cytomine.service.search.UploadedFileSearchParameter;
 import be.cytomine.service.security.SecurityACLService;
+import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SQLSearchParameter;
 import be.cytomine.utils.filters.SearchOperation;
@@ -60,6 +62,18 @@ public class UploadedFileService extends ModelService {
 
     private AbstractImageRepository abstractImageRepository;
 
+    private AbstractSliceRepository abstractSliceRepository;
+
+    private AbstractImageService abstractImageService;
+
+    private AbstractSliceService abstractSliceService;
+
+    private CompanionFileService companionFileService;
+
+    private CompanionFileRepository companionFileRepository;
+
+    private TaskService taskService;
+
 
     @Override
     public Class currentDomain() {
@@ -83,15 +97,14 @@ public class UploadedFileService extends ModelService {
         return uploadedFileRepository.search(user.getId(), parentId, onlyRoot, DomainUtils.extractIds(storages), pageable);
     }
 
-    public List<Map<String, Object>> list(UploadedFileSearchParameter searchParameters, String sortedProperty, String sortDirection) {
+    public List<Map<String, Object>> list(List<SearchParameterEntry> searchParameters, String sortedProperty, String sortDirection) {
 
         // authorization check is done in the sql request
 
-        searchParameters.findStorage().ifPresent(x -> x.setOperation(SearchOperation.in));
-        searchParameters.findUser().ifPresent(x -> x.setOperation(SearchOperation.in));
+        searchParameters.stream().filter(x -> x.getProperty().equals("storage")).findFirst().ifPresent(x -> x.setOperation(SearchOperation.in));
+        searchParameters.stream().filter(x -> x.getProperty().equals("user")).findFirst().ifPresent(x -> x.setOperation(SearchOperation.in));
 
-
-        List<SearchParameterEntry> validatedSearchParameters = SQLSearchParameter.getDomainAssociatedSearchParameters(UploadedFile.class, searchParameters.toList(), getEntityManager());
+        List<SearchParameterEntry> validatedSearchParameters = SQLSearchParameter.getDomainAssociatedSearchParameters(UploadedFile.class, searchParameters, getEntityManager());
 
         for (SearchParameterEntry validatedSearchParameter : validatedSearchParameters) {
             if (!validatedSearchParameter.getProperty().contains(".")) {
@@ -158,7 +171,7 @@ public class UploadedFileService extends ModelService {
                 "AND uf.content_type NOT similar to '%zip%' " +
                 "AND uf.deleted IS NULL " +
                 "AND " +
-                search +
+                (search.trim().isEmpty() ? "true" : search) +
                 " GROUP BY uf.id, ai.id " +
                 sort;
 
@@ -186,17 +199,32 @@ public class UploadedFileService extends ModelService {
 
     }
 
-//
-//    def listHierarchicalTree(User user, Long rootId) {
-//        UploadedFile root = read(rootId)
-//        if(!root) {
-//            throw new ForbiddenException("UploadedFile not found")
-//        }
-//        securityACLService.checkAtLeastOne(root, READ)
+
+    public List<Map<String, Object>> listHierarchicalTree(User user, Long rootId) {
+        UploadedFile root = this.find(rootId)
+                .orElseThrow(() -> new ObjectNotFoundException("UploadedFile", rootId));
+
+        String request = "SELECT uf.id, uf.created, uf.original_filename, uf.content_type, " +
+                "uf.l_tree, uf.parent_id as parent, " +
+                "uf.size, uf.status, " +
+                "cast (array_agg(ai.id) AS INT8[]) as image, cast (array_agg(asl.id) AS INT8[]) as slices, cast (array_agg(cf.id) AS INT8[]) as companion_file " +
+                "FROM uploaded_file uf " +
+                "LEFT JOIN abstract_image ai ON ai.uploaded_file_id = uf.id " +
+                "LEFT JOIN abstract_slice asl ON asl.uploaded_file_id = uf.id " +
+                "LEFT JOIN companion_file cf ON cf.uploaded_file_id = uf.id " +
+                "LEFT JOIN acl_object_identity as aoi ON aoi.object_id_identity = uf.storage_id " +
+                "LEFT JOIN acl_entry as ae ON ae.acl_object_identity = aoi.id " +
+                "LEFT JOIN acl_sid as asi ON asi.id = ae.sid " +
+                "WHERE uf.l_tree <@ CAST(CAST('" + root.getLTree() + "' as text) as ltree) " +
+                "AND asi.sid = :username " +
+                "AND uf.deleted IS NULL " +
+                "GROUP BY uf.id " +
+                "ORDER BY uf.l_tree ASC ";
+
+
 //        String request = "SELECT uf.id, uf.created, uf.original_filename, uf.content_type, " +
 //                "uf.l_tree, uf.parent_id as parent, " +
-//                "uf.size, uf.status, " +
-//                "array_agg(ai.id) as image, array_agg(asl.id) as slices, array_agg(cf.id) as companion_file " +
+//                "uf.size, uf.status " +
 //                "FROM uploaded_file uf " +
 //                "LEFT JOIN abstract_image ai ON ai.uploaded_file_id = uf.id " +
 //                "LEFT JOIN abstract_slice asl ON asl.uploaded_file_id = uf.id " +
@@ -204,33 +232,49 @@ public class UploadedFileService extends ModelService {
 //                "LEFT JOIN acl_object_identity as aoi ON aoi.object_id_identity = uf.storage_id " +
 //                "LEFT JOIN acl_entry as ae ON ae.acl_object_identity = aoi.id " +
 //                "LEFT JOIN acl_sid as asi ON asi.id = ae.sid " +
-//                "WHERE uf.l_tree <@ '" + root.lTree + "'::text::ltree " +
-//                "AND asi.sid = :username " +
+//                "WHERE asi.sid = :username " +
 //                "AND uf.deleted IS NULL " +
 //                "GROUP BY uf.id " +
-//                "ORDER BY uf.l_tree ASC "
-//
-//        def data = []
-//        def sql = new Sql(dataSource)
-//        sql.eachRow(request, [username: user.username]) { resultSet ->
-//                def row = SQLUtils.keysToCamelCase(resultSet.toRowResult())
-//            row.lTree = row.lTree.value
-//            row.image = row.image.array.find { it != null }
-//            row.slices = row.slices.array.findAll { it != null } // A same UF can be linked to several slices (virtual stacks)
-//            row.companionFile = row.companionFile.array.find { it != null }
-//            row.thumbURL =  null
-//            if(row.image) {
-//                row.thumbURL = UrlApi.getAbstractImageThumbUrl(row.image as Long)
-//                row.macroURL = UrlApi.getAssociatedImage(row.image as Long, "macro", row.contentType as String, 256)
-//            } else if (row.slices.size() > 0) {
-//                row.thumbURL = UrlApi.getAbstractSliceThumbUrl(row.slices[0] as Long)
-//            }
-//            data << row
-//        }
-//        sql.close()
-//
-//        return data
-//    }
+//                "ORDER BY uf.l_tree ASC ";
+
+//        String request = "SELECT uf.id, uf.created, uf.original_filename, uf.content_type, " +
+//                "uf.l_tree, uf.parent_id as parent, " +
+//                "uf.size, uf.status " +
+//                "FROM uploaded_file uf ";
+
+
+
+        Query query = getEntityManager().createNativeQuery(request, Tuple.class);
+        query.setParameter("username", user.getUsername());
+
+        List<Tuple> resultList = query.getResultList();
+        List<Map<String, Object>> results = new ArrayList<>();
+        for (Tuple rowResult : resultList) {
+            Map<String, Object> result = new HashMap<>();
+            for (TupleElement<?> element : rowResult.getElements()) {
+                Object value = rowResult.get(element.getAlias());
+                if (value instanceof BigInteger) {
+                    value = ((BigInteger)value).longValue();
+                }
+                String alias = SQLUtils.toCamelCase(element.getAlias());
+                result.put(alias, value);
+            }
+            //result.put("lTree", rowResult.get("lTree"));
+            result.put("image", (Arrays.stream((int[])rowResult.get("image"))).filter(x -> x!=0).boxed().findFirst().orElse(null));
+            result.put("slices", (Arrays.stream((int[])rowResult.get("slices"))).filter(x -> x!=0).boxed().collect(Collectors.toList())); // A same UF can be linked to several slices (virtual stacks)
+            result.put("companionFile",(Arrays.stream((int[])rowResult.get("image"))).filter(x -> x!=0).boxed().findFirst().orElse(null));
+            result.put("thumbURL", null);
+            if(result.get("image")!=null) {
+                result.put("thumbURL", UrlApi.getAbstractImageThumbUrl((Long)((List)result.get("image")).get(0), "png"));
+                result.put("macroURL", UrlApi.getAssociatedImage((Long)((List)result.get("image")).get(0), "macro", (String)result.get("contentType"), 256, "png"));
+            } else if (((List)result.get("slices")).size() > 0) {
+                result.put("thumbURL", UrlApi.getAbstractSliceThumbUrl((Long)((List)result.get("slices")).get(0), "png"));
+            }
+            results.add(result);
+        }
+        return results;
+
+    }
 
     public Optional<UploadedFile> find(Long id) {
         Optional<UploadedFile> uploadedFile = uploadedFileRepository.findById(id);
@@ -308,62 +352,58 @@ public class UploadedFileService extends ModelService {
 
 
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
-        throw new RuntimeException("not yet implemented");
-//        deleteDependentAbstractSlice(domain, transaction, task);
-//        deleteDependentAbstractImage(domain, transaction, task);
+        deleteDependentAbstractSlice(domain, transaction, task);
+        deleteDependentAbstractImage(domain, transaction, task);
+        deleteDependentCompanionFile(domain, transaction, task);
+        deleteDependentUploadedFile(domain, transaction, task);
+    }
+
+    private void deleteDependentAbstractImage(CytomineDomain domain, Transaction transaction,Task task) {
+        log.info("deleteDependentAbstractImage");
+
+        for (AbstractImage abstractImage : abstractImageRepository.findAllByUploadedFile((UploadedFile) domain)) {
+            abstractImageService.delete(abstractImage, transaction, task, false);
+        }
+    }
+
+    private void deleteDependentAbstractSlice(CytomineDomain domain, Transaction transaction,Task task) {
+        log.info("deleteDependentAbstractSlice");
+
+        for (AbstractSlice abstractSlice : abstractSliceRepository.findAllByUploadedFile((UploadedFile) domain)) {
+            abstractSliceService.delete(abstractSlice, transaction, task, false);
+        }
+    }
+
+    private void deleteDependentCompanionFile(CytomineDomain domain, Transaction transaction,Task task) {
+        log.info("deleteDependentCompanionFile");
+
+        for (CompanionFile companionFile : companionFileRepository.findAllByUploadedFile((UploadedFile) domain)) {
+            companionFileService.delete(companionFile, transaction, task, false);
+        }
+    }
+
+    private void deleteDependentUploadedFile(CytomineDomain domain, Transaction transaction, Task task) {
+        log.info("deleteDependentUploadedFile");
+        UploadedFile uploadedFile = (UploadedFile)domain;
+        taskService.updateTask(task, task!=null ? "Delete " + uploadedFileRepository.countByParent(uploadedFile)+ " uploadedFiles parents":"");
+
+        // Update all children so that their parent is the grandfather
+        for (UploadedFile child : uploadedFileRepository.findAllByParent(uploadedFile)) {
+            child.setParent(uploadedFile.getParent());
+            this.update(child, child.toJsonObject(), transaction);
+        }
+
+        String currentTree = uploadedFile.getLTree()!=null ?  uploadedFile.getLTree() : "";
+        String request = "UPDATE uploaded_file SET l_tree = '' WHERE id= "+uploadedFile.getId()+";\n";
+        String parentTree = (uploadedFile.getParent()!=null && uploadedFile.getParent().getLTree()!=null)? uploadedFile.getParent().getLTree() : "";
+        if (!parentTree.isEmpty()) {
+            request += "UPDATE uploaded_file " +
+                    "SET l_tree = '" +parentTree +"' || subpath(l_tree, nlevel('" +currentTree +"')) " +
+                    "WHERE l_tree <@ '" +currentTree +"';";
+        }
+        getEntityManager().createNativeQuery(request);
 
     }
 
-//
-//
-//    private void deleteDependentAbstractImage(CytomineDomain domain, Transaction transaction,Task task) {
-//        log.info("deleteDependentAbstractImage");
-//
-//        abstractImageRepository.findAllByUploadedFile((UploadedFile) domain)
-//
-////
-////                .each {
-////            abstractImageService.delete(it, transaction, task, false, true)
-////        }
-//    }
 
-//    def abstractSliceService
-//
-//    def deleteDependentAbstractSlice(CytomineDomain domain, Transaction transaction, Task task = null) {
-//        log.info "deleteDependentAbstractSlice"
-//        AbstractSlice.findAllByUploadedFile(uploadedFile).each {
-//            abstractSliceService.delete(it, transaction, task, false, true)
-//        }
-//    }
-//
-//    def companionFileService
-//    def deleteDependentCompanionFile(UploadedFile uploadedFile, Transaction transaction, Task task = null) {
-//        CompanionFile.findAllByUploadedFile(uploadedFile).each {
-//            companionFileService.delete(it, transaction, task, false)
-//        }
-//    }
-//
-//    def deleteDependentUploadedFile(UploadedFile uploadedFile, Transaction transaction,Task task=null) {
-//        taskService.updateTask(task,task? "Delete ${UploadedFile.countByParent(uploadedFile)} uploadedFile parents":"")
-//
-//        // Update all children so that their parent is the grandfather
-//        UploadedFile.findAllByParent(uploadedFile).each { child ->
-//                child.parent = uploadedFile.parent
-//            this.update(child, JSON.parse(child.encodeAsJSON()), transaction)
-//        }
-//
-//        String currentTree = uploadedFile?.lTree ?: ""
-//        String request = "UPDATE uploaded_file SET l_tree = '' WHERE id= "+uploadedFile.id+";\n"
-//
-//        String parentTree = (uploadedFile?.parent?.lTree)?:""
-//        if (!parentTree.isEmpty()) {
-//            request += "UPDATE uploaded_file " +
-//                    "SET l_tree = '" +parentTree +"' || subpath(l_tree, nlevel('" +currentTree +"')) " +
-//                    "WHERE l_tree <@ '" +currentTree +"';"
-//        }
-//
-//        def sql = new Sql(dataSource)
-//        sql.execute(request)
-//        sql.close()
-//    }
 }
