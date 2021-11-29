@@ -27,7 +27,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URLDecoder;
 import java.net.http.HttpResponse;
+import java.nio.charset.Charset;
 import java.util.*;
 
 import static be.cytomine.domain.image.UploadedFile_.contentType;
@@ -431,7 +433,10 @@ public abstract class RestCytomineController {
             } else if (entry.getValue()!=null && entry.getValue().length==1) {
                 value = entry.getValue()[0];
             }
-            flatMap.put(entry.getKey(), value);
+            if (value!=null) {
+                value = URLDecoder.decode(value, Charset.defaultCharset());
+            }
+            flatMap.put(URLDecoder.decode(entry.getKey(), Charset.defaultCharset()), value);
         }
         return flatMap;
     }

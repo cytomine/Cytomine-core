@@ -124,8 +124,7 @@ public class RestImageInstanceController extends RestCytomineController {
             // TODO: support withLastActivity
             throw new CytomineMethodNotYetImplementedException("");
         } else {
-            // TODO: retrieve searchParameters
-            return responseSuccess(imageInstanceService.list(project, new ArrayList<>(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax(), false), isFilterRequired(project));
+            return responseSuccess(imageInstanceService.list(project, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax(), false), isFilterRequired(project));
         }
     }
 
@@ -478,8 +477,8 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
         return responseSuccess(JsonObject.toJsonString(imageInstanceService.computeBounds(project)));
     }
-   
-//
+
+
 //    @GetMapping("/project/{id}/bounds/imageinstance.json")
 //    public ResponseEntity<String> bounds(
 //            @PathVariable Long id

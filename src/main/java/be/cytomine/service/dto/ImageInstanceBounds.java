@@ -58,6 +58,8 @@ public class ImageInstanceBounds {
         updateChoices(magnification, imageInstance.getMagnification());
 
         updateMinMax(physicalSizeX, imageInstance.getPhysicalSizeX());
+        updateChoices(physicalSizeX, imageInstance.getPhysicalSizeX());
+
         updateMinMax(physicalSizeY, imageInstance.getPhysicalSizeY());
         updateMinMax(physicalSizeZ, imageInstance.getPhysicalSizeZ());
         updateMinMax(fps, imageInstance.getFps());
