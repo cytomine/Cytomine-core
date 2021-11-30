@@ -258,6 +258,14 @@ public class ImageInstanceServiceTests {
         assertThat(imageInstanceService.list(user, searchParameterEntryList).stream().map(x -> x.get("id")))
                 .contains(img1.getId()).doesNotContain(img2.getId());
 
+        searchParameterEntryList =
+                new ArrayList<>(List.of(
+                        new SearchParameterEntry("numberOfAnnotations", SearchOperation.gte, 1000L),
+                        new SearchParameterEntry("numberOfAnnotations", SearchOperation.lte, 1000L))
+                );
+        assertThat(imageInstanceService.list(user, searchParameterEntryList).stream().map(x -> x.get("id")))
+                .contains(img1.getId()).doesNotContain(img2.getId());
+
 
         searchParameterEntryList =
                 new ArrayList<>(List.of(

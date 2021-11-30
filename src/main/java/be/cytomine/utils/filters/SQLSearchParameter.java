@@ -195,7 +195,7 @@ public class SQLSearchParameter {
         //if a same property is used multiple times
         for (Map.Entry<String, Integer> properties : parametersCount.entrySet()) {
             if (properties.getValue() > 1) {
-                List<SearchParameterEntry> duplicatedEntries = searchParameters.data.stream().filter( x -> properties.getKey().equals(x.property)).collect(Collectors.toList());
+                List<SearchParameterEntry> duplicatedEntries = searchParameters.data.stream().filter( x -> properties.getKey().equals(x.property.replaceAll("\\.","_"))).collect(Collectors.toList());
                 for (int i = 0 ; i<duplicatedEntries.size() ; i++) {
                     String oldName = duplicatedEntries.get(i).sqlParameter.keySet().iterator().next();
                     String newName = oldName+"_"+i;

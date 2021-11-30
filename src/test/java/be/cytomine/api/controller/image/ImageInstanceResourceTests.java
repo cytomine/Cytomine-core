@@ -316,6 +316,67 @@ public class ImageInstanceResourceTests {
     }
 
 
+    @Test
+    @Transactional
+    public void list_image_instance_by_project_with_annotation_filter() throws Exception {
+        Project project = builder.given_a_project();
+        // we add width filter to get only the image set defined in this test
+        ImageInstance image1 = builder.given_an_image_instance(builder.given_an_abstract_image(), project);
+        image1.setCountImageAnnotations(2L);
+        ImageInstance image2 = builder.given_an_image_instance(builder.given_an_abstract_image(), project);
+        image2.setCountImageAnnotations(4L);
+
+        restImageInstanceControllerMockMvc.perform(get("/api/project/{id}/imageinstance.json", project.getId())
+                        .param("offset", "0")
+                        .param("max", "0")
+                        .param("sort", "created")
+                        .param("order", "desc")
+                        .param("numberOfAnnotations[lte]", "5")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + image1.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + image2.getId() + ")]").exists());
+
+        restImageInstanceControllerMockMvc.perform(get("/api/project/{id}/imageinstance.json", project.getId())
+                        .param("offset", "0")
+                        .param("max", "0")
+                        .param("sort", "created")
+                        .param("order", "desc")
+                        .param("numberOfAnnotations[lte]", "3")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + image1.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + image2.getId() + ")]").doesNotExist());
+
+        restImageInstanceControllerMockMvc.perform(get("/api/project/{id}/imageinstance.json", project.getId())
+                        .param("offset", "0")
+                        .param("max", "0")
+                        .param("sort", "created")
+                        .param("order", "desc")
+                        .param("numberOfAnnotations[lte]", "4")
+                        .param("numberOfAnnotations[gte]", "2")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + image1.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + image2.getId() + ")]").exists());
+
+        restImageInstanceControllerMockMvc.perform(get("/api/project/{id}/imageinstance.json", project.getId())
+                        .param("offset", "0")
+                        .param("max", "0")
+                        .param("sort", "created")
+                        .param("order", "desc")
+                        .param("numberOfAnnotations[lte]", "4")
+                        .param("numberOfAnnotations[gte]", "3")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + image1.getId() + ")]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id==" + image2.getId() + ")]").exists());
+    }
+
 
     @Test
     @Transactional
