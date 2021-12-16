@@ -6,10 +6,7 @@ import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.middleware.ImageServer;
-import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.ontology.Relation;
-import be.cytomine.domain.ontology.RelationTerm;
-import be.cytomine.domain.ontology.Term;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUserSecRole;
 import be.cytomine.domain.security.User;
@@ -20,6 +17,8 @@ import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.database.BootstrapDataService;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.acls.model.Permission;
 import org.springframework.stereotype.Component;
@@ -185,7 +184,7 @@ public class BasicInstanceBuilder {
     }
 
     public Project given_a_project() {
-        return persistAndReturn(given_a_not_persisted_project());
+        return persistAndReturn(given_a_project_with_ontology(given_an_ontology()));
     }
 
     public Project given_a_project_with_ontology(Ontology ontology) {
@@ -285,6 +284,8 @@ public class BasicInstanceBuilder {
         AbstractImage image = new AbstractImage();
         image.setUploadedFile(given_a_uploaded_file());
         image.setOriginalFilename(randomString());
+        image.setWidth(16000);
+        image.setHeight(16000);
         return image;
     }
 
@@ -441,4 +442,41 @@ public class BasicInstanceBuilder {
         companionFile.setProgress(50);
         return companionFile;
     }
+
+    public UserAnnotation given_a_not_persisted_user_annotation() {
+        UserAnnotation annotation = new UserAnnotation();
+        annotation.setUser(given_superadmin());
+        try {
+            annotation.setLocation(new WKTReader().read("POLYGON ((1983 2168, 2107 2160, 2047 2074, 1983 2168))"));
+        } catch (ParseException ignored) {
+
+        }
+        annotation.setSlice(given_a_slice_instance());
+        annotation.setImage(annotation.getSlice().getImage());
+        annotation.setProject(annotation.getImage().getProject());
+        return annotation;
+    }
+
+    public UserAnnotation given_a_user_annotation() {
+        return persistAndReturn(given_a_not_persisted_user_annotation());
+    }
+
+    public UserAnnotation given_a_user_annotation(SliceInstance sliceInstance, String location, User user, Term term) throws ParseException {
+        UserAnnotation annotation = given_a_user_annotation();
+        annotation.setImage(sliceInstance.getImage());
+        annotation.setSlice(sliceInstance);
+        annotation.setLocation(new WKTReader().read(location));
+        annotation.setUser(user);
+        persistAndReturn(annotation);
+
+        AnnotationTerm annotationTerm = new AnnotationTerm();
+        annotationTerm.setUserAnnotation(annotation);
+        annotationTerm.setUser(user);
+        annotationTerm.setTerm(term);
+        persistAndReturn(annotationTerm);
+
+        em.refresh(annotation);
+        return annotation;
+    }
+
 }

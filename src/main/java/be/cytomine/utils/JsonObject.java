@@ -285,4 +285,20 @@ public class JsonObject extends HashMap<String, Object> {
             return null;
         }
     }
+
+    public List<Long> getJSONAttrListLong(String attr, List<Long> defaultValue) {
+        if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
+            return (List<Long>)((List)this.get(attr)).stream().map(x -> Long.parseLong(String.valueOf(x))).collect(Collectors.toList());
+        } else {
+            return defaultValue;
+        }
+    }
+
+    public Map<String, String> getJSONAttrMapString(String attr, Map<String, String> defaultValue) {
+        if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
+            return (Map<String, String>)get(attr);
+        } else {
+            return defaultValue;
+        }
+    }
 }

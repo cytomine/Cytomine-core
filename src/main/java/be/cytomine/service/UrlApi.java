@@ -65,7 +65,47 @@ public class UrlApi {
     }
 
 
+    public static String getAnnotationURL(Long idProject, Long idImage, Long idAnnotation) {
+        return  serverUrl + "/#/project/"+idProject+"/image/"+idImage+"/annotation/" + idAnnotation;
+    }
+
     public static String getAbstractSliceThumbUrl(Long idSlice, String format) {
         return serverUrl + "/api/abstractslice/" + idSlice + "/thumb." + format;
+    }
+
+    public static String getUserAnnotationCropWithAnnotationId(Long idAnnotation, String format) {
+        return serverUrl + "/api/userannotation/"+idAnnotation+"/crop." + format;
+    }
+
+    public static String getUserAnnotationCropWithAnnotationIdWithMaxSize(Long idAnnotation, int maxSize, String format) {
+        return serverUrl + "/api/userannotation/"+idAnnotation+"/crop." + format + "?maxSize=" + maxSize;
+    }
+
+    public static String getROIAnnotationCropWithAnnotationId(Long idAnnotation, String format) {
+        return serverUrl + "/api/roiannotation/"+idAnnotation+"/crop."+format;
+    }
+
+    public static String getROIAnnotationCropWithAnnotationIdWithMaxSize(Long idAnnotation, int maxSize, String format) {
+        return serverUrl + "/api/roiannotation/"+idAnnotation+"/crop."+format+"?maxSize=" + maxSize;
+    }
+
+    public static String getAlgoAnnotationCropWithAnnotationId(Long idAnnotation, String format) {
+        return serverUrl + "/api/algoannotation/"+idAnnotation+"/crop." + format;
+    }
+
+    public static String getAlgoAnnotationCropWithAnnotationIdWithMaxSize(Long idAnnotation, int maxsize, String format) {
+        return serverUrl + "/api/algoannotation/"+idAnnotation+"/crop."+format+"?maxSize=" + maxsize;
+    }
+
+    public static String getReviewedAnnotationCropWithAnnotationId(Long idAnnotation, String format) {
+        return serverUrl + "/api/reviewedannotation/"+idAnnotation+"/crop." + format;
+    }
+
+    public static String getReviewedAnnotationCropWithAnnotationIdWithMaxSize(Long idAnnotation, int maxSize, String format) {
+        return "serverUrl + \"/api/reviewedannotation/"+idAnnotation+"/crop."+format+"?maxSize=" + maxSize;
+    }
+
+    public static String getAnnotationCropWithAnnotationId(Long idAnnotation, int maxSize, String format) {
+        return serverUrl + "/api/annotation/"+idAnnotation+"/crop." + format + (maxSize!=0? "?maxSize=" + maxSize :"");
     }
 }

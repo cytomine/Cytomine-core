@@ -8,10 +8,11 @@ import com.vladmihalcea.hibernate.type.json.JsonNodeBinaryType;
 import com.vladmihalcea.hibernate.type.json.JsonNodeStringType;
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
 import org.hibernate.dialect.PostgreSQL10Dialect;
+import org.hibernate.spatial.dialect.postgis.PostgisDialect;
 
 import java.sql.Types;
 
-public class CustomPostgreSQLDialect extends PostgreSQL10Dialect{
+public class CustomPostgreSQLDialect extends PostgisDialect {
 
 
     public CustomPostgreSQLDialect () {

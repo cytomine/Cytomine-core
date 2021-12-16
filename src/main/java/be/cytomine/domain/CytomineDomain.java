@@ -6,6 +6,8 @@ import be.cytomine.domain.security.User;
 import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.annotation.CreatedDate;
@@ -20,7 +22,8 @@ import javax.validation.ValidatorFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Data
+@Getter
+@Setter
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 public abstract class CytomineDomain {
@@ -114,4 +117,10 @@ public abstract class CytomineDomain {
         return true;
     }
 
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "{" +
+                "id=" + id +
+                '}';
+    }
 }

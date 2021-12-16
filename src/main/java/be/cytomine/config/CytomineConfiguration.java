@@ -15,12 +15,22 @@ public class CytomineConfiguration {
 
     private Software software;
 
+    private Annotation annotation;
+
     public Software getSoftware() {
         return software;
     }
 
     public void setSoftware(Software software) {
         this.software = software;
+    }
+
+    public Annotation getAnnotation() {
+        return annotation;
+    }
+
+    public void setAnnotation(Annotation annotation) {
+        this.annotation = annotation;
     }
 }
 class Software {
@@ -44,5 +54,17 @@ class Path {
 
     public void setSoftwareImages(String softwareImages) {
         this.softwareImages = softwareImages;
+    }
+}
+
+class Annotation {
+    int maxNumberOfPoint;
+
+    public int getMaxNumberOfPoint() {
+        return maxNumberOfPoint;
+    }
+
+    public void setMaxNumberOfPoint(int maxNumberOfPoint) {
+        this.maxNumberOfPoint = maxNumberOfPoint;
     }
 }

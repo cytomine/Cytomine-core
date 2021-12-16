@@ -23,6 +23,11 @@ public class AddCommand extends Command {
         this.user = currentUser;
     }
 
+    public AddCommand(SecUser currentUser, Transaction transaction) {
+        this.user = currentUser;
+        this.transaction = transaction;
+    }
+
     public AddCommand() {
         super();
     }

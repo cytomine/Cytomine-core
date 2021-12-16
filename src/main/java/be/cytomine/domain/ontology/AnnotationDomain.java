@@ -1,30 +1,264 @@
 package be.cytomine.domain.ontology;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.image.AbstractImage;
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.Language;
+import be.cytomine.domain.security.SecUser;
+import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
+import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.service.dto.Point;
+import be.cytomine.utils.GisUtils;
 import be.cytomine.utils.JsonObject;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.io.ParseException;
+import com.vividsolutions.jts.io.WKTReader;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Entity
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-public class AnnotationDomain extends CytomineDomain implements Serializable {
+@Getter
+@Setter
+@Slf4j
+public abstract class AnnotationDomain extends CytomineDomain implements Serializable {
+
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "project_id", nullable = false)
+    @JoinColumn(name = "slice_id", nullable = true)
+    protected SliceInstance slice;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "image_id", nullable = false)
+    protected ImageInstance image; // Redundant with slice, used for speed up in security checks
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "project_id", nullable = true)
     protected Project project;
+
+    @NotNull
+    //@Type(type = "org.hibernate.spatial.JTSGeometryType")
+    @Column(columnDefinition = "geometry")
+    protected Geometry location;
+
+    @NotBlank
+    @NotNull
+    protected String wktLocation; // Redundant, better to use this than getting WKT from location properties
+
+    protected Double geometryCompression;
 
     protected Double area;
 
+    Integer areaUnit;
 
-    @Override
-    public String toJSON() {
-        return null;
+    Double perimeter;
+
+    Integer perimeterUnit;
+
+    long countComments = 0L;
+
+//    @Override
+//    public String toJSON() {
+//        return null;
+//    }
+//
+//    @Override
+//    public JsonObject toJsonObject() {
+//        return null;
+//    }
+
+    public void beforeCreate() {
+        if(project==null) {
+            project = image.getProject();
+        }
+
+        // TODO: migration
+//        if (slice==null) {
+//            slice = image.getReferenceSlice
+//        }
+        wktLocation = location.toText();
     }
 
-    @Override
-    public JsonObject toJsonObject() {
-        return null;
+    public void beforeUpdate() {
+        if(project==null) {
+            project = image.getProject();
+        }
+
+        // TODO: migration
+//        if (slice==null) {
+//            slice = image.getReferenceSlice
+//        }
+        this.computeGIS();
+        wktLocation = location.toText();
     }
+
+    /**
+     * Get all terms map with the annotation
+     * @return Terms list
+     */
+    public abstract List<Term> terms();
+
+    /**
+     * Get all annotation terms id
+     * @return Terms id list
+     */
+    public abstract List<Long> termsId();
+
+    /**
+     * Check if its an algo annotation
+     */
+    public abstract boolean isAlgoAnnotation();
+
+    /**
+     * Check if its a review annotation
+     */
+    public abstract boolean isReviewedAnnotation();
+
+    /**
+     * Get all terms for automatic review
+     * If review is done "for all" (without manual user control), we add these term to the new review annotation
+     * @return
+     */
+    public abstract List<Term> termsForReview();
+
+
+    public String getFilename() {
+        return Optional.ofNullable(this.image)
+                .map(ImageInstance::getBaseImage)
+                .map(AbstractImage::getOriginalFilename).orElse(null);
+    }
+
+    public String retrieveAreaUnit() {
+        return GisUtils.retrieveUnit(areaUnit);
+    }
+
+    public String retrievePerimeterUnit() {
+        return GisUtils.retrieveUnit(perimeterUnit);
+    }
+
+    public CytomineDomain container() {
+        return project;
+    }
+
+    private void computeGIS() {
+        if (this.image.getPhysicalSizeX() == null) {
+            area = (double)Math.round(this.location.getArea());
+            areaUnit = GisUtils.PIXELS2v;
+
+            perimeter = (double)Math.round(this.location.getLength());
+            perimeterUnit = GisUtils.PIXELv;
+        }
+        else {
+            area = this.location.getArea() * image.getPhysicalSizeX() * image.getPhysicalSizeX();
+            areaUnit = GisUtils.MICRON2v;
+
+            perimeter = this.location.getLength() * image.getPhysicalSizeX() / 1000;
+            perimeterUnit = GisUtils.MMv;
+        }
+    }
+
+    public Point getCentroid() {
+        com.vividsolutions.jts.geom.Point centroid = location.getCentroid();
+        return new Point(centroid.getX(), centroid.getY());
+    }
+
+
+    // TODO: cannot be perform here with spring
+//    /**
+//     * Get user/algo/reviewed annotation with id
+//     * Check the correct type and return it
+//     * @param id Annotation id
+//     * @return Annotation
+//     */
+//    public static AnnotationDomain getAnnotationDomain(String id, String className = null) {
+//        try {
+//            getAnnotationDomain(Long.parseLong(id), className)
+//        } catch(NumberFormatException e) {
+//            throw new ObjectNotFoundException("Annotation ${id} not found")
+//        }
+//    }
+//
+    /**
+     * Get user/algo/reviewed annotation with id
+     * Check the correct type and return it
+     * @param id Annotation id
+     * @return Annotation
+     */
+    public static AnnotationDomain getAnnotationDomain(EntityManager entityManager, Long id, String className) {
+        Class domain = null;
+        switch (className) {
+            case "be.cytomine.ontology.UserAnnotation": //TODO: migration
+                domain = UserAnnotation.class;
+                break;
+            case "be.cytomine.ontology.AlgoAnnotation":
+                throw new CytomineMethodNotYetImplementedException("migration");
+                //domain = AlgoAnnotation.class;
+                //break;
+            case "be.cytomine.ontology.ReviewedAnnotation":
+                throw new CytomineMethodNotYetImplementedException("migration");
+                //domain = ReviewedAnnotation.class;
+                //break;
+            case "be.cytomine.processing.RoiAnnotation":
+                throw new CytomineMethodNotYetImplementedException("migration");
+                //domain = RoiAnnotation.class;
+                //break;
+        }
+
+        AnnotationDomain annotation;
+        if (domain!=null) {
+            annotation = (AnnotationDomain)entityManager.find(domain, id);
+        }
+        else {
+            annotation = entityManager.find(UserAnnotation.class, id);
+//            if (annotation==null) annotation = entityManager.find(AlgoAnnotation.class, id);
+//            if (annotation==null) annotation = entityManager.find(ReviewedAnnotation.class, id);
+//            if (annotation==null) annotation = entityManager.find(RoiAnnotation.class, id);
+        }
+
+        if (annotation!=null) {
+            return annotation;
+        }
+        else {
+            throw new ObjectNotFoundException("Annotation "+id+" not found");
+        }
+    }
+
+    abstract Long getUserId();
+
+    public static JsonObject getDataFromDomain(CytomineDomain domain) {
+        JsonObject returnArray = CytomineDomain.getDataFromDomain(domain);
+        AnnotationDomain annotationDomain = (AnnotationDomain)domain;
+        returnArray.put("slice", Optional.ofNullable(annotationDomain.getSlice()).map(CytomineDomain::getId).orElse(null));
+        returnArray.put("image", Optional.ofNullable(annotationDomain.getImage()).map(CytomineDomain::getId).orElse(null));
+        returnArray.put("project", Optional.ofNullable(annotationDomain.getProject()).map(CytomineDomain::getId).orElse(null));
+        returnArray.put("user", annotationDomain.getUserId());
+
+        returnArray.put("location", annotationDomain.location.toString()); //TODO: totext?
+        returnArray.put("geometryCompression", annotationDomain.geometryCompression);
+        returnArray.put("centroid", annotationDomain.getCentroid());
+
+        returnArray.put("area", annotationDomain.getArea());
+        returnArray.put("areaUnit", annotationDomain.retrieveAreaUnit());
+        returnArray.put("perimeter", annotationDomain.getPerimeter());
+        returnArray.put("perimeterUnit", annotationDomain.retrievePerimeterUnit());
+
+        returnArray.put("term", annotationDomain.termsId());
+        returnArray.put("nbComments", annotationDomain.countComments);
+
+        return returnArray;
+    }
+
 }

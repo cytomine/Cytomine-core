@@ -9,7 +9,7 @@ spring:
       auto-commit: false
   jpa:
     database-platform: be.cytomine.config.CustomPostgreSQLDialect
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -44,7 +44,8 @@ application:
     defaultLanguage: ENGLISH
     imageServerURL: [http://imageServerURL/]
     messageBrokerServerURL: messageBrokerServerURL
-
+    annotation:
+      maxNumberOfPoint: 200
     software:
       path:
         softwareImages: softwareImages/

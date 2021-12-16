@@ -1,5 +1,6 @@
 package be.cytomine.utils;
 
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.dto.BoundariesCropParameter;
 import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.io.ParseException;
@@ -55,6 +56,6 @@ public class GeometryUtils {
             cropParameter.setHeight(100);
             return cropParameter;
         }
-        throw new IllegalArgumentException("Cannot extract boundaries for " + geometry);
+        throw new WrongArgumentException("Cannot extract boundaries for " + geometry);
     }
 }

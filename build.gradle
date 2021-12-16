@@ -46,6 +46,11 @@ dependencies {
 	implementation "com.fasterxml.jackson.core:jackson-annotations:2.10.4"
 	implementation "com.fasterxml.jackson.core:jackson-databind:2.10.4"
 
+	//implementation 'org.hibernate:hibernate-spatial:5.4.32.Final'
+// https://mvnrepository.com/artifact/org.hibernate/hibernate-spatial
+	//implementation group: 'org.hibernate', name: 'hibernate-spatial', version: '5.1.17.Final'
+	implementation 'org.hibernate:hibernate-spatial:5.3.10.Final'
+
 	implementation "commons-codec:commons-codec:1.6"
 
 	implementation 'org.springframework.security:spring-security-acl'

@@ -44,7 +44,8 @@ application:
     defaultLanguage: ENGLISH
     imageServerURL: [http://imageServerURL/]
     messageBrokerServerURL: messageBrokerServerURL
-
+    annotation:
+      maxNumberOfPoint: 200
     software:
       path:
         softwareImages: softwareImages/
