@@ -330,7 +330,7 @@ public class UserAnnotationServiceTests {
     void add_user_annotation_out_of_bounds() throws ParseException {
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation();
         userAnnotation.setLocation(new WKTReader().read("" +
-                "POLYGON((" +
+                "POLYGON ((" +
                 "-1 -1," +
                 "-1 " + userAnnotation.getImage().getBaseImage().getHeight() + "," +
                 userAnnotation.getImage().getBaseImage().getWidth()+5 + " "+userAnnotation.getImage().getBaseImage().getHeight()+","+
@@ -342,7 +342,7 @@ public class UserAnnotationServiceTests {
 
         assertThat(((UserAnnotation)commandResponse.getObject()).getLocation().toText())
                 .isEqualTo("" +
-                        "POLYGON((" +
+                        "POLYGON ((" +
                         "0 " + userAnnotation.getImage().getBaseImage().getHeight() + ", " +
                         userAnnotation.getImage().getBaseImage().getWidth() + " "+userAnnotation.getImage().getBaseImage().getHeight()+", "+
                         userAnnotation.getImage().getBaseImage().getWidth() + " 0, " +
@@ -449,7 +449,7 @@ public class UserAnnotationServiceTests {
 
         assertThat(((UserAnnotation)commandResponse.getObject()).getLocation())
                 .isEqualTo("" +
-                        "POLYGON((" +
+                        "POLYGON ((" +
                         "0 " + userAnnotation.getImage().getBaseImage().getHeight() + ", " +
                         userAnnotation.getImage().getBaseImage().getWidth() + " "+userAnnotation.getImage().getBaseImage().getHeight()+", "+
                         userAnnotation.getImage().getBaseImage().getWidth() + "0, " +

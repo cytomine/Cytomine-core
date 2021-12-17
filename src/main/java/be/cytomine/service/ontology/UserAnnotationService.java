@@ -44,6 +44,7 @@ import org.hibernate.spatial.criterion.SpatialRestrictions;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Tuple;
 import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -231,9 +232,7 @@ public class UserAnnotationService extends ModelService {
      */
     List<AnnotationLight> listLight() {
         securityACLService.checkAdmin(currentUserService.getCurrentUser());
-        List<AnnotationLight> annotationLights = userAnnotationRepository.listLight();
-        annotationLights.forEach(x -> x.setUrl(UrlApi.getUserAnnotationCropWithAnnotationIdWithMaxSize(x.getId(), 256, "png")));
-        return annotationLights;
+        return userAnnotationRepository.listLight();
     }
 
 
