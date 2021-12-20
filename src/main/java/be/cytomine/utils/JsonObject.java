@@ -180,7 +180,7 @@ public class JsonObject extends HashMap<String, Object> {
     }
 
     public Integer getJSONAttrInteger(String attr) {
-        return getJSONAttrInteger(attr, -1);
+        return getJSONAttrInteger(attr, null);
     }
 
 
@@ -197,7 +197,7 @@ public class JsonObject extends HashMap<String, Object> {
     }
 
     public Long getJSONAttrLong(String attr) {
-        return getJSONAttrLong(attr, -1L);
+        return getJSONAttrLong(attr, null);
     }
 
     public Boolean getJSONAttrBoolean(String attr, Boolean defaultValue) {

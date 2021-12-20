@@ -26,7 +26,7 @@ public abstract class AnnotationListing {
     /**
      *  default property group to show
      */
-    static final List<String> availableColumnsDefault = List.of("basic", "meta", "term");
+    public static final List<String> availableColumnsDefault = List.of("basic", "meta", "term");
 
     /**
      *  all properties group available, each value is a list of assoc [propertyName, SQL columnName/methodName)
@@ -81,7 +81,7 @@ public abstract class AnnotationListing {
     Boolean multipleTrack = false;
 
     String bbox = null;
-    Geometry bboxAnnotation = null;
+    String bboxAnnotation = null;
 
     Long baseAnnotation = null;
     Long maxDistanceBaseAnnotation = null;

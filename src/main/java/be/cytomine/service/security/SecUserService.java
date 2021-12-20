@@ -6,6 +6,7 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
+import be.cytomine.domain.security.UserJob;
 import be.cytomine.dto.AuthInformation;
 import be.cytomine.exceptions.*;
 import be.cytomine.repository.security.SecUserRepository;
@@ -18,6 +19,7 @@ import be.cytomine.service.dto.JobLayerDTO;
 import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SearchParameterEntry;
+import com.vividsolutions.jts.geom.util.GeometryCollectionMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -61,6 +63,11 @@ public class SecUserService extends ModelService {
         } catch (NumberFormatException ex) {
             return Optional.empty();
         }
+    }
+
+
+    public boolean isUserJob(Long id) {
+        return find(id).map(SecUser::isAlgo).orElse(false);
     }
 
     public SecUser get(Long id) {
@@ -385,6 +392,11 @@ public class SecUserService extends ModelService {
         return users;
     }
 
+    public List<SecUser> list(Project project, List<Long> ids) {
+        securityACLService.check(project,READ);
+        return secUserRepository.findAllByIdIn(ids);
+    }
+
     /**
      * Add the new domain with JSON data
      * @param json New domain data
@@ -498,5 +510,8 @@ public class SecUserService extends ModelService {
     }
 
 
-
+    public Optional<UserJob> findByJobId(Long job) {
+        // TODO:
+        throw new CytomineMethodNotYetImplementedException("not yet implemented");
+    }
 }

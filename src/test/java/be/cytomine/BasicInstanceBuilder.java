@@ -457,6 +457,15 @@ public class BasicInstanceBuilder {
         return annotation;
     }
 
+    public UserAnnotation given_a_not_persisted_user_annotation(Project project) {
+        UserAnnotation annotation = given_a_not_persisted_user_annotation();
+        annotation.getSlice().setProject(project);
+        annotation.getImage().setProject(project);
+        annotation.setProject(project);
+        return annotation;
+    }
+
+
     public UserAnnotation given_a_user_annotation() {
         return persistAndReturn(given_a_not_persisted_user_annotation());
     }
@@ -469,14 +478,40 @@ public class BasicInstanceBuilder {
         annotation.setUser(user);
         persistAndReturn(annotation);
 
-        AnnotationTerm annotationTerm = new AnnotationTerm();
-        annotationTerm.setUserAnnotation(annotation);
-        annotationTerm.setUser(user);
-        annotationTerm.setTerm(term);
-        persistAndReturn(annotationTerm);
+        if (term!=null) {
+            AnnotationTerm annotationTerm = new AnnotationTerm();
+            annotationTerm.setUserAnnotation(annotation);
+            annotationTerm.setUser(user);
+            annotationTerm.setTerm(term);
+            persistAndReturn(annotationTerm);
+            em.refresh(annotation);
+        }
 
-        em.refresh(annotation);
         return annotation;
     }
 
+    public AnnotationTerm given_a_not_persisted_annotation_term(UserAnnotation annotation) {
+        return given_a_not_persisted_annotation_term(annotation, this.given_a_term(annotation.getProject().getOntology()));
+    }
+
+    public AnnotationTerm given_a_not_persisted_annotation_term(UserAnnotation annotation, Term term) {
+        AnnotationTerm annotationTerm = new AnnotationTerm();
+        annotationTerm.setTerm(term);
+        annotationTerm.setUser(this.given_superadmin());
+        annotationTerm.setUserAnnotation(annotation);
+        return annotationTerm;
+    }
+
+    public AnnotationTerm given_an_annotation_term(UserAnnotation annotation, Term term) {
+        return persistAndReturn(given_a_not_persisted_annotation_term(annotation, term));
+    }
+
+    public AnnotationTerm given_an_annotation_term(UserAnnotation annotation) {
+        return persistAndReturn(given_a_not_persisted_annotation_term(annotation, this.given_a_term(annotation.getProject().getOntology())));
+    }
+
+    public AnnotationTerm given_an_annotation_term() {
+        UserAnnotation annotation = given_a_user_annotation();
+        return persistAndReturn(given_a_not_persisted_annotation_term(annotation, this.given_a_term(annotation.getProject().getOntology())));
+    }
 }

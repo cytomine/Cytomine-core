@@ -31,6 +31,7 @@ import java.net.URLDecoder;
 import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static be.cytomine.domain.image.UploadedFile_.contentType;
 import static java.awt.SystemColor.text;
@@ -43,10 +44,10 @@ public abstract class RestCytomineController {
     private TransactionService transactionService;
 
     @Autowired
-    private HttpServletRequest request;
+    protected HttpServletRequest request;
 
     @Autowired
-    private HttpServletResponse response;
+    protected HttpServletResponse response;
 
 //    /**
 //     * Response a successful HTTP message
@@ -97,6 +98,14 @@ public abstract class RestCytomineController {
 
     protected List<SearchParameterEntry> retrieveSearchParameters() {
         return SearchParametersUtils.getSearchParameters(retrieveRequestParam());
+    }
+
+    protected List<Long> extractListFromParameter(String parameter) {
+        if (parameter==null ||  parameter.isEmpty()) {
+            return null;
+        }
+        return Arrays.stream(parameter.replaceAll("_",",").split(",")).map(Long::parseLong)
+                .collect(Collectors.toList());
     }
 
 

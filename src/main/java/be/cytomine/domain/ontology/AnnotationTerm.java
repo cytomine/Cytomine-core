@@ -35,9 +35,9 @@ public class AnnotationTerm extends CytomineDomain implements Serializable {
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         AnnotationTerm relationTerm = this;
         relationTerm.id = json.getJSONAttrLong("id",null);
-        relationTerm.userAnnotation = (UserAnnotation)json.getJSONAttrDomain(entityManager, "userAnnotation", new Relation(), true);
+        relationTerm.userAnnotation = (UserAnnotation)json.getJSONAttrDomain(entityManager, "userannotation", new UserAnnotation(), true);
         relationTerm.term = (Term)json.getJSONAttrDomain(entityManager, "term", new Term(), true);
-        relationTerm.user = (SecUser)json.getJSONAttrDomain(entityManager, "useer", new SecUser(), true);
+        relationTerm.user = (SecUser)json.getJSONAttrDomain(entityManager, "user", new SecUser(), true);
         relationTerm.created = json.getJSONAttrDate("created");
         relationTerm.updated = json.getJSONAttrDate("updated");
 

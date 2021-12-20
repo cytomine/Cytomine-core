@@ -61,4 +61,16 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
     List<JobLayerDTO> findAllUserJob(Long imageInstanceId, Long projectInstanceId);
 
 
+
+    @Query(value = "SELECT DISTINCT sec_user.id \n" +
+                " FROM acl_object_identity, acl_entry,acl_sid, sec_user \n" +
+                " WHERE acl_object_identity.object_id_identity = :domainId\n" +
+                " AND acl_entry.acl_object_identity=acl_object_identity.id\n" +
+                " AND acl_entry.sid = acl_sid.id " +
+                " AND acl_sid.sid = sec_user.username " +
+                " AND sec_user.class = 'be.cytomine.security.User'", nativeQuery = true)
+    List<Long> findAllAllowedUserIdList(Long domainId);
+
+    List<SecUser> findAllByIdIn(List<Long> ids);
+
 }

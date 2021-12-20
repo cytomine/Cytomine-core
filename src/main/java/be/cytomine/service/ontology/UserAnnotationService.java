@@ -107,7 +107,7 @@ public class UserAnnotationService extends ModelService {
 //    }
 
 
-    List listIncluded(ImageInstance image, String geometry, SecUser user, List<Long> terms, AnnotationDomain annotation, List<String> propertiesToShow) {
+    public List listIncluded(ImageInstance image, String geometry, SecUser user, List<Long> terms, AnnotationDomain annotation, List<String> propertiesToShow) {
         securityACLService.check(image.container(), READ);
 
         UserAnnotationListing userAnnotationListing = new UserAnnotationListing(entityManager);
@@ -211,11 +211,11 @@ public class UserAnnotationService extends ModelService {
 //    }
 
 
-    Long countByProject(Project project) {
+    public Long countByProject(Project project) {
         return countByProject(project, null, null);
     }
 
-    Long countByProject(Project project, Date startDate, Date endDate) {
+    public Long countByProject(Project project, Date startDate, Date endDate) {
         if (startDate!=null && endDate!=null) {
             return userAnnotationRepository.countByProjectAndCreatedBetween(project, startDate, endDate);
         } else if (startDate!=null) {
@@ -230,7 +230,7 @@ public class UserAnnotationService extends ModelService {
     /**
      * List all annotation with a very light structure: id, project and crop url
      */
-    List<AnnotationLight> listLight() {
+    public List<AnnotationLight> listLight() {
         securityACLService.checkAdmin(currentUserService.getCurrentUser());
         return userAnnotationRepository.listLight();
     }

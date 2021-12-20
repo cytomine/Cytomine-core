@@ -41,7 +41,7 @@ public class AnnotationListingService  {
 
     public List listGeneric(AnnotationListing al) {
         securityACLService.check(al.container(),READ);
-        if(al.getKmeans()!=null && al.getKmeansValue()==null) {
+        if(al.getKmeans()!=null && al.getKmeans() && al.getKmeansValue()==null) {
             if(al.getBbox()==null) {
                 throw new WrongArgumentException("If you want to use kmeans, you must provide image bbox:" + al.getBbox());
             }
@@ -191,11 +191,11 @@ public class AnnotationListingService  {
             }
 
             if (termAsked) {
-                lastTermId = (long)tuple.get("term");
+                lastTermId = (tuple.get("term")!=null? (long)tuple.get("term") : -1);
             }
 
             if (trackAsked) {
-                lastTrackId = (long)tuple.get("track");
+                lastTrackId = (tuple.get("track")!=null? (long)tuple.get("track") : -1);
             }
 
             lastAnnotationId = (long)tuple.get("id");

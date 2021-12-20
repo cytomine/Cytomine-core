@@ -191,6 +191,14 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
 //        }
 //    }
 //
+
+    public static Optional<AnnotationDomain> findAnnotationDomain(EntityManager entityManager, Long id) {
+        return Optional.ofNullable(getAnnotationDomain(entityManager, id, ""));
+    }
+    public static AnnotationDomain getAnnotationDomain(EntityManager entityManager, Long id) {
+        return getAnnotationDomain(entityManager, id, "");
+    }
+
     /**
      * Get user/algo/reviewed annotation with id
      * Check the correct type and return it
@@ -220,8 +228,7 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
         AnnotationDomain annotation;
         if (domain!=null) {
             annotation = (AnnotationDomain)entityManager.find(domain, id);
-        }
-        else {
+        } else {
             annotation = entityManager.find(UserAnnotation.class, id);
 //            if (annotation==null) annotation = entityManager.find(AlgoAnnotation.class, id);
 //            if (annotation==null) annotation = entityManager.find(ReviewedAnnotation.class, id);
