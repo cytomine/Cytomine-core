@@ -1,0 +1,10 @@
+FROM gradle:7-jdk11 AS imageWithDependencies
+
+# We first copy the pom.xml file and the binaries stored in the source repository.
+# This way, we retrieve all maven dependencies at the beginning. All these steps will be cached by Docker unless pom.xml or libs/ has been updated.
+# This means that we only retrieve all dependencies if we modify the dependencies definition.
+
+COPY ./build.gradle /app/build.gradle
+
+RUN cd /app && \
+    gradle dependencies
