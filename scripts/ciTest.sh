@@ -15,7 +15,20 @@ mkdir -p ./ci/reports/test
 containerId=$(docker create --network scripts_default --link nginxTest:localhost-core --link postgresqltest:postgresqltest --link mongodbtest:mongodbtest --link rabbitmqtest:rabbitmqtest  cytomine/cytomine-core-spring-test )
 #docker network connect scripts_default $containerId
 docker start -ai  $containerId
+
+if [ $? -eq 0 ]
+then
+  echo "Success: no tests fails"
+  final=$?
+else
+  echo "Failure: Some tests fails" >&2
+  final=$?
+fi
+
+
 docker cp $containerId:/app/build/test-results "$PWD"/ci/reports
 docker rm $containerId
 
 cp -r "$PWD"/ci/reports/test-results $WORKSPACE/test-results
+
+exit $final
