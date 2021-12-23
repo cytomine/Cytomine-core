@@ -14,9 +14,7 @@ FROM imageWithDependencies
 
 COPY . /app
 WORKDIR /app
-RUN mkdir /app/build
-RUN mkdir /app/build/test-results
-RUN chmod -R 777 /app/build/
+
 RUN sed -i -- 's/localhost:5433/postgresqltest:5432/g' /app/src/test/resources/application.yml
 
 CMD gradle :test
