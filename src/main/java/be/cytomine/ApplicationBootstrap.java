@@ -1,8 +1,6 @@
 package be.cytomine;
 
 import be.cytomine.config.ApplicationConfiguration;
-import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.server.StorageRepository;
@@ -34,8 +32,6 @@ import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Component
 @Order(0)
@@ -88,8 +84,9 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
         SecUser secUser = secUserRepository.findByUsernameLikeIgnoreCase("admin").orElse(null);
         if (secUser!=null) {
             secUser.setPassword(passwordEncoder.encode("password"));
+            secUserRepository.save(secUser);
         }
-        secUserRepository.save(secUser);
+
 
         // TODO: print config
         log.info ("#############################################################################");
