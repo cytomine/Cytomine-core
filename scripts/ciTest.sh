@@ -13,7 +13,7 @@ echo "Launch tests for $VERSION_NUMBER"
 docker build --rm -f scripts/docker/Dockerfile-test.build --build-arg VERSION_NUMBER=$VERSION_NUMBER -t  cytomine/cytomine-core-spring-test .
 mkdir ./ci/surefire-reports
 
-containerId=$(docker create --network scripts_default --link nginxTest:localhost-core --link postgresqltest:postgresqltest --link mongodbtest:mongodbtest --link rabbitmqtest:rabbitmqtest -v "$PWD"/ci/surefire-reports:/app/target/surefire-reports cytomine/cytomine-core-spring-test )
+containerId=$(docker create --network scripts_default --link nginxTest:localhost-core --link postgresqltest:postgresqltest --link mongodbtest:mongodbtest --link rabbitmqtest:rabbitmqtest -v "$PWD"/ci/reports:/app/build/test-results cytomine/cytomine-core-spring-test )
 #docker network connect scripts_default $containerId
 docker start -ai  $containerId
 docker rm $containerId
