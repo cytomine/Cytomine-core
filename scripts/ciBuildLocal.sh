@@ -13,8 +13,8 @@ mkdir ./ci
 
 ./scripts/ciTest.sh
 
-./scripts/ciBuildJar.sh
+#./scripts/ciBuildJar.sh
 
-./scripts/ciPublishJar.sh
+#./scripts/ciPublishJar.sh
 
-./scripts/ciBuildDockerImage.sh
+#./scripts/ciBuildDockerImage.sh

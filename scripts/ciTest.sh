@@ -15,5 +15,5 @@ mkdir -p ./ci/reports/test
 containerId=$(docker create --network scripts_default --link nginxTest:localhost-core --link postgresqltest:postgresqltest --link mongodbtest:mongodbtest --link rabbitmqtest:rabbitmqtest  cytomine/cytomine-core-spring-test )
 #docker network connect scripts_default $containerId
 docker start -ai  $containerId
-docker cp /app/build/test-results "$PWD"/ci/reports
+docker cp $containerId:/app/build/test-results "$PWD"/ci/reports
 docker rm $containerId
