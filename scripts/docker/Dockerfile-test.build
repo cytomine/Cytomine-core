@@ -14,4 +14,7 @@ FROM imageWithDependencies
 
 COPY . /app
 WORKDIR /app
+
+RUN sed -i -- 's/localhost:5433/postgresqltest:5433/g' /app/application.properties
+
 CMD gradle :test
