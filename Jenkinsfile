@@ -29,7 +29,7 @@ node {
             sh 'scripts/ciTest.sh'
         }
         stage 'Publish test'
-        step([$class: 'JUnitResultArchiver', testResults: './ci/reports/test/*.xml'])
+        step([$class: 'JUnitResultArchiver', testResults: '**/ci/reports/test-results/test/TESTS*.xml'])
 
         stage 'Clear cytomine instance'
         catchError {
