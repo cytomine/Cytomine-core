@@ -19,10 +19,10 @@ docker start -ai  $containerId
 if [ $? -eq 0 ]
 then
   echo "Success: no tests fails"
-  final=$?
+  final=0
 else
   echo "Failure: Some tests fails" >&2
-  final=$?
+  final=1
 fi
 
 
