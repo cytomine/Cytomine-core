@@ -17,3 +17,5 @@ containerId=$(docker create --network scripts_default --link nginxTest:localhost
 docker start -ai  $containerId
 docker cp $containerId:/app/build/test-results "$PWD"/ci/reports
 docker rm $containerId
+
+cp -r "$PWD"/ci/reports/test-results $WORKSPACE/test-results
