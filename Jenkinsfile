@@ -33,7 +33,7 @@ node {
 
         stage 'Publish coverage'
         jacoco(
-              execPattern: './ci/reports/jacoco/*.exec',
+              execPattern: './jacoco/*.exec',
               classPattern: './ci/build/classes',
               sourcePattern: 'src/main/java',
               exclusionPattern: 'src/test*'
