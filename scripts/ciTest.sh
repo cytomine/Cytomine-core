@@ -31,5 +31,5 @@ docker cp $containerId:/app/build "$PWD"/ci
 docker rm $containerId
 
 cp -r "$PWD"/ci/build/test-results $WORKSPACE/test-results
-cp -r "$PWD"/ci/build/jacoco $WORKSPACE/jacoco
+#cp -r "$PWD"/ci/build/jacoco $WORKSPACE/jacoco
 exit $final
