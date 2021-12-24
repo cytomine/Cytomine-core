@@ -27,8 +27,9 @@ fi
 
 
 docker cp $containerId:/app/build/test-results "$PWD"/ci/reports
+docker cp $containerId:/app/build/jacoco "$PWD"/ci/reports
 docker rm $containerId
 
 cp -r "$PWD"/ci/reports/test-results $WORKSPACE/test-results
-
+cp -r "$PWD"/ci/reports/jacoco $WORKSPACE/jacoco
 exit $final
