@@ -25,17 +25,25 @@ node {
         sh 'docker-compose -f scripts/docker-compose.yml up -d'
 
         stage 'Build and test'
-        catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+        catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
             sh 'scripts/ciTest.sh'
         }
         stage 'Publish test'
         step([$class: 'JUnitResultArchiver', testResults: '**/test-results/**/*.xml'])
 
+        stage 'Publish coverage'
+        jacoco(
+              execPattern: './ci/reports/jacoco/*.exec',
+              classPattern: './ci/build/classes',
+              sourcePattern: 'src/main/java',
+              exclusionPattern: 'src/test*'
+        )
+
         stage 'Clear cytomine instance'
         catchError {
             sh 'docker-compose -f scripts/docker-compose.yml down -v'
         }
-        stage 'Final'
-        sh 'echo 0'
     }
+            stage 'Final'
+            sh 'echo 0'
 }

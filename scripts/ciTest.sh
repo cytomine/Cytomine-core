@@ -25,11 +25,11 @@ else
   final=1
 fi
 
-
-docker cp $containerId:/app/build/test-results "$PWD"/ci/reports
-docker cp $containerId:/app/build/jacoco "$PWD"/ci/reports
+docker cp $containerId:/app/build "$PWD"/ci
+docker #cp $containerId:/app/build/test-results "$PWD"/ci/reports
+docker #cp $containerId:/app/build/jacoco "$PWD"/ci/reports
 docker rm $containerId
 
-cp -r "$PWD"/ci/reports/test-results $WORKSPACE/test-results
-cp -r "$PWD"/ci/reports/jacoco $WORKSPACE/jacoco
+cp -r "$PWD"/ci/build/test-results $WORKSPACE/test-results
+cp -r "$PWD"/ci/build/jacoco $WORKSPACE/jacoco
 exit $final
