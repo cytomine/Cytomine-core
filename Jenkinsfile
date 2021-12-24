@@ -34,7 +34,7 @@ node {
 
 
         stage ('Build and test') {
-            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+            catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                 sh 'scripts/ciTest.sh'
             }
         }
@@ -44,8 +44,7 @@ node {
         }
 
         stage ('Publish coverage') {
-            jacoco(execPattern: './jacoco/*.exec',classPattern: './ci/build/classes',sourcePattern: 'src/main/java',exclusionPattern: 'src/test*'
-            )
+            step([$class: 'JacocoPublisher', runAlways: true, execPattern: './jacoco/**.exec',classPattern: './ci/build/classes',sourcePattern: 'src/main/java',exclusionPattern: 'src/test*'])
         }
 
         stage ('Clear cytomine instance') {
