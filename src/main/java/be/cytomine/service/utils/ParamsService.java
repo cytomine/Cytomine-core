@@ -6,15 +6,11 @@ import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.AnnotationListing;
 import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.repository.security.UserRepository;
-import be.cytomine.repository.utils.TaskRepository;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.Task;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;

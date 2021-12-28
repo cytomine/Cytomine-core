@@ -3,14 +3,11 @@ package be.cytomine.api.controller.image;
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
-import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.UploadedFile;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.dto.ImageParameter;
-import be.cytomine.service.dto.LabelParameter;
 import be.cytomine.service.dto.WindowParameter;
 import be.cytomine.service.image.*;
 import be.cytomine.service.middleware.ImageServerService;
@@ -21,11 +18,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api")

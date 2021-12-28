@@ -3,7 +3,8 @@ package be.cytomine.service;
 import be.cytomine.domain.ValidationError;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.*;
+import be.cytomine.exceptions.CytomineException;
+import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.command.CommandRepository;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Slf4j

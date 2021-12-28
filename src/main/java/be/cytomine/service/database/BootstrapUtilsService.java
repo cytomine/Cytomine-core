@@ -6,7 +6,10 @@ import be.cytomine.domain.image.server.MimeImageServer;
 import be.cytomine.domain.meta.Configuration;
 import be.cytomine.domain.meta.ConfigurationReadingRole;
 import be.cytomine.domain.middleware.ImageServer;
-import be.cytomine.domain.processing.*;
+import be.cytomine.domain.processing.ImageFilter;
+import be.cytomine.domain.processing.ImagingServer;
+import be.cytomine.domain.processing.ParameterConstraint;
+import be.cytomine.domain.processing.SoftwareUserRepository;
 import be.cytomine.domain.security.Language;
 import be.cytomine.domain.security.SecUserSecRole;
 import be.cytomine.domain.security.User;
@@ -34,7 +37,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j

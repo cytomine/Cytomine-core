@@ -2,29 +2,27 @@ package be.cytomine.service.image.server;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
-import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.server.Storage;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.ServerException;
 import be.cytomine.repository.image.server.StorageRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.utils.*;
+import be.cytomine.utils.CommandResponse;
+import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.SecurityUtils;
+import be.cytomine.utils.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static org.springframework.security.acls.domain.BasePermission.*;
-import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
 @Service
 @Slf4j

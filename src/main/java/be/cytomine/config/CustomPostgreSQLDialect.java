@@ -2,12 +2,6 @@ package be.cytomine.config;
 
 import be.cytomine.utils.LTreeType;
 import com.vladmihalcea.hibernate.type.array.IntArrayType;
-import com.vladmihalcea.hibernate.type.array.StringArrayType;
-import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
-import com.vladmihalcea.hibernate.type.json.JsonNodeBinaryType;
-import com.vladmihalcea.hibernate.type.json.JsonNodeStringType;
-import com.vladmihalcea.hibernate.type.json.JsonStringType;
-import org.hibernate.dialect.PostgreSQL10Dialect;
 import org.hibernate.spatial.dialect.postgis.PostgisDialect;
 
 import java.sql.Types;

@@ -2,11 +2,16 @@ package be.cytomine.service.image;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
-import be.cytomine.domain.image.*;
+import be.cytomine.domain.image.AbstractImage;
+import be.cytomine.domain.image.AbstractSlice;
+import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.*;
-import be.cytomine.repository.image.*;
+import be.cytomine.exceptions.AlreadyExistException;
+import be.cytomine.exceptions.ConstraintException;
+import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.AbstractSliceRepository;
+import be.cytomine.repository.image.SliceInstanceRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.security.SecurityACLService;
@@ -18,7 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;

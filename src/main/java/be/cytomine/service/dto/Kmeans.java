@@ -1,6 +1,5 @@
 package be.cytomine.service.dto;
 
-import com.vividsolutions.jts.geom.Geometry;
 import lombok.Data;
 
 import java.util.ArrayList;

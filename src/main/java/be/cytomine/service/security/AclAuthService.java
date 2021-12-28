@@ -1,6 +1,5 @@
 package be.cytomine.service.security;
 
-import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.repository.security.AclRepository;
 import lombok.RequiredArgsConstructor;

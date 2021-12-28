@@ -2,7 +2,6 @@ package be.cytomine.service.processing;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
-import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.processing.ProcessingServer;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.repository.processing.ProcessingServerRepository;
@@ -15,11 +14,8 @@ import be.cytomine.utils.Task;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import static org.springframework.security.acls.domain.BasePermission.*;
 
 @Service
 @RequiredArgsConstructor

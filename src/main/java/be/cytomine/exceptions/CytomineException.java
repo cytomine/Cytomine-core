@@ -1,6 +1,6 @@
 package be.cytomine.exceptions;
+
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**

@@ -16,11 +16,9 @@ import be.cytomine.utils.filters.SearchParametersUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -28,14 +26,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URLDecoder;
-import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
-import static be.cytomine.domain.image.UploadedFile_.contentType;
-import static java.awt.SystemColor.text;
-import static org.springframework.http.MediaType.IMAGE_JPEG_VALUE;
 
 @Slf4j
 public abstract class RestCytomineController {
@@ -106,18 +102,6 @@ public abstract class RestCytomineController {
         }
         return Arrays.stream(parameter.replaceAll("_",",").split(",")).map(Long::parseLong)
                 .collect(Collectors.toList());
-    }
-
-
-    private JsonObject buildJsonList(List list) {
-        RequestParams requestParams = retrieveRequestParam();
-        requestParams.putIfAbsent("offset", "0");
-        requestParams.putIfAbsent("max", "0");
-        return buildJsonList(list, Integer.parseInt(requestParams.get("offset")), Integer.parseInt(requestParams.get("max")));
-    }
-
-    private JsonObject buildJsonList(List list, Map<String,String> params) {
-        return buildJsonList(list, Integer.parseInt(params.get("offset")), Integer.parseInt(params.get("max")));
     }
 
     private JsonObject buildJsonList(List list, Integer offsetParameter, Integer maxParameter) {
@@ -218,18 +202,10 @@ public abstract class RestCytomineController {
         return responseSuccess(list, 0, 0, isFilterRequired);
     }
 
-    private ResponseEntity<String> responseSuccessDomainList(List<? extends CytomineDomain> list) {
-        return responseSuccessDomainList(list, 0, 0);
-    }
-
     private ResponseEntity<String> responseSuccessDomainList(List<? extends CytomineDomain> list, Integer offsetParameter, Integer maxParameter) {
         return ResponseEntity.status(200).body(buildJsonList(convertCytomineDomainListToJSON(list), offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
     }
 
-
-    private ResponseEntity<String> responseSuccessGenericList(List list) {
-        return responseSuccessGenericList(list, 0, 0);
-    }
 
     private ResponseEntity<String> responseSuccessGenericList(List list, Integer offsetParameter, Integer maxParameter) {
         return ResponseEntity.status(200).body(buildJsonList(list, offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
@@ -282,22 +258,9 @@ public abstract class RestCytomineController {
         return JsonObject.toJsonString(o);
     }
 
-    protected String convertObjectToJsonObject(Object o) {
-        return JsonObject.toJsonString(o);
-    }
-
     protected void filterOneElement(Map<String, Object> element) {
 
     }
-
-    protected String convertCytomineDomainToJSON(CytomineDomain cytomineDomain) {
-        return cytomineDomain.toJSON();
-    }
-
-    protected JsonObject buildJson(List<? extends CytomineDomain> list, Map<String,String> params, boolean isFilterRequired) {
-        return buildJsonList(convertCytomineDomainListToJSON(list), params);
-    }
-
 
     protected List<JsonObject> convertCytomineDomainListToJSON(List<? extends CytomineDomain> list) {
         List<JsonObject> results = new ArrayList<>();
@@ -339,7 +302,7 @@ public abstract class RestCytomineController {
             }
         } catch (CytomineException e) {
             log.error("add error:" + e.msg);
-            log.error(e.toString());
+            log.error(e.toString(), e);
             return buildJson(Map.of("success", false, "errors", e.msg), e.code);
         }
         return null;
@@ -456,7 +419,7 @@ public abstract class RestCytomineController {
         response.setStatus(200);
         response.setHeader("Connection", "Keep-Alive");
         response.setHeader("Accept-Ranges", "bytes");
-        response.setHeader("Content-Type", "image/jpeg");
+        response.setHeader("Content-Type", contentType);
         try(OutputStream os = response.getOutputStream()) {
             os.write(bytes , 0, bytes.length);
             os.flush();

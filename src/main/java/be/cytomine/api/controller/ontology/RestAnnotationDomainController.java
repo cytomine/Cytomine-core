@@ -1,8 +1,6 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.api.controller.utils.RequestParams;
-import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
@@ -10,8 +8,6 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.*;
 import be.cytomine.service.AnnotationListingService;
-import be.cytomine.service.image.SliceInstanceService;
-import be.cytomine.service.ontology.AnnotationIndexService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.utils.GeometryUtils;
@@ -20,11 +16,16 @@ import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.persistence.EntityManager;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -40,20 +41,46 @@ public class RestAnnotationDomainController extends RestCytomineController {
     private final EntityManager entityManager;
     
     private final ParamsService paramsService;
+
+    private final RestUserAnnotationController restUserAnnotationController;
     /**
      * List all ontology visible for the current user
      * For each ontology, print the terms tree
      */
-    @RequestMapping(value = "/annotation.json", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> search() throws IOException {
 
+    @RequestMapping(value = { "/annotation/search.json"}, method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<String> searchSpecified() throws IOException {
+        return search();
+    }
+
+    @RequestMapping(value = {"/annotation.json"}, method = {RequestMethod.GET})
+    public ResponseEntity<String> search() throws IOException {
         JsonObject params = mergeQueryParamsAndBodyParams();
         AnnotationListing annotationListing = buildAnnotationListing(params);
         List annotations = annotationListingService.listGeneric(annotationListing);
-
-
         return responseSuccess(annotations);
     }
+
+
+
+    /**
+     * Add an annotation
+     * Redirect to the controller depending on the user type
+     */
+    @RequestMapping(value = "/annotation.json", method = {RequestMethod.POST})
+    public ResponseEntity<String> add(@RequestBody JsonObject jsonObject) throws IOException {
+        SecUser secUser = secUserService.getCurrentUser();
+        if(jsonObject.getJSONAttrBoolean("roi", false)) {
+            throw new CytomineMethodNotYetImplementedException("");
+        } else if (secUser.isAlgo()) {
+            throw new CytomineMethodNotYetImplementedException("");
+        } else {
+            return restUserAnnotationController.add(jsonObject);
+        }
+    }
+
+
+
 
 
 
@@ -215,7 +242,9 @@ public class RestAnnotationDomainController extends RestCytomineController {
         }
 
         // Base annotation
-        al.setBaseAnnotation(params.getJSONAttrLong("baseAnnotation"));
+        al.setBaseAnnotation(params.getJSONAttrLong("baseAnnotation")!=null?
+                params.getJSONAttrLong("baseAnnotation") : // can be an annotation id
+                params.getJSONAttrStr("baseAnnotation")); // can be a string (wkt) too
         al.setMaxDistanceBaseAnnotation(params.getJSONAttrLong("maxDistanceBaseAnnotation"));
 
         // Date

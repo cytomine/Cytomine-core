@@ -1,15 +1,10 @@
 package be.cytomine.service;
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.image.server.Storage;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.domain.security.UserJob;
-import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.security.AclRepository;
-import be.cytomine.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.acls.domain.BasePermission;
@@ -17,7 +12,6 @@ import org.springframework.security.acls.model.Permission;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
 import java.util.List;
 
 @Slf4j

@@ -1,13 +1,11 @@
 package be.cytomine.service.utils;
 
-import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.exceptions.WrongArgumentException;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;

@@ -5,8 +5,6 @@ import org.apache.commons.text.CaseUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.springframework.util.StringUtils.capitalize;
-
 public class SQLUtils {
 
     public static String toCamelCase( String text) {
@@ -18,14 +16,14 @@ public class SQLUtils {
     }
 
 
-    public static Map<String, Object> keysToCamelCase(Map<String, Object> m) {
-        Map<String, Object> newMap = new HashMap<>();
-
-        for (Map.Entry<String, Object> entry : m.entrySet()) {
-            newMap.put(toCamelCase(entry.getKey()), entry.getValue());
-        }
-        return newMap;
-    }
+//    public static Map<String, Object> keysToCamelCase(Map<String, Object> m) {
+//        Map<String, Object> newMap = new HashMap<>();
+//
+//        for (Map.Entry<String, Object> entry : m.entrySet()) {
+//            newMap.put(toCamelCase(entry.getKey()), entry.getValue());
+//        }
+//        return newMap;
+//    }
 //
 //    public static Map<String, Object> keysToCamelCase(Map<String, Object> m) {
 //        Map<String, Object> newMap = new HashMap<>();

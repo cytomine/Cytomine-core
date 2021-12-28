@@ -5,10 +5,8 @@ import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.project.EditingMode;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -275,7 +273,19 @@ public class SecurityACLService {
         }
     }
 
+    public void checkIsSameUserOrAdminContainer(CytomineDomain domain,SecUser user,SecUser currentUser) {
+        boolean isNotSameUser = (!currentRoleService.isAdminByNow(currentUser) && (!Objects.equals(user.getId(), currentUser.getId())));
+        if (isNotSameUser) {
+            if (domain!=null) {
+                if (checkPermission(domain.container(), ADMINISTRATION,currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
+                    throw new ForbiddenException("You don't have the right to do this. You must be the creator or the container admin");
+                }
+            } else {
+                throw new ObjectNotFoundException("ACL error: domain is null! Unable to process project auth checking");
+            }
+        }
 
+    }
 
 
     public void checkFullOrRestrictedForOwner(Long id, Class className, String owner) {
@@ -327,7 +337,8 @@ public class SecurityACLService {
     private Object fieldValue(Class<?> type, Object object, String propertyName){
         Field field = null;
         try {
-            field = type.getField(propertyName);
+            field = type.getDeclaredField(propertyName);
+            field.setAccessible(true);
             return field.get(object);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new ForbiddenException("Cannot extract owner from class " + type + " => " + e);

@@ -1,7 +1,8 @@
 package be.cytomine.utils;
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.exceptions.*;
+import be.cytomine.exceptions.ServerException;
+import be.cytomine.exceptions.WrongArgumentException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -105,17 +106,6 @@ public class JsonObject extends HashMap<String, Object> {
     public static List<String> toStringList(String json) {
         try {
             return new ObjectMapper().readValue(json, new TypeReference<List<String>>(){});
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-
-
-    public static List<Map<String, Object>> toObjectList(String json) {
-        try {
-            return new ObjectMapper().readValue(json, new TypeReference<List<Map<String, Object>>>(){});
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             return null;

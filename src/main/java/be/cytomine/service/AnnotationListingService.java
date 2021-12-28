@@ -11,7 +11,6 @@ import be.cytomine.service.utils.KmeansGeometryService;
 import be.cytomine.utils.GisUtils;
 import be.cytomine.utils.JsonObject;
 import lombok.AllArgsConstructor;
-import net.bytebuddy.description.annotation.AnnotationList;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -19,11 +18,7 @@ import javax.persistence.Query;
 import javax.persistence.Tuple;
 import javax.persistence.TupleElement;
 import javax.transaction.Transactional;
-
 import java.math.BigInteger;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.util.*;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
@@ -114,7 +109,7 @@ public class AnnotationListingService  {
 
                 if(first) {
                     for (String columnName : al.getAllPropertiesName()) {
-                        if(tuple.get(columnName)!=null && !excludedColumns.contains(columnName)) {
+                        if(columnExists(tuple, columnName) && !excludedColumns.contains(columnName)) {
                             realColumn.add(columnName);
                         }
                     }
@@ -134,18 +129,18 @@ public class AnnotationListingService  {
                     item.put("term", tuple.get("term")!=null? buildList(tuple.get("term")) : new ArrayList<>());
                     item.put("userByTerm",
                             tuple.get("term")!=null?
-                                    buildList(new HashMap<>(JsonObject.of("id", tuple.get("annotationTerms"), "term", tuple.get("term"), "user", buildList(tuple.get("userTerm"))))) : new ArrayList<>());
+                                    buildList(new HashMap<>(JsonObject.of("id", tuple.get("annotationterms"), "term", tuple.get("term"), "user", buildList(tuple.get("userterm"))))) : new ArrayList<>());
                 }
 
                 if (al.getColumnsToPrint().contains("track") && (al instanceof UserAnnotationListing || al instanceof AlgoAnnotationListing)) {
                     trackAsked = true;
                     item.put("track", (tuple.get("track")!=null ? buildList(tuple.get("track")) : new ArrayList<>()));
-                    item.put("annotationTrack", (tuple.get("track")!=null ? buildList(new HashMap<>(Map.of("id", tuple.get("annotationTracks"), "track", tuple.get("track")))) : new ArrayList<>()));
+                    item.put("annotationTrack", (tuple.get("track")!=null ? buildList(new HashMap<>(Map.of("id", tuple.get("annotationtracks"), "track", tuple.get("track")))) : new ArrayList<>()));
                 }
 
                 if(al.getColumnsToPrint().contains("gis")) {
-                    item.put("perimeterUnit", tuple.get("perimeterUnit") != null? GisUtils.retrieveUnit((Integer)tuple.get("perimeterUnit")) : null);
-                    item.put("areaUnit", tuple.get("areaUnit") != null? GisUtils.retrieveUnit((Integer)tuple.get("areaUnit")) : null);
+                    item.put("perimeterUnit", tuple.get("perimeterunit") != null? GisUtils.retrieveUnit((Integer)tuple.get("perimeterunit")) : null);
+                    item.put("areaUnit", tuple.get("areaunit") != null? GisUtils.retrieveUnit((Integer)tuple.get("areaunit")) : null);
                     item.put("centroid", new Point((Double)tuple.get("x"), (Double)tuple.get("y")));
                 }
 
@@ -171,22 +166,22 @@ public class AnnotationListingService  {
             } else {
                 AnnotationResult lastResult = data.get(data.size()-1);
                 if (termAsked && tuple.get("term")!=null) {
-
-                    Map userByTerm = (Map)((List)lastResult.get("userByTerm")).get(data.size()-1);
+                    List lasResultUserByTerm = (List) lastResult.get("userByTerm");
+                    Map userByTerm = (Map)(lasResultUserByTerm).get(lasResultUserByTerm.size()-1);
                     List term = ((List)lastResult.get("term"));
                     if ((Long)tuple.get("term") == lastTermId) {
-                        if (!((List)(userByTerm.get("user"))).contains(tuple.get("userTerm"))) {
-                            ((List)(userByTerm.get("user"))).add(tuple.get("userTerm"));
+                        if (!((List)(userByTerm.get("user"))).contains(tuple.get("userterm"))) {
+                            ((List)(userByTerm.get("user"))).add(tuple.get("userterm"));
                         }
                     } else if (!term.contains(tuple.get("term"))) {
                         ((List)(lastResult.get("term"))).add(tuple.get("term"));
-                        ((List)lastResult.get("userByTerm")).add(new HashMap<>(Map.of("id", tuple.get("annotationTerms"), "term", tuple.get("term"), "user", buildList(tuple.get("userTerm")))));
+                        ((List)lastResult.get("userByTerm")).add(new HashMap<>(Map.of("id", tuple.get("annotationterms"), "term", tuple.get("term"), "user", buildList(tuple.get("userterm")))));
                     }
                 }
 
                 if (trackAsked && tuple.get("track")!=null && (long)tuple.get("track") != lastTrackId && !((List)lastResult.get("track")).contains(tuple.get("track"))) {
                     ((List)lastResult.get("track")).add(tuple.get("track"));
-                    ((List)lastResult.get("annotationTrack")).add(new HashMap<>(Map.of("id", tuple.get("annotationTracks"), "track", tuple.get("track") )));
+                    ((List)lastResult.get("annotationTrack")).add(new HashMap<>(Map.of("id", tuple.get("annotationtracks"), "track", tuple.get("track") )));
                 }
             }
 
@@ -201,6 +196,10 @@ public class AnnotationListingService  {
             lastAnnotationId = (long)tuple.get("id");
         }
         return data;
+    }
+
+    private boolean columnExists(Map<String, Object> tuple, String columnName) {
+        return tuple.get(columnName) != null || tuple.get(columnName.toLowerCase()) != null;
     }
 
     List buildList(Object firstElement) {

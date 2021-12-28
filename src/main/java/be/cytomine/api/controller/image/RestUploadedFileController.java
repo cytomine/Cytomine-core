@@ -2,14 +2,11 @@ package be.cytomine.api.controller.image;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.api.controller.utils.RequestParams;
-import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.image.AbstractImageService;
-import be.cytomine.service.image.UploadedFileService;
 import be.cytomine.service.image.UploadedFileService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.utils.JsonObject;

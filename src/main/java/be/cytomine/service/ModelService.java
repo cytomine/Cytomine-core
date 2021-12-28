@@ -5,22 +5,21 @@ import be.cytomine.domain.ValidationError;
 import be.cytomine.domain.command.Command;
 import be.cytomine.domain.command.DeleteCommand;
 import be.cytomine.domain.command.Transaction;
-import be.cytomine.exceptions.*;
+import be.cytomine.exceptions.InvalidRequestException;
+import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.exceptions.ServerException;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
-import be.cytomine.utils.filters.SearchParameterEntry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.ReflectionUtils;
 
 import javax.persistence.EntityManager;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 

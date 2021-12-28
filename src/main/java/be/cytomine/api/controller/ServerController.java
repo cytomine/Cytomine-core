@@ -25,7 +25,7 @@ public class ServerController extends RestCytomineController {
     private final CurrentUserService currentUserService;
 
     @PostMapping("/server/ping.json")
-    public ResponseEntity<String> createUser(@RequestBody JsonObject json,  HttpSession session) {
+    public ResponseEntity<String> ping(@RequestBody JsonObject json,  HttpSession session) {
         log.debug("REST request to ping");
         JsonObject response = new JsonObject();
         response.put("alive", true);

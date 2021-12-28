@@ -1,21 +1,17 @@
 package be.cytomine.api.controller.image;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.CompanionFile;
 import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.service.image.*;
+import be.cytomine.service.image.ImageInstanceService;
+import be.cytomine.service.image.NestedImageInstanceService;
+import be.cytomine.service.image.UploadedFileService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
-
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/api")

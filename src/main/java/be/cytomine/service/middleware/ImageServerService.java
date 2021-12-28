@@ -1,9 +1,10 @@
 package be.cytomine.service.middleware;
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.command.*;
+import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.middleware.ImageServer;
+import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.InvalidRequestException;
 import be.cytomine.exceptions.WrongArgumentException;
@@ -32,7 +33,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static be.cytomine.utils.HttpUtils.getContentFromUrl;
 
@@ -171,13 +171,12 @@ public class ImageServerService extends ModelService {
         return makeRequest(imageServerInternalUrl,"/slice/thumb." + format, parameters);
     }
 
-// TODO!!!!!!!!
-//
-//    def crop(AnnotationDomain annotation, def params, def urlOnly = false, def parametersOnly = false) {
-//        params.geometry = annotation.location
-//        crop(annotation.slice, params, urlOnly, parametersOnly)
-//    }
-//
+
+    public byte[] crop(AnnotationDomain annotation, CropParameter params) throws UnsupportedEncodingException, ParseException {
+        params.setLocation(annotation.getWktLocation());
+        return crop(annotation.getSlice().getBaseSlice(), params);
+    }
+
 
 
 

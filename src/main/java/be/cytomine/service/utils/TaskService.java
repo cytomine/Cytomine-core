@@ -7,8 +7,6 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 
-import static org.springframework.security.acls.domain.BasePermission.READ;
-
 @Service
 @Transactional
 public class TaskService {

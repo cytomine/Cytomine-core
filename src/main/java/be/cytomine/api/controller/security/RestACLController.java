@@ -3,14 +3,12 @@ package be.cytomine.api.controller.security;
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.CytomineException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.security.AclAuthService;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.persistence.EntityManager;
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -52,18 +48,18 @@ public class RestACLController extends RestCytomineController {
         }
     }
 
-    public CytomineDomain retrieveCytomineDomain(String domainClassName, Long domainIdent) {
-        CytomineDomain domain;
-        try {
-            domain = (CytomineDomain)entityManager.find(Class.forName(domainClassName), domainIdent);//Class.forName(domainClassName, false, Thread.currentThread().getContextClassLoader()).read(domainIdent);
-        } catch(Exception e) {
-            throw new ObjectNotFoundException("Cannot find object " + domainClassName + " with id " + domainIdent);
-        }
-        if(domain!=null) {
-            throw new ObjectNotFoundException("Request not valid: domainClassName="+ domainClassName + ", domainIdent= " + domainIdent);
-        }
-        return domain;
-    }
+//    public CytomineDomain retrieveCytomineDomain(String domainClassName, Long domainIdent) {
+//        CytomineDomain domain;
+//        try {
+//            domain = (CytomineDomain)entityManager.find(Class.forName(domainClassName), domainIdent);//Class.forName(domainClassName, false, Thread.currentThread().getContextClassLoader()).read(domainIdent);
+//        } catch(Exception e) {
+//            throw new ObjectNotFoundException("Cannot find object " + domainClassName + " with id " + domainIdent);
+//        }
+//        if(domain!=null) {
+//            throw new ObjectNotFoundException("Request not valid: domainClassName="+ domainClassName + ", domainIdent= " + domainIdent);
+//        }
+//        return domain;
+//    }
 
 
 //    @RestApiMethod(description="Get all ACL for a user and a class.", listing=true)

@@ -1,6 +1,5 @@
 package be.cytomine.utils.filters;
 
-import lombok.Builder;
 import lombok.Data;
 
 import java.util.Map;

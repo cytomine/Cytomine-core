@@ -1,8 +1,6 @@
 package be.cytomine.security;
 
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.utils.SecurityUtils;
 import org.slf4j.Logger;
@@ -19,8 +17,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
-
-import static java.lang.Math.min;
 
 public class TokenKeyFilter extends OncePerRequestFilter {
 

@@ -2,7 +2,6 @@ package be.cytomine.api.controller.image;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.api.controller.utils.RequestParams;
-import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
@@ -16,7 +15,6 @@ import be.cytomine.service.dto.ImageParameter;
 import be.cytomine.service.dto.LabelParameter;
 import be.cytomine.service.dto.WindowParameter;
 import be.cytomine.service.image.ImageInstanceService;
-import be.cytomine.service.image.ImagePropertiesService;
 import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.project.ProjectService;
@@ -30,14 +28,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-
-import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @RestController
 @RequestMapping("/api")

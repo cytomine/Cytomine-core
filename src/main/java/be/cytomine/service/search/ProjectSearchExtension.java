@@ -1,6 +1,5 @@
 package be.cytomine.service.search;
 
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
