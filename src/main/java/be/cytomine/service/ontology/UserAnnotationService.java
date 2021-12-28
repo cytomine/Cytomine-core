@@ -4,25 +4,26 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.ontology.*;
+import be.cytomine.domain.ontology.AnnotationDomain;
+import be.cytomine.domain.ontology.AnnotationTerm;
+import be.cytomine.domain.ontology.Term;
+import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.AnnotationLight;
 import be.cytomine.dto.SimplifiedAnnotation;
-import be.cytomine.exceptions.*;
-import be.cytomine.repository.AlgoAnnotationListing;
+import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
+import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.UserAnnotationListing;
-import be.cytomine.repository.ontology.RelationRepository;
-import be.cytomine.repository.ontology.TermRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
-import be.cytomine.service.UrlApi;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.dto.BoundariesCropParameter;
 import be.cytomine.service.image.ImageInstanceService;
-import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.image.SliceInstanceService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.SimplifyGeometryService;
@@ -35,21 +36,16 @@ import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import liquibase.pro.packaged.A;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.FetchMode;
-import org.hibernate.criterion.Restrictions;
-import org.hibernate.spatial.criterion.SpatialRestrictions;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Tuple;
 import javax.transaction.Transactional;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static org.springframework.security.acls.domain.BasePermission.*;
+import static org.springframework.security.acls.domain.BasePermission.DELETE;
+import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Slf4j
 @Service
@@ -76,6 +72,8 @@ public class UserAnnotationService extends ModelService {
     private final TransactionService transactionService;
 
     private final ValidateGeometryService validateGeometryService;
+
+    private final AnnotationTermService annotationTermService;
 
     @Override
     public Class currentDomain() {
@@ -204,11 +202,15 @@ public class UserAnnotationService extends ModelService {
 //        return annotations
 //    }
 
-    //TODO: seems to be useless ; no migration?:
-//    def count(User user, Project project = null) {
-//        if (project) return UserAnnotation.countByUserAndProject(user, project)
-//        return UserAnnotation.countByUser(user)
-//    }
+    public Long count(User user, Project project) {
+        if (project!=null) {
+            securityACLService.checkIsSameUserOrAdminContainer(project, user, currentUserService.getCurrentUser());
+            return userAnnotationRepository.countByUserAndProject(user, project);
+        } else {
+            securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
+            return userAnnotationRepository.countByUser(user);
+        }
+    }
 
 
     public Long countByProject(Project project) {
@@ -351,13 +353,12 @@ public class UserAnnotationService extends ModelService {
 
         List<Term> terms = new ArrayList<>();
         for (Long termId : termIds) {
-            throw new CytomineMethodNotYetImplementedException("");
-//            CommandResponse response = annotationTermService.addAnnotationTerm(addedAnnotation.getId(), termId, null, currentUser.getId(), currentUser, transaction);
-//            terms.add(((AnnotationTerm)(response.getData().get("annotationterm"))).getTerm());
+
+            CommandResponse response = annotationTermService.addAnnotationTerm(addedAnnotation.getId(), termId, null, currentUser.getId(), currentUser, transaction);
+            terms.add(((AnnotationTerm)(response.getObject())).getTerm());
         }
 
         ((Map<String, Object>)commandResponse.getData().get("annotation")).put("term", terms);
-
 
 
         // Add properties if any

@@ -3,6 +3,7 @@ package be.cytomine.repository.ontology;
 
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.AnnotationLight;
 import be.cytomine.service.UrlApi;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,6 +20,10 @@ import java.util.List;
 public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, Long>, JpaSpecificationExecutor<UserAnnotation>  {
 
     Long countByProject(Project project);
+
+    Long countByUserAndProject(User user, Project project);
+
+    Long countByUser(User user);
 
     Long countByProjectAndCreatedAfter(Project project, Date createdMin);
 
@@ -44,6 +49,9 @@ public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, 
         return annotationLights;
     }
 
+
+    @Query(value = "SELECT a.id id, ST_distance(a.location,ST_GeometryFromText(:geometry))  FROM user_annotation a WHERE project_id = :projectId", nativeQuery = true)
+    List<Tuple> listAnnotationWithDistance(Long projectId, String geometry);
 
 
 }

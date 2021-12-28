@@ -4,25 +4,19 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.Language;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.UrlApi;
 import be.cytomine.utils.JsonObject;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.WKTReader;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Entity
@@ -87,6 +81,11 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
 
     }
 
+    @Override
+    public boolean isUserAnnotation() {
+        return true;
+    }
+
     // TODO:
 //    def tracksId() {
 //        return tracks().collect { it.id }.unique()
@@ -117,6 +116,11 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
      * Check if its a review annotation
      */
     public boolean isReviewedAnnotation() {
+        return false;
+    }
+
+    @Override
+    public boolean isRoiAnnotation() {
         return false;
     }
 

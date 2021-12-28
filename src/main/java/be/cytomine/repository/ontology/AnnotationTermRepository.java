@@ -1,11 +1,13 @@
 package be.cytomine.repository.ontology;
 
-import be.cytomine.domain.ontology.*;
+import be.cytomine.domain.ontology.AnnotationTerm;
+import be.cytomine.domain.ontology.Term;
+import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
+import liquibase.repackaged.com.opencsv.bean.CsvToBean;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,4 +22,5 @@ public interface AnnotationTermRepository extends JpaRepository<AnnotationTerm, 
 
     Optional<AnnotationTerm>  findByUserAnnotationIdAndTermIdAndUserId(Long annotation, Long term, Long user);
 
+    List<AnnotationTerm> findAllByUserAndUserAnnotation(User user, UserAnnotation annotation);
 }

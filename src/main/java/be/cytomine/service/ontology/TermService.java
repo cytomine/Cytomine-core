@@ -3,14 +3,15 @@ package be.cytomine.service.ontology;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.ontology.Relation;
 import be.cytomine.domain.ontology.RelationTerm;
 import be.cytomine.domain.ontology.Term;
+import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.repository.ontology.OntologyRepository;
+import be.cytomine.repository.ontology.AnnotationTermRepository;
 import be.cytomine.repository.ontology.RelationRepository;
 import be.cytomine.repository.ontology.TermRepository;
 import be.cytomine.service.CurrentUserService;
@@ -24,7 +25,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.springframework.security.acls.domain.BasePermission.*;
 
@@ -43,6 +48,8 @@ public class TermService extends ModelService {
     private final CurrentUserService currentUserService;
 
     private final RelationTermService relationTermService;
+
+    private final AnnotationTermRepository annotationTermRepository;
 
     @Override
     public Class currentDomain() {
@@ -76,6 +83,7 @@ public class TermService extends ModelService {
         securityACLService.check(project,READ);
         return termRepository.findAllByOntology(project.getOntology());
     }
+
 
     public List<Long> getAllTermId(Project project) {
         securityACLService.check(project.container(), READ);

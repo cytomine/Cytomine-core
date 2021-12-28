@@ -1,6 +1,5 @@
 package be.cytomine.domain.ontology;
 
-import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.utils.JsonObject;
@@ -8,15 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static be.cytomine.domain.ontology.RelationTerm.PARENT;
 
 @Entity
 @Getter

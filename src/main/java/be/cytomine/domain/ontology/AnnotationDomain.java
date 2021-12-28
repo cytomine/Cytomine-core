@@ -5,29 +5,22 @@ import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.Language;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.dto.Point;
 import be.cytomine.utils.GisUtils;
 import be.cytomine.utils.JsonObject;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Entity
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
@@ -118,6 +111,11 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
     public abstract List<Long> termsId();
 
     /**
+     * Check if its an user annotation
+     */
+    public abstract boolean isUserAnnotation();
+
+    /**
      * Check if its an algo annotation
      */
     public abstract boolean isAlgoAnnotation();
@@ -126,6 +124,8 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
      * Check if its a review annotation
      */
     public abstract boolean isReviewedAnnotation();
+
+    public abstract boolean isRoiAnnotation();
 
     /**
      * Get all terms for automatic review
@@ -206,24 +206,28 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
      * @return Annotation
      */
     public static AnnotationDomain getAnnotationDomain(EntityManager entityManager, Long id, String className) {
+        // TODO: move in AnnotationDomainRepo
         Class domain = null;
-        switch (className) {
-            case "be.cytomine.ontology.UserAnnotation": //TODO: migration
-                domain = UserAnnotation.class;
-                break;
-            case "be.cytomine.ontology.AlgoAnnotation":
-                throw new CytomineMethodNotYetImplementedException("migration");
-                //domain = AlgoAnnotation.class;
-                //break;
-            case "be.cytomine.ontology.ReviewedAnnotation":
-                throw new CytomineMethodNotYetImplementedException("migration");
-                //domain = ReviewedAnnotation.class;
-                //break;
-            case "be.cytomine.processing.RoiAnnotation":
-                throw new CytomineMethodNotYetImplementedException("migration");
-                //domain = RoiAnnotation.class;
-                //break;
+        if (className!=null) {
+            switch (className) {
+                case "be.cytomine.ontology.UserAnnotation": //TODO: migration
+                    domain = UserAnnotation.class;
+                    break;
+                case "be.cytomine.ontology.AlgoAnnotation":
+                    throw new CytomineMethodNotYetImplementedException("migration");
+                    //domain = AlgoAnnotation.class;
+                    //break;
+                case "be.cytomine.ontology.ReviewedAnnotation":
+                    throw new CytomineMethodNotYetImplementedException("migration");
+                    //domain = ReviewedAnnotation.class;
+                    //break;
+                case "be.cytomine.processing.RoiAnnotation":
+                    throw new CytomineMethodNotYetImplementedException("migration");
+                    //domain = RoiAnnotation.class;
+                    //break;
+            }
         }
+
 
         AnnotationDomain annotation;
         if (domain!=null) {

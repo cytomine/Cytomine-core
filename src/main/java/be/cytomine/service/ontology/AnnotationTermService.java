@@ -5,7 +5,10 @@ import be.cytomine.domain.command.AddCommand;
 import be.cytomine.domain.command.Command;
 import be.cytomine.domain.command.DeleteCommand;
 import be.cytomine.domain.command.Transaction;
-import be.cytomine.domain.ontology.*;
+import be.cytomine.domain.ontology.AnnotationDomain;
+import be.cytomine.domain.ontology.AnnotationTerm;
+import be.cytomine.domain.ontology.Term;
+import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
@@ -15,7 +18,6 @@ import be.cytomine.repository.ontology.AnnotationTermRepository;
 import be.cytomine.repository.ontology.TermRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.command.TransactionService;
@@ -34,7 +36,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.springframework.security.acls.domain.BasePermission.*;
+import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Slf4j
 @Service
@@ -71,6 +73,12 @@ public class AnnotationTermService extends ModelService {
     public List<AnnotationTerm> list(UserAnnotation userAnnotation) {
         securityACLService.check(userAnnotation.container(),READ);
         return annotationTermRepository.findAllByUserAnnotation(userAnnotation);
+    }
+
+
+    public List<AnnotationTerm> list(UserAnnotation annotation, User user) {
+        securityACLService.check(annotation.container(),READ);
+        return annotationTermRepository.findAllByUserAndUserAnnotation(user, annotation);
     }
 
     //TODO: seems to be useless, migration required?

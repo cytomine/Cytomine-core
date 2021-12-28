@@ -1,19 +1,17 @@
 package be.cytomine.service.ontology;
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.command.*;
-import be.cytomine.domain.ontology.Ontology;
+import be.cytomine.domain.command.AddCommand;
+import be.cytomine.domain.command.Command;
+import be.cytomine.domain.command.DeleteCommand;
+import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.ontology.Relation;
 import be.cytomine.domain.ontology.RelationTerm;
 import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.repository.ontology.RelationRepository;
 import be.cytomine.repository.ontology.RelationTermRepository;
-import be.cytomine.repository.ontology.TermRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.security.SecurityACLService;
@@ -25,7 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static org.springframework.security.acls.domain.BasePermission.*;
 
