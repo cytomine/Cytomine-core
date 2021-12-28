@@ -3,9 +3,7 @@ package be.cytomine.repository.image;
 
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.project.Project;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;

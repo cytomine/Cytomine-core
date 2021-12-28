@@ -1,7 +1,6 @@
 package be.cytomine.repository.middleware;
 
 import be.cytomine.domain.middleware.AmqpQueue;
-import be.cytomine.domain.middleware.AmqpQueueConfig;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

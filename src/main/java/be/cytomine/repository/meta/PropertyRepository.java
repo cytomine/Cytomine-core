@@ -1,7 +1,6 @@
 package be.cytomine.repository.meta;
 
 import be.cytomine.domain.meta.Property;
-import be.cytomine.domain.ontology.Ontology;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

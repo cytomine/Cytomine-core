@@ -1,7 +1,9 @@
 package be.cytomine.repository.image;
 
 
-import be.cytomine.domain.image.*;
+import be.cytomine.domain.image.AbstractSlice;
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.image.SliceInstance;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;

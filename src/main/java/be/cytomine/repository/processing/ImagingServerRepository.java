@@ -1,6 +1,5 @@
 package be.cytomine.repository.processing;
 
-import be.cytomine.domain.processing.ImageFilter;
 import be.cytomine.domain.processing.ImagingServer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;

@@ -4,13 +4,11 @@ package be.cytomine.repository.security;
 import be.cytomine.domain.security.SecRole;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.SecUserSecRole;
-import be.cytomine.domain.security.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 

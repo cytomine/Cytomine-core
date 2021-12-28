@@ -10,11 +10,7 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
 import lombok.Data;
-import lombok.Getter;
 
 import javax.persistence.EntityManager;
 import java.util.*;
@@ -83,7 +79,7 @@ public abstract class AnnotationListing {
     String bbox = null;
     String bboxAnnotation = null;
 
-    Long baseAnnotation = null;
+    Object baseAnnotation = null;
     Long maxDistanceBaseAnnotation = null;
 
 
@@ -423,8 +419,7 @@ public abstract class AnnotationListing {
 
     String getSliceConst() {
         if (slice!=null) {
-            SliceInstance sliceInstance = entityManager.find(SliceInstance.class, slice);
-            if (slice!=null) {
+            if (entityManager.find(SliceInstance.class, slice)==null) {
                 throw new ObjectNotFoundException("Slice "+slice+" not exist!");
             }
             return "AND a.slice_id = " + slice + "\n";
@@ -460,7 +455,7 @@ public abstract class AnnotationListing {
                 throw new ObjectNotFoundException("You need to provide a 'baseAnnotation' parameter (annotation id/location = "+baseAnnotation+")!");
             } else {
                 try {
-                    AnnotationDomain base = AnnotationDomain.getAnnotationDomain(entityManager, baseAnnotation, null);
+                    AnnotationDomain base = AnnotationDomain.getAnnotationDomain(entityManager, ((Long)baseAnnotation), null);
                     //ST_distance(a.location,ST_GeometryFromText('POINT (0 0)'))
                     return "AND ST_distance(a.location,ST_GeometryFromText('"+base.getWktLocation() + "}')) <= "+maxDistanceBaseAnnotation+"\n";
                 } catch (Exception e) {
@@ -559,7 +554,7 @@ public abstract class AnnotationListing {
             addIfMissingColumn("slice");
             Long sliceId = (beforeSlice!=null) ? beforeSlice : afterSlice;
             SliceInstance sliceInstance = entityManager.find(SliceInstance.class, sliceId);
-            if (sliceInstance!=null) {
+            if (sliceInstance==null) {
                 throw new ObjectNotFoundException("Slice "+ sliceId +" not exists !");
             }
             String sign = (beforeSlice!=null) ? "<" : ">";
