@@ -1,10 +1,7 @@
 package be.cytomine.domain.image.server;
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.security.Language;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.service.ModelService;
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
 

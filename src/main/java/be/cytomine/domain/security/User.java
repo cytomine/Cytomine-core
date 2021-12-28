@@ -1,25 +1,14 @@
 package be.cytomine.domain.security;
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.ValidationError;
 import be.cytomine.utils.JsonObject;
-import lombok.Builder;
 import lombok.Data;
-import lombok.experimental.SuperBuilder;
 
 import javax.persistence.*;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @Entity
 @Data

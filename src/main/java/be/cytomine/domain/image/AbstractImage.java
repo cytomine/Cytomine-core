@@ -1,15 +1,11 @@
 package be.cytomine.domain.image;
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.image.server.Storage;
-import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.UserJob;
 import be.cytomine.service.UrlApi;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
-import be.cytomine.domain.image.UploadedFile;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
@@ -17,7 +13,6 @@ import javax.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Entity
 @Getter
@@ -198,12 +193,6 @@ public class AbstractImage extends CytomineDomain {
             return uploadedFile.container();
         }
         return null;
-    }
-    
-    
-    @Override
-    public String toJSON() {
-        return toJsonObject().toJsonString();
     }
 
     @Override

@@ -1,7 +1,6 @@
 package be.cytomine.domain;
 
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
 import javax.validation.ConstraintViolation;
 

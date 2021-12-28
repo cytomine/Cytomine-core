@@ -1,7 +1,6 @@
 package be.cytomine.domain.meta;
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.processing.ImagingServer;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +9,6 @@ import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import java.util.Optional;
 
 @Entity
 @Getter

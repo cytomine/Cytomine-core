@@ -2,12 +2,9 @@ package be.cytomine.domain.project;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.CommandHistory;
-import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.UserAnnotation;
-import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.LazyCollection;

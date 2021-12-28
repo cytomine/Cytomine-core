@@ -1,18 +1,9 @@
 package be.cytomine.domain.acl;
 
-import java.io.Serializable;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-
 import org.hibernate.annotations.Immutable;
+
+import javax.persistence.*;
+import java.io.Serializable;
 
 @Entity(name = "AclEntry")
 @Table(name = "acl_entry")

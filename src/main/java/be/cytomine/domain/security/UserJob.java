@@ -1,14 +1,8 @@
 package be.cytomine.domain.security;
 
-import be.cytomine.domain.CytomineDomain;
-import be.cytomine.utils.JsonObject;
 import lombok.Data;
 
 import javax.persistence.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 
 @Entity
 @Data

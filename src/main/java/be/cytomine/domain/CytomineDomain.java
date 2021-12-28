@@ -1,14 +1,10 @@
 package be.cytomine.domain;
 
-import be.cytomine.domain.security.Language;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.JsonObject;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;

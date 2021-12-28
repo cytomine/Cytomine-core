@@ -1,15 +1,14 @@
 package be.cytomine.domain.processing;
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.meta.ConfigurationReadingRole;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.EntityManager;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 
 @Entity
 @Getter

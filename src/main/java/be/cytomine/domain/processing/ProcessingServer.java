@@ -2,9 +2,6 @@ package be.cytomine.domain.processing;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.middleware.AmqpQueue;
-import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
@@ -15,8 +12,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.ManyToOne;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 @Entity
 @Getter

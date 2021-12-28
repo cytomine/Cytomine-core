@@ -3,14 +3,12 @@ package be.cytomine.domain.command;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.service.ModelService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 @Entity
 @Data

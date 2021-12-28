@@ -3,11 +3,7 @@ package be.cytomine.domain.image;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.middleware.ImageServer;
-import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.Language;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.LongArrayToBytesConverter;
@@ -18,8 +14,6 @@ import org.hibernate.annotations.Type;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 @Entity
 @Getter
