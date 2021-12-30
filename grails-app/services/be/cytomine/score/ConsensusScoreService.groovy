@@ -144,6 +144,7 @@ class ConsensusScoreService extends ModelService {
         securityACLService.check(imageInstance.container(), ADMINISTRATION)
         SecUser currentUser = cytomineService.getCurrentUser()
         securityACLService.checkIsSameUser(currentUser, SecUser.get(json.user))
+        securityACLService.checkisNotReadOnly(imageInstance.container())
         ScoreValue scoreValue = ScoreValue.read(json.scoreValue)
         if (!scoreValue) {
             throw new ObjectNotFoundException("Score value ${json.scoreValue} not found")
@@ -170,6 +171,7 @@ class ConsensusScoreService extends ModelService {
         SecUser currentUser = cytomineService.getCurrentUser()
         securityACLService.check(domain.container(), ADMINISTRATION)
         securityACLService.checkIsSameUser(currentUser, domain.user)
+        securityACLService.checkisNotReadOnly(domain.imageInstance.container())
         Command c = new DeleteCommand(user: currentUser, transaction: transaction)
         return executeCommand(c, domain, null)
     }

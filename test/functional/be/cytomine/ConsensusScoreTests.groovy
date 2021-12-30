@@ -28,6 +28,7 @@ import be.cytomine.test.BasicInstanceBuilder
 import be.cytomine.test.Infos
 import be.cytomine.test.http.ConsensusScoreAPI
 import be.cytomine.test.http.ImageScoreAPI
+import be.cytomine.test.http.ProjectAPI
 import grails.converters.JSON
 import org.codehaus.groovy.grails.web.json.JSONArray
 import be.cytomine.score.ConsensusScore
@@ -152,4 +153,23 @@ class ConsensusScoreTests {
         result = ConsensusScoreAPI.show(consensusScore.imageInstance.id, consensusScore.scoreValue.score.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 404 == result.code
     }
+
+    void testAddConsensusScoreInLockedProject() {
+        ConsensusScore consensusScore = BasicInstanceBuilder.getConsensusScoreNotExist()
+        ProjectAPI.lock(consensusScore.imageInstance.project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        def result = ConsensusScoreAPI.create(consensusScore.imageInstance.id, consensusScore.scoreValue.score.id, consensusScore.scoreValue.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 403 == result.code
+    }
+
+    void testDeleteConsensusScoreInLockedProject() {
+        ConsensusScore consensusScore = BasicInstanceBuilder.getConsensusScoreNotExist()
+        consensusScore = BasicInstanceBuilder.saveDomain(consensusScore)
+        ProjectAPI.lock(consensusScore.imageInstance.project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        def result = ConsensusScoreAPI.delete(consensusScore.imageInstance.id, consensusScore.scoreValue.score.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 403 == result.code
+
+        result = ConsensusScoreAPI.show(consensusScore.imageInstance.id, consensusScore.scoreValue.score.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+    }
+
 }
