@@ -2,10 +2,13 @@ package be.cytomine.security;
 
 import be.cytomine.domain.security.SecUser;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Date;
 
-@Data
+@Getter
+@Setter
 public class AuthWithToken {
 
     SecUser user;

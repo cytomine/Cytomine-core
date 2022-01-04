@@ -6,12 +6,15 @@ import be.cytomine.domain.security.SecUser;
 import be.cytomine.service.ModelService;
 import be.cytomine.utils.CommandResponse;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Transient;
 
-@Data
+@Getter
+@Setter
 @Entity
 @DiscriminatorValue("be.cytomine.command.DeleteCommand")
 public class DeleteCommand extends Command {

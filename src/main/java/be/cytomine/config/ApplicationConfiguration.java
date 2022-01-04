@@ -2,13 +2,16 @@ package be.cytomine.config;
 
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
-@Data
+@Getter
+@Setter
 public class ApplicationConfiguration {
 
     private String version;

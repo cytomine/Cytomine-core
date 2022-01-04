@@ -3,11 +3,14 @@ package be.cytomine.domain.command;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.Entity;
 
 @Entity
-@Data
+@Getter
+@Setter
 public class Transaction extends CytomineDomain {
 
     @Override

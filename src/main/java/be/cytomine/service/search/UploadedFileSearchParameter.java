@@ -2,13 +2,16 @@ package be.cytomine.service.search;
 
 import be.cytomine.utils.filters.SearchParameterEntry;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 public class UploadedFileSearchParameter {
 

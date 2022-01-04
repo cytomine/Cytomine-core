@@ -7,11 +7,14 @@ import be.cytomine.service.ModelService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 
 @Entity
-@Data
+@Getter
+@Setter
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name="class",
         discriminatorType = DiscriminatorType.STRING)

@@ -2,10 +2,13 @@ package be.cytomine.service.dto;
 
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Date;
 
-@Data
+@Getter
+@Setter
 public class JobLayerDTO {
 
     private Long id;

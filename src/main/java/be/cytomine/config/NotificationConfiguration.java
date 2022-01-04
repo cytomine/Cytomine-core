@@ -1,8 +1,11 @@
 package be.cytomine.config;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class NotificationConfiguration {
 
     private String email;

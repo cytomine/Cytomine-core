@@ -3,6 +3,8 @@ package be.cytomine.domain.security;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.Email;
@@ -11,7 +13,8 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 @Entity
-@Data
+@Getter
+@Setter
 @DiscriminatorValue("be.cytomine.security.User")
 public class User extends SecUser {
 

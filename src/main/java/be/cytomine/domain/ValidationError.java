@@ -1,10 +1,13 @@
 package be.cytomine.domain;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.validation.ConstraintViolation;
 
-@Data
+@Getter
+@Setter
 public class ValidationError {
 
     private String message;

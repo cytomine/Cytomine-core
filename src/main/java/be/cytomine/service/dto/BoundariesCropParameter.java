@@ -1,8 +1,11 @@
 package be.cytomine.service.dto;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class BoundariesCropParameter {
 
     private Integer topLeftX;

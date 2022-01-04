@@ -18,10 +18,7 @@ import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SQLSearchParameter;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import be.cytomine.utils.filters.SearchParameterProcessed;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
@@ -630,7 +627,8 @@ public class ProjectService extends ModelService {
 
 }
 
-@Data
+@Getter
+@Setter
 @Builder
 class ProjectSearchParameter {
 
@@ -659,7 +657,8 @@ class ProjectSearchParameter {
 }
 
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 class LastOpenedProject {
     Long id;

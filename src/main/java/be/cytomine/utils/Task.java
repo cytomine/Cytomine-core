@@ -1,13 +1,16 @@
 package be.cytomine.utils;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * A task provide info about a command.
  * The main info is the progress status
  * THIS CLASS CANNOT BE A DOMAIN! Because it cannot works with hibernate transaction.
  */
-@Data
+@Getter
+@Setter
 public class Task {
 
     private Long id;
