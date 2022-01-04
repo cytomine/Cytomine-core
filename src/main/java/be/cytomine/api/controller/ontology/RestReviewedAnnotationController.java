@@ -186,8 +186,8 @@ public class RestReviewedAnnotationController extends RestCytomineController {
         imageInstanceService.stopReview(imageInstance, cancel);
 
         String message = cancel ?
-                imageInstance.getReviewUser().getUsername() + " start reviewing on " + imageInstance.getInstanceFilename() :
-                imageInstance.getReviewUser().getUsername() + " validate reviewing on " + imageInstance.getInstanceFilename();
+                currentUserService.getCurrentUsername() + " cancel reviewing on " + imageInstance.getInstanceFilename() :
+                currentUserService.getCurrentUsername() + " validate reviewing on " + imageInstance.getInstanceFilename();
 
         return responseSuccess(JsonObject.of(
                 "message", message,

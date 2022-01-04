@@ -219,9 +219,8 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
                     //domain = AlgoAnnotation.class;
                     //break;
                 case "be.cytomine.ontology.ReviewedAnnotation":
-                    throw new CytomineMethodNotYetImplementedException("migration");
-                    //domain = ReviewedAnnotation.class;
-                    //break;
+                    domain = ReviewedAnnotation.class;
+                    break;
                 case "be.cytomine.processing.RoiAnnotation":
                     throw new CytomineMethodNotYetImplementedException("migration");
                     //domain = RoiAnnotation.class;
@@ -236,7 +235,7 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
         } else {
             annotation = entityManager.find(UserAnnotation.class, id);
 //            if (annotation==null) annotation = entityManager.find(AlgoAnnotation.class, id);
-//            if (annotation==null) annotation = entityManager.find(ReviewedAnnotation.class, id);
+            if (annotation==null) annotation = entityManager.find(ReviewedAnnotation.class, id);
 //            if (annotation==null) annotation = entityManager.find(RoiAnnotation.class, id);
         }
 

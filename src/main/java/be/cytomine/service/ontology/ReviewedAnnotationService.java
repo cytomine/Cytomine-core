@@ -384,6 +384,9 @@ public class ReviewedAnnotationService extends ModelService {
     public List<Long> reviewLayer(Long imageInstanceId, List<Long> usersIds, Task task) {
 
         taskService.updateTask(task, 2, "Extract parameters...");
+        if (usersIds==null || usersIds.isEmpty()) {
+            throw new WrongArgumentException("There is no layer:" + usersIds);
+        }
         List<SecUser> users = usersIds.stream()
                 .map(x -> userRepository.findById(x).orElseThrow(() -> new ObjectNotFoundException("User", x))).collect(Collectors.toList());
         ImageInstance imageInstance = imageInstanceService.find(imageInstanceId)

@@ -7,6 +7,7 @@ import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.AnnotationTerm;
+import be.cytomine.domain.ontology.ReviewedAnnotation;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
@@ -21,10 +22,7 @@ import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -82,6 +80,11 @@ public class AnnotationDomainResourceTests {
     UserAnnotation a2;
     UserAnnotation a3;
     UserAnnotation a4;
+    ReviewedAnnotation r1;
+    ReviewedAnnotation r2;
+    ReviewedAnnotation r3;
+    ReviewedAnnotation r4;
+
 
 
     void createAnnotationSet() throws ParseException {
@@ -94,8 +97,12 @@ public class AnnotationDomainResourceTests {
         a1 =  builder.given_a_user_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, term);
         a2 =  builder.given_a_user_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, term);
         a3 =  builder.given_a_user_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, term);
-
         a4 =  builder.given_a_user_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, null);
+
+        r1 =  builder.given_a_reviewed_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, term);
+        r2 =  builder.given_a_reviewed_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, term);
+        r3 =  builder.given_a_reviewed_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, term);
+        r4 =  builder.given_a_reviewed_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, null);
     }
     @BeforeEach
     public void BeforeEach() throws ParseException {
@@ -594,7 +601,7 @@ public class AnnotationDomainResourceTests {
     }
 
     @Test
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public void add_valid_user_annotation() throws Exception {
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation();
         restAnnotationDomainControllerMockMvc.perform(post("/api/annotation.json")
@@ -611,6 +618,347 @@ public class AnnotationDomainResourceTests {
                 .andExpect(jsonPath("$.annotation.id").exists());
 
     }
+
+
+
+
+    @Test
+    @Transactional
+    public void list_reviewed_annotation_property_show() throws Exception {
+        MvcResult result;
+        result = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("image", this.image.getId().toString())
+                        .param("reviewed", "true"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
+                .andReturn();
+
+        checkForProperties(result.getResponse().getContentAsString(),List.of("id","term","created","project","image"), List.of());
+
+        result = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("image", this.image.getId().toString())
+                        .param("showBasic", "true")
+                        .param("showWKT", "true")
+                        .param("reviewed", "true")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
+                .andReturn();
+
+        checkForProperties(result.getResponse().getContentAsString(),List.of("id","location"), List.of("term", "created", "area", "project"));
+
+
+        result = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("image", this.image.getId().toString())
+                        .param("showDefault", "true")
+                        .param("hideMeta", "true")
+                        .param("reviewed", "true")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
+                .andReturn();
+
+        checkForProperties(result.getResponse().getContentAsString(),List.of("id","term"), List.of("location", "created", "project"));
+
+        result = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("image", this.image.getId().toString())
+                        .param("showBasic", "true")
+                        .param("showImage", "true")
+                        .param("reviewed", "true")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
+                .andReturn();
+
+        checkForProperties(result.getResponse().getContentAsString(),List.of("id","originalFilename"), List.of("term", "location"));
+
+        result = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("image", this.image.getId().toString())
+                        .param("showWKT", "true")
+                        .param("hideWKT", "true")
+                        .param("hideBasic", "true")
+                        .param("hideMeta", "true")
+                        .param("reviewed", "true")
+                )
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andReturn();
+    }
+
+
+    @Test
+    @Transactional
+    public void list_reviewed_annotation_with_parameters_image() throws Exception {
+        r4.setImage(builder.given_an_image_instance(project));
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("reviewed", "true")
+                        .param("image", this.image.getId().toString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r3.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r4.getId() + ")]").doesNotExist())
+                .andReturn();
+    }
+
+
+
+    @Test
+    @Transactional
+    public void list_reviewed_annotation_search_with_no_terms() throws Exception {
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("reviewed", "true")
+                        .param("project", this.project.getId().toString())
+                        .param("noTerm", "true"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r3.getId() + ")]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r4.getId() + ")]").exists())
+                .andReturn();
+    }
+
+    @Test
+    @Transactional
+    public void list_reviewed_annotation_search_by_max_distance() throws Exception {
+        r1.setLocation(new WKTReader().read("POINT(0 0)")); //base point
+        r2.setLocation(new WKTReader().read("POINT(-10 0)")); //should be < 11
+        r3.setLocation(new WKTReader().read("POLYGON((10 0,15 10,15 15,10 15,10 0))")); //should be < 11
+        r4.setLocation(new WKTReader().read( "POINT(20 20)")); //should be > 11
+
+        List<Tuple> tuples = userAnnotationRepository.listAnnotationWithDistance(project.getId(), r1.getLocation().toText());
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("reviewed", "true")
+                        .param("project", this.project.getId().toString())
+                        .param("baseAnnotation", r1.getId().toString())
+                        .param("maxDistanceBaseAnnotation", "11")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r3.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r4.getId() + ")]").doesNotExist())
+                .andReturn();
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("reviewed", "true")
+                        .param("project", this.project.getId().toString())
+                        .param("baseAnnotation", r1.getLocation().toText())
+                        .param("maxDistanceBaseAnnotation", "11")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r3.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r4.getId() + ")]").doesNotExist())
+                .andReturn();
+
+
+    }
+
+    @Test
+    @Transactional
+    public void list_reviewed_annotation_search_by_image_and_user() throws Exception {
+
+        r1.setImage(builder.given_an_image_instance(project));
+        r2.setUser(builder.given_a_user());
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("reviewed", "true")
+                        .param("image", this.image.getId().toString())
+                        .param("user", this.me.getId().toString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r3.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r4.getId() + ")]").exists())
+                .andReturn();
+
+
+    }
+
+    @Test
+    @Transactional
+    public void list_reviewed_annotation_search_by_image_and_user_and_bbox() throws Exception {
+
+        r1.setLocation(new WKTReader().read("POLYGON ((1 1, 2 1, 2 2, 1 2, 1 1))"));
+        r2.setLocation(new WKTReader().read("POLYGON ((1 3, 2 3, 2 5, 1 5, 1 3))"));
+        r3.setLocation(new WKTReader().read("POLYGON ((3 1, 5 1,  5 3, 3 3, 3 1))"));
+        r4.setLocation(new WKTReader().read( "POLYGON ((4 4,8 4, 8 7,4 7,4 4))"));
+
+
+        // intersect a,b and c
+        String polygonIncluding_A1_A2_A3 = "POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))";
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("reviewed", "true")
+                        .param("image", this.r1.getImage().getId().toString())
+                        .param("user", this.me.getId().toString())
+                        .param("bbox", polygonIncluding_A1_A2_A3)
+                        .param("notReviewedOnly", "true")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r3.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r4.getId() + ")]").doesNotExist())
+                .andReturn();
+
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("reviewed", "true")
+                        .param("image", this.a1.getImage().getId().toString())
+                        .param("user", this.me.getId().toString())
+                        .param("bbox", polygonIncluding_A1_A2_A3)
+                        .param("notReviewedOnly", "true")
+                        .param("kmeansValue", "1")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r3.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r4.getId() + ")]").doesNotExist())
+                .andReturn();
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("reviewed", "true")
+                        .param("image", this.a1.getImage().getId().toString())
+                        .param("user", this.me.getId().toString())
+                        .param("bbox", polygonIncluding_A1_A2_A3)
+                        .param("notReviewedOnly", "true")
+                        .param("kmeansValue", "2")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r3.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r4.getId() + ")]").doesNotExist())
+                .andReturn();
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("reviewed", "true")
+                        .param("image", this.a1.getImage().getId().toString())
+                        .param("user", this.me.getId().toString())
+                        .param("bbox", polygonIncluding_A1_A2_A3)
+                        .param("notReviewedOnly", "true")
+                        .param("kmeansValue", "3")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r3.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r4.getId() + ")]").doesNotExist())
+                .andReturn();
+    }
+
+
+    @Test
+    @Transactional
+    public void list_reviewed_annotation_search_by_image_and_reviewer_and_term() throws Exception {
+
+        r1.setImage(builder.given_an_image_instance(project));
+        r2.setUser(builder.given_a_user());
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("reviewed", "true")
+                        .param("image", this.image.getId().toString())
+                        .param("user", this.me.getId().toString())
+                        .param("term", this.term.getId().toString())
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").doesNotExist()) //  wrong image
+                .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").doesNotExist()) //wrong user
+                .andExpect(jsonPath("$.collection[?(@.id==" + r3.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r4.getId() + ")]").doesNotExist()) //no term
+                .andReturn();
+
+        r1.setImage(builder.given_an_image_instance(project));
+        r2.setUser(this.me);
+        r2.setReviewUser(builder.given_a_user());
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("reviewed", "true")
+                        .param("image", this.image.getId().toString())
+                        .param("reviewUsers", this.me.getId().toString())
+                        .param("term", this.term.getId().toString())
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").doesNotExist()) //wrong user
+                .andReturn();
+    }
+
+
+    @Test
+    @Transactional
+    public void list_reviewed_annotation_without_term() throws Exception {
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("reviewed", "true")
+                        .param("noTerm", "true")
+                        .param("user", this.me.getId().toString())
+                        .param("image", this.image.getId().toString())
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r3.getId() + ")]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r4.getId() + ")]").exists())
+                .andReturn();
+
+    }
+
+    @Test
+    @Transactional
+    public void list_reviewed_annotation_with_multiple_term() throws Exception {
+        r1.getTerms().add(builder.given_a_term(r1.getProject().getOntology()));
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
+                        .param("reviewed", "true")
+                        .param("multipleTerm", "true")
+                        .param("user", this.me.getId().toString())
+                        .param("image", this.image.getId().toString())
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r3.getId() + ")]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id==" + r4.getId() + ")]").doesNotExist())
+                .andReturn();
+
+    }
+
+
+    @Test
+    @Transactional
+    public void list_reviewed_annotation_with_same_request_as_default_viewer() throws Exception {
+        Assertions.fail("TODO, see example for user annotation in this class");
+    }
+
+
+
+
+
+
+
 
 
 
