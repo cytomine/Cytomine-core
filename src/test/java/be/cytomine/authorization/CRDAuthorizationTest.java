@@ -75,7 +75,8 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
     }
 
 
-    protected static List<String> rolePerOrder = List.of("ROLE_GUEST", "ROLE_USER", "ROLE_ADMIN", "ROLE_SUPERADMIN");
+    protected static List<String> rolePerOrder = List.of("ROLE_GUEST", "ROLE_USER", "CREATOR", "ROLE_ADMIN", "ROLE_SUPERADMIN");
+    // CREATOR is a special case for domain with restriction for users other than creator (only a creator can modify its reviewed annotation)
 
     boolean isPermissionForbidden(Optional<Permission> permissionRequired, Permission permission) {
         return permissionRequired.isPresent() && (permission==null || permissionRequired.get().getMask() > permission.getMask());
@@ -172,7 +173,9 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
     @Test
     @WithMockUser(username = SUPERADMIN)
     public void admin_delete_domain() {
-        if (isPermissionRoleForbidden(minimalRoleForDelete(), "ROLE_SUPERADMIN")) {
+        if (minimalRoleForDelete().isPresent() && minimalRoleForDelete().get().equals("CREATOR")) {
+            expectOK (() -> when_i_delete_domain());
+        } else if (isPermissionRoleForbidden(minimalRoleForDelete(), "ROLE_SUPERADMIN")) {
             expectForbidden (() -> when_i_delete_domain());
         } else {
             expectOK (() -> when_i_delete_domain());
@@ -182,7 +185,9 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
     @Test
     @WithMockUser(username = USER_ACL_ADMIN)
     public void user_with_admin_permission_delete_domain() {
-        if (isPermissionForbidden(minimalPermissionForDelete(), BasePermission.ADMINISTRATION)) {
+        if (minimalRoleForDelete().isPresent() && minimalRoleForDelete().get().equals("CREATOR")) {
+            expectForbidden (() -> when_i_delete_domain());
+        } else if (isPermissionForbidden(minimalPermissionForDelete(), BasePermission.ADMINISTRATION)) {
             expectForbidden (() -> when_i_delete_domain());
         } else {
             expectOK (() -> when_i_delete_domain());
@@ -192,7 +197,9 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
     @Test
     @WithMockUser(username = USER_ACL_DELETE)
     public void user_with_delete_permission_delete_domain() {
-        if (isPermissionForbidden(minimalPermissionForDelete(), BasePermission.DELETE)) {
+        if (minimalRoleForDelete().isPresent() && minimalRoleForDelete().get().equals("CREATOR")) {
+            expectForbidden (() -> when_i_delete_domain());
+        } else if (isPermissionForbidden(minimalPermissionForDelete(), BasePermission.DELETE)) {
             expectForbidden (() -> when_i_delete_domain());
         } else {
             expectOK (() -> when_i_delete_domain());
@@ -203,7 +210,9 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
     @Test
     @WithMockUser(username = USER_ACL_CREATE)
     public void user_with_create_permission_delete_domain() {
-        if (isPermissionForbidden(minimalPermissionForDelete(), BasePermission.CREATE)) {
+        if (minimalRoleForDelete().isPresent() && minimalRoleForDelete().get().equals("CREATOR")) {
+            expectForbidden (() -> when_i_delete_domain());
+        } else if (isPermissionForbidden(minimalPermissionForDelete(), BasePermission.CREATE)) {
             expectForbidden (() -> when_i_delete_domain());
         } else {
             expectOK (() -> when_i_delete_domain());
@@ -213,7 +222,9 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
     @Test
     @WithMockUser(username = USER_ACL_WRITE)
     public void user_with_write_permission_delete_domain() {
-        if (isPermissionForbidden(minimalPermissionForDelete(), BasePermission.WRITE)) {
+        if (minimalRoleForDelete().isPresent() && minimalRoleForDelete().get().equals("CREATOR")) {
+            expectForbidden (() -> when_i_delete_domain());
+        } else if (isPermissionForbidden(minimalPermissionForDelete(), BasePermission.WRITE)) {
             expectForbidden (() -> when_i_delete_domain());
         } else {
             expectOK (() -> when_i_delete_domain());

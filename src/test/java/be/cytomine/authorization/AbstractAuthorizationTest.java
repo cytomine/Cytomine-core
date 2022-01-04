@@ -51,6 +51,8 @@ public abstract class AbstractAuthorizationTest {
 
     public static final String USER_NO_ACL = "ACL_USER_NO_ACL";
 
+    public static final String CREATOR = "CREATOR";
+
     public static final Map<String, List<String>> ROLES = new HashMap<>();
 
     static {
@@ -62,6 +64,7 @@ public abstract class AbstractAuthorizationTest {
         ROLES.put(USER_ACL_CREATE, List.of(ROLE_USER));
         ROLES.put(USER_ACL_DELETE, List.of(ROLE_USER));
         ROLES.put(USER_ACL_ADMIN, List.of(ROLE_USER));
+        ROLES.put(CREATOR, List.of(ROLE_USER));
         ROLES.put(GUEST, List.of(ROLE_GUEST));
     }
 
@@ -138,6 +141,7 @@ public abstract class AbstractAuthorizationTest {
         SecUser userWithAdmin = given_a_user(USER_ACL_ADMIN);
         SecUser userNoAcl = given_a_user(USER_NO_ACL);
         SecUser userGuest = given_a_user(GUEST);
+        SecUser creator = given_a_user(CREATOR);
     }
 
     protected void initACL(CytomineDomain container) {
@@ -147,6 +151,7 @@ public abstract class AbstractAuthorizationTest {
         permissionService.addPermission(container, USER_ACL_DELETE, BasePermission.DELETE);
         permissionService.addPermission(container, USER_ACL_ADMIN, BasePermission.ADMINISTRATION);
         permissionService.addPermission(container, GUEST, BasePermission.READ);
+        permissionService.addPermission(container, CREATOR, BasePermission.CREATE);
     }
 
     protected void expectForbidden(Executable executable) {
