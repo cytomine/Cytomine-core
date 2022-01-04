@@ -15,7 +15,6 @@ import be.cytomine.repository.image.AbstractImageRepository;
 import be.cytomine.repository.image.UploadedFileRepository;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.command.TransactionService;
-import be.cytomine.service.search.UploadedFileSearchParameter;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.filters.SearchOperation;
 import be.cytomine.utils.filters.SearchParameterEntry;

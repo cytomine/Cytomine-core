@@ -71,6 +71,9 @@ public class ProjectService extends ModelService {
         throw new RuntimeException("TODO");
     }
 
+    public List<Project> listForCurrentUser() {
+        return projectRepository.findAllProjectForUser(currentUserService.getCurrentUsername());
+    }
 
 
     List<Project> listByOntology(Ontology ontology) {

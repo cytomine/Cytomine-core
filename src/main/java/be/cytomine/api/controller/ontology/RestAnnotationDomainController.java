@@ -257,28 +257,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
     }
 
 
-    private JsonObject mergeQueryParamsAndBodyParams() throws IOException {
-        JsonObject response = new JsonObject();
-        Map<String, String[]> parameterMap = super.request.getParameterMap();
 
-        for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
-            if (entry.getValue()!= null  && entry.getValue().length>1) {
-                throw new CytomineMethodNotYetImplementedException("Multiple request params are not supported in this method");
-            } else if(entry.getValue()!= null && entry.getValue().length==1) {
-                response.put(entry.getKey(), entry.getValue()[0]);
-            }
-        }
-
-        if (request.getMethod().equals("POST")) {
-            String bodyData = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-            if (!bodyData.isEmpty()) {
-                Map<String, Object> bodyMap = JsonObject.toMap(bodyData);
-                response.putAll(bodyMap);
-            }
-        }
-
-        return response;
-    }
 
 
 

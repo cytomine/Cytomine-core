@@ -375,4 +375,9 @@ public class SecurityACLService {
         return fields;
     }
 
+    public void checkIsCreator(CytomineDomain domain, SecUser currentUser) {
+        if (!currentRoleService.isAdminByNow(currentUser) && (!Objects.equals(currentUser.getId(), domain.userDomainCreator().getId()))) {
+            throw new ForbiddenException("You don't have the right to read this resource! You must be the same user!");
+        }
+    }
 }

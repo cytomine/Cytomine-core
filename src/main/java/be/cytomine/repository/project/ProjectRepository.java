@@ -21,6 +21,17 @@ public interface ProjectRepository extends JpaRepository<Project, Long>  {
             "and aclEntry.sid = aclSid.id and aclSid.sid like :username")
     List<Project> findAllProjectForUserByOntology(String username, Ontology ontology);
 
+
+    @Query(value = "select distinct project "+
+            "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, Project as project "+
+            "where aclObjectId.objectId = project.id " +
+            "and aclEntry.aclObjectIdentity = aclObjectId.id "+
+            "and aclEntry.sid = aclSid.id and aclSid.sid like :username")
+    List<Project> findAllProjectForUser(String username);
+
+
+
+
     @Query(value = "select id, name from creator_project where user_id = :userId", nativeQuery = true)
     List<NamedCytomineDomain> listByCreator(Long userId);
 

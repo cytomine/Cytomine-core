@@ -520,6 +520,14 @@ public class AbstractImageResourceTests {
                 .andExpect(jsonPath("$.id").value(builder.given_superadmin().getId()));
     }
 
+    @Test
+    @Transactional
+    public void get_abstract_image_uploader_for_abstract_image_not_exist() throws Exception {
+        restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/user.json", 0))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
 
     @Test
     @Transactional

@@ -13,7 +13,6 @@ import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.UploadedFileRepository;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.command.TransactionService;
-import be.cytomine.service.search.UploadedFileSearchParameter;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.filters.SearchOperation;

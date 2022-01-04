@@ -25,6 +25,10 @@ public class TaskService {
         //TODO
     }
 
+    public void updateTask(Task task, int progress, String comment) {
+        //TODO
+    }
 
-
+    public void finishTask(Task task) {
+    }
 }

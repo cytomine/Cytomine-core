@@ -32,6 +32,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
 import java.io.File;
@@ -65,6 +66,9 @@ public class UserAnnotationServiceTests {
     @Autowired
     TransactionService transactionService;
 
+    @Autowired
+    EntityManager entityManager;
+
     @Test
     void get_userAnnotation_with_success() {
         UserAnnotation userAnnotation = builder.given_a_user_annotation();
@@ -95,6 +99,7 @@ public class UserAnnotationServiceTests {
             "c", "POLYGON ((3 1, 5 1,  5 3, 3 3, 3 1))",
             "d", "POLYGON ((4 4,8 4, 8 7,4 7,4 4))",
             "e", "POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))"
+            //e intersect a,b and c
     );
 
     @Test
@@ -303,6 +308,7 @@ public class UserAnnotationServiceTests {
         assertThat(commandResponse.getStatus()).isEqualTo(200);
         assertThat(userAnnotationService.find(commandResponse.getObject().getId())).isPresent();
         UserAnnotation created = userAnnotationService.find(commandResponse.getObject().getId()).get();
+        entityManager.refresh(created);
         assertThat(created.getTerms()).hasSize(2);
 
         commandService.undo();

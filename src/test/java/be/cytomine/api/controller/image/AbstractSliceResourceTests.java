@@ -3,8 +3,6 @@ package be.cytomine.api.controller.image;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.AbstractSlice;
-import be.cytomine.domain.image.AbstractSlice;
-import be.cytomine.domain.project.Project;
 import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -25,15 +23,10 @@ import org.springframework.test.web.servlet.MvcResult;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -46,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @WithMockUser(username = "superadmin")
 @Transactional
-public class AbstractSlideResourceTests {
+public class AbstractSliceResourceTests {
 
     @Autowired
     private EntityManager em;
@@ -210,7 +203,13 @@ public class AbstractSlideResourceTests {
                 .andExpect(jsonPath("$.id").value(builder.given_superadmin().getId()));
     }
 
-
+    @Test
+    @Transactional
+    public void get_abstract_slice_uploader_when_abstract_slice_does_not_exists() throws Exception {
+        restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/user.json", 0))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
 
     @Test
     @Transactional

@@ -1,6 +1,7 @@
 package be.cytomine.repository.ontology;
 
 
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
@@ -18,6 +19,8 @@ import java.util.List;
 
 
 public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, Long>, JpaSpecificationExecutor<UserAnnotation>  {
+
+    List<UserAnnotation> findAllByUserAndImage(User user, ImageInstance imageInstance);
 
     Long countByProject(Project project);
 

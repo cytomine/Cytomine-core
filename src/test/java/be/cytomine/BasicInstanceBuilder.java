@@ -476,6 +476,7 @@ public class BasicInstanceBuilder {
         annotation.setSlice(sliceInstance);
         annotation.setLocation(new WKTReader().read(location));
         annotation.setUser(user);
+        annotation.setProject(sliceInstance.getProject());
         persistAndReturn(annotation);
 
         if (term!=null) {
@@ -514,4 +515,71 @@ public class BasicInstanceBuilder {
         UserAnnotation annotation = given_a_user_annotation();
         return persistAndReturn(given_a_not_persisted_annotation_term(annotation, this.given_a_term(annotation.getProject().getOntology())));
     }
+
+    public ReviewedAnnotation given_a_not_persisted_reviewed_annotation() {
+        ReviewedAnnotation annotation = new ReviewedAnnotation();
+        annotation.setUser(given_superadmin());
+        try {
+            annotation.setLocation(new WKTReader().read("POLYGON ((1983 2168, 2107 2160, 2047 2074, 1983 2168))"));
+        } catch (ParseException ignored) {
+
+        }
+        UserAnnotation userAnnotation = given_a_user_annotation();
+        annotation.setSlice(userAnnotation.getSlice());
+        annotation.setImage(userAnnotation.getImage());
+        annotation.setProject(userAnnotation.getImage().getProject());
+        annotation.putParentAnnotation(userAnnotation);
+        annotation.setReviewUser(given_superadmin());
+        annotation.setStatus(0);
+        return annotation;
+    }
+
+    public ReviewedAnnotation given_a_not_persisted_reviewed_annotation(Project project) {
+        ReviewedAnnotation annotation = given_a_not_persisted_reviewed_annotation();
+        UserAnnotation userAnnotation = given_a_not_persisted_user_annotation(project);
+        userAnnotation = persistAndReturn(userAnnotation);
+        annotation.putParentAnnotation(userAnnotation);
+        annotation.getSlice().setProject(project);
+        annotation.getImage().setProject(project);
+        annotation.setProject(project);
+        annotation.setReviewUser(given_superadmin());
+        annotation.setStatus(0);
+        return annotation;
+    }
+
+
+    public ReviewedAnnotation given_a_reviewed_annotation() {
+        return persistAndReturn(given_a_not_persisted_reviewed_annotation());
+    }
+
+    public ReviewedAnnotation given_a_reviewed_annotation(SliceInstance sliceInstance, String location, User user, Term term) throws ParseException {
+        UserAnnotation userAnnotation =
+                given_a_user_annotation(sliceInstance, location, user, term);
+
+        ReviewedAnnotation annotation = given_a_reviewed_annotation();
+        annotation.setImage(sliceInstance.getImage());
+        annotation.setSlice(sliceInstance);
+        annotation.setLocation(new WKTReader().read(location));
+        annotation.setUser(user);
+        annotation.setProject(sliceInstance.getProject());
+        annotation.putParentAnnotation(userAnnotation);
+        annotation.setReviewUser(given_superadmin());
+        annotation.setStatus(0);
+        persistAndReturn(annotation);
+
+        if (term!=null) {
+            AnnotationTerm annotationTerm = new AnnotationTerm();
+            annotationTerm.setUserAnnotation(userAnnotation);
+            annotationTerm.setUser(user);
+            annotationTerm.setTerm(term);
+            persistAndReturn(annotationTerm);
+            annotation.getTerms().add(term);
+            persistAndReturn(annotation);
+        }
+        persistAndReturn(annotation);
+        em.refresh(userAnnotation);
+        em.refresh(annotation);
+        return annotation;
+    }
+
 }

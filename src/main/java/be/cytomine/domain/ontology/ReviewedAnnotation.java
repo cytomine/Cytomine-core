@@ -23,18 +23,40 @@ import java.util.stream.Collectors;
 @Entity
 @Getter
 @Setter
-public class UserAnnotation extends AnnotationDomain implements Serializable {
+public class ReviewedAnnotation extends AnnotationDomain implements Serializable {
 
+    /**
+     * Annotation that has been reviewed (just keep a link)
+     */
+    Long parentIdent;
+
+    String parentClassName;
+
+    /**
+     * Status for the reviewed (not yet use)
+     * May be: 'validate','conflict',...
+     */
+    Integer status;
+
+
+    /**
+     * User that create the annotation that has been reviewed
+     */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    private SecUser user;
 
-    Integer countReviewedAnnotations = 0;
+    /**
+     * User that review annotation
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "review_user_id", nullable = false)
+    private SecUser reviewUser;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-            name = "annotation_term",
-            joinColumns = { @JoinColumn(name = "user_annotation_id") },
+            name = "reviewed_annotation_term",
+            joinColumns = { @JoinColumn(name = "reviewed_annotation_terms_id") },
             inverseJoinColumns = { @JoinColumn(name = "term_id") }
     )
     private List<Term> terms = new ArrayList<>();
@@ -51,27 +73,23 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
         super.beforeUpdate();
     }
 
+
+    /**
+     * Set link to the annotation that has been reviewed
+     * @param annotation Annotation that is reviewed
+     */
+    public void putParentAnnotation(AnnotationDomain annotation) {
+        parentClassName = annotation.getClass().getName();
+        parentIdent = annotation.getId();
+    }
+
+
+
     @Override
     public List<Term> terms() {
         return terms;
     }
 
-    /**
-     * Check if annotation is reviewed
-     * @return True if annotation is linked with at least one review annotation
-     */
-    boolean hasReviewedAnnotation() {
-        return countReviewedAnnotations > 0;
-    }
-
-//TODO:
-//    def tracks() {
-//        if (this.version != null) {
-//            AnnotationTrack.findAllByAnnotationIdentAndDeletedIsNull(this.id).collect { it.track }
-//        } else {
-//            return []
-//        }
-//    }
 
     /**
      * Get all annotation terms id
@@ -84,21 +102,7 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
 
     @Override
     public boolean isUserAnnotation() {
-        return true;
-    }
-
-    // TODO:
-//    def tracksId() {
-//        return tracks().collect { it.id }.unique()
-//    }
-
-    /**
-     * Get all terms for automatic review
-     * If review is done "for all" (without manual user control), we add these term to the new review annotation
-     * @return
-     */
-    public List<Term> termsForReview() {
-        return terms().stream().distinct().collect(Collectors.toList());
+        return false;
     }
 
     @Override
@@ -117,7 +121,7 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
      * Check if its a review annotation
      */
     public boolean isReviewedAnnotation() {
-        return false;
+        return true;
     }
 
     @Override
@@ -125,41 +129,25 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
         return false;
     }
 
+    @Override
+    public List<Term> termsForReview() {
+        return terms;
+    }
 
-// TODO: seems to be not used
-//    /**
-//     * Get a list of each term link with annotation
-//     * For each term, add all users that add this term
-//     * [{id: x, term: y, user: [a,b,c]}, {...]
-//     */
-//    def usersIdByTerm() {
-//        def results = []
-//        if (this.version != null) {
-//            AnnotationTerm.findAllByUserAnnotationAndDeletedIsNull(this).each { annotationTerm ->
-//                    def map = [:]
-//                map.id = annotationTerm.id
-//                map.term = annotationTerm.term?.id
-//                map.user = [annotationTerm.user?.id]
-//                def item = results.find { it.term == annotationTerm.term?.id }
-//                if (!item) {
-//                    results << map
-//                } else {
-//                    item.user.add(annotationTerm.user.id)
-//                }
-//            }
-//        }
-//        results
-//    }
+
+    //////////////////////////////
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
-        UserAnnotation annotation = this;
+        ReviewedAnnotation annotation = this;
         annotation.id = json.getJSONAttrLong("id",null);
 
         annotation.slice = (SliceInstance)json.getJSONAttrDomain(entityManager, "slice", new SliceInstance(), true);
         annotation.image = (ImageInstance)json.getJSONAttrDomain(entityManager, "image", new ImageInstance(), true);
         annotation.project = (Project)json.getJSONAttrDomain(entityManager, "project", new Project(), true);
         annotation.user = (User)json.getJSONAttrDomain(entityManager, "user", new User(), true);
+        annotation.reviewUser = (User)json.getJSONAttrDomain(entityManager, "reviewUser", new SecUser(), true);
 
+        annotation.status = json.getJSONAttrInteger("status",0);
         annotation.geometryCompression = json.getJSONAttrDouble("geometryCompression",0D);
 
         annotation.created = json.getJSONAttrDate("created");
@@ -185,6 +173,35 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
             throw new WrongArgumentException("Geometry is empty:" + annotation.location.getNumPoints() + " points");
         }
 
+
+        /* Parent annotation */
+        Long annotationParentId = json.getJSONAttrLong("parentIdent", -1L);
+        if (annotationParentId == -1) {
+            annotationParentId = json.getJSONAttrLong("annotation", -1L);
+        }
+        try {
+            AnnotationDomain parent = AnnotationDomain.getAnnotationDomain(entityManager, annotationParentId);
+            annotation.parentClassName = parent.getClass().getName();
+            annotation.parentIdent = parent.getId();
+        } catch (Exception ignored) {
+            //parent is deleted...
+        }
+
+        /* Terms of reviewed annotation */
+        if (json.get("terms") == null || (json.containsKey("terms") && json.getJSONAttrStr("terms").equals("null"))) {
+            throw new WrongArgumentException("Term list was not found");
+        }
+        if (!annotation.terms().isEmpty()) {
+            annotation.terms.clear(); //remove all review term
+        }
+
+        for (Long id : json.getJSONAttrListLong("terms")) {
+            Term term = entityManager.find(Term.class, id);
+            if (term==null || !term.getOntology().equals(annotation.getProject().getOntology())) {
+                throw new WrongArgumentException("Term "+term+" is null or is not in ontology from the annotation project");
+            }
+            annotation.getTerms().add(term);
+        }
         return annotation;
     }
 
@@ -195,13 +212,20 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
 
     public static JsonObject getDataFromDomain(CytomineDomain domain) {
         JsonObject returnArray = AnnotationDomain.getDataFromDomain(domain);
-        UserAnnotation annotation = (UserAnnotation)domain;
-        returnArray.put("cropURL", UrlApi.getUserAnnotationCropWithAnnotationId(annotation.getId(), "png"));
-        returnArray.put("smallCropURL", UrlApi.getUserAnnotationCropWithAnnotationIdWithMaxSize(annotation.getId(), 256, "png"));
-        returnArray.put("url", UrlApi.getUserAnnotationCropWithAnnotationId(annotation.getId(), "png"));
+        ReviewedAnnotation annotation = (ReviewedAnnotation)domain;
+
+        returnArray.put("parentIdent", annotation.parentIdent);
+        returnArray.put("parentClassName", annotation.getParentClassName());
+        returnArray.put("status", annotation.getStatus());
+        returnArray.put("reviewUser", annotation.getReviewUser().getId());
+        returnArray.put("terms", annotation.termsId());
+        returnArray.put("term", annotation.termsId());
+
+        returnArray.put("cropURL", UrlApi.getReviewedAnnotationCropWithAnnotationId(annotation.getId(), "png"));
+        returnArray.put("smallCropURL", UrlApi.getReviewedAnnotationCropWithAnnotationIdWithMaxSize(annotation.getId(), 256, "png"));
+        returnArray.put("url", UrlApi.getReviewedAnnotationCropWithAnnotationId(annotation.getId(), "png"));
         returnArray.put("imageURL", UrlApi.getAnnotationURL(annotation.getImage().getProject().getId(), annotation.getImage().getId(), annotation.getId()));
-        returnArray.put("reviewed", annotation.hasReviewedAnnotation());
-        // TODO returnArray.put("track", domain?.tracksId());
+        returnArray.put("reviewed", true);
 
         return returnArray;
     }
@@ -211,5 +235,16 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
         return user;
     }
 
+
+    /**
+     * Return domain user (annotation user, image user...)
+     * By default, a domain has no user.
+     * You need to override userDomainCreator() in domain class
+     * @return Domain user
+     */
+    @Override
+    public SecUser userDomainCreator() {
+        return reviewUser;
+    }
 
 }

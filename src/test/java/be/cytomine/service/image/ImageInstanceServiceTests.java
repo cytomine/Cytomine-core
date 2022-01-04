@@ -634,4 +634,45 @@ public class ImageInstanceServiceTests {
         fail("not yet implemented");
     }
 
+
+
+
+
+
+
+
+    @Test
+    void start_image_reviewing() {
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        assertThat(imageInstance.getReviewStart()).isNull();
+        assertThat(imageInstance.getReviewStop()).isNull();
+        assertThat(imageInstance.getReviewUser()).isNull();
+
+        imageInstanceService.startReview(imageInstance);
+        assertThat(imageInstance.getReviewStart()).isNotNull();
+        assertThat(imageInstance.getReviewStop()).isNull();
+        assertThat(imageInstance.getReviewUser()).isNotNull();
+    }
+
+    @Test
+    void stop_image_reviewing() {
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        imageInstanceService.startReview(imageInstance);
+        imageInstanceService.stopReview(imageInstance, false);
+        assertThat(imageInstance.getReviewStart()).isNotNull();
+        assertThat(imageInstance.getReviewStop()).isNotNull();
+        assertThat(imageInstance.getReviewUser()).isNotNull();
+    }
+
+    @Test
+    void stop_image_reviewing_with_cancel() {
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        imageInstanceService.startReview(imageInstance);
+        imageInstanceService.stopReview(imageInstance, true);
+        assertThat(imageInstance.getReviewStart()).isNull();
+        assertThat(imageInstance.getReviewStop()).isNull();
+        assertThat(imageInstance.getReviewUser()).isNull();
+    }
+
+
 }

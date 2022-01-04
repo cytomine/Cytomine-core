@@ -9,10 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class JsonObject extends HashMap<String, Object> {
@@ -31,7 +28,11 @@ public class JsonObject extends HashMap<String, Object> {
 
 
     public JsonObject withChange(String key, Object value) {
-        this.put(key, value);
+        if (value == null) {
+            this.remove(key);
+        } else {
+            this.put(key, value);
+        }
         return this;
     }
 
@@ -270,10 +271,13 @@ public class JsonObject extends HashMap<String, Object> {
 
     public List<Long> getJSONAttrListLong(String attr) {
         if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
-            return (List<Long>)((List)this.get(attr)).stream().map(x -> Long.parseLong(String.valueOf(x))).collect(Collectors.toList());
-        } else {
-            return null;
+            if (this.get(attr) instanceof List) {
+                return (List<Long>)((List)this.get(attr)).stream().map(x -> Long.parseLong(String.valueOf(x))).collect(Collectors.toList());
+            } else if(this.get(attr) instanceof String) {
+                return Arrays.stream(this.get(attr).toString().split(",")).map(x -> Long.parseLong(String.valueOf(x))).collect(Collectors.toList());
+            }
         }
+        return null;
     }
 
     public List<Long> getJSONAttrListLong(String attr, List<Long> defaultValue) {

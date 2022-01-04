@@ -5,10 +5,7 @@ import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.AlreadyExistException;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
-import be.cytomine.exceptions.ForbiddenException;
-import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.exceptions.*;
 import be.cytomine.repository.image.AbstractSliceRepository;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.image.NestedImageInstanceRepository;
@@ -944,5 +941,36 @@ public class ImageInstanceService extends ModelService {
         if (imageAlreadyExist.isPresent() && (!Objects.equals(imageAlreadyExist.get().getId(), domain.getId()))) {
             throw new AlreadyExistException("Image " + ((ImageInstance)domain).getBaseImage().getOriginalFilename() + " already map with project " + ((ImageInstance)domain).getProject().getName());
         }
+    }
+
+    public void startReview(ImageInstance imageInstance) {
+        securityACLService.checkFullOrRestrictedForOwner(imageInstance,imageInstance.getUser());
+        imageInstance.setReviewStart(new Date());
+        imageInstance.setReviewUser(currentUserService.getCurrentUser());
+        if (imageInstance.getReviewUser()!=null && imageInstance.getReviewUser().isAlgo()) {
+            throw new WrongArgumentException("The review user " + imageInstance.getReviewUser() + " is not a real user (a userjob)");
+        }
+        saveDomain(imageInstance);
+    }
+
+    public void stopReview(ImageInstance imageInstance, boolean cancelReview) {
+        if (imageInstance.getReviewStart() == null || imageInstance.getReviewUser() == null) {
+            throw new WrongArgumentException("Image is not in review mode: image.reviewStart="+imageInstance.getReviewStart()+" and image.reviewUser=" + imageInstance.getReviewUser());
+        }
+        if (currentUserService.getCurrentUser() != imageInstance.getReviewUser()) {
+            throw new WrongArgumentException("Review can only be validate or stop by "+imageInstance.getReviewUser().getUsername());
+        }
+
+        if (cancelReview) {
+            if (imageInstance.getReviewStop()==null) {
+                //cancel reviewing
+                imageInstance.setReviewStart(null);
+                imageInstance.setReviewUser(null);
+            }
+            imageInstance.setReviewStop(null);
+        } else {
+            imageInstance.setReviewStop(new Date());
+        }
+        saveDomain(imageInstance);
     }
 }

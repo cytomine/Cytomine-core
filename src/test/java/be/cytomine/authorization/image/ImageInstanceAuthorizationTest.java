@@ -10,6 +10,7 @@ import be.cytomine.service.PermissionService;
 import be.cytomine.service.image.AbstractImageService;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.security.SecurityACLService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -118,6 +119,11 @@ public class ImageInstanceAuthorizationTest extends CRUDAuthorizationTest {
         expectForbidden(() -> when_i_delete_domain());
     }
 
+
+    @Test
+    public void user_cannot_stop_review_started_by_someone_else() {
+        Assertions.fail("to be done");
+    }
 
     @Override
     public void when_i_get_domain() {

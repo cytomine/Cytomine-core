@@ -198,6 +198,15 @@ public class CompanionFileResourceTests {
                 .andExpect(jsonPath("$.id").value(builder.given_superadmin().getId()));
     }
 
+    @Test
+    @Transactional
+    public void get_companion_file_uploader_with_unexisting_companion_file() throws Exception {
+        restCompanionFileControllerMockMvc.perform(get("/api/companionfile/{id}/user.json", 0))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+    }
+
+
 
     @Test
     public void download_companion_file() throws Exception {
