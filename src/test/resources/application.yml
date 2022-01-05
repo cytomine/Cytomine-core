@@ -18,8 +18,8 @@ spring:
   #  contexts: prod
   liquibase:
     change-log: classpath:config/liquibase/master.xml
-
-
+  profiles:
+    active: test
 
 server:
   port: 8080

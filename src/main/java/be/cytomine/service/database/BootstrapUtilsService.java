@@ -10,9 +10,7 @@ import be.cytomine.domain.processing.ImageFilter;
 import be.cytomine.domain.processing.ImagingServer;
 import be.cytomine.domain.processing.ParameterConstraint;
 import be.cytomine.domain.processing.SoftwareUserRepository;
-import be.cytomine.domain.security.Language;
-import be.cytomine.domain.security.SecUserSecRole;
-import be.cytomine.domain.security.User;
+import be.cytomine.domain.security.*;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.MimeRepository;
 import be.cytomine.repository.middleware.AmqpQueueRepository;
@@ -25,6 +23,7 @@ import be.cytomine.repository.processing.ImagingServerRepository;
 import be.cytomine.repository.processing.ParameterConstraintRepository;
 import be.cytomine.repository.processing.ProcessingServerRepository;
 import be.cytomine.repository.security.SecRoleRepository;
+import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.amqp.AmqpQueueConfigService;
@@ -96,6 +95,9 @@ public class BootstrapUtilsService {
     AmqpQueueConfigService amqpQueueConfigService;
 
     @Autowired
+    SecUserRepository secUserRepository;
+
+    @Autowired
     private Environment environment;
 
     @Autowired
@@ -134,6 +136,34 @@ public class BootstrapUtilsService {
             SecurityUtils.reauthenticate(applicationContext, "admin", "admin");
 
             storageService.initUserStorage(user);
+        }
+    }
+
+
+    public void createUserJob(String username, String password, User creator, List<String> roles) {
+        if (secUserRepository.findByUsernameLikeIgnoreCase(username).isEmpty()) {
+            log.info("Creating {}...", username);
+            UserJob user = new UserJob();
+            user.setUsername(username);
+            user.setPassword(password);
+            user.setEnabled(true);
+            user.setOrigin("BOOTSTRAP");
+            user.setUser(creator);
+            user.generateKeys();
+            log.info("Saving {}...", user.getUsername());
+            user = secUserRepository.save(user);
+
+            for (String role : roles) {
+                SecUserSecRole secUserSecRole = new SecUserSecRole();
+                secUserSecRole.setSecRole(secRoleRepository.getByAuthority(role));
+                secUserSecRole.setSecUser(user);
+                secUserSecRoleRepository.save(secUserSecRole);
+            }
+//
+//            //SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("admin", "admin"));
+//            SecurityUtils.reauthenticate(applicationContext, "admin", "admin");
+//
+//            storageService.initUserStorage(user);
         }
     }
 
@@ -502,4 +532,5 @@ public class BootstrapUtilsService {
         softwareUserRepository.setPrefix(prefix);
         entityManager.persist(softwareUserRepository);
     }
+
 }

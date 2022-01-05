@@ -35,4 +35,7 @@ public class UserJob extends SecUser {
         return "not implemented";
     }
 
+    public Boolean isAlgo() {
+        return true;
+    }
 }

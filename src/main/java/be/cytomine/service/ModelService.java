@@ -69,7 +69,9 @@ public abstract class ModelService<T extends CytomineDomain> {
 
         List<ValidationError> validationErrors = newObject.validate();
         if (!validationErrors.isEmpty()) {
-            log.error(validationErrors.toString());
+            for (ValidationError validationError : validationErrors) {
+                log.error(validationError.getProperty() + " " + validationError.getMessage());
+            }
             throw new WrongArgumentException(validationErrors.toString());
         }
 

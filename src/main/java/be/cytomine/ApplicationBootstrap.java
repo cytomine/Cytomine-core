@@ -2,6 +2,7 @@ package be.cytomine;
 
 import be.cytomine.config.ApplicationConfiguration;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.server.StorageRepository;
 import be.cytomine.repository.ontology.OntologyRepository;
@@ -123,10 +124,15 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
                 applicationConfiguration.getUseHTTPInternally()
         );
 
-        if (EnvironmentUtils.isTest(environment)) {
+        if (EnvironmentUtils.isTest(environment) && secUserRepository.count() == 0) {
             bootstrapDataService.initData();
             //noSQLCollectionService.cleanActivityDB() TODO:
             bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", dataset.ADMINEMAIL, dataset.ADMINPASSWORD, List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
+
+            // same as superadmin, but a userjob
+            bootstrapUtilDataService.createUserJob("superadminjob", dataset.ADMINPASSWORD,
+                    (User)secUserRepository.findByUsernameLikeIgnoreCase("superadmin").orElseThrow(() -> new ObjectNotFoundException("User", "superadmin")),
+                    List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
             //mockServicesForTests() TODO in test?
         } else if (secUserRepository.count() == 0) {
             //if database is empty, put minimal data
