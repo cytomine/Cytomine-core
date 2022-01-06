@@ -97,7 +97,7 @@ public class AlgoAnnotationTerm extends CytomineDomain implements Serializable {
         algoAnnotationTerm.term = (Term)json.getJSONAttrDomain(entityManager, "term", new Term(), false);
         algoAnnotationTerm.expectedTerm = (Term)json.getJSONAttrDomain(entityManager, "expectedTerm", new Term(), false);
         algoAnnotationTerm.userJob = (UserJob) json.getJSONAttrDomain(entityManager, "user", new UserJob(), false);
-        algoAnnotationTerm.rate = json.getJSONAttrDouble("rate",null);
+        algoAnnotationTerm.rate = json.getJSONAttrDouble("rate",0d);
 
         algoAnnotationTerm.created = json.getJSONAttrDate("created");
         algoAnnotationTerm.updated = json.getJSONAttrDate("updated");

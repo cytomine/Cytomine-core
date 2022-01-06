@@ -662,4 +662,25 @@ public class BasicInstanceBuilder {
 
         return annotation;
     }
+
+    public AlgoAnnotationTerm given_an_algo_annotation_term() {
+        AlgoAnnotation algoAnnotation = given_a_algo_annotation();
+        AlgoAnnotationTerm annotationTerm = new AlgoAnnotationTerm();
+        annotationTerm.setAnnotation(algoAnnotation);
+        annotationTerm.setUserJob(algoAnnotation.getUser());
+        annotationTerm.setTerm(given_a_term(algoAnnotation.getProject().getOntology()));
+        annotationTerm.setRate(0d);
+        persistAndReturn(annotationTerm);
+        em.refresh(algoAnnotation);
+        return annotationTerm;
+    }
+
+    public AlgoAnnotationTerm given_a_not_persisted_algo_annotation_term(AlgoAnnotation algoAnnotation) {
+        AlgoAnnotationTerm annotationTerm = new AlgoAnnotationTerm();
+        annotationTerm.setAnnotation(algoAnnotation);
+        annotationTerm.setUserJob(algoAnnotation.getUser());
+        annotationTerm.setTerm(given_a_term(algoAnnotation.getProject().getOntology()));
+        annotationTerm.setRate(0d);
+        return annotationTerm;
+    }
 }

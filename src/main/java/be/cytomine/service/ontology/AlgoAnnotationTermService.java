@@ -90,6 +90,7 @@ public class AlgoAnnotationTermService extends ModelService {
         if (userJob!=null) {
             return algoAnnotationTermRepository.findByAnnotationIdentAndTermAndUserJob(annotation.getId(), term, userJob);
         } else {
+            //TODO: problem if it exists multiple results (2 users => same term for same annotation)
             return algoAnnotationTermRepository.findByAnnotationIdentAndTerm(annotation.getId(), term);
         }
     }
