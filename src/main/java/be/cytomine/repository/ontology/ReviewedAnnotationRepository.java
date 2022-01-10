@@ -71,6 +71,8 @@ public interface ReviewedAnnotationRepository extends JpaRepository<ReviewedAnno
 
     Optional<ReviewedAnnotation> findByParentIdent(Long parentIdent);
 
+    List<ReviewedAnnotation> findAllByImage(ImageInstance image);
+
 
 //
 //    @Query(

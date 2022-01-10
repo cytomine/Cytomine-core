@@ -4,10 +4,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.AnnotationTerm;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.AlgoAnnotation;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
@@ -17,6 +14,7 @@ import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.AlgoAnnotationListing;
+import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.ontology.AlgoAnnotationRepository;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
@@ -24,6 +22,7 @@ import be.cytomine.service.ModelService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.dto.BoundariesCropParameter;
 import be.cytomine.service.image.ImageInstanceService;
+import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.image.SliceInstanceService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.SimplifyGeometryService;
@@ -65,7 +64,7 @@ public class AlgoAnnotationService extends ModelService {
 
     private final SliceInstanceService sliceInstanceService;
 
-    private final ImageInstanceService imageInstanceService;
+    private final ImageInstanceRepository imageInstanceRepository;
 
     private final SimplifyGeometryService simplifyGeometryService;
 
@@ -74,6 +73,8 @@ public class AlgoAnnotationService extends ModelService {
     private final ValidateGeometryService validateGeometryService;
 
     private final AlgoAnnotationTermService algoAnnotationTermService;
+
+    private final SliceCoordinatesService sliceCoordinatesService;
 
     @Override
     public Class currentDomain() {
@@ -156,9 +157,9 @@ public class AlgoAnnotationService extends ModelService {
                     .orElseThrow(() -> new ObjectNotFoundException("SliceInstance with id " + jsonObject.get("slice")));
             image = slice.getImage();
         } else if (!jsonObject.isMissing("image")) {
-            image = imageInstanceService.find(jsonObject.getJSONAttrLong("image"))
+            image = imageInstanceRepository.findById(jsonObject.getJSONAttrLong("image"))
                     .orElseThrow(() -> new ObjectNotFoundException("ImageInstance with id " + jsonObject.get("image")));
-            slice = imageInstanceService.getReferenceSlice(image);
+            slice = sliceCoordinatesService.getReferenceSlice(image);
 
         }
         Project project = slice.getProject();
@@ -259,7 +260,7 @@ public class AlgoAnnotationService extends ModelService {
         for (Long termId : termIds) {
 
             CommandResponse response = algoAnnotationTermService.addAlgoAnnotationTerm(addedAnnotation, termId, currentUser.getId(), currentUser, transaction);
-            terms.add(((AnnotationTerm)(response.getObject())).getTerm());
+            terms.add(((AlgoAnnotationTerm)(response.getObject())).getTerm());
         }
 
         ((Map<String, Object>)commandResponse.getData().get("annotation")).put("term", terms);
@@ -323,6 +324,8 @@ public class AlgoAnnotationService extends ModelService {
         securityACLService.checkFullOrRestrictedForOwner(domain, ((AlgoAnnotation)domain).getUser());
 
         // TODO: what about image/project ??
+        AlgoAnnotation annotation = (AlgoAnnotation)domain;
+        ImageInstance image = annotation.getImage();
 
         Geometry annotationShape;
         try {
@@ -335,6 +338,23 @@ public class AlgoAnnotationService extends ModelService {
         if (!annotationShape.isValid()) {
             throw new WrongArgumentException("Annotation location is not valid");
         }
+
+        Envelope envelope = annotationShape.getEnvelopeInternal();
+        boolean isSizeDefined = image.getBaseImage().getWidth()!=null && image.getBaseImage().getHeight()!=null;
+        if (isSizeDefined && (envelope.getMinX() < 0 || envelope.getMinY() < 0 ||
+                envelope.getMaxX() > image.getBaseImage().getWidth() ||
+                envelope.getMaxY() > image.getBaseImage().getHeight())) {
+            double maxX = Math.min(envelope.getMaxX(), image.getBaseImage().getWidth());
+            double maxY = Math.min(envelope.getMaxY(), image.getBaseImage().getHeight());
+            Geometry insideBounds = null;
+            try {
+                insideBounds = new WKTReader().read("POLYGON((0 0,0 " + maxY + "," + maxX + " " + maxY + "," + maxX + " 0,0 0))");
+            } catch (ParseException e) {
+                throw new WrongArgumentException("Annotation cannot be parsed with maxX/maxY:" + e.getMessage());
+            }
+            annotationShape = annotationShape.intersection(insideBounds);
+        }
+
 
         //simplify annotation
         try {

@@ -5,12 +5,10 @@ import be.cytomine.CytomineCoreApplication;
 import be.cytomine.TestUtils;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.ontology.AnnotationTerm;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.ReviewedAnnotation;
-import be.cytomine.domain.ontology.UserAnnotation;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
+import be.cytomine.domain.security.UserJob;
 import be.cytomine.dto.AnnotationLight;
 import be.cytomine.dto.ReviewedAnnotationStatsEntry;
 import be.cytomine.dto.UserTermMapping;
@@ -295,30 +293,6 @@ public class ReviewedAnnotationServiceTests {
     }
 
     @Test
-    void add_big_reviewed_annotation_with_max_number_of_points() throws ParseException {
-        ReviewedAnnotation reviewedAnnotation = builder.given_a_not_persisted_reviewed_annotation();
-        reviewedAnnotation.setLocation(new WKTReader().read(TestUtils.getResourceFileAsString("dataset/very_big_annotation.txt")));
-        JsonObject jsonObject = reviewedAnnotation.toJsonObject();
-        jsonObject.put("maxPoint", 100);
-        CommandResponse commandResponse = reviewedAnnotationService.add(jsonObject);
-        assertThat(commandResponse.getStatus()).isEqualTo(200);
-        ReviewedAnnotation created = reviewedAnnotationService.find(commandResponse.getObject().getId()).get();
-        assertThat(created.getLocation().getNumPoints()).isLessThanOrEqualTo(100);
-    }
-
-    @Test
-    void add_too_small_reviewed_annotation() throws ParseException {
-        ReviewedAnnotation reviewedAnnotation = builder.given_a_not_persisted_reviewed_annotation();
-        JsonObject jsonObject = reviewedAnnotation.toJsonObject();
-        jsonObject.put("location", "POLYGON ((225.73582220103702 306.89723126347087, 225.73582220103702 307.93556995227914, " +
-                "226.08028300710947 307.93556995227914, 226.08028300710947 306.89723126347087, " +
-                "225.73582220103702 306.89723126347087))");
-        Assertions.assertThrows(WrongArgumentException.class, () -> {
-            reviewedAnnotationService.add(jsonObject);
-        }) ;
-    }
-
-    @Test
     void add_reviewed_annotation_multiline() throws ParseException {
         ReviewedAnnotation reviewedAnnotation = builder.given_a_not_persisted_reviewed_annotation();
         reviewedAnnotation.setLocation(new WKTReader().read(
@@ -331,16 +305,6 @@ public class ReviewedAnnotationServiceTests {
                 .isEqualTo("LINESTRING (181.05636403199998 324.87936288, 208.31216076799996 303.464094016)");
         assertThat(((ReviewedAnnotation)commandResponse.getObject()).getWktLocation())
                 .isEqualTo("LINESTRING (181.05636403199998 324.87936288, 208.31216076799996 303.464094016)");
-    }
-
-    @Test
-    void add_reviewed_annotation_without_project() throws ParseException {
-        ReviewedAnnotation reviewedAnnotation = builder.given_a_not_persisted_reviewed_annotation();
-        JsonObject jsonObject = reviewedAnnotation.toJsonObject();
-        jsonObject.remove("project");
-        CommandResponse commandResponse = reviewedAnnotationService.add(jsonObject);
-        assertThat(commandResponse.getStatus()).isEqualTo(200); // project is retrieve from image/slice
-
     }
 
 
@@ -375,31 +339,6 @@ public class ReviewedAnnotationServiceTests {
         AssertionsForClassTypes.assertThat(edited.getWktLocation()).isEqualTo(newLocation);
 
     }
-
-    @Test
-    void edit_reviewed_annotation_out_of_bounds() throws ParseException {
-        ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
-        reviewedAnnotation.setLocation(new WKTReader().read("" +
-                "POLYGON((" +
-                "-1 -1," +
-                "-1 " + reviewedAnnotation.getImage().getBaseImage().getHeight() + "," +
-                reviewedAnnotation.getImage().getBaseImage().getWidth()+5 + " "+reviewedAnnotation.getImage().getBaseImage().getHeight()+","+
-                reviewedAnnotation.getImage().getBaseImage().getWidth() + " 0," +
-                "-1 -1))"));
-        JsonObject jsonObject = reviewedAnnotation.toJsonObject();
-        CommandResponse commandResponse = reviewedAnnotationService.update(reviewedAnnotation, jsonObject);
-        assertThat(commandResponse.getStatus()).isEqualTo(200);
-
-        assertThat(((ReviewedAnnotation)commandResponse.getObject()).getLocation())
-                .isEqualTo("" +
-                        "POLYGON ((" +
-                        "0 " + reviewedAnnotation.getImage().getBaseImage().getHeight() + ", " +
-                        reviewedAnnotation.getImage().getBaseImage().getWidth() + " "+reviewedAnnotation.getImage().getBaseImage().getHeight()+", "+
-                        reviewedAnnotation.getImage().getBaseImage().getWidth() + "0, " +
-                        "0 0, " +
-                        "0 " + reviewedAnnotation.getImage().getBaseImage().getHeight() +"))");
-    }
-
 
     @Test
     void edit_reviewed_annotation_empty_polygon() throws ParseException {
@@ -546,26 +485,22 @@ public class ReviewedAnnotationServiceTests {
 
     @Test
     void add_review_for_algo_annotation() {
-        Assertions.fail("todo");
 
-//        ImageInstance image = BasicInstanceBuilder.getImageInstanceNotExist(BasicInstanceBuilder.getProject(),true)
-//        UserJob user = BasicInstanceBuilder.getUserJob(image.project)
-//        AlgoAnnotation annotation = BasicInstanceBuilder.getAlgoAnnotationNotExist(user.job,user,true)
-//        annotation.image = image
-//        BasicInstanceBuilder.saveDomain(annotation)
-//        BasicInstanceBuilder.getAlgoAnnotationTerm(user.job,annotation,user)
-//
-//
-//        def result = ReviewedAnnotationAPI.markStartReview(image.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//
-//        result = ReviewedAnnotationAPI.addReviewAnnotation(annotation.id, annotation.termsId(),Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        def json = JSON.parse(result.data)
-//        assert json instanceof JSONObject
-//        assert Long.parseLong(json.reviewedannotation.parentIdent.toString()) == annotation.id
-//        assert json.reviewedannotation.terms !=null
-//        assert json.reviewedannotation.terms.size()==1
+        AlgoAnnotation annotation = builder.given_a_algo_annotation();
+        AlgoAnnotationTerm algoAnnotationTerm = builder.given_a_not_persisted_algo_annotation_term(annotation);
+        algoAnnotationTerm.setUserJob(annotation.getUser());
+        builder.persistAndReturn(algoAnnotationTerm);
+        entityManager.refresh(annotation);
+
+        imageInstanceService.startReview(annotation.getImage());
+
+        CommandResponse response = reviewedAnnotationService.reviewAnnotation(annotation.getId(), annotation.termsId());
+        AssertionsForClassTypes.assertThat(response).isNotNull();
+        AssertionsForClassTypes.assertThat(response.getStatus()).isEqualTo(200);
+
+        ReviewedAnnotation reviewedAnnotation = reviewedAnnotationRepository.findByParentIdent(annotation.getId()).get();
+        entityManager.refresh(reviewedAnnotation);
+        assertThat(reviewedAnnotation.getTerms()).hasSize(1);
     }
 
     @Test
@@ -769,6 +704,49 @@ public class ReviewedAnnotationServiceTests {
 //        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(0);
     }
 
+
+    @Test
+    void do_annotation_corrections() throws ParseException {
+
+        ReviewedAnnotation based = builder.given_a_reviewed_annotation();
+        based.setLocation(new WKTReader().read("POLYGON ((0 0, 0 5000, 10000 5000, 10000 0, 0 0))"));
+        builder.persistAndReturn(based);
+
+        ReviewedAnnotation anotherAnnotation = builder.given_a_reviewed_annotation();
+        anotherAnnotation.setLocation(new WKTReader().read("POLYGON ((0 5000, 10000 5000, 10000 10000, 0 10000, 0 5000))"));
+        anotherAnnotation.setImage(based.getImage());
+        builder.persistAndReturn(anotherAnnotation);
+
+        reviewedAnnotationService.doCorrectReviewedAnnotation(List.of(based.getId(), anotherAnnotation.getId()), "POLYGON ((0 5000, 10000 5000, 10000 10000, 0 10000, 0 5000))", false);
+
+        assertThat(reviewedAnnotationRepository.findById(based.getId())).isPresent();
+        assertThat(reviewedAnnotationRepository.findById(based.getId()).get().getLocation()).isEqualTo(new WKTReader().read("POLYGON ((0 0, 0 10000, 10000 10000, 10000 0, 0 0))"));
+
+        assertThat(reviewedAnnotationRepository.findById(anotherAnnotation.getId())).isEmpty();
+    }
+
+
+    @Test
+    void do_annotation_corrections_with_remove() throws ParseException {
+
+        ReviewedAnnotation based = builder.given_a_reviewed_annotation();
+        based.setLocation(new WKTReader().read("POLYGON ((0 0, 0 10000, 10000 10000, 10000 0, 0 0))"));
+        builder.persistAndReturn(based);
+
+        ReviewedAnnotation anotherAnnotation = builder.given_a_reviewed_annotation();
+        anotherAnnotation.setLocation(new WKTReader().read("POLYGON ((10000 10000, 10000 30000, 30000 30000, 30000 10000, 10000 10000))"));
+        anotherAnnotation.setImage(based.getImage());
+        builder.persistAndReturn(anotherAnnotation);
+
+        reviewedAnnotationService.doCorrectReviewedAnnotation(List.of(based.getId(), anotherAnnotation.getId()), "POLYGON ((0 5000, 2000 5000, 2000 2000, 0 2000, 0 5000))", true);
+
+        assertThat(reviewedAnnotationRepository.findById(based.getId())).isPresent();
+        assertThat(reviewedAnnotationRepository.findById(based.getId()).get().getLocation()).isEqualTo(new WKTReader().read("POLYGON ((0 0, 0 2000, 2000 2000, 2000 5000, 0 5000, 0 10000, 10000 10000, 10000 0, 0 0))"));
+
+        assertThat(reviewedAnnotationRepository.findById(anotherAnnotation.getId())).isPresent();
+        assertThat(reviewedAnnotationRepository.findById(anotherAnnotation.getId()).get().getLocation()).isEqualTo(new WKTReader().read("POLYGON ((10000 10000, 10000 16000, 16000 16000, 16000 10000, 10000 10000))"));
+
+    }
 
 
 }

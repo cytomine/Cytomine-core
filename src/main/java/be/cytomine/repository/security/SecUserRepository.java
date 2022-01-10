@@ -73,4 +73,5 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
 
     List<SecUser> findAllByIdIn(List<Long> ids);
 
+    List<SecUser> findAllByUsernameLikeIgnoreCase(String s);
 }

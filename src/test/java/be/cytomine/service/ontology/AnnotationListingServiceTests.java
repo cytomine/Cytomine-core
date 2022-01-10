@@ -6,14 +6,14 @@ import be.cytomine.TestUtils;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.ontology.ReviewedAnnotation;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.UserAnnotation;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
+import be.cytomine.domain.security.UserJob;
 import be.cytomine.dto.AnnotationLight;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
+import be.cytomine.repository.AlgoAnnotationListing;
 import be.cytomine.repository.AnnotationListing;
 import be.cytomine.repository.ReviewedAnnotationListing;
 import be.cytomine.repository.UserAnnotationListing;
@@ -104,14 +104,18 @@ public class AnnotationListingServiceTests {
     void search_user_annotation_by_images() {
         UserAnnotation userAnnotation = builder.given_a_user_annotation();
         UserAnnotation userAnnotationFromAnotherImage = builder.given_a_user_annotation();
-        userAnnotationFromAnotherImage.setImage(builder.given_an_image_instance(userAnnotation.getProject()));
+        userAnnotationFromAnotherImage.getImage().setProject(userAnnotation.getProject());
 
         UserAnnotationListing userAnnotationListing = new UserAnnotationListing(entityManager);
         userAnnotationListing.setImages(Arrays.asList(userAnnotation.getImage().getId(), userAnnotationFromAnotherImage.getImage().getId()));
         assertThat(annotationListingService.listGeneric(userAnnotationListing)
                 .stream().map(x->((AnnotationResult)x).get("id")))
-                .contains(userAnnotation.getId())
-                .doesNotContain(userAnnotationFromAnotherImage.getId());
+                .contains(userAnnotation.getId(), userAnnotationFromAnotherImage.getId());
+
+        userAnnotationListing.setImages(Arrays.asList(userAnnotation.getImage().getId()));
+        assertThat(annotationListingService.listGeneric(userAnnotationListing)
+                .stream().map(x->((AnnotationResult)x).get("id")))
+                .contains(userAnnotation.getId()).doesNotContain(userAnnotationFromAnotherImage.getId());
     }
 
     @Test
@@ -138,6 +142,7 @@ public class AnnotationListingServiceTests {
 
         UserAnnotationListing userAnnotationListing = new UserAnnotationListing(entityManager);
         userAnnotationListing.setTerms(Arrays.asList(userAnnotation.getTerms().get(0).getId()));
+        userAnnotationListing.setProject(userAnnotation.getProject().getId());
         assertThat(annotationListingService.listGeneric(userAnnotationListing)
                 .stream().map(x->((AnnotationResult)x).get("id")))
                 .contains(userAnnotation.getId())
@@ -159,12 +164,14 @@ public class AnnotationListingServiceTests {
 
         UserAnnotationListing userAnnotationListing = new UserAnnotationListing(entityManager);
         userAnnotationListing.setTerms(Arrays.asList(userAnnotation.getTerms().get(0).getId(), userAnnotation.getTerms().get(1).getId()));
+        userAnnotationListing.setProject(userAnnotation.getProject().getId());
+
         assertThat(annotationListingService.listGeneric(userAnnotationListing)
                 .stream().map(x->((AnnotationResult)x).get("id")))
                 .contains(userAnnotation.getId());
         AnnotationResult annotationResult = (AnnotationResult) annotationListingService.listGeneric(userAnnotationListing).get(0);
         assertThat(annotationResult.get("id")).isEqualTo(userAnnotation.getId());
-        assertThat((List<Long>)annotationResult.get("terms")).containsExactlyElementsOf(userAnnotation.getTerms().stream().map(CytomineDomain::getId).collect(Collectors.toList()));
+        assertThat((List<Long>)annotationResult.get("term")).containsExactlyElementsOf(userAnnotation.getTerms().stream().map(CytomineDomain::getId).collect(Collectors.toList()));
     }
 
 
@@ -366,4 +373,169 @@ public class AnnotationListingServiceTests {
 
 
 
+    @Test
+    void search_algo_annotation_by_project() {
+        AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
+        AlgoAnnotation algoAnnotationFromAnotherProject = builder.given_a_algo_annotation();
+
+        AlgoAnnotationListing algoAnnotationListing = new AlgoAnnotationListing(entityManager);
+        algoAnnotationListing.setProject(algoAnnotation.getProject().getId());
+        assertThat(annotationListingService.listGeneric(algoAnnotationListing)
+                .stream().map(x -> ((AnnotationResult) x).get("id")))
+                .contains(algoAnnotation.getId())
+                .doesNotContain(algoAnnotationFromAnotherProject.getId());
+    }
+
+    @Test
+    void search_algo_annotation_by_image() {
+        AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
+        AlgoAnnotation algoAnnotationFromAnotherImage = builder.given_a_algo_annotation();
+
+        AlgoAnnotationListing algoAnnotationListing = new AlgoAnnotationListing(entityManager);
+        algoAnnotationListing.setImage(algoAnnotation.getImage().getId());
+        assertThat(annotationListingService.listGeneric(algoAnnotationListing)
+                .stream().map(x -> ((AnnotationResult) x).get("id")))
+                .contains(algoAnnotation.getId())
+                .doesNotContain(algoAnnotationFromAnotherImage.getId());
+    }
+
+    @Test
+    void search_algo_annotation_by_images() {
+        AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
+        AlgoAnnotation algoAnnotationFromAnotherImage = builder.given_a_algo_annotation();
+        algoAnnotationFromAnotherImage.setImage(builder.given_an_image_instance(algoAnnotation.getProject()));
+
+        AlgoAnnotationListing algoAnnotationListing = new AlgoAnnotationListing(entityManager);
+        algoAnnotationListing.setImages(Arrays.asList(algoAnnotation.getImage().getId(), algoAnnotationFromAnotherImage.getImage().getId()));
+        assertThat(annotationListingService.listGeneric(algoAnnotationListing)
+                .stream().map(x -> ((AnnotationResult) x).get("id")))
+                .contains(algoAnnotation.getId())
+                .contains(algoAnnotationFromAnotherImage.getId());
+    }
+
+    @Test
+    void search_algo_annotation_by_images_from_different_project_fails() {
+        AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
+        AlgoAnnotation algoAnnotationFromAnotherImage = builder.given_a_algo_annotation();
+
+        AlgoAnnotationListing algoAnnotationListing = new AlgoAnnotationListing(entityManager);
+        algoAnnotationListing.setImages(Arrays.asList(algoAnnotation.getImage().getId(), algoAnnotationFromAnotherImage.getImage().getId()));
+        Assertions.assertThrows(WrongArgumentException.class, () -> annotationListingService.listGeneric(algoAnnotationListing));
+    }
+
+
+    @Test
+    void search_algo_annotation_by_users() {
+        AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
+
+        AlgoAnnotationListing algoAnnotationListing = new AlgoAnnotationListing(entityManager);
+        algoAnnotationListing.setImages(Arrays.asList(algoAnnotation.getImage().getId()));
+        algoAnnotationListing.setUser(algoAnnotation.getUser().getId());
+        assertThat(annotationListingService.listGeneric(algoAnnotationListing)
+                .stream().map(x -> ((AnnotationResult) x).get("id")))
+                .contains(algoAnnotation.getId());
+
+        algoAnnotationListing = new AlgoAnnotationListing(entityManager);
+        algoAnnotationListing.setImages(Arrays.asList(algoAnnotation.getImage().getId()));
+        algoAnnotationListing.setUser(builder.given_a_user().getId());
+        assertThat(annotationListingService.listGeneric(algoAnnotationListing)
+                .stream().map(x -> ((AnnotationResult) x).get("id")))
+                .doesNotContain(algoAnnotation.getId());
+    }
+    
+    @Test
+    void search_algo_annotation_by_terms() throws ParseException {
+
+        SliceInstance sliceInstance = builder.given_a_slice_instance();
+        UserJob user1 = builder.given_a_user_job();
+        UserJob user2 = builder.given_a_user_job();
+
+        Term term1 = builder.given_a_term(sliceInstance.getProject().getOntology());
+        Term term2 = builder.given_a_term(sliceInstance.getProject().getOntology());
+
+        AlgoAnnotation a1 = builder.given_a_algo_annotation(sliceInstance, POLYGONES.get("a"), user1, term1);
+        AlgoAnnotation a2 = builder.given_a_algo_annotation(sliceInstance, POLYGONES.get("b"), user1, term2);
+        AlgoAnnotation a3 = builder.given_a_algo_annotation(sliceInstance, POLYGONES.get("c"), user2, term1);
+        AlgoAnnotation a4 = builder.given_a_algo_annotation(sliceInstance, POLYGONES.get("d"), user2, term2);
+
+
+        AlgoAnnotationListing algoAnnotationListing = new AlgoAnnotationListing(entityManager);
+        algoAnnotationListing.setProject(sliceInstance.getProject().getId());
+        assertThat(annotationListingService.listGeneric(algoAnnotationListing)
+                .stream().map(x -> ((AnnotationResult) x).get("id")))
+                .contains(a1.getId())
+                .contains(a2.getId())
+                .contains(a3.getId())
+                .contains(a4.getId());
+
+        algoAnnotationListing = new AlgoAnnotationListing(entityManager);
+        algoAnnotationListing.setProject(sliceInstance.getProject().getId());
+        algoAnnotationListing.setTerm(term1.getId());
+        assertThat(annotationListingService.listGeneric(algoAnnotationListing)
+                .stream().map(x -> ((AnnotationResult) x).get("id")))
+                .contains(a1.getId())
+                .doesNotContain(a2.getId())
+                .contains(a3.getId())
+                .doesNotContain(a4.getId());
+
+        algoAnnotationListing = new AlgoAnnotationListing(entityManager);
+        algoAnnotationListing.setProject(sliceInstance.getProject().getId());
+        algoAnnotationListing.setTerms(Arrays.asList(term1.getId(), term2.getId()));
+        assertThat(annotationListingService.listGeneric(algoAnnotationListing)
+                .stream().map(x -> ((AnnotationResult) x).get("id")))
+                .contains(a1.getId())
+                .contains(a2.getId())
+                .contains(a3.getId())
+                .contains(a4.getId());
+    }
+
+
+    @Test
+    void search_algo_annotation_by_bbox() throws ParseException {
+
+        SliceInstance sliceInstance = builder.given_a_slice_instance();
+        UserJob user1 = builder.given_a_user_job();
+        UserJob user2 = builder.given_a_user_job();
+
+
+        Term term1 = builder.given_a_term(sliceInstance.getProject().getOntology());
+        Term term2 = builder.given_a_term(sliceInstance.getProject().getOntology());
+
+        AlgoAnnotation a1 = builder.given_a_algo_annotation(sliceInstance, POLYGONES.get("a"), user1, term1);
+        AlgoAnnotation a2 = builder.given_a_algo_annotation(sliceInstance, POLYGONES.get("b"), user1, term2);
+        AlgoAnnotation a3 = builder.given_a_algo_annotation(sliceInstance, POLYGONES.get("c"), user2, term1);
+        AlgoAnnotation a4 = builder.given_a_algo_annotation(sliceInstance, POLYGONES.get("d"), user2, term2);
+
+        AlgoAnnotationListing algoAnnotationListing = new AlgoAnnotationListing(entityManager);
+        algoAnnotationListing.setSlice(sliceInstance.getId());
+        algoAnnotationListing.setBbox("POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))");
+        assertThat(annotationListingService.listGeneric(algoAnnotationListing)
+                .stream().map(x -> ((AnnotationResult) x).get("id")))
+                .contains(a1.getId())
+                .contains(a2.getId())
+                .contains(a3.getId())
+                .doesNotContain(a4.getId());
+
+    }
+
+    @Test
+    void search_algo_annotation_with_multiple_terms() {
+        AlgoAnnotation algoAnnotation = entityManager.find(AlgoAnnotation.class, builder.given_an_algo_annotation_term().getAnnotationIdent());
+        AlgoAnnotationTerm secondTerm = builder.given_an_algo_annotation_term();
+        secondTerm.setTerm(builder.given_a_term(algoAnnotation.getProject().getOntology()));
+        secondTerm.setAnnotation(algoAnnotation);
+        secondTerm.setProject(algoAnnotation.getProject());
+        builder.persistAndReturn(secondTerm);
+        entityManager.refresh(algoAnnotation);
+
+        AlgoAnnotationListing userAnnotationListing = new AlgoAnnotationListing(entityManager);
+        userAnnotationListing.setProject(algoAnnotation.getProject().getId());
+        userAnnotationListing.setTerms(algoAnnotation.termsId());
+        assertThat(annotationListingService.listGeneric(userAnnotationListing)
+                .stream().map(x->((AnnotationResult)x).get("id")))
+                .contains(algoAnnotation.getId());
+        AnnotationResult annotationResult = (AnnotationResult) annotationListingService.listGeneric(userAnnotationListing).get(0);
+        assertThat(annotationResult.get("id")).isEqualTo(algoAnnotation.getId());
+        assertThat((List<Long>)annotationResult.get("term")).containsExactlyElementsOf(algoAnnotation.termsId());
+    }
 }

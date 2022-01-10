@@ -2,9 +2,7 @@ package be.cytomine.service.image;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.image.UploadedFile;
+import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
@@ -204,7 +202,7 @@ public class UploadedFileServiceTests {
 
     @Test
     void search_uploadedFile_by_storage() {
-        throw new RuntimeException("to implement in corporate version (?) ; some issues in the current version");
+        Assertions.fail("to implement in corporate version (?) ; some issues in the current version");
     }
 
     @Test
@@ -294,9 +292,17 @@ public class UploadedFileServiceTests {
 
     @Test
     void delete_uploadedFile_with_dependencies_with_success() {
-        AbstractImage abstractImage = builder.given_an_abstract_image();
+        UploadedFile uploadedFile = builder.given_a_uploaded_file();
 
-        CommandResponse commandResponse = uploadedFileService.delete(abstractImage.getUploadedFile(), null, null, true);
+        AbstractImage abstractImage = builder.given_an_abstract_image();
+        abstractImage.setUploadedFile(uploadedFile);
+
+        AbstractSlice abstractSlice = builder.given_an_abstract_slice();
+        abstractSlice.setUploadedFile(uploadedFile);
+
+        CompanionFile companionFile = builder.given_a_companion_file(abstractImage);
+        companionFile.setUploadedFile(uploadedFile);
+        CommandResponse commandResponse = uploadedFileService.delete(uploadedFile, null, null, true);
 
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);

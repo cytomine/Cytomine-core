@@ -328,7 +328,7 @@ public class AbstractImageService extends ModelService {
     private void deleteDependentImageInstance(AbstractImage ai, Transaction transaction,Task task) {
         List<ImageInstance> images = imageInstanceRepository.findAllByBaseImage(ai);
         if(!images.isEmpty()) {
-            throw new ConstraintException("This image $ai cannot be deleted as it has already been insert " +
+            throw new ConstraintException("This image cannot be deleted as it has already been insert " +
                     "in projects " + images.stream().map(x -> x.getProject().getName()).collect(Collectors.joining(",")));
         }
     }

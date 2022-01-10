@@ -35,6 +35,8 @@ public interface AlgoAnnotationRepository extends JpaRepository<AlgoAnnotation, 
 
     Long countByProjectAndCreatedBetween(Project project, Date createdMin, Date createdMax);
 
+    List<AlgoAnnotation> findAllByImage(ImageInstance image);
+
 //
 //    @Query(
 //            value = "SELECT a.id id, a.project_id container, '' url FROM user_annotation a, image_instance ii, abstract_image ai WHERE a.image_id = ii.id AND ii.base_image_id = ai.id AND ai.original_filename not like '%ndpi%svs%' AND GeometryType(a.location) != 'POINT' AND st_area(a.location) < 1500000 ORDER BY st_area(a.location) DESC",

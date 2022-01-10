@@ -83,6 +83,7 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
 //        if (slice==null) {
 //            slice = image.getReferenceSlice
 //        }
+        this.computeGIS();
         wktLocation = location.toText();
     }
 

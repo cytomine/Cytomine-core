@@ -1,9 +1,16 @@
 package be.cytomine.service;
 
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.ontology.AnnotationDomain;
+import be.cytomine.domain.ontology.ReviewedAnnotation;
+import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.AlgoAnnotationListing;
 import be.cytomine.repository.AnnotationListing;
 import be.cytomine.repository.UserAnnotationListing;
+import be.cytomine.repository.ontology.AnnotationDomainRepository;
+import be.cytomine.repository.ontology.ReviewedAnnotationRepository;
+import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.dto.AnnotationResult;
 import be.cytomine.service.dto.Point;
 import be.cytomine.service.security.SecurityACLService;
@@ -20,7 +27,9 @@ import javax.persistence.TupleElement;
 import javax.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Transactional
@@ -33,6 +42,7 @@ public class AnnotationListingService  {
     private final EntityManager entityManager;
 
     private final KmeansGeometryService kmeansGeometryService;
+
 
     public List listGeneric(AnnotationListing al) {
         securityACLService.check(al.container(),READ);

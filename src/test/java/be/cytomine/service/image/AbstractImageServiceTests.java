@@ -2,13 +2,12 @@ package be.cytomine.service.image;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.image.UploadedFile;
+import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
+import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.UploadedFileRepository;
 import be.cytomine.service.CommandService;
@@ -332,12 +331,6 @@ public class AbstractImageServiceTests {
 
         assertThat(abstractImage.getPhysicalSizeX()).isEqualTo(6);
         assertThat(abstractImage.getMagnification()).isEqualTo(10);
-
-        entityManager.refresh(imageInstance);
-
-        assertThat(imageInstance.getPhysicalSizeX()).isEqualTo(6);
-        assertThat(imageInstance.getMagnification()).isEqualTo(40);
-
     }
 
     @Test
@@ -352,10 +345,28 @@ public class AbstractImageServiceTests {
     }
 
     @Test
-    void delete_uploadedFile_with_dependencies_with_success() {
-        fail("not yet implemented");
+    void delete_abstract_image_with_dependencies_with_success() {
+        AbstractImage abstractImage = builder.given_an_abstract_image();
+
+        CompanionFile companionFile = builder.given_a_companion_file(abstractImage);
+
+        NestedImageInstance nestedImageInstance = builder.given_a_nested_image_instance();
+        nestedImageInstance.setBaseImage(abstractImage);
+
+        CommandResponse commandResponse = abstractImageService.delete(abstractImage, null, null, true);
+
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
     }
 
+    @Test
+    void delete_abstract_image_with_image_in_project_is_refused() {
+        AbstractImage abstractImage = builder.given_an_abstract_image();
+        ImageInstance imageInstance = builder.given_an_image_instance(abstractImage, builder.given_a_project());
+        Assertions.assertThrows(ForbiddenException.class, () -> {
+            abstractImageService.delete(abstractImage, null, null, true);
+        });
+    }
 
 
 }

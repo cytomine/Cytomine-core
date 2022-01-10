@@ -42,8 +42,6 @@ public class SimplifyGeometryServiceTests {
         //add very big geometry
         annotation.setLocation(new WKTReader().read(TestUtils.getResourceFileAsString("dataset/big_annotation.txt")));
 
-        builder.persistAndReturn(annotation);
-
         assertThat(annotation.getLocation().getNumPoints()).isGreaterThanOrEqualTo(500);
 
         long maxPoint;
@@ -84,8 +82,6 @@ public class SimplifyGeometryServiceTests {
         //add very big geometry
         annotation.setLocation(new WKTReader().read(TestUtils.getResourceFileAsString("dataset/very_big_annotation.txt")));
 
-        builder.persistAndReturn(annotation);
-
         assertThat(annotation.getLocation().getNumPoints()).isGreaterThanOrEqualTo(500);
 
         long maxPoint;
@@ -109,8 +105,6 @@ public class SimplifyGeometryServiceTests {
 
         //add very big geometry
         annotation.setLocation(new WKTReader().read(TestUtils.getResourceFileAsString("dataset/annotationbig_emptyspace.txt")));
-
-        builder.persistAndReturn(annotation);
 
         assertThat(annotation.getLocation().getNumPoints()).isGreaterThanOrEqualTo(500);
 
@@ -142,8 +136,8 @@ public class SimplifyGeometryServiceTests {
     }
 
 
-    private long getPointMultiplyByGeometriesOrInteriorRings(Geometry geometry, long numberOfPoints){
-        long result = 0;
+    public static int getPointMultiplyByGeometriesOrInteriorRings(Geometry geometry, long numberOfPoints){
+        int result = 0;
         if (geometry instanceof MultiPolygon) {
             for (int i = 0; i < geometry.getNumGeometries(); i++) {
                 Geometry geom = geometry.getGeometryN(i);

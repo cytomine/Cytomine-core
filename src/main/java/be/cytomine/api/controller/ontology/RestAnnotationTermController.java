@@ -1,20 +1,16 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.AnnotationTerm;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.UserAnnotation;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
+import be.cytomine.domain.security.UserJob;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.repository.ontology.TermRepository;
-import be.cytomine.service.ontology.AnnotationTermService;
-import be.cytomine.service.ontology.TermService;
-import be.cytomine.service.ontology.UserAnnotationService;
+import be.cytomine.service.ontology.*;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
@@ -49,6 +45,10 @@ public class RestAnnotationTermController extends RestCytomineController {
 
     private final SecurityACLService securityACLService;
 
+    private final AlgoAnnotationTermService algoAnnotationTermService;
+
+    private final ReviewedAnnotationService reviewedAnnotationService;
+
 
     @GetMapping("/annotation/{idAnnotation}/term.json")
     public ResponseEntity<String> listByAnnotation(
@@ -56,7 +56,7 @@ public class RestAnnotationTermController extends RestCytomineController {
             @RequestParam(value = "idUser", required = false) Long idUser
     ) {
         log.debug("REST request to list terms for annotation {}", idAnnotation);
-        List<AnnotationTerm> results = new ArrayList<>();
+        List results = new ArrayList<>();
         AnnotationDomain annotation = annotationDomainRepository.findById(idAnnotation)
                 .orElseThrow(() -> new ObjectNotFoundException("Annotation", idAnnotation));
         if (annotation.isAlgoAnnotation()) {
@@ -64,11 +64,9 @@ public class RestAnnotationTermController extends RestCytomineController {
         } else if (idUser==null && annotation.isUserAnnotation()) {
             results.addAll(annotationTermService.list((UserAnnotation)annotation));
         } else if(idUser==null && annotation.isAlgoAnnotation()) {
-//            results.addAll(algoAnnotationTermService.list((AlgoAnnotation)annotation));
-            throw new CytomineMethodNotYetImplementedException(""); //TODO
+            results.addAll(algoAnnotationTermService.list((AlgoAnnotation)annotation));
         } else if(idUser==null && annotation.isReviewedAnnotation()) {
-//            results.addAll(reviewedAnnotationService.listTerms((ReviewedAnnotation)annotation));
-            throw new CytomineMethodNotYetImplementedException(""); //TODO
+            results.addAll(reviewedAnnotationService.listTerms((ReviewedAnnotation)annotation));
         } else if(idUser!=null) {
             User user = (User)secUserService.find(idUser).orElseThrow(() -> new ObjectNotFoundException("User", idUser));
             results.addAll(annotationTermService.list((UserAnnotation)annotation, user));
@@ -109,9 +107,8 @@ public class RestAnnotationTermController extends RestCytomineController {
                     .orElseThrow(() -> new ObjectNotFoundException("SecUser", idUser));
             //user is set, get a specific annotation-term link from user
             if (secUserService.getCurrentUser().isAlgo()) {
-//                return responseSuccess(algoAnnotationTermService.read(annotation, term, user)
-//                        .orElseThrow(() -> new ObjectNotFoundException("AlgoAnnotationTerm", annotation + "-"+term+"-"+idUser)));  //TODO
-                throw new CytomineMethodNotYetImplementedException("");
+                return responseSuccess(algoAnnotationTermService.find(annotation, term, (UserJob) user)
+                        .orElseThrow(() -> new ObjectNotFoundException("AlgoAnnotationTerm", annotation + "-"+term+"-"+idUser)));
             } else {
                 return responseSuccess(annotationTermService.find(annotation, term, user)
                         .orElseThrow(() -> new ObjectNotFoundException("AnnotationTerm", annotation + "-"+term+"-"+idUser)));
@@ -119,9 +116,8 @@ public class RestAnnotationTermController extends RestCytomineController {
         } else {
             //user is not set, we will get the annotation-term from all user
             if(secUserService.getCurrentUser().isAlgo()) {
-//                return responseSuccess(algoAnnotationTermService.read(annotation, term, null)
-//                        .orElseThrow(() -> new ObjectNotFoundException("AlgoAnnotationTerm", annotation + "-"+term+"-null")));
-                throw new CytomineMethodNotYetImplementedException(""); //TODO
+                return responseSuccess(algoAnnotationTermService.find(annotation, term, null)
+                        .orElseThrow(() -> new ObjectNotFoundException("AlgoAnnotationTerm", annotation + "-"+term+"-null")));
             } else {
                 return responseSuccess(annotationTermService.find(annotation, term, null)
                         .orElseThrow(() -> new ObjectNotFoundException("AnnotationTerm", annotation + "-"+term+"-null")));
@@ -145,8 +141,7 @@ public class RestAnnotationTermController extends RestCytomineController {
             if (!annotation.isUserAnnotation() && !annotation.isAlgoAnnotation()) {
                 throw new WrongArgumentException("AlgoAnnotationTerm must have a valide annotation:"+json.getJSONAttrStr("annotationIdent"));
             }
-//            return responseSuccess(algoAnnotationTermService.add(json)); //TODO
-            throw new CytomineMethodNotYetImplementedException("");
+            return responseSuccess(algoAnnotationTermService.add(json));
         } else {
             securityACLService.check(json.getJSONAttrLong("userannotation"),UserAnnotation.class,READ);
             securityACLService.checkFullOrRestrictedForOwner(json.getJSONAttrLong("userannotation"),UserAnnotation.class, "user");

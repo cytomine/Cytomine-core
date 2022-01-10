@@ -75,6 +75,7 @@ public class NestedImageInstanceService extends ModelService {
      */
     public CommandResponse add(JsonObject json) {
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
         securityACLService.check(json.getJSONAttrLong("project"), Project.class, READ);
         securityACLService.checkIsNotReadOnly(json.getJSONAttrLong("project"), Project.class);
         synchronized (this.getClass()) {
@@ -92,6 +93,7 @@ public class NestedImageInstanceService extends ModelService {
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),READ);
+        securityACLService.checkUser(currentUser);
         securityACLService.check(jsonNewData.getJSONAttrLong("project"),Project.class,READ);
         securityACLService.checkIsNotReadOnly(domain.container());
         securityACLService.checkIsNotReadOnly(jsonNewData.getJSONAttrLong("project"),Project.class);
@@ -110,6 +112,7 @@ public class NestedImageInstanceService extends ModelService {
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),READ);
+        securityACLService.checkUser(currentUser);
         securityACLService.checkIsNotReadOnly(domain.container());
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
@@ -120,7 +123,7 @@ public class NestedImageInstanceService extends ModelService {
         NestedImageInstance nestedImageInstance = (NestedImageInstance)domain;
         Optional<NestedImageInstance> imageAlreadyExist = nestedImageInstanceRepository.findByBaseImageAndParentAndProject(nestedImageInstance.getBaseImage(), nestedImageInstance.getParent(), nestedImageInstance.getProject());
         if (imageAlreadyExist.isPresent() && (imageAlreadyExist.get().getId() != nestedImageInstance.getId())) {
-            throw new AlreadyExistException("Nested Image " + nestedImageInstance.getBaseImage().getOriginalFilename() + " already map with image " + nestedImageInstance.getParentId() + "in project " + nestedImageInstance.getProject().getName());
+            throw new AlreadyExistException("Nested Image " + nestedImageInstance.getBaseImage().getOriginalFilename() + " already map with image " + nestedImageInstance.getParentId() + " in project " + nestedImageInstance.getProject().getName());
         }
     }
 

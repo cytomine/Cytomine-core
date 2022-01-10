@@ -2,10 +2,13 @@ package be.cytomine.service.image;
 
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.dto.SliceCoordinate;
 import be.cytomine.dto.SliceCoordinates;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.AbstractSliceRepository;
+import be.cytomine.repository.image.SliceInstanceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +20,9 @@ public class SliceCoordinatesService {
 
     @Autowired
     AbstractSliceRepository abstractSliceRepository;
+
+    @Autowired
+    SliceInstanceRepository sliceInstanceRepository;
 
     public SliceCoordinates getSliceCoordinates(AbstractImage image) {
         List<AbstractSlice> slices = abstractSliceRepository.findAllByImage(image);
@@ -43,6 +49,11 @@ public class SliceCoordinatesService {
         SliceCoordinate sliceCoordinate = getReferenceSliceCoordinate(abstractImage);
         return abstractSliceRepository.findByImageAndChannelAndZStackAndTime(abstractImage, sliceCoordinate.getChannel(), sliceCoordinate.getZStack(), sliceCoordinate.getTime())
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", "image:" + abstractImage.getId() + "," + sliceCoordinate.getChannel()+ ":" + sliceCoordinate.getZStack() + ":" + sliceCoordinate.getTime()));
+    }
+
+    public SliceInstance getReferenceSlice(ImageInstance imageInstance) {
+        AbstractSlice abstractSlice = getReferenceSlice(imageInstance.getBaseImage());
+        return sliceInstanceRepository.findByBaseSliceAndImage(abstractSlice, imageInstance).orElse(null);
     }
 
 }

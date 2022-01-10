@@ -132,7 +132,7 @@ public class AnnotationTermServiceTests {
     @Test
     void add_valid_annotation_term_and_delete_other_terms() {
         UserAnnotation annotation = builder.given_a_user_annotation();
-        AnnotationTerm annotationTerm = builder.given_a_not_persisted_annotation_term(annotation);
+        AnnotationTerm annotationTerm = builder.given_an_annotation_term(annotation);
         Term oldTerm = annotationTerm.getTerm();
         Term newTerm = builder.given_a_term(annotation.getProject().getOntology());
 
@@ -216,7 +216,7 @@ public class AnnotationTermServiceTests {
         AnnotationTerm annotationTerm = builder.given_a_not_persisted_annotation_term(builder.given_a_user_annotation());
         JsonObject jsonObject = annotationTerm.toJsonObject();
         jsonObject.put("userannotation", -1L);
-        Assertions.assertThrows(WrongArgumentException.class, () -> {
+        Assertions.assertThrows(ObjectNotFoundException.class, () -> {
             annotationTermService.add(jsonObject);
         }) ;
     }

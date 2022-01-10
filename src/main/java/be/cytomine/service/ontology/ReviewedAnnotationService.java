@@ -4,10 +4,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.AnnotationTerm;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.ReviewedAnnotation;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
@@ -20,6 +17,7 @@ import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ReviewedAnnotationListing;
+import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.ontology.ReviewedAnnotationRepository;
 import be.cytomine.repository.ontology.TermRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
@@ -74,7 +72,7 @@ public class ReviewedAnnotationService extends ModelService {
 
     private final SliceInstanceService sliceInstanceService;
 
-    private final ImageInstanceService imageInstanceService;
+    private final ImageInstanceRepository imageInstanceRepository;
 
     private final SimplifyGeometryService simplifyGeometryService;
 
@@ -89,6 +87,8 @@ public class ReviewedAnnotationService extends ModelService {
     private final TaskService taskService;
 
     private final UserAnnotationRepository userAnnotationRepository;
+
+    private final GenericAnnotationService genericAnnotationService;
 
     @Override
     public Class currentDomain() {
@@ -264,8 +264,8 @@ public class ReviewedAnnotationService extends ModelService {
     public CommandResponse add(JsonObject jsonObject) {
         securityACLService.check(jsonObject.getJSONAttrLong("project"), Project.class, READ);
         securityACLService.checkIsNotReadOnly(jsonObject.getJSONAttrLong("project"), Project.class);
-
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
         //Start transaction
         Transaction transaction = transactionService.start();
 
@@ -290,6 +290,7 @@ public class ReviewedAnnotationService extends ModelService {
      */
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
         securityACLService.checkIsCreator(domain, currentUser);
         CommandResponse result = executeCommand(new EditCommand(currentUser, null), domain, jsonNewData);
         return result;
@@ -306,6 +307,7 @@ public class ReviewedAnnotationService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
         securityACLService.checkIsCreator(domain, currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
@@ -389,7 +391,7 @@ public class ReviewedAnnotationService extends ModelService {
         }
         List<SecUser> users = usersIds.stream()
                 .map(x -> userRepository.findById(x).orElseThrow(() -> new ObjectNotFoundException("User", x))).collect(Collectors.toList());
-        ImageInstance imageInstance = imageInstanceService.find(imageInstanceId)
+        ImageInstance imageInstance = imageInstanceRepository.findById(imageInstanceId)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageInstanceId));
 
         if (!imageInstance.isInReviewMode()) {
@@ -444,7 +446,7 @@ public class ReviewedAnnotationService extends ModelService {
         taskService.updateTask(task,2,"Extract parameters...");
         List<SecUser> users = usersIds.stream()
                 .map(x -> userRepository.findById(x).orElseThrow(() -> new ObjectNotFoundException("User", x))).collect(Collectors.toList());
-        ImageInstance imageInstance = imageInstanceService.find(imageInstanceId)
+        ImageInstance imageInstance = imageInstanceRepository.findById(imageInstanceId)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageInstanceId));
 
         //check constraint
@@ -556,5 +558,71 @@ public class ReviewedAnnotationService extends ModelService {
 //}
 
 
+    /**
+     * Apply a union or a diff on all covering annotations list with the newLocation geometry
+     * @param coveringAnnotations List of reviewed annotations id that are covering by newLocation geometry
+     * @param newLocation A geometry (wkt format)
+     * @param remove Flag that tell to extend or substract part of geometry from  coveringAnnotations list
+     * @return The first annotation data
+     */
+    // TODO: could be generic (same logic as for user annotation)
+    public CommandResponse doCorrectReviewedAnnotation(List<Long> coveringAnnotations, String newLocation, boolean remove) throws ParseException {
+        if (coveringAnnotations.isEmpty()) {
+            return null;
+        }
 
+        //Get the based annotation
+        ReviewedAnnotation based = this.find(coveringAnnotations.get(0)).get();
+
+        //Get the term of the based annotation, it will be the main term
+        List<Long> basedTerms = based.termsId();
+
+        //Get all other annotation with same term
+        List<Long> allOtherAnnotationId = coveringAnnotations.subList(1, coveringAnnotations.size());
+        List<ReviewedAnnotation> allAnnotationWithSameTerm = genericAnnotationService.findReviewedAnnotationWithTerm(allOtherAnnotationId, basedTerms);
+
+        //Create the new geometry
+        Geometry newGeometry = new WKTReader().read(newLocation);
+        if(!newGeometry.isValid()) {
+            throw new WrongArgumentException("Your annotation cannot be self-intersected.");
+        }
+
+        CommandResponse result = null;
+        Geometry oldLocation = based.getLocation();
+        if (remove) {
+            log.info("doCorrectUserAnnotation : remove");
+            //diff will be made
+            //-remove the new geometry from the based annotation location
+            //-remove the new geometry from all other annotation location
+            based.setLocation(based.getLocation().difference(newGeometry));
+            if (based.getLocation().getNumPoints() < 2) {
+                throw new WrongArgumentException("You cannot delete an annotation with substract! Use reject or delete tool.");
+            }
+
+            JsonObject jsonObject = based.toJsonObject();
+            based.setLocation(oldLocation);
+            result = update(based, jsonObject);
+
+            for(int i = 0; i < allAnnotationWithSameTerm.size(); i++) {
+                ReviewedAnnotation other = allAnnotationWithSameTerm.get(i);
+                other.setLocation(other.getLocation().difference(newGeometry));
+                update(other, other.toJsonObject());
+            }
+        } else {
+            log.info("doCorrectUserAnnotation : union");
+            //union will be made:
+            // -add the new geometry to the based annotation location.
+            // -add all other annotation geometry to the based annotation location (and delete other annotation)
+            based.setLocation(based.getLocation().union(newGeometry));
+            for (ReviewedAnnotation other : allAnnotationWithSameTerm) {
+                based.setLocation(based.getLocation().union(other.getLocation()));
+                delete(other, null, null, false);
+            }
+
+            JsonObject jsonObject = based.toJsonObject();
+            based.setLocation(oldLocation);
+            update(based, jsonObject);
+        }
+        return result;
+    }
 }

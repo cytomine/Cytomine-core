@@ -3,6 +3,9 @@ package be.cytomine.service.image;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.*;
+import be.cytomine.domain.ontology.AlgoAnnotation;
+import be.cytomine.domain.ontology.ReviewedAnnotation;
+import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.*;
@@ -10,10 +13,17 @@ import be.cytomine.repository.image.AbstractSliceRepository;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.image.NestedImageInstanceRepository;
 import be.cytomine.repository.image.SliceInstanceRepository;
+import be.cytomine.repository.ontology.AlgoAnnotationRepository;
+import be.cytomine.repository.ontology.AnnotationDomainRepository;
+import be.cytomine.repository.ontology.ReviewedAnnotationRepository;
+import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.ImageInstanceBounds;
+import be.cytomine.service.ontology.AlgoAnnotationService;
+import be.cytomine.service.ontology.ReviewedAnnotationService;
+import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SQLSearchParameter;
@@ -69,6 +79,18 @@ public class ImageInstanceService extends ModelService {
     private SliceInstanceRepository sliceInstanceRepository;
 
     private SliceCoordinatesService sliceCoordinatesService;
+
+    private UserAnnotationRepository userAnnotationRepository;
+
+    private AlgoAnnotationRepository algoAnnotationRepository;
+
+    private ReviewedAnnotationRepository reviewedAnnotationRepository;
+
+    private AlgoAnnotationService algoAnnotationService;
+
+    private UserAnnotationService userAnnotationService;
+
+    private ReviewedAnnotationService reviewedAnnotationService;
 
 
     @Override
@@ -731,6 +753,7 @@ public class ImageInstanceService extends ModelService {
          */
     public CommandResponse add(JsonObject json) {
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
         securityACLService.check(json.getJSONAttrLong("project"), Project.class, READ);
         securityACLService.checkIsNotReadOnly(json.getJSONAttrLong("project"), Project.class);
 
@@ -770,6 +793,7 @@ public class ImageInstanceService extends ModelService {
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(), READ);
+        securityACLService.checkUser(currentUser);
         securityACLService.check(jsonNewData.getJSONAttrLong("project"), Project.class, READ);
         securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((ImageInstance)domain).getUser());
         securityACLService.checkIsNotReadOnly(domain.container());
@@ -786,26 +810,15 @@ public class ImageInstanceService extends ModelService {
         boolean resolutionUpdated = (!Objects.equals(resolutionX, imageInstance.getPhysicalSizeX())) || (!Objects.equals(resolutionY, imageInstance.getPhysicalSizeY()));
 
         if (resolutionUpdated) {
-            // TODO: update annotations:
-//            def annotations
-//            annotations = UserAnnotation.findAllByImage(imageInstance)
-//            annotations.each {
-//                def json = JSON.parse(it.encodeAsJSON())
-//                userAnnotationService.update(it, json)
-//            }
-//
-//            annotations = AlgoAnnotation.findAllByImage(imageInstance)
-//            annotations.each {
-//                def json = JSON.parse(it.encodeAsJSON())
-//                algoAnnotationService.update(it, json)
-//            }
-//
-//            annotations = ReviewedAnnotation.findAllByImage(imageInstance)
-//            annotations.each {
-//                def json = JSON.parse(it.encodeAsJSON())
-//                reviewedAnnotationService.update(it, json)
-//            }
-
+            for (AlgoAnnotation algoAnnotation : algoAnnotationRepository.findAllByImage(imageInstance)) {
+                algoAnnotationService.update(algoAnnotation, algoAnnotation.toJsonObject());
+            }
+            for (ReviewedAnnotation reviewedAnnotation : reviewedAnnotationRepository.findAllByImage(imageInstance)) {
+                reviewedAnnotationService.update(reviewedAnnotation, reviewedAnnotation.toJsonObject());
+            }
+            for (UserAnnotation userAnnotation : userAnnotationRepository.findAllByImage(imageInstance)) {
+                userAnnotationService.update(userAnnotation, userAnnotation.toJsonObject());
+            }
         }
 
         return commandResponse;
@@ -823,6 +836,7 @@ public class ImageInstanceService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(), READ);
         securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((ImageInstance)domain).getUser());
 
@@ -847,24 +861,21 @@ public class ImageInstanceService extends ModelService {
     }
 
     private void deleteDependentAlgoAnnotation(ImageInstance image, Transaction transaction, Task task) {
-        //TODO:
-//        AlgoAnnotation.findAllByImage(image).each {
-//            algoAnnotationService.delete(it, transaction)
-//        }
+        for (AlgoAnnotation algoAnnotation : algoAnnotationRepository.findAllByImage(image)) {
+            algoAnnotationService.delete(algoAnnotation, transaction, task, false);
+        }
     }
 
     private void deleteDependentReviewedAnnotation(ImageInstance image, Transaction transaction, Task task) {
-        //TODO:
-//        ReviewedAnnotation.findAllByImage(image).each {
-//            reviewedAnnotationService.delete(it, transaction)
-//        }
+        for (ReviewedAnnotation reviewedAnnotation : reviewedAnnotationRepository.findAllByImage(image)) {
+            reviewedAnnotationService.delete(reviewedAnnotation, transaction, task, false);
+        }
     }
 
     private void deleteDependentUserAnnotation(ImageInstance image, Transaction transaction, Task task) {
-        //TODO:
-//        UserAnnotation.findAllByImage(image).each {
-//            userAnnotationService.delete(it, transaction)
-//        }
+        for (UserAnnotation userAnnotation : userAnnotationRepository.findAllByImage(image)) {
+            userAnnotationService.delete(userAnnotation, transaction, task, false);
+        }
     }
 
 

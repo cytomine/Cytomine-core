@@ -57,4 +57,5 @@ public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, 
     List<Tuple> listAnnotationWithDistance(Long projectId, String geometry);
 
 
+    List<UserAnnotation> findAllByImage(ImageInstance image);
 }

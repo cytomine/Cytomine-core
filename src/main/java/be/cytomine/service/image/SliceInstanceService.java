@@ -100,6 +100,7 @@ public class SliceInstanceService extends ModelService {
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),READ);
+        securityACLService.checkUser(currentUser);
         securityACLService.check(jsonNewData.getJSONAttrLong("project"), Project.class, READ);
         securityACLService.checkIsNotReadOnly(domain.container());
         securityACLService.checkIsNotReadOnly(jsonNewData.getJSONAttrLong("project"), Project.class);

@@ -104,6 +104,7 @@ public class AnnotationTermService extends ModelService {
     @Override
     public CommandResponse add(JsonObject jsonObject) {
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
         SecUser creator = userRepository.findById(jsonObject.getJSONAttrLong("user", -1L))
                 .orElse(currentUser);
         jsonObject.put("user", creator.getId());
@@ -125,6 +126,7 @@ public class AnnotationTermService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
         securityACLService.check(((AnnotationTerm)domain).getUserAnnotation().getId(), UserAnnotation.class, READ);
         securityACLService.checkFullOrRestrictedForOwner(domain, ((AnnotationTerm)domain).getUserAnnotation().getUser());
         Command c = new DeleteCommand(currentUser, transaction);

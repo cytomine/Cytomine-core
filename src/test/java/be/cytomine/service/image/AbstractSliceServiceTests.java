@@ -2,14 +2,12 @@ package be.cytomine.service.image;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.AbstractSlice;
-import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.image.UploadedFile;
+import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
+import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.UploadedFileRepository;
 import be.cytomine.service.CommandService;
@@ -207,8 +205,11 @@ public class AbstractSliceServiceTests {
     }
 
     @Test
-    void delete_uploadedFile_with_dependencies_with_success() {
-        fail("not yet implemented");
+    void delete_abstract_slice_with_dependencies_with_success() {
+        SliceInstance sliceInstance = builder.given_a_slice_instance();
+        Assertions.assertThrows(ConstraintException.class, () -> {
+            abstractSliceService.delete(sliceInstance.getBaseSlice(), null,  null, false);
+        });
     }
 
 

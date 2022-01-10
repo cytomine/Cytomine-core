@@ -4,6 +4,9 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.TestApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.NestedImageInstance;
+import be.cytomine.domain.ontology.AlgoAnnotation;
+import be.cytomine.domain.ontology.ReviewedAnnotation;
+import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
@@ -88,7 +91,6 @@ public class ImageInstanceServiceTests {
         for (int k = 0 ; k < 2 ; k++) { // execute twice the creation of images (6 images)
             for (int i = 0; i < 3; i++) {
                 ImageInstance imageInstance = builder.given_an_image_instance(project);
-                imageInstance.setCreated(dateChoices.get(i));
                 imageInstance.setUpdated(dateChoices.get(i));
                 imageInstance.setReviewStart(dateChoices.get(i));
                 imageInstance.setReviewStop(dateChoices.get(i));
@@ -126,8 +128,9 @@ public class ImageInstanceServiceTests {
 
         ImageInstanceBounds imageInstanceBounds = imageInstanceService.computeBounds(project);
 
-        assertThat(imageInstanceBounds.getCreated().getMin()).isEqualTo(new GregorianCalendar(2021, Calendar.JANUARY, 1).getTime());
-        assertThat(imageInstanceBounds.getCreated().getMax()).isEqualTo(new GregorianCalendar(2021, Calendar.DECEMBER, 1).getTime());
+        //Created cannot be set (auto generated)
+//        assertThat(imageInstanceBounds.getCreated().getMin()).isEqualTo(new GregorianCalendar(2021, Calendar.JANUARY, 1).getTime());
+//        assertThat(imageInstanceBounds.getCreated().getMax()).isEqualTo(new GregorianCalendar(2021, Calendar.DECEMBER, 1).getTime());
         assertThat(imageInstanceBounds.getReviewStart().getMin()).isEqualTo(new GregorianCalendar(2021, Calendar.JANUARY, 1).getTime());
         assertThat(imageInstanceBounds.getReviewStart().getMax()).isEqualTo(new GregorianCalendar(2021, Calendar.DECEMBER, 1).getTime());
         assertThat(imageInstanceBounds.getReviewStop().getMin()).isEqualTo(new GregorianCalendar(2021, Calendar.JANUARY, 1).getTime());
@@ -540,7 +543,7 @@ public class ImageInstanceServiceTests {
     @Test
     void add_valid_image_instance_with_unexsting_abstract_image_fails() {
         ImageInstance imageInstance = builder.given_a_not_persisted_image_instance(null, builder.given_a_project());
-        Assertions.assertThrows(AlreadyExistException.class, () -> {
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
             imageInstanceService.add(imageInstance.toJsonObject());
         });
     }
@@ -588,8 +591,49 @@ public class ImageInstanceServiceTests {
     }
 
     @Test
-    void edit_image_instance_resolution_modifies_annotation() {
-        Assertions.fail("todo: implement annotation");
+    void edit_image_instance_resolution_modifies_user_annotation() {
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        UserAnnotation userAnnotation = builder.given_a_user_annotation();
+        userAnnotation.setImage(imageInstance);
+
+        Double perimeter = userAnnotation.getPerimeter();
+        Double area = userAnnotation.getArea();
+
+        imageInstanceService.update(imageInstance, imageInstance.toJsonObject().withChange("physicalSizeX", 2.5d));
+
+        assertThat(userAnnotation.getPerimeter()).isNotEqualTo(perimeter);
+        assertThat(userAnnotation.getArea()).isNotEqualTo(area);
+    }
+
+    @Test
+    void edit_image_instance_resolution_modifies_reviewed_annotation() {
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
+        reviewedAnnotation.setImage(imageInstance);
+
+        Double perimeter = reviewedAnnotation.getPerimeter();
+        Double area = reviewedAnnotation.getArea();
+
+        imageInstanceService.update(imageInstance, imageInstance.toJsonObject().withChange("physicalSizeX", 2.5d));
+
+        assertThat(reviewedAnnotation.getPerimeter()).isNotEqualTo(perimeter);
+        assertThat(reviewedAnnotation.getArea()).isNotEqualTo(area);
+    }
+
+
+    @Test
+    void edit_image_instance_resolution_modifies_algo_annotation() {
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
+        algoAnnotation.setImage(imageInstance);
+
+        Double perimeter = algoAnnotation.getPerimeter();
+        Double area = algoAnnotation.getArea();
+
+        imageInstanceService.update(imageInstance, imageInstance.toJsonObject().withChange("physicalSizeX", 2.5d));
+
+        assertThat(algoAnnotation.getPerimeter()).isNotEqualTo(perimeter);
+        assertThat(algoAnnotation.getArea()).isNotEqualTo(area);
     }
 
 
@@ -612,7 +656,7 @@ public class ImageInstanceServiceTests {
     @Test
     void edit_image_instance_with_unexsting_user_fails() {
         ImageInstance imageInstance = builder.given_an_image_instance();
-        Assertions.assertThrows(ObjectNotFoundException.class, () -> {
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
             imageInstanceService.add(imageInstance.toJsonObject().withChange("user", null));
         });
     }
@@ -630,7 +674,7 @@ public class ImageInstanceServiceTests {
     }
 
     @Test
-    void delete_uploadedFile_with_dependencies_with_success() {
+    void delete_image_instance_with_dependencies_with_success() {
         fail("not yet implemented");
     }
 

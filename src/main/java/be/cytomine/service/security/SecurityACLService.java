@@ -80,7 +80,7 @@ public class SecurityACLService {
 
     public void checkIsAdminContainer(CytomineDomain domain, SecUser currentUser) {
         if (domain!=null) {
-            if (!checkPermission(domain.container(), ADMINISTRATION, currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
+            if (!hasPermission(domain.container(), ADMINISTRATION, currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
                 throw new ForbiddenException("You don't have the right to do this. You must be the creator or the container admin");
             }
         } else {
@@ -100,7 +100,7 @@ public class SecurityACLService {
 //    }
     public void check(CytomineDomain domain, Permission permission, SecUser currentUser) {
         if (domain!=null) {
-            if (!checkPermission(domain.container(), permission, currentRoleService.isAdminByNow(currentUser))) {
+            if (!hasPermission(domain.container(), permission, currentRoleService.isAdminByNow(currentUser))) {
                 throw new ForbiddenException("You don't have the right to read or modify this resource! "  + domain.getClass() + " " + domain.getId());
             }
         } else {
@@ -113,13 +113,19 @@ public class SecurityACLService {
 
     }
 
+
     /**
      * Check if user has permission on the curret domain
      * @param permission Permission to check (READ,...)
      * @return true if user has this permission on current domain
      */
-    boolean checkPermission(CytomineDomain domain, Permission permission, boolean isAdmin) {
+    public boolean hasPermission(CytomineDomain domain, Permission permission, boolean isAdmin) {
         boolean right = permissionService.hasACLPermission(domain, permission) || isAdmin;
+        return right;
+    }
+
+    public boolean hasPermission(CytomineDomain domain, Permission permission) {
+        boolean right = permissionService.hasACLPermission(domain, permission) || currentRoleService.isAdminByNow(currentUserService.getCurrentUser());
         return right;
     }
 
@@ -277,7 +283,7 @@ public class SecurityACLService {
         boolean isNotSameUser = (!currentRoleService.isAdminByNow(currentUser) && (!Objects.equals(user.getId(), currentUser.getId())));
         if (isNotSameUser) {
             if (domain!=null) {
-                if (checkPermission(domain.container(), ADMINISTRATION,currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
+                if (hasPermission(domain.container(), ADMINISTRATION,currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
                     throw new ForbiddenException("You don't have the right to do this. You must be the creator or the container admin");
                 }
             } else {
@@ -380,4 +386,5 @@ public class SecurityACLService {
             throw new ForbiddenException("You don't have the right to read this resource! You must be the same user!");
         }
     }
+
 }

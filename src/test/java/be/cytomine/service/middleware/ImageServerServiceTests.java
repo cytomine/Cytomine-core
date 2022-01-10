@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -202,17 +203,18 @@ public class ImageServerServiceTests {
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("openslide/mrxs");
         configureFor("localhost", 8888);
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         stubFor(get(urlEqualTo("/image/nested.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512&label=macro"))
                 .willReturn(
-                        aResponse().withBody(new byte[]{0, 1, 2, 3})
+                        aResponse().withBody(mockResponse)
                 )
         );
         LabelParameter labelParameter = new LabelParameter();
         labelParameter.setMaxSize(512);
         labelParameter.setLabel("macro");
         labelParameter.setFormat("png");
-        assertThat(imageServerService.label(image, labelParameter)).isEqualTo(new byte[]{0, 1, 2, 3});
+        assertThat(imageServerService.label(image, labelParameter)).isEqualTo(mockResponse);
     }
 
     @Test
@@ -228,25 +230,31 @@ public class ImageServerServiceTests {
 
         configureFor("localhost", 8888);
 
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+
+
         stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=256"))
                 .willReturn(
-                        aResponse().withBody(new byte[]{0, 1, 2, 3})
+                        aResponse().withBody(mockResponse)
                 )
         );
         ImageParameter imageParameter = new ImageParameter();
         imageParameter.setMaxSize(256);
         imageParameter.setFormat("png");
-        assertThat(imageServerService.thumb(slice, imageParameter)).isEqualTo(new byte[]{0, 1, 2, 3});
+        assertThat(imageServerService.thumb(slice, imageParameter)).isEqualTo(mockResponse);
+
+
+        byte[] mockResponse2 = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512"))
                 .willReturn(
-                        aResponse().withBody(new byte[]{0, 1, 2, 3, 4, 5, 6})
+                        aResponse().withBody(mockResponse2)
                 )
         );
 
         imageParameter.setMaxSize(512);
         imageParameter.setFormat("png");
-        assertThat(imageServerService.thumb(slice, imageParameter)).isEqualTo(new byte[]{0, 1, 2, 3, 4, 5, 6});
+        assertThat(imageServerService.thumb(slice, imageParameter)).isEqualTo(mockResponse2);
     }
 
 
@@ -264,10 +272,12 @@ public class ImageServerServiceTests {
         slice.setUploadedFile(image.getUploadedFile());
 
         configureFor("localhost", 8888);
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+
         String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=crop";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
-                        aResponse().withBody(new byte[]{0, 1, 2, 3})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -276,7 +286,7 @@ public class ImageServerServiceTests {
         cropParameter.setFormat("png");
         byte[] crop = imageServerService.crop(slice, cropParameter);
         //List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        assertThat(crop).isEqualTo(new byte[]{0, 1, 2, 3});
+        assertThat(crop).isEqualTo(mockResponse);
 
     }
 
@@ -294,12 +304,13 @@ public class ImageServerServiceTests {
 
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
         slice.setUploadedFile(image.getUploadedFile());
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         configureFor("localhost", 8888);
         String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
-                        aResponse().withBody(new byte[]{0, 10, 20})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -311,11 +322,11 @@ public class ImageServerServiceTests {
         windowParameter.setFormat("png");
         byte[] crop = imageServerService.window(slice, windowParameter);
         //List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        assertThat(crop).isEqualTo(new byte[]{0, 10, 20});
+        assertThat(crop).isEqualTo(mockResponse);
 
         windowParameter.setFormat("jpg");
         assertThat(imageServerService.windowUrl(slice, windowParameter))
-                .isEqualTo("http://localhost:8888/slice/crop.jpg?fif=%2Fdata%2Fimages%2F78%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop");
+                .isEqualTo("http://localhost:8888/slice/crop.jpg?fif=%2Fdata%2Fimages%2F"+ builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop");
     }
 
 }

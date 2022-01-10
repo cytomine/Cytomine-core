@@ -6,6 +6,10 @@ import com.vividsolutions.jts.geom.*;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class GeometryUtils {
 
     public static Geometry createBoundingBox(String bbox) throws ParseException {
@@ -51,5 +55,72 @@ public class GeometryUtils {
             return cropParameter;
         }
         throw new WrongArgumentException("Cannot extract boundaries for " + geometry);
+    }
+
+
+    /**
+     * Fill polygon to complete empty space inside polygon/mulypolygon
+     * @param polygon A polygon or multipolygon wkt polygon
+     * @return A polygon or multipolygon filled points
+     */
+    public static String fillPolygon(String polygon) {
+        if (polygon.startsWith("POLYGON")) return "POLYGON(" + getFirstPolygonLocation(polygon) + ")";
+        else if (polygon.startsWith("MULTIPOLYGON")) return "MULTIPOLYGON(" + getFirstPolygonLocationForEachItem(polygon) + ")";
+        else throw new WrongArgumentException("Form cannot be filled:" + polygon);
+    }
+
+    /**
+     * Fill all polygon inside a Multipolygon WKT polygon
+     * @param form Multipolygon WKT polygon
+     * @return Multipolygon with all its polygon filled
+     */
+    private static String getFirstPolygonLocationForEachItem(String form) {
+        //e.g: "MULTIPOLYGON (((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)) , ((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)) , ((6 3,9 2,9 4,6 3)))";
+        String workingForm = form.replaceAll("\\) ", ")");
+        //"MULTIPOLYGON(((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)),((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)),((6 3,9 2,9 4,6 3)))";
+        workingForm = workingForm.replaceAll(" \\(", "(");
+        workingForm = workingForm.replace("MULTIPOLYGON(", "");
+        //"((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)),((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)),((6 3,9 2,9 4,6 3)))";
+        workingForm = workingForm.substring(0, workingForm.length() - 1);
+        //"((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)),((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2)),((6 3,9 2,9 4,6 3))";
+        String[] polygons = workingForm.split("\\)\\)\\,\\(\\(");
+        //"[ ((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2] [1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2] [6 3,9 2,9 4,6 3)) ]";
+        List<String> fixedPolygon = new ArrayList<String>();
+        for (int i = 0; i < polygons.length; i++) {
+            if (i == 0) {
+                fixedPolygon.add(polygons[i] + "))");
+            } else if (i == polygons.length - 1) {
+                fixedPolygon.add("((" + polygons[i] + "");
+            } else {
+                fixedPolygon.add("((" + polygons[i] + "))");
+            }
+            //"[ ((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2))] [((1 1,5 1,5 5,1 5,1 1),(2 2,2 3,3 3,3 2,2 2))] [((6 3,9 2,9 4,6 3)) ]";
+        }
+
+        List<String> filledPolygon = new ArrayList<String>();
+        for (int i = 0; i < fixedPolygon.size(); i++) {
+            filledPolygon.add("(" + getFirstPolygonLocation(fixedPolygon.get(i)) + ")");
+            //"[ ((1 1,5 1,5 5,1 5,1 1))] [((1 1,5 1,5 5,1 5,1 1))] [((6 3,9 2,9 4,6 3)) ]";
+        }
+
+        String multiPolygon = String.join(",", filledPolygon);
+        //"((1 1,5 1,5 5,1 5,1 1)),((1 1,5 1,5 5,1 5,1 1)),((6 3,9 2,9 4,6 3))";
+        return multiPolygon;
+    }
+
+    /**
+     * Fill a polygon
+     * @param polygon Polygon as wkt
+     * @return Polygon filled points
+     */
+    private static String getFirstPolygonLocation(String polygon) {
+        int i = 0;
+        int start, stop;
+        while (polygon.charAt(i) != '(') i++;
+        while (polygon.charAt(i + 1) == '(') i++;
+        start = i;
+        while (polygon.charAt(i) != ')') i++;
+        stop = i;
+        return polygon.substring(start, stop + 1);
     }
 }

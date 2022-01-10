@@ -1,8 +1,8 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.UserAnnotation;
+import be.cytomine.api.controller.utils.RequestParams;
+import be.cytomine.domain.ontology.AlgoAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
@@ -12,10 +12,11 @@ import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.middleware.ImageServerService;
-import be.cytomine.service.ontology.UserAnnotationService;
+import be.cytomine.service.ontology.AlgoAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
+import be.cytomine.service.utils.ParamsService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import com.vividsolutions.jts.io.ParseException;
@@ -24,16 +25,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
 @Slf4j
 @RequiredArgsConstructor
-public class RestUserAnnotationController extends RestCytomineController {
+public class RestAlgoAnnotationController extends RestCytomineController {
 
-    private final UserAnnotationService userAnnotationService;
+    private final AlgoAnnotationService algoAnnotationService;
 
     private final ProjectService projectService;
 
@@ -45,203 +49,111 @@ public class RestUserAnnotationController extends RestCytomineController {
 
     private final ImageServerService imageServerService;
 
-    @GetMapping("/userannotation.json")
-    public ResponseEntity<String> listLight(
-    ) {
-        log.debug("REST request to list user annotation light");
-        return responseSuccess(userAnnotationService.listLight());
-    }
+    private final ParamsService paramsService;
 
-
-    @GetMapping("/user/{idUser}/userannotation/count.json")
-    public ResponseEntity<String> countByUser(
-            @PathVariable(value = "idUser") Long idUser,
-            @RequestParam(value="project", required = false) Long idProject
-    ) {
-        log.debug("REST request to count user annotation by user/project");
-        SecUser user = secUserService.find(idUser)
-                .orElseThrow(() -> new ObjectNotFoundException("User", idUser));
-        Project project = null;
-        if (idProject!=null) {
-            project = projectService.find(idProject)
-                    .orElseThrow(() -> new ObjectNotFoundException("Project", idProject));
+    /**
+     * List all annotation (created by algo) visible for the current user
+     */
+    @GetMapping("/algoannotation.json")
+    public ResponseEntity<String> list(
+    ) throws IOException {
+        log.debug("REST request to list algo annotation");
+        List result = new ArrayList<>();
+        List<String> propertyGroupToShow = paramsService.getPropertyGroupToShow(mergeQueryParamsAndBodyParams());
+        for (Project project : projectService.listForCurrentUser()) {
+            result.addAll(algoAnnotationService.list(project, propertyGroupToShow));
         }
-        return responseSuccess(JsonObject.of("total", userAnnotationService.count((User)user, project)));
+        return responseSuccess(result);
     }
 
 
-    @GetMapping("/project/{idProject}/userannotation/count.json")
-    public ResponseEntity<String> countByUser(
+    @GetMapping("/algoannotation/{id}.json")
+    public ResponseEntity<String> show(
+            @PathVariable Long id
+    ) {
+        log.debug("REST request to get algo annotation : {}", id);
+        return algoAnnotationService.find(id)
+                .map(this::responseSuccess)
+                .orElseGet(() -> responseNotFound("AlgoAnnotation", id));
+    }
+
+    @GetMapping("/project/{idProject}/algoannotation/count.json")
+    public ResponseEntity<String> countByProject(
             @PathVariable(value = "idProject") Long idProject,
             @RequestParam(value="startDate", required = false) Long startDate,
             @RequestParam(value="endDate", required = false) Long endDate
     ) {
-        log.debug("REST request to count user annotation by user/project");
+        log.debug("REST request to count algo annotation by project");
         Project project= projectService.find(idProject)
                 .orElseThrow(() -> new ObjectNotFoundException("Project", idProject));
         Date start = (startDate!=null? new Date(startDate) : null);
         Date end = (endDate!=null? new Date(endDate) : null);
-        return responseSuccess(JsonObject.of("total", userAnnotationService.countByProject(project, start, end)));
+        return responseSuccess(JsonObject.of("total", algoAnnotationService.countByProject(project, start, end)));
     }
 
 
-    // TODO
-    /**
-     * Download report with annotation
-     */
-//    @RestApiMethod(description = "Download a report (pdf, xls,...) with user annotation data from a specific project")
-//    @RestApiResponseObject(objectIdentifier = "file")
-//    @RestApiParams(params = [
-//            @RestApiParam(name = "id", type = "long", paramType = RestApiParamType.PATH, description = "The project id"),
-//            @RestApiParam(name = "terms", type = "list", paramType = RestApiParamType.QUERY, description = "The annotation terms id (if empty: all terms)"),
-//            @RestApiParam(name = "users", type = "list", paramType = RestApiParamType.QUERY, description = "The annotation users id (if empty: all users)"),
-//            @RestApiParam(name = "images", type = "list", paramType = RestApiParamType.QUERY, description = "The annotation images id (if empty: all images)"),
-//            @RestApiParam(name = "afterThan", type = "Long", paramType = RestApiParamType.QUERY, description = "(Optional) Annotations created before this date will not be returned"),
-//            @RestApiParam(name = "beforeThan", type = "Long", paramType = RestApiParamType.QUERY, description = "(Optional) Annotations created after this date will not be returned"),
-//            @RestApiParam(name = "format", type = "string", paramType = RestApiParamType.QUERY, description = "The report format (pdf, xls,...)")
-//            ])
-//    def downloadDocumentByProject() {
-//        Long afterThan = params.getLong('afterThan')
-//        Long beforeThan = params.getLong('beforeThan')
-//        reportService.createAnnotationDocuments(params.long('id'), params.terms, params.boolean("noTerm", false), params.boolean("multipleTerms", false),
-//        params.users, params.images, afterThan, beforeThan, params.format, response, "USERANNOTATION")
-//    }
-
-
-
-    //TODO: migration
-
-//
-//
-//    def sharedAnnotationService
-//    /**
-//     * Add comment on an annotation to other user
-//     */
-//    @RestApiMethod(description = "Add comment on an annotation to other user and send a mail to users")
-//    @RestApiResponseObject(objectIdentifier = "empty")
-//    @RestApiParams(params = [
-//            @RestApiParam(name = "annotation", type = "long", paramType = RestApiParamType.PATH, description = "The annotation id"),
-//            @RestApiParam(name = "POST JSON: comment", type = "string", paramType = RestApiParamType.QUERY, description = "The comment"),
-//            @RestApiParam(name = "POST JSON: sender", type = "long", paramType = RestApiParamType.QUERY, description = "The user id who share the annotation"),
-//            @RestApiParam(name = "POST JSON: subject", type = "string", paramType = RestApiParamType.QUERY, description = "The subject of the mail that will be send"),
-//            @RestApiParam(name = "POST JSON: from", type = "string", paramType = RestApiParamType.QUERY, description = "The username of the user who send the mail"),
-//            @RestApiParam(name = "POST JSON: receivers", type = "list", paramType = RestApiParamType.QUERY, description = "The list of user (id) to send the mail"),
-//            @RestApiParam(name = "POST JSON: emails", type = "list", paramType = RestApiParamType.QUERY, required = false, description = "The list of emails to send the mail. Used if receivers is null"),
-//            @RestApiParam(name = "POST JSON: annotationURL ", type = "string", paramType = RestApiParamType.QUERY, description = "The URL of the annotation in the image viewer"),
-//            @RestApiParam(name = "POST JSON: shareAnnotationURL", type = "string", paramType = RestApiParamType.QUERY, description = "The URL of the comment"),
-//            ])
-//    def addComment() {
-//
-//        UserAnnotation annotation = userAnnotationService.read(params.getLong('annotation'))
-//        def result = sharedAnnotationService.add(request.JSON, annotation, params)
-//        if (result) {
-//            responseResult(result)
-//        }
-//    }
-//
-//    /**
-//     * Show a single comment for an annotation
-//     */
-//    //TODO : duplicated code in AlgoAnnotation
-//    @RestApiMethod(description = "Get a specific comment")
-//    @RestApiParams(params = [
-//            @RestApiParam(name = "annotation", type = "long", paramType = RestApiParamType.PATH, description = "The annotation id"),
-//            @RestApiParam(name = "id", type = "long", paramType = RestApiParamType.PATH, description = "The comment id"),
-//            ])
-//    def showComment() {
-//        UserAnnotation annotation = userAnnotationService.read(params.long('annotation'))
-//        if (!annotation) {
-//            responseNotFound("Annotation", params.annotation)
-//        }
-//        def sharedAnnotation = sharedAnnotationService.read(params.long('id'))
-//        if (sharedAnnotation) {
-//            responseSuccess(sharedAnnotation)
-//        } else {
-//            responseNotFound("SharedAnnotation", params.id)
-//        }
-//    }
-//
-//    /**
-//     * List all comments for an annotation
-//     */
-//    @RestApiMethod(description = "Get all comments on annotation", listing = true)
-//    @RestApiParams(params = [
-//            @RestApiParam(name = "annotation", type = "long", paramType = RestApiParamType.PATH, description = "The annotation id")
-//            ])
-//    def listComments() {
-//        UserAnnotation annotation = userAnnotationService.read(params.long('annotation'))
-//        if (annotation) {
-//            responseSuccess(sharedAnnotationService.listComments(annotation))
-//        } else {
-//            responseNotFound("Annotation", params.id)
-//        }
-//    }
-
-
-
-    @GetMapping("/userannotation/{id}.json")
-    public ResponseEntity<String> show(
-            @PathVariable Long id
-    ) {
-        log.debug("REST request to get Term : {}", id);
-        return userAnnotationService.find(id)
-                .map(this::responseSuccess)
-                .orElseGet(() -> responseNotFound("UserAnnotation", id));
-    }
-
-
-    /**
-     * Add a new term
-     * Use next add relation-term to add relation with another term
-     * @param json JSON with Term data
-     * @return Response map with .code = http response code and .data.term = new created Term
-     */
-    @PostMapping("/userannotation.json")
+    @PostMapping("/algoannotation.json")
     public ResponseEntity<String> add(
             @RequestBody JsonObject json,
             @RequestParam(required = false) Long minPoint,
             @RequestParam(required = false) Long maxPoint
     ) {
-        log.debug("REST request to save user annotation : " + json);
+        log.debug("REST request to save algo annotation : " + json);
         json.putIfAbsent("minPoint", minPoint);
         json.putIfAbsent("maxPoint", maxPoint);
-        return add(userAnnotationService, json);
+        return add(algoAnnotationService, json);
     }
 
     public CommandResponse addOne(ModelService service, JsonObject json) {
         if (json.isMissing("location")) {
             throw new WrongArgumentException("Annotation must have a valid geometry:" + json.get("location"));
         }
+        RequestParams requestParam = retrieveRequestParam();
+        json.putIfAbsent("minPoint", requestParam.get("minPoint"));
+        json.putIfAbsent("maxPoint", requestParam.get("maxPoint"));
         return service.add(json);
     }
 
 
-    @PutMapping("/userannotation/{id}.json")
+    @PutMapping("/algoannotation/{id}.json")
     public ResponseEntity<String> edit(@PathVariable String id, @RequestBody JsonObject json) {
-        log.debug("REST request to edit user annotation : " + id);
-        return update(userAnnotationService, json);
+        log.debug("REST request to edit algo annotation : " + id);
+        //get annotation from DB
+        AlgoAnnotation domain = (AlgoAnnotation)algoAnnotationService.retrieve(json);
+        //update it thanks to JSON in request
+        CommandResponse result = algoAnnotationService.update(domain,json);
+        return responseSuccess(result);
     }
 
-    @DeleteMapping("/userannotation/{id}.json")
+    @DeleteMapping("/algoannotation/{id}.json")
     public ResponseEntity<String> delete(@PathVariable String id) {
         log.debug("REST request to delete an annotation : " + id);
-        return delete(userAnnotationService, JsonObject.of("id", id), null);
+        return delete(algoAnnotationService, JsonObject.of("id", id), null);
     }
 
-    //TODO:
 
-//    def repeat() {
-//        UserAnnotation annotation = userAnnotationService.read(params.long("id"))
-//        if (annotation) {
-//            def repeat = JSONUtils.getJSONAttrInteger(request.JSON,'repeat',1)
-//            def slice = JSONUtils.getJSONAttrInteger(request.JSON, 'slice', null)
-//            responseSuccess(userAnnotationService.repeat(annotation, slice, repeat))
-//        } else {
-//            responseNotFound("UserAnnotation", params.id)
-//        }
+
+    // TODO
+//    @RestApiMethod(description="Download a report (pdf, xls,...) with software annotation data from a specific project")
+//    @RestApiResponseObject(objectIdentifier =  "file")
+//    @RestApiParams(params=[
+//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The project id"),
+//            @RestApiParam(name="terms", type="list", paramType = RestApiParamType.QUERY,description = "The annotation terms id (if empty: all terms)"),
+//            @RestApiParam(name="users", type="list", paramType = RestApiParamType.QUERY,description = "The annotation users id (if empty: all users)"),
+//            @RestApiParam(name="images", type="list", paramType = RestApiParamType.QUERY,description = "The annotation images id (if empty: all images)"),
+//            @RestApiParam(name="afterThan", type="Long", paramType = RestApiParamType.QUERY, description = "(Optional) Annotations created before this date will not be returned"),
+//            @RestApiParam(name="beforeThan", type="Long", paramType = RestApiParamType.QUERY, description = "(Optional) Annotations created after this date will not be returned"),
+//            @RestApiParam(name="format", type="string", paramType = RestApiParamType.QUERY,description = "The report format (pdf, xls,...)"),
+//            ])
+//    def downloadDocumentByProject() {
+//        Long afterThan = params.getLong('afterThan')
+//        Long beforeThan = params.getLong('beforeThan')
+//        reportService.createAnnotationDocuments(params.long('id'), params.terms, params.boolean("noTerm", false), params.boolean("multipleTerms", false),
+//        params.users, params.images, afterThan, beforeThan, params.format, response, "ALGOANNOTATION")
 //    }
 
-    @RequestMapping(value = "/userannotation/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
+
+    @RequestMapping(value = "/algoannotation/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public void crop(
             @PathVariable Long id,
             @PathVariable String format,
@@ -272,8 +184,8 @@ public class RestUserAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer jpegQuality
     ) throws UnsupportedEncodingException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
-        UserAnnotation userAnnotation = userAnnotationService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("UserAnnotation", id));
+        AlgoAnnotation algoAnnotation = algoAnnotationService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("AlgoAnnotation", id));
 
         CropParameter cropParameter = new CropParameter();
         cropParameter.setGeometry(geometry);
@@ -302,10 +214,10 @@ public class RestUserAnnotationController extends RestCytomineController {
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
 
-        responseByteArray(imageServerService.crop(userAnnotation, cropParameter), format);
+        responseByteArray(imageServerService.crop(algoAnnotation, cropParameter), format);
     }
 
-    @RequestMapping(value = "/userannotation/{id}/mask.{format}", method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value = "/algoannotation/{id}/mask.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public void cropMask(
             @PathVariable Long id,
             @PathVariable String format,
@@ -334,8 +246,8 @@ public class RestUserAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer jpegQuality
     ) throws UnsupportedEncodingException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
-        UserAnnotation userAnnotation = userAnnotationService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("UserAnnotation", id));
+        AlgoAnnotation algoAnnotation = algoAnnotationService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("AlgoAnnotation", id));
 
         CropParameter cropParameter = new CropParameter();
         cropParameter.setGeometry(geometry);
@@ -364,10 +276,10 @@ public class RestUserAnnotationController extends RestCytomineController {
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
 
-        responseByteArray(imageServerService.crop(userAnnotation, cropParameter), format);
+        responseByteArray(imageServerService.crop(algoAnnotation, cropParameter), format);
     }
 
-    @RequestMapping(value = "/userannotation/{id}/alphamask.{format}", method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value = "/algoannotation/{id}/alphamask.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public void cropAlphaMask(
             @PathVariable Long id,
             @PathVariable String format,
@@ -396,8 +308,8 @@ public class RestUserAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer jpegQuality
     ) throws UnsupportedEncodingException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
-        UserAnnotation userAnnotation = userAnnotationService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("UserAnnotation", id));
+        AlgoAnnotation algoAnnotation = algoAnnotationService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("AlgoAnnotation", id));
 
         CropParameter cropParameter = new CropParameter();
         cropParameter.setGeometry(geometry);
@@ -425,6 +337,71 @@ public class RestUserAnnotationController extends RestCytomineController {
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
 
-        responseByteArray(imageServerService.crop(userAnnotation, cropParameter), format);
+        responseByteArray(imageServerService.crop(algoAnnotation, cropParameter), format);
     }
+
+
+    //TODO
+//
+//
+//    @RestApiMethod(description="Add comment on an annotation to other user and send a mail to users")
+//    @RestApiResponseObject(objectIdentifier = "empty")
+//    @RestApiParams(params=[
+//            @RestApiParam(name="annotation", type="long", paramType = RestApiParamType.PATH,description = "The annotation id"),
+//            @RestApiParam(name="POST JSON: comment", type="string", paramType = RestApiParamType.QUERY,description = "The comment"),
+//            @RestApiParam(name="POST JSON: sender", type="long", paramType = RestApiParamType.QUERY,description = "The user id who share the annotation"),
+//            @RestApiParam(name="POST JSON: subject", type="string", paramType = RestApiParamType.QUERY,description = "The subject of the mail that will be send"),
+//            @RestApiParam(name="POST JSON: from", type="string", paramType = RestApiParamType.QUERY,description = "The username of the user who send the mail"),
+//            @RestApiParam(name="POST JSON: receivers", type="list", paramType = RestApiParamType.QUERY,description = "The list of user (id) to send the mail"),
+//            @RestApiParam(name="POST JSON: emails", type="list", paramType = RestApiParamType.QUERY,required = false, description = "The list of emails to send the mail. Used (and mandatory) if receivers is null"),
+//            @RestApiParam(name="POST JSON: annotationURL ", type="string", paramType = RestApiParamType.QUERY,description = "The URL of the annotation in the image viewer"),
+//            @RestApiParam(name="POST JSON: shareAnnotationURL", type="string", paramType = RestApiParamType.QUERY,description = "The URL of the comment"),
+//            ])
+//    def addComment() {
+//
+//        AlgoAnnotation annotation = algoAnnotationService.read(params.getLong('annotation'))
+//        def result = sharedAnnotationService.add(request.JSON, annotation, params)
+//        if(result) {
+//            responseResult(result)
+//        }
+//    }
+//
+//    /**
+//     * Show a single comment for an annotation
+//     */
+//    //TODO : duplicate code from UserAnnotation
+//    @RestApiMethod(description="Get a specific comment")
+//    @RestApiParams(params=[
+//            @RestApiParam(name="annotation", type="long", paramType = RestApiParamType.PATH,description = "The annotation id"),
+//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The comment id"),
+//            ])
+//    def showComment() {
+//
+//        AlgoAnnotation annotation = algoAnnotationService.read(params.long('annotation'))
+//        if (!annotation) {
+//            responseNotFound("Annotation", params.annotation)
+//        }
+//        def sharedAnnotation = SharedAnnotation.findById(params.long('id'))
+//        if (sharedAnnotation) {
+//            responseSuccess(sharedAnnotation)
+//        } else {
+//            responseNotFound("SharedAnnotation", params.id)
+//        }
+//    }
+//
+//    /**
+//     * List all comments for an annotation
+//     */
+//    @RestApiMethod(description="Get all comments on annotation", listing=true)
+//    @RestApiParams(params=[
+//            @RestApiParam(name="annotation", type="long", paramType = RestApiParamType.PATH,description = "The annotation id")
+//            ])
+//    def listComments() {
+//        AlgoAnnotation annotation = algoAnnotationService.read(params.long('annotation'))
+//        if (annotation) {
+//            responseSuccess(sharedAnnotationService.listComments(annotation))
+//        } else {
+//            responseNotFound("Annotation", params.id)
+//        }
+//    }
 }

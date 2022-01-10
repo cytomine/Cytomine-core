@@ -317,7 +317,9 @@ public class AlgoAnnotationServiceTests {
         commandService.redo();
 
         AssertionsForClassTypes.assertThat(algoAnnotationService.find(commandResponse.getObject().getId())).isPresent();
-        assertThat(algoAnnotationService.find(commandResponse.getObject().getId()).get().terms()).hasSize(2);
+        algoAnnotation = algoAnnotationService.find(commandResponse.getObject().getId()).get();
+        entityManager.refresh(algoAnnotation);
+        assertThat(algoAnnotation.terms()).hasSize(2);
     }
 
 
@@ -452,12 +454,12 @@ public class AlgoAnnotationServiceTests {
         CommandResponse commandResponse = algoAnnotationService.update(algoAnnotation, jsonObject);
         assertThat(commandResponse.getStatus()).isEqualTo(200);
 
-        assertThat(((AlgoAnnotation)commandResponse.getObject()).getLocation())
+        assertThat(((AlgoAnnotation)commandResponse.getObject()).getLocation().toText())
                 .isEqualTo("" +
                         "POLYGON ((" +
                         "0 " + algoAnnotation.getImage().getBaseImage().getHeight() + ", " +
                         algoAnnotation.getImage().getBaseImage().getWidth() + " "+algoAnnotation.getImage().getBaseImage().getHeight()+", "+
-                        algoAnnotation.getImage().getBaseImage().getWidth() + "0, " +
+                        algoAnnotation.getImage().getBaseImage().getWidth() + " 0, " +
                         "0 0, " +
                         "0 " + algoAnnotation.getImage().getBaseImage().getHeight() +"))");
     }

@@ -4,10 +4,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.AnnotationTerm;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.UserAnnotation;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
@@ -17,6 +14,10 @@ import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.UserAnnotationListing;
+import be.cytomine.repository.image.ImageInstanceRepository;
+import be.cytomine.repository.ontology.AlgoAnnotationRepository;
+import be.cytomine.repository.ontology.AlgoAnnotationTermRepository;
+import be.cytomine.repository.ontology.ReviewedAnnotationRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
@@ -24,6 +25,7 @@ import be.cytomine.service.ModelService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.dto.BoundariesCropParameter;
 import be.cytomine.service.image.ImageInstanceService;
+import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.image.SliceInstanceService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.SimplifyGeometryService;
@@ -65,8 +67,6 @@ public class UserAnnotationService extends ModelService {
 
     private final SliceInstanceService sliceInstanceService;
 
-    private final ImageInstanceService imageInstanceService;
-
     private final SimplifyGeometryService simplifyGeometryService;
 
     private final TransactionService transactionService;
@@ -74,6 +74,17 @@ public class UserAnnotationService extends ModelService {
     private final ValidateGeometryService validateGeometryService;
 
     private final AnnotationTermService annotationTermService;
+
+    private final GenericAnnotationService genericAnnotationService;
+
+    private final AlgoAnnotationTermRepository algoAnnotationTermRepository;
+
+    private final AlgoAnnotationTermService algoAnnotationTermService;
+
+    private final SliceCoordinatesService sliceCoordinatesService;
+
+    private final ImageInstanceRepository imageInstanceRepository;
+
 
     @Override
     public Class currentDomain() {
@@ -253,9 +264,9 @@ public class UserAnnotationService extends ModelService {
                     .orElseThrow(() -> new ObjectNotFoundException("SliceInstance with id " + jsonObject.get("slice")));
             image = slice.getImage();
         } else if (!jsonObject.isMissing("image")) {
-            image = imageInstanceService.find(jsonObject.getJSONAttrLong("image"))
+            image = imageInstanceRepository.findById(jsonObject.getJSONAttrLong("image"))
                     .orElseThrow(() -> new ObjectNotFoundException("ImageInstance with id " + jsonObject.get("image")));
-            slice = imageInstanceService.getReferenceSlice(image);
+            slice = sliceCoordinatesService.getReferenceSlice(image);
 
         }
         Project project = slice.getProject();
@@ -268,10 +279,11 @@ public class UserAnnotationService extends ModelService {
         jsonObject.put("image", image.getId());
         jsonObject.put("project", project.getId());
 
+        SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(project, READ);
         securityACLService.checkIsNotReadOnly(project);
+        securityACLService.checkUser(currentUser);
 
-        SecUser currentUser = currentUserService.getCurrentUser();
         if (jsonObject.isMissing("user")) {
             jsonObject.put("user", currentUser.getId());
         } else if (!Objects.equals(jsonObject.getJSONAttrLong("user"), currentUser.getId())) {
@@ -415,6 +427,7 @@ public class UserAnnotationService extends ModelService {
      */
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.check(domain.container(), READ);
         //securityACLService.checkIsSameUserOrAdminContainer(annotation,annotation.user,currentUser)
         securityACLService.checkFullOrRestrictedForOwner(domain, ((UserAnnotation)domain).getUser());
 
@@ -432,7 +445,7 @@ public class UserAnnotationService extends ModelService {
             throw new WrongArgumentException("Annotation location is not valid");
         }
 
-        ImageInstance image = imageInstanceService.find(jsonNewData.getJSONAttrLong("image"))
+        ImageInstance image = imageInstanceRepository.findById(jsonNewData.getJSONAttrLong("image"))
                 .orElseThrow(() -> new WrongArgumentException("Annotation not associated with a valid image"));
 
         Envelope envelope = annotationShape.getEnvelopeInternal();
@@ -500,7 +513,9 @@ public class UserAnnotationService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.check(domain.container(),DELETE);
+        securityACLService.check(domain.container(), READ);
+        securityACLService.checkUser(currentUser);
+        securityACLService.checkFullOrRestrictedForOwner(domain.container(), currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }
@@ -553,34 +568,17 @@ public class UserAnnotationService extends ModelService {
     }
 
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
-        return;
+        deleteDependentAlgoAnnotationTerm((UserAnnotation)domain, transaction, task);
     }
 
 
-
-//TODO
     public void deleteDependentAlgoAnnotationTerm(UserAnnotation ua, Transaction transaction, Task task) {
-//        AlgoAnnotationTerm.findAllByAnnotationIdent(ua.id).each {
-//            algoAnnotationTermService.delete(it, transaction, null, false)
-//        }
-
+        for (AlgoAnnotationTerm algoAnnotationTerm : algoAnnotationTermRepository.findAllByAnnotationIdent(ua.getId())) {
+            algoAnnotationTermService.delete(algoAnnotationTerm, transaction, task, false);
+        }
     }
 
-//    def deleteDependentAnnotationTerm(UserAnnotation ua, Transaction transaction, Task task = null) {
-//        AnnotationTerm.findAllByUserAnnotation(ua).each {
-//            try {
-//                annotationTermService.delete(it, transaction, null, false)
-//            } catch (ForbiddenException fe) {
-//                throw new ForbiddenException("This annotation has been linked to the term " + it.term + " by " + it.userDomainCreator() + ". " + it.userDomainCreator() + " must unlink its term before you can delete this annotation.")
-//            }
-//        }
-//    }
 
-//    def deleteDependentReviewedAnnotation(UserAnnotation ua, Transaction transaction, Task task = null) {
-////        ReviewedAnnotation.findAllByParentIdent(ua.id).each {
-////            reviewedAnnotationService.delete(it,transaction,null,false)
-////        }
-//    }
 
 //    def deleteDependentSharedAnnotation(UserAnnotation ua, Transaction transaction, Task task = null) {
 //        //TODO: we should implement a full service for sharedannotation and delete them if annotation is deleted
@@ -601,6 +599,66 @@ public class UserAnnotationService extends ModelService {
 //            annotationTrackService.delete(it, transaction, task)
 //        }
 //    }
+
+    public CommandResponse doCorrectUserAnnotation(List<Long> coveringAnnotations, String newLocation, boolean remove) throws ParseException {
+        if (coveringAnnotations.isEmpty()) {
+            return null;
+        }
+
+        //Get the based annotation
+        UserAnnotation based = this.find(coveringAnnotations.get(0)).get();
+
+        //Get the term of the based annotation, it will be the main term
+        List<Long> basedTerms = based.termsId();
+
+        //Get all other annotation with same term
+        List<Long> allOtherAnnotationId = coveringAnnotations.subList(1, coveringAnnotations.size());
+        List<UserAnnotation> allAnnotationWithSameTerm = genericAnnotationService.findUserAnnotationWithTerm(allOtherAnnotationId, basedTerms);
+
+        //Create the new geometry
+        Geometry newGeometry = new WKTReader().read(newLocation);
+        if(!newGeometry.isValid()) {
+            throw new WrongArgumentException("Your annotation cannot be self-intersected.");
+        }
+
+        CommandResponse result = null;
+        Geometry oldLocation = based.getLocation();
+        if (remove) {
+            log.info("doCorrectUserAnnotation : remove");
+            //diff will be made
+            //-remove the new geometry from the based annotation location
+            //-remove the new geometry from all other annotation location
+            based.setLocation(based.getLocation().difference(newGeometry));
+            if (based.getLocation().getNumPoints() < 2) {
+                throw new WrongArgumentException("You cannot delete an annotation with substract! Use reject or delete tool.");
+            }
+
+            JsonObject jsonObject = based.toJsonObject();
+            based.setLocation(oldLocation);
+            result = update(based, jsonObject);
+
+            for(int i = 0; i < allAnnotationWithSameTerm.size(); i++) {
+                UserAnnotation other = allAnnotationWithSameTerm.get(i);
+                other.setLocation(other.getLocation().difference(newGeometry));
+                update(other, other.toJsonObject());
+            }
+        } else {
+            log.info("doCorrectUserAnnotation : union");
+            //union will be made:
+            // -add the new geometry to the based annotation location.
+            // -add all other annotation geometry to the based annotation location (and delete other annotation)
+            based.setLocation(based.getLocation().union(newGeometry));
+            for (UserAnnotation other : allAnnotationWithSameTerm) {
+                based.setLocation(based.getLocation().union(other.getLocation()));
+                delete(other, null, null, false);
+            }
+            JsonObject jsonObject = based.toJsonObject();
+            based.setLocation(oldLocation);
+            update(based, jsonObject);
+        }
+        return result;
+    }
+
 
 
 }
