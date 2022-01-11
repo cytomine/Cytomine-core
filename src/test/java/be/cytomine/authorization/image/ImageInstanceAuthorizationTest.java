@@ -6,6 +6,7 @@ import be.cytomine.authorization.CRUDAuthorizationTest;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.EditingMode;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.image.AbstractImageService;
 import be.cytomine.service.image.ImageInstanceService;
@@ -20,6 +21,7 @@ import org.springframework.security.acls.model.Permission;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -30,8 +32,6 @@ import static org.springframework.security.acls.domain.BasePermission.WRITE;
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @Transactional
 public class ImageInstanceAuthorizationTest extends CRUDAuthorizationTest {
-
-    // We need more flexibility:
 
     private ImageInstance imageInstance = null;
 
@@ -121,8 +121,25 @@ public class ImageInstanceAuthorizationTest extends CRUDAuthorizationTest {
 
 
     @Test
+    @WithMockUser(username = USER_ACL_ADMIN)
     public void user_cannot_stop_review_started_by_someone_else() {
-        Assertions.fail("to be done");
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        imageInstance.setProject(this.imageInstance.getProject());
+        imageInstance.setReviewStart(new Date());
+        imageInstance.setReviewUser(builder.given_superadmin());
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
+            imageInstanceService.stopReview(imageInstance, false);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_ADMIN)
+    public void user_can_stop_review_started_by_himself() {
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        imageInstance.setProject(this.imageInstance.getProject());
+        imageInstance.setReviewStart(new Date());
+        imageInstance.setReviewUser(userWithAdmin);
+        imageInstanceService.stopReview(imageInstance, false);
     }
 
     @Override
@@ -164,16 +181,16 @@ public class ImageInstanceAuthorizationTest extends CRUDAuthorizationTest {
 
     @Override
     protected Optional<String> minimalRoleForCreate() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
     @Override
     protected Optional<String> minimalRoleForDelete() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
     @Override
     protected Optional<String> minimalRoleForEdit() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 }

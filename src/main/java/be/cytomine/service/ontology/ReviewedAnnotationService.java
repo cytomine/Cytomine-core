@@ -568,7 +568,7 @@ public class ReviewedAnnotationService extends ModelService {
     // TODO: could be generic (same logic as for user annotation)
     public CommandResponse doCorrectReviewedAnnotation(List<Long> coveringAnnotations, String newLocation, boolean remove) throws ParseException {
         if (coveringAnnotations.isEmpty()) {
-            return null;
+            throw new WrongArgumentException("Covering annotations are empty");
         }
 
         //Get the based annotation
@@ -621,7 +621,7 @@ public class ReviewedAnnotationService extends ModelService {
 
             JsonObject jsonObject = based.toJsonObject();
             based.setLocation(oldLocation);
-            update(based, jsonObject);
+            result = update(based, jsonObject);
         }
         return result;
     }

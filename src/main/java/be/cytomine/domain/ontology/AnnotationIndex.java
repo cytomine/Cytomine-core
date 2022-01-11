@@ -29,9 +29,6 @@ public class AnnotationIndex {
 
     Long countReviewedAnnotation;
 
-    private String color;
-
-
     public static JsonObject getDataFromDomain(AnnotationIndex index) {
         JsonObject returnArray = new JsonObject();
         returnArray.put("user", index.getUser()!=null? index.getUser().getId() : null);

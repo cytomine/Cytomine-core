@@ -79,7 +79,7 @@ public class NestedImageInstanceAuthorizationTest extends CRUDAuthorizationTest 
 
     @Override
     protected void when_i_add_domain() {
-        NestedImageInstance nestedImageInstance = builder.given_a_nested_image_instance();
+        NestedImageInstance nestedImageInstance = builder.given_a_not_persisted_nested_image_instance();
         nestedImageInstance.setProject(this.nestedImageInstance.getProject());
         nestedImageInstance.setBaseImage(builder.given_an_abstract_image());
         nestedImageInstanceService.add(nestedImageInstance.toJsonObject());

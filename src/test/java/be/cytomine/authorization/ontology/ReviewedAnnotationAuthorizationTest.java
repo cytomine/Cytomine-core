@@ -8,11 +8,13 @@ import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.EditingMode;
 import be.cytomine.domain.project.Project;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
 import com.vividsolutions.jts.io.ParseException;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,7 +65,7 @@ public class ReviewedAnnotationAuthorizationTest extends CRUDAuthorizationTest {
         UserAnnotation annotation
                 = builder.given_a_user_annotation();
         annotation.getImage().setReviewStart(new Date());
-        annotation.getImage().setReviewUser(builder.given_a_user(USER_ACL_ADMIN));
+        annotation.getImage().setReviewUser(userWithAdmin);
         expectOK (() -> {
             reviewedAnnotationService.reviewAnnotation(annotation.getId(), null);
         });
@@ -77,7 +79,7 @@ public class ReviewedAnnotationAuthorizationTest extends CRUDAuthorizationTest {
                 = builder.given_a_user_annotation();
         annotation.getImage().setReviewStart(new Date());
         annotation.getImage().setReviewUser(builder.given_a_user(SUPERADMIN)); // someone else
-        expectForbidden (() -> {
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
             reviewedAnnotationService.reviewAnnotation(annotation.getId(), null);
         });
     }
@@ -111,8 +113,7 @@ public class ReviewedAnnotationAuthorizationTest extends CRUDAuthorizationTest {
     @Test
     @WithMockUser(username = USER_ACL_READ)
     public void user_can_delete_its_annotation_even_if_other_users_has_set_terms(){
-        throw new CytomineMethodNotYetImplementedException("");
-        //TODO: see ReviewedAnnotationSecutiryTests . testDeleteReviewedAnnotationWithTerm
+        Assertions.fail("todo");
     }
 
     @Override

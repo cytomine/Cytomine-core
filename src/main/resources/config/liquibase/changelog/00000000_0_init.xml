@@ -2422,9 +2422,12 @@
         <createIndex indexName="algo_annotation_image_id_index" tableName="algo_annotation">
             <column name="image_id"/>
         </createIndex>
-        <createIndex indexName="algo_annotation_location_index" tableName="algo_annotation">
-            <column name="location"/>
-        </createIndex>
+        <!-- Not possible to specify the index type using liquibase, so we write a custom sql command-->
+        <sql>
+            CREATE INDEX algo_annotation_location_index
+                ON algo_annotation USING GIST (location);
+        </sql>
+
         <createIndex indexName="algo_annotation_project_id_index" tableName="algo_annotation">
             <column name="project_id"/>
         </createIndex>
@@ -2437,9 +2440,10 @@
         <createIndex indexName="reviewed_annotation_image_id_index" tableName="reviewed_annotation">
             <column name="image_id"/>
         </createIndex>
-        <createIndex indexName="reviewed_annotation_location_index" tableName="reviewed_annotation">
-            <column name="location"/>
-        </createIndex>
+        <sql>
+            CREATE INDEX reviewed_annotation_location_index
+                ON reviewed_annotation USING GIST (location);
+        </sql>
         <createIndex indexName="reviewed_annotation_project_id_index" tableName="reviewed_annotation">
             <column name="project_id"/>
         </createIndex>
@@ -2467,9 +2471,18 @@
         <createIndex indexName="user_annotation_image_id_index" tableName="user_annotation">
             <column name="image_id"/>
         </createIndex>
-        <createIndex indexName="user_annotation_location_index" tableName="user_annotation">
-            <column name="location"/>
-        </createIndex>
+
+        <!-- Not possible to specify the index type using liquibase, so we write a custom sql command-->
+        <sql>
+            CREATE INDEX user_annotation_location_index
+                ON user_annotation USING GIST (location);
+        </sql>
+
+
+        <!-- Unfortunatley Liquibase doesn't allow you to specify index type yet -->
+        <!-- http://forum.liquibase.org/topic/create-index-and-order -->
+
+
         <createIndex indexName="user_annotation_project_id_index" tableName="user_annotation">
             <column name="project_id"/>
         </createIndex>

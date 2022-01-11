@@ -205,6 +205,11 @@ public class ImageServerService extends ModelService {
 
     }
 
+    public LinkedHashMap<String,Object> cropParameters(AnnotationDomain annotationDomain, CropParameter cropParameter) throws ParseException {
+        cropParameter.setLocation(annotationDomain.getWktLocation());
+        return cropParameters(annotationDomain.getSlice().getBaseSlice(), cropParameter);
+    }
+
     public LinkedHashMap<String,Object> cropParameters(AbstractSlice slice, CropParameter cropParameter) throws ParseException {
         LinkedHashMap<String, Object> parameters = retrieveImageServerParameters(slice);
 

@@ -654,7 +654,7 @@ public class UserAnnotationService extends ModelService {
             }
             JsonObject jsonObject = based.toJsonObject();
             based.setLocation(oldLocation);
-            update(based, jsonObject);
+            result = update(based, jsonObject);
         }
         return result;
     }

@@ -53,6 +53,24 @@ public abstract class AbstractAuthorizationTest {
 
     public static final String CREATOR = "CREATOR";
 
+    protected SecUser superadmin;
+
+    protected SecUser userWithRead;
+
+    protected SecUser userWithWrite;
+
+    protected SecUser userWithCreate;
+
+    protected SecUser userWithDelete;
+
+    protected SecUser userWithAdmin;
+
+    protected SecUser userNoAcl;
+
+    protected SecUser userGuest;
+
+    protected SecUser creator;
+
     public static final Map<String, List<String>> ROLES = new HashMap<>();
 
     static {
@@ -133,15 +151,15 @@ public abstract class AbstractAuthorizationTest {
     }
 
     protected void initUser() throws Exception {
-        SecUser superadmin = given_a_user(SUPERADMIN);
-        SecUser userWithRead = given_a_user(USER_ACL_READ);
-        SecUser userWithWrite = given_a_user(USER_ACL_WRITE);
-        SecUser userWithCreate = given_a_user(USER_ACL_CREATE);
-        SecUser userWithDelete = given_a_user(USER_ACL_DELETE);
-        SecUser userWithAdmin = given_a_user(USER_ACL_ADMIN);
-        SecUser userNoAcl = given_a_user(USER_NO_ACL);
-        SecUser userGuest = given_a_user(GUEST);
-        SecUser creator = given_a_user(CREATOR);
+        superadmin = given_a_user(SUPERADMIN);
+        userWithRead = given_a_user(USER_ACL_READ);
+        userWithWrite = given_a_user(USER_ACL_WRITE);
+        userWithCreate = given_a_user(USER_ACL_CREATE);
+        userWithDelete = given_a_user(USER_ACL_DELETE);
+        userWithAdmin = given_a_user(USER_ACL_ADMIN);
+        userNoAcl = given_a_user(USER_NO_ACL);
+        userGuest = given_a_user(GUEST);
+        creator = given_a_user(CREATOR);
     }
 
     protected void initACL(CytomineDomain container) {

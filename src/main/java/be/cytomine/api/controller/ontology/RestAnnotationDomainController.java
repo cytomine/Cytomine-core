@@ -96,7 +96,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
             params.put("suggestedTerm", params.get("term"));
             params.remove("term");
             params.remove("usersForTermAlgo");
-            annotationListing = new UserAnnotationListing(entityManager);
+            annotationListing = buildAnnotationListing(new UserAnnotationListing(entityManager), params);
             annotations.addAll(annotationListingService.listGeneric(annotationListing));
         }
 
@@ -302,14 +302,13 @@ public class RestAnnotationDomainController extends RestCytomineController {
         cropParameter.setFormat(format);
 
 
-        LinkedHashMap<String, Object> result = imageServerService.cropParameters(annotation.getSlice().getBaseSlice(), cropParameter);
+        LinkedHashMap<String, Object> result = imageServerService.cropParameters(annotation, cropParameter);
         result.put("location", result.get("location").toString());
         return responseSuccess(JsonObject.toJsonString(result));
     }
 
     private AnnotationListing buildAnnotationListing(JsonObject params) {
         AnnotationListing al;
-
         if(isReviewedAnnotationAsked(params)) {
             al = new ReviewedAnnotationListing(entityManager);
         }
@@ -322,6 +321,10 @@ public class RestAnnotationDomainController extends RestCytomineController {
         else {
             al = new UserAnnotationListing(entityManager);
         }
+        return buildAnnotationListing(al, params);
+    }
+    private AnnotationListing buildAnnotationListing(AnnotationListing al, JsonObject params) {
+
         al.setColumnsToPrint(paramsService.getPropertyGroupToShow(params));
 
         // Project
@@ -437,7 +440,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
 //            @RestApiParam(name="user", type="long", paramType = RestApiParamType.QUERY,description = "The annotation user id (may be an algo) "),
 //            @RestApiParam(name="terms", type="list", paramType = RestApiParamType.QUERY,description = "The annotation terms id")
 //            ])
-    @GetMapping("/api/imageinstance/{image}/annotation/included.json")
+    @GetMapping("/imageinstance/{image}/annotation/included.json")
     public ResponseEntity<String> listIncludedAnnotation(
             @PathVariable(name="image") Long imageId
     ) throws IOException {
