@@ -191,8 +191,8 @@ public class TermService extends ModelService {
 //            throw new ConstraintException("Term is still linked with ${nbreUserAnnotation} annotations created by user. Cannot delete term!")
 //        }
 //    }
-
-
+//
+//
 //    def deleteDependentHasManyReviewedAnnotation(Term term, Transaction transaction, Task task = null) {
 //        def criteria = ReviewedAnnotation.createCriteria()
 //        def results = criteria.list {
@@ -218,6 +218,6 @@ public class TermService extends ModelService {
 //            it.save()
 //        }
 //    }
-//
+
 
 }

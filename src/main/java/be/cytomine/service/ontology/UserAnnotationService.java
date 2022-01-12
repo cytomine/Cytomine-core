@@ -4,6 +4,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
@@ -27,6 +28,7 @@ import be.cytomine.service.dto.BoundariesCropParameter;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.image.SliceInstanceService;
+import be.cytomine.service.meta.PropertyService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.service.utils.ValidateGeometryService;
@@ -45,6 +47,7 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.springframework.security.acls.domain.BasePermission.DELETE;
 import static org.springframework.security.acls.domain.BasePermission.READ;
@@ -84,6 +87,10 @@ public class UserAnnotationService extends ModelService {
     private final SliceCoordinatesService sliceCoordinatesService;
 
     private final ImageInstanceRepository imageInstanceRepository;
+
+    private final PropertyService propertyService;
+
+    private final AnnotationTrackService annotationTrackService;
 
 
     @Override
@@ -374,36 +381,30 @@ public class UserAnnotationService extends ModelService {
 
 
         // Add properties if any
-        //TODO: uncomment when properties will be implemented
         Map<String, String> properties = new HashMap<>();
         properties.putAll(jsonObject.getJSONAttrMapString("property", new HashMap<>()));
         properties.putAll(jsonObject.getJSONAttrMapString("properties", new HashMap<>()));
 
         for (Map.Entry<String, String> entry : properties.entrySet()) {
-            throw new CytomineMethodNotYetImplementedException("");
-//            String key = entry.getKey();
-//            String value = entry.getValue();
-//            propertyService.addProperty("be.cytomine.ontology.UserAnnotation", addedAnnotation.getId(), key, value, currentUser, transaction);
+            String key = entry.getKey();
+            String value = entry.getValue();
+            propertyService.addProperty(UserAnnotation.class.getName(), addedAnnotation.getId(), key, value, currentUser, transaction);
         }
 
-        //TODO: uncomment when track will be implemented
-        // Add annotation-term if any
         List<Long> tracksIds = new ArrayList<>();
         tracksIds.addAll(jsonObject.getJSONAttrListLong("track", new ArrayList<>()));
         tracksIds.addAll(jsonObject.getJSONAttrListLong("tracks", new ArrayList<>()));
         if (!tracksIds.isEmpty()) {
-            throw new CytomineMethodNotYetImplementedException("");
+
+            List<AnnotationTrack> annotationTracks = new ArrayList<>();
+            for (Long trackId : tracksIds) {
+                CommandResponse response =
+                        annotationTrackService.addAnnotationTrack(UserAnnotation.class.getName(), addedAnnotation.getId(), trackId, addedAnnotation.getSlice().getId(), transaction);
+                annotationTracks.add((AnnotationTrack) response.getData().get("annotationtrack"));
+            }
+            ((Map<String, Object>)commandResponse.getData().get("annotation")).put("annotationTrack", annotationTracks);
+            ((Map<String, Object>)commandResponse.getData().get("annotation")).put("track", annotationTracks.stream().map(x -> x.getTrack()).collect(Collectors.toList()));
         }
-//        List<AnnotationTrack> annotationTracks = new ArrayList<>();
-//        for (Long trackId : tracksIds) {
-//            CommandResponse response =
-//                    annotationTrackService.addAnnotationTrack("be.cytomine.ontology.UserAnnotation", addedAnnotation.getId(), trackId, addedAnnotation.getSlice().getId(), currentUser, transaction);
-//            annotationTracks.add((AnnotationTrack) response.getData().get("annotationtrack"));
-//        }
-//        ((Map<String, Object>)commandResponse.getData().get("annotation")).put("annotationTrack", annotationTracks);
-//        ((Map<String, Object>)commandResponse.getData().get("annotation")).put("track", annotationTracks.stream().map(x -> x.getTrack()).collect(Collectors.toList()));
-
-
 
         return commandResponse;
     }
@@ -480,16 +481,6 @@ public class UserAnnotationService extends ModelService {
             jsonNewData.put("location", validateGeometryService.tryToMakeItValidIfNotValid(jsonNewData.getJSONAttrStr("location")));
         }
         CommandResponse result = executeCommand(new EditCommand(currentUser, null), domain, jsonNewData);
-
-        // TODO: retrieval
-//        if (result.success) {
-//            Long id = result.userannotation.id
-//            try {
-//                updateRetrievalAnnotation(id)
-//            } catch (Exception e) {
-//                log.error "Cannot update in retrieval:" + e.toString()
-//            }
-//        }
 
         return result;
     }

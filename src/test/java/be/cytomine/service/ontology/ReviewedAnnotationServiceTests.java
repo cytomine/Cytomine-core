@@ -458,12 +458,12 @@ public class ReviewedAnnotationServiceTests {
         builder.persistAndReturn(userAnnotation);
         AnnotationTerm annotationTerm = builder.given_an_annotation_term(userAnnotation);
 
+        entityManager.refresh(userAnnotation);
+
         CommandResponse response = reviewedAnnotationService.reviewAnnotation(userAnnotation.getId(), null);
+        entityManager.refresh(((ReviewedAnnotation)response.getObject()));
         assertThat(((ReviewedAnnotation)response.getObject()).getTerms()).containsExactly(annotationTerm.getTerm());
 
-        Term anotherTerm = builder.given_a_term(image.getProject().getOntology());
-        response = reviewedAnnotationService.reviewAnnotation(userAnnotation.getId(), List.of(anotherTerm.getId()));
-        assertThat(((ReviewedAnnotation)response.getObject()).getTerms()).containsExactly(anotherTerm);
     }
 
     @Test
