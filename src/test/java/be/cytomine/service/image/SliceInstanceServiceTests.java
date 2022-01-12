@@ -6,6 +6,8 @@ import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.image.UploadedFile;
+import be.cytomine.domain.ontology.AnnotationIndex;
+import be.cytomine.domain.ontology.AnnotationTrack;
 import be.cytomine.domain.project.Project;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
@@ -173,9 +175,24 @@ public class SliceInstanceServiceTests {
 
     @Test
     void delete_slice_instance_with_dependencies_with_success() {
-        fail("not yet implemented");
-        // annotation track
-        // annotation index
+        SliceInstance sliceInstance = builder.given_a_slice_instance();
+
+        AnnotationTrack annotationTrack = builder.given_a_annotation_track();
+        annotationTrack.setSlice(sliceInstance);
+
+        AnnotationIndex annotationIndex = builder.given_a_annotation_index();
+        annotationIndex.setSlice(sliceInstance);
+
+        assertThat(entityManager.find(AnnotationTrack.class, annotationTrack.getId())).isNotNull();
+        assertThat(entityManager.find(AnnotationIndex.class, annotationIndex.getId())).isNotNull();
+
+        CommandResponse commandResponse = sliceInstanceService.delete(sliceInstance, null, null, true);
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+
+        assertThat(entityManager.find(AnnotationTrack.class, annotationTrack.getId())).isNull();
+        assertThat(entityManager.find(AnnotationIndex.class, annotationIndex.getId())).isNull();
+
     }
 
 

@@ -4,6 +4,7 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
+import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
@@ -348,15 +349,16 @@ public class AbstractImageServiceTests {
     void delete_abstract_image_with_dependencies_with_success() {
         AbstractImage abstractImage = builder.given_an_abstract_image();
 
-        CompanionFile companionFile = builder.given_a_companion_file(abstractImage);
+        AttachedFile attachedFile = builder.given_a_attached_file(abstractImage);
 
-        NestedImageInstance nestedImageInstance = builder.given_a_nested_image_instance();
-        nestedImageInstance.setBaseImage(abstractImage);
+        assertThat(entityManager.find(AttachedFile.class, attachedFile.getId())).isNotNull();
 
         CommandResponse commandResponse = abstractImageService.delete(abstractImage, null, null, true);
 
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);
+
+        assertThat(entityManager.find(AttachedFile.class, attachedFile.getId())).isNull();
     }
 
     @Test

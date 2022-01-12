@@ -4,8 +4,7 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.TestUtils;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.AlgoAnnotation;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
 import be.cytomine.dto.AnnotationLight;
@@ -510,7 +509,36 @@ public class AlgoAnnotationServiceTests {
 
         AssertionsForClassTypes.assertThat(commandResponse).isNotNull();
         AssertionsForClassTypes.assertThat(commandResponse.getStatus()).isEqualTo(200);
+
+    }
+
+    @Test
+    void delete_algo_annotation_with_dependencies() {
+        AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
+        AlgoAnnotationTerm algoAnnotationTerm = builder.given_an_algo_annotation_term();
+        algoAnnotationTerm.setAnnotation(algoAnnotation);
+
+        ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
+        reviewedAnnotation.setParentClassName(algoAnnotation.getClass().getName());
+        reviewedAnnotation.setParentIdent(algoAnnotation.getId());
+
+        SharedAnnotation sharedAnnotation = builder.given_a_shared_annotation();
+        sharedAnnotation.setAnnotation(algoAnnotation);
+
+        AnnotationTrack annotationTrack = builder.given_a_annotation_track();
+        annotationTrack.setAnnotation(algoAnnotation);
+
+        CommandResponse commandResponse = algoAnnotationService.delete(algoAnnotation, null, null, true);
+
+        AssertionsForClassTypes.assertThat(commandResponse).isNotNull();
+        AssertionsForClassTypes.assertThat(commandResponse.getStatus()).isEqualTo(200);
         AssertionsForClassTypes.assertThat(algoAnnotationService.find(algoAnnotation.getId()).isEmpty());
+
+        assertThat(entityManager.find(AlgoAnnotation.class, algoAnnotation.getId())).isNull();
+        assertThat(entityManager.find(ReviewedAnnotation.class, reviewedAnnotation.getId())).isNull();
+        assertThat(entityManager.find(SharedAnnotation.class, sharedAnnotation.getId())).isNull();
+        assertThat(entityManager.find(AnnotationTrack.class, annotationTrack.getId())).isNull();
+        assertThat(entityManager.find(AlgoAnnotationTerm.class, algoAnnotationTerm.getId())).isNull();
 
     }
 }

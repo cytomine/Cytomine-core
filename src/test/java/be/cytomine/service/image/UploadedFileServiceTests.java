@@ -300,8 +300,6 @@ public class UploadedFileServiceTests {
         AbstractSlice abstractSlice = builder.given_an_abstract_slice();
         abstractSlice.setUploadedFile(uploadedFile);
 
-        CompanionFile companionFile = builder.given_a_companion_file(abstractImage);
-        companionFile.setUploadedFile(uploadedFile);
         CommandResponse commandResponse = uploadedFileService.delete(uploadedFile, null, null, true);
 
         assertThat(commandResponse).isNotNull();

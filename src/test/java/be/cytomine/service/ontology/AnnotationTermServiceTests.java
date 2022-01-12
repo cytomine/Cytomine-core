@@ -2,10 +2,7 @@ package be.cytomine.service.ontology;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.ontology.AnnotationTerm;
-import be.cytomine.domain.ontology.RelationTerm;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.UserAnnotation;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -209,6 +206,24 @@ public class AnnotationTermServiceTests {
         assertThat(annotationTermRepository
                 .findByUserAnnotationAndTermAndUser(annotation, oldTerm, annotationTerm.getUser())).isEmpty();
 
+    }
+
+
+    @Test
+    void add_valid_annotation_term_and_delete_other_terms_for_reviewed_annotation() {
+        ReviewedAnnotation annotation = builder.given_a_reviewed_annotation();
+        Term oldTerm = builder.given_a_term(annotation.getProject().getOntology());
+        annotation.getTerms().add(oldTerm);
+        builder.persistAndReturn(annotation);
+        Term newTerm = builder.given_a_term(annotation.getProject().getOntology());
+
+        CommandResponse commandResponse = annotationTermService.addWithDeletingOldTerm(
+                annotation.getId(),
+                newTerm.getId(),
+                false
+        );
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
     }
 
     @Test

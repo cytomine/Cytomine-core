@@ -4,6 +4,7 @@ import be.cytomine.authorization.AbstractAuthorizationTest;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
+import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.*;
@@ -703,4 +704,54 @@ public class BasicInstanceBuilder {
         return persistAndReturn(sharedAnnotation);
     }
 
+    public Track given_a_track() {
+        return persistAndReturn(given_a_not_persisted_track());
+    }
+
+    public Track given_a_not_persisted_track() {
+        Track track = new Track();
+        track.setName(randomString());
+        track.setColor(randomString());
+        track.setImage(given_an_image_instance());
+        track.setProject(track.getImage().getProject());
+        return track;
+    }
+
+    public AnnotationTrack given_a_annotation_track() {
+        return persistAndReturn(given_a_not_persisted_annotation_track());
+    }
+
+    public AnnotationTrack given_a_not_persisted_annotation_track() {
+        AnnotationTrack annotationTrack = new AnnotationTrack();
+        UserAnnotation annotation = given_a_user_annotation();
+        annotationTrack.setAnnotation(annotation);
+        annotationTrack.setSlice(annotation.getSlice());
+        annotationTrack.setTrack(given_a_track());
+        return annotationTrack;
+    }
+
+    public AttachedFile given_a_attached_file(CytomineDomain domain) {
+        return persistAndReturn(given_a_not_persisted_attached_file(domain));
+    }
+
+    public AttachedFile given_a_not_persisted_attached_file(CytomineDomain domain) {
+        AttachedFile attachedFile = new AttachedFile();
+        attachedFile.setData(UUID.randomUUID().toString().getBytes());
+        attachedFile.setFilename("test.txt");
+        attachedFile.setDomain(domain);
+        return attachedFile;
+    }
+
+    public AnnotationIndex given_a_not_persisted_annotation_index() {
+        AnnotationIndex annotationIndex = new AnnotationIndex();
+        annotationIndex.setSlice(given_a_slice_instance());
+        annotationIndex.setCountAnnotation(1L);
+        annotationIndex.setCountReviewedAnnotation(1L);
+        annotationIndex.setUser(given_superadmin());
+        return annotationIndex;
+    }
+
+    public AnnotationIndex given_a_annotation_index() {
+        return persistAndReturn(given_a_not_persisted_annotation_index());
+    }
 }
