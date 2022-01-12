@@ -32,6 +32,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -683,4 +684,23 @@ public class BasicInstanceBuilder {
         annotationTerm.setRate(0d);
         return annotationTerm;
     }
+
+    public SharedAnnotation given_a_not_persisted_shared_annotation() {
+        SharedAnnotation sharedAnnotation = new SharedAnnotation();
+        sharedAnnotation.setAnnotation(given_a_user_annotation());
+        sharedAnnotation.setComment("Rech. proj. pr proj. priv. Self Dem. Brt. Poss. S'adr. à l'hô. Mart");
+        sharedAnnotation.setSender(given_superadmin());
+        sharedAnnotation.setReceivers(List.of(given_superadmin()));
+        return sharedAnnotation;
+    }
+
+    public SharedAnnotation given_a_shared_annotation() {
+        return persistAndReturn(given_a_not_persisted_shared_annotation());
+    }
+    public SharedAnnotation given_a_shared_annotation(AnnotationDomain annotationDomain) {
+        SharedAnnotation sharedAnnotation = given_a_not_persisted_shared_annotation();
+        sharedAnnotation.setAnnotation(annotationDomain);
+        return persistAndReturn(sharedAnnotation);
+    }
+
 }

@@ -40,6 +40,7 @@ import javax.persistence.EntityManager;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -235,21 +236,6 @@ public class ReviewedAnnotationResourceTests {
 
     @Test
     @Transactional
-    public void add_reviewed_annotation_with_not_valid_location() throws Exception {
-        ReviewedAnnotation reviewedAnnotation = builder.given_a_not_persisted_reviewed_annotation();
-        JsonObject jsonObject = reviewedAnnotation.toJsonObject();
-        jsonObject.put("location",
-                "POLYGON ((225.73582220103702 306.89723126347087, 225.73582220103702 307.93556995227914, 226.08028300710947 307.93556995227914, 226.08028300710947 306.89723126347087, 225.73582220103702 306.89723126347087))"
-                ); // too small
-        restReviewedAnnotationControllerMockMvc.perform(post("/api/reviewedannotation.json")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonObject.toJsonString()))
-                .andDo(print())
-                .andExpect(status().is4xxClientError());
-    }
-
-    @Test
-    @Transactional
     public void add_valid_reviewed_annotation_without_project() throws Exception {
         ReviewedAnnotation reviewedAnnotation = builder.given_a_not_persisted_reviewed_annotation();
         JsonObject jsonObject = reviewedAnnotation.toJsonObject();
@@ -262,23 +248,6 @@ public class ReviewedAnnotationResourceTests {
                 .andExpect(jsonPath("$.annotation.project").value(reviewedAnnotation.getProject().getId()));
         // => project is retrieve from slice/image
     }
-
-    @Test
-    @Transactional
-    public void add_valid_reviewed_annotation_with_terms() throws Exception {
-        ReviewedAnnotation reviewedAnnotation = builder.given_a_not_persisted_reviewed_annotation();
-        Term term1 = builder.given_a_term(reviewedAnnotation.getProject().getOntology());
-        Term term2 = builder.given_a_term(reviewedAnnotation.getProject().getOntology());
-        JsonObject jsonObject = reviewedAnnotation.toJsonObject();
-        jsonObject.put("terms", Arrays.asList(term1.getId(), term2.getId()));
-        restReviewedAnnotationControllerMockMvc.perform(post("/api/reviewedannotation.json")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonObject.toJsonString()))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reviewedannotation.term", hasSize(2)));
-    }
-
 
     @Test
     @Transactional
@@ -496,15 +465,17 @@ public class ReviewedAnnotationResourceTests {
     @Test
     @javax.transaction.Transactional
     public void get_reviewed_annotation_crop() throws Exception {
-        ReviewedAnnotation annotation = given_a_reviewed_annotation_with_valid_image_server();
+        ReviewedAnnotation annotation = given_a_reviewed_annotation_with_valid_image_server(builder);
 
         configureFor("localhost", 8888);
+
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
 
         String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=crop";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
-                        aResponse().withBody(new byte[]{101})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -513,21 +484,22 @@ public class ReviewedAnnotationResourceTests {
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(new byte[]{101});
+        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
     @Test
     @javax.transaction.Transactional
     public void get_reviewed_annotation_crop_mask() throws Exception {
-        ReviewedAnnotation annotation = given_a_reviewed_annotation_with_valid_image_server();
+        ReviewedAnnotation annotation = given_a_reviewed_annotation_with_valid_image_server(builder);
 
         configureFor("localhost", 8888);
 
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=mask";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
-                        aResponse().withBody(new byte[]{102})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -536,20 +508,23 @@ public class ReviewedAnnotationResourceTests {
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(new byte[]{102});
+        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
 
     @Test
     @javax.transaction.Transactional
     public void get_reviewed_annotation_alpha_mask() throws Exception {
-        ReviewedAnnotation annotation = given_a_reviewed_annotation_with_valid_image_server();
+        ReviewedAnnotation annotation = given_a_reviewed_annotation_with_valid_image_server(builder);
+
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+
 
         configureFor("localhost", 8888);
         String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=alphaMask";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
-                        aResponse().withBody(new byte[]{103})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -558,10 +533,10 @@ public class ReviewedAnnotationResourceTests {
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(new byte[]{103});
+        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
-    private ReviewedAnnotation given_a_reviewed_annotation_with_valid_image_server() throws ParseException {
+    public static ReviewedAnnotation given_a_reviewed_annotation_with_valid_image_server(BasicInstanceBuilder builder) throws ParseException {
         AbstractImage image = builder.given_an_abstract_image();
         image.setWidth(109240);
         image.setHeight(220696);

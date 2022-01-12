@@ -7,6 +7,7 @@ import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.AnnotationTerm;
+import be.cytomine.domain.ontology.SharedAnnotation;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
@@ -17,6 +18,7 @@ import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
+import com.github.tomakehurst.wiremock.common.Json;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
@@ -41,6 +43,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -378,15 +381,16 @@ public class UserAnnotationResourceTests {
     @Test
     @javax.transaction.Transactional
     public void get_user_annotation_crop() throws Exception {
-        UserAnnotation annotation = given_a_user_annotation_with_valid_image_server();
+        UserAnnotation annotation = given_a_user_annotation_with_valid_image_server(builder);
 
         configureFor("localhost", 8888);
 
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=crop";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
-                        aResponse().withBody(new byte[]{101})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -395,21 +399,22 @@ public class UserAnnotationResourceTests {
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(new byte[]{101});
+        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
     @Test
     @javax.transaction.Transactional
     public void get_user_annotation_crop_mask() throws Exception {
-        UserAnnotation annotation = given_a_user_annotation_with_valid_image_server();
+        UserAnnotation annotation = given_a_user_annotation_with_valid_image_server(builder);
 
         configureFor("localhost", 8888);
 
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=mask";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
-                        aResponse().withBody(new byte[]{102})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -418,22 +423,23 @@ public class UserAnnotationResourceTests {
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(new byte[]{102});
+        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
 
     @Test
     @javax.transaction.Transactional
     public void get_user_annotation_alpha_mask() throws Exception {
-        UserAnnotation annotation = given_a_user_annotation_with_valid_image_server();
+        UserAnnotation annotation = given_a_user_annotation_with_valid_image_server(builder);
 
         configureFor("localhost", 8888);
 
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=mask";
+        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=alphaMask";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
-                        aResponse().withBody(new byte[]{103})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -442,10 +448,10 @@ public class UserAnnotationResourceTests {
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(new byte[]{103});
+        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
-    private UserAnnotation given_a_user_annotation_with_valid_image_server() throws ParseException {
+    public static UserAnnotation given_a_user_annotation_with_valid_image_server(BasicInstanceBuilder builder) throws ParseException {
         AbstractImage image = builder.given_an_abstract_image();
         image.setWidth(109240);
         image.setHeight(220696);
@@ -466,8 +472,51 @@ public class UserAnnotationResourceTests {
     }
 
 
+    @Test
+    @Transactional
+    public void create_comments_for_annotation() throws Exception {
+        SharedAnnotation annotation = builder.given_a_shared_annotation();
 
+        JsonObject jsonObject = annotation.toJsonObject();
+        jsonObject.put("subject", "subject for test mail");
+        jsonObject.put("message", "message for test mail");
+        jsonObject.put("users", List.of(builder.given_superadmin().getId()));
 
+        restUserAnnotationControllerMockMvc.perform(post("/api/userannotation/{id}/comment.json", annotation.getAnnotationIdent())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonObject.toJsonString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.printMessage").value(true))
+                .andExpect(jsonPath("$.callback").exists())
+                .andExpect(jsonPath("$.callback.method").value("be.cytomine.AddSharedAnnotationCommand"))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.command").exists())
+                .andExpect(jsonPath("$.sharedannotation.id").exists());
+    }
 
+    @Test
+    @Transactional
+    public void get_comment_for_annotation() throws Exception {
+        UserAnnotation userAnnotation = builder.given_a_user_annotation();
+        SharedAnnotation comment = builder.given_a_shared_annotation(userAnnotation);
+
+        restUserAnnotationControllerMockMvc.perform(get("/api/userannotation/{annotation}/comment/{id}.json", userAnnotation.getId(), comment.getId()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(comment.getId()));
+    }
+
+    @Test
+    @Transactional
+    public void list_comment_for_annotation() throws Exception {
+        UserAnnotation userAnnotation = builder.given_a_user_annotation();
+        SharedAnnotation comment = builder.given_a_shared_annotation(userAnnotation);
+
+        restUserAnnotationControllerMockMvc.perform(get("/api/userannotation/{annotation}/comment.json", userAnnotation.getId()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").value(equalTo(1)));
+    }
 
 }

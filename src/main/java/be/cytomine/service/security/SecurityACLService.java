@@ -1,6 +1,7 @@
 package be.cytomine.service.security;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.GenericCytomineDomainContainer;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.server.Storage;
@@ -10,12 +11,14 @@ import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.UserJob;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.security.AclRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.PermissionService;
+import be.cytomine.service.ontology.GenericAnnotationService;
 import be.cytomine.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.acls.model.Permission;
@@ -80,7 +83,7 @@ public class SecurityACLService {
 
     public void checkIsAdminContainer(CytomineDomain domain, SecUser currentUser) {
         if (domain!=null) {
-            if (!hasPermission(domain.container(), ADMINISTRATION, currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
+            if (!hasPermission(retrieveContainer(domain), ADMINISTRATION, currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
                 throw new ForbiddenException("You don't have the right to do this. You must be the creator or the container admin");
             }
         } else {
@@ -89,7 +92,18 @@ public class SecurityACLService {
 
     }
 
-//    public void check(Long id, Class className, String method, Permission permission) {
+    private CytomineDomain retrieveContainer(CytomineDomain domain) {
+        if (domain instanceof GenericCytomineDomainContainer) {
+            try {
+                return ((CytomineDomain)entityManager.find(Class.forName(((GenericCytomineDomainContainer) domain).getContainerClass()), domain.getId())).container();
+            } catch (ClassNotFoundException e) {
+                throw new WrongArgumentException("Cannot load " + domain);
+            }
+        }
+        return domain.container();
+    }
+
+    //    public void check(Long id, Class className, String method, Permission permission) {
 //        CytomineDomain domain = (CytomineDomain)entityManager.find(className, id);
 //        if (domain!=null) {
 //            def containerObject = simpleObject."$method"()
@@ -100,7 +114,7 @@ public class SecurityACLService {
 //    }
     public void check(CytomineDomain domain, Permission permission, SecUser currentUser) {
         if (domain!=null) {
-            if (!hasPermission(domain.container(), permission, currentRoleService.isAdminByNow(currentUser))) {
+            if (!hasPermission(retrieveContainer(domain), permission, currentRoleService.isAdminByNow(currentUser))) {
                 throw new ForbiddenException("You don't have the right to read or modify this resource! "  + domain.getClass() + " " + domain.getId());
             }
         } else {
@@ -269,8 +283,8 @@ public class SecurityACLService {
     //check if the container (e.g. Project) is not in readonly. If in readonly, only admins can edit this.
     public void checkIsNotReadOnly(CytomineDomain domain) {
         if (domain!=null) {
-            boolean readOnly = !domain.container().canUpdateContent();
-            boolean containerAdmin = permissionService.hasACLPermission(domain.container(),ADMINISTRATION);
+            boolean readOnly = !retrieveContainer(domain).canUpdateContent();
+            boolean containerAdmin = permissionService.hasACLPermission(retrieveContainer(domain),ADMINISTRATION);
             if(readOnly && !containerAdmin) {
                 throw new ForbiddenException("The project for this data is in readonly mode! You must be project manager to add, edit or delete this resource in a readonly project.");
             }
@@ -283,7 +297,7 @@ public class SecurityACLService {
         boolean isNotSameUser = (!currentRoleService.isAdminByNow(currentUser) && (!Objects.equals(user.getId(), currentUser.getId())));
         if (isNotSameUser) {
             if (domain!=null) {
-                if (hasPermission(domain.container(), ADMINISTRATION,currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
+                if (hasPermission(retrieveContainer(domain), ADMINISTRATION,currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
                     throw new ForbiddenException("You don't have the right to do this. You must be the creator or the container admin");
                 }
             } else {
@@ -315,9 +329,9 @@ public class SecurityACLService {
     //check if the container (e.g. Project) has the minimal editing mode or is Admin. If not, exception will be thown
     public void checkFullOrRestrictedForOwner(CytomineDomain domain, SecUser owner) {
         if (domain!=null) {
-            if(permissionService.hasACLPermission(domain.container(),ADMINISTRATION)
+            if(permissionService.hasACLPermission(retrieveContainer(domain),ADMINISTRATION)
                     || currentRoleService.isAdminByNow(currentUserService.getCurrentUser())) return;
-            switch (((Project)domain.container()).getMode()) {
+            switch (((Project) retrieveContainer(domain)).getMode()) {
                 case CLASSIC :
                     return;
                 case RESTRICTED :
@@ -326,11 +340,11 @@ public class SecurityACLService {
                             throw new ForbiddenException("You don't have the right to do this. You must be the creator or the container admin");
                         }
                     } else {
-                        throw new ForbiddenException("The project for this data is in "+((Project)domain.container()).getMode().name() +" mode! You must be project manager to add, edit or delete this resource.");
+                        throw new ForbiddenException("The project for this data is in "+((Project) retrieveContainer(domain)).getMode().name() +" mode! You must be project manager to add, edit or delete this resource.");
                     }
                     break;
                 case READ_ONLY :
-                    throw new ForbiddenException("The project for this data is in "+((Project)domain.container()).getMode().name()+" mode! You must be project manager to add, edit or delete this resource.");
+                    throw new ForbiddenException("The project for this data is in "+((Project) retrieveContainer(domain)).getMode().name()+" mode! You must be project manager to add, edit or delete this resource.");
                 default :
                     throw new ObjectNotFoundException("ACL error: project editing mode is unknown! Unable to process project auth checking");
 

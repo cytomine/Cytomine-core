@@ -23,6 +23,7 @@ import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SecUserService extends ModelService {
@@ -515,5 +517,33 @@ public class SecUserService extends ModelService {
     public Optional<UserJob> findByJobId(Long job) {
         // TODO:
         throw new CytomineMethodNotYetImplementedException("not yet implemented");
+    }
+
+    /**
+     * Add a user in project user or admin list
+     * @param user User to add in project
+     * @param project Project that will be accessed by user
+     * @param admin Flaf if user will become a simple user or a project manager
+     * @return Response structure
+     */
+    public void addUserToProject(SecUser user, Project project, boolean admin) {
+        securityACLService.check(project,ADMINISTRATION);
+        log.info("service.addUserToProject");
+        if (project!=null) {
+            log.info("addUserToProject project=" + project + " user=" + user + " ADMIN=" + admin);
+            synchronized (this.getClass()) {
+                if(admin) {
+                    permissionService.addPermission(project, user.getUsername(), ADMINISTRATION);
+                }
+                permissionService.addPermission(project, user.getUsername(), READ);
+                if(project.getOntology()!=null) {
+                    log.info("addUserToProject ontology=" + project.getOntology() + " user=" + user + " ADMIN=" + admin);
+                    permissionService.addPermission(project.getOntology(), user.getUsername(), READ);
+                    if (admin) {
+                        permissionService.addPermission(project.getOntology(), user.getUsername(), ADMINISTRATION);
+                    }
+                }
+            }
+        }
     }
 }

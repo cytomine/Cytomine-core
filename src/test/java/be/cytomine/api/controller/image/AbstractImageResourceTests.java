@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -538,12 +539,14 @@ public class AbstractImageResourceTests {
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("openslide/mrxs");
 
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0,0,0);
         slice.setUploadedFile(image.getUploadedFile());
         configureFor("localhost", 8888);
         stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512"))
                 .willReturn(
-                        aResponse().withBody(new byte[]{0,1,2,3})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -552,7 +555,7 @@ public class AbstractImageResourceTests {
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(new byte[]{0,1,2,3});
+        assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
     @Test
@@ -573,12 +576,14 @@ public class AbstractImageResourceTests {
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("openslide/mrxs");
 
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0,0,0);
         slice.setUploadedFile(image.getUploadedFile());
         configureFor("localhost", 8888);
         stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=1024"))
                 .willReturn(
-                        aResponse().withBody(new byte[]{0,1,2,3})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -587,7 +592,7 @@ public class AbstractImageResourceTests {
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(new byte[]{0,1,2,3});
+        assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
 
@@ -619,9 +624,11 @@ public class AbstractImageResourceTests {
         image.getUploadedFile().setContentType("openslide/mrxs");
         configureFor("localhost", 8888);
 
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+
         stubFor(get(urlEqualTo("/image/nested.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512&label=macro"))
                 .willReturn(
-                        aResponse().withBody(new byte[]{0,1,2,3,4})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -631,7 +638,7 @@ public class AbstractImageResourceTests {
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(new byte[]{0,1,2,3,4});
+        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
 
@@ -646,10 +653,12 @@ public class AbstractImageResourceTests {
         configureFor("localhost", 8888);
 
 
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+
         String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=crop";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
-                        aResponse().withBody(new byte[]{99})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -659,7 +668,7 @@ public class AbstractImageResourceTests {
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(new byte[]{99});
+        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
     @Test
@@ -670,11 +679,13 @@ public class AbstractImageResourceTests {
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
         slice.setUploadedFile(image.getUploadedFile());
 
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+
         configureFor("localhost", 8888);
         String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
-                        aResponse().withBody(new byte[]{123})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -683,7 +694,7 @@ public class AbstractImageResourceTests {
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(new byte[]{123});
+        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
 
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/window_url-10-20-30-40.jpg", image.getId()))
@@ -702,11 +713,13 @@ public class AbstractImageResourceTests {
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
         slice.setUploadedFile(image.getUploadedFile());
 
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+
         configureFor("localhost", 8888);
         String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
-                        aResponse().withBody(new byte[]{123})
+                        aResponse().withBody(mockResponse)
                 )
         );
 
@@ -715,7 +728,7 @@ public class AbstractImageResourceTests {
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(new byte[]{123});
+        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
 
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/camera_url-10-20-30-40.jpg", image.getId()))

@@ -3,6 +3,7 @@ package be.cytomine.api.controller.ontology;
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.api.controller.utils.RequestParams;
 import be.cytomine.domain.ontology.AlgoAnnotation;
+import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
@@ -13,6 +14,7 @@ import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.AlgoAnnotationService;
+import be.cytomine.service.ontology.SharedAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
@@ -50,6 +52,8 @@ public class RestAlgoAnnotationController extends RestCytomineController {
     private final ImageServerService imageServerService;
 
     private final ParamsService paramsService;
+
+    private final SharedAnnotationService sharedAnnotationService;
 
     /**
      * List all annotation (created by algo) visible for the current user
@@ -341,67 +345,49 @@ public class RestAlgoAnnotationController extends RestCytomineController {
     }
 
 
-    //TODO
-//
-//
-//    @RestApiMethod(description="Add comment on an annotation to other user and send a mail to users")
-//    @RestApiResponseObject(objectIdentifier = "empty")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="annotation", type="long", paramType = RestApiParamType.PATH,description = "The annotation id"),
-//            @RestApiParam(name="POST JSON: comment", type="string", paramType = RestApiParamType.QUERY,description = "The comment"),
-//            @RestApiParam(name="POST JSON: sender", type="long", paramType = RestApiParamType.QUERY,description = "The user id who share the annotation"),
-//            @RestApiParam(name="POST JSON: subject", type="string", paramType = RestApiParamType.QUERY,description = "The subject of the mail that will be send"),
-//            @RestApiParam(name="POST JSON: from", type="string", paramType = RestApiParamType.QUERY,description = "The username of the user who send the mail"),
-//            @RestApiParam(name="POST JSON: receivers", type="list", paramType = RestApiParamType.QUERY,description = "The list of user (id) to send the mail"),
-//            @RestApiParam(name="POST JSON: emails", type="list", paramType = RestApiParamType.QUERY,required = false, description = "The list of emails to send the mail. Used (and mandatory) if receivers is null"),
-//            @RestApiParam(name="POST JSON: annotationURL ", type="string", paramType = RestApiParamType.QUERY,description = "The URL of the annotation in the image viewer"),
-//            @RestApiParam(name="POST JSON: shareAnnotationURL", type="string", paramType = RestApiParamType.QUERY,description = "The URL of the comment"),
-//            ])
-//    def addComment() {
-//
-//        AlgoAnnotation annotation = algoAnnotationService.read(params.getLong('annotation'))
-//        def result = sharedAnnotationService.add(request.JSON, annotation, params)
-//        if(result) {
-//            responseResult(result)
-//        }
-//    }
-//
-//    /**
-//     * Show a single comment for an annotation
-//     */
-//    //TODO : duplicate code from UserAnnotation
-//    @RestApiMethod(description="Get a specific comment")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="annotation", type="long", paramType = RestApiParamType.PATH,description = "The annotation id"),
-//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The comment id"),
-//            ])
-//    def showComment() {
-//
-//        AlgoAnnotation annotation = algoAnnotationService.read(params.long('annotation'))
-//        if (!annotation) {
-//            responseNotFound("Annotation", params.annotation)
-//        }
-//        def sharedAnnotation = SharedAnnotation.findById(params.long('id'))
-//        if (sharedAnnotation) {
-//            responseSuccess(sharedAnnotation)
-//        } else {
-//            responseNotFound("SharedAnnotation", params.id)
-//        }
-//    }
-//
-//    /**
-//     * List all comments for an annotation
-//     */
-//    @RestApiMethod(description="Get all comments on annotation", listing=true)
-//    @RestApiParams(params=[
-//            @RestApiParam(name="annotation", type="long", paramType = RestApiParamType.PATH,description = "The annotation id")
-//            ])
-//    def listComments() {
-//        AlgoAnnotation annotation = algoAnnotationService.read(params.long('annotation'))
-//        if (annotation) {
-//            responseSuccess(sharedAnnotationService.listComments(annotation))
-//        } else {
-//            responseNotFound("Annotation", params.id)
-//        }
-//    }
+    /**
+     * Add comment on an annotation to other user
+     */
+    @PostMapping("/algoannotation/{annotation}/comment.json")
+    public ResponseEntity<String> addComment(
+            @PathVariable(value = "annotation") Long annotationId,
+            @RequestBody JsonObject json
+    ) {
+        log.debug("REST request to create comment for annotation : " + json);
+        AlgoAnnotation annotation = algoAnnotationService.find(annotationId)
+                .orElseThrow(()-> new ObjectNotFoundException("Annotation", annotationId));
+        json.put("annotationIdent", annotation.getId());
+        json.put("annotationClassName", annotation.getClass().getName());
+        return responseSuccess(sharedAnnotationService.add(json));
+    }
+
+
+    /**
+     * Show a single comment for an annotation
+     */
+    @GetMapping("/algoannotation/{annotation}/comment/{id}.json")
+    public ResponseEntity<String> showComment(
+            @PathVariable(value = "annotation") Long annotationId,
+            @PathVariable(value = "id") Long commentId
+    ) {
+        log.debug("REST request to read comment {} for annotation {}", commentId, annotationId);
+        AlgoAnnotation annotation = algoAnnotationService.find(annotationId)
+                .orElseThrow(()-> new ObjectNotFoundException("Annotation", annotationId));
+        return responseSuccess(sharedAnnotationService.find(commentId).orElseThrow(() ->
+                new ObjectNotFoundException("SharedAnnotation", commentId)));
+    }
+
+    /**
+     * List all comments for an annotation
+     */
+    @GetMapping("/algoannotation/{annotation}/comment.json")
+    public ResponseEntity<String> listComments(
+            @PathVariable(value = "annotation") Long annotationId
+    ) {
+        log.debug("REST request to read comments for annotation {}", annotationId);
+        AlgoAnnotation annotation = algoAnnotationService.find(annotationId)
+                .orElseThrow(()-> new ObjectNotFoundException("Annotation", annotationId));
+        return responseSuccess(sharedAnnotationService.listComments(annotation));
+    }
+
 }

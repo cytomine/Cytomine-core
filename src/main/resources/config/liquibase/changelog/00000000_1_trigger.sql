@@ -307,9 +307,9 @@ CREATE OR REPLACE FUNCTION beforeInsertComment() RETURNS TRIGGER AS $incImageBef
 currentUserAnnotation user_annotation%ROWTYPE;
             currentAlgoAnnotation algo_annotation%ROWTYPE;
 BEGIN
-            IF NEW.annotation_class_name = 'be.cytomine.ontology.AlgoAnnotation' THEN
+            IF NEW.annotation_class_name = 'be.cytomine.domain.ontology.AlgoAnnotation' THEN
 SELECT * INTO currentAlgoAnnotation FROM algo_annotation where id = NEW.annotation_ident FOR UPDATE;
-ELSIF NEW.annotation_class_name = 'be.cytomine.ontology.UserAnnotation' THEN
+ELSIF NEW.annotation_class_name = 'be.cytomine.domain.ontology.UserAnnotation' THEN
 SELECT * INTO currentUserAnnotation FROM user_annotation where id = NEW.annotation_ident FOR UPDATE;
 END IF;
 RETURN NEW;
@@ -320,11 +320,11 @@ CREATE TRIGGER beforeInsertCommentTrigger BEFORE INSERT ON shared_annotation FOR
 -------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION afterInsertComment() RETURNS trigger AS $incSharedAnnAfter$
 BEGIN
-            IF NEW.annotation_class_name = 'be.cytomine.ontology.AlgoAnnotation' THEN
+            IF NEW.annotation_class_name = 'be.cytomine.domain.ontology.AlgoAnnotation' THEN
 UPDATE algo_annotation
 SET count_comments = count_comments + 1
 WHERE id = NEW.annotation_ident;
-ELSIF NEW.annotation_class_name = 'be.cytomine.ontology.UserAnnotation' THEN
+ELSIF NEW.annotation_class_name = 'be.cytomine.domain.ontology.UserAnnotation' THEN
 UPDATE user_annotation
 SET count_comments = count_comments + 1
 WHERE id = NEW.annotation_ident;

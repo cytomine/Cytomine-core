@@ -2,6 +2,7 @@ package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.ontology.AnnotationDomain;
+import be.cytomine.domain.ontology.SharedAnnotation;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
@@ -12,6 +13,7 @@ import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.middleware.ImageServerService;
+import be.cytomine.service.ontology.SharedAnnotationService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.security.SecUserService;
@@ -44,6 +46,8 @@ public class RestUserAnnotationController extends RestCytomineController {
     private final CurrentUserService currentUserService;
 
     private final ImageServerService imageServerService;
+
+    private final SharedAnnotationService sharedAnnotationService;
 
     @GetMapping("/userannotation.json")
     public ResponseEntity<String> listLight(
@@ -108,75 +112,50 @@ public class RestUserAnnotationController extends RestCytomineController {
 //    }
 
 
+    /**
+     * Add comment on an annotation to other user
+     */
+    @PostMapping("/userannotation/{annotation}/comment.json")
+    public ResponseEntity<String> addComment(
+            @PathVariable(value = "annotation") Long annotationId,
+            @RequestBody JsonObject json
+    ) {
+        log.debug("REST request to create comment for annotation : " + json);
+        UserAnnotation annotation = userAnnotationService.find(annotationId)
+                .orElseThrow(()-> new ObjectNotFoundException("Annotation", annotationId));
+        json.put("annotationIdent", annotation.getId());
+        json.put("annotationClassName", annotation.getClass().getName());
+        return responseSuccess(sharedAnnotationService.add(json));
+    }
 
-    //TODO: migration
 
-//
-//
-//    def sharedAnnotationService
-//    /**
-//     * Add comment on an annotation to other user
-//     */
-//    @RestApiMethod(description = "Add comment on an annotation to other user and send a mail to users")
-//    @RestApiResponseObject(objectIdentifier = "empty")
-//    @RestApiParams(params = [
-//            @RestApiParam(name = "annotation", type = "long", paramType = RestApiParamType.PATH, description = "The annotation id"),
-//            @RestApiParam(name = "POST JSON: comment", type = "string", paramType = RestApiParamType.QUERY, description = "The comment"),
-//            @RestApiParam(name = "POST JSON: sender", type = "long", paramType = RestApiParamType.QUERY, description = "The user id who share the annotation"),
-//            @RestApiParam(name = "POST JSON: subject", type = "string", paramType = RestApiParamType.QUERY, description = "The subject of the mail that will be send"),
-//            @RestApiParam(name = "POST JSON: from", type = "string", paramType = RestApiParamType.QUERY, description = "The username of the user who send the mail"),
-//            @RestApiParam(name = "POST JSON: receivers", type = "list", paramType = RestApiParamType.QUERY, description = "The list of user (id) to send the mail"),
-//            @RestApiParam(name = "POST JSON: emails", type = "list", paramType = RestApiParamType.QUERY, required = false, description = "The list of emails to send the mail. Used if receivers is null"),
-//            @RestApiParam(name = "POST JSON: annotationURL ", type = "string", paramType = RestApiParamType.QUERY, description = "The URL of the annotation in the image viewer"),
-//            @RestApiParam(name = "POST JSON: shareAnnotationURL", type = "string", paramType = RestApiParamType.QUERY, description = "The URL of the comment"),
-//            ])
-//    def addComment() {
-//
-//        UserAnnotation annotation = userAnnotationService.read(params.getLong('annotation'))
-//        def result = sharedAnnotationService.add(request.JSON, annotation, params)
-//        if (result) {
-//            responseResult(result)
-//        }
-//    }
-//
-//    /**
-//     * Show a single comment for an annotation
-//     */
-//    //TODO : duplicated code in AlgoAnnotation
-//    @RestApiMethod(description = "Get a specific comment")
-//    @RestApiParams(params = [
-//            @RestApiParam(name = "annotation", type = "long", paramType = RestApiParamType.PATH, description = "The annotation id"),
-//            @RestApiParam(name = "id", type = "long", paramType = RestApiParamType.PATH, description = "The comment id"),
-//            ])
-//    def showComment() {
-//        UserAnnotation annotation = userAnnotationService.read(params.long('annotation'))
-//        if (!annotation) {
-//            responseNotFound("Annotation", params.annotation)
-//        }
-//        def sharedAnnotation = sharedAnnotationService.read(params.long('id'))
-//        if (sharedAnnotation) {
-//            responseSuccess(sharedAnnotation)
-//        } else {
-//            responseNotFound("SharedAnnotation", params.id)
-//        }
-//    }
-//
-//    /**
-//     * List all comments for an annotation
-//     */
-//    @RestApiMethod(description = "Get all comments on annotation", listing = true)
-//    @RestApiParams(params = [
-//            @RestApiParam(name = "annotation", type = "long", paramType = RestApiParamType.PATH, description = "The annotation id")
-//            ])
-//    def listComments() {
-//        UserAnnotation annotation = userAnnotationService.read(params.long('annotation'))
-//        if (annotation) {
-//            responseSuccess(sharedAnnotationService.listComments(annotation))
-//        } else {
-//            responseNotFound("Annotation", params.id)
-//        }
-//    }
+    /**
+     * Show a single comment for an annotation
+     */
+    @GetMapping("/userannotation/{annotation}/comment/{id}.json")
+    public ResponseEntity<String> showComment(
+            @PathVariable(value = "annotation") Long annotationId,
+            @PathVariable(value = "id") Long commentId
+    ) {
+        log.debug("REST request to read comment {} for annotation {}", commentId, annotationId);
+        UserAnnotation annotation = userAnnotationService.find(annotationId)
+                .orElseThrow(()-> new ObjectNotFoundException("Annotation", annotationId));
+        return responseSuccess(sharedAnnotationService.find(commentId).orElseThrow(() ->
+                new ObjectNotFoundException("SharedAnnotation", commentId)));
+    }
 
+    /**
+     * List all comments for an annotation
+     */
+    @GetMapping("/userannotation/{annotation}/comment.json")
+    public ResponseEntity<String> listComments(
+            @PathVariable(value = "annotation") Long annotationId
+    ) {
+        log.debug("REST request to read comments for annotation {}", annotationId);
+        UserAnnotation annotation = userAnnotationService.find(annotationId)
+                .orElseThrow(()-> new ObjectNotFoundException("Annotation", annotationId));
+        return responseSuccess(sharedAnnotationService.listComments(annotation));
+    }
 
 
     @GetMapping("/userannotation/{id}.json")
