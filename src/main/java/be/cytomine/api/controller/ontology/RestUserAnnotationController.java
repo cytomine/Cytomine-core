@@ -75,7 +75,7 @@ public class RestUserAnnotationController extends RestCytomineController {
 
 
     @GetMapping("/project/{idProject}/userannotation/count.json")
-    public ResponseEntity<String> countByUser(
+    public ResponseEntity<String> countByProject(
             @PathVariable(value = "idProject") Long idProject,
             @RequestParam(value="startDate", required = false) Long startDate,
             @RequestParam(value="endDate", required = false) Long endDate

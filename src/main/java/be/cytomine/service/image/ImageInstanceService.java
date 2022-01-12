@@ -21,6 +21,7 @@ import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.ImageInstanceBounds;
+import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.AlgoAnnotationService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.ontology.UserAnnotationService;
@@ -34,6 +35,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Session;
 import org.hibernate.query.NativeQuery;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
@@ -53,45 +55,61 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 @Slf4j
 @Service
 @Transactional
-@AllArgsConstructor
 public class ImageInstanceService extends ModelService {
 
     private static List<String> ABSTRACT_IMAGE_COLUMNS_FOR_SEARCH = List.of("width", "height");
 
+    @Autowired
     private EntityManager entityManager;
 
+    @Autowired
     private CurrentUserService currentUserService;
 
+    @Autowired
     private CurrentRoleService currentRoleService;
 
+    @Autowired
     private SecurityACLService securityACLService;
 
-    private ImageInstanceRepository ImageInstanceRepository;
-
+    @Autowired
     private ImageInstanceRepository imageInstanceRepository;
 
+    @Autowired
     private AbstractSliceRepository abstractSliceRepository;
 
+    @Autowired
     private SliceInstanceService sliceInstanceService;
 
+    @Autowired
     private NestedImageInstanceRepository nestedImageInstanceRepository;
 
+    @Autowired
     private SliceInstanceRepository sliceInstanceRepository;
 
+    @Autowired
     private SliceCoordinatesService sliceCoordinatesService;
 
+    @Autowired
     private UserAnnotationRepository userAnnotationRepository;
 
+    @Autowired
     private AlgoAnnotationRepository algoAnnotationRepository;
 
+    @Autowired
     private ReviewedAnnotationRepository reviewedAnnotationRepository;
 
-    private AlgoAnnotationService algoAnnotationService;
-
+    @Autowired
     private UserAnnotationService userAnnotationService;
 
+    @Autowired
     private ReviewedAnnotationService reviewedAnnotationService;
 
+
+    private AlgoAnnotationService algoAnnotationService;
+    @Autowired
+    public void setAlgoAnnotationService(AlgoAnnotationService algoAnnotationService) {
+        this.algoAnnotationService = algoAnnotationService;
+    }
 
     @Override
     public Class currentDomain() {
@@ -105,7 +123,7 @@ public class ImageInstanceService extends ModelService {
 
 
     public Optional<ImageInstance> find(Long id) {
-        Optional<ImageInstance> ImageInstance = ImageInstanceRepository.findById(id);
+        Optional<ImageInstance> ImageInstance = imageInstanceRepository.findById(id);
         ImageInstance.ifPresent(image -> securityACLService.check(image.container(),READ));
         return ImageInstance;
     }
@@ -116,11 +134,11 @@ public class ImageInstanceService extends ModelService {
 
 
     public Optional<ImageInstance> next(ImageInstance imageInstance) {
-        return ImageInstanceRepository.findTopByProjectAndCreatedLessThanOrderByCreatedDesc(imageInstance.getProject(), imageInstance.getCreated());
+        return imageInstanceRepository.findTopByProjectAndCreatedLessThanOrderByCreatedDesc(imageInstance.getProject(), imageInstance.getCreated());
     }
 
     public Optional<ImageInstance> previous(ImageInstance imageInstance) {
-        return ImageInstanceRepository.findTopByProjectAndCreatedGreaterThanOrderByCreatedAsc(imageInstance.getProject(), imageInstance.getCreated());
+        return imageInstanceRepository.findTopByProjectAndCreatedGreaterThanOrderByCreatedAsc(imageInstance.getProject(), imageInstance.getCreated());
     }
 
     public List<ImageInstance> listByProject(Project project) {

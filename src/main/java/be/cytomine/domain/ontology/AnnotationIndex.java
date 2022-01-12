@@ -5,6 +5,7 @@ import be.cytomine.domain.security.SecUser;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 
@@ -14,6 +15,8 @@ import javax.persistence.*;
 public class AnnotationIndex {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGenerator")
+    @GenericGenerator(name = "myGenerator", strategy = "be.cytomine.config.CustomIdentifierGenerator")
     Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -24,6 +27,9 @@ public class AnnotationIndex {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "slice_id", nullable = true)
     private SliceInstance slice;
+
+    @Version
+    protected Integer version = 0;
 
     Long countAnnotation;
 

@@ -22,6 +22,7 @@ import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -44,7 +45,7 @@ public class ImageServerService extends ModelService {
 
     private static final int GET_URL_MAX_LENGTH = 512;
     
-    private final ImageInstanceService imageInstanceService;
+    private ImageInstanceService imageInstanceService;
     
     private final SecurityACLService securityACLService;
 
@@ -53,6 +54,11 @@ public class ImageServerService extends ModelService {
     private final CurrentUserService currentUserService;
 
     private final SimplifyGeometryService simplifyGeometryService;
+
+    @Autowired
+    public void setImageInstanceService(ImageInstanceService imageInstanceService) {
+        this.imageInstanceService = imageInstanceService;
+    }
 
     public ImageServer get(Long id) {
         securityACLService.checkGuest();

@@ -4,6 +4,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
+import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ConstraintException;
@@ -11,10 +12,12 @@ import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.*;
+import be.cytomine.repository.meta.AttachedFileRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.command.TransactionService;
+import be.cytomine.service.meta.AttachedFileService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -68,13 +71,9 @@ public class AbstractImageService extends ModelService {
 
     private UploadedFileRepository uploadedFileRepository;
 
-//    private AttachedFileService attachedFileService;
-//
-//    private AttachedFileRepository attachedFileRepository;
-//
-//    private AttachedFileService attachedFileService;
-
     private NestedImageInstanceRepository nestedImageInstanceRepository;
+
+    private AttachedFileService attachedFileService;
 
 
     @Override
@@ -91,7 +90,6 @@ public class AbstractImageService extends ModelService {
     public void checkDoNotAlreadyExist(CytomineDomain domain) {
 
     }
-
 
     public Optional<AbstractImage> find(Long id) {
         Optional<AbstractImage> abstractImage = abstractImageRepository.findById(id);
@@ -342,11 +340,10 @@ public class AbstractImageService extends ModelService {
     }
 
     private void deleteDependentAttachedFile(AbstractImage ai, Transaction transaction,Task task)  {
-        //TODO
-//        List<AttachedFile> attachedFiles = attachedFileRepository.findAllByImage(ai);
-//        for (AttachedFile attachedFile : attachedFiles) {
-//            attachedFileService.delete(attachedFile, transaction, task);
-//        }
+        List<AttachedFile> attachedFiles = attachedFileService.findAllByDomain(ai);
+        for (AttachedFile attachedFile : attachedFiles) {
+            attachedFileService.delete(attachedFile, transaction, task, false);
+        }
     }
 
     private void  deleteDependentNestedImageInstance(AbstractImage ai, Transaction transaction,Task task) {

@@ -16,6 +16,7 @@ import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.AlgoAnnotationListing;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.ontology.AlgoAnnotationRepository;
+import be.cytomine.repository.ontology.SharedAnnotationRepository;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
@@ -24,6 +25,7 @@ import be.cytomine.service.dto.BoundariesCropParameter;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.image.SliceInstanceService;
+import be.cytomine.service.meta.PropertyService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.service.utils.ValidateGeometryService;
@@ -42,6 +44,7 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.springframework.security.acls.domain.BasePermission.DELETE;
 import static org.springframework.security.acls.domain.BasePermission.READ;
@@ -75,6 +78,17 @@ public class AlgoAnnotationService extends ModelService {
     private final AlgoAnnotationTermService algoAnnotationTermService;
 
     private final SliceCoordinatesService sliceCoordinatesService;
+
+    private final PropertyService propertyService;
+
+    private final AnnotationTrackService annotationTrackService;
+
+    private final ReviewedAnnotationService reviewedAnnotationService;
+
+    private final SharedAnnotationService sharedAnnotationService;
+
+    private final SharedAnnotationRepository sharedAnnotationRepository;
+
 
     @Override
     public Class currentDomain() {
@@ -265,38 +279,31 @@ public class AlgoAnnotationService extends ModelService {
 
         ((Map<String, Object>)commandResponse.getData().get("annotation")).put("term", terms);
 
-
         // Add properties if any
-        //TODO: uncomment when properties will be implemented
         Map<String, String> properties = new HashMap<>();
         properties.putAll(jsonObject.getJSONAttrMapString("property", new HashMap<>()));
         properties.putAll(jsonObject.getJSONAttrMapString("properties", new HashMap<>()));
 
         for (Map.Entry<String, String> entry : properties.entrySet()) {
-            throw new CytomineMethodNotYetImplementedException("");
-//            String key = entry.getKey();
-//            String value = entry.getValue();
-//            propertyService.addProperty("be.cytomine.ontology.AlgoAnnotation", addedAnnotation.getId(), key, value, currentUser, transaction);
+            String key = entry.getKey();
+            String value = entry.getValue();
+            propertyService.addProperty(AlgoAnnotation.class.getName(), addedAnnotation.getId(), key, value, currentUser, transaction);
         }
 
-        //TODO: uncomment when track will be implemented
-        // Add annotation-term if any
         List<Long> tracksIds = new ArrayList<>();
         tracksIds.addAll(jsonObject.getJSONAttrListLong("track", new ArrayList<>()));
         tracksIds.addAll(jsonObject.getJSONAttrListLong("tracks", new ArrayList<>()));
         if (!tracksIds.isEmpty()) {
-            throw new CytomineMethodNotYetImplementedException("");
+
+            List<AnnotationTrack> annotationTracks = new ArrayList<>();
+            for (Long trackId : tracksIds) {
+                CommandResponse response =
+                        annotationTrackService.addAnnotationTrack(AlgoAnnotation.class.getName(), addedAnnotation.getId(), trackId, addedAnnotation.getSlice().getId(), transaction);
+                annotationTracks.add((AnnotationTrack) response.getData().get("annotationtrack"));
+            }
+            ((Map<String, Object>)commandResponse.getData().get("annotation")).put("annotationTrack", annotationTracks);
+            ((Map<String, Object>)commandResponse.getData().get("annotation")).put("track", annotationTracks.stream().map(x -> x.getTrack()).collect(Collectors.toList()));
         }
-//        List<AnnotationTrack> annotationTracks = new ArrayList<>();
-//        for (Long trackId : tracksIds) {
-//            CommandResponse response =
-//                    annotationTrackService.addAnnotationTrack("be.cytomine.ontology.AlgoAnnotation", addedAnnotation.getId(), trackId, addedAnnotation.getSlice().getId(), currentUser, transaction);
-//            annotationTracks.add((AnnotationTrack) response.getData().get("annotationtrack"));
-//        }
-//        ((Map<String, Object>)commandResponse.getData().get("annotation")).put("annotationTrack", annotationTracks);
-//        ((Map<String, Object>)commandResponse.getData().get("annotation")).put("track", annotationTracks.stream().map(x -> x.getTrack()).collect(Collectors.toList()));
-
-
 
         return commandResponse;
     }
@@ -411,35 +418,30 @@ public class AlgoAnnotationService extends ModelService {
     }
 
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
-        return;
+        deleteDependentAlgoAnnotationTerm((AlgoAnnotation)domain, transaction, task);
+        deleteDependentReviewedAnnotation((AlgoAnnotation)domain, transaction, task);
+        deleteDependentSharedAnnotation((AlgoAnnotation)domain, transaction, task);
+        deleteDependentAnnotationTrack((AlgoAnnotation)domain, transaction, task);
     }
 
-    //TODO
-//
-//    def deleteDependentAlgoAnnotationTerm(AlgoAnnotation ao, Transaction transaction, Task task = null) {
-//        AlgoAnnotationTerm.findAllByAnnotationIdent(ao.id).each {
-//            algoAnnotationTermService.delete(it,transaction,null,false)
-//        }
-//    }
-//
-//    def deleteDependentReviewedAnnotation(AlgoAnnotation aa, Transaction transaction, Task task = null) {
-//        ReviewedAnnotation.findAllByParentIdent(aa.id).each {
-//            reviewedAnnotationService.delete(it,transaction,null,false)
-//        }
-//    }
-//
-//    def deleteDependentSharedAnnotation(AlgoAnnotation aa, Transaction transaction, Task task = null) {
-//        SharedAnnotation.findAllByAnnotationClassNameAndAnnotationIdent(aa.class.name, aa.id).each {
-//            sharedAnnotationService.delete(it,transaction,null,false)
-//        }
-//
-//    }
-//
-//    def annotationTrackService
-//    def deleteDependentAnnotationTrack(AlgoAnnotation ua, Transaction transaction, Task task = null) {
-//        AnnotationTrack.findAllByAnnotationIdent(ua.id).each {
-//            annotationTrackService.delete(it, transaction, task)
-//        }
-//    }
+    public void deleteDependentAlgoAnnotationTerm(AlgoAnnotation ao, Transaction transaction, Task task) {
+        for (AlgoAnnotationTerm algoAnnotationTerm : algoAnnotationTermService.list(ao)) {
+            algoAnnotationTermService.delete(algoAnnotationTerm,transaction,task,false);
+        }
+    }
+    public void deleteDependentReviewedAnnotation(AlgoAnnotation aa, Transaction transaction, Task task) {
+        Optional<ReviewedAnnotation> reviewed = reviewedAnnotationService.findByParent(aa);
+        reviewed.ifPresent(reviewedAnnotation -> reviewedAnnotationService.delete(reviewedAnnotation, transaction, task, false));
+    }
+    public void deleteDependentSharedAnnotation(AlgoAnnotation aa, Transaction transaction, Task task) {
+        for (SharedAnnotation sharedAnnotation : sharedAnnotationRepository.findAllByAnnotationIdentOrderByCreatedDesc(aa.getId())) {
+            sharedAnnotationService.delete(sharedAnnotation,transaction,task,false);
+        }
+    }
+    public void deleteDependentAnnotationTrack(AlgoAnnotation ua, Transaction transaction, Task task) {
+        for (AnnotationTrack annotationTrack : annotationTrackService.list(ua)) {
+            annotationTrackService.delete(annotationTrack, transaction, task, false);
+        }
+    }
 
 }

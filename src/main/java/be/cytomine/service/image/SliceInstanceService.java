@@ -4,12 +4,18 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.ontology.AnnotationTrack;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.repository.image.SliceInstanceRepository;
+import be.cytomine.repository.ontology.AnnotationIndexRepository;
+import be.cytomine.repository.ontology.AnnotationTrackRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
+import be.cytomine.service.dto.AnnotationIndexLightDTO;
+import be.cytomine.service.ontology.AnnotationIndexService;
+import be.cytomine.service.ontology.AnnotationTrackService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -22,6 +28,7 @@ import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
@@ -37,6 +44,11 @@ public class SliceInstanceService extends ModelService {
 
     private SliceInstanceRepository sliceInstanceRepository;
 
+    private AnnotationTrackService annotationTrackService;
+
+    private AnnotationIndexRepository annotationIndexRepository;
+
+    private AnnotationTrackRepository annotationTrackRepository;
 
     @Override
     public Class currentDomain() {
@@ -140,17 +152,13 @@ public class SliceInstanceService extends ModelService {
     }
 
     private void deleteDependentAnnotationTrack(SliceInstance slice, Transaction transaction, Task task) {
-        // TODO:
-//        AnnotationTrack.findAllBySlice(slice).each {
-//            annotationTrackService.delete(it, transaction, task)
-//        }
+        for (AnnotationTrack annotationTrack : annotationTrackRepository.findAllBySlice(slice)) {
+            annotationTrackService.delete(annotationTrack, transaction, task, false);
+        }
     }
 
     private void deleteDependentAnnotationIndex(SliceInstance slice, Transaction transaction, Task task) {
-        //TODO:
-//        AnnotationIndex.findAllBySlice(slice).each {
-//            it.delete()
-//        }
+        annotationIndexRepository.deleteAllBySlice(slice);
     }
 
 

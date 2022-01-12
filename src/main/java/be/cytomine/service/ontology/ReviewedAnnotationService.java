@@ -90,6 +90,8 @@ public class ReviewedAnnotationService extends ModelService {
 
     private final GenericAnnotationService genericAnnotationService;
 
+    private final AlgoAnnotationTermService algoAnnotationTermService;
+
     @Override
     public Class currentDomain() {
         return ReviewedAnnotation.class;
@@ -133,6 +135,10 @@ public class ReviewedAnnotationService extends ModelService {
         reviewedAnnotationListing.setColumnsToPrint(propertiesToShow);
         reviewedAnnotationListing.setProject(project.getId());
         return annotationListingService.executeRequest(reviewedAnnotationListing);
+    }
+
+    public Optional<ReviewedAnnotation> findByParent(AnnotationDomain annotationDomain) {
+         return reviewedAnnotationRepository.findByParentIdent(annotationDomain.getId());
     }
 
     public List<ReviewedAnnotationStatsEntry> statsGroupByUser(ImageInstance ImageInstance) {
@@ -546,17 +552,14 @@ public class ReviewedAnnotationService extends ModelService {
 
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         ((ReviewedAnnotation)domain).getTerms().clear();
+        deleteDependentAlgoAnnotationTerm(((ReviewedAnnotation)domain), transaction, task);
     }
 
-
-
-//TODO
-//def deleteDependentAlgoAnnotationTerm(ReviewedAnnotation annotation, Transaction transaction, Task task = null) {
-//    AlgoAnnotationTerm.findAllByAnnotationIdentAndDeletedIsNull(annotation.id).each {
-//        algoAnnotationTermService.delete(it,transaction,null,false)
-//    }
-//}
-
+    public void deleteDependentAlgoAnnotationTerm(ReviewedAnnotation annotation, Transaction transaction, Task task) {
+        for (AlgoAnnotationTerm algoAnnotationTerm : algoAnnotationTermService.list(annotation)) {
+            algoAnnotationTermService.delete(algoAnnotationTerm,transaction,task,false);
+        }
+    }
 
     /**
      * Apply a union or a diff on all covering annotations list with the newLocation geometry
@@ -625,4 +628,6 @@ public class ReviewedAnnotationService extends ModelService {
         }
         return result;
     }
+
+
 }

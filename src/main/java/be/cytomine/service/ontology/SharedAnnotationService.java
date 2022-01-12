@@ -27,6 +27,8 @@ import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -46,23 +48,24 @@ public class SharedAnnotationService extends ModelService {
 
     private final SharedAnnotationRepository sharedAnnotationRepository;
 
-    private final RelationRepository relationRepository;
-
     private final SecurityACLService securityACLService;
 
     private final CurrentUserService currentUserService;
 
     private final AnnotationDomainRepository annotationDomainRepository;
 
-    private final ImageServerService imageServerService;
+    private ImageServerService imageServerService;
 
     private final SecUserService secUserService;
-
-    private final CurrentRoleService currentRoleService;
 
     private final SecRoleRepository secRoleRepository;
 
     private final SecUserSecRoleRepository secUserSecRoleRepository;
+
+    @Autowired
+    public void setImageServerService(ImageServerService imageServerService) {
+        this.imageServerService = imageServerService;
+    }
 
     @Override
     public Class currentDomain() {

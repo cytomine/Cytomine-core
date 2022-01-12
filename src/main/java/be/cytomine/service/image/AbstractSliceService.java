@@ -154,7 +154,6 @@ public class AbstractSliceService extends ModelService {
 
     @Override
     public void checkDoNotAlreadyExist(CytomineDomain domain) {
-        //TODO: withNewSession
         AbstractSlice abstractSlice = ((AbstractSlice)domain);
         abstractSliceRepository.findByImageAndChannelAndZStackAndTime(abstractSlice.getImage(), abstractSlice.getChannel(), abstractSlice.getZStack(), abstractSlice.getTime()).ifPresent(slice -> {
             if (!Objects.equals(slice.getId(), abstractSlice.getId())) {

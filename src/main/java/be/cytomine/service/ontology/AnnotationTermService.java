@@ -5,15 +5,13 @@ import be.cytomine.domain.command.AddCommand;
 import be.cytomine.domain.command.Command;
 import be.cytomine.domain.command.DeleteCommand;
 import be.cytomine.domain.command.Transaction;
-import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.AnnotationTerm;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.UserAnnotation;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.AnnotationTermRepository;
 import be.cytomine.repository.ontology.TermRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
@@ -176,21 +174,17 @@ public class AnnotationTermService extends ModelService {
             }
             //Add annotation term
             return addAnnotationTerm(idAnnotation, idTerm, null, currentUser.getId(), currentUser, transaction);
-        }  else {
-            throw new CytomineMethodNotYetImplementedException("Method only accept UserAnnotation");
+        }  else if(annotation instanceof ReviewedAnnotation){
+            Transaction transaction = transactionService.start();
+            ReviewedAnnotation reviewed = (ReviewedAnnotation)annotation;
+            reviewed.getTerms().clear();
+            reviewed.getTerms().add(termRepository.getById(idTerm));
+            getEntityManager().persist(reviewed);
+            CommandResponse commandResponse = new CommandResponse();
+            commandResponse.setStatus(200);
+            return commandResponse;
         }
-        // TODO: need ReviewedAnnotation
-//        else if(annotation instanceof ReviewedAnnotation) {
-//            Transaction transaction = transactionService.start()
-//            ReviewedAnnotation reviewed = (ReviewedAnnotation)annotation
-//            reviewed.terms.clear()
-//            reviewed.terms.add(Term.read(idterm))
-//            reviewed.save(flush:true)
-//            return [status:200]
-//
-//        }
-
-
+        throw new WrongArgumentException("annotation " + annotation.getClass() + " not supported");
     }
 
 

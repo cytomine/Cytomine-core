@@ -22,12 +22,6 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class CommandService {
-
-//    def springSecurityService
-//    def grailsApplication
-//    def securityACLService
-//    def cytomineService
-
     @Autowired
     ApplicationContext applicationContext;
 
@@ -50,8 +44,6 @@ public class CommandService {
     static final int SUCCESS_EDIT_CODE = 200;
     static final int SUCCESS_DELETE_CODE = 200;
 
-    static final int NOT_FOUND_CODE = 404;
-    static final int TOO_LONG_REQUEST = 413;
 
 //    /**
 //     * Execute an 'addcommand' c with json data
@@ -147,11 +139,6 @@ public class CommandService {
     }
 
     private ModelService loadCorrespondingModelService(Command command) {
-        //return  (ModelService)applicationContext.getBean(command.getServiceName());
-//        String[] allBeanNames = applicationContext.getBeanDefinitionNames();
-//        for(String beanName : allBeanNames) {
-//            System.out.println(beanName);
-//        }
         if (command.getServiceName()==null || command.getServiceName().length()<1 ) {
             throw new RuntimeException("Bean definition name " + command.getServiceName() + " is null or blank");
         }

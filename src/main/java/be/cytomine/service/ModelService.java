@@ -306,7 +306,7 @@ public abstract class ModelService<T extends CytomineDomain> {
         return domain;
     }
 
-    private Long retrieveLongId(JsonObject json) {
+    protected Long retrieveLongId(JsonObject json) {
         Long id;
         if (json.get("id") instanceof String) {
             id = Long.parseLong((String) json.get("id"));

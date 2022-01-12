@@ -24,7 +24,7 @@ public class Track extends CytomineDomain {
     private String color;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "image_instance_id", nullable = true)
+    @JoinColumn(name = "image_id", nullable = true)
     private ImageInstance image;
 
     @ManyToOne(fetch = FetchType.LAZY)
