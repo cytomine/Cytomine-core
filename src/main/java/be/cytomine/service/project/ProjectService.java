@@ -19,6 +19,7 @@ import be.cytomine.utils.filters.SQLSearchParameter;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import be.cytomine.utils.filters.SearchParameterProcessed;
 import lombok.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
@@ -33,17 +34,20 @@ import java.util.stream.Collectors;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class ProjectService extends ModelService {
 
-    private final CommandHistoryRepository commandHistoryRepository;
+    @Autowired
+    private CommandHistoryRepository commandHistoryRepository;
 
-    private final CurrentUserService currentUserService;
+    @Autowired
+    private CurrentUserService currentUserService;
 
-    private final ProjectRepository projectRepository;
+    @Autowired
+    private ProjectRepository projectRepository;
 
-    private final SecurityACLService securityACLService;
+    @Autowired
+    private SecurityACLService securityACLService;
 
     public Optional<Project> find(Long id) {
         Optional<Project> project = projectRepository.findById(id);

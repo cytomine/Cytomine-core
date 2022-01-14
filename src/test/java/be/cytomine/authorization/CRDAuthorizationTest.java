@@ -234,7 +234,9 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
     @Test
     @WithMockUser(username = USER_ACL_READ)
     public void user_with_read_permission_delete_domain() {
-        if (isPermissionForbidden(minimalPermissionForDelete(), BasePermission.READ)) {
+        if (minimalRoleForDelete().isPresent() && minimalRoleForDelete().get().equals("CREATOR")) {
+            expectForbidden (() -> when_i_delete_domain());
+        } else if (isPermissionForbidden(minimalPermissionForDelete(), BasePermission.READ)) {
             expectForbidden (() -> when_i_delete_domain());
         } else {
             expectOK (() -> when_i_delete_domain());

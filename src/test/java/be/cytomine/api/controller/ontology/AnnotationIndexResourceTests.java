@@ -4,11 +4,14 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.ontology.AnnotationIndex;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
+import be.cytomine.repository.ontology.AnnotationIndexRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
+import be.cytomine.service.dto.AnnotationIndexLightDTO;
 import com.vividsolutions.jts.io.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,9 +20,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+
+import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -45,6 +53,12 @@ public class AnnotationIndexResourceTests {
 
     @Autowired
     private MockMvc restAnnotationIndexControllerMockMvc;
+
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
+    @Autowired
+    private AnnotationIndexRepository annotationIndexRepository;
 
     Project project;
     ImageInstance image;
@@ -73,17 +87,29 @@ public class AnnotationIndexResourceTests {
     }
     @BeforeEach
     public void BeforeEach() throws ParseException {
-        createAnnotationSet();
+        this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
+            @Override
+            protected void doInTransactionWithoutResult(TransactionStatus status) {
+                try {
+                    createAnnotationSet();
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     @Test
-    @Transactional
     public void list_user_annotation_property_show() throws Exception {
+
+        List<AnnotationIndex> all = annotationIndexRepository.findAll();
+        List<AnnotationIndexLightDTO> slices = annotationIndexRepository.findAllBySlice(slice);
+        List<AnnotationIndexLightDTO> slicesLight = annotationIndexRepository.findAllLightBySliceInstance(slice.getId());
         restAnnotationIndexControllerMockMvc.perform(get("/api/sliceinstance/{id}/annotationindex.json", slice.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")]").exists())
-                .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")].slice").value(slice.getId()))
+                .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")].slice").value(slice.getId().intValue()))
                 .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")].countAnnotation").value(4))
                 .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")].countReviewedAnnotation").value(0))
                 .andReturn();

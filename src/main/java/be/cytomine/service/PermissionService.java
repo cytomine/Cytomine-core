@@ -7,6 +7,7 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.security.AclRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.security.acls.model.Permission;
 import org.springframework.stereotype.Service;
@@ -16,16 +17,13 @@ import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PermissionService {
 
-    private final EntityManager entityManager;
+    @Autowired
+    private CurrentUserService currentUserService;
 
-    private final CurrentUserService currentUserService;
-
-    private final CurrentRoleService currentRoleService;
-
-    private final AclRepository aclRepository;
+    @Autowired
+    private AclRepository aclRepository;
 
     public boolean hasACLPermission(CytomineDomain domain, String username, Permission permission) {
         List<Integer> masks = getPermissionInACL(domain,username);

@@ -959,7 +959,27 @@ public class AnnotationDomainResourceTests {
     @Test
     @Transactional
     public void list_reviewed_annotation_with_same_request_as_default_viewer() throws Exception {
-        Assertions.fail("TODO, see example for user annotation in this class");
+        ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
+
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.put("bbox", "0,0,102400,76288");
+        jsonObject.put("image", reviewedAnnotation.getImage().getId());
+        jsonObject.put("slice", reviewedAnnotation.getSlice().getId());
+        jsonObject.put("kmeans", true);
+        jsonObject.put("max", 0);
+        jsonObject.put("offset", 0);
+        jsonObject.put("notReviewedOnly", true);
+        jsonObject.put("showWKT", true);
+        jsonObject.put("showGIS", true);
+        jsonObject.put("showTerm", true);
+        jsonObject.put("user", reviewedAnnotation.getUser().getId());
+        restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/search.json")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonObject.toJsonString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id==" + reviewedAnnotation.getId() + ")]").exists())
+                .andReturn();
     }
 
 
@@ -1376,7 +1396,7 @@ public class AnnotationDomainResourceTests {
         maxPoint = 50;
         minPoint = 10;
 
-        MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(get("/api/simplify.json")
+        MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(put("/api/simplify.json")
                         .param("minPoint", String.valueOf(minPoint)).param("maxPoint", String.valueOf(maxPoint))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonObject.of("wkt", TestUtils.getResourceFileAsString("dataset/very_big_annotation.txt")).toJsonString()))
@@ -1492,6 +1512,8 @@ public class AnnotationDomainResourceTests {
 
         AnnotationDomain annotation = builder.given_a_not_persisted_user_annotation();
         annotation.setLocation(new WKTReader().read(multiPolygon));
+        annotation.getImage().getBaseImage().setWidth(500000);
+        annotation.getImage().getBaseImage().setHeight(500000);
         builder.persistAndReturn(annotation);
 
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/{id}/fill.json", annotation.getId())
@@ -1499,8 +1521,10 @@ public class AnnotationDomainResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk()).andReturn();
 
+        em.refresh(annotation);
+
         assertThat(annotation.getLocation().toText().replaceAll(" ",""))
-                .isEqualTo(multiPolygonWithoutBlank.replaceAll(" ",""));
+                .isEqualTo(multiPolygonWithoutBlank.replaceAll(" ","").replaceAll("\n",""));
     }
 
 
@@ -1512,7 +1536,7 @@ public class AnnotationDomainResourceTests {
 
     @Test
     public void testFreehandAnnotationCorrectionReviewedAdd() throws Exception {
-        doFreeHandAnnotationAdd(builder.given_a_reviewed_annotation(),false);
+        doFreeHandAnnotationAdd(builder.given_a_reviewed_annotation(),true);
     }
 
 

@@ -43,6 +43,7 @@ import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -56,41 +57,50 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class ReviewedAnnotationService extends ModelService {
 
-    private final ReviewedAnnotationRepository reviewedAnnotationRepository;
+    @Autowired
+    private ReviewedAnnotationRepository reviewedAnnotationRepository;
 
-    private final SecurityACLService securityACLService;
+    @Autowired
+    private SecurityACLService securityACLService;
 
-    private final CurrentUserService currentUserService;
+    @Autowired
+    private CurrentUserService currentUserService;
 
-    private final AnnotationListingService annotationListingService;
+    @Autowired
+    private AnnotationListingService annotationListingService;
 
-    private final EntityManager entityManager;
+    @Autowired
+    private EntityManager entityManager;
 
-    private final SliceInstanceService sliceInstanceService;
+    @Autowired
+    private ImageInstanceRepository imageInstanceRepository;
 
-    private final ImageInstanceRepository imageInstanceRepository;
+    @Autowired
+    private TransactionService transactionService;
 
-    private final SimplifyGeometryService simplifyGeometryService;
+    @Autowired
+    private ValidateGeometryService validateGeometryService;
 
-    private final TransactionService transactionService;
+    @Autowired
+    private TermRepository termRepository;
 
-    private final ValidateGeometryService validateGeometryService;
+    @Autowired
+    private TaskService taskService;
 
-    private final AnnotationTermService annotationTermService;
+    @Autowired
+    private UserAnnotationRepository userAnnotationRepository;
 
-    private final TermRepository termRepository;
+    @Autowired
+    private GenericAnnotationService genericAnnotationService;
 
-    private final TaskService taskService;
+    @Autowired
+    private AlgoAnnotationTermService algoAnnotationTermService;
 
-    private final UserAnnotationRepository userAnnotationRepository;
-
-    private final GenericAnnotationService genericAnnotationService;
-
-    private final AlgoAnnotationTermService algoAnnotationTermService;
+    @Autowired
+    private UserRepository userRepository;
 
     @Override
     public Class currentDomain() {
@@ -387,7 +397,6 @@ public class ReviewedAnnotationService extends ModelService {
     }
 
 
-    private final UserRepository userRepository;
 
     public List<Long> reviewLayer(Long imageInstanceId, List<Long> usersIds, Task task) {
 

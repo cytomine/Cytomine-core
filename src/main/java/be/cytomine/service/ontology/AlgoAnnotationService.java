@@ -39,6 +39,7 @@ import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -51,43 +52,59 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class AlgoAnnotationService extends ModelService {
 
-    private final AlgoAnnotationRepository algoAnnotationRepository;
+    @Autowired
+    private AlgoAnnotationRepository algoAnnotationRepository;
 
-    private final SecurityACLService securityACLService;
+    @Autowired
+    private SecurityACLService securityACLService;
 
-    private final CurrentUserService currentUserService;
+    @Autowired
+    private CurrentUserService currentUserService;
 
-    private final AnnotationListingService annotationListingService;
+    @Autowired
+    private AnnotationListingService annotationListingService;
 
-    private final EntityManager entityManager;
+    @Autowired
+    private EntityManager entityManager;
 
-    private final SliceInstanceService sliceInstanceService;
+    @Autowired
+    private SliceInstanceService sliceInstanceService;
 
-    private final ImageInstanceRepository imageInstanceRepository;
+    @Autowired
+    private ImageInstanceRepository imageInstanceRepository;
 
-    private final SimplifyGeometryService simplifyGeometryService;
+    @Autowired
+    private SimplifyGeometryService simplifyGeometryService;
 
-    private final TransactionService transactionService;
+    @Autowired
+    private TransactionService transactionService;
 
-    private final ValidateGeometryService validateGeometryService;
+    @Autowired
+    private ValidateGeometryService validateGeometryService;
 
-    private final AlgoAnnotationTermService algoAnnotationTermService;
+    @Autowired
+    private AlgoAnnotationTermService algoAnnotationTermService;
 
-    private final SliceCoordinatesService sliceCoordinatesService;
+    @Autowired
+    private SliceCoordinatesService sliceCoordinatesService;
 
-    private final PropertyService propertyService;
+    @Autowired
+    private PropertyService propertyService;
 
-    private final AnnotationTrackService annotationTrackService;
+    @Autowired
+    private AnnotationTrackService annotationTrackService;
 
-    private final ReviewedAnnotationService reviewedAnnotationService;
+    @Autowired
+    private ReviewedAnnotationService reviewedAnnotationService;
 
-    private final SharedAnnotationService sharedAnnotationService;
+    @Autowired
+    private SharedAnnotationService sharedAnnotationService;
 
-    private final SharedAnnotationRepository sharedAnnotationRepository;
+    @Autowired
+    private SharedAnnotationRepository sharedAnnotationRepository;
 
 
     @Override

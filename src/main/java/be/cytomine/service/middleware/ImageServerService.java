@@ -40,20 +40,24 @@ import static be.cytomine.utils.HttpUtils.getContentFromUrl;
 @Slf4j
 @Service
 @Transactional
-@AllArgsConstructor
 public class ImageServerService extends ModelService {
 
     private static final int GET_URL_MAX_LENGTH = 512;
-    
+
+    @Autowired
     private ImageInstanceService imageInstanceService;
-    
-    private final SecurityACLService securityACLService;
 
-    private final ImageServerRepository imageServerRepository;
+    @Autowired
+    private SecurityACLService securityACLService;
 
-    private final CurrentUserService currentUserService;
+    @Autowired
+    private ImageServerRepository imageServerRepository;
 
-    private final SimplifyGeometryService simplifyGeometryService;
+    @Autowired
+    private CurrentUserService currentUserService;
+
+    @Autowired
+    private SimplifyGeometryService simplifyGeometryService;
 
     @Autowired
     public void setImageInstanceService(ImageInstanceService imageInstanceService) {

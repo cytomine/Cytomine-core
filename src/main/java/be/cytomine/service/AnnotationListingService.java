@@ -18,6 +18,7 @@ import be.cytomine.service.utils.KmeansGeometryService;
 import be.cytomine.utils.GisUtils;
 import be.cytomine.utils.JsonObject;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -34,14 +35,16 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Transactional
 @Service
-@AllArgsConstructor
 public class AnnotationListingService  {
 
-    private final SecurityACLService securityACLService;
+    @Autowired
+    private SecurityACLService securityACLService;
 
-    private final EntityManager entityManager;
+    @Autowired
+    private EntityManager entityManager;
 
-    private final KmeansGeometryService kmeansGeometryService;
+    @Autowired
+    private KmeansGeometryService kmeansGeometryService;
 
 
     public List listGeneric(AnnotationListing al) {

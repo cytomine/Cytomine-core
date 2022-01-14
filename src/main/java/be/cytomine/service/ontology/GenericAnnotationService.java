@@ -13,6 +13,7 @@ import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.KmeansGeometryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -26,21 +27,26 @@ import static org.springframework.security.acls.domain.BasePermission.ADMINISTRA
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class GenericAnnotationService {
 
-    private final CurrentUserService currentUserService;
+    @Autowired
+    private CurrentUserService currentUserService;
 
-    private final SecurityACLService securityACLService;
+    @Autowired
+    private SecurityACLService securityACLService;
 
-    private final EntityManager entityManager;
+    @Autowired
+    private EntityManager entityManager;
 
-    private final AnnotationDomainRepository annotationDomainRepository;
+    @Autowired
+    private AnnotationDomainRepository annotationDomainRepository;
 
-    private final ReviewedAnnotationRepository reviewedAnnotationRepository;
+    @Autowired
+    private ReviewedAnnotationRepository reviewedAnnotationRepository;
 
-    private final UserAnnotationRepository userAnnotationRepository;
+    @Autowired
+    private UserAnnotationRepository userAnnotationRepository;
 
     /**
      * Find all annotation id from a specific table created by a user that touch location geometry

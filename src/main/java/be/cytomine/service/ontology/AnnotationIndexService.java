@@ -6,21 +6,26 @@ import be.cytomine.repository.ontology.AnnotationIndexRepository;
 import be.cytomine.service.dto.AnnotationIndexLightDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.List;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class AnnotationIndexService {
 
-    private final AnnotationIndexRepository annotationIndexRepository;
+    @Autowired
+    private AnnotationIndexRepository annotationIndexRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     public List<AnnotationIndexLightDTO> list(SliceInstance sliceInstance) {
-        return annotationIndexRepository.findAllLightByImageInstance(sliceInstance.getId());
+        return annotationIndexRepository.findAllLightBySliceInstance(sliceInstance.getId());
     }
 
     /**

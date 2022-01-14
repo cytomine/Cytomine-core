@@ -42,25 +42,32 @@ import static org.springframework.security.acls.domain.BasePermission.*;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class SharedAnnotationService extends ModelService {
 
-    private final SharedAnnotationRepository sharedAnnotationRepository;
+    @Autowired
+    private SharedAnnotationRepository sharedAnnotationRepository;
 
-    private final SecurityACLService securityACLService;
+    @Autowired
+    private SecurityACLService securityACLService;
 
-    private final CurrentUserService currentUserService;
+    @Autowired
+    private CurrentUserService currentUserService;
 
-    private final AnnotationDomainRepository annotationDomainRepository;
+    @Autowired
+    private AnnotationDomainRepository annotationDomainRepository;
+
+
+    @Autowired
+    private SecUserService secUserService;
+
+    @Autowired
+    private SecRoleRepository secRoleRepository;
+
+    @Autowired
+    private SecUserSecRoleRepository secUserSecRoleRepository;
 
     private ImageServerService imageServerService;
-
-    private final SecUserService secUserService;
-
-    private final SecRoleRepository secRoleRepository;
-
-    private final SecUserSecRoleRepository secUserSecRoleRepository;
 
     @Autowired
     public void setImageServerService(ImageServerService imageServerService) {

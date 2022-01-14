@@ -6,6 +6,7 @@ import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -13,12 +14,10 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class CurrentUserService {
 
-    private final EntityManager entityManager;
-
-    private final SecUserRepository secUserRepository;
+    @Autowired
+    private SecUserRepository secUserRepository;
 
 
     public String getCurrentUsername() {

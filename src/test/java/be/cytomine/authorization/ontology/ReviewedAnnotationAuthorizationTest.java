@@ -52,6 +52,9 @@ public class ReviewedAnnotationAuthorizationTest extends CRUDAuthorizationTest {
     public void before() throws Exception {
         if (reviewedAnnotation == null) {
             reviewedAnnotation = builder.given_a_reviewed_annotation();
+            reviewedAnnotation.getImage().setReviewStart(null);
+            reviewedAnnotation.getImage().setReviewUser(null);
+            reviewedAnnotation.getImage().setReviewStop(null);
             initUser();
             initACL(reviewedAnnotation.container());
         }
@@ -64,8 +67,11 @@ public class ReviewedAnnotationAuthorizationTest extends CRUDAuthorizationTest {
     public void user_can_review_annotation_if_reviewer() {
         UserAnnotation annotation
                 = builder.given_a_user_annotation();
+        annotation.setImage(this.reviewedAnnotation.getImage());
+        annotation.setProject(this.reviewedAnnotation.getProject());
         annotation.getImage().setReviewStart(new Date());
         annotation.getImage().setReviewUser(userWithAdmin);
+
         expectOK (() -> {
             reviewedAnnotationService.reviewAnnotation(annotation.getId(), null);
         });
@@ -77,6 +83,8 @@ public class ReviewedAnnotationAuthorizationTest extends CRUDAuthorizationTest {
     public void user_cannot_review_annotation_if_not_reviewer() {
         UserAnnotation annotation
                 = builder.given_a_user_annotation();
+        annotation.setImage(this.reviewedAnnotation.getImage());
+        annotation.setProject(this.reviewedAnnotation.getProject());
         annotation.getImage().setReviewStart(new Date());
         annotation.getImage().setReviewUser(builder.given_a_user(SUPERADMIN)); // someone else
         Assertions.assertThrows(WrongArgumentException.class, () -> {
@@ -89,6 +97,8 @@ public class ReviewedAnnotationAuthorizationTest extends CRUDAuthorizationTest {
     public void creator_can_edit_its_annotation() {
         ReviewedAnnotation reviewedAnnotation
                 = builder.given_a_reviewed_annotation();
+        reviewedAnnotation.setImage(this.reviewedAnnotation.getImage());
+        reviewedAnnotation.setProject(this.reviewedAnnotation.getProject());
         reviewedAnnotation.getImage().setReviewStart(new Date());
         reviewedAnnotation.getImage().setReviewUser(builder.given_a_user(USER_ACL_ADMIN));
         reviewedAnnotation.setReviewUser(userRepository.findByUsernameLikeIgnoreCase(CREATOR).get());
@@ -102,18 +112,14 @@ public class ReviewedAnnotationAuthorizationTest extends CRUDAuthorizationTest {
     public void creator_can_delete_its_annotation() {
         ReviewedAnnotation reviewedAnnotation
                 = builder.given_a_reviewed_annotation();
+        reviewedAnnotation.setImage(this.reviewedAnnotation.getImage());
+        reviewedAnnotation.setProject(this.reviewedAnnotation.getProject());
         reviewedAnnotation.getImage().setReviewStart(new Date());
         reviewedAnnotation.getImage().setReviewUser(builder.given_a_user(USER_ACL_ADMIN));
         reviewedAnnotation.setReviewUser(userRepository.findByUsernameLikeIgnoreCase(CREATOR).get());
         expectOK (() -> {
             reviewedAnnotationService.delete(reviewedAnnotation, null, null, false);
         });
-    }
-
-    @Test
-    @WithMockUser(username = USER_ACL_READ)
-    public void user_can_delete_its_annotation_even_if_other_users_has_set_terms(){
-        Assertions.fail("todo");
     }
 
     @Override

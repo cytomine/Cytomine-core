@@ -16,7 +16,7 @@ public interface AnnotationIndexRepository extends JpaRepository<AnnotationIndex
     @Query( value = "SELECT user_id as user, slice_id as slice ,count_annotation as countAnnotation,count_reviewed_annotation as countReviewedAnnotation " +
             " FROM annotation_index " +
             " WHERE slice_id = :slice", nativeQuery = true)
-    List<AnnotationIndexLightDTO> findAllLightByImageInstance(long slice);
+    List<AnnotationIndexLightDTO> findAllLightBySliceInstance(long slice);
 
 
     Optional<AnnotationIndexLightDTO> findOneBySliceAndUser(SliceInstance slice, SecUser user);

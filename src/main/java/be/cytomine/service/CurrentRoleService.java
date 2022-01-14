@@ -6,6 +6,7 @@ import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,14 +23,10 @@ import java.util.stream.Collectors;
 
 @Service
 @SessionScope
-@RequiredArgsConstructor
 public class CurrentRoleService {
 
-    private final EntityManager entityManager;
-
-    private final SecUserRepository secUserRepository;
-
-    private final SecUserSecRoleRepository secUserSecRoleRepository;
+    @Autowired
+    private SecUserSecRoleRepository secUserSecRoleRepository;
 
     public boolean isAdmin = false;
 

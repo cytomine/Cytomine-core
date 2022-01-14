@@ -59,9 +59,7 @@ public class RestAnnotationTermController extends RestCytomineController {
         List results = new ArrayList<>();
         AnnotationDomain annotation = annotationDomainRepository.findById(idAnnotation)
                 .orElseThrow(() -> new ObjectNotFoundException("Annotation", idAnnotation));
-        if (annotation.isAlgoAnnotation()) {
-            // do nothing
-        } else if (idUser==null && annotation.isUserAnnotation()) {
+        if (idUser==null && annotation.isUserAnnotation()) {
             results.addAll(annotationTermService.list((UserAnnotation)annotation));
         } else if(idUser==null && annotation.isAlgoAnnotation()) {
             results.addAll(algoAnnotationTermService.list((AlgoAnnotation)annotation));

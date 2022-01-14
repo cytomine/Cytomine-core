@@ -20,6 +20,7 @@ import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.stereotype.Service;
 
@@ -33,23 +34,29 @@ import static org.springframework.security.acls.domain.BasePermission.*;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class OntologyService extends ModelService {
 
-    private final OntologyRepository ontologyRepository;
+    @Autowired
+    private OntologyRepository ontologyRepository;
 
-    private final SecurityACLService securityACLService;
+    @Autowired
+    private SecurityACLService securityACLService;
 
-    private final CurrentUserService currentUserService;
+    @Autowired
+    private CurrentUserService currentUserService;
 
-    private final ProjectRepository projectRepository;
+    @Autowired
+    private ProjectRepository projectRepository;
 
-    private final TermService termService;
+    @Autowired
+    private TermService termService;
 
-    private final PermissionService permissionService;
+    @Autowired
+    private PermissionService permissionService;
 
-    private final SecUserService secUserService;
+    @Autowired
+    private SecUserService secUserService;
 
     public Ontology get(Long id) {
         return find(id).orElse(null);

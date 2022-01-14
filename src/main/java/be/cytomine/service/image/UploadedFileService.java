@@ -24,6 +24,7 @@ import be.cytomine.utils.filters.SearchParameterEntry;
 import be.cytomine.utils.filters.SearchParameterProcessed;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -42,27 +43,36 @@ import static org.springframework.security.acls.domain.BasePermission.WRITE;
 @Slf4j
 @Service
 @Transactional
-@AllArgsConstructor
 public class UploadedFileService extends ModelService {
 
+    @Autowired
     private CurrentUserService currentUserService;
 
+    @Autowired
     private SecurityACLService securityACLService;
 
+    @Autowired
     private UploadedFileRepository uploadedFileRepository;
 
+    @Autowired
     private AbstractImageRepository abstractImageRepository;
 
+    @Autowired
     private AbstractSliceRepository abstractSliceRepository;
 
+    @Autowired
     private AbstractImageService abstractImageService;
 
+    @Autowired
     private AbstractSliceService abstractSliceService;
 
+    @Autowired
     private CompanionFileService companionFileService;
 
+    @Autowired
     private CompanionFileRepository companionFileRepository;
 
+    @Autowired
     private TaskService taskService;
 
 
@@ -253,20 +263,31 @@ public class UploadedFileService extends ModelService {
                 result.put(alias, value);
             }
             //result.put("lTree", rowResult.get("lTree"));
-            result.put("image", (Arrays.stream((int[])rowResult.get("image"))).filter(x -> x!=0).boxed().findFirst().orElse(null));
-            result.put("slices", (Arrays.stream((int[])rowResult.get("slices"))).filter(x -> x!=0).boxed().collect(Collectors.toList())); // A same UF can be linked to several slices (virtual stacks)
-            result.put("companionFile",(Arrays.stream((int[])rowResult.get("image"))).filter(x -> x!=0).boxed().findFirst().orElse(null));
+            result.put("image", (Arrays.stream((long[])rowResult.get("image"))).filter(x -> x!=0).boxed().findFirst().orElse(null));
+            result.put("slices", (Arrays.stream((long[])rowResult.get("slices"))).filter(x -> x!=0).boxed().collect(Collectors.toList())); // A same UF can be linked to several slices (virtual stacks)
+            result.put("companionFile",(Arrays.stream((long[])rowResult.get("image"))).filter(x -> x!=0).boxed().findFirst().orElse(null));
             result.put("thumbURL", null);
-            if(result.get("image")!=null) {
-                result.put("thumbURL", UrlApi.getAbstractImageThumbUrl((Long)((List)result.get("image")).get(0), "png"));
-                result.put("macroURL", UrlApi.getAssociatedImage((Long)((List)result.get("image")).get(0), "macro", (String)result.get("contentType"), 256, "png"));
-            } else if (((List)result.get("slices")).size() > 0) {
-                result.put("thumbURL", UrlApi.getAbstractSliceThumbUrl((Long)((List)result.get("slices")).get(0), "png"));
+
+            // Hack: it seems that Hibernate-type return a Long if 1 element or a List<Long> if more than 1 element.
+            Long image = returnElementOrTakeFirstElementIfArray(result.get("image"));
+            Long slice = returnElementOrTakeFirstElementIfArray(result.get("slices"));
+            if(image!=null) {
+                result.put("thumbURL", UrlApi.getAbstractImageThumbUrl(image, "png"));
+                result.put("macroURL", UrlApi.getAssociatedImage(image, "macro", (String)result.get("contentType"), 256, "png"));
+            } else if (slice!=null) {
+                result.put("thumbURL", UrlApi.getAbstractSliceThumbUrl(slice, "png"));
             }
             results.add(result);
         }
         return results;
 
+    }
+
+    private Long returnElementOrTakeFirstElementIfArray(Object longOrLongArray) {
+        if (longOrLongArray==null || (longOrLongArray instanceof List && ((List)longOrLongArray).isEmpty())) {
+            return null;
+        }
+        return (longOrLongArray instanceof Long ? (Long)longOrLongArray : (Long)((List)longOrLongArray).get(0));
     }
 
     public Optional<UploadedFile> find(Long id) {

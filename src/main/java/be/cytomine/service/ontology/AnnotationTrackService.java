@@ -34,6 +34,7 @@ import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -47,19 +48,23 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class AnnotationTrackService extends ModelService {
 
-    private final AnnotationTrackRepository annotationTrackRepository;
+    @Autowired
+    private AnnotationTrackRepository annotationTrackRepository;
 
-    private final SecurityACLService securityACLService;
+    @Autowired
+    private SecurityACLService securityACLService;
 
-    private final CurrentUserService currentUserService;
+    @Autowired
+    private CurrentUserService currentUserService;
 
-    private final AnnotationDomainRepository annotationDomainRepository;
+    @Autowired
+    private AnnotationDomainRepository annotationDomainRepository;
 
-    private final TrackRepository trackRepository;
+    @Autowired
+    private TrackRepository trackRepository;
 
 
     @Override

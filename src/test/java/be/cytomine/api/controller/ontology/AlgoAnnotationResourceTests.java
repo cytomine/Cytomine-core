@@ -119,6 +119,7 @@ public class AlgoAnnotationResourceTests {
 
     @Test
     @Transactional
+    @WithMockUser("superadmin")
     public void list_annotations_light() throws Exception {
         AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
         builder.addUserToProject(algoAnnotation.getProject(), builder.given_superadmin().getUsername());

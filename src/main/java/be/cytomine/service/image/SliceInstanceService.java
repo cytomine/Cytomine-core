@@ -22,6 +22,7 @@ import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -35,19 +36,24 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 @Slf4j
 @Service
 @Transactional
-@AllArgsConstructor
 public class SliceInstanceService extends ModelService {
 
+    @Autowired
     private CurrentUserService currentUserService;
 
+    @Autowired
     private SecurityACLService securityACLService;
 
+    @Autowired
     private SliceInstanceRepository sliceInstanceRepository;
 
+    @Autowired
     private AnnotationTrackService annotationTrackService;
 
+    @Autowired
     private AnnotationIndexRepository annotationIndexRepository;
 
+    @Autowired
     private AnnotationTrackRepository annotationTrackRepository;
 
     @Override

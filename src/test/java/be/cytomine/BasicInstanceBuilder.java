@@ -504,7 +504,7 @@ public class BasicInstanceBuilder {
     }
 
     public UserAnnotation given_a_user_annotation(SliceInstance sliceInstance, String location, User user, Term term) throws ParseException {
-        UserAnnotation annotation = given_a_user_annotation();
+        UserAnnotation annotation = given_a_not_persisted_user_annotation(sliceInstance.getProject());
         annotation.setImage(sliceInstance.getImage());
         annotation.setSlice(sliceInstance);
         annotation.setLocation(new WKTReader().read(location));

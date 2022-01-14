@@ -24,6 +24,7 @@ import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -36,15 +37,17 @@ import static org.springframework.security.acls.domain.BasePermission.*;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class AttachedFileService extends ModelService {
 
-    private final AttachedFileRepository attachedFileRepository;
+    @Autowired
+    private AttachedFileRepository attachedFileRepository;
 
-    private final SecurityACLService securityACLService;
+    @Autowired
+    private SecurityACLService securityACLService;
 
-    private final CurrentUserService currentUserService;
+    @Autowired
+    private CurrentUserService currentUserService;
 
     public List<AttachedFile> findAllByDomain(CytomineDomain domain) {
         return attachedFileRepository.findAllByDomainClassNameAndDomainIdent(domain.getClass().getName(), domain.getId());

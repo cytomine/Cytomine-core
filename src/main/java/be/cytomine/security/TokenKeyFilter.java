@@ -1,6 +1,8 @@
 package be.cytomine.security;
 
+import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
+import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.utils.SecurityUtils;
 import org.slf4j.Logger;
@@ -24,12 +26,12 @@ public class TokenKeyFilter extends OncePerRequestFilter {
 
     private final DomainUserDetailsService domainUserDetailsService;
 
-    private final UserRepository userRepository;
+    private final SecUserRepository secUserRepository;
 
 
-    public TokenKeyFilter(DomainUserDetailsService domainUserDetailsService, UserRepository userRepository) {
+    public TokenKeyFilter(DomainUserDetailsService domainUserDetailsService, SecUserRepository secUserRepository) {
         this.domainUserDetailsService = domainUserDetailsService;
-        this.userRepository = userRepository;
+        this.secUserRepository = secUserRepository;
     }
 
     @Override
@@ -104,7 +106,7 @@ public class TokenKeyFilter extends OncePerRequestFilter {
             String accessKey = authorization.substring(authorization.indexOf(" ") + 1, authorization.indexOf(":"));
             String authorizationSign = authorization.substring(authorization.indexOf(":") + 1);
 
-            Optional<User> user = userRepository.findByPublicKeyAndEnabled(accessKey,true);
+            Optional<SecUser> user = secUserRepository.findByPublicKeyAndEnabled(accessKey,true);
 
             if (user.isEmpty()) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");

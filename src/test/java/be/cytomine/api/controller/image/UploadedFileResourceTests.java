@@ -4,6 +4,7 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.project.Project;
+import be.cytomine.repository.image.UploadedFileRepository;
 import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -60,6 +61,9 @@ public class UploadedFileResourceTests {
 
     @Autowired
     private PropertyRepository propertyRepository;
+
+    @Autowired
+    private UploadedFileRepository uploadedFileRepository;
     
     @Test
     @Transactional
@@ -161,11 +165,10 @@ public class UploadedFileResourceTests {
                         .param("max", "0"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(equalTo(2)))) // default sorting must be created desc
+                .andExpect(jsonPath("$.collection", hasSize(greaterThanOrEqualTo(2)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.collection[0].id").value(image2.getId()))
                 .andExpect(jsonPath("$.collection[1].id").value(image1.getId()))
                 .andExpect(jsonPath("$.offset").value(1))
-                .andExpect(jsonPath("$.perPage").value(2))
                 .andExpect(jsonPath("$.size", greaterThanOrEqualTo(3)))
                 .andExpect(jsonPath("$.totalPages").value(1));
 
@@ -175,13 +178,11 @@ public class UploadedFileResourceTests {
                         .param("max", "500"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(equalTo(3)))) // default sorting must be created desc
+                .andExpect(jsonPath("$.collection", hasSize(greaterThanOrEqualTo(3)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.collection[0].id").value(image3.getId()))
                 .andExpect(jsonPath("$.collection[1].id").value(image2.getId()))
                 .andExpect(jsonPath("$.collection[2].id").value(image1.getId()))
                 .andExpect(jsonPath("$.offset").value(0))
-                .andExpect(jsonPath("$.perPage").value(3))
-                .andExpect(jsonPath("$.size").value(3))
                 .andExpect(jsonPath("$.totalPages").value(1));
 
 
@@ -193,7 +194,7 @@ public class UploadedFileResourceTests {
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(0)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.offset").value(500))
                 .andExpect(jsonPath("$.perPage").value(0))
-                .andExpect(jsonPath("$.size").value(3))
+                .andExpect(jsonPath("$.size").value(greaterThanOrEqualTo(3)))
                 .andExpect(jsonPath("$.totalPages").value(1));
     }
 
@@ -219,6 +220,8 @@ public class UploadedFileResourceTests {
         uploadedfileChild2.setStatus(9);
         UploadedFile uploadedFile2 = builder.given_a_uploaded_file();
         uploadedFile2.setSize(100000L);
+
+        List<UploadedFile> uploadedFiles = null;
 
         MvcResult mvcResult;
         List<Long> ids;
@@ -312,8 +315,8 @@ public class UploadedFileResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk()).andReturn();
         ids = retrieveIds(mvcResult);
-        first = ids.get(0);
-        last = ids.get(ids.size()-1);
+        uploadedFiles = ids.stream().map(x -> uploadedFileRepository.getById(x)).collect(Collectors.toList());
+        assertThat(uploadedFiles.get(0).getSize()).isLessThan(uploadedFiles.get(uploadedFiles.size()-1).getSize());
 
         mvcResult = restUploadedFileControllerMockMvc.perform(get("/api/uploadedfile.json")
                         .param("onlyRootsWithDetails", "true")
@@ -322,8 +325,8 @@ public class UploadedFileResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk()).andReturn();
         ids = retrieveIds(mvcResult);
-        assertThat(ids.get(0)).isEqualTo(last);
-        assertThat(ids.get(ids.size()-1)).isEqualTo(first);
+        uploadedFiles = ids.stream().map(x -> uploadedFileRepository.getById(x)).collect(Collectors.toList());
+        assertThat(uploadedFiles.get(0).getSize()).isGreaterThan(uploadedFiles.get(uploadedFiles.size()-1).getSize());
 
 
         mvcResult = restUploadedFileControllerMockMvc.perform(get("/api/uploadedfile.json")

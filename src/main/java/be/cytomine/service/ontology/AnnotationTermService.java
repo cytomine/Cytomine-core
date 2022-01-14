@@ -25,6 +25,7 @@ import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -38,23 +39,29 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class AnnotationTermService extends ModelService {
 
-    private final AnnotationTermRepository annotationTermRepository;
+    @Autowired
+    private AnnotationTermRepository annotationTermRepository;
 
-    private final SecurityACLService securityACLService;
+    @Autowired
+    private SecurityACLService securityACLService;
 
-    private final CurrentUserService currentUserService;
+    @Autowired
+    private CurrentUserService currentUserService;
 
-    private final SecUserRepository userRepository;
+    @Autowired
+    private SecUserRepository userRepository;
 
-    private final TermRepository termRepository;
+    @Autowired
+    private TermRepository termRepository;
 
-    private final UserAnnotationRepository userAnnotationRepository;
+    @Autowired
+    private UserAnnotationRepository userAnnotationRepository;
 
-    private final TransactionService transactionService;
+    @Autowired
+    private TransactionService transactionService;
 
     @Override
     public Class currentDomain() {

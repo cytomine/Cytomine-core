@@ -1,5 +1,6 @@
 package be.cytomine.config;
 
+import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.security.*;
 import org.springframework.context.annotation.Bean;
@@ -24,12 +25,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final DomainUserDetailsService domainUserDetailsService;
 
-    private final UserRepository userRepository;
+    private final SecUserRepository secUserRepository;
 
 
-    public SecurityConfiguration(DomainUserDetailsService domainUserDetailsService, UserRepository userRepository) {
+    public SecurityConfiguration(DomainUserDetailsService domainUserDetailsService, SecUserRepository secUserRepository) {
         this.domainUserDetailsService = domainUserDetailsService;
-        this.userRepository = userRepository;
+        this.secUserRepository = secUserRepository;
     }
 
     @Bean
@@ -87,7 +88,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         http
                 .csrf()
                 .disable()
-                .addFilterBefore(new TokenKeyFilter(domainUserDetailsService, userRepository), BasicAuthenticationFilter.class)
+                .addFilterBefore(new TokenKeyFilter(domainUserDetailsService, secUserRepository), BasicAuthenticationFilter.class)
                 .exceptionHandling().authenticationEntryPoint(
                         (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
                 .and()

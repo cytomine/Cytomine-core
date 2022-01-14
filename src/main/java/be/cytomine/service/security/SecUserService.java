@@ -24,6 +24,7 @@ import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
@@ -41,20 +42,25 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class SecUserService extends ModelService {
 
-    private final SecUserRepository secUserRepository;
+    @Autowired
+    private SecUserRepository secUserRepository;
 
-    private final UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-    private final SecurityACLService securityACLService;
+    @Autowired
+    private SecurityACLService securityACLService;
 
-    private final CurrentUserService currentUserService;
+    @Autowired
+    private CurrentUserService currentUserService;
 
-    private final CurrentRoleService currentRoleService;
+    @Autowired
+    private CurrentRoleService currentRoleService;
 
-    private final PermissionService permissionService;
+    @Autowired
+    private PermissionService permissionService;
 
     public Optional<SecUser> find(Long id) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());

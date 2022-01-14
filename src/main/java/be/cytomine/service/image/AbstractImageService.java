@@ -27,6 +27,7 @@ import be.cytomine.utils.filters.SearchParameterEntry;
 import be.cytomine.utils.filters.SpecificationBuilder;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -44,35 +45,48 @@ import static org.springframework.security.acls.domain.BasePermission.WRITE;
 @Slf4j
 @Service
 @Transactional
-@AllArgsConstructor
 public class AbstractImageService extends ModelService {
 
+    @Autowired
     private CurrentUserService currentUserService;
 
+    @Autowired
     private CurrentRoleService currentRoleService;
 
+    @Autowired
     private SecurityACLService securityACLService;
 
+    @Autowired
     private AbstractImageRepository abstractImageRepository;
 
+    @Autowired
     private ImageInstanceRepository imageInstanceRepository;
 
+    @Autowired
     private TransactionService transactionService;
 
+    @Autowired
     private ImageInstanceService imageInstanceService;
 
+    @Autowired
     private CompanionFileRepository companionFileRepository;
 
+    @Autowired
     private AbstractSliceRepository abstractSliceRepository;
 
+    @Autowired
     private AbstractSliceService abstractSliceService;
 
+    @Autowired
     private CompanionFileService companionFileService;
 
+    @Autowired
     private UploadedFileRepository uploadedFileRepository;
 
+    @Autowired
     private NestedImageInstanceRepository nestedImageInstanceRepository;
 
+    @Autowired
     private AttachedFileService attachedFileService;
 
 

@@ -233,22 +233,6 @@ public class ReviewedAnnotationResourceTests {
 
     }
 
-
-    @Test
-    @Transactional
-    public void add_valid_reviewed_annotation_without_project() throws Exception {
-        ReviewedAnnotation reviewedAnnotation = builder.given_a_not_persisted_reviewed_annotation();
-        JsonObject jsonObject = reviewedAnnotation.toJsonObject();
-        jsonObject.remove("project");
-        restReviewedAnnotationControllerMockMvc.perform(post("/api/reviewedannotation.json")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonObject.toJsonString()))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.annotation.project").value(reviewedAnnotation.getProject().getId()));
-        // => project is retrieve from slice/image
-    }
-
     @Test
     @Transactional
     public void edit_valid_reviewed_annotation() throws Exception {

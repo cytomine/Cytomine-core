@@ -2,8 +2,11 @@ package be.cytomine.api.controller.ontology;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.domain.ontology.AlgoAnnotationTerm;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.AnnotationTerm;
+import be.cytomine.domain.ontology.ReviewedAnnotation;
+import be.cytomine.repository.ontology.AnnotationTermRepository;
 import be.cytomine.service.ontology.AnnotationTermService;
 import be.cytomine.utils.JsonObject;
 import org.junit.jupiter.api.Assertions;
@@ -42,6 +45,9 @@ public class AnnotationTermResourceTests {
     @Autowired
     private AnnotationTermService annotationTermService;
 
+    @Autowired
+    private AnnotationTermRepository annotationTermRepository;
+
     @Test
     @Transactional
     public void list_by_user_annotation() throws Exception {
@@ -74,13 +80,24 @@ public class AnnotationTermResourceTests {
     @Test
     @Transactional
     public void list_by_algo_annotation() throws Exception {
-        Assertions.fail("not yet implemented");
+        AlgoAnnotationTerm algoAnnotationTerm = builder.given_an_algo_annotation_term();
+        restAnnotationTermControllerMockMvc.perform(get("/api/annotation/{id}/term.json", algoAnnotationTerm.getAnnotationIdent()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(1)))
+                .andExpect(jsonPath("$.collection[?(@.id=='"+algoAnnotationTerm.getId()+"')]").exists());
     }
 
     @Test
     @Transactional
     public void list_by_reviewed_annotation() throws Exception {
-        Assertions.fail("not yet implemented");
+        ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
+        reviewedAnnotation.getTerms().add(builder.given_a_term(reviewedAnnotation.getProject().getOntology()));
+        restAnnotationTermControllerMockMvc.perform(get("/api/annotation/{id}/term.json", reviewedAnnotation.getId()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(1)))
+                .andExpect(jsonPath("$.collection[?(@.term=='"+reviewedAnnotation.getTerms().get(0).getId()+"')]").exists());
     }
 
 
@@ -213,8 +230,22 @@ public class AnnotationTermResourceTests {
 
     @Test
     @Transactional
+    @WithMockUser("superadminjob")
     public void add_valid_annotation_term_for_algo() throws Exception {
-        Assertions.fail("not yet implemenetd");
+        AlgoAnnotationTerm algoAnnotationTerm = builder.given_an_algo_annotation_term();
+        restAnnotationTermControllerMockMvc.perform(post("/api/annotation/{idAnnotation}/term/{idTerm}.json", algoAnnotationTerm.getAnnotationIdent(),algoAnnotationTerm.getTerm().getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(algoAnnotationTerm.toJSON()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.printMessage").value(true))
+                .andExpect(jsonPath("$.callback").exists())
+                .andExpect(jsonPath("$.callback.algoannotationtermID").exists())
+                .andExpect(jsonPath("$.callback.method").value("be.cytomine.AddAlgoAnnotationTermCommand"))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.command").exists())
+                .andExpect(jsonPath("$.algoannotationterm.id").exists())
+                .andExpect(jsonPath("$.algoannotationterm.term").exists());
     }
 
     @Test
@@ -246,9 +277,21 @@ public class AnnotationTermResourceTests {
                 .andExpect(jsonPath("$.annotationterm.id").exists())
                 .andExpect(jsonPath("$.annotationterm.term").exists());
 
-        assertThat(annotationTermService.find(previousAnnotationTerm.getUserAnnotation(), previousAnnotationTerm.getTerm(), previousAnnotationTerm.getUser())).isEmpty();
-        assertThat(annotationTermService.find(previousAnnotationTermFromOtherUser.getUserAnnotation(), previousAnnotationTermFromOtherUser.getTerm(), previousAnnotationTermFromOtherUser.getUser())).isPresent();
-        assertThat(annotationTermService.find(annotationTerm.getUserAnnotation(), annotationTerm.getTerm(), annotationTerm.getUser())).isPresent();
+        assertThat(annotationTermRepository.findByUserAnnotationIdAndTermIdAndUserId(
+                previousAnnotationTerm.getUserAnnotation().getId(),
+                previousAnnotationTerm.getTerm().getId(),
+                previousAnnotationTerm.getUser().getId())
+        ).isEmpty();
+        assertThat(annotationTermRepository.findByUserAnnotationIdAndTermIdAndUserId(
+                previousAnnotationTermFromOtherUser.getUserAnnotation().getId(),
+                previousAnnotationTermFromOtherUser.getTerm().getId(),
+                previousAnnotationTermFromOtherUser.getUser().getId())
+        ).isPresent();
+        assertThat(annotationTermRepository.findByUserAnnotationIdAndTermIdAndUserId(
+                annotationTerm.getUserAnnotation().getId(),
+                annotationTerm.getTerm().getId(),
+                annotationTerm.getUser().getId())
+        ).isPresent();
     }
 
     @Test
@@ -278,8 +321,17 @@ public class AnnotationTermResourceTests {
                 .andExpect(jsonPath("$.annotationterm.id").exists())
                 .andExpect(jsonPath("$.annotationterm.term").exists());
 
-        assertThat(annotationTermService.find(previousAnnotationTerm.getUserAnnotation(), previousAnnotationTerm.getTerm(), previousAnnotationTerm.getUser())).isEmpty();
-        assertThat(annotationTermService.find(annotationTerm.getUserAnnotation(), annotationTerm.getTerm(), annotationTerm.getUser())).isPresent();
+
+        assertThat(annotationTermRepository.findByUserAnnotationIdAndTermIdAndUserId(
+                previousAnnotationTerm.getUserAnnotation().getId(),
+                previousAnnotationTerm.getTerm().getId(),
+                previousAnnotationTerm.getUser().getId())
+        ).isEmpty();
+        assertThat(annotationTermRepository.findByUserAnnotationIdAndTermIdAndUserId(
+                annotationTerm.getUserAnnotation().getId(),
+                annotationTerm.getTerm().getId(),
+                annotationTerm.getUser().getId())
+        ).isPresent();
     }
 
 

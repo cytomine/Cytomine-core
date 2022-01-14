@@ -4,6 +4,7 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.authorization.CRUDAuthorizationTest;
 import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.ontology.AnnotationTerm;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.EditingMode;
@@ -109,28 +110,10 @@ public class UserAnnotationAuthorizationTest extends CRUDAuthorizationTest {
     }
 
     @Test
-    @WithMockUser(username = USER_ACL_ADMIN)
-    public void project_admin_can_correct_annotation_from_other_user() throws ParseException {
-//        String basedLocation = "POLYGON ((0 0, 0 5000, 10000 5000, 10000 0, 0 0))";
-//        String addedLocation = "POLYGON ((0 5000, 10000 5000, 10000 10000, 0 10000, 0 5000))";
-//        String expectedLocation = "POLYGON ((0 0, 0 10000, 10000 10000, 10000 0, 0 0))";
-//
-//        // Annotation created by another user
-//        UserAnnotation annotation
-//                = builder.given_a_not_persisted_user_annotation(this.userAnnotation.getProject());
-//        annotation.setUser(builder.given_a_user(USER_ACL_READ));
-//        annotation.setLocation(new WKTReader().read(basedLocation));
-        throw new CytomineMethodNotYetImplementedException("");
-
-        // + TODO: do same test for simple user
-    }
-
-
-    @Test
     @WithMockUser(username = USER_ACL_READ)
     public void user_can_delete_its_annotation_even_if_other_users_has_set_terms(){
-        throw new CytomineMethodNotYetImplementedException("");
-        //TODO: see UserAnnotationSecutiryTests . testDeleteUserAnnotationWithTerm
+        AnnotationTerm annotationTerm = builder.given_an_annotation_term(userAnnotation);
+        userAnnotationService.delete(userAnnotation, null, null, false);
     }
 
     @Override

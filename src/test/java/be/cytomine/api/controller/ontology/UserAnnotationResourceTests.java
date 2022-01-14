@@ -25,6 +25,7 @@ import com.vividsolutions.jts.io.WKTReader;
 import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mortbay.util.ajax.JSON;
@@ -253,7 +254,7 @@ public class UserAnnotationResourceTests {
     @Test
     @Transactional
     public void download_user_annotation_document() throws Exception {
-        throw new CytomineMethodNotYetImplementedException("todo...");
+        Assertions.fail("todo...");
     }
 
     @Test

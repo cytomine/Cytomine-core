@@ -12,6 +12,7 @@ import be.cytomine.domain.security.User;
 import be.cytomine.dto.AnnotationLight;
 import be.cytomine.dto.SimplifiedAnnotation;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
+import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.UserAnnotationListing;
@@ -109,9 +110,6 @@ public class UserAnnotationService extends ModelService {
 
     @Autowired
     private SliceInstanceRepository sliceInstanceRepository;
-
-    @Autowired
-    private ReviewedAnnotationService reviewedAnnotationService;
 
     @Autowired
     private SharedAnnotationService sharedAnnotationService;
@@ -532,7 +530,7 @@ public class UserAnnotationService extends ModelService {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(), READ);
         securityACLService.checkUser(currentUser);
-        securityACLService.checkFullOrRestrictedForOwner(domain.container(), currentUser);
+        securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((UserAnnotation)domain).getUser());
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }
@@ -580,6 +578,17 @@ public class UserAnnotationService extends ModelService {
         deleteDependentAlgoAnnotationTerm((UserAnnotation)domain, transaction, task);
         deleteDependentSharedAnnotation((UserAnnotation)domain, transaction, task);
         deleteDependentAnnotationTrack((UserAnnotation)domain, transaction, task);
+    }
+
+
+    public void deleteDependentAnnotationTerm(UserAnnotation ua, Transaction transaction, Task task) {
+        for (AnnotationTerm annotationTerm : annotationTermService.list(ua)) {
+            try {
+                annotationTermService.delete(annotationTerm, transaction, null, false);
+            } catch (ForbiddenException fe) {
+                throw new ForbiddenException("This annotation has been linked to the term " + annotationTerm.getTerm() + " by " + annotationTerm.userDomainCreator() + ". " + annotationTerm.userDomainCreator() + " must unlink its term before you can delete this annotation.");
+            }
+        }
     }
 
 

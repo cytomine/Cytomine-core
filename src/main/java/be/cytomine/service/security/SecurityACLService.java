@@ -21,6 +21,7 @@ import be.cytomine.service.PermissionService;
 import be.cytomine.service.ontology.GenericAnnotationService;
 import be.cytomine.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.acls.model.Permission;
 import org.springframework.stereotype.Service;
 
@@ -37,23 +38,25 @@ import static org.springframework.security.acls.domain.BasePermission.ADMINISTRA
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Service
-@RequiredArgsConstructor
 public class SecurityACLService {
 
+    @Autowired
+    private EntityManager entityManager;
 
-    private final EntityManager entityManager;
+    @Autowired
+    private CurrentUserService currentUserService;
 
-    private final CurrentUserService currentUserService;
+    @Autowired
+    private CurrentRoleService currentRoleService;
 
-    private final CurrentRoleService currentRoleService;
+    @Autowired
+    private OntologyRepository ontologyRepository;
 
-    private final AclRepository aclRepository;
+    @Autowired
+    private PermissionService permissionService;
 
-    private final OntologyRepository ontologyRepository;
-
-    private final PermissionService permissionService;
-
-    private final ImageInstanceRepository imageInstanceRepository;
+    @Autowired
+    private ImageInstanceRepository imageInstanceRepository;
 
     public void check(Long id, String className, Permission permission) {
         try {
