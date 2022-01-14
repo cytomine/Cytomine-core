@@ -107,6 +107,11 @@ public class UploadedFileServiceTests {
         assertThat(list.stream().map(x -> x.get("id"))).contains(uploadedFile1.getId());
         assertThat(list.stream().map(x -> x.get("id"))).contains(uploadedFile2.getId());
         assertThat(list.stream().map(x -> x.get("id"))).doesNotContain(uploadedFileNotSameUser.getId());
+
+
+        assertThat(list.get(0)).containsKey("originalFilename");
+        assertThat(list.get(0)).containsKey("storageId");
+        assertThat(list.get(0)).containsKey("thumbURL");
     }
 
     @Test

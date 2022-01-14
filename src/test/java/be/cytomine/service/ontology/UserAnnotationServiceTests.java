@@ -4,10 +4,7 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.TestUtils;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.ontology.RelationTerm;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.UserAnnotation;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.AnnotationLight;
@@ -517,6 +514,29 @@ public class UserAnnotationServiceTests {
     }
 
     @Test
+    void delete_user_annotation_with_dependencies() {
+        UserAnnotation userAnnotation = builder.given_a_user_annotation();
+        SharedAnnotation sharedAnnotation = builder.given_a_shared_annotation();
+        sharedAnnotation.setAnnotation(userAnnotation);
+        AnnotationTrack annotationTrack = builder.given_a_annotation_track();
+        annotationTrack.setAnnotation(userAnnotation);
+
+        assertThat(entityManager.find(UserAnnotation.class, userAnnotation.getId())).isNotNull();
+        assertThat(entityManager.find(SharedAnnotation.class, sharedAnnotation.getId())).isNotNull();
+        assertThat(entityManager.find(AnnotationTrack.class, annotationTrack.getId())).isNotNull();
+
+        CommandResponse commandResponse = userAnnotationService.delete(userAnnotation, null, null, true);
+
+        AssertionsForClassTypes.assertThat(commandResponse).isNotNull();
+        AssertionsForClassTypes.assertThat(commandResponse.getStatus()).isEqualTo(200);
+
+        assertThat(entityManager.find(UserAnnotation.class, userAnnotation.getId())).isNull();
+        assertThat(entityManager.find(SharedAnnotation.class, sharedAnnotation.getId())).isNull();
+        assertThat(entityManager.find(AnnotationTrack.class, annotationTrack.getId())).isNull();
+    }
+
+
+    @Test
     void do_annotation_corrections() throws ParseException {
 
         UserAnnotation based = builder.given_a_user_annotation();
@@ -560,347 +580,8 @@ public class UserAnnotationServiceTests {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //TODO: test repead when implemented
-
-
-
-
-
-
-
-
-//
-//
-//    def testAnnotationIncludeFilterAlgoAnnotation() {
-//
-//
-//
-//        checkIncluded(slice, image,a1,a2,a3,a4,user1,user2,term1,term2)
-//
-//        def result = AnnotationDomainAPI.downloadIncluded("POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))", image.id, user1.id, [term1.id,term2.id], "pdf",Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        result = AnnotationDomainAPI.downloadIncluded("POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))", image.id, user1.id, [term1.id,term2.id], "csv",Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        println result
-//        assert 200 == result.code
-//    }
-//
-//
-//    public static def checkIncluded(
-//            SliceInstance slice,
-//            ImageInstance image,
-//            AnnotationDomain a1,
-//            AnnotationDomain a2,
-//            AnnotationDomain a3,
-//            AnnotationDomain a4,
-//            SecUser user1,
-//            SecUser user2,
-//            Term term1,
-//            Term term2) {
-//
-//        //tatic def listIncluded(String geometry, Long idImage, Long idUser,List<Long> terms,String username, String password) {
-//        def result = AnnotationDomainAPI.listIncluded("POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))", image.id, user1.id, null, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        assert AnnotationDomainAPI.containsInJSONList(a1.id,result.data)
-//        assert AnnotationDomainAPI.containsInJSONList(a2.id,result.data)
-//        assert !AnnotationDomainAPI.containsInJSONList(a3.id,result.data)
-//        assert !AnnotationDomainAPI.containsInJSONList(a4.id,result.data)
-//
-//        result = AnnotationDomainAPI.listIncluded("POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))", image.id, user2.id, [term1.id,term2.id], Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        assert !AnnotationDomainAPI.containsInJSONList(a1.id,result.data)
-//        assert !AnnotationDomainAPI.containsInJSONList(a2.id,result.data)
-//        assert AnnotationDomainAPI.containsInJSONList(a3.id,result.data)
-//        assert !AnnotationDomainAPI.containsInJSONList(a4.id,result.data)
-//
-//        result = AnnotationDomainAPI.listIncluded("POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))", image.id, user2.id, [term1.id], Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        assert !AnnotationDomainAPI.containsInJSONList(a1.id,result.data)
-//        assert !AnnotationDomainAPI.containsInJSONList(a2.id,result.data)
-//        assert AnnotationDomainAPI.containsInJSONList(a3.id,result.data)
-//        assert !AnnotationDomainAPI.containsInJSONList(a4.id,result.data)
-//
-//        UserAnnotation a5 = BasicInstanceBuilder.getUserAnnotationNotExist(slice, "POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))",User.findByUsername(Infos.SUPERADMINLOGIN),term2)
-//
-//        result = AnnotationDomainAPI.listIncluded(a5, image.id, user1.id, [term1.id,term2.id], Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        assert AnnotationDomainAPI.containsInJSONList(a1.id,result.data)
-//        assert AnnotationDomainAPI.containsInJSONList(a2.id,result.data)
-//        assert !AnnotationDomainAPI.containsInJSONList(a3.id,result.data)
-//        assert !AnnotationDomainAPI.containsInJSONList(a4.id,result.data)
-//        assert !AnnotationDomainAPI.containsInJSONList(a5.id,result.data)
-//    }
-//
-
-
-
-//
-//
-//
-//    @Test
-//    void list_all_userAnnotation_with_success() {
-//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-//        assertThat(userAnnotation).isIn(userAnnotationService.fin());
-//    }
-//
-//
-//
-//    @Test
-//    void list_userAnnotation_by_ontology_include_userAnnotation_from_ontology() {
-//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-//        assertThat(userAnnotation).isIn(userAnnotationService.list(userAnnotation.getOntology()));
-//    }
-//
-//    @Test
-//    void list_userAnnotation_by_ontology_do_not_include_userAnnotation_from_other_ontology() {
-//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-//        Ontology ontology = builder.given_an_ontology();
-//        assertThat(userAnnotationService.list(ontology).size()).isEqualTo(0);
-//    }
-//
-//    @Test
-//    void list_userAnnotation_by_project_include_userAnnotation_from_project_ontology() {
-//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-//        Project project = builder.given_a_project_with_ontology(userAnnotation.getOntology());
-//        assertThat(userAnnotation).isIn(userAnnotationService.list(project));
-//    }
-//
-//    @Test
-//    void list_userAnnotation_by_project_do_not_include_userAnnotation_from_other_ontology() {
-//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-//        Project project = builder.given_a_project_with_ontology(builder.given_an_ontology());
-//        assertThat(userAnnotationService.list(project)).asList().isEmpty();
-//    }
-//
-//    @Test
-//    void list_userAnnotation_by_project_return_empty_result_if_project_has_no_ontology() {
-//        Project project = builder.given_a_project_with_ontology(null);
-//        assertThat(userAnnotationService.list(project)).asList().isEmpty();
-//    }
-//
-//
-//    @Test
-//    void list_userAnnotation_ids_by_project_include_userAnnotation_from_project_ontology() {
-//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-//        Project project = builder.given_a_project_with_ontology(userAnnotation.getOntology());
-//        assertThat(userAnnotation.getId()).isIn(userAnnotationService.getAllUserAnnotationId(project));
-//    }
-//
-//    @Test
-//    void list_userAnnotation_ids_by_project_do_not_include_userAnnotation_from_other_ontology() {
-//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-//        Project project = builder.given_a_project_with_ontology(builder.given_an_ontology());
-//        assertThat(userAnnotationService.getAllUserAnnotationId(project)).asList().doesNotContain(userAnnotation.getId());
-//    }
-//
-//    @Test
-//    void list_userAnnotation_ids_by_project_return_empty_result_if_project_has_no_ontology() {
-//        Project project = builder.given_a_project_with_ontology(null);
-//        assertThat(userAnnotationService.getAllUserAnnotationId(project)).asList().isEmpty();
-//    }
-//
-//    @Test
-//    void add_valid_userAnnotation_with_success() {
-//        Ontology ontology = builder.given_an_ontology();
-//        UserAnnotation userAnnotation = BasicInstanceBuilder.given_a_not_persisted_userAnnotation(ontology);
-//
-//        CommandResponse commandResponse = userAnnotationService.add(userAnnotation.toJsonObject());
-//
-//        assertThat(commandResponse).isNotNull();
-//        assertThat(commandResponse.getStatus()).isEqualTo(200);
-//        assertThat(userAnnotationService.find(commandResponse.getObject().getId())).isPresent();
-//        UserAnnotation created = userAnnotationService.find(commandResponse.getObject().getId()).get();
-//        assertThat(created.getName()).isEqualTo(userAnnotation.getName());
-//        assertThat(created.getOntology()).isEqualTo(userAnnotation.getOntology());
-//    }
-//
-//    @Test
-//    void add_userAnnotation_with_null_ontology_fail() {
-//        UserAnnotation userAnnotation = BasicInstanceBuilder.given_a_not_persisted_userAnnotation(null);
-//        Assertions.assertThrows(WrongArgumentException.class, () -> {
-//            userAnnotationService.add(userAnnotation.toJsonObject());
-//        });
-//    }
-//
-//    @Test
-//    void add_userAnnotation_with_null_color_fail() {
-//        UserAnnotation userAnnotation = BasicInstanceBuilder.given_a_not_persisted_userAnnotation(builder.given_an_ontology());
-//        userAnnotation.setColor(null);
-//        Assertions.assertThrows(WrongArgumentException.class, () -> {
-//            userAnnotationService.add(userAnnotation.toJsonObject());
-//        });
-//    }
-//
-//    @Test
-//    void undo_redo_userAnnotation_creation_with_success() {
-//        UserAnnotation userAnnotation = BasicInstanceBuilder.given_a_not_persisted_userAnnotation(builder.given_an_ontology());
-//        CommandResponse commandResponse = userAnnotationService.add(userAnnotation.toJsonObject());
-//        assertThat(userAnnotationService.find(commandResponse.getObject().getId())).isPresent();
-//        System.out.println("id = " + commandResponse.getObject().getId() + " name = " + userAnnotation.getName());
-//
-//        commandService.undo();
-//
-//        assertThat(userAnnotationService.find(commandResponse.getObject().getId())).isEmpty();
-//
-//        commandService.redo();
-//
-//        assertThat(userAnnotationService.find(commandResponse.getObject().getId())).isPresent();
-//
-//    }
-//
-//    @Test
-//    void redo_userAnnotation_creation_fail_if_userAnnotation_already_exist() {
-//        UserAnnotation userAnnotation = BasicInstanceBuilder.given_a_not_persisted_userAnnotation(builder.given_an_ontology());
-//        CommandResponse commandResponse = userAnnotationService.add(userAnnotation.toJsonObject());
-//        assertThat(userAnnotationService.find(commandResponse.getObject().getId())).isPresent();
-//        System.out.println("id = " + commandResponse.getObject().getId() + " name = " + userAnnotation.getName());
-//
-//        commandService.undo();
-//
-//        assertThat(userAnnotationService.find(commandResponse.getObject().getId())).isEmpty();
-//
-//        UserAnnotation userAnnotationWithSameName = BasicInstanceBuilder.given_a_not_persisted_userAnnotation(userAnnotation.getOntology());
-//        userAnnotationWithSameName.setName(userAnnotation.getName());
-//        builder.persistAndReturn(userAnnotationWithSameName);
-//
-//        // re-create a userAnnotation with a name that already exist in this ontology
-//        Assertions.assertThrows(AlreadyExistException.class, () -> {
-//            commandService.redo();
-//        });
-//    }
-//
-//    @Test
-//    void edit_valid_userAnnotation_with_success() {
-//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-//
-//        CommandResponse commandResponse = userAnnotationService.update(userAnnotation, userAnnotation.toJsonObject().withChange("name", "NEW NAME").withChange("color", "NEW COLOR"));
-//
-//        assertThat(commandResponse).isNotNull();
-//        assertThat(commandResponse.getStatus()).isEqualTo(200);
-//        assertThat(userAnnotationService.find(commandResponse.getObject().getId())).isPresent();
-//        UserAnnotation edited = userAnnotationService.find(commandResponse.getObject().getId()).get();
-//        assertThat(edited.getName()).isEqualTo("NEW NAME");
-//        assertThat(edited.getColor()).isEqualTo("NEW COLOR");
-//    }
-//
-//    @Test
-//    void undo_redo_userAnnotation_edition_with_success() {
-//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-//        userAnnotation.setName("OLD NAME");
-//        userAnnotation = builder.persistAndReturn(userAnnotation);
-//
-//        userAnnotationService.update(userAnnotation, userAnnotation.toJsonObject().withChange("name", "NEW NAME"));
-//
-//        assertThat(userAnnotationRepository.getById(userAnnotation.getId()).getName()).isEqualTo("NEW NAME");
-//
-//        commandService.undo();
-//
-//        assertThat(userAnnotationRepository.getById(userAnnotation.getId()).getName()).isEqualTo("OLD NAME");
-//
-//        commandService.redo();
-//
-//        assertThat(userAnnotationRepository.getById(userAnnotation.getId()).getName()).isEqualTo("NEW NAME");
-//
-//    }
-//
-//    @Test
-//    void delete_userAnnotation_with_success() {
-//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-//
-//        CommandResponse commandResponse = userAnnotationService.delete(userAnnotation, null, null, true);
-//
-//        assertThat(commandResponse).isNotNull();
-//        assertThat(commandResponse.getStatus()).isEqualTo(200);
-//        assertThat(userAnnotationService.find(userAnnotation.getId()).isEmpty());
-//    }
-//
-//    @Test
-//    void delete_userAnnotation_with_dependencies_with_success() {
-//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-//        RelationUserAnnotation relationUserAnnotation = builder.given_a_relation_userAnnotation(userAnnotation, builder.given_a_user_annotation(userAnnotation.getOntology()));
-//
-//        CommandResponse commandResponse = userAnnotationService.delete(userAnnotation, null, null, true);
-//
-//        assertThat(commandResponse).isNotNull();
-//        assertThat(commandResponse.getStatus()).isEqualTo(200);
-//        assertThat(userAnnotationService.find(userAnnotation.getId()).isEmpty());
-//    }
-//
-//
-//    @Test
-//    void undo_redo_userAnnotation_deletion_with_success() {
-//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-//
-//        userAnnotationService.delete(userAnnotation, null, null, true);
-//
-//        assertThat(userAnnotationService.find(userAnnotation.getId()).isEmpty());
-//
-//        commandService.undo();
-//
-//        assertThat(userAnnotationService.find(userAnnotation.getId()).isPresent());
-//
-//        commandService.redo();
-//
-//        assertThat(userAnnotationService.find(userAnnotation.getId()).isEmpty());
-//    }
-//
-//    @Test
-//    void undo_redo_userAnnotation_deletion_restore_dependencies() {
-//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-//        RelationUserAnnotation relationUserAnnotation = builder.given_a_relation_userAnnotation(userAnnotation, builder.given_a_user_annotation(userAnnotation.getOntology()));
-//        CommandResponse commandResponse = userAnnotationService.delete(userAnnotation, transactionService.start(), null, true);
-//
-//        assertThat(userAnnotationService.find(userAnnotation.getId()).isEmpty());
-//        assertThat(relationUserAnnotationRepository.findById(relationUserAnnotation.getId())).isEmpty();
-//
-//        commandService.undo();
-//
-//        assertThat(userAnnotationService.find(userAnnotation.getId()).isPresent());
-//        assertThat(relationUserAnnotationRepository.findById(relationUserAnnotation.getId())).isPresent();
-//
-//        commandService.redo();
-//
-//        assertThat(userAnnotationService.find(userAnnotation.getId()).isEmpty());
-//        assertThat(relationUserAnnotationRepository.findById(relationUserAnnotation.getId())).isEmpty();
-//
-//        commandService.undo();
-//
-//        assertThat(userAnnotationService.find(userAnnotation.getId()).isPresent());
-//        assertThat(relationUserAnnotationRepository.findById(relationUserAnnotation.getId())).isPresent();
-//
-//        commandService.redo();
-//
-//        assertThat(userAnnotationService.find(userAnnotation.getId()).isEmpty());
-//        assertThat(relationUserAnnotationRepository.findById(relationUserAnnotation.getId())).isEmpty();
-//    }
+    @Test
+    public void repeat_annotation() {
+        Assertions.fail("todo");
+    }
 }

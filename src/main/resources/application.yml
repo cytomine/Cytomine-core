@@ -33,16 +33,17 @@ application:
   adminPublicKey: adminPublicKey
   superAdminPrivateKey: superAdminPrivateKey
   superAdminPublicKey: superAdminPublicKey
-  ImageServerPrivateKey: ImageServerPrivateKey
-  ImageServerPublicKey: ImageServerPublicKey
+  ImageServerPrivateKey: 2fd0480e-0d83-453b-b4fc-b75da8fed1a2
+  ImageServerPublicKey: e87916c4-549c-4806-8605-f756e646d778
   rabbitMQPrivateKey: rabbitMQPrivateKey
   rabbitMQPublicKey: rabbitMQPublicKey
   softwareSources: softwareSources/
   useHTTPInternally: true
+  storagePath: "/data/images"
 
   cytomine:
     defaultLanguage: ENGLISH
-    imageServerURL: [http://imageServerURL/]
+    imageServerURL: ["http://localhost-ims"]
     messageBrokerServerURL: messageBrokerServerURL
     annotation:
       maxNumberOfPoint: 200

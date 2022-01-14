@@ -23,4 +23,6 @@ public interface AnnotationTermRepository extends JpaRepository<AnnotationTerm, 
     Optional<AnnotationTerm>  findByUserAnnotationIdAndTermIdAndUserId(Long annotation, Long term, Long user);
 
     List<AnnotationTerm> findAllByUserAndUserAnnotation(User user, UserAnnotation annotation);
+
+    long countByTerm(Term term);
 }

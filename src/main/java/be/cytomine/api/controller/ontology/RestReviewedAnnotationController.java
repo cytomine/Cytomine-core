@@ -165,7 +165,7 @@ public class RestReviewedAnnotationController extends RestCytomineController {
 
         return responseSuccess(JsonObject.of(
                 "message", imageInstance.getReviewUser().getUsername() + " start reviewing on " + imageInstance.getInstanceFilename(),
-                "imageinstance", imageInstance
+                "imageinstance", ImageInstance.getDataFromDomain(imageInstance)
         ));
     }
 
@@ -191,7 +191,7 @@ public class RestReviewedAnnotationController extends RestCytomineController {
 
         return responseSuccess(JsonObject.of(
                 "message", message,
-                "imageinstance", imageInstance
+                "imageinstance", ImageInstance.getDataFromDomain(imageInstance)
         ));
     }
 

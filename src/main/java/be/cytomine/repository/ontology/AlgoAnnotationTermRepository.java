@@ -23,4 +23,8 @@ public interface AlgoAnnotationTermRepository extends JpaRepository<AlgoAnnotati
 
     Optional<AlgoAnnotationTerm> findByAnnotationIdentAndTerm(Long annotationId, Term term);
 
+    long countByTerm(Term term);
+
+    long countByExpectedTerm(Term term);
+
 }

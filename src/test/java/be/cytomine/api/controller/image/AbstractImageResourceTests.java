@@ -191,23 +191,23 @@ public class AbstractImageResourceTests {
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json").param("project", String.valueOf(project1.getId())))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")]").exists())
-                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject2.getId() + ")]").doesNotExist())
-                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1And2.getId() + ")]").exists());
+                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")].inProject").value(true))
+                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject2.getId() + ")].inProject").value(false))
+                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1And2.getId() + ")].inProject").value(true));
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json").param("project", String.valueOf(project2.getId())))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")]").doesNotExist())
-                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject2.getId() + ")]").exists())
-                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1And2.getId() + ")]").exists());
+                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")].inProject").value(false))
+                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject2.getId() + ")].inProject").value(true))
+                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1And2.getId() + ")].inProject").value(true));
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json").param("project", String.valueOf(anotherProject.getId())))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")]").doesNotExist())
-                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject2.getId() + ")]").doesNotExist())
-                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1And2.getId() + ")]").doesNotExist());
+                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")].inProject").value(false))
+                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject2.getId() + ")].inProject").value(false))
+                .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1And2.getId() + ")].inProject").value(false));
 
     }
 

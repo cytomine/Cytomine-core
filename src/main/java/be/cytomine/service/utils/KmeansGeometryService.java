@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.Tuple;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -73,12 +74,13 @@ public class KmeansGeometryService {
         List<Tuple> resultList = nativeQuery.getResultList();
         for (Tuple tuple : resultList) {
             Kmeans kmeans = new Kmeans();
-            kmeans.setId((Long)tuple.get(0));
-            kmeans.setCount((Long)tuple.get(1));
+            kmeans.setId(((Integer)tuple.get(0)).longValue());
+            kmeans.setCount(((BigInteger)tuple.get(1)).longValue());
             kmeans.setLocation((String) tuple.get(2));
             if(kmeans.getCount()>max) {
                 max = kmeans.getCount();
             }
+            data.add(kmeans);
         }
 
         for (Kmeans datum : data) {
@@ -89,7 +91,11 @@ public class KmeansGeometryService {
 
     public int mustBeReduce(Long slice, Long user, String bbox) {
         SliceInstance sliceInstance = entityManager.find(SliceInstance.class, slice);
-        SecUser secUser = entityManager.find(SecUser.class, user);
+
+        SecUser secUser = null;
+        if (user!=null) {
+            secUser = entityManager.find(SecUser.class, user);
+        }
         try {
             return mustBeReduce(sliceInstance, secUser,new WKTReader().read(bbox));
         } catch (ParseException e) {

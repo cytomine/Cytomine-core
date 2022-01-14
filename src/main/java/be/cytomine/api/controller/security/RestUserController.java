@@ -11,13 +11,19 @@ import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -33,6 +39,8 @@ public class RestUserController extends RestCytomineController {
     private final CurrentUserService currentUserService;
 
     private final ImageInstanceService imageInstanceService;
+
+    private final SecurityACLService securityACLService;
 
     @GetMapping("/user/{id}.json")
     public ResponseEntity<String> getUser(
@@ -64,7 +72,7 @@ public class RestUserController extends RestCytomineController {
         Optional<SecUser> user = secUserService.findCurrentUser();
         //TODO: admin, user, guest, adminByNow...
         return user.map( secUser -> {
-            JsonObject object = User.getDataFromDomain(secUser);
+            JsonObject object = User.getDataFromDomainWithPersonnalData(secUser);
             return responseSuccess(object);
         }).orElseGet(() -> responseNotFound("User", "current"));
     }
@@ -142,6 +150,35 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(secUserService.listLayers(project, image));
 
     }
+
+    @GetMapping("/signature.json")
+    public ResponseEntity<String> signature(
+            @RequestParam String method,
+            @RequestParam(value = "content-MD5", required = false, defaultValue = "") String contentMD5,
+            @RequestParam(value = "content-type", required = false, defaultValue = "") String contenttype,
+            @RequestParam(value = "content-Type", required = false, defaultValue = "") String contentType,
+            @RequestParam(value = "date", required = false, defaultValue = "") String date,
+            @RequestParam(value = "queryString", required = false, defaultValue = "") String queryString,
+            @RequestParam(value = "forwardURI", required = false, defaultValue = "") String forwardURI
+    ) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
+        SecUser user = currentUserService.getCurrentUser();
+        if (!queryString.isEmpty()) {
+            queryString = "?" + queryString;
+        }
+        String signature = SecurityUtils.generateKeys(method,contentMD5,contenttype.isEmpty()?contentType:contenttype,date,queryString,forwardURI,user);
+
+        return responseSuccess(JsonObject.of("signature", signature, "publicKey", user.getPublicKey()));
+    }
+
+    @GetMapping("/userkey/{publicKey}/keys.json")
+    public ResponseEntity<String> keys(@PathVariable String publicKey) {
+        SecUser user = secUserService.findByPublicKey(publicKey)
+                .orElseThrow(() -> new ObjectNotFoundException("User", Map.of("publicKey", publicKey).toString()));
+        securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
+        return responseSuccess(JsonObject.of("privateKey", user.getPrivateKey(), "publicKey", user.getPublicKey()));
+    }
+
+
 
 
 

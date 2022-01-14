@@ -19,4 +19,5 @@ public class SpringConfigurationForMVC extends WebMvcConfigurerAdapter {
     public void configurePathMatch(PathMatchConfigurer configurer) {
         configurer.setUseSuffixPatternMatch(false);
     }
+
 }

@@ -62,6 +62,9 @@ public class AbstractImage extends CytomineDomain {
     @ManyToOne
     private SecUser user; //owner
 
+    @Transient
+    private Boolean inProject = false;
+
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         AbstractImage abstractImage = this;
@@ -123,6 +126,7 @@ public class AbstractImage extends CytomineDomain {
         returnArray.put("preview", UrlApi.getAbstractImageThumbUrlWithMaxSize(abstractImage.id, 1024, "png"));
         returnArray.put("macroURL", UrlApi.getAssociatedImage(abstractImage.id, "macro", Optional.ofNullable(abstractImage.getUploadedFile()).map(UploadedFile::getContentType).orElse(null), 512, "png"));
 
+        returnArray.put("inProject", abstractImage.getInProject());
         return returnArray;
     }
 

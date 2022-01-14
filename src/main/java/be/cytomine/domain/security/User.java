@@ -136,16 +136,18 @@ public class User extends SecUser {
         returnArray.put("language", (user.language!=null? user.language.toString() : null));
 
         returnArray.put("isDeveloper", user.isDeveloper);
-//TODO
-//        if (!(domain?.springSecurityService?.principal instanceof String) && domain?.id == domain?.springSecurityService?.currentUser?.id) {
-//            returnArray['publicKey'] = domain?.publicKey
-//            returnArray['privateKey'] = domain?.privateKey
-//            returnArray['passwordExpired'] = domain?.passwordExpired
-//        }
-
         returnArray.put("enabled", user.enabled);
         returnArray.put("user", user.creator);
         return returnArray;
+    }
+
+
+    public static JsonObject getDataFromDomainWithPersonnalData(CytomineDomain domain) {
+        JsonObject json = User.getDataFromDomain(domain);
+        json.put("publicKey", ((User)domain).getPublicKey());
+        json.put("privateKey", ((User)domain).getPrivateKey());
+        json.put("passwordExpired", ((User)domain).getPasswordExpired());
+        return json;
     }
 
     @Override

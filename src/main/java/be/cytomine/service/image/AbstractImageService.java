@@ -158,13 +158,10 @@ public class AbstractImageService extends ModelService {
         Page<AbstractImage> images = abstractImageRepository.findAll(specification, pageable);
 
         if (project != null) {
-            //TODO: could be possible to include in specification (using join)
-            if (pageable.isPaged() && (pageable.getPageSize()!=Integer.MAX_VALUE)) {
-                throw new WrongArgumentException("Pagination not supported with 'project' parameter");
-            } else {
-                HashSet<Long> ids = new HashSet<>(abstractImageRepository.findAllIdsByProject(project));
-                images = new PageImpl<>(images.getContent().stream().filter(x -> ids.contains(x.getId())).collect(Collectors.toList()));
-
+            TreeSet<Long> inProjectImagesId = new TreeSet<>(imageInstanceRepository.findAllByProject(project).stream().map(x -> x.getBaseImage().getId())
+                    .collect(Collectors.toList()));
+            for (AbstractImage abstractImage : images.getContent()) {
+                abstractImage.setInProject(inProjectImagesId.contains(abstractImage.getId()));
             }
         }
 

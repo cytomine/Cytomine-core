@@ -207,18 +207,20 @@ public class RestUserAnnotationController extends RestCytomineController {
         return delete(userAnnotationService, JsonObject.of("id", id), null);
     }
 
-    //TODO:
 
-//    def repeat() {
-//        UserAnnotation annotation = userAnnotationService.read(params.long("id"))
-//        if (annotation) {
-//            def repeat = JSONUtils.getJSONAttrInteger(request.JSON,'repeat',1)
-//            def slice = JSONUtils.getJSONAttrInteger(request.JSON, 'slice', null)
-//            responseSuccess(userAnnotationService.repeat(annotation, slice, repeat))
-//        } else {
-//            responseNotFound("UserAnnotation", params.id)
-//        }
-//    }
+    @PostMapping("/userannotation/{id}/repeat.json")
+    public ResponseEntity<String> repeat(
+            @RequestBody JsonObject json,
+            @PathVariable Long id
+    ) {
+        log.debug("REST request to repeat user annotation : {} ", id);
+
+        UserAnnotation annotation = userAnnotationService.find(id)
+                .orElseThrow(()-> new ObjectNotFoundException("Annotation", id));
+        return responseSuccess(userAnnotationService.repeat(
+                annotation, json.getJSONAttrLong("repeat", 1L), json.getJSONAttrInteger("slice", null)));
+    }
+
 
     @RequestMapping(value = "/userannotation/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public void crop(

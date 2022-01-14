@@ -91,6 +91,7 @@ public class TokenKeyFilter extends OncePerRequestFilter {
         try {
 
             String content_md5 = (request.getHeader("content-MD5") != null) ? request.getHeader("content-MD5") : "";
+
             String content_type = (request.getHeader("content-type") != null) ? request.getHeader("content-type") : "";
             content_type = (request.getHeader("Content-Type") != null) ? request.getHeader("Content-Type") : content_type;
             String date = (request.getHeader("date") != null) ? request.getHeader("date") : "";
@@ -104,7 +105,6 @@ public class TokenKeyFilter extends OncePerRequestFilter {
             String authorizationSign = authorization.substring(authorization.indexOf(":") + 1);
 
             Optional<User> user = userRepository.findByPublicKeyAndEnabled(accessKey,true);
-//            }
 
             if (user.isEmpty()) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
@@ -115,6 +115,17 @@ public class TokenKeyFilter extends OncePerRequestFilter {
                     this.reauthenticate(user.get().getUsername(), null);
                     return true;
                 } else {
+                    // the java client does not set content-type, so we override the header to application/json BEFORE this authentication.
+                    // So the client thinks content-type is "" while spring boot set it to application/json. In order to match the client signature, we generate it
+                    // with an empty value.
+                    // => it would be better to improve the java client to set a valid content type.
+                    String signatureWithEmptyContentType = SecurityUtils.generateKeys(request.getMethod(),content_md5, "",date,queryString,path,user.get());
+                    if (authorizationSign.equals(signatureWithEmptyContentType)) {
+                        this.reauthenticate(user.get().getUsername(), null);
+                        return true;
+                    }
+
+
                     return false;
                 }
             }

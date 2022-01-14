@@ -512,7 +512,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
      * It's better to avoid the user of this method if we know the correct type of an annotation id
      * Annotation x => annotation/x.json is slower than userannotation/x.json or algoannotation/x.json
      */
-    @RequestMapping(value = "/annotation/{id}.json", method = {RequestMethod.POST})
+    @RequestMapping(value = "/annotation/{id}.json", method = {RequestMethod.GET})
     public ResponseEntity<String> show(@PathVariable Long id) throws IOException {
         AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
         if (annotation.isUserAnnotation()) {

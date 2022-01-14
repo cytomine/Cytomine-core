@@ -10,10 +10,9 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
+import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.repository.ontology.AnnotationTermRepository;
-import be.cytomine.repository.ontology.RelationRepository;
-import be.cytomine.repository.ontology.TermRepository;
+import be.cytomine.repository.ontology.*;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.security.SecurityACLService;
@@ -50,6 +49,10 @@ public class TermService extends ModelService {
     private final RelationTermService relationTermService;
 
     private final AnnotationTermRepository annotationTermRepository;
+
+    private final AlgoAnnotationTermRepository algoAnnotationTermRepository;
+
+    private final ReviewedAnnotationRepository reviewedAnnotationRepository;
 
     @Override
     public Class currentDomain() {
@@ -162,62 +165,37 @@ public class TermService extends ModelService {
     @Override
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         deleteDependentRelationTerm((Term)domain, transaction, task);
+        deleteAlgoAnnotationTerm((Term)domain, transaction, task);
+        deleteAnnotationTerm((Term)domain, transaction, task);
+        deleteReviewedAnnotationTerm((Term)domain, transaction, task);
     }
 
     public void deleteDependentRelationTerm(Term term, Transaction transaction, Task task) {
         for (RelationTerm relationTerm : relationTermService.list(term)) {
-            relationTermService.delete(relationTerm, transaction, null, false);
+            relationTermService.delete(relationTerm, transaction, task, false);
         }
     }
 
-//    def deleteDependentAlgoAnnotationTerm(Term term, Transaction transaction, Task task = null) {
-//        def nbreAlgoAnnotation = AlgoAnnotationTerm.createCriteria().count {
-//            isNull("deleted")
-//            or {
-//                eq("term", term)
-//                eq("expectedTerm", term)
-//            }
-//        }
-//
-//        if (nbreAlgoAnnotation>0) {
-//            throw new ConstraintException("Term is still linked with ${nbreAlgoAnnotation} annotations created by job. Cannot delete term!")
-//        }
-//    }
-//
-//    def deleteDependentAnnotationTerm(Term term, Transaction transaction, Task task = null) {
-//        def nbreUserAnnotation = AnnotationTerm.countByTermAndDeletedIsNull(term)
-//
-//        if (nbreUserAnnotation>0) {
-//            throw new ConstraintException("Term is still linked with ${nbreUserAnnotation} annotations created by user. Cannot delete term!")
-//        }
-//    }
-//
-//
-//    def deleteDependentHasManyReviewedAnnotation(Term term, Transaction transaction, Task task = null) {
-//        def criteria = ReviewedAnnotation.createCriteria()
-//        def results = criteria.list {
-//            terms {
-//                inList("id", term.id)
-//            }
-//        }
-//
-//        if(!results.isEmpty()) {
-//            throw new ConstraintException("Term is linked with ${results.size()} validate annotations. Cannot delete term!")
-//        }
-//    }
-//
-//    def deleteDependentHasManyAnnotationFilter(Term term, Transaction transaction, Task task = null) {
-//        def criteria = AnnotationFilter.createCriteria()
-//        def results = criteria.list {
-//            users {
-//                inList("id", term.id)
-//            }
-//        }
-//        results.each {
-//            it.removeFromTerms(term)
-//            it.save()
-//        }
-//    }
+    public void deleteAlgoAnnotationTerm(Term term, Transaction transaction, Task task) {
+        long terms = algoAnnotationTermRepository.countByTerm(term);
+        long expectedTerms = algoAnnotationTermRepository.countByExpectedTerm(term);
 
+        if (terms!=0 || expectedTerms!=0) {
+            throw new ConstraintException("Term is still linked with "+(terms+expectedTerms)+" annotations created by job. Cannot delete term!");
+        }
+    }
 
+    public void deleteAnnotationTerm(Term term, Transaction transaction, Task task) {
+        long terms = annotationTermRepository.countByTerm(term);
+        if (terms!=0) {
+            throw new ConstraintException("Term is still linked with "+(terms)+" annotations created by user. Cannot delete term!");
+        }
+    }
+
+    public void deleteReviewedAnnotationTerm(Term term, Transaction transaction, Task task) {
+        long terms = reviewedAnnotationRepository.countAllByTermsContaining(term);
+        if (terms!=0) {
+            throw new ConstraintException("Term is still linked with "+(terms)+" reviewed annotations. Cannot delete term!");
+        }
+    }
 }

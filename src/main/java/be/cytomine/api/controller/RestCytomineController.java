@@ -137,7 +137,7 @@ public abstract class RestCytomineController {
             int maxForCollection = Math.min(list.size() - offset, max);
             subList = list.subList(offset,offset + maxForCollection);
         }
-        return JsonObject.of("collection", subList, "offset", offset, "perPage", Math.min(max, list.size()), "size", list.size(), "totalPages", Math.ceil((double)list.size()/(double)max));
+        return JsonObject.of("collection", subList, "offset", offset, "perPage", Math.min(max, list.size()), "size", list.size(), "totalPages", (int)Math.ceil((double)list.size()/(double)max));
 
     }
 
@@ -154,7 +154,7 @@ public abstract class RestCytomineController {
         }
         Integer offset = offsetParameter != null ? offsetParameter : 0;
         Integer max = (maxParameter != null && maxParameter!=0) ? maxParameter : Integer.MAX_VALUE;
-        return JsonObject.of("collection", finalContent, "offset", offset, "perPage", Math.min(max, page.getContent().size()), "size", page.getTotalElements(), "totalPages", Math.ceil((double)page.getTotalElements()/(double)max));
+        return JsonObject.of("collection", finalContent, "offset", offset, "perPage", Math.min(max, page.getContent().size()), "size", page.getTotalElements(), "totalPages", (int)Math.ceil((double)page.getTotalElements()/(double)max));
     }
 
 //    protected ResponseEntity<String> response(Map<String, Object> response, int code) {

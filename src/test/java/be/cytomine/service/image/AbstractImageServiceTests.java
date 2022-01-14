@@ -32,6 +32,7 @@ import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -105,8 +106,9 @@ public class AbstractImageServiceTests {
         Page<AbstractImage> images = null;
         images = abstractImageService.list(project, new ArrayList<>(), Pageable.unpaged());
         assertThat(images.getContent()).contains(abstractImageInProject);
-        assertThat(images.getContent()).doesNotContain(abstractImageNotInProject);
-
+        assertThat(images.getContent().stream().filter(x -> Objects.equals(x.getId(), abstractImageInProject.getId())).findFirst().get().getInProject()).isTrue();
+        assertThat(images.getContent()).contains(abstractImageNotInProject);
+        assertThat(images.getContent().stream().filter(x -> Objects.equals(x.getId(), abstractImageNotInProject.getId())).findFirst().get().getInProject()).isFalse();
     }
 
     @Test

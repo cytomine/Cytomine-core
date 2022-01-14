@@ -1,10 +1,7 @@
 package be.cytomine.api;
 
 
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
-import be.cytomine.exceptions.ForbiddenException;
-import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.exceptions.WrongArgumentException;
+import be.cytomine.exceptions.*;
 import be.cytomine.utils.JsonObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,4 +50,20 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(jsonObject.toJsonString());
     }
 
+    @ExceptionHandler(AlreadyExistException.class)
+    public ResponseEntity<?> handleException(AlreadyExistException exception) {
+        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()));
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(jsonObject.toJsonString());
+    }
+
+
+    @ExceptionHandler(ConstraintException.class)
+    public ResponseEntity<?> handleException(ConstraintException exception) {
+        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()));
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(jsonObject.toJsonString());
+    }
 }

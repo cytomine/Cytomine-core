@@ -1091,7 +1091,7 @@ public class AnnotationDomainResourceTests {
     @Transactional
     public void show_valid_user_annotation() throws Exception {
         UserAnnotation annotation = builder.given_a_user_annotation();
-        restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/{id}.json", annotation.getId()))
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}.json", annotation.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(annotation.getId()));
@@ -1101,7 +1101,7 @@ public class AnnotationDomainResourceTests {
     @Transactional
     public void show_valid_reviewed_annotation() throws Exception {
         ReviewedAnnotation annotation = builder.given_a_reviewed_annotation();
-        restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/{id}.json", annotation.getId()))
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}.json", annotation.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(annotation.getId()));
@@ -1111,7 +1111,7 @@ public class AnnotationDomainResourceTests {
     @Transactional
     public void show_valid_algo_annotation() throws Exception {
         AlgoAnnotation annotation = builder.given_a_algo_annotation();
-        restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/{id}.json", annotation.getId()))
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}.json", annotation.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(annotation.getId()));
@@ -1120,7 +1120,7 @@ public class AnnotationDomainResourceTests {
     @Test
     @Transactional
     public void show_an_unexisting_annotation() throws Exception {
-        restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/{id}.json", 0))
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}.json", 0))
                 .andDo(print())
                 .andExpect(status().isNotFound());
     }

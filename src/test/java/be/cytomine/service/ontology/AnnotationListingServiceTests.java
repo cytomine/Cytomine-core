@@ -22,7 +22,9 @@ import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.dto.AnnotationResult;
+import be.cytomine.service.dto.Kmeans;
 import be.cytomine.service.ontology.UserAnnotationService;
+import be.cytomine.service.utils.KmeansGeometryService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import com.vividsolutions.jts.io.ParseException;
@@ -73,6 +75,9 @@ public class AnnotationListingServiceTests {
 
     @Autowired
     AnnotationListingService annotationListingService;
+
+    @Autowired
+    KmeansGeometryService kmeansGeometryService;
 
     @Test
     void search_user_annotation_by_project() {
@@ -325,6 +330,9 @@ public class AnnotationListingServiceTests {
                 .contains(a2.getId())
                 .contains(a3.getId())
                 .doesNotContain(a4.getId());
+        AnnotationResult oneResult = (AnnotationResult)annotationListingService.listGeneric(reviewedAnnotationListing).get(0);
+        assertThat((oneResult).get("parentIdent"))
+                .isNotNull();
 
     }
 
@@ -538,4 +546,38 @@ public class AnnotationListingServiceTests {
         assertThat(annotationResult.get("id")).isEqualTo(algoAnnotation.getId());
         assertThat((List<Long>)annotationResult.get("term")).containsExactlyElementsOf(algoAnnotation.termsId());
     }
+
+
+    @Test
+    void search_algo_annotation_by_bbox_with_kmeans() throws ParseException {
+
+        SliceInstance sliceInstance = builder.given_a_slice_instance();
+        UserJob user1 = builder.given_a_user_job();
+        UserJob user2 = builder.given_a_user_job();
+
+
+        Term term1 = builder.given_a_term(sliceInstance.getProject().getOntology());
+        Term term2 = builder.given_a_term(sliceInstance.getProject().getOntology());
+
+        for (int i = 0; i < 10 ; i++) {
+            builder.given_a_algo_annotation(sliceInstance, POLYGONES.get("a"), user1, term1);
+            builder.given_a_algo_annotation(sliceInstance, POLYGONES.get("b"), user1, term2);
+            builder.given_a_algo_annotation(sliceInstance, POLYGONES.get("c"), user2, term1);
+            builder.given_a_algo_annotation(sliceInstance, POLYGONES.get("d"), user2, term2);
+        }
+
+        AlgoAnnotationListing algoAnnotationListing = new AlgoAnnotationListing(entityManager);
+        algoAnnotationListing.setSlice(sliceInstance.getId());
+        algoAnnotationListing.setBbox("POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))");
+        algoAnnotationListing.setKmeans(true);
+        algoAnnotationListing.setKmeansValue(KmeansGeometryService.KMEANSFULL);
+        List list = annotationListingService.listGeneric(algoAnnotationListing);
+        assertThat(list).isNotEmpty();
+        assertThat(list.get(0)).isInstanceOf(Kmeans.class);
+
+        assertThat(kmeansGeometryService.mustBeReduce(sliceInstance.getId(), user1.getId(), "POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))"))
+                .isEqualTo(KmeansGeometryService.FULL);
+
+    }
+
 }

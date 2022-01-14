@@ -46,7 +46,7 @@ public class AnnotationListingService  {
 
     public List listGeneric(AnnotationListing al) {
         securityACLService.check(al.container(),READ);
-        if(al.getKmeans()!=null && al.getKmeans() && al.getKmeansValue()==null) {
+        if((al.getKmeans()!=null && al.getKmeans()) && al.getKmeansValue()==null) {
             if(al.getBbox()==null) {
                 throw new WrongArgumentException("If you want to use kmeans, you must provide image bbox:" + al.getBbox());
             }
@@ -57,7 +57,7 @@ public class AnnotationListingService  {
 
             Integer rule = kmeansGeometryService.mustBeReduce(al.getSlice(),al.getUser(),al.getBbox());
             al.setKmeansValue(rule);
-        } else {
+        } else if(al.getKmeans()!=null && !al.getKmeans()){
             //no kmeans
             al.setKmeansValue(KmeansGeometryService.FULL);
         }
@@ -130,7 +130,7 @@ public class AnnotationListingService  {
                 item.put("class", al.getDomainClass());
 
                 for (String columnName : realColumn) {
-                    item.put(columnName, tuple.get(columnName));
+                    item.put(columnName, tuple.get(columnName)!=null? tuple.get(columnName) : tuple.get(columnName.toLowerCase()));
                 }
 
 

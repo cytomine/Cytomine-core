@@ -1,13 +1,18 @@
 package be.cytomine;
 
 import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.domain.ontology.Ontology;
+import be.cytomine.domain.ontology.Term;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.server.StorageRepository;
 import be.cytomine.repository.ontology.OntologyRepository;
+import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.AclRepository;
 import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.service.PermissionService;
 import be.cytomine.service.UrlApi;
 import be.cytomine.service.database.BootstrapDataService;
 import be.cytomine.service.database.BootstrapUtilsService;
@@ -33,6 +38,8 @@ import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
 @Component
 @Order(0)
@@ -69,6 +76,14 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
     BootstrapUtilsService bootstrapUtilDataService;
 
     @Autowired
+    ProjectRepository projectRepository;
+
+    @Autowired
+    PermissionService permissionService;
+
+
+
+    @Autowired
     Dataset dataset;
 
     @Autowired
@@ -86,7 +101,39 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
         if (secUser!=null) {
             secUser.setPassword(passwordEncoder.encode("password"));
             secUserRepository.save(secUser);
+
+            if (projectRepository.count()==0) {
+                Ontology ontology = new Ontology();
+                ontology.setName("ONTOLOGY_DEMO1");
+                ontology.setUser((User)secUser);
+                ontology = ontologyRepository.save(ontology);
+
+                Term term1 = new Term();
+                term1.setName("term1");
+                term1.setColor("#FF0000");
+                term1.setOntology(ontology);
+                entityManager.persist(term1);
+                Term term2 = new Term();
+                term2.setName("term2");
+                term2.setColor("#00FF00");
+                term2.setOntology(ontology);
+                entityManager.persist(term2);
+
+                Project project = new Project();
+                project.setName("PROJECT_DEMO1");
+                project.setOntology(ontology);
+
+                project = projectRepository.save(project);
+
+                permissionService.addPermission(project, secUser.getUsername(), ADMINISTRATION, secUser);
+                permissionService.addPermission(ontology, secUser.getUsername(), ADMINISTRATION, secUser);
+            }
+
+
+
         }
+
+
 
 
         // TODO: print config
@@ -166,6 +213,7 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
         bootstrapUtilDataService.createMultipleImageServer();
         bootstrapUtilDataService.updateProcessingServerRabbitQueues();
 
+        log.info ("#############################################################################");
         // TODO!
 //        bootstrapUtilDataService.fillProjectConnections();
 //        bootstrapUtilDataService.fillImageConsultations();

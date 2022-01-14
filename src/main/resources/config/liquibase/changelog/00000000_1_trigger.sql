@@ -1,6 +1,4 @@
 --changeset lrollus (generated):1636385276500-1
---preconditions onFail:MARK_RAN onError:HALT
---precondition-sql-check expectedResult:0 select count(trigger_name) from information_schema.triggers WHERE trigger_name = 'beforeinsertuserannotationtrigger'
 CREATE OR REPLACE FUNCTION beforeInsertUserAnnotation() RETURNS TRIGGER AS $incUserAnnBefore$
             DECLARE
 currentImage  image_instance%ROWTYPE;
@@ -343,8 +341,8 @@ currentImage  image_instance%ROWTYPE;
            currentProject  project%ROWTYPE;
            currentAnnotationIndex  annotation_index%ROWTYPE;
            current_class reviewed_annotation.parent_class_name%TYPE;
-           algo_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.ontology.AlgoAnnotation';
-           user_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.ontology.UserAnnotation';
+           algo_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.domain.ontology.AlgoAnnotation';
+           user_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.domain.ontology.UserAnnotation';
            currentUserAnnotation user_annotation%ROWTYPE;
            currentAlgoAnnotation algo_annotation%ROWTYPE;
 BEGIN
@@ -367,8 +365,8 @@ CREATE TRIGGER beforeInsertReviewedAnnotationTrigger BEFORE INSERT ON reviewed_a
 CREATE OR REPLACE FUNCTION incrementAnnotationReviewedAnnotation() RETURNS trigger as $incAnnRevAnn$
         DECLARE
 current_class reviewed_annotation.parent_class_name%TYPE;
-           algo_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.ontology.AlgoAnnotation';
-           user_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.ontology.UserAnnotation';
+           algo_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.domain.ontology.AlgoAnnotation';
+           user_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.domain.ontology.UserAnnotation';
             alreadyExist INTEGER;
             current_id annotation_index.id%TYPE;
 BEGIN
@@ -407,8 +405,8 @@ CREATE TRIGGER incrementAnnotationReviewedAnnotationTrigger AFTER INSERT ON revi
 CREATE OR REPLACE FUNCTION updateAnnotationReviewedAnnotation() RETURNS trigger as $incAnnRevAnn$
         DECLARE
 current_class reviewed_annotation.parent_class_name%TYPE;
-           algo_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.ontology.AlgoAnnotation';
-           user_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.ontology.UserAnnotation';
+           algo_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.domain.ontology.AlgoAnnotation';
+           user_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.domain.ontology.UserAnnotation';
             alreadyExist INTEGER;
             current_id annotation_index.id%TYPE;
 BEGIN
@@ -487,8 +485,8 @@ currentImage  image_instance%ROWTYPE;
             currentProject  project%ROWTYPE;
             currentAnnotationIndex  annotation_index%ROWTYPE;
            current_class reviewed_annotation.parent_class_name%TYPE;
-           algo_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.ontology.AlgoAnnotation';
-           user_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.ontology.UserAnnotation';
+           algo_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.domain.ontology.AlgoAnnotation';
+           user_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.domain.ontology.UserAnnotation';
            currentUserAnnotation user_annotation%ROWTYPE;
            currentAlgoAnnotation algo_annotation%ROWTYPE;
 BEGIN
@@ -511,8 +509,8 @@ CREATE TRIGGER beforeDeleteReviewedAnnotationTrigger BEFORE DELETE ON reviewed_a
 CREATE OR REPLACE FUNCTION afterDeleteReviewedAnnotation() RETURNS trigger as $incAnnRevAnn$
         DECLARE
 current_class reviewed_annotation.parent_class_name%TYPE;
-           algo_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.ontology.AlgoAnnotation';
-           user_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.ontology.UserAnnotation';
+           algo_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.domain.ontology.AlgoAnnotation';
+           user_class reviewed_annotation.parent_class_name%TYPE := 'be.cytomine.domain.ontology.UserAnnotation';
 BEGIN
 UPDATE image_instance
 SET count_image_reviewed_annotations = count_image_reviewed_annotations - 1

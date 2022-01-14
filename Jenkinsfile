@@ -40,7 +40,7 @@ node {
         }
 
         stage ('Publish test') {
-            step([$class: 'JUnitResultArchiver', testResults: '**/test-results/**/*.xml'])
+            step([$class: 'JUnitResultArchiver', testResults: '**/ci/build/test-results/**/*.xml'])
         }
 
         stage ('Publish coverage') {

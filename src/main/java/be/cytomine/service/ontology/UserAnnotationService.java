@@ -16,10 +16,8 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.UserAnnotationListing;
 import be.cytomine.repository.image.ImageInstanceRepository;
-import be.cytomine.repository.ontology.AlgoAnnotationRepository;
-import be.cytomine.repository.ontology.AlgoAnnotationTermRepository;
-import be.cytomine.repository.ontology.ReviewedAnnotationRepository;
-import be.cytomine.repository.ontology.UserAnnotationRepository;
+import be.cytomine.repository.image.SliceInstanceRepository;
+import be.cytomine.repository.ontology.*;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
@@ -42,6 +40,7 @@ import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -54,44 +53,71 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class UserAnnotationService extends ModelService {
 
-    private final UserAnnotationRepository userAnnotationRepository;
+    @Autowired
+    private UserAnnotationRepository userAnnotationRepository;
 
-    private final SecurityACLService securityACLService;
+    @Autowired
+    private SecurityACLService securityACLService;
 
-    private final CurrentUserService currentUserService;
+    @Autowired
+    private CurrentUserService currentUserService;
 
-    private final AnnotationListingService annotationListingService;
+    @Autowired
+    private AnnotationListingService annotationListingService;
 
-    private final EntityManager entityManager;
+    @Autowired
+    private EntityManager entityManager;
 
-    private final SliceInstanceService sliceInstanceService;
+    @Autowired
+    private SliceInstanceService sliceInstanceService;
 
-    private final SimplifyGeometryService simplifyGeometryService;
+    @Autowired
+    private SimplifyGeometryService simplifyGeometryService;
 
-    private final TransactionService transactionService;
+    @Autowired
+    private TransactionService transactionService;
 
-    private final ValidateGeometryService validateGeometryService;
+    @Autowired
+    private ValidateGeometryService validateGeometryService;
 
-    private final AnnotationTermService annotationTermService;
+    @Autowired
+    private AnnotationTermService annotationTermService;
 
-    private final GenericAnnotationService genericAnnotationService;
+    @Autowired
+    private GenericAnnotationService genericAnnotationService;
 
-    private final AlgoAnnotationTermRepository algoAnnotationTermRepository;
+    @Autowired
+    private AlgoAnnotationTermRepository algoAnnotationTermRepository;
 
-    private final AlgoAnnotationTermService algoAnnotationTermService;
+    @Autowired
+    private AlgoAnnotationTermService algoAnnotationTermService;
 
-    private final SliceCoordinatesService sliceCoordinatesService;
+    @Autowired
+    private SliceCoordinatesService sliceCoordinatesService;
 
-    private final ImageInstanceRepository imageInstanceRepository;
+    @Autowired
+    private ImageInstanceRepository imageInstanceRepository;
 
-    private final PropertyService propertyService;
+    @Autowired
+    private PropertyService propertyService;
 
-    private final AnnotationTrackService annotationTrackService;
+    @Autowired
+    private AnnotationTrackService annotationTrackService;
 
+    @Autowired
+    private SliceInstanceRepository sliceInstanceRepository;
+
+    @Autowired
+    private ReviewedAnnotationService reviewedAnnotationService;
+
+    @Autowired
+    private SharedAnnotationService sharedAnnotationService;
+
+    @Autowired
+    private SharedAnnotationRepository sharedAnnotationRepository;
 
     @Override
     public Class currentDomain() {
@@ -521,37 +547,29 @@ public class UserAnnotationService extends ModelService {
         response.getData().remove("userannotation");
     }
 
-    // TODO!
-//    List repeat(Long userAnnotation, Long baseSliceId, int repeat) {
-//        SliceInstance currentSlice = sliceInstanceService.find(baseSliceId)
-//                .orElseThrow(() -> new ObjectNotFoundException("SliceInstance with id " + baseSliceId));
-//
-//        def slices = SliceInstance.createCriteria().list {
-//            createAlias("baseSlice", "as")
-//            eq("image", userAnnotation.image)
-//            order("as.time", "asc")
-//            order("as.zStack", "asc")
-//            order("as.channel", "asc")
-//            fetchMode("baseSlice", FetchMode.JOIN)
-//            ge("as.time", currentSlice.baseSlice.time)
-//            ge("as.zStack", currentSlice.baseSlice.zStack)
-//            ge("as.channel", currentSlice.baseSlice.channel)
-//            ne("id", userAnnotation.slice.id)
-//            maxResults(repeat)
-//        }
-//
-//        def collection = []
-//        slices.each { slice ->
-//                collection << add(new JSONObject([
-//                        slice   : slice.id,
-//                location: userAnnotation.location.toString(),
-//                terms   : userAnnotation.termsId(),
-//                tracks  : userAnnotation.tracksId()
-//            ]))
-//        }
-//
-//        return [collection: collection]
-//    }
+    public List<CommandResponse> repeat(UserAnnotation userAnnotation, Long baseSliceId, int repeat) {
+        SliceInstance currentSlice = sliceInstanceService.find(baseSliceId)
+                .orElseThrow(() -> new ObjectNotFoundException("SliceInstance with id " + baseSliceId));
+
+        List<SliceInstance> slices = sliceInstanceRepository.listByImageInstanceOrderedByTZC(
+                userAnnotation.getImage(),
+                currentSlice.getBaseSlice().getTime(),
+                currentSlice.getBaseSlice().getZStack(),
+                currentSlice.getBaseSlice().getChannel(),
+                userAnnotation.getSlice().getId()
+        ).stream().limit(repeat).collect(Collectors.toList());
+
+        List<CommandResponse> collection = slices.stream()
+                .map(slice -> this.add(JsonObject.of(
+                        "slice", slice.getId(),
+                        "location", userAnnotation.getLocation().toString(),
+                        "terms", userAnnotation.termsId(),
+                        "tracks", userAnnotation.tracksId())))
+                .collect(Collectors.toList());
+
+        return collection;
+    }
+
 
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
         UserAnnotation annotation = (UserAnnotation)domain;
@@ -560,6 +578,8 @@ public class UserAnnotationService extends ModelService {
 
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         deleteDependentAlgoAnnotationTerm((UserAnnotation)domain, transaction, task);
+        deleteDependentSharedAnnotation((UserAnnotation)domain, transaction, task);
+        deleteDependentAnnotationTrack((UserAnnotation)domain, transaction, task);
     }
 
 
@@ -569,27 +589,16 @@ public class UserAnnotationService extends ModelService {
         }
     }
 
-
-
-//    def deleteDependentSharedAnnotation(UserAnnotation ua, Transaction transaction, Task task = null) {
-//        //TODO: we should implement a full service for sharedannotation and delete them if annotation is deleted
-////        if(SharedAnnotation.findByUserAnnotation(ua)) {
-////            throw new ConstraintException("There are some comments on this annotation. Cannot delete it!")
-////        }
-//
-//        SharedAnnotation.findAllByAnnotationClassNameAndAnnotationIdent(ua.class.name, ua.id).each {
-//            sharedAnnotationService.delete(it, transaction, null, false)
-//        }
-//
-//    }
-//
-//    def annotationTrackService
-//
-//    def deleteDependentAnnotationTrack(UserAnnotation ua, Transaction transaction, Task task = null) {
-//        AnnotationTrack.findAllByAnnotationIdent(ua.id).each {
-//            annotationTrackService.delete(it, transaction, task)
-//        }
-//    }
+    public void deleteDependentSharedAnnotation(UserAnnotation aa, Transaction transaction, Task task) {
+        for (SharedAnnotation sharedAnnotation : sharedAnnotationRepository.findAllByAnnotationIdentOrderByCreatedDesc(aa.getId())) {
+            sharedAnnotationService.delete(sharedAnnotation,transaction,task,false);
+        }
+    }
+    public void deleteDependentAnnotationTrack(UserAnnotation ua, Transaction transaction, Task task) {
+        for (AnnotationTrack annotationTrack : annotationTrackService.list(ua)) {
+            annotationTrackService.delete(annotationTrack, transaction, task, false);
+        }
+    }
 
     public CommandResponse doCorrectUserAnnotation(List<Long> coveringAnnotations, String newLocation, boolean remove) throws ParseException {
         if (coveringAnnotations.isEmpty()) {

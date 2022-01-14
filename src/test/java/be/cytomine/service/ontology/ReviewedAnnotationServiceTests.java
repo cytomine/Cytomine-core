@@ -614,94 +614,72 @@ public class ReviewedAnnotationServiceTests {
     UserAnnotationRepository userAnnotationRepository;
 
     @Test
-    @Transactional(Transactional.TxType.NEVER)
     void annotation_reviewed_counter_for_user_annotation() {
 
-        Long[] annotationId = new Long[1];
-        this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
-            @Override
-            protected void doInTransactionWithoutResult(TransactionStatus status) {
-                ImageInstance image = builder.given_an_image_instance();
-                imageInstanceService.startReview(image);
-                UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(image.getProject());
-                userAnnotation.setImage(image);
-                builder.persistAndReturn(userAnnotation);
+        ImageInstance image = builder.given_an_image_instance();
+        imageInstanceService.startReview(image);
+        UserAnnotation userAnnotation = builder.given_a_user_annotation();
+        userAnnotation.setImage(image);
+        userAnnotation.setProject(image.getProject());
+        builder.persistAndReturn(userAnnotation);
 
-                annotationId[0]=userAnnotation.getId();
-            }
-        });
+        assertThat(userAnnotation.getCountReviewedAnnotations()).isEqualTo(0);
+        assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(0);
+        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(0);
 
-        final UserAnnotation annotation = userAnnotationRepository.getById(annotationId[0]);
+        reviewedAnnotationService.reviewAnnotation(userAnnotation.getId(), null);
 
+        entityManager.refresh(userAnnotation);
+        entityManager.refresh(image);
+        entityManager.refresh(image.getProject());
 
-        assertThat(reviewedAnnotationRepository.countReviewedAnnotation(annotationId[0])).isEqualTo(0);
-//        assertThat(annotation.getImage().getCountImageReviewedAnnotations()).isEqualTo(0);
-//        assertThat(annotation.getProject().getCountReviewedAnnotations()).isEqualTo(0);
+        assertThat(userAnnotation.getCountReviewedAnnotations()).isEqualTo(1);
+        assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(1);
+        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(1);
 
+        reviewedAnnotationService.unReviewAnnotation(userAnnotation.getId());
 
-        this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
-            @Override
-            protected void doInTransactionWithoutResult(TransactionStatus status) {
-                reviewedAnnotationService.reviewAnnotation(annotation.getId(), null);
-            }
-        });
+        entityManager.refresh(userAnnotation);
+        entityManager.refresh(image);
+        entityManager.refresh(image.getProject());
 
-//
-//        final UserAnnotation userAnnotationReviewed = userAnnotationRepository.getById(annotationId[0]);
-//        entityManager.refresh(userAnnotationReviewed);
-
-        assertThat(reviewedAnnotationRepository.countReviewedAnnotation(annotationId[0])).isEqualTo(1);
-//        assertThat(userAnnotationReviewed.getImage().getCountImageReviewedAnnotations()).isEqualTo(1);
-//        assertThat(userAnnotationReviewed.getProject().getCountReviewedAnnotations()).isEqualTo(1);
-
-//        reviewedAnnotationService.unReviewAnnotation(userAnnotation.getId());
-//
-//        entityManager.refresh(userAnnotation);
-//        entityManager.refresh(image);
-//        entityManager.refresh(image.getProject());
-//
-//        assertThat(userAnnotation.getCountReviewedAnnotations()).isEqualTo(0);
-//        assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(0);
-//        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(0);
+        assertThat(userAnnotation.getCountReviewedAnnotations()).isEqualTo(0);
+        assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(0);
+        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(0);
     }
 
 
     @Test
     void annotation_reviewed_counter_for_algo_annotation() {
-        Assertions.fail("todo");
+        ImageInstance image = builder.given_an_image_instance();
+        imageInstanceService.startReview(image);
+        AlgoAnnotation annotation = builder.given_a_algo_annotation();
+        annotation.setImage(image);
+        annotation.setProject(image.getProject());
 
-//        ImageInstance image = builder.given_an_image_instance();
-//        imageInstanceService.startReview(image);
-//        UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(image.getProject());
-//        userAnnotation.setImage(image);
-//
-//        entityManager.refresh(userAnnotation);
-//        entityManager.refresh(image);
-//        entityManager.refresh(image.getProject());
-//
-//        assertThat(userAnnotation.getCountReviewedAnnotations()).isEqualTo(0);
-//        assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(0);
-//        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(0);
-//
-//        reviewedAnnotationService.reviewAnnotation(userAnnotation.getId(), null);
-//
-//        entityManager.refresh(userAnnotation);
-//        entityManager.refresh(image);
-//        entityManager.refresh(image.getProject());
-//
-//        assertThat(userAnnotation.getCountReviewedAnnotations()).isEqualTo(1);
-//        assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(1);
-//        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(1);
-//
-//        reviewedAnnotationService.unReviewAnnotation(userAnnotation.getId());
-//
-//        entityManager.refresh(userAnnotation);
-//        entityManager.refresh(image);
-//        entityManager.refresh(image.getProject());
-//
-//        assertThat(userAnnotation.getCountReviewedAnnotations()).isEqualTo(0);
-//        assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(0);
-//        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(0);
+        assertThat(annotation.getCountReviewedAnnotations()).isEqualTo(0);
+        assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(0);
+        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(0);
+
+        reviewedAnnotationService.reviewAnnotation(annotation.getId(), null);
+
+        entityManager.refresh(annotation);
+        entityManager.refresh(image);
+        entityManager.refresh(image.getProject());
+
+        assertThat(annotation.getCountReviewedAnnotations()).isEqualTo(1);
+        assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(1);
+        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(1);
+
+        reviewedAnnotationService.unReviewAnnotation(annotation.getId());
+
+        entityManager.refresh(annotation);
+        entityManager.refresh(image);
+        entityManager.refresh(image.getProject());
+
+        assertThat(annotation.getCountReviewedAnnotations()).isEqualTo(0);
+        assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(0);
+        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(0);
     }
 
 

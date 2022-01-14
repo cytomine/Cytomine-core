@@ -39,7 +39,13 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
     )
     private List<Term> terms = new ArrayList<>();
 
-
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "annotation_track",
+            joinColumns = { @JoinColumn(name = "annotation_ident") },
+            inverseJoinColumns = { @JoinColumn(name = "track_id") }
+    )
+    private List<Track> tracks = new ArrayList<>();
 
     @PrePersist
     public void beforeCreate() {
@@ -64,14 +70,9 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
         return countReviewedAnnotations > 0;
     }
 
-//TODO:
-//    def tracks() {
-//        if (this.version != null) {
-//            AnnotationTrack.findAllByAnnotationIdentAndDeletedIsNull(this.id).collect { it.track }
-//        } else {
-//            return []
-//        }
-//    }
+    public List<Track> tracks() {
+        return tracks;
+    }
 
     /**
      * Get all annotation terms id
@@ -87,10 +88,10 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
         return true;
     }
 
-    // TODO:
-//    def tracksId() {
-//        return tracks().collect { it.id }.unique()
-//    }
+    public List<Long> tracksId() {
+        return tracks().stream().map(CytomineDomain::getId).distinct().collect(Collectors.toList());
+
+    }
 
     /**
      * Get all terms for automatic review

@@ -2,12 +2,10 @@ package be.cytomine.service.ontology;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.ontology.Relation;
-import be.cytomine.domain.ontology.RelationTerm;
-import be.cytomine.domain.ontology.Term;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.exceptions.AlreadyExistException;
+import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.RelationTermRepository;
@@ -22,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -49,6 +49,9 @@ public class TermServiceTests {
 
     @Autowired
     TransactionService transactionService;
+
+    @Autowired
+    EntityManager entityManager;
 
     @Test
     void list_all_term_with_success() {
@@ -258,6 +261,48 @@ public class TermServiceTests {
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);
         assertThat(termService.find(term.getId()).isEmpty());
+    }
+
+    @Test
+    void delete_term_with_annotation_term_fails() {
+        Term term = builder.given_a_term();
+        AnnotationTerm annotationTerm = builder.given_an_annotation_term();
+        annotationTerm.setTerm(term);
+
+        Assertions.assertThrows(ConstraintException.class, () -> {
+            termService.delete(term, null, null, true);
+        });
+
+        assertThat(entityManager.find(Term.class, term.getId())).isNotNull();
+        assertThat(entityManager.find(AnnotationTerm.class, annotationTerm.getId())).isNotNull();
+    }
+
+    @Test
+    void delete_term_with_algo_annotation_term_fails() {
+        Term term = builder.given_a_term();
+        AlgoAnnotationTerm annotationTerm = builder.given_an_algo_annotation_term();
+        annotationTerm.setTerm(term);
+
+        Assertions.assertThrows(ConstraintException.class, () -> {
+            termService.delete(term, null, null, true);
+        });
+
+        assertThat(entityManager.find(Term.class, term.getId())).isNotNull();
+        assertThat(entityManager.find(AlgoAnnotationTerm.class, annotationTerm.getId())).isNotNull();
+    }
+
+    @Test
+    void delete_term_with_reviewed_annotation_term_fails() {
+        Term term = builder.given_a_term();
+        ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
+        reviewedAnnotation.getTerms().add(term);
+
+        Assertions.assertThrows(ConstraintException.class, () -> {
+            termService.delete(term, null, null, true);
+        });
+
+        assertThat(entityManager.find(Term.class, term.getId())).isNotNull();
+        assertThat(entityManager.find(ReviewedAnnotation.class, reviewedAnnotation.getId())).isNotNull();
     }
 
 

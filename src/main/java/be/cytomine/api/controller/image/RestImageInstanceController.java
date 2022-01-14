@@ -471,21 +471,6 @@ public class RestImageInstanceController extends RestCytomineController {
         return responseSuccess(JsonObject.toJsonString(imageInstanceService.computeBounds(project)));
     }
 
-
-//    @GetMapping("/project/{id}/bounds/imageinstance.json")
-//    public ResponseEntity<String> bounds(
-//            @PathVariable Long id
-//    ) {
-//        log.debug("REST request to list projects bounds");
-//        // TODO: implement... real implementation is on the top
-//
-//        return ResponseEntity.status(200).body(
-//               "{\"channel\":{\"min\":null,\"max\":null},\"countImageAnnotations\":{\"min\":0,\"max\":99999},\"countImageJobAnnotations\":{\"min\":0,\"max\":99999},\"countImageReviewedAnnotations\":{\"min\":0,\"max\":99999},\"created\":{\"min\":\"1691582770212\",\"max\":\"1605232995654\"},\"deleted\":{\"min\":null,\"max\":null},\"instanceFilename\":{\"min\":\"15H26535 CD8_07.12.2020_11.06.32.mrxs\",\"max\":\"VE0CD5700003EF_2020-11-04_11_36_38.scn\"},\"magnification\":{\"list\":[20,40],\"min\":20,\"max\":40},\"resolution\":{\"list\":[0.12499998807907104,0.25,0.49900001287460327],\"min\":0.25,\"max\":0.49900001287460327},\"reviewStart\":{\"min\":null,\"max\":null},\"reviewStop\":{\"min\":null,\"max\":null},\"updated\":{\"min\":null,\"max\":null},\"zIndex\":{\"min\":null,\"max\":null},\"width\":{\"min\":46000,\"max\":106259},\"height\":{\"min\":32914,\"max\":306939},\"format\":{\"list\":[\"mrxs\",\"scn\",\"svs\"]},\"mimeType\":{\"list\":[\"openslide/mrxs\",\"openslide/scn\",\"openslide/svs\"]}}"
-//        );
-//
-//
-//    }
-
     boolean isFilterRequired(Project project) {
         boolean isManager;
         try {
@@ -510,9 +495,6 @@ public class RestImageInstanceController extends RestCytomineController {
 ////            if(project) filterEnabled = project.blindMode
 //        }
 //    }
-
-
-
 
 
     protected void filterOneElement(Map<String, Object> element) {

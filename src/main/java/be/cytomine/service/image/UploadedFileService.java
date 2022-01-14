@@ -182,8 +182,10 @@ public class UploadedFileService extends ModelService {
                 if (value instanceof BigInteger) {
                     value = ((BigInteger)value).longValue();
                 }
-                result.put(element.getAlias(), value);
+                String alias = SQLUtils.toCamelCase(element.getAlias());
+                result.put(alias, value);
             }
+            result.put("thumbURL",(result.get("image")!=null) ? UrlApi.getAbstractImageThumbUrl((Long)result.get("image"), "png") : null);
             results.add(result);
         }
         return results;

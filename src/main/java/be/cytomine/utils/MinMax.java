@@ -1,11 +1,12 @@
 package be.cytomine.utils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MinMax<T> {
     T min;
     T max;
-    List<T> list;
+    List<T> list = new ArrayList<>();
 
     public T getMin() {
         return min;
