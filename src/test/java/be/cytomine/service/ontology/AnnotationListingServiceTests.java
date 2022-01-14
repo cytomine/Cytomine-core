@@ -544,7 +544,9 @@ public class AnnotationListingServiceTests {
                 .contains(algoAnnotation.getId());
         AnnotationResult annotationResult = (AnnotationResult) annotationListingService.listGeneric(userAnnotationListing).get(0);
         assertThat(annotationResult.get("id")).isEqualTo(algoAnnotation.getId());
-        assertThat((List<Long>)annotationResult.get("term")).containsExactlyElementsOf(algoAnnotation.termsId());
+        List<Long> termsId = algoAnnotation.termsId();
+        assertThat((List<Long>)annotationResult.get("term")).contains(termsId.get(0));
+        assertThat((List<Long>)annotationResult.get("term")).contains(termsId.get(1));
     }
 
 

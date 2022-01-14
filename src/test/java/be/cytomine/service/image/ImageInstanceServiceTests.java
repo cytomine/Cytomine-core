@@ -656,6 +656,7 @@ public class ImageInstanceServiceTests {
     @Test
     void edit_image_instance_with_unexsting_user_fails() {
         ImageInstance imageInstance = builder.given_an_image_instance();
+        imageInstance.setBaseImage(builder.given_an_abstract_image());
         Assertions.assertThrows(WrongArgumentException.class, () -> {
             imageInstanceService.add(imageInstance.toJsonObject().withChange("user", null));
         });

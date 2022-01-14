@@ -968,7 +968,9 @@ public class AnnotationDomainResourceTests {
         jsonObject.put("kmeans", true);
         jsonObject.put("max", 0);
         jsonObject.put("offset", 0);
-        jsonObject.put("notReviewedOnly", true);
+        jsonObject.put("notReviewedOnly", false);
+        jsonObject.put("reviewed", true);
+        jsonObject.put("showDefault", true);
         jsonObject.put("showWKT", true);
         jsonObject.put("showGIS", true);
         jsonObject.put("showTerm", true);

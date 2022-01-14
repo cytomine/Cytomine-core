@@ -169,10 +169,4 @@ public class NestedImageInstanceServiceTests {
         assertThat(commandResponse.getStatus()).isEqualTo(200);
         AssertionsForClassTypes.assertThat(nestedImageInstanceService.find(nestedImageInstance.getId()).isEmpty());
     }
-
-    @Test
-    void delete_nested_image_with_dependencies_with_success() {
-        fail("not yet implemented");
-    }
-
 }
