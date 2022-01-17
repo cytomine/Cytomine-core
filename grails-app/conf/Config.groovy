@@ -423,6 +423,7 @@ cytomine.customUI.project = [
         "project-explore-property":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
         "project-explore-follow":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
         "project-explore-guided-tour":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
+        "project-explore-slide-label":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
 
         //annotation details
         "project-explore-annotation-main":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
