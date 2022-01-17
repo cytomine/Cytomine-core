@@ -180,6 +180,40 @@ class AbstractImageService extends ModelService {
             search += " ) "
         }
 
+        def validatedSearchParameters = getDomainAssociatedSearchParameters(AbstractImage, searchParameters)
+
+        loop:for (def parameter : searchParameters){
+            String property
+            switch(parameter.field) {
+                case "tag" :
+                    property = "tda.tag_id"
+                    parameter.values = convertSearchParameter(Long.class, parameter.values)
+                    break
+                default:
+                    continue loop
+            }
+            validatedSearchParameters << [operator: parameter.operator, property: property, value: parameter.values]
+        }
+
+        def tagSearchParameters= validatedSearchParameters.findAll {it.property == "tda.tag_id"}
+        validatedSearchParameters = tagSearchParameters
+
+        def hvSQLSearch = searchParametersToSQLConstraints(validatedSearchParameters + tagSearchParameters)
+
+        if(hvSQLSearch && hvSQLSearch.data && !hvSQLSearch.data.isEmpty()) {
+            search += " AND "
+            search += hvSQLSearch.data.collect{it.sql}.join(" AND ")
+            hvSQLSearch.sqlParameters.each{
+                mapParams.put(it.key,it.value)
+            }
+        }
+
+        if(tagSearchParameters) {
+            if (!searchText || searchText.isEmpty()) {
+                from += "LEFT OUTER JOIN tag_domain_association tda ON ${abstractImageAlias}.id = tda.domain_ident AND tda.domain_class_name = 'be.cytomine.image.AbstractImage' "
+            }
+        }
+
 
         if(!currentRoleServiceProxy.isAdminByNow(user)) {
             List<Long> storages = securityACLService.getStorageList(cytomineService.currentUser, false).collect{it.id}
