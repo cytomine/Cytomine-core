@@ -2,6 +2,8 @@ package be.cytomine.search
 
 import be.cytomine.image.AbstractImage
 import be.cytomine.image.hv.HVMetadata
+import be.cytomine.meta.Tag
+import be.cytomine.meta.TagDomainAssociation
 import be.cytomine.security.SecurityTestsAbstract
 
 /*
@@ -79,6 +81,50 @@ class AbstractImageSearchTests {
 
     }
 
+    void testGetSearchByMetadata(){
+
+        AbstractImage img = BasicInstanceBuilder.getAbstractImageNotExist(true)
+        AbstractImage img2 = BasicInstanceBuilder.getAbstractImageNotExist(true)
+        TagDomainAssociation tda = BasicInstanceBuilder.getTagDomainAssociationNotExist(img, true)
+        TagDomainAssociation tda2 = BasicInstanceBuilder.getTagDomainAssociationNotExist(img2, true)
+        Tag tag1 = tda.tag
+        Tag tag2 = tda2.tag
+
+        def result = AbstractImageAPI.list(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        long size = json.size
+        assert size >= 2
+
+
+        def searchParameters = [[operator : "in", field : "tag", value: tag1.id]]
+
+        result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert json.size == 1
+        assert json.collection[0].id == img.id
+
+        searchParameters = [[operator : "in", field : "tag", value: tag2.id]]
+
+        result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert json.size == 1
+        assert json.collection[0].id == img2.id
+
+        searchParameters = [[operator : "in", field : "tag", value: ""+tag1.id+","+tag2.id]]
+
+        result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert json.size == 2
+    }
+
     //search hv-ikt
     void testGetSearchHVIKT(){
 
@@ -105,7 +151,7 @@ class AbstractImageSearchTests {
         assert size >= 2
 
 
-        def searchParameters = [[operator : "ilike", field : "search", value:"test with space"]]
+        def searchParameters = [[operator : "ilike", field : "searchText", value:"test with space"]]
 
         result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -115,7 +161,7 @@ class AbstractImageSearchTests {
                                 .findAll {it.originalFilename.contains("with")}
                                 .findAll {it.originalFilename.contains("space")}.size()
 
-        searchParameters = [[operator : "ilike", field : "search", value:"test  space"]]
+        searchParameters = [[operator : "ilike", field : "searchText", value:"test  space"]]
 
         result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -124,7 +170,7 @@ class AbstractImageSearchTests {
             assert json.size == AbstractImage.findAllByOriginalFilenameIlike("test")
                     .findAll {it.originalFilename.contains("space")}.size()
 
-        searchParameters = [[operator : "ilike", field : "search", value:"test_without_space"]]
+        searchParameters = [[operator : "ilike", field : "searchText", value:"test_without_space"]]
 
         result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -133,7 +179,7 @@ class AbstractImageSearchTests {
         assert json.size == AbstractImage.countByOriginalFilename("test_without_space")
         assert json.size == 0
 
-        searchParameters = [[operator : "ilike", field : "search", value:"sp*ce"]]
+        searchParameters = [[operator : "ilike", field : "searchText", value:"sp*ce"]]
 
         result = AbstractImageAPI.search(0,0, searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
