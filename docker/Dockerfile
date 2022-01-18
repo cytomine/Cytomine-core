@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009-2018. Authors: see NOTICE file.
+# Copyright (c) 2009-2022. Authors: see NOTICE file.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,23 +14,48 @@
 # limitations under the License.
 #
 
-ARG FROM_NAMESPACE
-ARG FROM_VERSION
-FROM ${FROM_NAMESPACE}/tomcat7:$FROM_VERSION
+FROM tomcat:9.0-jdk8-openjdk
+
+MAINTAINER Cytomine SCRLFS "support@cytomine.coop"
 
 
-RUN rm -r /var/lib/tomcat7/webapps/* && mkdir -p /usr/share/tomcat7/.grails
+# base librairies and configuration
+RUN apt-get update -y && apt-get -y install \
+      build-essential \
+      locate \
+      logrotate \
+      net-tools \
+      unzip \
+      wget
 
-ARG VERSION
-ARG NAMESPACE=Cytomine-ULiege
-ARG RELEASE_PATH=https://github.com/${NAMESPACE}/Cytomine-Core/releases/download/v${VERSION}
-ADD ${RELEASE_PATH}/core.war /var/lib/tomcat7/webapps/ROOT.war
-ADD ${RELEASE_PATH}/restapidoc.json /var/lib/tomcat7/restapidoc.json
+RUN sed -i "/su root syslog/c\su root root" /etc/logrotate.conf
+ENV LANG C.UTF-8
+ENV DEBIAN_FRONTEND noninteractive
+
+
+#tomcat configuration
+
+RUN apt-get -y update && apt-get install -y autoconf automake libpopt-dev libtool make xz-utils
+RUN cd /tmp/ && wget https://github.com/logrotate/logrotate/releases/download/3.18.0/logrotate-3.18.0.tar.xz && tar -xJf logrotate-3.18.0.tar.xz
+RUN cd /tmp/logrotate-3.18.0 && autoreconf -fiv && ./configure && make
+
+RUN cp /tmp/logrotate-3.18.0/logrotate /usr/sbin/logrotate
+
+
+# core specificities
+
+RUN ln -s /usr/local/tomcat /var/lib/tomcat9 #for backward compatibility
+RUN ln -s /usr/share/tomcat9/.grails /root/.grails #for backward compatibility
+
+RUN rm -rf /var/lib/tomcat9/webapps/* && cd /var/lib/tomcat9/webapps/  && wget https://github.com/cytomine/Cytomine-core/releases/download/v3.2.0/Core.war -O ROOT.war
+RUN cd /var/lib/tomcat9/  && wget https://github.com/cytomine/Cytomine-core/releases/download/v3.2.0/restapidoc.json -O restapidoc.json
+
+RUN mkdir -p /usr/share/tomcat9/.grails
 
 RUN touch /tmp/addHosts.sh
-COPY setenv.sh /usr/share/tomcat7/bin/setenv.sh
-RUN chmod +x /usr/share/tomcat7/bin/setenv.sh
-COPY deploy.sh /tmp/deploy.sh
+ADD setenv.sh /tmp/setenv.sh
+RUN chmod +x /tmp/setenv.sh
+ADD deploy.sh /tmp/deploy.sh
 RUN chmod +x /tmp/deploy.sh
 
 ENTRYPOINT ["/tmp/deploy.sh"]
