@@ -437,6 +437,77 @@ class StorageSecurityTests extends SecurityTestsAbstract {
         checkNotAbleToAdministrate(storage, USERNAME1, PASSWORD1)
     }
 
+    void testCommonStoragePrivilegeForReadOnlyCannotAttachFile() {
+        //Get admin user
+        User admin = BasicInstanceBuilder.getSuperAdmin(USERNAMEADMIN,PASSWORDADMIN)
+        //Get user1
+        User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
+
+        Storage storage = createStorageFromAPI(USERNAMEADMIN, PASSWORDADMIN)
+
+        assert (200 == StorageAPI.changeUserPermission(storage.id, user1.id,"READ",USERNAMEADMIN,PASSWORDADMIN).code)
+
+        def attachedFileToAdd = BasicInstanceBuilder.getAttachedFileNotExist(false)
+        attachedFileToAdd.setDomain(storage)
+        def result = AttachedFileAPI.upload(attachedFileToAdd.domainClassName,attachedFileToAdd.domainIdent,new File("test/functional/be/cytomine/utils/simpleFile.txt"),SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
+        assert 403 == result.code
+    }
+
+    void testCommonStoragePrivilegeForWriteCanAttachFile() {
+        //Get admin user
+        User admin = BasicInstanceBuilder.getSuperAdmin(USERNAMEADMIN,PASSWORDADMIN)
+        //Get user1
+        User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
+
+        Storage storage = createStorageFromAPI(USERNAMEADMIN, PASSWORDADMIN)
+        println "storage = $storage"
+
+        assert (200 == StorageAPI.changeUserPermission(storage.id, user1.id,"WRITE",USERNAMEADMIN,PASSWORDADMIN).code)
+
+        def attachedFileToAdd = BasicInstanceBuilder.getAttachedFileNotExist(false)
+        attachedFileToAdd.setDomain(storage)
+        def result = AttachedFileAPI.upload(attachedFileToAdd.domainClassName,attachedFileToAdd.domainIdent,new File("test/functional/be/cytomine/utils/simpleFile.txt"),SecurityTestsAbstract.USERNAME1,SecurityTestsAbstract.PASSWORD1)
+        assert 200 == result.code
+    }
+
+    void testCommonStoragePrivilegeForWriteCanDeleteItsOwnUploadedFile() {
+        //Get admin user
+        User admin = BasicInstanceBuilder.getSuperAdmin(USERNAMEADMIN,PASSWORDADMIN)
+        //Get user1
+        User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
+
+        Storage storage = createStorageFromAPI(USERNAMEADMIN, PASSWORDADMIN)
+
+        assert (200 == StorageAPI.changeUserPermission(storage.id, user1.id,"WRITE",USERNAMEADMIN,PASSWORDADMIN).code)
+
+        UploadedFile uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
+        uploadedfileToAdd.storage = storage
+        def result = UploadedFileAPI.create(uploadedfileToAdd.encodeAsJSON(), USERNAME1, PASSWORD1)
+        assert 200 == result.code
+
+        UploadedFileAPI.delete(result.data.id, USERNAME1, PASSWORD1)
+        assert 200 == result.code
+    }
+
+    void testCommonStoragePrivilegeForWriteCannotDeleteAnotherUserUploadedFile() {
+        //Get admin user
+        User admin = BasicInstanceBuilder.getSuperAdmin(USERNAMEADMIN,PASSWORDADMIN)
+        //Get user1
+        User user1 = BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
+
+        Storage storage = createStorageFromAPI(USERNAMEADMIN, PASSWORDADMIN)
+
+        assert (200 == StorageAPI.changeUserPermission(storage.id, user1.id,"WRITE",USERNAMEADMIN,PASSWORDADMIN).code)
+
+        UploadedFile uploadedfileToAdd = BasicInstanceBuilder.getUploadedFileNotExist()
+        uploadedfileToAdd.storage = storage
+        def result = UploadedFileAPI.create(uploadedfileToAdd.encodeAsJSON(), USERNAMEADMIN, PASSWORDADMIN)
+        assert 200 == result.code
+
+        result = UploadedFileAPI.delete(result.data.id, USERNAME1, PASSWORD1)
+        assert 403 == result.code //not his file
+    }
+
     void testStorageOwnerHasAdministrationPrivilege() {
         BasicInstanceBuilder.getUser(USERNAME1,PASSWORD1)
 
