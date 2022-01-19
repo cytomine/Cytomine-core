@@ -18,6 +18,7 @@ package be.cytomine.api.meta
 
 import be.cytomine.api.RestController
 import be.cytomine.image.AbstractImage
+import be.cytomine.image.server.Storage
 import be.cytomine.project.Project
 import be.cytomine.AnnotationDomain
 import be.cytomine.CytomineDomain
@@ -130,7 +131,9 @@ class RestAttachedFileController extends RestController {
             } else if(recipientDomain instanceof Project || !recipientDomain.container() instanceof Project) {
                 securityACLService.check(domainIdent,domainClassName,"container",WRITE)
                 securityACLService.checkIsDomainNotLocked(domainIdent,domainClassName)
-            } else {
+            } else if(recipientDomain instanceof Storage || !recipientDomain.container() instanceof Storage) {
+                securityACLService.check(domainIdent,domainClassName,"container",WRITE)
+            }else {
                 securityACLService.checkFullOrRestrictedForOwner(domainIdent,domainClassName, "user")
             }
             def result = attachedFileService.add(filename,f.getBytes(),key,domainIdent,domainClassName)

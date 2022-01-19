@@ -206,4 +206,8 @@ class UploadedFile extends CytomineDomain implements Serializable {
     CytomineDomain container() {
         return storage
     }
+
+    public SecUser userDomainCreator() {
+        return user
+    }
 }

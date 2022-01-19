@@ -261,6 +261,7 @@ class UploadedFileService extends ModelService {
         SecUser currentUser = cytomineService.getCurrentUser()
         securityACLService.checkUser(currentUser)
         securityACLService.checkAtLeastOne(domain, WRITE)
+        securityACLService.checkIsCreator(domain, currentUser)
         Command c = new DeleteCommand(user: currentUser,transaction:transaction)
         return executeCommand(c,domain,null)
     }
