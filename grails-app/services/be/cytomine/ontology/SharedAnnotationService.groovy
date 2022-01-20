@@ -21,6 +21,7 @@ import be.cytomine.Exception.CytomineException
 import be.cytomine.Exception.MiddlewareException
 import be.cytomine.Exception.ObjectNotFoundException
 import be.cytomine.command.*
+import be.cytomine.meta.Configuration
 import be.cytomine.security.ForgotPasswordToken
 import be.cytomine.security.SecRole
 import be.cytomine.security.SecUser
@@ -45,6 +46,7 @@ class SharedAnnotationService extends ModelService {
     def secUserSecRoleService
     def abstractImageService
     def imageServerService
+    def configurationService
 
 
     // Avoid loading loop because secUserService -> userAnnotationService -> shareAnnotationService
@@ -185,7 +187,8 @@ class SharedAnnotationService extends ModelService {
         if (result) {
             log.info "send mail to " + receiversEmail
             try {
-                notificationService.notifyShareAnnotation(sender, receiversEmail, json, attachments, cid)
+                Configuration configuration = configurationService.readByKey("SHARED_ANNOTATION_EMAIL_MODE")
+                notificationService.notifyShareAnnotation(sender, receiversEmail, json, attachments, cid, (configuration? configuration.value : "classic"))
             } catch (MiddlewareException e) {
                 if(Environment.getCurrent() == Environment.DEVELOPMENT){
                     e.printStackTrace()
