@@ -120,7 +120,7 @@ class NotificationService {
                 welcomeMessage)
     }
 
-    def notifyShareAnnotation(User sender, def receiversEmail, def request, def attachments, def cid) {
+    def notifyShareAnnotation(User sender, def receiversEmail, def request, def attachments, def cid, String mode = "classic") {
         String subject = request.subject
         String shareMessage = renderService.createShareMessage([
                 from: request.from,
@@ -132,7 +132,7 @@ class NotificationService {
                 website: grailsApplication.config.grails.instanceHostWebsite,
                 mailFrom: grailsApplication.config.grails.instanceHostSupportMail,
                 phoneNumber: grailsApplication.config.grails.instanceHostPhoneNumber
-        ])
+        ], mode)
 
         cytomineMailService.send(
                 cytomineMailService.NO_REPLY_EMAIL,
