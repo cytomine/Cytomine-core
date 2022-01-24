@@ -104,6 +104,9 @@ class Project extends CytomineDomain implements Serializable {
     @RestApiObjectField(description = "If true, an user (which is not an administrator of the project) cannot see admins layers", mandatory = false)
     boolean hideAdminsLayers = false
 
+    @RestApiObjectField(description = "When domain was removed from Cytomine", useForCreation = false)
+    Date toDeleteAt
+
 //    @RestApiObjectField(description = "Editing mode of the current project (read_only, restricted or classic)", mandatory = true)
     EditingMode mode = EditingMode.CLASSIC;
 
@@ -130,6 +133,7 @@ class Project extends CytomineDomain implements Serializable {
         name(maxSize: 150, unique: true, blank: false)
         discipline(nullable: true)
         ontology(nullable: true)
+        toDeleteAt(nullable: true)
     }
 
     /**
@@ -247,6 +251,7 @@ class Project extends CytomineDomain implements Serializable {
         returnArray['hideUsersLayers'] = domain?.hideUsersLayers
         returnArray['hideAdminsLayers'] = domain?.hideAdminsLayers
 
+        returnArray['toDeleteAt'] = domain?.toDeleteAt?.time?.toString()
         return returnArray
     }
 

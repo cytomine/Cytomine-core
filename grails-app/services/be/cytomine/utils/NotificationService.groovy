@@ -19,6 +19,7 @@ package be.cytomine.utils
 import be.cytomine.api.UrlApi
 import be.cytomine.image.AbstractImage
 import be.cytomine.image.ImageInstance
+import be.cytomine.project.Project
 import be.cytomine.security.ForgotPasswordToken
 import be.cytomine.security.SecUser
 import be.cytomine.security.User
@@ -26,6 +27,7 @@ import be.cytomine.security.UserJob
 
 import javax.imageio.ImageIO
 import java.awt.image.BufferedImage
+import java.text.SimpleDateFormat
 
 class NotificationService {
 
@@ -35,6 +37,29 @@ class NotificationService {
     def renderService
     def abstractImageService
     def imageServerService
+
+    def notifyProjectDelete(def receiversEmail, Project project) {
+        String message = renderService.createProjectDeleteWarning([
+                projectId : project.id,
+                projectName : project.name,
+                toDeleteAt: new SimpleDateFormat("dd/MM/YYYY").format(project.toDeleteAt),
+                by: grailsApplication.config.grails.serverURL,
+                website: grailsApplication.config.grails.instanceHostWebsite,
+                mailFrom: grailsApplication.config.grails.instanceHostSupportMail,
+                phoneNumber: grailsApplication.config.grails.instanceHostPhoneNumber
+        ])
+        String mailTitle = "Project " + project.name + " will be deleted soon"
+
+        println message
+
+        cytomineMailService.send(
+                null,
+                receiversEmail as String[],
+                null,
+                new String[0],
+                mailTitle,
+                message)
+    }
 
     public def notifyNewImageAvailable(SecUser currentUser, AbstractImage abstractImage, def projects) {
         User recipient = null
