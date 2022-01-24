@@ -708,15 +708,17 @@ class ProjectService extends ModelService {
      * @param printMessage Flag if client will print or not confirm message
      * @return Response structure (code, old domain,..)
      */
-    def delete(Project domain, Transaction transaction = null, Task task = null, boolean printMessage = true) {
+    def delete(Project domain, Transaction transaction = null, Task task = null, boolean printMessage = true, boolean checkPermission = true) {
 //        SecUser currentUser = cytomineService.getCurrentUser()
 //        securityACLService.check(domain,DELETE)
 //        Command c = new DeleteCommand(user: currentUser,transaction:transaction,linkProject: false,refuseUndo:true)
 //        return executeCommand(c,domain,null)
 
         //We don't delete domain, we juste change a flag
-        securityACLService.check(domain.container(),ADMINISTRATION)
-        securityACLService.checkisNotReadOnly(domain.container())
+        if (checkPermission) {
+            securityACLService.check(domain.container(),ADMINISTRATION)
+            securityACLService.checkisNotReadOnly(domain.container())
+        }
         def jsonNewData = JSON.parse(domain.encodeAsJSON())
         jsonNewData.deleted = new Date().time
         SecUser currentUser = cytomineService.getCurrentUser()
