@@ -45,4 +45,8 @@ class RenderService {
     String createNewImagesAvailableMessage(model) {
         groovyPageRenderer.render view: '/mail/new_image', model: model
     }
+
+    String createProjectDeleteWarning(model) {
+        groovyPageRenderer.render view: '/mail/project_delete_warning', model: model
+    }
 }

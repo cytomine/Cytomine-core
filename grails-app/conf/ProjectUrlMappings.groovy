@@ -30,6 +30,9 @@ class ProjectUrlMappings {
         "/api/project/$id.$format"(controller: "restProject"){
             action = [GET:"show", PUT:"update", DELETE:"delete"]
         }
+        "/api/project/$id/method/snooze.$format"(controller: "restProject"){
+            action = [PUT:"snooze"]
+        }
         "/api/software/$id/project.$format"(controller:"restProject"){
             action = [GET: "listBySoftware"]
         }

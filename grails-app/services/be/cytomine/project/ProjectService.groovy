@@ -22,6 +22,7 @@ import be.cytomine.Exception.ObjectNotFoundException
 import be.cytomine.Exception.WrongArgumentException
 import be.cytomine.command.*
 import be.cytomine.image.ImageInstance
+import be.cytomine.meta.Configuration
 import be.cytomine.ontology.AlgoAnnotation
 import be.cytomine.ontology.Ontology
 import be.cytomine.ontology.ReviewedAnnotation
@@ -70,6 +71,7 @@ class ProjectService extends ModelService {
     def notificationService
     def projectRepresentativeUserService
     def ontologyService
+    def configurationService
 
     def currentDomain() {
         Project
@@ -447,6 +449,25 @@ class ProjectService extends ModelService {
         //Add annotation-term if term
         int progress = 20
 
+        try {
+            if (configurationService.readByKey(Configuration.DELETE_PROJECT_AFTER_DELAY_IN_DAYS)) {
+                String value = configurationService.readByKey(Configuration.DELETE_PROJECT_AFTER_DELAY_IN_DAYS).value
+                if (value && value !="") {
+                    try {
+                        log.info "If not snooze, project will be deleted in $value days"
+                        Long delay = Long.parseLong(value) * 24 * 60 * 60 * 1000
+                        project.toDeleteAt = new Date(project.created.time + delay)
+                        log.info "To delete at date is ${project.toDeleteAt}"
+                        project.save(flush:true)
+                    } catch (NumberFormatException ex) {
+                        // ignored
+                    }
+                }
+            }
+        } catch(ObjectNotFoundException ignored) {
+
+        }
+
         if (project) {
             def users = JSONUtils.getJSONList(json.users);
             def admins = JSONUtils.getJSONList(json.admins);
@@ -597,6 +618,16 @@ class ProjectService extends ModelService {
             if(project.ontology) ontologyService.determineRightsForUsers(project.ontology, secUserService.listUsers(project))
         }
         return result
+    }
+
+    public void snooze(Project project) {
+        securityACLService.check(project, ADMINISTRATION)
+        if (project.toDeleteAt) {
+            project.toDeleteAt = new Date(project.toDeleteAt.time + (7*24*60*60*1000))
+            saveDomain(project)
+        } else {
+            throw new WrongArgumentException("Cannot snooze project if toDeleteAt is empty")
+        }
     }
 
     private changeProjectUser(Project project, def projectNewUsers, def projectOldUsers, boolean admin, Task task, int progressStart) {

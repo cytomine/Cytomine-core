@@ -153,6 +153,24 @@ class RestProjectController extends RestController {
     }
 
     /**
+     * Snooze project deletion (auto delete after x days
+     */
+    @RestApiMethod(description="Snooze project deletion")
+    @RestApiParams(params=[
+            @RestApiParam(name="id", type="int", paramType = RestApiParamType.PATH, description = "The project id")
+    ])
+    def snooze () {
+        try {
+            def domain = projectService.retrieve(JSON.parse("{id : $params.id}"))
+            def result = projectService.snooze(domain)
+            responseSuccess([:])
+        } catch (CytomineException e) {
+            log.error(e)
+            response([success: false, errors: e.msg, errorValues: e.values], e.code)
+        }
+    }
+
+    /**
      * Get last action done on a specific project
      * ex: "user x add a new annotation on image y",...
      */
