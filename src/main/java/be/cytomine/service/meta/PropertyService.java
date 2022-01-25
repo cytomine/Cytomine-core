@@ -111,10 +111,6 @@ public class PropertyService extends ModelService {
         return executeCommand(c,domain, null);
     }
 
-    @Override
-    public void checkDoNotAlreadyExist(CytomineDomain domain) {
-
-    }
 
     @Override
     public List<Object> getStringParamsI18n(CytomineDomain domain) {

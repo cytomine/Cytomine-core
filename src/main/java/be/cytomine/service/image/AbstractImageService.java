@@ -100,10 +100,6 @@ public class AbstractImageService extends ModelService {
         return new AbstractImage().buildDomainFromJson(json, getEntityManager());
     }
 
-    @Override
-    public void checkDoNotAlreadyExist(CytomineDomain domain) {
-
-    }
 
     public Optional<AbstractImage> find(Long id) {
         Optional<AbstractImage> abstractImage = abstractImageRepository.findById(id);

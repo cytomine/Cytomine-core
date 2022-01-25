@@ -5,10 +5,7 @@ import be.cytomine.domain.ValidationError;
 import be.cytomine.domain.command.Command;
 import be.cytomine.domain.command.DeleteCommand;
 import be.cytomine.domain.command.Transaction;
-import be.cytomine.exceptions.InvalidRequestException;
-import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.exceptions.ServerException;
-import be.cytomine.exceptions.WrongArgumentException;
+import be.cytomine.exceptions.*;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -22,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
@@ -186,7 +185,9 @@ public abstract class ModelService<T extends CytomineDomain> {
         return true;
     }
 
-    public abstract CommandResponse add(JsonObject jsonObject);
+    public CommandResponse add(JsonObject jsonObject) {
+        throw new CytomineMethodNotYetImplementedException("No add method implemented");
+    }
 
     public abstract Class currentDomain();
 
@@ -359,11 +360,17 @@ public abstract class ModelService<T extends CytomineDomain> {
     }
 
 
-    public abstract CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction);
+    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
+        throw new CytomineMethodNotYetImplementedException("No update method implemented");
+    }
 
-    public abstract CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage);
+    public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
+        throw new CytomineMethodNotYetImplementedException("No delete method implemented");
+    }
 
-    public abstract void checkDoNotAlreadyExist(CytomineDomain domain);
+    public void checkDoNotAlreadyExist(CytomineDomain domain) {
+        // do nothing by default
+    }
 
     public EntityManager getEntityManager() {
         return entityManager;
@@ -376,6 +383,15 @@ public abstract class ModelService<T extends CytomineDomain> {
     public void updateTask(Task task, int index, int numberOfDirectDependence) {
         //taskService.updateTask(task, (int)((double)index/(double)numberOfDirectDependence)*100, "")
         // TODO
+    }
+
+    public CytomineDomain getCytomineDomain(String domainClassName, Long domainIdent) {
+        try {
+            return (CytomineDomain)getEntityManager()
+                    .find(Class.forName(domainClassName), domainIdent);
+        } catch (ClassNotFoundException e) {
+            throw new ObjectNotFoundException(domainClassName, domainIdent);
+        }
     }
 
 }

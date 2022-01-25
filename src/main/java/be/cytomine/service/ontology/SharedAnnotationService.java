@@ -259,10 +259,6 @@ public class SharedAnnotationService extends ModelService {
         return new SharedAnnotation().buildDomainFromJson(json, getEntityManager());
     }
 
-    public void checkDoNotAlreadyExist(CytomineDomain domain){
-
-    }
-
     @Override
     public List<String> getStringParamsI18n(CytomineDomain domain) {
         SharedAnnotation sharedAnnotation = (SharedAnnotation)domain;

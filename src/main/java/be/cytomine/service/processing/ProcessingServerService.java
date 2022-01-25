@@ -83,9 +83,4 @@ public class ProcessingServerService extends ModelService {
         return List.of(((ProcessingServer)domain).getName());
     }
 
-
-    @Override
-    public void checkDoNotAlreadyExist(CytomineDomain domain) {
-
-    }
 }

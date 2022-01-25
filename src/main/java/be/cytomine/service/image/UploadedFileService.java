@@ -352,11 +352,6 @@ public class UploadedFileService extends ModelService {
         return executeCommand(c,domain, null);
     }
 
-    @Override
-    public void checkDoNotAlreadyExist(CytomineDomain domain) {
-
-    }
-
 
     @Override
     public List<String> getStringParamsI18n(CytomineDomain domain) {

@@ -148,12 +148,6 @@ public class AlgoAnnotationTermService extends ModelService {
         return executeCommand(c,domain, null);
     }
 
-    @Override
-    public void checkDoNotAlreadyExist(CytomineDomain domain) {
-
-    }
-
-
     protected void afterAdd(CytomineDomain domain, CommandResponse response) {
         response.getData().put("annotation", response.getData().get("algoannotation"));
         response.getData().remove("algoannotation");

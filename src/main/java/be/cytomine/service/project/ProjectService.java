@@ -607,10 +607,6 @@ public class ProjectService extends ModelService {
         return null;
     }
 
-    @Override
-    public void checkDoNotAlreadyExist(CytomineDomain domain) {
-
-    }
 
 
     // working code for ontologies

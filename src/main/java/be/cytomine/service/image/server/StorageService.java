@@ -139,10 +139,6 @@ public class StorageService extends ModelService {
     }
 
 
-    @Override
-    public void checkDoNotAlreadyExist(CytomineDomain domain) {
-
-    }
 
     @Override
     public List<Object> getStringParamsI18n(CytomineDomain domain) {

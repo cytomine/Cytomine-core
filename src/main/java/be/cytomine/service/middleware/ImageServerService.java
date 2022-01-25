@@ -445,12 +445,6 @@ public class ImageServerService extends ModelService {
 
 
     @Override
-    public void checkDoNotAlreadyExist(CytomineDomain domain) {
-
-    }
-
-
-    @Override
     public CommandResponse add(JsonObject jsonObject) {
         throw new CytomineMethodNotYetImplementedException("");
     }

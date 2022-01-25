@@ -4,14 +4,18 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.meta.AttachedFile;
+import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.RelationTerm;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.AlreadyExistException;
+import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
+import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.meta.AttachedFileRepository;
+import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.repository.ontology.AnnotationTermRepository;
 import be.cytomine.repository.ontology.RelationRepository;
 import be.cytomine.repository.ontology.TermRepository;
@@ -49,51 +53,88 @@ public class AttachedFileService extends ModelService {
     @Autowired
     private CurrentUserService currentUserService;
 
-    public List<AttachedFile> findAllByDomain(CytomineDomain domain) {
-        return attachedFileRepository.findAllByDomainClassNameAndDomainIdent(domain.getClass().getName(), domain.getId());
-    }
-
-    @Override
-    public CommandResponse add(JsonObject jsonObject) {
-        return null;
-    }
+    @Autowired
+    private AnnotationDomainRepository annotationDomainRepository;
 
     @Override
     public Class currentDomain() {
         return AttachedFile.class;
     }
 
+    public List<AttachedFile> list() {
+        securityACLService.checkAdmin(currentUserService.getCurrentUser());
+        return attachedFileRepository.findAll();
+    }
+
+    public List<AttachedFile> findAllByDomain(CytomineDomain domain) {
+        return findAllByDomain(domain.getClass().getName(), domain.getId());
+    }
+
+    public List<AttachedFile> findAllByDomain(String domainClassName, Long domainIdent) {
+        if(domainClassName.contains("AnnotationDomain")) {
+            AnnotationDomain annotation = annotationDomainRepository.findById(domainIdent)
+                    .orElseThrow(() -> new ObjectNotFoundException(domainClassName, domainIdent));
+            securityACLService.check(annotation, READ);
+        } else {
+            securityACLService.check(domainIdent,domainClassName, READ);
+        }
+        return attachedFileRepository.findAllByDomainClassNameAndDomainIdent(domainClassName, domainIdent);
+    }
+
+    public Optional<AttachedFile> findById(Long id) {
+        Optional<AttachedFile> attachedFile = attachedFileRepository.findById(id);
+        attachedFile.ifPresent(file -> securityACLService.check(file.getDomainIdent(),file.getDomainClassName(),READ));
+        return attachedFile;
+    }
+
+    public AttachedFile create(String filename,byte[] data, String key, Long domainIdent,String domainClassName) throws ClassNotFoundException {
+        securityACLService.checkUser(currentUserService.getCurrentUser());
+        CytomineDomain recipientDomain = (CytomineDomain)getEntityManager().find(Class.forName(domainClassName), domainIdent);
+
+        if(recipientDomain instanceof Project || !(recipientDomain.container() instanceof Project)) {
+            securityACLService.check(domainIdent,domainClassName,WRITE);
+        } else {
+            securityACLService.check(domainIdent,domainClassName,WRITE);
+            securityACLService.checkFullOrRestrictedForOwner(domainIdent,domainClassName, "user");
+        }
+
+        AttachedFile file = new AttachedFile();
+        file.setDomainIdent(domainIdent);
+        file.setDomainClassName(domainClassName);
+        file.setFilename(filename);
+        file.setData(data);
+        file.setKey(key);
+        saveDomain(file);
+        return file;
+    }
+
+    @Override
+    public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
+        SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
+        AttachedFile attachedFile = (AttachedFile)domain;
+
+        CytomineDomain recipientDomain = getCytomineDomain(attachedFile.getDomainClassName(), attachedFile.getDomainIdent());
+        if (recipientDomain == null) {
+            throw new ObjectNotFoundException(attachedFile.getDomainClassName(), attachedFile.getDomainIdent());
+        }
+
+        if(recipientDomain instanceof Project || !(recipientDomain.container() instanceof Project)) {
+            securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),DELETE);
+        } else {
+            securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),DELETE);
+            securityACLService.checkFullOrRestrictedForOwner(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(), "user");
+        }
+        Command c = new DeleteCommand(currentUser, transaction);
+        return executeCommand(c,domain, null);
+    }
+
+
     @Override
     public CytomineDomain createFromJSON(JsonObject json) {
         return null;
     }
 
-    @Override
-    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        return null;
-    }
-
-
-    /**
-     * Delete this domain
-     * @param domain Domain to delete
-     * @param transaction Transaction link with this command
-     * @param task Task for this command
-     * @param printMessage Flag if client will print or not confirm message
-     * @return Response structure (code, old domain,..)
-     */
-    @Override
-    public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.check(domain.container(),READ);
-        Command c = new DeleteCommand(currentUser, transaction);
-        return executeCommand(c,domain, null);
-    }
-
-    @Override
-    public void checkDoNotAlreadyExist(CytomineDomain domain) {
-
-    }
 
     @Override
     public List<Object> getStringParamsI18n(CytomineDomain domain) {

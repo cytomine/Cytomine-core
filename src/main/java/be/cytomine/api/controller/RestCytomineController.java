@@ -447,6 +447,16 @@ public abstract class RestCytomineController {
         }
     }
 
+    protected void responseFile(String name, byte[] array) throws IOException {
+        response.setStatus(200);
+        response.setHeader("Content-Type", "application/octet-stream");
+        response.setHeader("Content-disposition", "attachment; filename=" + name);
+        try(OutputStream os = response.getOutputStream()) {
+            os.write(array , 0, array.length);
+            os.flush();
+        }
+    }
+
     protected void responseString(String contentType, String string) throws IOException {
         response.setContentType(contentType);
         response.setStatus(200);
