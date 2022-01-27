@@ -19,6 +19,14 @@ spring:
   liquibase:
     change-log: classpath:config/liquibase/master.xml
 
+  data:
+    mongodb:
+#      authentication-database: admin
+#      username: root
+#      password: root
+      database: cytomine
+      port: 27017
+      host: localhost
 
 
 server:

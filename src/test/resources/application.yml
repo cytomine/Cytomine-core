@@ -21,9 +21,21 @@ spring:
   profiles:
     active: test
 
+  data:
+    mongodb:
+      authentication-database: admin
+      username: mongoadmin
+      password: secret
+      database: cytomine
+      port: 27018
+      host: localhost
+
 server:
   port: 8080
 
+logging:
+  level:
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
 
 application:
   serverURL: http://localhost:8080
