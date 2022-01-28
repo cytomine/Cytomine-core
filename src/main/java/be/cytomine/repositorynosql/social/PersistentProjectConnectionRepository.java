@@ -1,6 +1,8 @@
 package be.cytomine.repositorynosql.social;
 
 
+import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -50,5 +52,17 @@ public interface PersistentProjectConnectionRepository extends MongoRepository<P
    AggregationResults retrieve(Long project, String sortProperty, Integer sortDirection);
 
 
+    Long countAllByProjectAndUser(Long project, Long user);
 
+    @Aggregation(pipeline = {"{$group: {_id : '$project', total : {$sum :1}}}"})
+    AggregationResults countConnectionByProject();
+
+
+    Long countByProject(Long project);
+
+    Long countByProjectAndCreatedAfter(Long project, Date createdMin);
+
+    Long countByProjectAndCreatedBefore(Long project, Date createdMax);
+
+    Long countByProjectAndCreatedBetween(Long project, Date createdMin, Date createdMax);
 }

@@ -22,6 +22,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import javax.transaction.Transactional;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -233,8 +235,305 @@ public class ProjectConnectionServiceTests {
         assertThat(results.get(0).getExtraProperties()).doesNotContainEntry("online", true);
     }
 
+    @Test
+    void number_of_connections_by_project_and_user() {
+        Project projet = builder.given_a_project();
+        User user = builder.given_superadmin();
+        User anotherUser = builder.given_a_user();
+
+        given_a_persistent_connection_in_project(user, projet);
+        given_a_persistent_connection_in_project(user, projet);
+
+        Map<String, Object> result = projectConnectionService.numberOfConnectionsByProjectAndUser(projet, user);
+        assertThat(result.get("user")).isEqualTo(user.getId());
+        assertThat(result.get("frequency")).isEqualTo(2L);
+
+        result = projectConnectionService.numberOfConnectionsByProjectAndUser(builder.given_a_project(), user);
+        assertThat(result.get("user")).isEqualTo(user.getId());
+        assertThat(result.get("frequency")).isEqualTo(0L);
+
+        result = projectConnectionService.numberOfConnectionsByProjectAndUser(projet, anotherUser);
+        assertThat(result.get("user")).isEqualTo(anotherUser.getId());
+        assertThat(result.get("frequency")).isEqualTo(0L);
+    }
+
+    @Test
+    void number_of_connections_by_project_and_users() {
+        Project projet = builder.given_a_project();
+        User user = builder.given_superadmin();
+        User anotherUser = builder.given_a_user();
+
+
+        List<Map<String, Object>> results;
+
+        results = projectConnectionService
+                .numberOfConnectionsByProjectAndUser(projet, List.of(user.getId(), anotherUser.getId()), "created", "desc", 100L ,0L);
+        assertThat(results).isEmpty();
+
+        given_a_persistent_connection_in_project(user, projet);
+        given_a_persistent_connection_in_project(user, projet);
+
+
+        results = projectConnectionService
+                .numberOfConnectionsByProjectAndUser(projet, List.of(user.getId(), anotherUser.getId()), "created", "desc", 100L ,0L);
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).get("user")).isEqualTo(user.getId());
+        assertThat(results.get(0).get("frequency")).isEqualTo(2);
+
+
+        given_a_persistent_connection_in_project(anotherUser, projet);
+
+        results = projectConnectionService
+                .numberOfConnectionsByProjectAndUser(projet, List.of(user.getId(), anotherUser.getId()), "created", "desc", 100L ,0L);
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).get("user")).isEqualTo(anotherUser.getId());
+        assertThat(results.get(0).get("frequency")).isEqualTo(1);
+        assertThat(results.get(1).get("user")).isEqualTo(user.getId());
+        assertThat(results.get(1).get("frequency")).isEqualTo(2);
+
+    }
+
+    @Test
+    void number_of_connections_by_project_and_users_fill_empty_users() {
+        Project projet = builder.given_a_project();
+        User user = builder.given_superadmin();
+        User anotherUser = builder.given_a_user();
+
+
+        List<Map<String, Object>> results;
+
+        results = projectConnectionService
+                .numberOfConnectionsOfGivenByProject(projet, List.of(user.getId(), anotherUser.getId()), "created", "desc", 100L ,0L);
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).get("user")).isNotNull();
+        assertThat(results.get(1).get("user")).isNotNull();
+        assertThat(results.get(0).get("frequency")).isNull();
+        assertThat(results.get(1).get("frequency")).isNull();
+
+        given_a_persistent_connection_in_project(user, projet);
+        given_a_persistent_connection_in_project(user, projet);
+
+
+        results = projectConnectionService
+                .numberOfConnectionsOfGivenByProject(projet, List.of(user.getId(), anotherUser.getId()), "created", "desc", 100L ,0L);
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).get("user")).isEqualTo(user.getId());
+        assertThat(results.get(0).get("frequency")).isEqualTo(2);
+        assertThat(results.get(1).get("user")).isEqualTo(anotherUser.getId());
+        assertThat(results.get(1).get("frequency")).isNull();
+
+        given_a_persistent_connection_in_project(anotherUser, projet);
+
+        results = projectConnectionService
+                .numberOfConnectionsOfGivenByProject(projet, List.of(user.getId(), anotherUser.getId()), "created", "desc", 100L ,0L);
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).get("user")).isEqualTo(anotherUser.getId());
+        assertThat(results.get(0).get("frequency")).isEqualTo(1);
+        assertThat(results.get(1).get("user")).isEqualTo(user.getId());
+        assertThat(results.get(1).get("frequency")).isEqualTo(2);
+
+    }
+
+    @Test
+    void total_number_of_connections_by_project() {
+        Project projet = builder.given_a_project();
+        User user = builder.given_superadmin();
+        User anotherUser = builder.given_a_user();
+
+        List<Map<String, Object>> results;
+
+        results = projectConnectionService.totalNumberOfConnectionsByProject();
+        assertThat(results).isEmpty();
+
+        given_a_persistent_connection_in_project(user, projet);
+        given_a_persistent_connection_in_project(user, projet);
+        given_a_persistent_connection_in_project(anotherUser, projet);
+
+        results = projectConnectionService.totalNumberOfConnectionsByProject();
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).get("project")).isEqualTo(projet.getId());
+        assertThat(results.get(0).get("total")).isEqualTo(3);
+    }
+
+    @Test
+    void number_of_connections_by_project_ordered_by_hour_and_days() throws ParseException {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        Project projet = builder.given_a_project();
+        User user = builder.given_superadmin();
+        User anotherUser = builder.given_a_user();
+
+        List<Map<String, Object>> results
+                = projectConnectionService.numberOfConnectionsByProjectOrderedByHourAndDays(projet, new Date().getTime(), user);
+        assertThat(results).isEmpty();
+
+        given_a_persistent_connection_in_project(user, projet, simpleDateFormat.parse("2022-01-01T12:00:00"));
+        given_a_persistent_connection_in_project(user, projet, simpleDateFormat.parse("2022-01-01T12:05:00"));
+        given_a_persistent_connection_in_project(anotherUser, projet, simpleDateFormat.parse("2022-01-01T12:30:00"));
+
+        results
+                = projectConnectionService.numberOfConnectionsByProjectOrderedByHourAndDays(projet, null, user);
+        assertThat(results).hasSize(1);
+
+        assertThat(results.get(0).get("time")).isEqualTo(simpleDateFormat.parse("2022-01-01T12:00:00"));
+        assertThat(results.get(0).get("frequency")).isEqualTo(3);
+
+        given_a_persistent_connection_in_project(user, projet, simpleDateFormat.parse("2022-01-20T03:00:00"));
+
+        results
+                = projectConnectionService.numberOfConnectionsByProjectOrderedByHourAndDays(projet, null, user);
+        assertThat(results).hasSize(2);
+        // TODO: fails because no order (no sorting)
+        assertThat(results.get(0).get("time")).isEqualTo(simpleDateFormat.parse("2022-01-20T03:00:00"));
+        assertThat(results.get(0).get("frequency")).isEqualTo(1);
+
+        results
+                = projectConnectionService.numberOfConnectionsByProjectOrderedByHourAndDays(projet, simpleDateFormat.parse("2022-01-05T12:00:00").getTime(), user);
+        assertThat(results).hasSize(1);
+
+        assertThat(results.get(0).get("time")).isEqualTo(simpleDateFormat.parse("2022-01-20T03:00:00"));
+        assertThat(results.get(0).get("frequency")).isEqualTo(1);
+
+    }
+
+    @Test
+    void total_number_of_connections_by_project_with_dates() {
+        Project projet = builder.given_a_project();
+        User user = builder.given_superadmin();
+        User anotherUser = builder.given_a_user();
+
+        List<Map<String, Object>> results;
+
+
+
+        results = projectConnectionService.totalNumberOfConnectionsByProject();
+        assertThat(results).isEmpty();
+
+        Date noConnectionBefore = new Date();
+        given_a_persistent_connection_in_project(user, projet);
+        given_a_persistent_connection_in_project(user, projet);
+        Date twoConnectionBefore = new Date();
+        given_a_persistent_connection_in_project(anotherUser, projet);
+        Date threeConnectionBefore = new Date();
+
+        assertThat(projectConnectionService.countByProject(projet, null, null))
+                .isEqualTo(3);
+        assertThat(projectConnectionService.countByProject(projet, noConnectionBefore.getTime(), twoConnectionBefore.getTime()))
+                .isEqualTo(2);
+        assertThat(projectConnectionService.countByProject(projet, twoConnectionBefore.getTime(), threeConnectionBefore.getTime()))
+                .isEqualTo(1);
+    }
+
+
+    @Test
+    void number_of_connections_by_project_ordered_by_period() throws ParseException {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+
+        Project projet = builder.given_a_project();
+        User user = builder.given_superadmin();
+
+        List<Map<String, Object>> results
+                = projectConnectionService.numberOfProjectConnections("day", null, null, projet, user);
+        assertThat(results).isEmpty();
+
+        given_a_persistent_connection_in_project(user, projet, simpleDateFormat.parse("2022-01-01T12:00:00"));
+        given_a_persistent_connection_in_project(user, projet, simpleDateFormat.parse("2022-01-01T12:05:00"));
+        given_a_persistent_connection_in_project(user, projet, simpleDateFormat.parse("2022-01-01T13:30:00"));
+
+        results
+                = projectConnectionService.numberOfProjectConnections("day", null, null, projet, user);
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).get("time")).isEqualTo(simpleDateFormat.parse("2022-01-01T01:00:00"));
+        assertThat(results.get(0).get("frequency")).isEqualTo(3);
+
+        results
+                = projectConnectionService.numberOfProjectConnections("hour", null, null, projet, user);
+        assertThat(results).hasSize(2);
+        Optional<Map<String, Object>> entry = results.stream().filter(x -> x.get("frequency").equals(2)).findFirst();
+        assertThat(entry).isPresent();
+        assertThat(entry.get().get("time")).isEqualTo(simpleDateFormat.parse("2022-01-01T12:00:00"));
+        entry = results.stream().filter(x -> x.get("frequency").equals(1)).findFirst();
+        assertThat(entry).isPresent();
+        assertThat(entry.get().get("time")).isEqualTo(simpleDateFormat.parse("2022-01-01T13:00:00"));
+
+
+        given_a_persistent_connection_in_project(user, projet, simpleDateFormat.parse("2021-01-20T03:00:00"));
+
+        results
+                = projectConnectionService.numberOfProjectConnections("week", null, null, projet, user);
+        assertThat(results).hasSize(2);
+        entry = results.stream().filter(x -> x.get("frequency").equals(3)).findFirst();
+        assertThat(entry).isPresent();
+        assertThat(entry.get().get("time")).isEqualTo(simpleDateFormat.parse("2021-12-26T01:00:00")); // last sunday before 2021/01/01
+        entry = results.stream().filter(x -> x.get("frequency").equals(1)).findFirst();
+        assertThat(entry).isPresent();
+        assertThat(entry.get().get("time")).isEqualTo(simpleDateFormat.parse("2021-01-17T01:00:00")); // idem before 2021-01-20
+
+    }
+
+    @Test
+    void average_connections_by_project_ordered_by_period() throws ParseException {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+
+        Project projet = builder.given_a_project();
+        User user = builder.given_superadmin();
+
+        List<Map<String, Object>> results
+                = projectConnectionService.averageOfProjectConnections("day", null, simpleDateFormat.parse("2022-02-01T12:00:00").getTime(), projet, user);
+        assertThat(results).isEmpty();
+
+        given_a_persistent_connection_in_project(user, projet, simpleDateFormat.parse("2022-01-01T12:00:00"));
+        given_a_persistent_connection_in_project(user, projet, simpleDateFormat.parse("2022-01-01T12:05:00"));
+        given_a_persistent_connection_in_project(user, projet, simpleDateFormat.parse("2022-01-01T13:30:00"));
+
+        results
+                = projectConnectionService.averageOfProjectConnections("day", null, simpleDateFormat.parse("2022-02-01T12:00:00").getTime(), projet, user);
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).get("time")).isEqualTo(simpleDateFormat.parse("2022-01-01T01:00:00"));
+        assertThat(results.get(0).get("frequency")).isEqualTo(1.0);
+
+        results
+                = projectConnectionService.averageOfProjectConnections("hour", null, simpleDateFormat.parse("2022-02-01T12:00:00").getTime(), projet, user);
+        assertThat(results).hasSize(2);
+        for (Map<String, Object> result : results) {
+            System.out.println(result);
+        }
+        Optional<Map<String, Object>> entry = results.stream().filter(x -> (double)x.get("frequency") >= 0.65 && (double)x.get("frequency") <= 0.67d).findFirst();
+        assertThat(entry).isPresent();
+        assertThat(entry.get().get("time")).isEqualTo(simpleDateFormat.parse("2022-01-01T12:00:00"));
+        entry = results.stream().filter(x -> (double)x.get("frequency") >= 0.32d && (double)x.get("frequency") <= 0.34d).findFirst();
+        assertThat(entry).isPresent();
+        assertThat(entry.get().get("time")).isEqualTo(simpleDateFormat.parse("2022-01-01T13:00:00"));
+
+
+        given_a_persistent_connection_in_project(user, projet, simpleDateFormat.parse("2022-01-20T03:00:00"));
+
+        results
+                = projectConnectionService.averageOfProjectConnections("week", null, simpleDateFormat.parse("2022-02-01T12:00:00").getTime(), projet, user);
+        assertThat(results).hasSize(2);
+        for (Map<String, Object> result : results) {
+            System.out.println(result);
+        }
+        entry = results.stream().filter(x -> x.get("frequency").equals(0.75d)).findFirst();
+        assertThat(entry).isPresent();
+        assertThat(entry.get().get("time")).isEqualTo(simpleDateFormat.parse("2021-12-26T01:00:00"));
+        entry = results.stream().filter(x -> x.get("frequency").equals(0.25d)).findFirst();
+        assertThat(entry).isPresent();
+        assertThat(entry.get().get("time")).isEqualTo(simpleDateFormat.parse("2022-01-16T01:00:00"));
+
+    }
+
+    @Test
+    void get_user_activity_details() throws ParseException {
+        Assertions.fail("todo");
+    }
+
     PersistentProjectConnection given_a_persistent_connection_in_project(User user, Project project) {
         PersistentProjectConnection connection = projectConnectionService.add(user, project.getId(), "xxx", "linux", "chrome", "123");
+        return connection;
+    }
+
+    PersistentProjectConnection given_a_persistent_connection_in_project(User user, Project project, Date created) {
+        PersistentProjectConnection connection = projectConnectionService.add(user, project.getId(), "xxx", "linux", "chrome", "123", created);
         return connection;
     }
 
