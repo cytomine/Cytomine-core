@@ -24,8 +24,6 @@ import org.restapidoc.annotation.RestApiObjectField
 @RestApiObject(name = "configuration", description = "A key-value entry that save the configurations through the application")
 class Configuration extends CytomineDomain implements Serializable {
 
-    public static String DELETE_PROJECT_AFTER_DELAY_IN_DAYS = "DELETE_PROJECT_AFTER_DELAY_IN_DAYS"
-
     // Can evolve with more than these simple roles (project manager, etc.)
     static enum Role {
         ADMIN, USER, ALL

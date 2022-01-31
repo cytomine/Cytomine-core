@@ -17,7 +17,6 @@ package be.cytomine
 */
 
 import be.cytomine.image.ImageInstance
-import be.cytomine.meta.Configuration
 import be.cytomine.ontology.AlgoAnnotation
 import be.cytomine.ontology.Ontology
 import be.cytomine.ontology.UserAnnotation
@@ -207,44 +206,6 @@ class ProjectTests  {
         def jsonUpdate = JSON.parse(jsonProject)
         def result = ProjectAPI.create(jsonUpdate.toString(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 409 == result.code
-    }
-
-    void testAddProjectWithToDeleteConfig() {
-        Configuration configuration = new Configuration(key: Configuration.DELETE_PROJECT_AFTER_DELAY_IN_DAYS, value: "5", readingRole: Configuration.Role.ALL)
-        configuration.save(flush:true, failOnError: true)
-        try {
-            def projectToAdd = BasicInstanceBuilder.getProjectNotExist()
-            def result = ProjectAPI.create(projectToAdd.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-            assert 200 == result.code
-            Project project = result.data
-            assert project.toDeleteAt == new Date(project.created.time + (5 * 24 * 60 * 60 * 1000))
-        } finally {
-            // reset to empty
-            if (configuration) {
-                configuration.delete()
-            }
-        }
-    }
-
-    void testAddProjectWithoutToDeleteConfig() {
-        Configuration configuration = Configuration.findByKey(Configuration.DELETE_PROJECT_AFTER_DELAY_IN_DAYS)
-        assert  configuration == null
-        def projectToAdd = BasicInstanceBuilder.getProjectNotExist()
-        def result = ProjectAPI.create(projectToAdd.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 200 == result.code
-        Project project = result.data
-        assert project.toDeleteAt == null
-    }
-
-    void testSnoozeProject() {
-        def project = BasicInstanceBuilder.getProjectNotExist(true)
-        Date deleteAt = new Date()
-        project.setToDeleteAt(deleteAt)
-        project.save(flush:true)
-        def result = ProjectAPI.snooze(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-        assert 200 == result.code
-        project.refresh()
-        assert project.toDeleteAt == new Date(deleteAt.time + 7 * 24 * 60 * 60 * 1000)
     }
 
     void testEditProjectCorrect() {
