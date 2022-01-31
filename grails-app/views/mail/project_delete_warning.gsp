@@ -17,7 +17,7 @@
                             </p>
 
                             <p>
-                                Click <a href='<%= by %>/#/project/<%= projectId %>/information'> here</a> if you want to delay the deleted date. <br />
+                                Click <a href='<%= by %>/#/project/<%= projectId %>/information'> on the Stay alive button</a> if you want to delay the deleted date. <br />
                             </p>
 
                             <!-- social & contact -->
