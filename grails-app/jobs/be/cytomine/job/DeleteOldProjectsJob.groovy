@@ -38,9 +38,15 @@ class DeleteOldProjectsJob {
 
     @Transactional
     def execute() {
+        Configuration configuration = Configuration.findByKey(Configuration.DELETE_PROJECT_AFTER_DELAY_IN_DAYS)
+        log.info("DeleteOldProjectsJob with configuration " + (configuration ? configuration.value : "null"))
+        if (!configuration || configuration.value.trim().equals("0")) {
+            return
+        }
+
         Date today = new Date()
-        Date todayPlus5days = new Date(today.time + (5 * 24 * 3600 * 1000))
-        log.info("todayPlus5days = " + todayPlus5days)
+        Date todayPlus3days = new Date(today.time + (3 * 24 * 3600 * 1000))
+        log.info("todayPlus3days = " + todayPlus3days)
         Project.findAllByToDeleteAtIsNotNull().each { project ->
             if (project.toDeleteAt) {
                 log.info("Project ${project.name} has toDeleteAt " + project.toDeleteAt)
@@ -51,7 +57,7 @@ class DeleteOldProjectsJob {
                     SpringSecurityUtils.doWithAuth("superadmin", {
                         projectService.delete(project, transactionService.start(), null, false, false)
                     })
-                } else if (project.toDeleteAt.before(todayPlus5days)) {
+                } else if (project.toDeleteAt.before(todayPlus3days)) {
                     // send email
                     log.info("Send an email because we will delete project")
                     def secUsers = secUserService.listAdmins(project, false)
@@ -59,5 +65,14 @@ class DeleteOldProjectsJob {
                 }
             }
         }
+
+        Long delay = Long.parseLong(configuration.value)
+        Date maxBeforeDeleting = new Date(new Date().getTime()-(delay*1000*60*60))
+        log.info("deleteOldActivitiesJob: delete all command before " + maxBeforeDeleting)
+//        println CommandHistory.exe
+        //CommandHistory.executeUpdate('delete CommandHistory ch where ch.created < ?', [maxBeforeDeleting])
+        def content = CommandHistory.executeQuery("SELECT ch FROM CommandHistory ch WHERE ch.created < '$maxBeforeDeleting'")
+        println content.size()
+        CommandHistory.executeUpdate("delete CommandHistory ch where ch.created < '$maxBeforeDeleting'")
     }
 }
