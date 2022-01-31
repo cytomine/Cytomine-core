@@ -20,7 +20,6 @@ import be.cytomine.project.Project
 */
 
 import be.cytomine.security.SecUser
-import grails.plugin.springsecurity.SpringSecurityUtils
 import org.springframework.transaction.annotation.Transactional
 
 class DeleteOldProjectsJob {
@@ -30,10 +29,9 @@ class DeleteOldProjectsJob {
     def transactionService
     def notificationService
     def secUserService
-    def currentRoleServiceProxy
 
     static triggers = {
-        simple name: 'deleteOldProjectsJob', startDelay: 60*1000, repeatInterval: 24*3600*1000
+        simple name: 'deleteOldProjectsJob', startDelay: 60*1000, repeatInterval: 60*1000 //24*3600*1000
     }
 
     @Transactional
@@ -54,9 +52,7 @@ class DeleteOldProjectsJob {
                 if (project.toDeleteAt.before(today)) {
                     // delete project
                     log.info("Delete project ${project.id} ${project.name}")
-                    SpringSecurityUtils.doWithAuth("superadmin", {
-                        projectService.delete(project, transactionService.start(), null, false, false)
-                    })
+                    projectService.delete(project, transactionService.start(), null, false)
                 } else if (project.toDeleteAt.before(todayPlus3days)) {
                     // send email
                     log.info("Send an email because we will delete project")
