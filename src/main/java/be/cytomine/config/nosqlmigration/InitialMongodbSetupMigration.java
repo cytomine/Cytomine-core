@@ -171,6 +171,7 @@ public class InitialMongodbSetupMigration {
         //	}
         //]
 
+        // TODO: we have to migrate old data from *UserPosition with the new location scheme (+ index) see MongoDBDomainTests.persistent_user_position_domain
         createCollectionIfNotExists(
                 "lastUserPosition",
                 List.of(

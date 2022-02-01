@@ -36,6 +36,7 @@ import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static be.cytomine.domain.social.PersistentUserPosition.getJtsPolygon;
 import static com.mongodb.client.model.Aggregates.*;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Sorts.ascending;
@@ -129,7 +130,7 @@ public class UserPositionService {
         persistedPosition.setImage(imageInstance.getId());
         persistedPosition.setSlice(sliceInstance.getId());
         persistedPosition.setProject(imageInstance.getProject().getId());
-        persistedPosition.setLocation(area.toGeoJsonPolygon());
+        persistedPosition.setLocation(area.toMongodbLocation().getCoordinates());
         persistedPosition.setZoom(zoom);
         persistedPosition.setRotation(rotation);
         persistedPosition.setBroadcast(broadcast);

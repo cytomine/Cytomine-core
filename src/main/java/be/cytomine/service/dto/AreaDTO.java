@@ -1,5 +1,6 @@
 package be.cytomine.service.dto;
 
+import be.cytomine.domain.social.MongodbLocation;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,5 +32,17 @@ public class AreaDTO {
                 .map(point ->
                         new org.springframework.data.geo.Point(point.getX(), point.getY()))
                 .collect(Collectors.toList()));
+    }
+
+    public MongodbLocation toMongodbLocation() {
+        MongodbLocation location = new MongodbLocation();
+        location.setType("polygon");
+        location.setCoordinates(toPointList().stream().map(point -> List.of(point.getX(), point.getY())).collect(Collectors.toList()));
+        return location;
+
+//        return new GeoJsonPolygon(toPointList().stream()
+//                .map(point ->
+//                        new org.springframework.data.geo.Point(point.getX(), point.getY()))
+//                .collect(Collectors.toList()));
     }
 }

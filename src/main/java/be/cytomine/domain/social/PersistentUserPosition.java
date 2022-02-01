@@ -15,6 +15,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.geo.GeoJsonPolygon;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -23,14 +24,15 @@ import javax.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-@Entity
+//@Entity
 @Getter
 @Setter
 @Document
 //@CompoundIndex(def = "{'user' : 1, 'image': 1, 'slice': 1, created' : -1}")
 //@CompoundIndex(def = "{'location':'2d', 'image':1, 'slice':1}")
-@Embeddable
+//@Embeddable
 public class PersistentUserPosition {
 
 
@@ -80,8 +82,8 @@ public class PersistentUserPosition {
     /**
      * User screen area
      */
-
-    GeoJsonPolygon location;
+    @ElementCollection
+    List<List<Double>> location;
 
     /**
      * User zoom on image
@@ -116,10 +118,10 @@ public class PersistentUserPosition {
         returnArray.put("zoom", position.getZoom());
         returnArray.put("rotation", position.getRotation());
         returnArray.put("broadcast", position.isBroadcast());
-        Polygon polygon = getJtsPolygon(domain.location);
-        returnArray.put("location", polygon.toString());
-        returnArray.put("x", polygon.getCentroid().getX());
-        returnArray.put("y", polygon.getCentroid().getY());
+//        Polygon polygon = getJtsPolygon(domain.location);
+//        returnArray.put("location", polygon.toString());
+//        returnArray.put("x", polygon.getCentroid().getX());
+//        returnArray.put("y", polygon.getCentroid().getY());
         return returnArray;
     }
 //    static Polygon getPolygonFromMongo(List locationList) {
@@ -130,8 +132,13 @@ public class PersistentUserPosition {
 //        Polygon poly = new Polygon(linear, null, fact);
 //        return poly;
 //    }
-    static Polygon getJtsPolygon(GeoJsonPolygon polygon) {
-        return new GeometryFactory().createPolygon(polygon.getPoints().stream().map(point -> new Coordinate(point.getX(), point.getY())).toArray(Coordinate[]::new));
+    public static Polygon getJtsPolygon(GeoJsonPolygon polygon) {
+        List<Coordinate> coordinates = polygon.getPoints().stream().map(point -> new Coordinate(point.getX(), point.getY())).collect(Collectors.toList());
+        if (coordinates.size() > 1) {
+            // finish with the first point
+            coordinates.add(coordinates.get(0));
+        }
+        return new GeometryFactory().createPolygon(coordinates.toArray(Coordinate[]::new));
     }
 
 

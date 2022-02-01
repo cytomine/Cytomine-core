@@ -14,6 +14,7 @@ import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
+import be.cytomine.service.dto.AreaDTO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.ListIndexesIterable;
@@ -36,6 +37,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static be.cytomine.domain.social.PersistentUserPosition.getJtsPolygon;
 import static be.cytomine.service.social.ProjectConnectionService.DATABASE_NAME;
 import static com.mongodb.client.model.Filters.eq;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -465,7 +467,12 @@ public class MongoDBDomainTests {
         persistedPosition.setCreated(mongoDBFormat.parse("2021-09-23T08:55:03.608Z"));
         persistedPosition.setImage(imageInstance.getId());
         persistedPosition.setImageName("CMU-1-Small-Region (1).svs");
-        persistedPosition.setLocation(new GeoJsonPolygon(new Point(-3338d,3128d), new Point(5558d,3128d), new Point(5558d,-160d), new Point(-3338d,-160d)));
+        persistedPosition.setLocation(new AreaDTO(
+                new be.cytomine.service.dto.Point(-3338d,3128d),
+                new be.cytomine.service.dto.Point(5558d,3128d),
+                new be.cytomine.service.dto.Point(5558d,-160d),
+                new be.cytomine.service.dto.Point(-3338d,-160d)
+        ).toMongodbLocation().getCoordinates());
         persistedPosition.setProject(project.getId());
         persistedPosition.setRotation(0d);
         persistedPosition.setSession("B6AC04394B9D9F746A15E511C5DC243B");
@@ -509,7 +516,9 @@ public class MongoDBDomainTests {
                         "}";
 
         assertThat(objectMapper.readTree(document.toJson())).isEqualTo(objectMapper.readTree(expectedResults));
-        // TODO: issue with Date: created seems to have issue with UTC + problem with polygon
+        // TODO: issue with Date: created seems to have issue with UTC
+        //
+        //  + problem with polygon and it does not return the same type!!!!
 
         // TODO: test index
     }
