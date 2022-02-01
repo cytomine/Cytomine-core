@@ -30,7 +30,12 @@ spring:
       port: 27018
       host: localhost
 
-server:
+      #uri: 'mongodb://mongoadmin:secret@localhost:27018/cytomine?authSource=admin&retryWrites=false' #?retryWrites=false&authSource=admin'
+      #auto-index-creation: true
+mongock:
+  migration-scan-package:
+    - be.cytomine.config.nosqlmigration
+
   port: 8080
 
 logging:

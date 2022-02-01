@@ -26,7 +26,7 @@ import static be.cytomine.domain.ontology.RelationTerm.PARENT;
 @Getter
 @Setter
 @Document
-@CompoundIndex(def = "{'user' : 1, 'created' : -1}")
+//@CompoundIndex(def = "{'user' : 1, 'created' : -1}")
 public class PersistentConnection {
 
     @Id
@@ -40,10 +40,10 @@ public class PersistentConnection {
     protected Date updated;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     protected User user;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = true)
     private Project project;
 

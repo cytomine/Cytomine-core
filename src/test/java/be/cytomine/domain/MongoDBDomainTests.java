@@ -1,0 +1,545 @@
+package be.cytomine.domain;
+
+import be.cytomine.BasicInstanceBuilder;
+import be.cytomine.CytomineCoreApplication;
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.User;
+import be.cytomine.domain.social.PersistentConnection;
+import be.cytomine.domain.social.PersistentImageConsultation;
+import be.cytomine.domain.social.PersistentProjectConnection;
+import be.cytomine.domain.social.PersistentUserPosition;
+import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
+import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
+import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
+import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.client.ListIndexesIterable;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import org.bson.Document;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.geo.Point;
+import org.springframework.data.mongodb.core.geo.GeoJsonPolygon;
+
+import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+import static be.cytomine.service.social.ProjectConnectionService.DATABASE_NAME;
+import static com.mongodb.client.model.Filters.eq;
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest(classes = CytomineCoreApplication.class)
+@AutoConfigureMockMvc
+@Transactional
+public class MongoDBDomainTests {
+
+    @Autowired
+    BasicInstanceBuilder builder;
+
+    @Autowired
+    EntityManager entityManager;
+
+    @Autowired
+    PersistentProjectConnectionRepository persistentProjectConnectionRepository;
+
+    @Autowired
+    PersistentConnectionRepository persistentConnectionRepository;
+
+    @Autowired
+    PersistentImageConsultationRepository persistentImageConsultationRepository;
+
+    @Autowired
+    PersistentUserPositionRepository persistentUserPositionRepository;
+
+    @Autowired
+    MongoClient mongoClient;
+
+    SimpleDateFormat mongoDBFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    @BeforeEach
+    public void cleanDB() {
+        persistentProjectConnectionRepository.deleteAll();
+        persistentConnectionRepository.deleteAll();
+        persistentImageConsultationRepository.deleteAll();
+        persistentUserPositionRepository.deleteAll();
+    }
+
+    /**
+     * Check that the format of MongoDB is the same as
+     */
+    @Test
+    void last_connection_domain() throws ParseException, JsonProcessingException {
+        Assertions.fail("TODO");
+    }
+
+    /**
+     * Check that the format of MongoDB is the same as
+     */
+    @Test
+    void last_user_position() throws ParseException, JsonProcessingException {
+        Assertions.fail("TODO");
+    }
+
+
+
+    /**
+     * Check that the format of MongoDB is the same as
+     */
+    @Test
+    void persistent_connection_domain() throws ParseException, JsonProcessingException {
+
+        // Result from Mongodb with the Cytomine Grails version
+
+//        > db.persistentConnection.findOne()
+//        {
+//                 "_id" : NumberLong(198),
+//                "created" : ISODate("2021-09-15T14:21:41.204Z"),
+//                "session" : "2D68BD4BE734DC4EFF20F9FB0EE5F3F7",
+//                "user" : NumberLong(58),
+//                "version" : NumberLong(0)
+//        }
+
+        PersistentConnection connection = new PersistentConnection();
+        connection.setId(3073L);
+        connection.setCreated(mongoDBFormat.parse("2021-09-22T09:06:32.472Z"));
+        connection.setSession("B7850470EED8CD7570E05C50FD5F02F6");
+        connection.setProject(null);
+
+        connection = persistentConnectionRepository.insert(connection);
+
+        Document document = retrieveDocument("persistentConnection", connection.getId());
+
+        // check index
+
+
+        ListIndexesIterable<Document> indexes = retrieveIndex("persistentConnection");
+        //> db.persistentConnection.getIndexes()
+        //                [
+        //                {
+        //                        "v" : 1,
+        //                "key" : {
+        //            "_id" : 1
+        //        },
+        //        "name" : "_id_",
+        //                "ns" : "cytomine.persistentConnection"
+        //	},
+        //        {
+        //            "v" : 1,
+        //                "key" : {
+        //            "user" : 1,
+        //                    "created" : -1
+        //        },
+        //            "name" : "user_1_created_-1",
+        //                "ns" : "cytomine.persistentConnection"
+        //        }
+        //]
+
+        Document indexId = null;
+        Document indexUserCreated = null;
+        for (Document index : indexes) {
+            if (index.get("name").equals("_id_")) {
+                indexId = index;
+            }
+            if (index.get("name").equals("user_1_created_-1")) {
+                indexUserCreated = index;
+            }
+        }
+        assertThat(indexes).hasSize(2);
+        assertThat(indexId).isNotNull();
+        assertThat(((Document)indexId.get("key")).get("_id")).isEqualTo(1);
+        assertThat(indexUserCreated).isNotNull();
+        assertThat(((Document)indexUserCreated.get("key")).get("user")).isEqualTo(1);
+        assertThat(((Document)indexUserCreated.get("key")).get("created")).isEqualTo(-1);
+
+
+        // {
+        //   "_id":3073,
+        //   "created":{
+        //      "$date":"2021-09-22T07:06:32.472Z"
+        //   },
+        //   "session":"B7850470EED8CD7570E05C50FD5F02F6"
+        //}
+
+        String expectedResults =
+                "{\n" +
+                        "   \"_id\":3073,\n" +
+                        "   \"created\":{\n" +
+                        "      \"$date\":\"2021-09-22T09:06:32.472Z\"\n" +
+                        "   },\n" +
+                        "   \"session\":\"B7850470EED8CD7570E05C50FD5F02F6\"\n" +
+                        "}";
+
+        assertThat(objectMapper.readTree(document.toJson())).isEqualTo(objectMapper.readTree(expectedResults));
+        // TODO: issue with Date: created seems to have issue with UTC
+
+
+        // TODO: test index
+    }
+
+
+    /**
+     * Check that the format of MongoDB is the same as
+     */
+    @Test
+    void persistent_project_connection_domain() throws ParseException, JsonProcessingException {
+
+        // Result from Mongodb with the Cytomine Grails version
+
+//        > db.persistentProjectConnection.findOne()
+//        {
+//                 "_id" : NumberLong(3073),
+//                "browser" : "firefox",
+//                "browserVersion" : "92.0.0",
+//                "created" : ISODate("2021-09-22T09:06:32.472Z"),
+//                "os" : "Linux",
+//                "project" : NumberLong(3063),
+//                "session" : "B7850470EED8CD7570E05C50FD5F02F6",
+//                "user" : NumberLong(58),
+//                "countCreatedAnnotations" : 0,
+//                "countViewedImages" : 0,
+//                "time" : NumberLong(139164)
+//        }
+
+        PersistentProjectConnection connection = new PersistentProjectConnection();
+        connection.setId(3073L);
+        connection.setBrowser("firefox");
+        connection.setBrowserVersion("92.0.0");
+        connection.setCreated(mongoDBFormat.parse("2021-09-22T09:06:32.472Z"));
+        connection.setOs("Linux");
+        connection.setProject(3063L);
+        connection.setSession("B7850470EED8CD7570E05C50FD5F02F6");
+        connection.setUser(58L);
+        connection.setCountCreatedAnnotations(0);
+        connection.setCountViewedImages(0);
+        connection.setTime(139164L);
+
+        connection = persistentProjectConnectionRepository.insert(connection);
+
+        Document document = retrieveDocument("persistentProjectConnection", connection.getId());
+
+        // {"_id": 3073, "browser": "firefox", "browserVersion": "92.0.0", "created": {"$date": "2021-09-22T09:06:32.472Z"}, "os": "Linux", "project": 3063, "session": "B7850470EED8CD7570E05C50FD5F02F6", "user": 58, "countCreatedAnnotations": 0, "countViewedImages": 0, "time": 139164}
+
+        String expectedResults =
+                "{\n" +
+                        "   \"_id\":3073,\n" +
+                        "   \"browser\":\"firefox\",\n" +
+                        "   \"browserVersion\":\"92.0.0\",\n" +
+                        "   \"created\":{\n" +
+                        "      \"$date\":\"2021-09-22T09:06:32.472Z\"\n" +
+                        "   },\n" +
+                        "   \"os\":\"Linux\",\n" +
+                        "   \"project\":3063,\n" +
+                        "   \"session\":\"B7850470EED8CD7570E05C50FD5F02F6\",\n" +
+                        "   \"user\":58,\n" +
+                        "   \"countCreatedAnnotations\":0,\n" +
+                        "   \"countViewedImages\":0,\n" +
+                        "   \"time\":139164\n" +
+                        "}";
+
+        assertThat(objectMapper.readTree(document.toJson())).isEqualTo(objectMapper.readTree(expectedResults));
+        // TODO: issue with Date: created seems to have issue with UTC
+
+
+        // TODO: test index
+    }
+
+
+    /**
+     * Check that the format of MongoDB is the same as
+     */
+    @Test
+    void persistent_image_consultation_domain() throws ParseException, JsonProcessingException {
+
+        // Result from Mongodb with the Cytomine Grails version
+
+//> db.persistentImageConsultation.findOne()
+//        {
+//            "_id" : NumberLong(3975),
+//                "created" : ISODate("2021-09-23T08:55:02.602Z"),
+//                "image" : NumberLong(3962),
+//                "imageName" : "CMU-1-Small-Region (1).svs",
+//                "imageThumb" : "http://localhost-core/api/imageinstance/3962/thumb.png?maxSize=256",
+//                "mode" : "view",
+//                "project" : NumberLong(3063),
+//                "projectConnection" : NumberLong(3974),
+//                "session" : "B6AC04394B9D9F746A15E511C5DC243B",
+//                "user" : NumberLong(58),
+//                "countCreatedAnnotations" : 0,
+//                "time" : NumberLong(12149)
+//        }
+
+
+        PersistentImageConsultation consultation = new PersistentImageConsultation();
+        consultation.setId(3975L);
+        consultation.setUser(58L);
+        consultation.setImage(3962L);
+        consultation.setProject(3063L);
+        consultation.setSession("B6AC04394B9D9F746A15E511C5DC243B");
+        consultation.setProjectConnection(3974L);
+        consultation.setCreated(mongoDBFormat.parse("2021-09-23T08:55:02.602Z"));
+        consultation.setSession("B6AC04394B9D9F746A15E511C5DC243B");
+        consultation.setMode("view");
+        consultation.setImageName("CMU-1-Small-Region (1).svs");
+        consultation.setImageThumb("http://localhost-core/api/imageinstance/3962/thumb.png?maxSize=256");
+        consultation.setTime(12149L);
+        consultation.setCountCreatedAnnotations(0);
+
+        consultation = persistentImageConsultationRepository.insert(consultation);
+
+        Document document = retrieveDocument("persistentImageConsultation", consultation.getId());
+
+     // "_id": 3975, "created": {"$date": "2021-09-23T08:55:02.602Z"}, "image": 3962, "imageName": "CMU-1-Small-Region (1).svs", "imageThumb": "http://localhost-core/api/imageinstance/3962/thumb.png?maxSize=256", "mode": "view", "project": 3063, "projectConnection": 3974, "session": "B6AC04394B9D9F746A15E511C5DC243B", "user": 58, "countCreatedAnnotations": 0, "time": 12149}
+
+        String expectedResults =
+                "{\n" +
+                        "\"_id\": 3975,\n" +
+                        "\"created\": {\n" +
+                        "\"$date\": \"2021-09-23T08:55:02.602Z\"\n" +
+                        "},\n" +
+                        "\"image\": 3962,\n" +
+                        "\"imageName\": \"CMU-1-Small-Region (1).svs\",\n" +
+                        "\"imageThumb\": \"http://localhost-core/api/imageinstance/3962/thumb.png?maxSize=256\",\n" +
+                        "\"mode\": \"view\",\n" +
+                        "\"project\": 3063,\n" +
+                        "\"projectConnection\": 3974,\n" +
+                        "\"session\": \"B6AC04394B9D9F746A15E511C5DC243B\",\n" +
+                        "\"user\": 58,\n" +
+                        "\"countCreatedAnnotations\": 0,\n" +
+                        "\"time\": 12149\n" +
+                        "}";
+
+        assertThat(objectMapper.readTree(document.toJson())).isEqualTo(objectMapper.readTree(expectedResults));
+        // TODO: issue with Date: created seems to have issue with UTC
+
+        // TODO: test index
+    }
+
+
+
+    /**
+     * Check that the format of MongoDB is the same as
+     */
+    @Test
+    void persistent_user_position_domain() throws ParseException, JsonProcessingException {
+
+        //Test index
+        //> db.persistentUserPosition.getIndexes()
+        //[
+        //	{
+        //		"v" : 1,
+        //		"key" : {
+        //			"_id" : 1
+        //		},
+        //		"name" : "_id_",
+        //		"ns" : "cytomine.persistentUserPosition"
+        //	},
+        //	{
+        //		"v" : 1,
+        //		"key" : {
+        //			"user" : 1,
+        //			"image" : 1,
+        //			"slice" : 1,
+        //			"created" : -1
+        //		},
+        //		"name" : "user_1_image_1_slice_1_created_-1",
+        //		"ns" : "cytomine.persistentUserPosition"
+        //	},
+        //	{
+        //		"v" : 1,
+        //		"key" : {
+        //			"location" : "2d",
+        //			"image" : 1,
+        //			"slice" : 1
+        //		},
+        //		"name" : "location_2d_image_1_slice_1",
+        //		"ns" : "cytomine.persistentUserPosition",
+        //		"min" : -2147483648,
+        //		"max" : 2147483647
+        //	},
+        //	{
+        //		"v" : 1,
+        //		"key" : {
+        //			"image" : 1
+        //		},
+        //		"name" : "image_1",
+        //		"ns" : "cytomine.persistentUserPosition"
+        //	}
+        //]
+        ListIndexesIterable<Document> indexes = retrieveIndex("persistentUserPosition");
+        Document indexId = null;
+        Document indexUserImageSliceCreated = null;
+        Document locationImageSlice = null;
+        Document image = null;
+        for (Document index : indexes) {
+            if (index.get("name").equals("_id_")) {
+                indexId = index;
+            }
+            if (index.get("name").equals("user_1_image_1_slice_1_created_-1")) {
+                indexUserImageSliceCreated = index;
+            }
+
+            if (index.get("name").equals("location_2d_image_1_slice_1")) {
+                locationImageSlice = index;
+            }
+
+            if (index.get("name").equals("image_1")) {
+                image = index;
+            }
+        }
+        assertThat(indexes).hasSize(4);
+
+        assertThat(indexId).isNotNull();
+        assertThat(((Document)indexId.get("key")).get("_id")).isEqualTo(1);
+
+        assertThat(indexUserImageSliceCreated).isNotNull();
+        assertThat(((Document)indexUserImageSliceCreated.get("key")).get("user")).isEqualTo(1);
+        assertThat(((Document)indexUserImageSliceCreated.get("key")).get("image")).isEqualTo(1);
+        assertThat(((Document)indexUserImageSliceCreated.get("key")).get("slice")).isEqualTo(1);
+        assertThat(((Document)indexUserImageSliceCreated.get("key")).get("created")).isEqualTo(-1);
+
+        assertThat(locationImageSlice).isNotNull();
+        assertThat(((Document)locationImageSlice.get("key")).get("location")).isEqualTo("2d");
+        assertThat(((Document)locationImageSlice.get("key")).get("image")).isEqualTo(1);
+        assertThat(((Document)locationImageSlice.get("key")).get("slice")).isEqualTo(1);
+
+        assertThat(image).isNotNull();
+        assertThat(((Document)image.get("key")).get("image")).isEqualTo(1);
+
+        // Result from Mongodb with the Cytomine Grails version
+
+        //> db.persistentUserPosition.findOne()
+        //        {
+        //            "_id" : NumberLong(3977),
+        //                "broadcast" : false,
+        //                "created" : ISODate("2021-09-23T08:55:03.608Z"),
+        //                "image" : NumberLong(3962),
+        //                "imageName" : "CMU-1-Small-Region (1).svs",
+        //                "location" : [
+        //		[
+        //            -3338,3128
+        //		],
+        //		[
+        //            5558,3128
+        //		],
+        //		[
+        //            5558,-160
+        //		],
+        //		[
+        //            -3338,-160
+        //		]
+        //	],
+        //            "project" : NumberLong(3063),
+        //                "rotation" : "0.0",
+        //                "session" : "B6AC04394B9D9F746A15E511C5DC243B",
+        //                "slice" : NumberLong(3963),
+        //                "user" : NumberLong(58),
+        //                "zoom" : 2
+        //        }
+        ImageInstance imageInstance = new ImageInstance();
+        imageInstance.setId(3962L);
+        Project project = new Project();
+        project.setId(3063L);
+        SliceInstance sliceInstance = new SliceInstance();
+        sliceInstance.setId(3963L);
+        User user = new User();
+        user.setId(58L);
+
+
+        PersistentUserPosition persistedPosition = new PersistentUserPosition();
+        persistedPosition.setId(3977L);
+        persistedPosition.setBroadcast(false);
+        persistedPosition.setCreated(mongoDBFormat.parse("2021-09-23T08:55:03.608Z"));
+        persistedPosition.setImage(imageInstance.getId());
+        persistedPosition.setImageName("CMU-1-Small-Region (1).svs");
+        persistedPosition.setLocation(new GeoJsonPolygon(new Point(-3338d,3128d), new Point(5558d,3128d), new Point(5558d,-160d), new Point(-3338d,-160d)));
+        persistedPosition.setProject(project.getId());
+        persistedPosition.setRotation(0d);
+        persistedPosition.setSession("B6AC04394B9D9F746A15E511C5DC243B");
+        persistedPosition.setSlice(sliceInstance.getId());
+        persistedPosition.setUser(user.getId());
+        persistedPosition.setZoom(2);
+
+        persistedPosition = persistentUserPositionRepository.insert(persistedPosition);
+
+        Document document = retrieveDocument("persistentUserPosition", persistedPosition.getId());
+
+        MongoClient mongoClient = MongoClients.create();
+        MongoCollection<Document> persistentProjectConnectionFromGrails = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentUserPosition");
+        ArrayList<Document> results = persistentProjectConnectionFromGrails.find(eq("_id", 3977L))
+                .into(new ArrayList<>());
+        for (Document result : results) {
+            System.out.println(result.toJson());
+        }
+
+        String expectedResults =
+                "{\n" +
+                        "\"_id\": 3977,\n" +
+                        "\"broadcast\": false,\n" +
+                        "\"created\": {\n" +
+                        "\"$date\": \"2021-09-23T08:55:03.608Z\"\n" +
+                        "},\n" +
+                        "\"image\": 3962,\n" +
+                        "\"imageName\": \"CMU-1-Small-Region (1).svs\",\n" +
+                        "\"location\": [\n" +
+                        "[-3338.0, 3128.0],\n" +
+                        "[5558.0, 3128.0],\n" +
+                        "[5558.0, -160.0],\n" +
+                        "[-3338.0, -160.0]\n" +
+                        "],\n" +
+                        "\"project\": 3063,\n" +
+                        "\"rotation\": \"0.0\",\n" +
+                        "\"session\": \"B6AC04394B9D9F746A15E511C5DC243B\",\n" +
+                        "\"slice\": 3963,\n" +
+                        "\"user\": 58,\n" +
+                        "\"zoom\": 2\n" +
+                        "}";
+
+        assertThat(objectMapper.readTree(document.toJson())).isEqualTo(objectMapper.readTree(expectedResults));
+        // TODO: issue with Date: created seems to have issue with UTC + problem with polygon
+
+        // TODO: test index
+    }
+
+
+
+    private Document retrieveDocument(String collectionName, Long id) {
+        MongoCollection<Document> persistentProjectConnection = mongoClient.getDatabase(DATABASE_NAME).getCollection(collectionName);
+
+        List<Document> results = persistentProjectConnection.find(eq("_id", id))
+                .into(new ArrayList<>());
+        System.out.println("****************************");
+        assertThat(results).hasSize(1);
+        Document document = results.get(0);
+        return document;
+    }
+
+    private ListIndexesIterable<Document> retrieveIndex(String collectionName) {
+        MongoCollection<Document> persistentProjectConnection = mongoClient.getDatabase(DATABASE_NAME).getCollection(collectionName);
+        return persistentProjectConnection.listIndexes();
+    }
+
+
+    // how to retrieve doc from grails version
+
+    //        MongoClient mongoClient = MongoClients.create();
+//        MongoCollection<Document> persistentProjectConnectionFromGrails = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentProjectConnection");
+//        results = persistentProjectConnectionFromGrails.find(eq("_id", 3073L))
+//                .into(new ArrayList<>());
+//        for (Document result : results) {
+//            System.out.println(result.toJson());
+//        }
+}

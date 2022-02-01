@@ -18,7 +18,7 @@ import java.util.Date;
 @Getter
 @Setter
 @Document
-@CompoundIndex(def = "{'date' : 2}")
+//@CompoundIndex(def = "{'date' : 2, 'expireAfterSeconds': 60}")
 /**
  * Info on last user connection on Cytomine
  * User x connect to poject y the 2013/01/01 at xxhyymin

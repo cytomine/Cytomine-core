@@ -1,6 +1,7 @@
 package be.cytomine;
 
 import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.nosqlmigration.InitialMongodbSetupMigration;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.Project;
@@ -81,7 +82,8 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
     @Autowired
     PermissionService permissionService;
 
-
+    @Autowired
+    InitialMongodbSetupMigration initialSetupMigration;
 
     @Autowired
     Dataset dataset;
@@ -97,12 +99,16 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
 
     public void init() {
 
+
+        initialSetupMigration.changeSet();
+
+
         SecUser secUser = secUserRepository.findByUsernameLikeIgnoreCase("admin").orElse(null);
         if (secUser!=null) {
             secUser.setPassword(passwordEncoder.encode("password"));
             secUserRepository.save(secUser);
 
-            if (projectRepository.count()==0) {
+            if (ontologyRepository.count()==0) {
                 Ontology ontology = new Ontology();
                 ontology.setName("ONTOLOGY_DEMO1");
                 ontology.setUser((User)secUser);

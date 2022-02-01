@@ -659,7 +659,7 @@ public class ProjectConnectionService {
     }
 
 
-    List getUserActivityDetails(String activityId){
+    List getUserActivityDetails(Long activityId){
         PersistentProjectConnection connection = persistentProjectConnectionRepository.findById(activityId)
                 .orElseThrow(() -> new ObjectNotFoundException("PersistentProjectConnection", activityId));
         Project project = projectRepository.getById(connection.getProject());

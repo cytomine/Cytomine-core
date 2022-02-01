@@ -1,14 +1,18 @@
 package be.cytomine.service.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+
+import java.util.List;
 
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class Point {
-    double x;
-    double y;
+    Double x;
+    Double y;
+
+    public List<Double> toList() {
+        return List.of(x,y);
+    }
 }

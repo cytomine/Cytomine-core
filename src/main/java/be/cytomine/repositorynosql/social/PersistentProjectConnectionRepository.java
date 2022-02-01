@@ -20,7 +20,7 @@ import java.util.Optional;
  * Spring Data JPA repository for the user entity.
  */
 @Repository
-public interface PersistentProjectConnectionRepository extends MongoRepository<PersistentProjectConnection, String> {
+public interface PersistentProjectConnectionRepository extends MongoRepository<PersistentProjectConnection, Long> {
 
     List<PersistentProjectConnection> findAllByUserAndProjectAndCreatedLessThan(Long user, Long project, Date created, PageRequest pageRequest);
 
@@ -65,4 +65,5 @@ public interface PersistentProjectConnectionRepository extends MongoRepository<P
     Long countByProjectAndCreatedBefore(Long project, Date createdMax);
 
     Long countByProjectAndCreatedBetween(Long project, Date createdMin, Date createdMax);
+
 }

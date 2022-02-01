@@ -1,17 +1,9 @@
 package be.cytomine.domain.social;
 
-import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.security.User;
 import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
-import org.bson.codecs.pojo.annotations.BsonIgnore;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -30,14 +22,12 @@ import java.util.Map;
 @Setter
 @Document
 @Entity
-//@CompoundIndex(def = "{'project' : 1, 'created' : -1}")
-public class PersistentProjectConnection  implements Cloneable {
+//@CompoundIndex(def = "{'user' : 1, 'image' : 1, 'created': -1}")
+public class PersistentImageConsultation implements Cloneable {
 
         // TODO:
 //    version false
 //    stateless true //don't store data in memory after read&co. These data don't need to be update.
-
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -45,49 +35,45 @@ public class PersistentProjectConnection  implements Cloneable {
 
     protected Date created;
 
-    @Transient
-    protected Date updated;
-
-
-    @NotNull
     Long user;
 
-    @NotNull
     @Indexed
+    Long image;
+
     Long project;
 
-    Long time;
+    Long projectConnection;
 
     String session;
 
-    String os;
+    String imageName;
 
-    String browser;
+    String imageThumb;
 
-    String browserVersion;
+    String mode;
 
-    Integer countViewedImages;
+    Long time;
 
     Integer countCreatedAnnotations;
 
-    @javax.persistence.Transient
     @Transient // we need both
+    @org.springframework.data.annotation.Transient
     Map<String, Object> extraProperties = new LinkedHashMap<>();
 
-    public static JsonObject getDataFromDomain(PersistentProjectConnection domain) {
+    public static JsonObject getDataFromDomain(PersistentImageConsultation domain) {
         JsonObject returnArray = new JsonObject();
-        PersistentProjectConnection connection = (PersistentProjectConnection)domain;
+        PersistentImageConsultation connection = (PersistentImageConsultation)domain;
         returnArray.put("class", domain.getClass());
         returnArray.put("id", domain.getId());
         returnArray.put("created", DateUtils.getTimeToString(domain.created));
-        returnArray.put("updated", DateUtils.getTimeToString(domain.updated));
         returnArray.put("user", connection.getUser());
+        returnArray.put("image", connection.getImage());
+        returnArray.put("imageName", connection.getImageName());
+        returnArray.put("imageThumb", connection.getImageThumb());
+        returnArray.put("mode", connection.getMode());
         returnArray.put("project", connection.getProject());
+        returnArray.put("projectConnection", connection.getProjectConnection());
         returnArray.put("time", connection.getTime());
-        returnArray.put("os", connection.getOs());
-        returnArray.put("browser", connection.getBrowser());
-        returnArray.put("browserVersion", connection.getBrowserVersion());
-        returnArray.put("countViewedImages", connection.getCountViewedImages());
         returnArray.put("countCreatedAnnotations", connection.getCountCreatedAnnotations());
         returnArray.putAll(connection.getExtraProperties());
         return returnArray;
@@ -95,14 +81,15 @@ public class PersistentProjectConnection  implements Cloneable {
 
     @Override
     public Object clone() {
-        PersistentProjectConnection result = new PersistentProjectConnection();
+        PersistentImageConsultation result = new PersistentImageConsultation();
         result.user = user;
         result.project = project;
+        result.projectConnection = projectConnection;
         result.time = time;
-        result.os = os;
-        result.browser = browser;
-        result.browserVersion = browserVersion;
-        result.countViewedImages = countViewedImages;
+        result.image = image;
+        result.imageName = imageName;
+        result.imageThumb = imageThumb;
+        result.mode = mode;
         result.countCreatedAnnotations = countCreatedAnnotations;
         result.id = id;
         result.created = created;
@@ -120,12 +107,13 @@ public class PersistentProjectConnection  implements Cloneable {
 
     @Override
     public String toString() {
-        return "PersistentProjectConnection{" +
+        return "PersistentImageConsultation{" +
                 "id='" + id + '\'' +
                 ", created=" + created +
                 ", createdTime=" + (created!=null? created.getTime() : null) +
                 ", user=" + user +
                 ", project=" + project +
+                ", image=" + image +
                 ", time=" + time +
                 '}';
     }

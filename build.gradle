@@ -33,6 +33,12 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 
+//	implementation 'io.mongock:mongock-springboot:5.0.35'
+//
+//// https://mvnrepository.com/artifact/io.mongock/mongodb-springdata-v3-driver
+//	implementation group: 'io.mongock', name: 'mongodb-springdata-v3-driver', version: '5.0.35'
+
+
 //	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-mongodb
 //	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-mongodb', version: '2.2.9.RELEASE'
 //	implementation 'org.springframework.data:spring-data-mongodb:2.2.9.RELEASE'
