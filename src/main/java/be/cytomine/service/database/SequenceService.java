@@ -3,8 +3,14 @@ package be.cytomine.service.database;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.sql.DataSource;
 import javax.transaction.Transactional;
+import java.math.BigInteger;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 @Service
 @Transactional
@@ -14,7 +20,7 @@ public class SequenceService {
 //    EntityManager entityManager;
 
     @Autowired
-    private DataSource dataSource;
+    private EntityManager entityManager;
 
 
 
@@ -42,15 +48,19 @@ public class SequenceService {
 //            throwables.printStackTrace();
 //        }
 //    }
-//    /**
-//     * Get a new id number
-//     */
-//    Long generateID() throws SQLException {
-//        Statement statement = dataSource.getConnection().createStatement();
-//        ResultSet res = statement.executeQuery("select nextval('" + SEQ_NAME + "');");
-//        res.next();
-//        Long nextVal = res.getLong("nextval");
-//        return nextVal;
-//    }
+    /**
+     * Get a new id number
+     */
+    public Long generateID()  {
+        Statement statement = null;
+        try {
+            Query query = entityManager.createNativeQuery("select nextval('" + SEQ_NAME + "');");
+            BigInteger val = (BigInteger) query.getSingleResult();
+            return val.longValue();
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot generate ID with sequence: " + e, e);
+        }
+
+    }
 
 }

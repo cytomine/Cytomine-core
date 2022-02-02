@@ -112,11 +112,11 @@ public class UserPositionService {
             Boolean broadcast) {
 
         LastUserPosition position = new LastUserPosition();
-        position.setUser(user);
-        position.setImage(imageInstance);
-        position.setSlice(sliceInstance);
-        position.setProject(imageInstance.getProject());
-        position.setLocation(area.toGeoJsonPolygon());
+        position.setUser(user.getId());
+        position.setImage(imageInstance.getId());
+        position.setSlice(sliceInstance.getId());
+        position.setProject(imageInstance.getProject().getId());
+        position.setLocation(area.toMongodbLocation().getCoordinates());
         position.setZoom(zoom);
         position.setRotation(rotation);
         position.setBroadcast(broadcast);

@@ -22,15 +22,13 @@ import java.util.stream.Collectors;
 
 import static be.cytomine.domain.ontology.RelationTerm.PARENT;
 
-@Entity
+//@Entity
 @Getter
 @Setter
 @Document
 //@CompoundIndex(def = "{'user' : 1, 'created' : -1}")
 public class PersistentConnection {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     protected Long id;
 
     @CreatedDate

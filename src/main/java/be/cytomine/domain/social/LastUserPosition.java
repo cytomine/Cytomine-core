@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 
 import static be.cytomine.domain.social.PersistentUserPosition.getJtsPolygon;
 
-@Entity
 @Getter
 @Setter
 @Document
@@ -54,33 +53,21 @@ public class LastUserPosition {
     @LastModifiedDate
     protected Date updated;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
-    protected SecUser user;
+    protected Long user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(nullable = true)
-    @Indexed
-    private ImageInstance image;
+    private Long image;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(nullable = true)
-    private SliceInstance slice;
+    private Long slice;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(nullable = true)
-    private Project project;
-
-    private String session;
+    private Long project;
 
     private String imageName;
 
     /**
      * User screen area
      */
-
-
-    GeoJsonPolygon location;
+    @ElementCollection
+    List<List<Double>> location;
 
     /**
      * User zoom on image
@@ -106,10 +93,10 @@ public class LastUserPosition {
         returnArray.put("id", domain.getId());
         returnArray.put("created", DateUtils.getTimeToString(domain.created));
         returnArray.put("updated", DateUtils.getTimeToString(domain.updated));
-        returnArray.put("user", position.getUser()!=null? position.getUser().getId() : null);
-        returnArray.put("image", position.getImage()!=null? position.getImage().getId() : null);
-        returnArray.put("slice", position.getSlice()!=null? position.getSlice().getId() : null);
-        returnArray.put("project", position.getProject()!=null? position.getProject().getId() : null);
+        returnArray.put("user", position.getUser());
+        returnArray.put("image", position.getImage());
+        returnArray.put("slice", position.getSlice());
+        returnArray.put("project", position.getProject());
         returnArray.put("zoom", position.getZoom());
         returnArray.put("rotation", position.getRotation());
         returnArray.put("broadcast", position.isBroadcast());

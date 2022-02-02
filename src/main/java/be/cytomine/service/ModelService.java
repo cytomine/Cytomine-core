@@ -6,6 +6,7 @@ import be.cytomine.domain.command.Command;
 import be.cytomine.domain.command.DeleteCommand;
 import be.cytomine.domain.command.Transaction;
 import be.cytomine.exceptions.*;
+import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -48,6 +49,11 @@ public abstract class ModelService<T extends CytomineDomain> {
 //
     @Autowired
     CommandService commandService;
+
+    @Autowired
+    SequenceService sequenceService;
+
+
 //    def responseService
 
 //    def cytomineService
@@ -59,6 +65,10 @@ public abstract class ModelService<T extends CytomineDomain> {
 //    def tagDomainAssociationService
     //def securityACLService
     boolean saveOnUndoRedoStack = true;
+
+    public Long generateNextId() {
+        return sequenceService.generateID();
+    }
 
     /**
      * Save a domain on database, throw error if cannot save

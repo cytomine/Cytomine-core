@@ -9,6 +9,7 @@ import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
+import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Transient;
@@ -29,7 +30,7 @@ import java.util.Map;
 @Getter
 @Setter
 @Document
-@Entity
+//@Entity
 //@CompoundIndex(def = "{'project' : 1, 'created' : -1}")
 public class PersistentProjectConnection  implements Cloneable {
 
@@ -37,10 +38,6 @@ public class PersistentProjectConnection  implements Cloneable {
 //    version false
 //    stateless true //don't store data in memory after read&co. These data don't need to be update.
 
-
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     protected Long id;
 
     protected Date created;

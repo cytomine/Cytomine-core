@@ -14,7 +14,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 
-@Entity
+//@Entity
 @Getter
 @Setter
 @Document
@@ -25,22 +25,22 @@ import java.util.Date;
  */
 public class LastConnection {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    protected String id;
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.AUTO)
+    protected Long id;
 
     @CreatedDate
-    @Indexed(name="last_connection_expiration", expireAfterSeconds=300)
+//    @Indexed(name="last_connection_expiration", expireAfterSeconds=300)
     protected Date created;
 
     @LastModifiedDate
     protected Date updated;
 
-    @NotNull
-    @ManyToOne(fetch = FetchType.EAGER)
-    protected User user;
+    protected Date date;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(nullable = true)
-    private Project project;
+    protected Long user;
+
+    private Long project;
+
+    private Integer version = 0;
 }

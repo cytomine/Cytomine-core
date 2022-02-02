@@ -18,7 +18,7 @@ import java.util.Optional;
 
 
 @Repository
-public interface LastConnectionRepository extends MongoRepository<LastConnection, String> {
+public interface LastConnectionRepository extends MongoRepository<LastConnection, Long> {
 
-    List<LastConnection> findByProjectAndUser(Project project, User user);
+    List<LastConnection> findByProjectAndUser(Long project, Long user);
 }

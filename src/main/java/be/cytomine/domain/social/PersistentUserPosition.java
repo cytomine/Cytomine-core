@@ -21,6 +21,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -118,10 +119,10 @@ public class PersistentUserPosition {
         returnArray.put("zoom", position.getZoom());
         returnArray.put("rotation", position.getRotation());
         returnArray.put("broadcast", position.isBroadcast());
-//        Polygon polygon = getJtsPolygon(domain.location);
-//        returnArray.put("location", polygon.toString());
-//        returnArray.put("x", polygon.getCentroid().getX());
-//        returnArray.put("y", polygon.getCentroid().getY());
+        Polygon polygon = getJtsPolygon(domain.location);
+        returnArray.put("location", polygon.toString());
+        returnArray.put("x", polygon.getCentroid().getX());
+        returnArray.put("y", polygon.getCentroid().getY());
         return returnArray;
     }
 //    static Polygon getPolygonFromMongo(List locationList) {
@@ -141,5 +142,12 @@ public class PersistentUserPosition {
         return new GeometryFactory().createPolygon(coordinates.toArray(Coordinate[]::new));
     }
 
-
+    public static Polygon getJtsPolygon(List<List<Double>> polygon) {
+        List<Coordinate> coordinates = polygon.stream().map(point -> new Coordinate(point.get(0), point.get(1))).collect(Collectors.toList());
+        if (coordinates.size() > 1) {
+            // finish with the first point
+            coordinates.add(coordinates.get(0));
+        }
+        return new GeometryFactory().createPolygon(coordinates.toArray(Coordinate[]::new));
+    }
 }

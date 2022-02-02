@@ -9,6 +9,7 @@ import be.cytomine.domain.social.LastConnection;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
+import be.cytomine.service.database.SequenceService;
 import com.mongodb.client.MongoClient;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Assertions;
@@ -39,6 +40,9 @@ public class ProjectConnectionServiceTests {
 
     @Autowired
     ProjectConnectionService projectConnectionService;
+
+    @Autowired
+    SequenceService sequenceService;
 
     @Autowired
     PersistentProjectConnectionRepository persistentProjectConnectionRepository;
@@ -539,8 +543,9 @@ public class ProjectConnectionServiceTests {
 
     LastConnection given_a_last_connection(User user, Project project) {
         LastConnection lastConnection = new LastConnection();
-        lastConnection.setProject(project);
-        lastConnection.setUser(user);
+        lastConnection.setId(sequenceService.generateID());
+        lastConnection.setProject(project.getId());
+        lastConnection.setUser(user.getId());
         return lastConnectionRepository.insert(lastConnection);
     }
 }

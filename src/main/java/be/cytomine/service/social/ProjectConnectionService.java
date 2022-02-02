@@ -15,6 +15,7 @@ import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.repositorynosql.social.ProjectConnectionRepository;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
+import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import com.mongodb.client.MongoClient;
@@ -94,6 +95,9 @@ public class ProjectConnectionService {
     MongoTemplate mongoTemplate;
 
     @Autowired
+    SequenceService sequenceService;
+
+    @Autowired
     private SessionFactory sessionFactory;
 
     public PersistentProjectConnection add(SecUser user, Long projectId, String session, String os, String browser, String browserVersion) {
@@ -106,6 +110,7 @@ public class ProjectConnectionService {
         closeLastProjectConnection(user.getId(), project.getId(), created);
 
         PersistentProjectConnection connection = new PersistentProjectConnection();
+        connection.setId(sequenceService.generateID());
         connection.setUser(user.getId());
         connection.setProject(project.getId());
         connection.setCreated(created);
@@ -209,10 +214,10 @@ public class ProjectConnectionService {
 //        criteria.add(Restrictions.eq("project", project));
 
         AggregationResults queryResults = persistentProjectConnectionRepository.retrieve(project.getId(), sortProperty, (sortDirection.equals("desc")? -1 : 1));
-        List<PersistentProjectConnection> connected = queryResults.getMappedResults();
+        List<LinkedHashMap> connected = queryResults.getMappedResults();
 
         List<Long> unconnectedIds =  new ArrayList<>(userIds);
-        unconnectedIds.removeAll(connected.stream().map(x -> x.getUser()).collect(Collectors.toList()));
+        unconnectedIds.removeAll(connected.stream().map(x -> x.get("user")).collect(Collectors.toList()));
 
         List<Map<String, Object>> unconnected = unconnectedIds.stream().map(x -> Map.of("user", (Object)x)).collect(Collectors.toList());
 
@@ -307,7 +312,7 @@ public class ProjectConnectionService {
 
         if(connections.get(0).getTime()==null) {
             connections.set(0, ((PersistentProjectConnection)(connections.get(0)).clone()));
-            boolean online = !lastConnectionRepository.findByProjectAndUser(project, user).isEmpty();
+            boolean online = !lastConnectionRepository.findByProjectAndUser(project.getId(), user.getId()).isEmpty();
             fillProjectConnection(connections.get(0), new Date());
             if(online) {
                 connections.get(0).getExtraProperties().put("online", true);
