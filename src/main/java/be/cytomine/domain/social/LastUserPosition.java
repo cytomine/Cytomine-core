@@ -31,20 +31,8 @@ import static be.cytomine.domain.social.PersistentUserPosition.getJtsPolygon;
 @Getter
 @Setter
 @Document
-//@CompoundIndex(def = "{'user' : 1, 'image': 1, 'slice': 1, 'created' : -1}")
-//@CompoundIndex(def = "{'location':'2d', 'image':1, 'slice':1}")
-//@CompoundIndex(def = "{'created':1, 'expireAfterSeconds': 60}")
 public class LastUserPosition {
 
-
-   // TODO:
-   // stateless true //don't store data in memory after read&co. These data don't need to be update.
-
-    //TODO:
-    // indexAttributes:[min:Integer.MIN_VALUE, max:Integer.MAX_VALUE],
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     protected Long id;
 
     @CreatedDate

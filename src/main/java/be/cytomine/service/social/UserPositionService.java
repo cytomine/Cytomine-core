@@ -11,12 +11,14 @@ import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repositorynosql.social.*;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
+import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.dto.AreaDTO;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Projections;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
@@ -92,6 +94,9 @@ public class UserPositionService {
     @Autowired
     LastUserPositionRepository lastUserPositionRepository;
 
+    @Autowired
+    SequenceService sequenceService;
+
 //
 //    public LastUserPosition add(SecUser user, SliceInstance sliceInstance) {
 //
@@ -101,7 +106,7 @@ public class UserPositionService {
 //
 //    }
 
-    public LastUserPosition add(
+    public PersistentUserPosition add(
             Date created,
             SecUser user,
             SliceInstance sliceInstance,
@@ -112,6 +117,7 @@ public class UserPositionService {
             Boolean broadcast) {
 
         LastUserPosition position = new LastUserPosition();
+        position.setId(sequenceService.generateID());
         position.setUser(user.getId());
         position.setImage(imageInstance.getId());
         position.setSlice(sliceInstance.getId());
@@ -126,6 +132,7 @@ public class UserPositionService {
         lastUserPositionRepository.insert(position);
 
         PersistentUserPosition persistedPosition = new PersistentUserPosition();
+        persistedPosition.setId(sequenceService.generateID());
         persistedPosition.setUser(user.getId());
         persistedPosition.setImage(imageInstance.getId());
         persistedPosition.setSlice(sliceInstance.getId());
@@ -139,7 +146,7 @@ public class UserPositionService {
         persistedPosition.setImageName(imageInstance.getBlindInstanceFilename());
         persistentUserPositionRepository.insert(persistedPosition);
 
-        return position;
+        return persistedPosition;
     }
 
     public Optional<LastUserPosition> lastPositionByUser(ImageInstance image, SliceInstance slice, SecUser user, boolean broadcast) {
@@ -187,7 +194,6 @@ public class UserPositionService {
         return results.stream().map(x -> x.getLong("_id")).collect(Collectors.toList());
     }
 
-
     List<PersistentUserPosition> list(ImageInstance image, User user, SliceInstance slice, Long afterThan, Long beforeThan, int max, int offset){
         securityACLService.check(image,WRITE);
 
@@ -201,13 +207,14 @@ public class UserPositionService {
         if (slice!=null) {
             query.addCriteria(Criteria.where("slice").is(slice.getId()));
         }
-        if (afterThan!=null) {
+        if (afterThan!=null && beforeThan!=null) {
+            query.addCriteria(Criteria.where("created").gte(new Date(afterThan)).lte(new Date(beforeThan)));
+        } else if (afterThan!=null) {
             query.addCriteria(Criteria.where("created").gte(new Date(afterThan)));
-        }
-        if (beforeThan!=null) {
+        } else if (beforeThan!=null) {
             query.addCriteria(Criteria.where("created").lte(new Date(beforeThan)));
         }
-        query.with(Sort.by(Sort.Direction.DESC, "asc"));
+        query.with(Sort.by(Sort.Direction.DESC, "created"));
         query.limit(max);
         query.skip(offset);
 
@@ -215,7 +222,6 @@ public class UserPositionService {
         return lastUserPositions;
 
     }
-
 
     public List<Map<String, Object>> summarize(ImageInstance image, User user, SliceInstance slice, Long afterThan, Long beforeThan) {
         securityACLService.check(image, WRITE);
@@ -235,10 +241,10 @@ public class UserPositionService {
             request.add(match(eq("slice", slice.getId())));
         }
 
-        request.add(group(Fields.fields()
-                .and("location", "$location")
-                .and("zoom", "$zoom")
-                .and("rotation", "$rotation"), Accumulators.sum("frequency", 1), Accumulators.first("image", "$image")));
+
+
+        request.add(group(Document.parse("{location: '$location', zoom: '$zoom', rotation: '$rotation'}"),
+                Accumulators.sum("frequency", 1), Accumulators.first("image", "$image")));
 
 
         MongoCollection<Document> persistentUserPosition = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentUserPosition");
