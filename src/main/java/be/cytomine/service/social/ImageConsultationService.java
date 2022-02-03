@@ -18,6 +18,7 @@ import be.cytomine.repositorynosql.social.*;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.UrlApi;
+import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
 import com.mongodb.client.MongoClient;
@@ -28,6 +29,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -97,6 +99,8 @@ public class ImageConsultationService {
     @Autowired
     PersistentUserPositionRepository persistentUserPositionRepository;
 
+    @Autowired
+    SequenceService sequenceService;
 
     public PersistentImageConsultation add(SecUser user, Long imageId, String session, String mode, Date created) {
         ImageInstance imageInstance = imageInstanceRepository.findById(imageId)
@@ -105,6 +109,7 @@ public class ImageConsultationService {
         closeLastImageConsultation(user.getId(), imageId, created);
 
         PersistentImageConsultation consultation = new PersistentImageConsultation();
+        consultation.setId(sequenceService.generateID());
         consultation.setUser(user.getId());
         consultation.setImage(imageId);
         consultation.setProject(imageInstance.getProject().getId());
@@ -151,7 +156,7 @@ public class ImageConsultationService {
     }
 
 
-    private void fillImageConsultation(PersistentImageConsultation consultation, Date before) {
+    public void fillImageConsultation(PersistentImageConsultation consultation, Date before) {
         Date after = consultation.getCreated();
 
 //        // collect {it.created.getTime} is really slow. I just want the getTime of PersistentConnection
@@ -195,62 +200,62 @@ public class ImageConsultationService {
 
     }
 
-    public List<Map<String, Object>> listImageConsultationByProjectAndUser(Long project, Long user, boolean distinctImages, Integer max, Integer offset) {
+    public Page<PersistentImageConsultation> listImageConsultationByProjectAndUserNoImageDistinct(Long project, Long user, Integer max, Integer offset) {
         if (max != 0) {
-            max += offset;
-        }
-
-        List<Bson> requests = new ArrayList<>();
-        if (distinctImages) {
-            List<Map<String, Object>> data = new ArrayList<>();
-
-            requests.add(match(eq("user", user)));
-            requests.add(match(eq("project", project)));
-
-            requests.add(group("$image", Accumulators.max("date", "$created"), Accumulators.first("time", "$time"), Accumulators.first("countCreatedAnnotations", "$countCreatedAnnotations")));
-            requests.add(sort(descending("date")));
-
-            MongoCollection<Document> persistentImageConsultation = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentImageConsultation");
-
-            List<Document> results = persistentImageConsultation.aggregate(requests)
-                    .into(new ArrayList<>());
-
-            LinkedHashMap<Long, ImageInstance> imageInstancesMap = new LinkedHashMap<>();
-
-            for (Document result : results) {
-                try {
-                    Long imageInstanceId = result.getLong("_id");
-                    ImageInstance image = imageInstancesMap.get(imageInstanceId);
-                    if (image == null) {
-                        image = imageInstanceRepository.findById(imageInstanceId).orElse(null);
-                        imageInstancesMap.put(imageInstanceId, image);
-                    }
-
-                    String filename;
-                    if (image != null) {
-                        filename = image.getBlindInstanceFilename();
-                    } else {
-                        filename = "Image " + imageInstanceId;
-                    }
-                    be.cytomine.utils.JsonObject jsonObject = new be.cytomine.utils.JsonObject();
-                    jsonObject.put("created", result.get("date"));
-                    jsonObject.put("user", result.get("user"));
-                    jsonObject.put("time", result.get("time"));
-                    jsonObject.put("imageThumb", UrlApi.getImageInstanceThumbUrlWithMaxSize(image.getId()));
-                    jsonObject.put("imageName", filename);
-                    jsonObject.put("project", image.getProject().getId());
-                    jsonObject.put("countCreatedAnnotations", result.get("countCreatedAnnotations"));
-
-                } catch (CytomineException e) {
-                    //if user has data but has no access to picture,  ImageInstance.read will throw a forbiddenException
-                }
-            }
-            data.sort(Comparator.comparing(o -> (Date) ((Map<String, Object>) o).get("created")).reversed());
-            return data;
+            max += offset; // ?
         } else {
-            return persistentImageConsultationRepository.findAllByProjectAndUser(project, user, PageRequest.of(0, max, Sort.Direction.DESC, "created"))
-                    .stream().map(x -> PersistentImageConsultation.getDataFromDomain(x)).collect(Collectors.toList());
+            max = Integer.MAX_VALUE;
         }
+        return persistentImageConsultationRepository.findAllByProjectAndUser(project, user, PageRequest.of(0, max, Sort.Direction.DESC, "created"));
+    }
+
+    public List<Map<String, Object>> listImageConsultationByProjectAndUserWithDistinctImage(Long project, Long user) {
+        List<Bson> requests = new ArrayList<>();
+        List<Map<String, Object>> data = new ArrayList<>();
+
+        requests.add(match(eq("user", user)));
+        requests.add(match(eq("project", project)));
+
+        requests.add(group("$image", Accumulators.max("date", "$created"), Accumulators.first("time", "$time"), Accumulators.first("countCreatedAnnotations", "$countCreatedAnnotations")));
+        requests.add(sort(descending("date")));
+
+        MongoCollection<Document> persistentImageConsultation = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentImageConsultation");
+
+        List<Document> results = persistentImageConsultation.aggregate(requests)
+                .into(new ArrayList<>());
+
+        LinkedHashMap<Long, ImageInstance> imageInstancesMap = new LinkedHashMap<>();
+
+        for (Document result : results) {
+            try {
+                Long imageInstanceId = result.getLong("_id");
+                ImageInstance image = imageInstancesMap.get(imageInstanceId);
+                if (image == null) {
+                    image = imageInstanceRepository.findById(imageInstanceId).orElse(null);
+                    imageInstancesMap.put(imageInstanceId, image);
+                }
+
+                String filename;
+                if (image != null) {
+                    filename = image.getBlindInstanceFilename();
+                } else {
+                    filename = "Image " + imageInstanceId;
+                }
+                be.cytomine.utils.JsonObject jsonObject = new be.cytomine.utils.JsonObject();
+                jsonObject.put("created", result.get("date"));
+                jsonObject.put("user", result.get("user"));
+                jsonObject.put("time", result.get("time"));
+                jsonObject.put("imageThumb", UrlApi.getImageInstanceThumbUrlWithMaxSize(image.getId()));
+                jsonObject.put("imageName", filename);
+                jsonObject.put("project", image.getProject().getId());
+                jsonObject.put("countCreatedAnnotations", result.get("countCreatedAnnotations"));
+                data.add(jsonObject);
+            } catch (CytomineException e) {
+                //if user has data but has no access to picture,  ImageInstance.read will throw a forbiddenException
+            }
+        }
+        data.sort(Comparator.comparing(o -> (Date) ((Map<String, Object>) o).get("created")).reversed());
+        return data;
     }
 
     public List<Map<String, Object>> lastImageOfUsersByProject(Project project, List<Long> userIds, String sortProperty, String sortDirection, Long max, Long offset) {
@@ -270,7 +275,7 @@ public class ImageConsultationService {
 
         List<Bson> requests = new ArrayList<>();
         requests.addAll(matchsFilters);
-        requests.addAll(List.of(group, sort, skip));
+        requests.addAll(List.of(sort,group, sort, skip));
 
         if (max > 0) {
             requests.add(limit(max.intValue()));
@@ -324,10 +329,11 @@ public class ImageConsultationService {
 //        criteria.add(Restrictions.eq("project", project));
 
         AggregationResults queryResults = persistentImageConsultationRepository.retrieve(project.getId(), sortProperty, (sortDirection.equals("desc") ? -1 : 1));
-        List<PersistentProjectConnection> connected = queryResults.getMappedResults();
+        List<LinkedHashMap> aggregation = queryResults.getMappedResults();
+        List<Long> connected = aggregation.stream().map(x -> (Long)x.get("user")).distinct().collect(Collectors.toList());
 
         List<Long> unconnectedIds = new ArrayList<>(userIds);
-        unconnectedIds.removeAll(connected.stream().map(x -> x.getUser()).collect(Collectors.toList()));
+        unconnectedIds.removeAll(connected);
 
         List<Map<String, Object>> unconnected = unconnectedIds.stream().map(x -> Map.of("user", (Object) x)).collect(Collectors.toList());
 
@@ -399,7 +405,7 @@ public class ImageConsultationService {
                     filename = "Image " + result.get("image");
                 }
             }
-            data.add(JsonObject.of("user", result.get("_id"), "created", result.get("created"), "image", result.get("image")
+            data.add(JsonObject.of("user", result.get("user"), "created", result.get("created"), "image", result.get("image")
                     , "imageName", filename, "mode", result.get("mode")));
         }
         return data;
@@ -421,7 +427,7 @@ public class ImageConsultationService {
         requests.add(match(eq("project", projectId)));
         requests.add(match(eq("user", userId)));
         requests.add(sort(ascending("created")));
-        requests.add(group(Fields.fields().and("project", "$project").and("user", "$user").and("image", "$image"),
+        requests.add(group(Document.parse("{project: '$project', user: '$user', image: '$image'}"),
                 Accumulators.sum("time", "$time"),
                 Accumulators.sum("frequency", 1),
                 Accumulators.sum("countCreatedAnnotations", "$countCreatedAnnotations"),
@@ -468,6 +474,7 @@ public class ImageConsultationService {
             jsonObject.put("frequency", result.get("frequency"));
             jsonObject.put("imageName", filename);
             jsonObject.put("imageThumb", result.get("imageThumb"));
+            data.add(jsonObject);
         }
         return data;
     }

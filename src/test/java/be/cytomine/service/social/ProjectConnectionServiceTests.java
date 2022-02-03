@@ -2,15 +2,19 @@ package be.cytomine.service.social;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastConnection;
+import be.cytomine.domain.social.PersistentImageConsultation;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.service.database.SequenceService;
 import com.mongodb.client.MongoClient;
+import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,6 +60,9 @@ public class ProjectConnectionServiceTests {
     @Autowired
     LastConnectionRepository lastConnectionRepository;
 
+    @Autowired
+    ImageConsultationService imageConsultationService;
+
     @BeforeEach
     public void cleanDB() {
         persistentProjectConnectionRepository.deleteAll();
@@ -64,7 +71,7 @@ public class ProjectConnectionServiceTests {
 
     
     @Test
-    void test() {
+    void creation_and_close() {
         User user = builder.given_superadmin();
         Project projet = builder.given_a_project();
         Date before = new Date(new Date().getTime()-1000);
@@ -196,15 +203,21 @@ public class ProjectConnectionServiceTests {
         Project projet = builder.given_a_project();
         User user = builder.given_superadmin();
 
-        PersistentProjectConnection connection = given_a_persistent_connection_in_project(user, projet);
+        PersistentProjectConnection connection = given_a_persistent_connection_in_project(user, projet, DateUtils.addSeconds(new Date(), -10));
         assertThat(connection.getCountCreatedAnnotations()).isNull();
 
         UserAnnotation annotation = builder.given_a_not_persisted_user_annotation(projet);
         builder.persistAndReturn(annotation);
 
-        connection = given_a_persistent_connection_in_project(user, projet);
-        connection = given_a_persistent_connection_in_project(user, projet);
+
+        connection = given_a_persistent_connection_in_project(user, projet,DateUtils.addSeconds(new Date(), 1));
+        connection = given_a_persistent_connection_in_project(user, projet,DateUtils.addSeconds(new Date(), 10));
         List<PersistentProjectConnection> allByUserAndProject = persistentProjectConnectionRepository.findAllByUserAndProject(user.getId(), projet.getId(), PageRequest.of(0, 50, Sort.Direction.DESC, "created"));
+
+        for (PersistentProjectConnection persistentProjectConnection : allByUserAndProject) {
+            System.out.println("Annotations: " + persistentProjectConnection.getCountCreatedAnnotations());
+        }
+
 
         assertThat(allByUserAndProject).hasSize(3);
         assertThat(allByUserAndProject.get(0).getCountCreatedAnnotations()).isNull();
@@ -214,7 +227,30 @@ public class ProjectConnectionServiceTests {
 
     @Test
     void fill_project_connection_update_image_counter() {
-        Assertions.fail("todo");
+        Project projet = builder.given_a_project();
+        User user = builder.given_superadmin();
+        ImageInstance imageInstance1 = builder.given_an_image_instance(projet);
+        ImageInstance imageInstance2 = builder.given_an_image_instance(imageInstance1.getProject());
+
+        PersistentProjectConnection connection = given_a_persistent_connection_in_project(user, projet, DateUtils.addSeconds(new Date(), -10));
+        assertThat(connection.getCountCreatedAnnotations()).isNull();
+
+        given_a_persistent_image_consultation(user, imageInstance1, DateUtils.addSeconds(new Date(), -3));
+        given_a_persistent_image_consultation(user, imageInstance2, DateUtils.addSeconds(new Date(), -2));
+        given_a_persistent_image_consultation(user, imageInstance1, DateUtils.addSeconds(new Date(), -1));
+
+        connection = given_a_persistent_connection_in_project(user, projet, DateUtils.addSeconds(new Date(), 1));
+        connection = given_a_persistent_connection_in_project(user, projet, DateUtils.addSeconds(new Date(), 10));
+        List<PersistentProjectConnection> allByUserAndProject = persistentProjectConnectionRepository.findAllByUserAndProject(user.getId(), projet.getId(), PageRequest.of(0, 50, Sort.Direction.DESC, "created"));
+
+        for (PersistentProjectConnection persistentProjectConnection : allByUserAndProject) {
+            System.out.println("Images: " + persistentProjectConnection.getCountViewedImages());
+        }
+
+        assertThat(allByUserAndProject).hasSize(3);
+        assertThat(allByUserAndProject.get(0).getCountViewedImages()).isNull();
+        assertThat(allByUserAndProject.get(1).getCountViewedImages()).isEqualTo(0);
+        assertThat(allByUserAndProject.get(2).getCountViewedImages()).isEqualTo(2);
     }
 
     @Test
@@ -407,16 +443,14 @@ public class ProjectConnectionServiceTests {
 
         List<Map<String, Object>> results;
 
-
-
         results = projectConnectionService.totalNumberOfConnectionsByProject();
         assertThat(results).isEmpty();
 
-        Date noConnectionBefore = new Date();
-        given_a_persistent_connection_in_project(user, projet);
-        given_a_persistent_connection_in_project(user, projet);
-        Date twoConnectionBefore = new Date();
-        given_a_persistent_connection_in_project(anotherUser, projet);
+        Date noConnectionBefore = DateUtils.addDays(new Date(), -100);
+        given_a_persistent_connection_in_project(user, projet, DateUtils.addDays(new Date(), -10));
+        given_a_persistent_connection_in_project(user, projet, DateUtils.addDays(new Date(), -10));
+        Date twoConnectionBefore = DateUtils.addDays(new Date(), -5);
+        given_a_persistent_connection_in_project(anotherUser, projet, DateUtils.addDays(new Date(), -1));
         Date threeConnectionBefore = new Date();
 
         assertThat(projectConnectionService.countByProject(projet, null, null))
@@ -528,7 +562,22 @@ public class ProjectConnectionServiceTests {
 
     @Test
     void get_user_activity_details() throws ParseException {
-        Assertions.fail("todo");
+        Project projet = builder.given_a_project();
+        User user = builder.given_superadmin();
+        ImageInstance imageInstance1 = builder.given_an_image_instance(projet);
+        ImageInstance imageInstance2 = builder.given_an_image_instance(imageInstance1.getProject());
+
+        PersistentProjectConnection connection = given_a_persistent_connection_in_project(user, projet, DateUtils.addSeconds(new Date(), -10));
+        assertThat(connection.getCountCreatedAnnotations()).isNull();
+
+        given_a_persistent_image_consultation(user, imageInstance1, DateUtils.addSeconds(new Date(), -3));
+        given_a_persistent_image_consultation(user, imageInstance2, DateUtils.addSeconds(new Date(), -2));
+        given_a_persistent_image_consultation(user, imageInstance1, DateUtils.addSeconds(new Date(), -1));
+
+        PersistentProjectConnection secondConnection = given_a_persistent_connection_in_project(user, projet, DateUtils.addSeconds(new Date(), 1));
+
+        List<PersistentImageConsultation> userActivityDetails = projectConnectionService.getUserActivityDetails(connection.getId());
+        assertThat(userActivityDetails).hasSize(3);
     }
 
     PersistentProjectConnection given_a_persistent_connection_in_project(User user, Project project) {
@@ -547,5 +596,9 @@ public class ProjectConnectionServiceTests {
         lastConnection.setProject(project.getId());
         lastConnection.setUser(user.getId());
         return lastConnectionRepository.insert(lastConnection);
+    }
+
+    PersistentImageConsultation given_a_persistent_image_consultation(SecUser user, ImageInstance imageInstance, Date created) {
+        return imageConsultationService.add(user, imageInstance.getId(), "xxx", "mode", created);
     }
 }

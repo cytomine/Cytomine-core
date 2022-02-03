@@ -1,5 +1,6 @@
 package be.cytomine.domain.social;
 
+import be.cytomine.domain.CytomineSocialDomain;
 import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
@@ -23,7 +24,7 @@ import java.util.Map;
 @Document
 @Entity
 //@CompoundIndex(def = "{'user' : 1, 'image' : 1, 'created': -1}")
-public class PersistentImageConsultation implements Cloneable {
+public class PersistentImageConsultation extends CytomineSocialDomain implements Cloneable {
 
         // TODO:
 //    version false
@@ -116,5 +117,10 @@ public class PersistentImageConsultation implements Cloneable {
                 ", image=" + image +
                 ", time=" + time +
                 '}';
+    }
+
+    @Override
+    public JsonObject toJsonObject() {
+        return getDataFromDomain(this);
     }
 }

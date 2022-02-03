@@ -1,5 +1,6 @@
 package be.cytomine.domain.social;
 
+import be.cytomine.domain.CytomineSocialDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
@@ -34,7 +35,7 @@ import java.util.stream.Stream;
 //@CompoundIndex(def = "{'user' : 1, 'image': 1, 'slice': 1, created' : -1}")
 //@CompoundIndex(def = "{'location':'2d', 'image':1, 'slice':1}")
 //@Embeddable
-public class PersistentUserPosition {
+public class PersistentUserPosition extends CytomineSocialDomain {
 
 
    // TODO:
@@ -149,5 +150,10 @@ public class PersistentUserPosition {
             coordinates.add(coordinates.get(0));
         }
         return new GeometryFactory().createPolygon(coordinates.toArray(Coordinate[]::new));
+    }
+
+    @Override
+    public JsonObject toJsonObject() {
+        return getDataFromDomain(this);
     }
 }

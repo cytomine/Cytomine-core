@@ -2,6 +2,7 @@ package be.cytomine.api.controller;
 
 import be.cytomine.api.controller.utils.RequestParams;
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.CytomineSocialDomain;
 import be.cytomine.exceptions.CytomineException;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.InvalidRequestException;
@@ -151,6 +152,8 @@ public abstract class RestCytomineController {
         List finalContent = page.getContent();
         if (page.getContent().size() > 0 && page.getContent().get(0) instanceof CytomineDomain) {
             finalContent = convertCytomineDomainListToJSON(page.getContent());
+        } else if (page.getContent().size() > 0 && page.getContent().get(0) instanceof CytomineSocialDomain) {
+            finalContent = convertCytomineSocialDomainListToJSON(page.getContent());
         }
         Integer offset = offsetParameter != null ? offsetParameter : 0;
         Integer max = (maxParameter != null && maxParameter!=0) ? maxParameter : Integer.MAX_VALUE;
@@ -193,13 +196,19 @@ public abstract class RestCytomineController {
         List filtered = list;
         if (isFilterRequired) {
             filtered = new ArrayList();
-            if (!list.isEmpty() && list.get(0) instanceof CytomineDomain) {
+            if (!list.isEmpty() && (list.get(0) instanceof CytomineDomain)) {
                 for (Object o : list) {
                     JsonObject jsonObject = ((CytomineDomain) o).toJsonObject();
                     filterOneElement(jsonObject);
                     filtered.add(jsonObject);
                 }
-            }else if (!list.isEmpty() && list.get(0) instanceof Map) {
+            } else if (!list.isEmpty() && (list.get(0) instanceof CytomineSocialDomain)) {
+                for (Object o : list) {
+                    JsonObject jsonObject = ((CytomineSocialDomain) o).toJsonObject();
+                    filterOneElement(jsonObject);
+                    filtered.add(jsonObject);
+                }
+            } else if (!list.isEmpty() && list.get(0) instanceof Map) {
                 for (Object o : list) {
                     Map json = (Map)o;
                     filterOneElement(json);
@@ -210,6 +219,8 @@ public abstract class RestCytomineController {
 
         if (list.isEmpty() || list.get(0) instanceof CytomineDomain) {
             return responseSuccessDomainList((List<? extends CytomineDomain>) filtered, offsetParameter, maxParameter);
+        } else if (list.isEmpty() || list.get(0) instanceof CytomineSocialDomain) {
+            return responseSuccessSocialDomainList((List<? extends CytomineSocialDomain>) filtered, offsetParameter, maxParameter);
         } else {
             return responseSuccessGenericList(filtered, offsetParameter, maxParameter);
         }
@@ -227,6 +238,9 @@ public abstract class RestCytomineController {
         return ResponseEntity.status(200).body(buildJsonList(convertCytomineDomainListToJSON(list), offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
     }
 
+    private ResponseEntity<String> responseSuccessSocialDomainList(List<? extends CytomineSocialDomain> list, Integer offsetParameter, Integer maxParameter) {
+        return ResponseEntity.status(200).body(buildJsonList(convertCytomineSocialDomainListToJSON(list), offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
+    }
 
     private ResponseEntity<String> responseSuccessGenericList(List list, Integer offsetParameter, Integer maxParameter) {
         return ResponseEntity.status(200).body(buildJsonList(list, offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
@@ -286,6 +300,14 @@ public abstract class RestCytomineController {
     protected List<JsonObject> convertCytomineDomainListToJSON(List<? extends CytomineDomain> list) {
         List<JsonObject> results = new ArrayList<>();
         for (CytomineDomain cytomineDomain : list) {
+            results.add(cytomineDomain.toJsonObject());
+        }
+        return results;
+    }
+
+    protected List<JsonObject> convertCytomineSocialDomainListToJSON(List<? extends CytomineSocialDomain> list) {
+        List<JsonObject> results = new ArrayList<>();
+        for (CytomineSocialDomain cytomineDomain : list) {
             results.add(cytomineDomain.toJsonObject());
         }
         return results;

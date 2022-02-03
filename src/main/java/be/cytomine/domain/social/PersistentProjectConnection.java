@@ -1,6 +1,7 @@
 package be.cytomine.domain.social;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.CytomineSocialDomain;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.security.User;
@@ -32,7 +33,7 @@ import java.util.Map;
 @Document
 //@Entity
 //@CompoundIndex(def = "{'project' : 1, 'created' : -1}")
-public class PersistentProjectConnection  implements Cloneable {
+public class PersistentProjectConnection extends CytomineSocialDomain implements Cloneable {
 
         // TODO:
 //    version false
@@ -125,5 +126,10 @@ public class PersistentProjectConnection  implements Cloneable {
                 ", project=" + project +
                 ", time=" + time +
                 '}';
+    }
+
+    @Override
+    public JsonObject toJsonObject() {
+        return getDataFromDomain(this);
     }
 }

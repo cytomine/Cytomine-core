@@ -194,8 +194,11 @@ public class UserPositionService {
         return results.stream().map(x -> x.getLong("_id")).collect(Collectors.toList());
     }
 
-    List<PersistentUserPosition> list(ImageInstance image, User user, SliceInstance slice, Long afterThan, Long beforeThan, int max, int offset){
+    public List<PersistentUserPosition> list(ImageInstance image, User user, SliceInstance slice, Long afterThan, Long beforeThan, Integer max, Integer offset){
         securityACLService.check(image,WRITE);
+        if (max == 0) {
+            max = Integer.MAX_VALUE;
+        }
 
         Query query = new Query();
         if (user!=null) {

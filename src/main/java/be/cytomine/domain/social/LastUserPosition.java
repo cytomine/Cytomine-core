@@ -1,5 +1,6 @@
 package be.cytomine.domain.social;
 
+import be.cytomine.domain.CytomineSocialDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
@@ -31,7 +32,7 @@ import static be.cytomine.domain.social.PersistentUserPosition.getJtsPolygon;
 @Getter
 @Setter
 @Document
-public class LastUserPosition {
+public class LastUserPosition extends CytomineSocialDomain  {
 
     protected Long id;
 
@@ -74,13 +75,13 @@ public class LastUserPosition {
         return created != null ? created.getTime() - new Date(0).getTime() : null;
     }
 
-    public static JsonObject getDataFromDomain(LastUserPosition domain) {
+    public static JsonObject getDataFromDomain(CytomineSocialDomain domain) {
         JsonObject returnArray = new JsonObject();
         LastUserPosition position = (LastUserPosition)domain;
-        returnArray.put("class", domain.getClass());
-        returnArray.put("id", domain.getId());
-        returnArray.put("created", DateUtils.getTimeToString(domain.created));
-        returnArray.put("updated", DateUtils.getTimeToString(domain.updated));
+        returnArray.put("class", position.getClass());
+        returnArray.put("id", position.getId());
+        returnArray.put("created", DateUtils.getTimeToString(position.created));
+        returnArray.put("updated", DateUtils.getTimeToString(position.updated));
         returnArray.put("user", position.getUser());
         returnArray.put("image", position.getImage());
         returnArray.put("slice", position.getSlice());
@@ -88,11 +89,15 @@ public class LastUserPosition {
         returnArray.put("zoom", position.getZoom());
         returnArray.put("rotation", position.getRotation());
         returnArray.put("broadcast", position.isBroadcast());
-        Polygon polygon = getJtsPolygon(domain.location);
+        Polygon polygon = getJtsPolygon(position.location);
         returnArray.put("location", polygon.toString());
         returnArray.put("x", polygon.getCentroid().getX());
         returnArray.put("y", polygon.getCentroid().getY());
         return returnArray;
     }
 
+    @Override
+    public JsonObject toJsonObject() {
+        return getDataFromDomain(this);
+    }
 }

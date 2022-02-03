@@ -5,6 +5,7 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
@@ -22,7 +23,7 @@ import java.util.Optional;
 @Repository
 public interface PersistentProjectConnectionRepository extends MongoRepository<PersistentProjectConnection, Long> {
 
-    List<PersistentProjectConnection> findAllByUserAndProjectAndCreatedLessThan(Long user, Long project, Date created, PageRequest pageRequest);
+    Page<PersistentProjectConnection> findAllByUserAndProjectAndCreatedLessThan(Long user, Long project, Date created, PageRequest pageRequest);
 
     
     @Aggregation(pipeline = {"{$match: {project: ?0, user: ?1, $and : [{created: {$gte: ?3}},{created: {$lte: ?2}}]}},{$sort: {created: 1}},{$project: {dateInMillis: {$subtract: {'$created', ?4}}}}"})

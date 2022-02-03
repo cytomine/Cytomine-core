@@ -3,6 +3,7 @@ package be.cytomine.service.social;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
+import be.cytomine.domain.social.PersistentImageConsultation;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -11,6 +12,7 @@ import be.cytomine.repository.UserAnnotationListing;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
+import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.repositorynosql.social.ProjectConnectionRepository;
 import be.cytomine.service.AnnotationListingService;
@@ -32,6 +34,7 @@ import org.hibernate.criterion.Projection;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -96,6 +99,12 @@ public class ProjectConnectionService {
 
     @Autowired
     SequenceService sequenceService;
+
+    @Autowired
+    ImageConsultationService imageConsultationService;
+
+    @Autowired
+    PersistentImageConsultationRepository persistentImageConsultationRepository;
 
     @Autowired
     private SessionFactory sessionFactory;
@@ -214,10 +223,11 @@ public class ProjectConnectionService {
 //        criteria.add(Restrictions.eq("project", project));
 
         AggregationResults queryResults = persistentProjectConnectionRepository.retrieve(project.getId(), sortProperty, (sortDirection.equals("desc")? -1 : 1));
-        List<LinkedHashMap> connected = queryResults.getMappedResults();
+        List<LinkedHashMap> aggregation = queryResults.getMappedResults();
+        List<Long> connected = aggregation.stream().map(x -> (Long)x.get("user")).collect(Collectors.toList());
 
         List<Long> unconnectedIds =  new ArrayList<>(userIds);
-        unconnectedIds.removeAll(connected.stream().map(x -> x.get("user")).collect(Collectors.toList()));
+        unconnectedIds.removeAll(connected);
 
         List<Map<String, Object>> unconnected = unconnectedIds.stream().map(x -> Map.of("user", (Object)x)).collect(Collectors.toList());
 
@@ -287,8 +297,8 @@ public class ProjectConnectionService {
         // TODO:
 
         // count viewed images
-//        connection.countViewedImages = imageConsultationService.getImagesOfUsersByProjectBetween(connection.user,
-//                connection.project,after, before).unique({it.image}).size()
+        List<Long> images = imageConsultationService.getImagesOfUsersByProjectBetween(connection.getUser(), connection.getProject(), after, before).stream().map(x -> ((Long) x.get("image"))).distinct().collect(Collectors.toList());
+        connection.setCountViewedImages(images.size());
 
         AnnotationListing al = new UserAnnotationListing(entityManager);
         al.setProject(connection.getProject());
@@ -303,6 +313,9 @@ public class ProjectConnectionService {
 
     public List<PersistentProjectConnection> getConnectionByUserAndProject(User user, Project project, Integer limit, Integer offset){
         securityACLService.check(project,WRITE);
+        if (limit==0) {
+            limit = Integer.MAX_VALUE;
+        }
 
         List<PersistentProjectConnection> connections = persistentProjectConnectionRepository.findAllByUserAndProject(user.getId(), project.getId(), PageRequest.of(offset, limit, Sort.Direction.DESC, "created"));
 
@@ -664,30 +677,30 @@ public class ProjectConnectionService {
     }
 
 
-    List getUserActivityDetails(Long activityId){
+    public List<PersistentImageConsultation> getUserActivityDetails(Long activityId){
         PersistentProjectConnection connection = persistentProjectConnectionRepository.findById(activityId)
                 .orElseThrow(() -> new ObjectNotFoundException("PersistentProjectConnection", activityId));
         Project project = projectRepository.getById(connection.getProject());
         securityACLService.check(project,WRITE);
 
-//        List<PersistentImageConsultation> consultations = persistentImageConsultationRepository.findAllByCreatedGreaterThanAndProjectConnection(connection.getCreated(), activityId, PageRequest.of(0, Integer.MAX_VALUE, Sort.Direction.DESC, "created"));
-//
-//        if(consultations.size() == 0) {
-//            return consultations;
-//        }
-//        // current connection. We need to calculate time for the currently opened image
-//        if(connection.getTime()==null) {
-//            int i = 0;
-//            Date before = new Date();
-//            while(i < consultations.size() && consultations.get(i).getTime()==null) {
-//                consultations.set(i,((PersistentImageConsultation) consultations.get(i)).clone());
-//                imageConsultationService.fillImageConsultation(consultations.get(i), before);
-//                before = consultations.get(i).getCreated();
-//                i++;
-//            }
-//        }
-//        return consultations
-        throw new CytomineMethodNotYetImplementedException("Implement");
+        List<PersistentImageConsultation> consultations = persistentImageConsultationRepository
+                .findAllByCreatedGreaterThanAndProjectConnectionOrderByCreatedDesc(connection.getCreated(), activityId);
+
+        if(consultations.size() == 0) {
+            return consultations;
+        }
+        // current connection. We need to calculate time for the currently opened image
+        if(connection.getTime()==null) {
+            int i = 0;
+            Date before = new Date();
+            while(i < consultations.size() && consultations.get(i).getTime()==null) {
+                consultations.set(i,(PersistentImageConsultation)(consultations.get(i)).clone());
+                imageConsultationService.fillImageConsultation(consultations.get(i), before);
+                before = consultations.get(i).getCreated();
+                i++;
+            }
+        }
+        return consultations;
     }
 
     private void closeLastProjectConnection(Long user, Long project, Date before){

@@ -1,7 +1,10 @@
 package be.cytomine.domain.social;
 
+import be.cytomine.domain.CytomineSocialDomain;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
+import be.cytomine.exceptions.WrongArgumentException;
+import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
@@ -23,7 +26,7 @@ import java.util.Date;
  * Info on last user connection on Cytomine
  * User x connect to poject y the 2013/01/01 at xxhyymin
  */
-public class LastConnection {
+public class LastConnection extends CytomineSocialDomain {
 
 //    @Id
 //    @GeneratedValue(strategy = GenerationType.AUTO)
@@ -43,4 +46,9 @@ public class LastConnection {
     private Long project;
 
     private Integer version = 0;
+
+    @Override
+    public JsonObject toJsonObject() {
+        throw new WrongArgumentException("getDataFromDomain is not implemented for this class");
+    }
 }
