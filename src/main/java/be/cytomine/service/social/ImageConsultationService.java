@@ -19,6 +19,7 @@ import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.UrlApi;
 import be.cytomine.service.database.SequenceService;
+import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
 import com.mongodb.client.MongoClient;
@@ -102,7 +103,11 @@ public class ImageConsultationService {
     @Autowired
     SequenceService sequenceService;
 
+    @Autowired
+    ImageInstanceService imageInstanceService;
+
     public PersistentImageConsultation add(SecUser user, Long imageId, String session, String mode, Date created) {
+        System.out.println(currentUserService.getCurrentUser());
         ImageInstance imageInstance = imageInstanceRepository.findById(imageId)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
 
@@ -195,26 +200,29 @@ public class ImageConsultationService {
         al.setAfterThan(after);
 
         // count created annotations
+
         consultation.setCountCreatedAnnotations(annotationListingService.listGeneric(al).size());
         persistentImageConsultationRepository.save(consultation);
 
     }
 
-    public Page<PersistentImageConsultation> listImageConsultationByProjectAndUserNoImageDistinct(Long project, Long user, Integer max, Integer offset) {
+    public Page<PersistentImageConsultation> listImageConsultationByProjectAndUserNoImageDistinct(Project project, SecUser user, Integer max, Integer offset) {
+        securityACLService.checkIsSameUserOrAdminContainer(project, user, currentUserService.getCurrentUser());
         if (max != 0) {
             max += offset; // ?
         } else {
             max = Integer.MAX_VALUE;
         }
-        return persistentImageConsultationRepository.findAllByProjectAndUser(project, user, PageRequest.of(0, max, Sort.Direction.DESC, "created"));
+        return persistentImageConsultationRepository.findAllByProjectAndUser(project.getId(), user.getId(), PageRequest.of(0, max, Sort.Direction.DESC, "created"));
     }
 
-    public List<Map<String, Object>> listImageConsultationByProjectAndUserWithDistinctImage(Long project, Long user) {
+    public List<Map<String, Object>> listImageConsultationByProjectAndUserWithDistinctImage(Project project, SecUser user) {
+        securityACLService.checkIsSameUserOrAdminContainer(project, user, currentUserService.getCurrentUser());
         List<Bson> requests = new ArrayList<>();
         List<Map<String, Object>> data = new ArrayList<>();
 
-        requests.add(match(eq("user", user)));
-        requests.add(match(eq("project", project)));
+        requests.add(match(eq("user", user.getId())));
+        requests.add(match(eq("project", project.getId())));
 
         requests.add(group("$image", Accumulators.max("date", "$created"), Accumulators.first("time", "$time"), Accumulators.first("countCreatedAnnotations", "$countCreatedAnnotations")));
         requests.add(sort(descending("date")));
@@ -243,6 +251,7 @@ public class ImageConsultationService {
                 }
                 be.cytomine.utils.JsonObject jsonObject = new be.cytomine.utils.JsonObject();
                 jsonObject.put("created", result.get("date"));
+                jsonObject.put("image", imageInstanceId);
                 jsonObject.put("user", result.get("user"));
                 jsonObject.put("time", result.get("time"));
                 jsonObject.put("imageThumb", UrlApi.getImageInstanceThumbUrlWithMaxSize(image.getId()));
@@ -486,9 +495,49 @@ public class ImageConsultationService {
         } else if (endDate == null) {
             return persistentImageConsultationRepository.countByProjectAndCreatedAfter(project.getId(), new Date(startDate));
         } else if (startDate == null) {
-            return persistentImageConsultationRepository.countByProjectAndCreatedAfter(project.getId(), new Date(endDate));
+            return persistentImageConsultationRepository.countByProjectAndCreatedBefore(project.getId(), new Date(endDate));
         } else {
             return persistentImageConsultationRepository.countByProjectAndCreatedBetween(project.getId(), new Date(startDate), new Date(endDate));
         }
+    }
+
+
+    public List listLastOpened(Long max) {
+        SecUser user = (SecUser)currentUserService.getCurrentUser();
+        securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
+
+        List<Bson> requests = new ArrayList<>();
+        requests.add(match(eq("user", user.getId())));
+        requests.add(sort(ascending("created")));
+        requests.add(group("$image",
+                Accumulators.max("date", "$created")));
+        requests.add(sort(descending("date")));
+        requests.add(limit(max == null || max ==0 ? 5 : max.intValue()));
+
+        List<Map<String, Object>> data = new ArrayList<>();
+
+        MongoCollection<Document> persistentImageConsultation = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentImageConsultation");
+
+
+        List<Document> results = persistentImageConsultation.aggregate(requests)
+                .into(new ArrayList<>());
+        for (Document result : results) {
+            try {
+                ImageInstance imageInstance = imageInstanceService.find(result.getLong("_id"))
+                        .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", result.getString("_id")));
+                JsonObject jsonObject = new JsonObject();
+                jsonObject.put("id", result.get("_id"));
+                jsonObject.put("date", result.get("date"));
+                jsonObject.put("thumb", UrlApi.getImageInstanceThumbUrlWithMaxSize(imageInstance.getId()));
+                jsonObject.put("instanceFilename", imageInstance.getBlindInstanceFilename());
+                jsonObject.put("project", imageInstance.getProject().getId());
+                data.add(jsonObject);
+            } catch(CytomineException ex) {
+                //if user has data but has no access to picture,  ImageInstance.read will throw a forbiddenException
+            }
+
+        }
+        data.sort(Comparator.comparing(o -> (Date) ((Map<String, Object>) o).get("date")).reversed());
+        return data;
     }
 }

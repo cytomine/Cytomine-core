@@ -124,6 +124,15 @@ public class JsonObject extends HashMap<String, Object> {
         }
     }
 
+    public static List<Map<String, Object>> toMapList(String json) {
+        try {
+            return new ObjectMapper().readValue(json, new TypeReference<List<Map<String, Object>>>(){});
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 
     public static JsonObject toJsonObject(String json) {
         try {

@@ -627,37 +627,6 @@ public class ImageInstanceService extends ModelService {
 
     }
 
-    //TODO:
-//    def listLastOpened(User user, Long offset = null, Long max = null) {
-//        securityACLService.checkIsSameUser(user, cytomineService.currentUser)
-//        def data = []
-//
-//        def db = mongo.getDB(noSQLCollectionService.getDatabaseName())
-//        db.persistentImageConsultation.aggregate(
-//                [$match: [user: user.id]],
-//                [$group: [_id: '$image', "date": [$max: '$created']]],
-//                [$sort: [date: -1]],
-//                [$limit: (max == null ? 5 : max)]
-//        ).results().each {
-//            try {
-//                ImageInstance image = read(it['_id'])
-//
-//                data << [id              : it['_id'],
-//                        date            : it['date'],
-//                        thumb           : UrlApi.getImageInstanceThumbUrl(image.id),
-//                        instanceFilename: image.blindInstanceFilename,
-//                        project         : image.project.id
-//                ]
-//            } catch (CytomineException e) {
-//                //if user has data but has no access to picture,  ImageInstance.read will throw a forbiddenException
-//            }
-//        }
-//        data = data.sort { -it.date.getTime() }
-//        return data
-//    }
-
-
-
     public JsonObject listTree(Project project, Long offset, Long max) {
         securityACLService.check(project, READ);
         List<JsonObject> children = new ArrayList<>();

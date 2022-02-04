@@ -67,14 +67,14 @@ public class UserPositionServiceTests {
         persistentUserPositionRepository.deleteAll();
     }
 
-    private static final AreaDTO USER_VIEW = new AreaDTO(
+    public static final AreaDTO USER_VIEW = new AreaDTO(
             new be.cytomine.service.dto.Point(1000d, 1000d),
             new be.cytomine.service.dto.Point(4000d, 1000d),
             new be.cytomine.service.dto.Point(4000d, 4000d),
             new be.cytomine.service.dto.Point(1000d, 4000d)
     );
 
-    private static final AreaDTO ANOTHER_USER_VIEW = new AreaDTO(
+    public static final AreaDTO ANOTHER_USER_VIEW = new AreaDTO(
             new be.cytomine.service.dto.Point(3000d, 3000d),
             new be.cytomine.service.dto.Point(9000d, 3000d),
             new be.cytomine.service.dto.Point(9000d, 9000d),

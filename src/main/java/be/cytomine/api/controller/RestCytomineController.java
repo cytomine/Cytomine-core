@@ -260,6 +260,10 @@ public abstract class RestCytomineController {
         return ResponseEntity.status(200).body(response.toJSON());
     }
 
+    protected ResponseEntity<String> responseSuccess(CytomineSocialDomain response) {
+        return ResponseEntity.status(200).body(response.toJsonObject().toJsonString());
+    }
+
     protected ResponseEntity<String> responseSuccess(String response) {
         return ResponseEntity.status(200).body(response);
     }

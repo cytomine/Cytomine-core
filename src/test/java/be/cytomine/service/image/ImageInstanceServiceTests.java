@@ -395,39 +395,6 @@ public class ImageInstanceServiceTests {
 
     }
 
-    //TODO!
-//    void testListImagesInstanceByProjectWithLastActivity() {
-//        ImageInstance img = BasicInstanceBuilder.getImageInstanceNotExist(BasicInstanceBuilder.getProjectNotExist(true), true)
-//        BasicInstanceBuilder.getImageConsultationNotExist(img, true)
-//        BasicInstanceBuilder.getImageInstanceNotExist(img.project, true)
-//
-//        def result = ImageInstanceAPI.listByProjectWithLastActivity(img.project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        def json = JSON.parse(result.data)
-//        assert json.collection instanceof JSONArray
-//        long size = json.size
-//        assert size > 1
-//        Long id1 = json.collection[0].id
-//        Long id2 = json.collection[1].id
-//
-//        result = ImageInstanceAPI.listByProjectWithLastActivity(img.project.id, 1, 0, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        json = JSON.parse(result.data)
-//        assert json.collection instanceof JSONArray
-//        assert json.size == size
-//        assert json.collection.size() == 1
-//        assert json.collection[0].id == id1
-//
-//        result = ImageInstanceAPI.listByProjectWithLastActivity(img.project.id, 1, 1, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        json = JSON.parse(result.data)
-//        assert json.collection instanceof JSONArray
-//        assert json.size == size
-//        assert json.collection.size() == 1
-//        assert json.collection[0].id == id2
-//
-//    }
-
 
     @Test
     void list_all_image_ids_for_project() {

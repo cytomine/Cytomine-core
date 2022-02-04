@@ -115,7 +115,7 @@ public class UserPositionService {
             Integer zoom,
             Double rotation,
             Boolean broadcast) {
-
+        //TODO: no ACL???
         LastUserPosition position = new LastUserPosition();
         position.setId(sequenceService.generateID());
         position.setUser(user.getId());
@@ -194,7 +194,7 @@ public class UserPositionService {
         return results.stream().map(x -> x.getLong("_id")).collect(Collectors.toList());
     }
 
-    public List<PersistentUserPosition> list(ImageInstance image, User user, SliceInstance slice, Long afterThan, Long beforeThan, Integer max, Integer offset){
+    public List<PersistentUserPosition> list(ImageInstance image, SecUser user, SliceInstance slice, Long afterThan, Long beforeThan, Integer max, Integer offset){
         securityACLService.check(image,WRITE);
         if (max == 0) {
             max = Integer.MAX_VALUE;
@@ -226,7 +226,7 @@ public class UserPositionService {
 
     }
 
-    public List<Map<String, Object>> summarize(ImageInstance image, User user, SliceInstance slice, Long afterThan, Long beforeThan) {
+    public List<Map<String, Object>> summarize(ImageInstance image, SecUser user, SliceInstance slice, Long afterThan, Long beforeThan) {
         securityACLService.check(image, WRITE);
 
         List<Bson> request = new ArrayList<>();

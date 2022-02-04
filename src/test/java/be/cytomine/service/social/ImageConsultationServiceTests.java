@@ -127,7 +127,7 @@ public class ImageConsultationServiceTests {
 
         given_a_persistent_image_consultation(user, imageInstance, new Date());
 
-        Page<PersistentImageConsultation> results = imageConsultationService.listImageConsultationByProjectAndUserNoImageDistinct(imageInstance.getProject().getId(), user.getId(), 0, 0);
+        Page<PersistentImageConsultation> results = imageConsultationService.listImageConsultationByProjectAndUserNoImageDistinct(imageInstance.getProject(), user, 0, 0);
         assertThat(results).hasSize(1);
     }
 
@@ -142,14 +142,14 @@ public class ImageConsultationServiceTests {
 
 
         List<Map<String, Object>> results = imageConsultationService.listImageConsultationByProjectAndUserWithDistinctImage(
-                imageInstance1.getProject().getId(), user.getId());
+                imageInstance1.getProject(), user);
         assertThat(results).hasSize(1);
         assertThat(results.get(0).get("imageName")).isEqualTo(imageInstance1.getBlindInstanceFilename());
 
         given_a_persistent_image_consultation(user, imageInstance2, new Date());
 
         results = imageConsultationService.listImageConsultationByProjectAndUserWithDistinctImage(
-                imageInstance1.getProject().getId(), user.getId());
+                imageInstance1.getProject(), user);
         assertThat(results).hasSize(2);
 
     }

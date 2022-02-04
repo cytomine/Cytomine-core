@@ -507,7 +507,7 @@ public class ProjectConnectionService {
         } else if (endDate==null) {
             return persistentProjectConnectionRepository.countByProjectAndCreatedAfter(project.getId(), new Date(startDate));
         } else if (startDate==null) {
-            return persistentProjectConnectionRepository.countByProjectAndCreatedAfter(project.getId(), new Date(endDate));
+            return persistentProjectConnectionRepository.countByProjectAndCreatedBefore(project.getId(), new Date(endDate));
         } else {
             return persistentProjectConnectionRepository.countByProjectAndCreatedBetween(project.getId(), new Date(startDate), new Date(endDate));
         }

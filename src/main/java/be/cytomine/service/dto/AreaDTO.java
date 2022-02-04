@@ -1,8 +1,10 @@
 package be.cytomine.service.dto;
 
 import be.cytomine.domain.social.MongodbLocation;
+import be.cytomine.utils.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.geo.GeoJsonPolygon;
 
@@ -11,6 +13,7 @@ import java.util.stream.Collectors;
 
 @Getter
 @Setter
+@NoArgsConstructor
 @AllArgsConstructor
 public class AreaDTO {
 

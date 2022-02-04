@@ -10,6 +10,7 @@ import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.InvalidRequestException;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.dto.ImageParameter;
 import be.cytomine.service.dto.LabelParameter;
@@ -50,6 +51,8 @@ public class RestImageInstanceController extends RestCytomineController {
 
     private final SecurityACLService securityACLService;
 
+    private final CurrentUserService currentUserService;
+
 
     @GetMapping("/imageinstance/{id}.json")
     public ResponseEntity<String> show(
@@ -82,16 +85,6 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("SecUser", id));
         return responseSuccess(imageInstanceService.listLight(secUser));
     }
-
-    //TODO with mongo
-//    @GetMapping("/imageinstance/method/lastopened.json")
-//    public ResponseEntity<String> listLastOpenImage() {
-//        log.debug("REST request to get image instance light by user {}", id);
-//        SecUser secUser = secUserService.find(id)
-//                .orElseThrow(() -> new ObjectNotFoundException("SecUser", id));
-//        RequestParams requestParams = retrievePageableParameters();
-//        return responseSuccess(imageInstanceService.listLastOpened(secUser, requestParams.getOffset(), requestParams.getMax()));
-//    }
 
     @GetMapping("/project/{id}/imageinstance.json")
     public ResponseEntity<String> listByProject(
