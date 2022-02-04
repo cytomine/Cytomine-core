@@ -47,7 +47,7 @@ public interface PersistentProjectConnectionRepository extends MongoRepository<P
 //    @Aggregation(pipeline = {"{$match: {project: ?0}},{$sort: {?2: ?3}},{$group: {_id : '$user', created : {$max :'$created'}}, {$skip: ?4}}"})
 //    AggregationResults retrieve(Long project, String sortProperty, Integer sortDirection, Integer offset);
 
-    List<PersistentProjectConnection> findAllByUserAndProject(Long user, Long project, PageRequest pageRequest);
+    Page<PersistentProjectConnection> findAllByUserAndProject(Long user, Long project, PageRequest pageRequest);
 
    @Aggregation(pipeline = {"{$match: {project: ?0}},{$sort: {?1: ?2}},{$group: {_id : '$user', created : {$max :'$created'}}}"})
    AggregationResults retrieve(Long project, String sortProperty, Integer sortDirection);

@@ -34,9 +34,7 @@ import org.hibernate.criterion.Projection;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -109,12 +107,11 @@ public class ProjectConnectionService {
     @Autowired
     private SessionFactory sessionFactory;
 
-    public PersistentProjectConnection add(SecUser user, Long projectId, String session, String os, String browser, String browserVersion) {
-        return add(user, projectId, session, os, browser, browserVersion, new Date());
+    public PersistentProjectConnection add(SecUser user, Project project, String session, String os, String browser, String browserVersion) {
+        return add(user, project, session, os, browser, browserVersion, new Date());
     }
 
-    public PersistentProjectConnection add(SecUser user, Long projectId, String session, String os, String browser, String browserVersion, Date created) {
-        Project project = projectRepository.getById(projectId);
+    public PersistentProjectConnection add(SecUser user, Project project, String session, String os, String browser, String browserVersion, Date created) {
         securityACLService.check(project, READ);
         closeLastProjectConnection(user.getId(), project.getId(), created);
 
@@ -311,16 +308,16 @@ public class ProjectConnectionService {
         persistentProjectConnectionRepository.save(connection);
     }
 
-    public List<PersistentProjectConnection> getConnectionByUserAndProject(User user, Project project, Integer limit, Integer offset){
+    public Page<PersistentProjectConnection> getConnectionByUserAndProject(SecUser user, Project project, Integer limit, Integer offset){
         securityACLService.check(project,WRITE);
         if (limit==0) {
             limit = Integer.MAX_VALUE;
         }
 
-        List<PersistentProjectConnection> connections = persistentProjectConnectionRepository.findAllByUserAndProject(user.getId(), project.getId(), PageRequest.of(offset, limit, Sort.Direction.DESC, "created"));
-
+        Page<PersistentProjectConnection> results = persistentProjectConnectionRepository.findAllByUserAndProject(user.getId(), project.getId(), PageRequest.of(offset, limit, Sort.Direction.DESC, "created"));
+        List<PersistentProjectConnection> connections = new ArrayList<PersistentProjectConnection>(results.getContent());
         if(connections.size() == 0) {
-            return connections;
+            return Page.empty();
         }
 
         if(connections.get(0).getTime()==null) {
@@ -331,7 +328,7 @@ public class ProjectConnectionService {
                 connections.get(0).getExtraProperties().put("online", true);
             }
         }
-        return connections;
+        return new PageImpl<>(connections, Pageable.ofSize(limit), results.getTotalElements());
     }
 
     public Map<String, Object> numberOfConnectionsByProjectAndUser(Project project, User user) {
@@ -449,7 +446,7 @@ public class ProjectConnectionService {
     }
 
 
-    public List<Map<String, Object>> numberOfConnectionsByProjectOrderedByHourAndDays(Project project, Long afterThan, User user) {
+    public List<Map<String, Object>> numberOfConnectionsByProjectOrderedByHourAndDays(Project project, Long afterThan, SecUser user) {
 
         securityACLService.check(project, WRITE);
         // what we want
@@ -514,7 +511,13 @@ public class ProjectConnectionService {
     }
 
 
-    public List<Map<String, Object>> numberOfProjectConnections(String period, Long afterThan, Long beforeThan, Project project, User user){
+    public List<Map<String, Object>> numberOfProjectConnections(String period, Long afterThan, Long beforeThan, Project project, SecUser user){
+        if (user!=null) {
+            securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
+        } else {
+            securityACLService.checkAdmin(currentUserService.getCurrentUser());
+        }
+
         if (beforeThan == null) {
             beforeThan = new Date().getTime();
         }
@@ -593,7 +596,17 @@ public class ProjectConnectionService {
     }
 
 
-    public List<Map<String, Object>> averageOfProjectConnections(String period, Long afterThan, Long beforeThan, Project project, User user){
+    public List<Map<String, Object>> averageOfProjectConnections(String period, Long afterThan, Long beforeThan, Project project, SecUser user){
+        if (project != null) {
+            securityACLService.check(project,READ);
+            if (user!= null) {
+                securityACLService.checkIsSameUserOrAdminContainer(project, user, currentUserService.getCurrentUser());
+            }
+        } else {
+            securityACLService.checkAdmin(currentUserService.getCurrentUser());
+        }
+
+
         if (beforeThan == null) {
             beforeThan = new Date().getTime();
         }

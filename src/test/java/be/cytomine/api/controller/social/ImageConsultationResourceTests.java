@@ -19,6 +19,7 @@ import be.cytomine.service.social.UserPositionServiceTests;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.SecurityUtils;
 import org.apache.commons.lang3.time.DateUtils;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -175,43 +176,6 @@ public class ImageConsultationResourceTests {
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
 
     }
-//
-
-//
-//    @Test
-//    public void list_last_user_consultation_bis() throws Exception {
-//        User user = builder.given_superadmin();
-//
-//        ImageInstance imageInstance1 =builder.given_an_image_instance();
-//        ImageInstance imageInstance2 =builder.given_an_image_instance(imageInstance1.getProject());
-//
-////        restImageConsultationControllerMockMvc.perform(get("/api/imageinstance/method/lastopened.json"))
-////                .andDo(print())
-////                .andExpect(status().isOk());
-//
-////        restImageConsultationControllerMockMvc.perform(get("/api/imageinstance/method/lastopened.json"))
-////                .andDo(print())
-////                .andExpect(status().isOk());
-//        imageConsultationService.add(user, imageInstance1.getId(), "xxx", "mode", DateUtils.addSeconds(new Date(), -3));
-//        imageConsultationService.add(user, imageInstance2.getId(), "xxx", "mode", DateUtils.addSeconds(new Date(), -2));
-//        imageConsultationService.add(user, imageInstance2.getId(), "xxx", "mode", DateUtils.addSeconds(new Date(), -1));
-////        given_a_persistent_image_consultation(user, imageInstance1, DateUtils.addSeconds(new Date(), -3));
-////        given_a_persistent_image_consultation(user, imageInstance2, DateUtils.addSeconds(new Date(), -2));
-////        given_a_persistent_image_consultation(user, imageInstance2, DateUtils.addSeconds(new Date(), -2));
-//
-//        restImageConsultationControllerMockMvc.perform(get("/api/imageinstance/method/lastopened.json"))
-//                .andDo(print())
-//                .andExpect(status().isOk());
-//
-//        imageConsultationService.add(user, imageInstance2.getId(), "xxx", "mode", DateUtils.addSeconds(new Date(), -1));
-//
-//        restImageConsultationControllerMockMvc.perform(get("/api/imageinstance/method/lastopened.json")
-//                        .param("max", "1"))
-//                .andDo(print())
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
-//                .andExpect(jsonPath("$.collection[0].id").value(imageInstance1.getId()));
-//    }
 
     @Test
     @Transactional
@@ -275,6 +239,29 @@ public class ImageConsultationResourceTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].frequency").value(2));
+
+    }
+
+
+    @Test
+    @Transactional
+    public void resume_by_user_and_project_export_as_csv() throws Exception {
+        User user = builder.given_superadmin();
+        ImageInstance imageInstance1 =builder.given_an_image_instance();
+        ImageInstance imageInstance2 =builder.given_an_image_instance(imageInstance1.getProject());
+
+        given_a_persistent_image_consultation(user, imageInstance1, DateUtils.addSeconds(new Date(), -3));
+        given_a_persistent_image_consultation(user, imageInstance1, DateUtils.addSeconds(new Date(), -3));
+
+
+        restImageConsultationControllerMockMvc.perform(get("/api/imageconsultation/resume.json")
+                        .param("project", imageInstance1.getProject().getId().toString())
+                        .param("user", user.getId().toString())
+                        .param("export", "csv"))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        Assertions.fail("todo");
 
     }
 

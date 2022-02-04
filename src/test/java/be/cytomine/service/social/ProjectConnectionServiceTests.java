@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -75,7 +76,7 @@ public class ProjectConnectionServiceTests {
         User user = builder.given_superadmin();
         Project projet = builder.given_a_project();
         Date before = new Date(new Date().getTime()-1000);
-        PersistentProjectConnection connection = projectConnectionService.add(user, projet.getId(), "xxx", "linux", "chrome", "123");
+        PersistentProjectConnection connection = projectConnectionService.add(user, projet, "xxx", "linux", "chrome", "123");
         assertThat(connection).isNotNull();
         assertThat(connection.getTime()).isNull();
         Date after = new Date();
@@ -85,7 +86,7 @@ public class ProjectConnectionServiceTests {
         assertThat(connectionOptional.get().getSession()).isEqualTo("xxx");
         assertThat(connectionOptional.get().getTime()).isNull();
 
-        connection = projectConnectionService.add(user, projet.getId(), "yyy", "linux", "chrome", "123");
+        connection = projectConnectionService.add(user, projet, "yyy", "linux", "chrome", "123");
 
 
         connectionOptional = persistentProjectConnectionRepository.findAllByUserAndProjectAndCreatedLessThan(builder.given_superadmin().getId(), projet.getId(), after,
@@ -212,7 +213,7 @@ public class ProjectConnectionServiceTests {
 
         connection = given_a_persistent_connection_in_project(user, projet,DateUtils.addSeconds(new Date(), 1));
         connection = given_a_persistent_connection_in_project(user, projet,DateUtils.addSeconds(new Date(), 10));
-        List<PersistentProjectConnection> allByUserAndProject = persistentProjectConnectionRepository.findAllByUserAndProject(user.getId(), projet.getId(), PageRequest.of(0, 50, Sort.Direction.DESC, "created"));
+        Page<PersistentProjectConnection> allByUserAndProject = persistentProjectConnectionRepository.findAllByUserAndProject(user.getId(), projet.getId(), PageRequest.of(0, 50, Sort.Direction.DESC, "created"));
 
         for (PersistentProjectConnection persistentProjectConnection : allByUserAndProject) {
             System.out.println("Annotations: " + persistentProjectConnection.getCountCreatedAnnotations());
@@ -220,9 +221,9 @@ public class ProjectConnectionServiceTests {
 
 
         assertThat(allByUserAndProject).hasSize(3);
-        assertThat(allByUserAndProject.get(0).getCountCreatedAnnotations()).isNull();
-        assertThat(allByUserAndProject.get(1).getCountCreatedAnnotations()).isEqualTo(0);
-        assertThat(allByUserAndProject.get(2).getCountCreatedAnnotations()).isEqualTo(1);
+        assertThat(allByUserAndProject.getContent().get(0).getCountCreatedAnnotations()).isNull();
+        assertThat(allByUserAndProject.getContent().get(1).getCountCreatedAnnotations()).isEqualTo(0);
+        assertThat(allByUserAndProject.getContent().get(2).getCountCreatedAnnotations()).isEqualTo(1);
     }
 
     @Test
@@ -241,16 +242,16 @@ public class ProjectConnectionServiceTests {
 
         connection = given_a_persistent_connection_in_project(user, projet, DateUtils.addSeconds(new Date(), 1));
         connection = given_a_persistent_connection_in_project(user, projet, DateUtils.addSeconds(new Date(), 10));
-        List<PersistentProjectConnection> allByUserAndProject = persistentProjectConnectionRepository.findAllByUserAndProject(user.getId(), projet.getId(), PageRequest.of(0, 50, Sort.Direction.DESC, "created"));
+        Page<PersistentProjectConnection> allByUserAndProject = persistentProjectConnectionRepository.findAllByUserAndProject(user.getId(), projet.getId(), PageRequest.of(0, 50, Sort.Direction.DESC, "created"));
 
         for (PersistentProjectConnection persistentProjectConnection : allByUserAndProject) {
             System.out.println("Images: " + persistentProjectConnection.getCountViewedImages());
         }
 
         assertThat(allByUserAndProject).hasSize(3);
-        assertThat(allByUserAndProject.get(0).getCountViewedImages()).isNull();
-        assertThat(allByUserAndProject.get(1).getCountViewedImages()).isEqualTo(0);
-        assertThat(allByUserAndProject.get(2).getCountViewedImages()).isEqualTo(2);
+        assertThat(allByUserAndProject.getContent().get(0).getCountViewedImages()).isNull();
+        assertThat(allByUserAndProject.getContent().get(1).getCountViewedImages()).isEqualTo(0);
+        assertThat(allByUserAndProject.getContent().get(2).getCountViewedImages()).isEqualTo(2);
     }
 
     @Test
@@ -264,15 +265,15 @@ public class ProjectConnectionServiceTests {
         given_a_persistent_connection_in_project(anotherUser, projet);
         given_a_last_connection(user, projet);
 
-        List<PersistentProjectConnection> results = projectConnectionService.getConnectionByUserAndProject(user, projet, 50, 0);
+        Page<PersistentProjectConnection> results = projectConnectionService.getConnectionByUserAndProject(user, projet, 50, 0);
         assertThat(results).isNotEmpty();
-        assertThat(results.get(0).getUser()).isEqualTo(user.getId());
-        assertThat(results.get(0).getExtraProperties()).containsEntry("online", true);
+        assertThat(results.getContent().get(0).getUser()).isEqualTo(user.getId());
+        assertThat(results.getContent().get(0).getExtraProperties()).containsEntry("online", true);
 
         results = projectConnectionService.getConnectionByUserAndProject(anotherUser, projet, 50, 0);
         assertThat(results).isNotEmpty();
-        assertThat(results.get(0).getUser()).isEqualTo(anotherUser.getId());
-        assertThat(results.get(0).getExtraProperties()).doesNotContainEntry("online", true);
+        assertThat(results.getContent().get(0).getUser()).isEqualTo(anotherUser.getId());
+        assertThat(results.getContent().get(0).getExtraProperties()).doesNotContainEntry("online", true);
     }
 
     @Test
@@ -581,12 +582,12 @@ public class ProjectConnectionServiceTests {
     }
 
     PersistentProjectConnection given_a_persistent_connection_in_project(User user, Project project) {
-        PersistentProjectConnection connection = projectConnectionService.add(user, project.getId(), "xxx", "linux", "chrome", "123");
+        PersistentProjectConnection connection = projectConnectionService.add(user, project, "xxx", "linux", "chrome", "123");
         return connection;
     }
 
     PersistentProjectConnection given_a_persistent_connection_in_project(User user, Project project, Date created) {
-        PersistentProjectConnection connection = projectConnectionService.add(user, project.getId(), "xxx", "linux", "chrome", "123", created);
+        PersistentProjectConnection connection = projectConnectionService.add(user, project, "xxx", "linux", "chrome", "123", created);
         return connection;
     }
 
