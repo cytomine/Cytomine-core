@@ -28,7 +28,7 @@ spring:
       password: secret
       database: cytomine
       port: 27018
-      host: localhost
+      host: localhost #do not change
 
       #uri: 'mongodb://mongoadmin:secret@localhost:27018/cytomine?authSource=admin&retryWrites=false' #?retryWrites=false&authSource=admin'
       #auto-index-creation: true

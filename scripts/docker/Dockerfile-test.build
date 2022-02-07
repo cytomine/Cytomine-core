@@ -16,5 +16,6 @@ COPY . /app
 WORKDIR /app
 
 RUN sed -i -- 's/localhost:5433/postgresqltest:5432/g' /app/src/test/resources/application.yml
+RUN sed -i -- 's/host: localhost/host: mongodbtest/g' /app/src/test/resources/application.yml
 
 CMD gradle :test
