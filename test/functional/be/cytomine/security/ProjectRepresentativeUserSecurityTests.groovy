@@ -43,6 +43,14 @@ class ProjectRepresentativeUserSecurityTests extends SecurityTestsAbstract {
         result = ProjectRepresentativeUserAPI.show(id, idProject, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
 
+        // add another representative to delete it
+        def USERNAME2 = "user2";
+        def PASSWORD2 = "password";
+        def resAddUser = ProjectAPI.addUserProject(ref.project.id,user2.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        ref = new ProjectRepresentativeUser(project: ref.project, user: user2)
+        result = ProjectRepresentativeUserAPI.create(ref.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+
         //check if delete == good HTTP Code
         result = ProjectRepresentativeUserAPI.delete(id, idProject, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 200 == result.code
@@ -65,26 +73,12 @@ class ProjectRepresentativeUserSecurityTests extends SecurityTestsAbstract {
         assert 200 == result.code
         Project project = result.data
 
+        Long idProject = result.data.id
 
         //create new representative
         def ref = new ProjectRepresentativeUser(project: project, user: user1)
-        result = ProjectRepresentativeUserAPI.create(ref.encodeAsJSON(), USERNAME1, PASSWORD1)
         //check if create == good HTTP Code
-        assert 200 == result.code
-
-        Long id = result.data.id
-        Long idProject = result.data.project.id
-
-        ProjectRepresentativeUser representative = result.data;
-
-        //check if show == good HTTP Code
-        result = ProjectRepresentativeUserAPI.show(id, idProject, USERNAME1, PASSWORD1)
-        assert 200 == result.code
-
-        //check if delete == good HTTP Code
-        result = ProjectRepresentativeUserAPI.delete(id, idProject, USERNAME1, PASSWORD1)
-        assert 200 == result.code
-
+        assert 409 == ProjectRepresentativeUserAPI.create(ref.encodeAsJSON(), USERNAME1, PASSWORD1).code // already present
 
 
         //create new representative not yet added to the project
@@ -102,8 +96,7 @@ class ProjectRepresentativeUserSecurityTests extends SecurityTestsAbstract {
         //check if create == good HTTP Code
         assert 200 == result.code
 
-        id = result.data.id
-        idProject = result.data.project.id
+        def id = result.data.id
 
         //check if show == good HTTP Code
         result = ProjectRepresentativeUserAPI.show(id, idProject, USERNAME1, PASSWORD1)

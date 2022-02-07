@@ -17,6 +17,7 @@ package be.cytomine.project
 */
 
 import be.cytomine.Exception.CytomineException
+import be.cytomine.Exception.WrongArgumentException
 import be.cytomine.command.*
 import be.cytomine.security.User
 import be.cytomine.utils.ModelService

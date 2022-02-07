@@ -744,6 +744,13 @@ class ProjectService extends ModelService {
             log.info("force to put it in list")
             permissionService.addPermission(domain, cytomineService.currentUser.username, BasePermission.ADMINISTRATION)
         }
+
+        if (projectRepresentativeUserService.getByProjectAndUser(domain, cytomineService.currentUser)==null) {
+            log.info("add creator ${cytomineService.currentUser.id} as representative for project ${domain.id}")
+            def json = JSON.parse(new ProjectRepresentativeUser(project:domain, user:cytomineService.currentUser).encodeAsJSON());
+            projectRepresentativeUserService.add(json);
+        }
+
     }
 
 

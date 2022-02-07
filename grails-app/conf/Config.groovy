@@ -393,6 +393,7 @@ cytomine.customUI.project = [
         "project-activities-tab":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":false],
         "project-information-tab":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
         "project-configuration-tab":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":false],
+        "project-report-tab":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
 
         //image details
         "project-explore-image-overview":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
@@ -423,6 +424,7 @@ cytomine.customUI.project = [
         "project-explore-property":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
         "project-explore-follow":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
         "project-explore-guided-tour":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
+        "project-explore-slide-label":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
 
         //annotation details
         "project-explore-annotation-main":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
