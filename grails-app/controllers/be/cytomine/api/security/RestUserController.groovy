@@ -69,7 +69,7 @@ class RestUserController extends RestController {
      */
     @RestApiMethod(description="Get all project managers", listing = true)
     @RestApiParams(params=[
-        @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The project id")
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The project id")
     ])
     def showAdminByProject() {
         Project project = projectService.read(params.long('id'))
@@ -87,7 +87,12 @@ class RestUserController extends RestController {
     def showRepresentativeByProject() {
         Project project = projectService.read(params.long('id'))
         if (project) {
-            responseSuccess(projectRepresentativeUserService.listUserByProject(project))
+            def users = projectRepresentativeUserService.listUserByProject(project)
+            users = users.collect{User.getDataFromDomain(it)}
+            users.each {
+                it.doNotHideEmail = true
+            }
+            responseSuccess(users)
         } else {
             responseNotFound("User", "Project", params.id)
         }
@@ -98,7 +103,7 @@ class RestUserController extends RestController {
      */
     @RestApiMethod(description="Get project creator (Only 1 even if response is list)", listing = true)
     @RestApiParams(params=[
-        @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The project id")
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The project id")
     ])
     def showCreatorByProject() {
         Project project = projectService.read(params.long('id'))
@@ -114,7 +119,7 @@ class RestUserController extends RestController {
      */
     @RestApiMethod(description="Get ontology creator (Only 1 even if response is list)", listing = true)
     @RestApiParams(params=[
-        @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The ontology id")
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The ontology id")
     ])
     def showCreatorByOntology() {
         Ontology ontology = ontologyService.read(params.long('id'))
@@ -129,7 +134,7 @@ class RestUserController extends RestController {
      */
     @RestApiMethod(description="Get all ontology users. Online flag may be set to get only online users", listing = true)
     @RestApiParams(params=[
-        @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The ontology id")
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The ontology id")
     ])
     def showUserByOntology() {
         Ontology ontology = ontologyService.read(params.long('id'))
@@ -147,8 +152,8 @@ class RestUserController extends RestController {
             description="Get all user layers available for a project. If image param is set, add user job layers. The result depends on the current user and the project flag (hideUsersLayers,...).",
             listing = true)
     @RestApiParams(params=[
-        @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The project id"),
-        @RestApiParam(name="image", type="long", paramType = RestApiParamType.PATH, description = "(Optional) The image id, if set add userjob layers"),
+            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH, description = "The project id"),
+            @RestApiParam(name="image", type="long", paramType = RestApiParamType.PATH, description = "(Optional) The image id, if set add userjob layers"),
     ])
     def showLayerByProject() {
         Project project = projectService.read(params.long('id'))
@@ -188,7 +193,7 @@ class RestUserController extends RestController {
      */
     @RestApiMethod(description="Render and returns all Users",listing = true)
     @RestApiParams(params=[
-        @RestApiParam(name="publicKey", type="string", paramType = RestApiParamType.QUERY, description = "(Optional) If set, get only user with the public key in param"),
+            @RestApiParam(name="publicKey", type="string", paramType = RestApiParamType.QUERY, description = "(Optional) If set, get only user with the public key in param"),
     ])
     def list() {
         def result
@@ -198,9 +203,21 @@ class RestUserController extends RestController {
         } else {
             def extended = [:]
             if(params.getBoolean("withRoles")) extended.put("withRoles",params.withRoles)
-            result = secUserService.list(extended, searchParameters, params.sort, params.order, params.long("max",0), params.long("offset",0))
-            responseSuccess([collection : result.data, size : result.total, offset: result.offset, perPage: result.perPage, totalPages: result.totalPages])
+            result = secUserService.list(extended, searchParameters, params.getBoolean("onlineFilter", null), params.sort, params.order)
+            responseSuccess(result)
         }
+    }
+
+    /**
+     * Download report with annotation
+     */
+    @RestApiMethod(description = "Download a report (pdf, xls,...) with all users")
+    @RestApiResponseObject(objectIdentifier = "file")
+    @RestApiParams(params = [
+            @RestApiParam(name = "format", type = "string", paramType = RestApiParamType.QUERY, description = "The report format (pdf, xls,...)")
+    ])
+    def downloadDocumentWithAllUsers() {
+        reportService.createUserFullListingLightDocuments(params.format, response)
     }
 
     /**
@@ -1053,8 +1070,8 @@ class RestUserController extends RestController {
 
     @Override
     protected void filterOneElement(JSONObject element){
-        if(element['id'] != cytomineService.currentUser.id)
-        element['email'] = null
+        if(element['id'] != cytomineService.currentUser.id && !element.doNotHideEmail)
+            element['email'] = null
     }
 
 }

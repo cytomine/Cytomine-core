@@ -81,6 +81,8 @@ class SecUserService extends ModelService {
     def imageConsultationService
     def projectService
     def projectConnectionService
+    def noSQLCollectionService
+    def mongo
 
     def currentDomain() {
         User
@@ -137,10 +139,10 @@ class SecUserService extends ModelService {
         cytomineService.getCurrentUser()
     }
 
-    def list(def extended = [:], def searchParameters = [], Long max = 0, Long offset = 0) {
-        list(extended, searchParameters, null, null, max, offset)
+    def list(def extended = [:], def searchParameters = []) {
+        list(extended, searchParameters, null, null, null)
     }
-    def list(def extended, def searchParameters = [], String sortColumn, String sortDirection, Long max = 0, Long offset = 0) {
+    def list(def extended, def searchParameters = [], Boolean onlineFilter = null, String sortColumn, String sortDirection) {
         securityACLService.checkGuest(cytomineService.currentUser)
 
         if (sortColumn.equals("role") && !extended.withRoles) throw new WrongArgumentException("Cannot sort on user role without argument withRoles")
@@ -148,7 +150,7 @@ class SecUserService extends ModelService {
         if(!sortColumn) sortColumn = "username"
         if(!sortDirection) sortDirection = "asc"
 
-        if(!ReflectionUtils.findField(User, sortColumn) && !(["role", "fullName"].contains(sortColumn)))
+        if(!ReflectionUtils.findField(User, sortColumn) && !(["role", "fullName", "lastConnection"].contains(sortColumn)))
             throw new CytomineMethodNotYetImplementedException("User list sorted by $sortColumn is not implemented")
 
         def multiSearch = searchParameters.find{it.field == "fullName"}
@@ -178,15 +180,17 @@ class SecUserService extends ModelService {
 
         if(sortColumn == "role") {
             sort = "ORDER BY $sortColumn $sortDirection, u.id ASC "
-        } else if(sortColumn == "fullName"){
+        } else if(sortColumn == "lastConnection"){
+            sort = "" // sort will be done later
+        }else if(sortColumn == "fullName"){
             sort = "ORDER BY u.firstname $sortDirection, u.id "
         } else if(sortColumn != "id"){ //avoid random sort when multiple values of the
             sort = "ORDER BY u.$sortColumn $sortDirection, u.id "
         } else sort = "ORDER BY u.$sortColumn $sortDirection "
 
         String request = select + from + where + search + groupBy + sort
-        if(max > 0) request += " LIMIT $max "
-        if(offset > 0) request += " OFFSET $offset "
+//        if(max > 0) request += " LIMIT $max "
+//        if(offset > 0) request += " OFFSET $offset "
 
 
         def sql = new Sql(dataSource)
@@ -231,22 +235,28 @@ class SecUserService extends ModelService {
             data << line
 
         }
-
-        def size
-        request = "SELECT COUNT(DISTINCT u.id) " + from + where + search
-
-        sql.eachRow(request, mapParams) {
-            size = it.count
-        }
         sql.close()
 
-        def result = [data:data, total:size]
-        max = (max > 0) ? max : Integer.MAX_VALUE
-        result.offset = offset
-        result.perPage = Math.min(max, result.total)
-        result.totalPages = Math.ceil(result.total / max)
+        def db = mongo.getDB(noSQLCollectionService.getDatabaseName())
+        def requestConnection = []
+        requestConnection << [$group : [_id : '$user', "date":[$max:'$created']]]
+        def results = db.persistentConnection.aggregate(requestConnection)
+        println results.results()
+        Map<Long,Date> onlineUsers = results.results().collectEntries{[it.'_id', it.date]}
+        Date now = new Date()
+        println onlineUsers
+        data.each {
+            it.lastConnection = onlineUsers.get(it.id)
+            it.online = it.lastConnection && Math.abs(now.getTime() - it.lastConnection.getTime())< (300 * 1000L);
+        }
+        if(onlineFilter!=null) {
+            data = data.findAll{it.online == onlineFilter}
+        }
+        if (sortColumn=="lastConnection") {
+            data = data.sort {sortDirection.equals("asc") ? it.lastConnection : (it.lastConnection!=null? -it.lastConnection.getTime() : Long.MAX_VALUE)}
+        }
 
-        return result
+        return data
     }
 
     def lock(SecUser user){

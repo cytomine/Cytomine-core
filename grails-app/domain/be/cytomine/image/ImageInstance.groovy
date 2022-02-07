@@ -268,6 +268,7 @@ class ImageInstance extends CytomineDomain implements Serializable {
         returnArray['instrument'] = image?.instrument?.id
         returnArray['instrumentValue'] = image?.instrument?.value
 
+        returnArray['labelURL'] = UrlApi.getAssociatedImageInstance(image?.id, "label", image?.baseImage?.uploadedFile?.contentType, 512)
         return returnArray
     }
 
