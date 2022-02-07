@@ -30,6 +30,11 @@ class UserUrlMappings {
         "/api/user.$format"(controller:"restUser"){
             action = [GET:"list",POST:"add"]
         }
+        "/api/user/action/download.$format"(controller:"restUser"){
+            action = [GET:"downloadDocumentWithAllUsers"]
+        }
+
+
         "/api/user/$id.$format"(controller:"restUser"){
             action = [GET:"show",PUT:"update", DELETE:"delete"]
         }

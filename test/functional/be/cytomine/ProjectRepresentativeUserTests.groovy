@@ -18,6 +18,7 @@ package be.cytomine
 
 import be.cytomine.project.Project
 import be.cytomine.project.ProjectRepresentativeUser
+import be.cytomine.security.SecurityTestsAbstract
 import be.cytomine.security.User
 import be.cytomine.test.BasicInstanceBuilder
 import be.cytomine.test.Infos
@@ -92,6 +93,12 @@ class ProjectRepresentativeUserTests {
     void testDeleteProjectRepresentativeUser() {
         def refToDelete = BasicInstanceBuilder.getProjectRepresentativeUserNotExist()
         assert refToDelete.save(flush: true)!= null
+
+        def anotherOne = BasicInstanceBuilder.getProjectRepresentativeUserNotExist()
+        anotherOne.setProject(refToDelete.project)
+        anotherOne.setUser(BasicInstanceBuilder.getUser2())
+        assert anotherOne.save(flush: true)!= null
+
         def id = refToDelete.id
         def idProject = refToDelete.project.id
         def result = ProjectRepresentativeUserAPI.delete(id, idProject, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
@@ -116,6 +123,12 @@ class ProjectRepresentativeUserTests {
     void testDeleteProjectRepresentativeUserByProjectAndUser() {
         ProjectRepresentativeUser refToDelete = BasicInstanceBuilder.getProjectRepresentativeUserNotExist()
         assert refToDelete.save(flush: true)!= null
+        def anotherOne = BasicInstanceBuilder.getProjectRepresentativeUserNotExist()
+        anotherOne.setProject(refToDelete.project)
+        anotherOne.setUser(BasicInstanceBuilder.getUser2())
+        assert anotherOne.save(flush: true)!= null
+
+
         def id = refToDelete.id
         def idProject = refToDelete.project.id
         def idUser = refToDelete.user.id
@@ -180,6 +193,45 @@ class ProjectRepresentativeUserTests {
     void testDeleteProjectRepresentativeUserNotExist() {
         def result = ProjectRepresentativeUserAPI.delete(-99, -99, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 404 == result.code
+    }
+
+    void testAddProjectCreateAutomaticallyRepresentative() {
+        def user = BasicInstanceBuilder.getSuperAdmin(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        def result = ProjectAPI.create(BasicInstanceBuilder.getProjectNotExist().encodeAsJSON(),Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        Project project = result.data
+        result = ProjectRepresentativeUserAPI.list(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert json.collection.collect{it.user+""}.contains(user.id+"")
+    }
+
+    void testRefuseToRemoveLastRepresentativeUser() {
+        def user = BasicInstanceBuilder.getSuperAdmin(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        def result = ProjectAPI.create(BasicInstanceBuilder.getProjectNotExist().encodeAsJSON(),Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        Project project = result.data
+
+        // 1 user
+        result = ProjectRepresentativeUserAPI.deleteByUser(user.id, project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 400 == result.code
+
+        def USERNAME2 = "user2";
+        def PASSWORD2 = "password";
+
+        def anotherUser = BasicInstanceBuilder.getUser2()
+
+        def refToAdd = BasicInstanceBuilder.getProjectRepresentativeUserNotExist()
+        refToAdd.setProject(project)
+        refToAdd.setUser(anotherUser)
+        Infos.addUserRight(anotherUser, project)
+        result = ProjectRepresentativeUserAPI.create(refToAdd.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code // first creation
+
+        result = ProjectRepresentativeUserAPI.deleteByUser(user.id, project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code // now it should be possible as there is another representative
+
+        result = ProjectRepresentativeUserAPI.deleteByUser(anotherUser.id, project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 400 == result.code // only 1 representative
     }
 
 }

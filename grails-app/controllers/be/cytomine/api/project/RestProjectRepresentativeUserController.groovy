@@ -1,6 +1,7 @@
 package be.cytomine.api.project
 
 import be.cytomine.Exception.CytomineException
+import be.cytomine.Exception.WrongArgumentException
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -83,9 +84,13 @@ class RestProjectRepresentativeUserController extends RestController {
             if(!domain) {
                 Project project = projectService.read(params.getLong("idProject"))
                 User user = secUserService.read(params.getLong("user"))
-
                 domain = projectRepresentativeUserService.getByProjectAndUser(project, user)
             }
+
+            if (projectRepresentativeUserService.listByProject(domain.project).size()<2) {
+                throw new WrongArgumentException("You cannot remove the last representative role. Add someone else as representative")
+            }
+
             def result = projectRepresentativeUserService.delete(domain,transactionService.start(),task)
             responseResult(result)
         } catch (CytomineException e) {

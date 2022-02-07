@@ -246,4 +246,36 @@ class ReportService {
 
 
     }
+
+    // contain only username and user pretty name
+    def createUserFullListingLightDocuments(def format,def response) {
+
+        def exporterIdentifier = format;
+        if (exporterIdentifier == "xls") {
+            exporterIdentifier = "excel"
+        }
+        response.contentType = grailsApplication.config.grails.mime.types[format]
+        SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyyMMdd_hhmmss");
+        String datePrefix = simpleFormat.format(new Date())
+        response.setHeader("Content-disposition", "attachment; filename=${datePrefix}_users.${format}")
+
+        def exportResult = []
+
+        def users = secUserService.list([withRoles:true]);
+        users.each { user ->
+            def data = [:]
+            data.username = user.username
+            data.fullname = user.lastname + " " + user.firstname
+            data.email = user.email
+            data.status = user.accountLocked ? "locked" : "active"
+            data.role = user.role
+            data.lastConnection = user.lastConnection
+            exportResult.add(data)
+        }
+
+        List fields = ["username", "fullname", "email", "status", "role", "lastConnection"]
+        Map labels = ["username": "User Name", "fullname": "Full Name", "email": "Email", "status": "Status", "role" : "Role", "lastConnection": "Last connection"]
+        String title = "Users @ " + (new Date()).toLocaleString()
+        exportService.export(exporterIdentifier, response.outputStream, exportResult, fields, labels, null, ["title": title, "csv.encoding": "UTF-8", "separator": ";"])
+    }
 }

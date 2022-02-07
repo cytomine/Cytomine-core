@@ -393,6 +393,7 @@ cytomine.customUI.project = [
         "project-activities-tab":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":false],
         "project-information-tab":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
         "project-configuration-tab":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":false],
+        "project-report-tab":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
 
         //image details
         "project-explore-image-overview":["ADMIN_PROJECT":true,"CONTRIBUTOR_PROJECT":true],
