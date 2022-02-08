@@ -206,7 +206,7 @@ class ProjectRepresentativeUserTests {
         assert json.collection.collect{it.user+""}.contains(user.id+"")
     }
 
-    void testRefuseToRemoveLastRepresentativeUser() {
+    void testRefuseToDowngradeLastRepresentativeUser() {
         def user = BasicInstanceBuilder.getSuperAdmin(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         def result = ProjectAPI.create(BasicInstanceBuilder.getProjectNotExist().encodeAsJSON(),Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         Project project = result.data
@@ -232,6 +232,49 @@ class ProjectRepresentativeUserTests {
 
         result = ProjectRepresentativeUserAPI.deleteByUser(anotherUser.id, project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
         assert 400 == result.code // only 1 representative
+    }
+
+    void testRefuseToRemoveLastRepresentativeUser() {
+        def user = BasicInstanceBuilder.getSuperAdmin(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        def anotherUser = BasicInstanceBuilder.getUser2()
+
+        def result = ProjectAPI.create(BasicInstanceBuilder.getProjectNotExist().encodeAsJSON(),Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        Project project = result.data
+
+        def refToAdd = BasicInstanceBuilder.getProjectRepresentativeUserNotExist()
+        refToAdd.setProject(project)
+        refToAdd.setUser(anotherUser)
+        Infos.addUserRight(anotherUser, project)
+        result = ProjectRepresentativeUserAPI.create(refToAdd.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code // first creation
+
+        result = ProjectRepresentativeUserAPI.list(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert json.collection.collect{it.user+""}.contains(user.id+"")
+        assert json.collection.collect{it.user+""}.contains(anotherUser.id+"")
+
+        result = ProjectRepresentativeUserAPI.deleteByUser(user.id, project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code // it should be possible as there is another representative
+
+        result = ProjectRepresentativeUserAPI.list(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert !json.collection.collect{it.user+""}.contains(user.id+"")
+        assert json.collection.collect{it.user+""}.contains(anotherUser.id+"")
+
+        result =  ProjectAPI.deleteUserProject(project.id, anotherUser.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+
+        // current user (superadmin) should now have the representative role
+        result = ProjectRepresentativeUserAPI.list(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert json.collection.collect{it.user+""}.contains(user.id+"")
+        assert !json.collection.collect{it.user+""}.contains(anotherUser.id+"")
     }
 
 }
