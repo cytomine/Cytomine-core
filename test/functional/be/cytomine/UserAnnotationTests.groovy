@@ -475,6 +475,18 @@ class UserAnnotationTests  {
 
 
 
+    void testListUserAnnotationByImageAndUser() {
+        UserAnnotation annotation = BasicInstanceBuilder.getUserAnnotation()
+        def result = UserAnnotationAPI.listByImage(annotation.image.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        def json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+
+        result = UserAnnotationAPI.listByImageAndUser(annotation.image.id, annotation.user.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+    }
 
     void testListAlgoAnnotationByImageAndUser() {
         UserAnnotation annotation = BasicInstanceBuilder.getUserAnnotation()
