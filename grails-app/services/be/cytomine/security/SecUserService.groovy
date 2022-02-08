@@ -889,6 +889,17 @@ class SecUserService extends ModelService {
             if(representative) {
                 projectRepresentativeUserService.delete(representative)
             }
+
+            // if no representative, add current user as a representative
+            if (projectRepresentativeUserService.listByProject(project).size()==0) {
+                if (!securityACLService.getProjectList(cytomineService.currentUser).contains(project)) {
+                    // if current user is not in project (= SUPERADMIN), add to the project
+                    addUserToProject(user, project, true)
+                }
+                log.info("add current user ${cytomineService.currentUser.id} as representative for project ${project.id}")
+                def json = JSON.parse(new ProjectRepresentativeUser(project:project, user:cytomineService.currentUser).encodeAsJSON());
+                projectRepresentativeUserService.add(json);
+            }
         }
         [data: [message: "OK"], status: 201]
     }
