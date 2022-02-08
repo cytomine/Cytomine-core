@@ -14,5 +14,6 @@ import java.util.Date;
 @Repository
 public interface LastUserPositionRepository extends MongoRepository<LastUserPosition, Long> {
 
+    void deleteAllByImage(Long id);
 
 }

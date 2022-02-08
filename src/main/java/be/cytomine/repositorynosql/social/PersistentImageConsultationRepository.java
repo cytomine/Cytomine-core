@@ -40,4 +40,6 @@ public interface PersistentImageConsultationRepository extends MongoRepository<P
     Page<PersistentImageConsultation> findAllByProjectAndUser(Long project, Long user, PageRequest request);
 
     List<PersistentImageConsultation> findAllByCreatedGreaterThanAndProjectConnectionOrderByCreatedDesc(Date created, Long activityId);
+
+    void deleteAllByImage(Long id);
 }

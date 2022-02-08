@@ -792,6 +792,51 @@ public class MongoDBDomainTests {
     }
 
 
+    /**
+     * Check that the format of MongoDB is the same as
+     */
+    @Test
+    void annotation_action_indexes() throws ParseException, JsonProcessingException {
+        ListIndexesIterable<Document> indexes = retrieveIndex("annotationAction");
+        //[
+        //	{
+        //		"v" : 1,
+        //		"key" : {
+        //			"_id" : 1
+        //		},
+        //		"name" : "_id_",
+        //		"ns" : "cytomine.annotationAction"
+        //	},
+        //	{
+        //		"v" : 1,
+        //		"key" : {
+        //			"user" : 1,
+        //			"image" : 1,
+        //			"created" : -1
+        //		},
+        //		"name" : "user_1_image_1_created_-1",
+        //		"ns" : "cytomine.annotationAction"
+        //	}
+        //]
+        Document indexId = null;
+        Document indexUserDate = null;
+        for (Document index : indexes) {
+            if (index.get("name").equals("_id_")) {
+                indexId = index;
+            }
+            if (index.get("name").equals("user_1_image_1_created_-1")) {
+                indexUserDate = index;
+            }
+        }
+        assertThat(indexes).hasSize(2);
+        assertThat(indexId).isNotNull();
+        assertThat(((Document)indexId.get("key")).get("_id")).isEqualTo(1);
+        assertThat(indexUserDate).isNotNull();
+        assertThat(((Document)indexUserDate.get("key")).get("user")).isEqualTo(1);
+        assertThat(((Document)indexUserDate.get("key")).get("image")).isEqualTo(1);
+        assertThat(((Document)indexUserDate.get("key")).get("created")).isEqualTo(-1);
+    }
+
 
     private Document retrieveDocument(String collectionName, Long id) {
         MongoCollection<Document> persistentProjectConnection = mongoClient.getDatabase(DATABASE_NAME).getCollection(collectionName);
