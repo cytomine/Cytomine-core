@@ -3,9 +3,8 @@ package be.cytomine.service.image;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.*;
-import be.cytomine.domain.ontology.AlgoAnnotation;
-import be.cytomine.domain.ontology.ReviewedAnnotation;
-import be.cytomine.domain.ontology.UserAnnotation;
+import be.cytomine.domain.meta.Property;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.*;
@@ -13,31 +12,38 @@ import be.cytomine.repository.image.AbstractSliceRepository;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.image.NestedImageInstanceRepository;
 import be.cytomine.repository.image.SliceInstanceRepository;
-import be.cytomine.repository.ontology.AlgoAnnotationRepository;
-import be.cytomine.repository.ontology.AnnotationDomainRepository;
-import be.cytomine.repository.ontology.ReviewedAnnotationRepository;
-import be.cytomine.repository.ontology.UserAnnotationRepository;
+import be.cytomine.repository.ontology.*;
+import be.cytomine.repositorynosql.social.AnnotationActionRepository;
+import be.cytomine.repositorynosql.social.LastUserPositionRepository;
+import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
+import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.ImageInstanceBounds;
+import be.cytomine.service.meta.PropertyService;
 import be.cytomine.service.middleware.ImageServerService;
-import be.cytomine.service.ontology.AlgoAnnotationService;
-import be.cytomine.service.ontology.ReviewedAnnotationService;
-import be.cytomine.service.ontology.UserAnnotationService;
+import be.cytomine.service.ontology.*;
+import be.cytomine.service.search.ImageSearchExtension;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SQLSearchParameter;
 import be.cytomine.utils.filters.SearchOperation;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import be.cytomine.utils.filters.SearchParameterProcessed;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Accumulators;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.hibernate.Session;
 import org.hibernate.query.NativeQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ReflectionUtils;
 
@@ -50,6 +56,11 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static be.cytomine.service.social.ImageConsultationService.DATABASE_NAME;
+import static com.mongodb.client.model.Aggregates.*;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Sorts.ascending;
+import static com.mongodb.client.model.Sorts.descending;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Slf4j
@@ -104,8 +115,36 @@ public class ImageInstanceService extends ModelService {
     @Autowired
     private ReviewedAnnotationService reviewedAnnotationService;
 
+    @Autowired
+    private AnnotationActionRepository annotationActionRepository;
+
+    @Autowired
+    private PersistentUserPositionRepository persistentUserPositionRepository;
+
+    @Autowired
+    private LastUserPositionRepository lastUserPositionRepository;
+
+    @Autowired
+    private PersistentImageConsultationRepository persistentImageConsultationRepository;
+
+    @Autowired
+    PropertyService propertyService;
+
+    @Autowired
+    AnnotationTrackRepository annotationTrackRepository;
+
+    @Autowired
+    TrackService trackService;
+
+    @Autowired
+    MongoTemplate mongoTemplate;
+
+    @Autowired
+    MongoClient mongoClient;
 
     private AlgoAnnotationService algoAnnotationService;
+
+
     @Autowired
     public void setAlgoAnnotationService(AlgoAnnotationService algoAnnotationService) {
         this.algoAnnotationService = algoAnnotationService;
@@ -653,74 +692,34 @@ public class ImageInstanceService extends ModelService {
         return tree;
     }
 
+    public Page<Map<String, Object>> listExtended(Project project, ImageSearchExtension extension, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long offset, Long max) {
 
+        Page<Map<String, Object>> images = list(project, searchParameters, sortColumn, sortDirection, max, offset, false);
 
-    //TODO:
-//    def listExtended(Project project, String sortColumn, String sortDirection, def searchParameters, Long max  = 0, Long offset = 0, def extended) {
-//
-//        def data = []
-//        def images = list(project, sortColumn, sortDirection, searchParameters, max, offset)
-//
-//        //get last activity grouped by images
-//        def user = cytomineService.currentUser
-//
-//        def db = mongo.getDB(noSQLCollectionService.getDatabaseName())
-//        def result = db.persistentImageConsultation.aggregate(
-//                [$match: [user: user.id]],
-//                [$sort: [created: -1]],
-//                [$group: [_id: '$image', created: [$max: '$created'], user: [$first: '$user']]],
-//                [$sort: [_id: 1]]
-//        )
-//
-//        def consultations = result.results().collect {
-//            [imageId: it['_id'], lastActivity: it['created'], user: it['user']]
-//        }
-//
-//        // we sorted to apply binary search instead of a simple "find" method. => performance
-//        def binSearchI = { aList, property, target ->
-//                def a = aList
-//                def offSet = 0
-//        while (!a.empty) {
-//            def n = a.size()
-//            def m = n.intdiv(2)
-//            if (a[m]."$property" > target) {
-//                a = a[0..<m]
-//            } else if (a[m]."$property" < target) {
-//                a = a[(m + 1)..<n]
-//                offSet += m + 1
-//            } else {
-//                return (offSet + m)
-//            }
-//        }
-//        return -1
-//        }
-//
-//        images.data.each { image ->
-//                def index
-//            def line = image
-//            if(extended.withLastActivity) {
-//                index = binSearchI(consultations, "imageId", image.id)
-//                if (index >= 0) {
-//                    line.putAt("lastActivity", consultations[index].lastActivity)
-//                } else {
-//                    line.putAt("lastActivity", null)
-//                }
-//            }
-//            data << line
-//        }
-//        images.data = data
-//        return images
-//    }
-//
-//
-//
-//
-//
-//
-//
-//
-//
+        List<Bson> requests = new ArrayList<>();
+        requests.add(match(eq("user", currentUserService.getCurrentUser().getId())));
+        requests.add(sort(descending("created")));
+        requests.add(group("$image", Accumulators.max("created", "$created"), Accumulators.first("user", "$user")));
+        requests.add(sort(ascending("_id")));
 
+        MongoCollection<Document> persistentImageConsultation = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentImageConsultation");
+
+        List<Document> results = persistentImageConsultation.aggregate(requests)
+                .into(new ArrayList<>());
+        List<Date> consultations = results.stream().map(x -> (Date)x.get("created"))
+                .collect(Collectors.toList());
+        List<Long> ids = results.stream().map(x -> x.getLong("_id")).collect(Collectors.toList());
+
+        for (Map<String, Object> item : images.getContent()) {
+            if (extension.isWithLastActivity()) {
+                int index = Collections.binarySearch(ids, (Long)item.get("id"));
+                if (index >= 0) {
+                    item.put("lastActivity", consultations.get(index));
+                }
+            }
+        }
+        return images;
+    }
 
     public SliceInstance getReferenceSlice(Long id) {
         ImageInstance image = find(id).orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
@@ -785,6 +784,8 @@ public class ImageInstanceService extends ModelService {
         securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((ImageInstance)domain).getUser());
         securityACLService.checkIsNotReadOnly(domain.container());
         securityACLService.checkIsNotReadOnly(jsonNewData.getJSONAttrLong("project"), Project.class);
+
+        jsonNewData.putIfAbsent("user", ((ImageInstance)domain).getUser().getId());
 
         JsonObject attributes = domain.toJsonObject();
         CommandResponse commandResponse = executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
@@ -868,38 +869,25 @@ public class ImageInstanceService extends ModelService {
 
 
     private void deleteDependentAnnotationAction(ImageInstance image, Transaction transaction, Task task) {
-        //TODO:
-//        AnnotationAction.findAllByImage(image).each {
-//            it.delete()
-//        }
+        annotationActionRepository.deleteAllByImage(image.getId());
     }
 
     private void deleteDependentLastUserPosition(ImageInstance image, Transaction transaction, Task task) {
-        //TODO:
-//        LastUserPosition.findAllByImage(image).each {
-//            it.delete()
-//        }
+        lastUserPositionRepository.deleteAllByImage(image.getId());
     }
 
     private void deleteDependentPersistentUserPosition(ImageInstance image, Transaction transaction, Task task) {
-        //TODO:
-//        PersistentUserPosition.findAllByImage(image).each {
-//            it.delete()
-//        }
+        persistentUserPositionRepository.deleteAllByImage(image.getId());
     }
 
     private void deleteDependentPersistentImageConsultation(ImageInstance image, Transaction transaction, Task task) {
-        //TODO:
-//        PersistentImageConsultation.findAllByImage(image).each {
-//            it.delete()
-//        }
+        persistentImageConsultationRepository.deleteAllByImage(image.getId());
     }
 
     private void deleteDependentProperty(ImageInstance image, Transaction transaction, Task task) {
-        //TODO:
-//        Property.findAllByDomainIdent(image.id).each {
-//            propertyService.delete(it, transaction, null, false)
-//        }
+        for (Property property : propertyService.list(image)) {
+            propertyService.delete(property, transaction, task, false);
+        }
     }
 
 
@@ -920,10 +908,9 @@ public class ImageInstanceService extends ModelService {
     }
 
     private void deleteDependentTrack(ImageInstance image, Transaction transaction, Task task) {
-        //TODO:
-//        Track.findAllByImage(image).each {
-//            trackService.delete(it, transaction, task)
-//        }
+        for (Track track : trackService.list(image)) {
+            trackService.delete(track, transaction, task, false);
+        }
     }
 
     @Override

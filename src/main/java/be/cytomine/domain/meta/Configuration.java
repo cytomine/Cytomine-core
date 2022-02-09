@@ -32,7 +32,7 @@ public class Configuration extends CytomineDomain {
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         Configuration configuration = (Configuration)this;
         configuration.id = json.getJSONAttrLong("id",null);
-        configuration.key = json.getJSONAttrStr("name", true);
+        configuration.key = json.getJSONAttrStr("key", true);
         configuration.value = json.getJSONAttrStr("value", true);
         configuration.readingRole = ConfigurationReadingRole.valueOf(json.getJSONAttrStr("readingRole",true));
         configuration.created = json.getJSONAttrDate("created");

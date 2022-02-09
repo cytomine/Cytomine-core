@@ -5,6 +5,8 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.meta.AttachedFile;
+import be.cytomine.domain.meta.Configuration;
+import be.cytomine.domain.meta.ConfigurationReadingRole;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.*;
@@ -753,5 +755,17 @@ public class BasicInstanceBuilder {
 
     public AnnotationIndex given_a_annotation_index() {
         return persistAndReturn(given_a_not_persisted_annotation_index());
+    }
+
+    public Configuration given_a_configuration(String key) {
+        return persistAndReturn(given_a_not_persisted_configuration(key));
+    }
+
+    public Configuration given_a_not_persisted_configuration(String key) {
+        Configuration configuration = new Configuration();
+        configuration.setKey(key);
+        configuration.setValue("value");
+        configuration.setReadingRole(ConfigurationReadingRole.ALL);
+        return configuration;
     }
 }

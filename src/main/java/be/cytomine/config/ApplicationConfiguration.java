@@ -14,6 +14,8 @@ import javax.validation.constraints.NotNull;
 @Setter
 public class ApplicationConfiguration {
 
+    private String serverId;
+
     private String version;
 
     private String serverURL;

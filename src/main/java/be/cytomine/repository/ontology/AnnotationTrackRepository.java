@@ -1,5 +1,6 @@
 package be.cytomine.repository.ontology;
 
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.AnnotationTrack;
 import be.cytomine.domain.ontology.Track;

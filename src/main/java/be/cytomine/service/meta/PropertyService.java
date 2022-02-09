@@ -10,6 +10,7 @@ import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.meta.AttachedFileRepository;
+import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.security.SecurityACLService;
@@ -36,6 +37,16 @@ public class PropertyService extends ModelService {
 
     @Autowired
     private CurrentUserService currentUserService;
+
+    @Autowired
+    private PropertyRepository propertyRepository;
+
+    public List<Property> list(CytomineDomain cytomineDomain) {
+        if(!cytomineDomain.getClass().getName().contains("AbstractImage")) {
+            securityACLService.check(cytomineDomain.container(),READ);
+        }
+        return propertyRepository.findAllByDomainIdent(cytomineDomain.getId());
+    }
 
     @Override
     public CommandResponse add(JsonObject jsonObject) {
@@ -114,6 +125,6 @@ public class PropertyService extends ModelService {
 
     @Override
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
-        return List.of(domain.getId(), ((AttachedFile)domain).getDomainClassName());
+        return List.of(domain.getId(), ((Property)domain).getDomainClassName());
     }
 }

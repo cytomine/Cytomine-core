@@ -75,6 +75,11 @@ public class SecUserService extends ModelService {
         }
     }
 
+    public Optional<User> findUser(Long id) {
+        securityACLService.checkGuest(currentUserService.getCurrentUser());
+        return userRepository.findById(id);
+    }
+
 
     public boolean isUserJob(Long id) {
         return find(id).map(SecUser::isAlgo).orElse(false);

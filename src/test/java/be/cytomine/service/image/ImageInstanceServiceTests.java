@@ -4,24 +4,36 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.TestApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.NestedImageInstance;
+import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.ontology.AlgoAnnotation;
+import be.cytomine.domain.ontology.AnnotationTrack;
 import be.cytomine.domain.ontology.ReviewedAnnotation;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
+import be.cytomine.domain.social.AnnotationAction;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.UploadedFileRepository;
+import be.cytomine.repositorynosql.social.AnnotationActionRepository;
+import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
+import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.dto.ImageInstanceBounds;
+import be.cytomine.service.search.ImageSearchExtension;
+import be.cytomine.service.social.AnnotationActionService;
+import be.cytomine.service.social.ImageConsultationService;
+import be.cytomine.service.social.UserPositionService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.filters.SearchOperation;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -35,6 +47,7 @@ import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static be.cytomine.service.social.UserPositionServiceTests.USER_VIEW;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
@@ -62,6 +75,31 @@ public class ImageInstanceServiceTests {
 
     @Autowired
     EntityManager entityManager;
+
+    @Autowired
+    AnnotationActionRepository annotationActionRepository;
+
+    @Autowired
+    AnnotationActionService annotationActionService;
+
+    @Autowired
+    UserPositionService userPositionService;
+
+    @Autowired
+    PersistentUserPositionRepository persistentUserPositionRepository;
+
+    @Autowired
+    ImageConsultationService imageConsultationService;
+
+    @Autowired
+    PersistentImageConsultationRepository persistentImageConsultationRepository;
+
+    @BeforeEach
+    public void cleanDB() {
+        persistentImageConsultationRepository.deleteAll();
+        annotationActionRepository.deleteAll();
+        persistentUserPositionRepository.deleteAll();
+    }
 
     @Test
     void retrieve_image_bounds_for_empty_project() {
@@ -195,7 +233,20 @@ public class ImageInstanceServiceTests {
 
     @Test
     void search_images_with_last_activities() {
-        Assertions.fail("todo: implement all search specific test + todo with impl mongodb");
+        Date consultation = new Date();
+        ImageInstance imageInstance1 = builder.given_an_image_instance();
+        ImageInstance imageInstance2 = builder.given_an_image_instance(imageInstance1.getProject());
+        imageConsultationService.add(builder.given_superadmin(), imageInstance1.getId(), "xxx", "view", consultation);
+
+        ImageSearchExtension imageSearchExtension = new ImageSearchExtension();
+        imageSearchExtension.setWithLastActivity(true);
+        Page<Map<String, Object>> results = imageInstanceService.listExtended(imageInstance1.getProject(), imageSearchExtension, new ArrayList<>(), "created", "desc", 0L, 0L);
+
+        assertThat(results.getTotalElements()).isEqualTo(2);
+        assertThat(results.getContent().get(0).get("id")).isEqualTo(imageInstance2.getId());
+        assertThat(results.getContent().get(0).get("lastActivity")).isNull();
+        assertThat(results.getContent().get(1).get("id")).isEqualTo(imageInstance1.getId());
+        assertThat(results.getContent().get(1).get("lastActivity")).isEqualTo(consultation);
     }
 
     @Test
@@ -620,15 +671,6 @@ public class ImageInstanceServiceTests {
         });
     }
 
-    @Test
-    void edit_image_instance_with_unexsting_user_fails() {
-        ImageInstance imageInstance = builder.given_an_image_instance();
-        imageInstance.setBaseImage(builder.given_an_abstract_image());
-        Assertions.assertThrows(WrongArgumentException.class, () -> {
-            imageInstanceService.add(imageInstance.toJsonObject().withChange("user", null));
-        });
-    }
-
 
     @Test
     void delete_image_instance_with_success() {
@@ -643,7 +685,63 @@ public class ImageInstanceServiceTests {
 
     @Test
     void delete_image_instance_with_dependencies_with_success() {
-        fail("not yet implemented");
+        SliceInstance sliceInstance = builder.given_a_slice_instance();
+        ImageInstance imageInstance = sliceInstance.getImage();
+
+//        deleteDependentAlgoAnnotation(imageInstance, transaction, task);
+//        deleteDependentReviewedAnnotation(imageInstance, transaction, task);
+//        deleteDependentUserAnnotation(imageInstance, transaction, task);
+//        deleteDependentAnnotationAction(imageInstance, transaction, task);
+//        deleteDependentLastUserPosition(imageInstance, transaction, task);
+//        deleteDependentPersistentUserPosition(imageInstance, transaction, task);
+//        deleteDependentPersistentImageConsultation(imageInstance, transaction, task);
+//        deleteDependentProperty(imageInstance, transaction, task);
+//        deleteDependentNestedImageInstance(imageInstance, transaction, task);
+//        deleteDependentSliceInstance(imageInstance, transaction, task);
+//        deleteDependentTrack(imageInstance, transaction, task);
+
+        AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
+        algoAnnotation.setImage(imageInstance);
+
+        ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
+        reviewedAnnotation.setImage(imageInstance);
+
+        UserAnnotation userAnnotation = builder.given_a_user_annotation();
+        userAnnotation.setImage(imageInstance);
+
+        Property property = builder.given_a_property(imageInstance, "mustbedeleted", "value");
+
+        annotationActionService.add(userAnnotation, builder.given_superadmin(), "view", new Date());
+        userPositionService.add(new Date(), builder.given_superadmin(), sliceInstance, imageInstance, USER_VIEW, 0, 0d, false);
+        imageConsultationService.add(builder.given_superadmin(), imageInstance.getId(), "xxx", "view", new Date());
+
+        AssertionsForClassTypes.assertThat(entityManager.find(AlgoAnnotation.class, algoAnnotation.getId())).isNotNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(ReviewedAnnotation.class, reviewedAnnotation.getId())).isNotNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(UserAnnotation.class, userAnnotation.getId())).isNotNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(Property.class, property.getId())).isNotNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(AlgoAnnotation.class, algoAnnotation.getId())).isNotNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(SliceInstance.class, sliceInstance.getId())).isNotNull();
+
+        assertThat(annotationActionRepository.count()).isEqualTo(1);
+        assertThat(persistentImageConsultationRepository.count()).isEqualTo(1);
+        assertThat(persistentUserPositionRepository.count()).isEqualTo(1);
+
+        CommandResponse commandResponse = imageInstanceService.delete(imageInstance, null, null, true);
+
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        AssertionsForClassTypes.assertThat(imageInstanceService.find(imageInstance.getId()).isEmpty());
+
+        AssertionsForClassTypes.assertThat(entityManager.find(AlgoAnnotation.class, algoAnnotation.getId())).isNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(ReviewedAnnotation.class, reviewedAnnotation.getId())).isNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(UserAnnotation.class, userAnnotation.getId())).isNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(Property.class, property.getId())).isNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(AlgoAnnotation.class, algoAnnotation.getId())).isNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(SliceInstance.class, sliceInstance.getId())).isNull();
+
+        assertThat(annotationActionRepository.count()).isEqualTo(0);
+        assertThat(persistentImageConsultationRepository.count()).isEqualTo(0);
+        assertThat(persistentUserPositionRepository.count()).isEqualTo(0);
     }
 
 

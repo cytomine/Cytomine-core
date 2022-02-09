@@ -119,9 +119,26 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/**").authenticated()
                 .antMatchers("/api/login/impersonate*").hasAuthority("ADMIN")
                 .antMatchers("/api/logout/impersonate*").authenticated()
+                .antMatchers(HttpMethod.POST, "/server/**").permitAll()
                 .antMatchers("/**").permitAll()
                 .and()
                 .addFilter(switchUserFilter());
         // @formatter:on
     }
+
+//    grails.plugin.springsecurity.interceptUrlMap = [
+//        '/admin/**':    ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
+//        '/admincyto/**':    ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
+//        '/monitoring/**':    ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
+//        '/j_spring_security_switch_user': ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
+//        '/securityInfo/**': ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
+//        '/api/**':      ['IS_AUTHENTICATED_REMEMBERED'],
+//        '/lib/**':      ['IS_AUTHENTICATED_ANONYMOUSLY'],
+//        '/css/**':      ['IS_AUTHENTICATED_ANONYMOUSLY'],
+//        '/images/**':   ['IS_AUTHENTICATED_ANONYMOUSLY'],
+//        '/*':           ['IS_AUTHENTICATED_REMEMBERED'], //if cas authentication, active this      //beta comment
+//        '/login/**':    ['IS_AUTHENTICATED_ANONYMOUSLY'],
+//        '/logout/**':   ['IS_AUTHENTICATED_ANONYMOUSLY'],
+//        '/status/**':   ['IS_AUTHENTICATED_ANONYMOUSLY']
+//]
 }

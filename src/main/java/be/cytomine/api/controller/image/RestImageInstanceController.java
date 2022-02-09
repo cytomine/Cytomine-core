@@ -19,6 +19,7 @@ import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.project.ProjectService;
+import be.cytomine.service.search.ImageSearchExtension;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
@@ -107,8 +108,9 @@ public class RestImageInstanceController extends RestCytomineController {
         } else if (tree) {
             return responseSuccess(imageInstanceService.listTree(project, requestParams.getOffset(), requestParams.getMax()), isFilterRequired(project));
         } else if (withLastActivity) {
-            // TODO: support withLastActivity
-            throw new CytomineMethodNotYetImplementedException("");
+            ImageSearchExtension imageSearchExtension = new ImageSearchExtension();
+            imageSearchExtension.setWithLastActivity(withLastActivity);
+            return responseSuccess(imageInstanceService.listExtended(project, imageSearchExtension, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax()), isFilterRequired(project));
         } else {
             return responseSuccess(imageInstanceService.list(project, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax(), false), isFilterRequired(project));
         }

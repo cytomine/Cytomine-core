@@ -21,4 +21,6 @@ import java.util.Optional;
 public interface LastConnectionRepository extends MongoRepository<LastConnection, Long> {
 
     List<LastConnection> findByProjectAndUser(Long project, Long user);
+
+    List<LastConnection> findByUserOrderByCreatedDesc(Long user);
 }

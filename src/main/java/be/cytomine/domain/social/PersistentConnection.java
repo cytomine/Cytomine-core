@@ -41,11 +41,11 @@ public class PersistentConnection extends CytomineSocialDomain {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    protected User user;
+    protected Long user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = true)
-    private Project project;
+    private Long project;
 
     private String session;
 
