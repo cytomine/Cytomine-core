@@ -2,6 +2,7 @@ package be.cytomine.utils;
 
 import org.apache.commons.text.CaseUtils;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,6 +16,15 @@ public class SQLUtils {
         return CaseUtils.toCamelCase(text, capitalized, new char[]{'_'});
     }
 
+    public static Long castToLong(Object o) {
+        if (o==null) {
+            return null;
+        } else if (o instanceof BigInteger) {
+            return ((BigInteger)o).longValue();
+        } else {
+            return Long.parseLong(o.toString());
+        }
+    }
 
 //    public static Map<String, Object> keysToCamelCase(Map<String, Object> m) {
 //        Map<String, Object> newMap = new HashMap<>();

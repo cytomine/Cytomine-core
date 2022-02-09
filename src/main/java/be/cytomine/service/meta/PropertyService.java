@@ -1,31 +1,36 @@
 package be.cytomine.service.meta;
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.command.AddCommand;
-import be.cytomine.domain.command.Command;
-import be.cytomine.domain.command.DeleteCommand;
-import be.cytomine.domain.command.Transaction;
-import be.cytomine.domain.meta.AttachedFile;
+import be.cytomine.domain.command.*;
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.meta.Configuration;
 import be.cytomine.domain.meta.Property;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.repository.meta.AttachedFileRepository;
 import be.cytomine.repository.meta.PropertyRepository;
+import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
-import lombok.RequiredArgsConstructor;
+import com.vividsolutions.jts.geom.Geometry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.Query;
+import javax.persistence.Tuple;
 import javax.transaction.Transactional;
-import java.util.List;
+import java.math.BigInteger;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import static be.cytomine.utils.SQLUtils.castToLong;
 import static org.springframework.security.acls.domain.BasePermission.READ;
+import static org.springframework.security.acls.domain.BasePermission.WRITE;
 
 @Slf4j
 @Service
@@ -40,12 +45,43 @@ public class PropertyService extends ModelService {
 
     @Autowired
     private PropertyRepository propertyRepository;
+    
+    @Autowired
+    private AnnotationDomainRepository annotationDomainRepository;
+
+    @Override
+    public Class currentDomain() {
+        return Property.class;
+    }
+
+
+    public List<Property> list() {
+        securityACLService.checkAdmin(currentUserService.getCurrentUser());
+        return propertyRepository.findAll();
+    }
 
     public List<Property> list(CytomineDomain cytomineDomain) {
         if(!cytomineDomain.getClass().getName().contains("AbstractImage")) {
             securityACLService.check(cytomineDomain.container(),READ);
         }
         return propertyRepository.findAllByDomainIdent(cytomineDomain.getId());
+    }
+
+    public Optional<Property> findById(Long id) {
+        
+        Optional<Property> property = propertyRepository.findById(id);
+        if (property.isPresent() && !property.get().getDomainClassName().contains("AbstractImage") && !property.get().getDomainClassName().contains("Software")) {
+            securityACLService.check(property.get().container(),READ);
+        }
+        return property;
+    }
+
+    public Optional<Property> findByDomainAndKey(CytomineDomain domain, String key) {
+        Optional<Property> property = propertyRepository.findByDomainIdentAndKey(domain.getId(), key);
+        if (property.isPresent() && !property.get().getDomainClassName().contains("AbstractImage") && !property.get().getDomainClassName().contains("Software")) {
+            securityACLService.check(property.get().container(),READ);
+        }
+        return property;
     }
 
     @Override
@@ -61,12 +97,16 @@ public class PropertyService extends ModelService {
                     .find(Class.forName(jsonObject.getJSONAttrStr("domainClassName")), jsonObject.getJSONAttrLong("domainIdent"));
         } catch (ClassNotFoundException ignored) {
         }
-       if (domain==null) {
-           throw new WrongArgumentException("Property has no associated domain:"+ jsonObject.toJsonString());
-       }
+        if (domain==null) {
+            throw new WrongArgumentException("Property has no associated domain:"+ jsonObject.toJsonString());
+        }
 
         if (!domain.getClass().getName().contains("AbstractImage")) {
-            securityACLService.check(domain.container(),READ);
+            if (domain instanceof Project) {
+                securityACLService.check(domain.container(),WRITE);
+            } else {
+                securityACLService.check(domain.container(),READ);
+            }
             if (domain.userDomainCreator()!=null) {
                 securityACLService.checkFullOrRestrictedForOwner(domain, domain.userDomainCreator());
             } else {
@@ -79,7 +119,6 @@ public class PropertyService extends ModelService {
         return executeCommand(command,null, jsonObject);
     }
 
-
     public CommandResponse addProperty(String domainClassName, Long domainIdent, String key, String value, SecUser user, Transaction transaction) {
         JsonObject jsonObject = JsonObject.of(
                 "domainClassName", domainClassName,
@@ -91,40 +130,153 @@ public class PropertyService extends ModelService {
     }
 
     @Override
-    public Class currentDomain() {
-        return Property.class;
-    }
-
-    @Override
-    public CytomineDomain createFromJSON(JsonObject json) {
-        return null;
-    }
-
-    @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        return null;
+        Property property = (Property)domain;
+        if(!property.getDomainClassName().contains("AbstractImage")) {
+            securityACLService.check(property.container(),READ);
+            CytomineDomain parent = null;
+            try {
+                parent = (CytomineDomain)getEntityManager()
+                        .find(Class.forName(property.getDomainClassName()), property.getDomainIdent());
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+            if (parent!=null && parent.userDomainCreator()!=null) {
+                securityACLService.checkFullOrRestrictedForOwner(property, parent.userDomainCreator());
+            } else {
+                securityACLService.checkIsNotReadOnly(property);
+            }
+        }
+        SecUser currentUser = currentUserService.getCurrentUser();
+        return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
     }
 
-
-    /**
-     * Delete this domain
-     * @param domain Domain to delete
-     * @param transaction Transaction link with this command
-     * @param task Task for this command
-     * @param printMessage Flag if client will print or not confirm message
-     * @return Response structure (code, old domain,..)
-     */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.check(domain.container(),READ);
+        Property property = (Property)domain;
+        if(!property.getDomainClassName().contains("AbstractImage")) {
+            securityACLService.check(property.container(),READ);
+            CytomineDomain parent = null;
+            try {
+                parent = (CytomineDomain)getEntityManager()
+                        .find(Class.forName(property.getDomainClassName()), property.getDomainIdent());
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+            if (parent!=null && parent.userDomainCreator()!=null) {
+                securityACLService.checkFullOrRestrictedForOwner(property, parent.userDomainCreator());
+            }  else if (((Property) domain).getDomainClassName().contains("Project")){
+                securityACLService.check(((Property) domain).getDomainIdent(),((Property) domain).getDomainClassName(), WRITE);
+            } else {
+                securityACLService.checkIsNotReadOnly(property);
+            }
+        }
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }
 
+    @Override
+    public CytomineDomain createFromJSON(JsonObject json) {
+        return new Property().buildDomainFromJson(json, getEntityManager());
+    }
 
     @Override
-    public List<Object> getStringParamsI18n(CytomineDomain domain) {
-        return List.of(domain.getId(), ((Property)domain).getDomainClassName());
+    public List<String> getStringParamsI18n(CytomineDomain domain) {
+        Property property = (Property)domain;
+        return Arrays.asList(property.getKey(), property.getDomainClassName(), String.valueOf(property.getDomainIdent()));
     }
+
+    public List<Map<String, Object>> listKeysForAnnotation(Project project, ImageInstance image, Boolean withUser) {
+        if (project != null) {
+            securityACLService.check(project,READ);
+        } else {
+            securityACLService.check(image.container(),READ);
+        }
+
+        String request = "SELECT DISTINCT p.key " +
+                (withUser? ", ua.user_id " : "") +
+                "FROM property as p, user_annotation as ua " +
+                "WHERE p.domain_ident = ua.id " +
+                (project!=null? "AND ua.project_id = '"+ project.getId() + "' " : "") +
+                (image!=null? "AND ua.image_id = '"+ image.getId() + "' " : "") +
+                "UNION " +
+                "SELECT DISTINCT p1.key " +
+                (withUser? ", aa.user_id " : "") +
+                "FROM property as p1, algo_annotation as aa " +
+                "WHERE p1.domain_ident = aa.id " +
+                (project!=null? "AND aa.project_id = '"+ project.getId() + "' " : "") +
+                (image!=null? "AND aa.image_id = '"+ image.getId() + "' " : "") +
+                "UNION " +
+                "SELECT DISTINCT p2.key " +
+                (withUser? ", ra.user_id " : "") +
+                "FROM property as p2, reviewed_annotation as ra " +
+                "WHERE p2.domain_ident = ra.id " +
+                (project!=null? "AND ra.project_id = '"+ project.getId() + "' " : "") +
+                (image!=null? "AND ra.image_id = '"+ image.getId() + "' " : "");
+
+        return  selectListKeyWithUser(request, Map.of());
+    }
+
+    public List<String> listKeysForImageInstance(Project project) {
+        if (project != null) {
+            securityACLService.check(project,READ);
+        }
+
+        String request = "SELECT DISTINCT p.key " +
+                "FROM property as p, image_instance as ii " +
+                "WHERE p.domain_ident = ii.id " +
+                "AND ii.project_id = "+ project.getId();
+
+        return selectListkey(request, Map.of());
+    }
+
+    public List<Map<String, Object>> listAnnotationCenterPosition(SecUser user, ImageInstance image, Geometry boundingbox, String key) {
+        securityACLService.check(image.container(),READ);
+        String request = "SELECT DISTINCT ua.id, ST_X(ST_CENTROID(ua.location)) as x,ST_Y(ST_CENTROID(ua.location)) as y, p.value " +
+                "FROM user_annotation ua, property as p " +
+                "WHERE p.domain_ident = ua.id " +
+                "AND p.key = :key " +
+                "AND ua.image_id = '"+ image.getId() +"' " +
+                "AND ua.user_id = '"+ user.getId() +"' " +
+                (boundingbox!=null ? "AND ST_Intersects(ua.location,ST_GeometryFromText('" + boundingbox.toString() + "',0)) " :"") +
+                "UNION " +
+                "SELECT DISTINCT aa.id, ST_X(ST_CENTROID(aa.location)) as x,ST_Y(ST_CENTROID(aa.location)) as y, p.value " +
+                "FROM algo_annotation aa, property as p " +
+                "WHERE p.domain_ident = aa.id " +
+                "AND p.key = :key " +
+                "AND aa.image_id = '"+ image.getId() +"' " +
+                "AND aa.user_id = '"+ user.getId() +"' " +
+                (boundingbox!=null ? "AND ST_Intersects(aa.location,ST_GeometryFromText('" + boundingbox.toString() + "',0)) " :"");
+
+        return selectsql(request, Map.of("key", (Object)key));
+    }
+
+    private List<String> selectListkey(String request, Map<String, Object> parameters) {
+        Query nativeQuery = getEntityManager().createNativeQuery(request, Tuple.class);
+        for (Map.Entry<String, Object> map : parameters.entrySet()) {
+            nativeQuery.setParameter(map.getKey(), map.getValue());
+        }
+        List<Tuple> resultList = nativeQuery.getResultList();
+        return resultList.stream().map(x -> (String)x.get(0)).collect(Collectors.toList());
+    }
+
+    private List<Map<String, Object>> selectListKeyWithUser(String request, Map<String, Object> parameters) {
+        Query nativeQuery = getEntityManager().createNativeQuery(request, Tuple.class);
+        for (Map.Entry<String, Object> map : parameters.entrySet()) {
+            nativeQuery.setParameter(map.getKey(), map.getValue());
+        }
+        List<Tuple> resultList = nativeQuery.getResultList();
+        return resultList.stream().map(x -> Map.of("key", x.get(0), "user", (x.getElements().size()>1 ? castToLong(x.get(1)) : 0L))).collect(Collectors.toList());
+    }
+
+    private List<Map<String, Object>> selectsql(String request, Map<String, Object> parameters) {
+        Query nativeQuery = getEntityManager().createNativeQuery(request, Tuple.class);
+        for (Map.Entry<String, Object> map : parameters.entrySet()) {
+            nativeQuery.setParameter(map.getKey(), map.getValue());
+        }
+        List<Tuple> resultList = nativeQuery.getResultList();
+        return resultList.stream().map(x -> Map.of("idAnnotation", castToLong(x.get(0)), "x", x.get(1), "y", x.get(2), "value", x.get(3))).collect(Collectors.toList());
+    }
+
 }

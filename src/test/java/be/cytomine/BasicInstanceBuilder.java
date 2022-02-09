@@ -4,10 +4,7 @@ import be.cytomine.authorization.AbstractAuthorizationTest;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
-import be.cytomine.domain.meta.AttachedFile;
-import be.cytomine.domain.meta.Configuration;
-import be.cytomine.domain.meta.ConfigurationReadingRole;
-import be.cytomine.domain.meta.Property;
+import be.cytomine.domain.meta.*;
 import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
@@ -450,6 +447,9 @@ public class BasicInstanceBuilder {
         return nestedImageInstance;
     }
 
+    public Property given_a_property(CytomineDomain cytomineDomain) {
+        return persistAndReturn(given_a_not_persisted_property(cytomineDomain, "key", "value"));
+    }
 
     public Property given_a_property(CytomineDomain cytomineDomain, String key, String value) {
         return persistAndReturn(given_a_not_persisted_property(cytomineDomain, key, value));
@@ -767,5 +767,16 @@ public class BasicInstanceBuilder {
         configuration.setValue("value");
         configuration.setReadingRole(ConfigurationReadingRole.ALL);
         return configuration;
+    }
+
+    public Description given_a_description(CytomineDomain domain) {
+        return persistAndReturn(given_a_not_persisted_description(domain));
+    }
+
+    public Description given_a_not_persisted_description(CytomineDomain domain) {
+        Description description = new Description();
+        description.setDomain(domain);
+        description.setData("hello!");
+        return description;
     }
 }
