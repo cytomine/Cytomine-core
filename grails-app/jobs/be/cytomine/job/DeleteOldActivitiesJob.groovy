@@ -30,18 +30,16 @@ class DeleteOldActivitiesJob {
 
     @Transactional
     def execute() {
-        Configuration configuration = Configuration.findByKey("ACTIVITIES_RETENTION_DELAY_IN_HOURS")
+        Configuration configuration = Configuration.findByKey("ACTIVITIES_RETENTION_DELAY_IN_DAYS")
         log.info("deleteOldActivitiesJob with configuration " + configuration)
         if (!configuration || configuration.value.trim().equals("0")) {
             return
         }
         Long delay = Long.parseLong(configuration.value)
-        Date maxBeforeDeleting = new Date(new Date().getTime()-(delay*1000*60*60))
+        Date maxBeforeDeleting = new Date(new Date().getTime()-(delay*1000*60*60*24))
         log.info("deleteOldActivitiesJob: delete all command before " + maxBeforeDeleting)
 //        println CommandHistory.exe
         //CommandHistory.executeUpdate('delete CommandHistory ch where ch.created < ?', [maxBeforeDeleting])
-        def content = CommandHistory.executeQuery("SELECT ch FROM CommandHistory ch WHERE ch.created < '$maxBeforeDeleting'")
-        println content.size()
         CommandHistory.executeUpdate("delete CommandHistory ch where ch.created < '$maxBeforeDeleting'")
     }
 }
