@@ -41,6 +41,7 @@ mongock:
 logging:
   level:
     org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+#    org.hibernate.type.descriptor.sql: TRACE
 
 application:
   serverId: default

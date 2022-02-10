@@ -137,9 +137,6 @@ public class ImageInstanceService extends ModelService {
     TrackService trackService;
 
     @Autowired
-    MongoTemplate mongoTemplate;
-
-    @Autowired
     MongoClient mongoClient;
 
     private AlgoAnnotationService algoAnnotationService;

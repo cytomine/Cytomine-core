@@ -6,6 +6,7 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.NestedImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.meta.Property;
+import be.cytomine.domain.meta.TagDomainAssociation;
 import be.cytomine.domain.ontology.AlgoAnnotation;
 import be.cytomine.domain.ontology.AnnotationTrack;
 import be.cytomine.domain.ontology.ReviewedAnnotation;
@@ -358,6 +359,7 @@ public class ImageInstanceServiceTests {
         img1.getBaseImage().setWidth(499);
         img1.setInstanceFilename("TEST");
         img1.setCountImageAnnotations(1000L);
+        TagDomainAssociation tagForImage1 = builder.given_a_tag_association(builder.given_a_tag("xxx"), img1);
 
         ImageInstance img2 = builder.given_an_image_instance(project);
         img2.getBaseImage().setWidth(501);
@@ -406,6 +408,13 @@ public class ImageInstanceServiceTests {
         searchParameterEntryList =
                 new ArrayList<>(List.of(
                         new SearchParameterEntry("name", SearchOperation.ilike, img1.getInstanceFilename())
+                ));
+        assertThat(imageInstanceService.list(project, searchParameterEntryList).stream().map(x -> x.get("id")))
+                .contains(img1.getId()).doesNotContain(img2.getId());
+
+        searchParameterEntryList =
+                new ArrayList<>(List.of(
+                        new SearchParameterEntry("tag", SearchOperation.ilike, tagForImage1.getTag().getName())
                 ));
         assertThat(imageInstanceService.list(project, searchParameterEntryList).stream().map(x -> x.get("id")))
                 .contains(img1.getId()).doesNotContain(img2.getId());

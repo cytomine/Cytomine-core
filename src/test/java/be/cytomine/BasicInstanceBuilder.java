@@ -779,4 +779,31 @@ public class BasicInstanceBuilder {
         description.setData("hello!");
         return description;
     }
+
+    public Tag given_a_tag(String name) {
+        return persistAndReturn(given_a_not_persisted_tag(name));
+    }
+
+
+    public Tag given_a_tag() {
+        return persistAndReturn(given_a_not_persisted_tag(randomString()));
+    }
+
+    public Tag given_a_not_persisted_tag(String name) {
+        Tag tag = new Tag();
+        tag.setName(name);
+        tag.setUser(given_superadmin());
+        return tag;
+    }
+
+    public TagDomainAssociation given_a_tag_association(Tag tag, CytomineDomain domain) {
+        return persistAndReturn(given_a_not_persisted_tag_association(tag, domain));
+    }
+
+    public TagDomainAssociation given_a_not_persisted_tag_association(Tag tag, CytomineDomain domain) {
+        TagDomainAssociation tagDomainAssociation = new TagDomainAssociation();
+        tagDomainAssociation.setTag(tag);
+        tagDomainAssociation.setDomain(domain);
+        return tagDomainAssociation;
+    }
 }

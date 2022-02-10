@@ -127,7 +127,20 @@ public class ReviewedAnnotationServiceTests {
                 DateUtils.addDays(reviewedAnnotation.getCreated(),30)))
                 .isEqualTo(0);
     }
+    @Test
 
+    void count_by_project_with_terms() {
+        ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
+        reviewedAnnotation.getTerms().clear();
+
+        ReviewedAnnotation reviewedAnnotationWithTerms = builder.given_a_reviewed_annotation();
+        reviewedAnnotation.getTerms().add(builder.given_a_term(reviewedAnnotationWithTerms.getProject().getOntology()));
+
+        assertThat(reviewedAnnotationService.countByProjectAndWithTerms(reviewedAnnotation.getProject())).isEqualTo(0);
+        assertThat(reviewedAnnotationService.countByProjectAndWithTerms(reviewedAnnotationWithTerms.getProject())).isEqualTo(1);
+
+
+    }
 
     @Test
     void list_all_for_project() {

@@ -184,12 +184,17 @@ public abstract class RestCytomineController {
         return ResponseEntity.status(200).body(buildJsonList(page, requestParams).toJsonString());
     }
 
+
     protected ResponseEntity<String> responseSuccess(Page page, Integer offsetParameter, Integer maxParameter) {
         return ResponseEntity.status(200).body(buildJsonList(page, offsetParameter, maxParameter).toJsonString());
     }
 
     protected ResponseEntity<String> responseSuccess(Page page, Map<String,String> params) {
         return ResponseEntity.status(200).body(buildJsonList(page, params).toJsonString());
+    }
+
+    public ResponseEntity<String> responseSuccess(List list, Long offsetParameter, Long maxParameter) {
+        return responseSuccess(list, offsetParameter.intValue(), maxParameter.intValue(), false);
     }
 
     public ResponseEntity<String> responseSuccess(List list, Integer offsetParameter, Integer maxParameter, boolean isFilterRequired) {

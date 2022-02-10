@@ -85,6 +85,14 @@ public class AbstractImageServiceTests {
         assertThat(images.getContent()).contains(abstractImage2);
         assertThat(images.getContent()).doesNotContain(abstractImage1);
 
+        images = abstractImageService.list(null, new ArrayList<>(List.of(new SearchParameterEntry("width", SearchOperation.in, List.of(2048)))), Pageable.unpaged());
+        assertThat(images.getContent()).contains(abstractImage2);
+        assertThat(images.getContent()).doesNotContain(abstractImage1);
+
+        images = abstractImageService.list(null, new ArrayList<>(List.of(new SearchParameterEntry("uploadedFile", SearchOperation.in, List.of(abstractImage2.getUploadedFile().getId())))), Pageable.unpaged());
+        assertThat(images.getContent()).contains(abstractImage2);
+        assertThat(images.getContent()).doesNotContain(abstractImage1);
+
         images = abstractImageService.list(null, new ArrayList<>(
                 List.of(new SearchParameterEntry("width", SearchOperation.lte, 800),
                         new SearchParameterEntry("originalFilename", SearchOperation.ilike, "kara"))
