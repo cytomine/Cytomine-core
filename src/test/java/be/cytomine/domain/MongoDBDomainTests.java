@@ -275,8 +275,8 @@ public class MongoDBDomainTests {
         assertThat(((Document)locationImageSlice.get("key")).get("slice")).isEqualTo(1);
 
         assertThat(created).isNotNull();
-        assertThat(((Document)created.get("key")).get("created")).isEqualTo("1");
-        assertThat(created.get("expireAfterSeconds")).isEqualTo("60L");
+        assertThat(((Document)created.get("key")).get("created")).isEqualTo(1);
+        assertThat(created.get("expireAfterSeconds")).isEqualTo(60L);
 
         assertThat(image).isNotNull();
         assertThat(((Document)image.get("key")).get("image")).isEqualTo(1);

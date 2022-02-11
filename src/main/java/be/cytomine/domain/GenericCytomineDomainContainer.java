@@ -27,4 +27,10 @@ public class GenericCytomineDomainContainer extends CytomineDomain {
                 ", containerClass='" + containerClass + '\'' +
                 '}';
     }
+
+    public CytomineDomain container() {
+        return this;
+    }
+
+
 }

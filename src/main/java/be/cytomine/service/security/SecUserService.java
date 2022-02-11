@@ -4,10 +4,12 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
 import be.cytomine.dto.AuthInformation;
+import be.cytomine.dto.NamedCytomineDomain;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ServerException;
@@ -19,6 +21,8 @@ import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.dto.JobLayerDTO;
+import be.cytomine.service.project.ProjectRepresentativeUserService;
+import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SearchParameterEntry;
@@ -61,6 +65,12 @@ public class SecUserService extends ModelService {
 
     @Autowired
     private PermissionService permissionService;
+
+    @Autowired
+    private ProjectService projectService;
+
+    @Autowired
+    private ProjectRepresentativeUserService projectRepresentativeUserService;
 
     public Optional<SecUser> find(Long id) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
@@ -556,5 +566,66 @@ public class SecUserService extends ModelService {
                 }
             }
         }
+    }
+    
+    /**
+     * Delete a user from a project user or admin list
+     * @param user User to remove from project
+     * @param project Project that will not longer be accessed by user
+     * @param admin Flaf if user will become a simple user or a project manager
+     * @return Response structure
+     */
+    public void deleteUserFromProject(SecUser user, Project project, boolean admin) {
+        if (!Objects.equals(currentUserService.getCurrentUser().getId(), user.getId())) {
+            securityACLService.check(project,ADMINISTRATION);
+        }
+        if (project!=null) {
+            log.info("deleteUserFromProject project=" + project.getId() + " username=" + user.getUsername() + " ADMIN=" + admin);
+            if(project.getOntology()!=null) {
+                removeOntologyRightIfNecessary(project, (User) user, admin);
+            }
+            if(admin) {
+                permissionService.deletePermission(project, user.getUsername(), ADMINISTRATION);
+            }
+            else {
+                permissionService.deletePermission(project, user.getUsername(), READ);
+            }
+
+            projectRepresentativeUserService.find(project, (User)user)
+                    .ifPresent(x -> projectRepresentativeUserService.delete(x, null, null, false));
+
+            // if no representative, add current user as a representative
+            if (projectRepresentativeUserService.listByProject(project).size()==0) {
+                if (!securityACLService.getProjectList(currentUserService.getCurrentUser(), null).contains(project)) {
+                    // if current user is not in project (= SUPERADMIN), add to the project
+                    addUserToProject(user, project, true);
+                }
+                log.info("add current user "+currentUserService.getCurrentUsername()+" as representative for project " + project.getId());
+                ProjectRepresentativeUser pru = new ProjectRepresentativeUser();
+                pru.setProject(project);
+                pru.setUser((User) currentUserService.getCurrentUser());
+                projectRepresentativeUserService.add(pru.toJsonObject());
+            }
+        }
+    }
+
+    private void removeOntologyRightIfNecessary(Project project, User user, boolean admin) {
+        //we remove the right ONLY if user has no other project with this ontology
+        List<Project> projects = securityACLService.getProjectList(user,project.getOntology());
+        List<Project> otherProjects = new ArrayList<>(projects);
+        otherProjects.remove(project);
+
+        if(otherProjects.isEmpty()) {
+            //user has no other project with this ontology, remove the right!
+            permissionService.deletePermission(project.getOntology(),user.getUsername(),READ);
+            permissionService.deletePermission(project.getOntology(),user.getUsername(),ADMINISTRATION);
+        } else if(admin) {
+            List<Long> managedProjectList = projectService.listByAdmin(user).stream().map(NamedCytomineDomain::getId).collect(Collectors.toList());
+            List<Long> otherProjectsIds = otherProjects.stream().map(CytomineDomain::getId).collect(Collectors.toList());
+            if (managedProjectList.stream().noneMatch(otherProjectsIds::contains)) {
+                permissionService.deletePermission(project.getOntology(), user.getUsername(), ADMINISTRATION);
+            }
+        }
+
     }
 }

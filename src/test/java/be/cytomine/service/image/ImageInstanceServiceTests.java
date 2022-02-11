@@ -414,7 +414,7 @@ public class ImageInstanceServiceTests {
 
         searchParameterEntryList =
                 new ArrayList<>(List.of(
-                        new SearchParameterEntry("tag", SearchOperation.ilike, tagForImage1.getTag().getName())
+                        new SearchParameterEntry("tag", SearchOperation.in, List.of(tagForImage1.getTag().getId()))
                 ));
         assertThat(imageInstanceService.list(project, searchParameterEntryList).stream().map(x -> x.get("id")))
                 .contains(img1.getId()).doesNotContain(img2.getId());

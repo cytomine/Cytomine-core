@@ -11,6 +11,14 @@ import java.util.List;
 @Repository
 public interface AclRepository extends JpaRepository<SecUser, Long> {
 
+
+
+    @Query(value = "select count(secUser) from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, SecUser as secUser "+
+            "where aclObjectId.objectId = :projectId and aclEntry.aclObjectIdentity = aclObjectId and aclEntry.sid = aclSid and aclSid.sid = secUser.username " +
+            "and TYPE(secUser) = User and secUser.id = :userId")
+    Long countEntries(long projectId, long userId);
+
+
     @Query(value = "SELECT mask FROM acl_object_identity aoi, acl_sid sid, acl_entry ae " +
             "WHERE aoi.object_id_identity = :domainId " +
             "AND sid.sid = :humanUsername "  +

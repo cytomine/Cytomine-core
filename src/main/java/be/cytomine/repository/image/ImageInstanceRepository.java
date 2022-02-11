@@ -42,4 +42,6 @@ public interface ImageInstanceRepository extends JpaRepository<ImageInstance, Lo
 
     Optional<ImageInstance> findTopByProjectAndCreatedLessThanOrderByCreatedDesc(Project project, Date created);
     Optional<ImageInstance> findTopByProjectAndCreatedGreaterThanOrderByCreatedAsc(Project project, Date created);
+
+    Long countAllByProject(Project project);
 }

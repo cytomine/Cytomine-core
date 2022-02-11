@@ -91,7 +91,7 @@ public class AttachedFileResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$[0].id").value(attachedFile.getId().intValue()));
+                .andExpect(jsonPath("$.collection[0].id").value(attachedFile.getId().intValue()));
     }
 
     @Test

@@ -13,4 +13,5 @@ public interface CommandHistoryRepository extends JpaRepository<CommandHistory, 
 
     List<CommandHistory> findAllByProject(Project project, Pageable pageable);
 
+    void deleteAllByProject(Project project);
 }

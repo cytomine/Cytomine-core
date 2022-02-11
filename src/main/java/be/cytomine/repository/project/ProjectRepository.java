@@ -3,12 +3,14 @@ package be.cytomine.repository.project;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
+import be.cytomine.dto.DatedCytomineDomain;
 import be.cytomine.dto.NamedCytomineDomain;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long>  {
@@ -54,5 +56,15 @@ public interface ProjectRepository extends JpaRepository<Project, Long>  {
     }
 
 
+    @Query(value = "select id, created as date from project where id NOT IN (:ignoredProjectIds) order by date desc", nativeQuery = true)
+    List<DatedCytomineDomain> listLastCreated(List<Long> ignoredProjectIds);
+
+    @Query(value = "select id, created as date from project order by date desc", nativeQuery = true)
+    List<DatedCytomineDomain> listLastCreated();
+
     List<Project> findAllByOntology(Ontology ontology);
+
+    List<Project> findAllByIdIn(List<Long> project);
+
+    Optional<Project> findByName(String name);
 }

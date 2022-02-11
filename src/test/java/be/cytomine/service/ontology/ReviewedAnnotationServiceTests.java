@@ -138,8 +138,6 @@ public class ReviewedAnnotationServiceTests {
 
         assertThat(reviewedAnnotationService.countByProjectAndWithTerms(reviewedAnnotation.getProject())).isEqualTo(0);
         assertThat(reviewedAnnotationService.countByProjectAndWithTerms(reviewedAnnotationWithTerms.getProject())).isEqualTo(1);
-
-
     }
 
     @Test

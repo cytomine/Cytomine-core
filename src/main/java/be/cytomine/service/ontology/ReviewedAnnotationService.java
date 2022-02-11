@@ -138,6 +138,9 @@ public class ReviewedAnnotationService extends ModelService {
         }
     }
 
+    public Long countByProjectAndWithTerms(Project project) {
+        return reviewedAnnotationRepository.countAllByProjectAndTerms_Empty(project);
+    }
 
     public List list(Project project, List<String> propertiesToShow) {
         securityACLService.check(project.container(), READ);

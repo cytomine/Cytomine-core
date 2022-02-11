@@ -8,12 +8,15 @@ import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
+import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.ontology.OntologyRepository;
+import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.AclRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
@@ -21,6 +24,7 @@ import be.cytomine.service.PermissionService;
 import be.cytomine.service.ontology.GenericAnnotationService;
 import be.cytomine.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.acls.model.Permission;
 import org.springframework.stereotype.Service;
@@ -37,6 +41,7 @@ import java.util.stream.Collectors;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
+@Slf4j
 @Service
 public class SecurityACLService {
 
@@ -57,6 +62,12 @@ public class SecurityACLService {
 
     @Autowired
     private ImageInstanceRepository imageInstanceRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private AclRepository aclRepository;
 
     public void check(Long id, String className, Permission permission) {
         try {
@@ -96,9 +107,11 @@ public class SecurityACLService {
     }
 
     private CytomineDomain retrieveContainer(CytomineDomain domain) {
-        if (domain instanceof GenericCytomineDomainContainer) {
+        if (domain.container() instanceof GenericCytomineDomainContainer) {
             try {
-                return ((CytomineDomain)entityManager.find(Class.forName(((GenericCytomineDomainContainer) domain).getContainerClass()), domain.getId())).container();
+                Class className = Class.forName(((GenericCytomineDomainContainer) domain.container()).getContainerClass());
+                CytomineDomain parent = ((CytomineDomain)entityManager.find(className, domain.container().getId()));
+                return parent.container();
             } catch (ClassNotFoundException e) {
                 throw new WrongArgumentException("Cannot load " + domain);
             }
@@ -197,6 +210,26 @@ public class SecurityACLService {
         }
         return (List<Storage>) query.getResultList();
     }
+
+    public List<Project> getProjectList(SecUser user, Ontology ontology) {
+        //faster method
+        if (currentRoleService.isAdminByNow(user)) {
+            return projectRepository.findAllByOntology(ontology);
+        }
+        else {
+            Query query = entityManager.createQuery(
+                    "select distinct project "+
+                            "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid,  Project as project "+
+                            "where aclObjectId.objectId = project.id " +
+                            "and aclEntry.aclObjectIdentity = aclObjectId "+
+                            (ontology!=null? "and project.ontology.id = ${ontology.id} " : " ") +
+                            "and aclEntry.sid = aclSid and aclSid.sid like '"+user.getUsername() +"'");
+            return query.getResultList();
+        }
+    }
+
+
+
 
     public List<String> getProjectUsers(Project project) {
         // adminByPass TODO
@@ -334,6 +367,10 @@ public class SecurityACLService {
         if (domain!=null) {
             if(permissionService.hasACLPermission(retrieveContainer(domain),ADMINISTRATION)
                     || currentRoleService.isAdminByNow(currentUserService.getCurrentUser())) return;
+
+            CytomineDomain container = retrieveContainer(domain);
+            log.debug("Container is " + container);
+            log.debug("Container2 is " + container.container());
             switch (((Project) retrieveContainer(domain)).getMode()) {
                 case CLASSIC :
                     return;
@@ -401,6 +438,18 @@ public class SecurityACLService {
     public void checkIsCreator(CytomineDomain domain, SecUser currentUser) {
         if (!currentRoleService.isAdminByNow(currentUser) && (!Objects.equals(currentUser.getId(), domain.userDomainCreator().getId()))) {
             throw new ForbiddenException("You don't have the right to read this resource! You must be the same user!");
+        }
+    }
+
+    public boolean isUserInProject(User user, Project project) {
+        this.check(project,READ);
+        return (aclRepository.countEntries(project.getId(), user.getId()) > 0);
+    }
+
+    public void checkIsUserInProject(User user, Project project) {
+        boolean result = isUserInProject(user, project);
+        if(!result) {
+            throw new ConstraintException("Error: the user "+user.getId()+" is not into the project "+project.getId());
         }
     }
 

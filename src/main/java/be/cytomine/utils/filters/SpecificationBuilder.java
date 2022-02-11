@@ -1,10 +1,14 @@
 package be.cytomine.utils.filters;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.exceptions.WrongArgumentException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+@Slf4j
 public class SpecificationBuilder {
 
 
@@ -30,27 +34,23 @@ public class SpecificationBuilder {
                         criteriaBuilder.equal(root.get(input.getProperty()),
                                 castToRequiredType(root.get(input.getProperty()).getJavaType(),
                                         input.getValue()));
-
             case nequals:
                 return (root, query, criteriaBuilder) ->
                         criteriaBuilder.notEqual(root.get(input.getProperty()),
                                 castToRequiredType(root.get(input.getProperty()).getJavaType(),
                                         input.getValue()));
-
             case gte:
                 return (root, query, criteriaBuilder) ->
                         criteriaBuilder.ge(root.get(input.getProperty()),
                                 (Number) castToRequiredType(
                                         root.get(input.getProperty()).getJavaType(),
                                         input.getValue()));
-
             case lte:
                 return (root, query, criteriaBuilder) ->
                         criteriaBuilder.le(root.get(input.getProperty()),
                                 (Number) castToRequiredType(
                                         root.get(input.getProperty()).getJavaType(),
                                         input.getValue()));
-
             case like:
                 return (root, query, criteriaBuilder) ->
                         criteriaBuilder.like(root.get(input.getProperty()),
@@ -60,7 +60,6 @@ public class SpecificationBuilder {
                 return (root, query, criteriaBuilder) ->
                         criteriaBuilder.like(criteriaBuilder.lower(root.get(input.getProperty())),
                                 "%"+input.getValue().toString().toLowerCase()+"%");
-
             case in:
                 return (root, query, criteriaBuilder) ->
                         criteriaBuilder.in(root.get(input.getProperty()))
@@ -74,14 +73,36 @@ public class SpecificationBuilder {
     }
 
     public static Object castToRequiredType(Class fieldType, Object value) {
+        log.debug("castToRequiredType " + fieldType.getName() + " value " + value);
+        log.debug("value has type " + value.getClass().getName());
+        if (value instanceof List) {
+            log.debug("value is a list");
+            return ((List)value).stream().map(x -> castToRequiredType(fieldType, x)).collect(Collectors.toList());
+        }
+
         if(fieldType.isAssignableFrom(Double.class)) {
             return Double.valueOf(value.toString());
-        } else if(fieldType.isAssignableFrom(Integer.class)) {
+        } else if(fieldType.isAssignableFrom(String.class)) {
+            return String.valueOf(value.toString());
+        }else if(fieldType.isAssignableFrom(Integer.class)) {
             return Integer.valueOf(value.toString());
-        } else if(Enum.class.isAssignableFrom(fieldType)) {
+        } else if(fieldType.isAssignableFrom(Long.class)) {
+            log.debug("value is a long");
+            return Long.valueOf(value.toString());
+        }else if(Enum.class.isAssignableFrom(fieldType)) {
             return Enum.valueOf(fieldType, value.toString());
+        } else if(CytomineDomain.class.isAssignableFrom(fieldType)) {
+            log.debug("CytomineDomain");
+            if (value instanceof Long) {
+                log.debug("Long");
+                return value;
+            }
+            if (value instanceof CytomineDomain) {
+                log.debug("Object");
+                return ((CytomineDomain) value);
+            }
         }
-        return null;
+        throw new WrongArgumentException("Type " + value.getClass().getName() + " not supported for filter " + fieldType);
     }
 
 }

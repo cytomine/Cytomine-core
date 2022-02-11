@@ -3,6 +3,7 @@ package be.cytomine.repository.ontology;
 import be.cytomine.domain.ontology.AnnotationTerm;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import liquibase.repackaged.com.opencsv.bean.CsvToBean;
@@ -25,4 +26,7 @@ public interface AnnotationTermRepository extends JpaRepository<AnnotationTerm, 
     List<AnnotationTerm> findAllByUserAndUserAnnotation(User user, UserAnnotation annotation);
 
     long countByTerm(Term term);
+
+    List<AnnotationTerm> findAllByUserAnnotation_Project(Project project);
+
 }

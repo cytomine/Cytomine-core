@@ -64,6 +64,16 @@ public class AnnotationTermServiceTests {
     }
 
     @Test
+    void list_annotation_term_for_project_with_success() {
+        AnnotationTerm annotationTerm = builder.given_an_annotation_term();
+        AnnotationTerm annotationTermFromAnotherProject = builder.given_an_annotation_term();
+
+        assertThat(annotationTermService.list(annotationTerm.getUserAnnotation().getProject()))
+                .contains(annotationTerm).doesNotContain(annotationTermFromAnotherProject);
+
+    }
+
+    @Test
     void list_annotation_term_not_defined_by_user() {
         AnnotationTerm annotationTerm = builder.given_an_annotation_term();
 

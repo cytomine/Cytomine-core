@@ -1,6 +1,5 @@
 package be.cytomine;
 
-import be.cytomine.authorization.AbstractAuthorizationTest;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
@@ -8,6 +7,7 @@ import be.cytomine.domain.meta.*;
 import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.SecUserSecRole;
 import be.cytomine.domain.security.User;
@@ -16,20 +16,15 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.MimeRepository;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.repository.security.SecUserSecRoleRepository;
-import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.PermissionService;
-import be.cytomine.service.database.BootstrapDataService;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.acls.model.Permission;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.List;
@@ -805,5 +800,25 @@ public class BasicInstanceBuilder {
         tagDomainAssociation.setTag(tag);
         tagDomainAssociation.setDomain(domain);
         return tagDomainAssociation;
+    }
+
+    public ProjectRepresentativeUser given_an_project_representative_user() {
+        return persistAndReturn(given_a_not_persisted_project_representative_user(given_a_project(), given_superadmin()));
+    }
+
+    public ProjectRepresentativeUser given_an_project_representative_user(Project project, User user) {
+        return persistAndReturn(given_a_not_persisted_project_representative_user(project, user));
+    }
+
+    public ProjectRepresentativeUser given_a_not_persisted_project_representative_user() {
+        return given_a_not_persisted_project_representative_user(given_a_project(), given_superadmin());
+    }
+
+    public ProjectRepresentativeUser given_a_not_persisted_project_representative_user(Project project, User user) {
+        addUserToProject(project, user.getUsername());
+        ProjectRepresentativeUser projectRepresentativeUser = new ProjectRepresentativeUser();
+        projectRepresentativeUser.setUser(user);
+        projectRepresentativeUser.setProject(project);
+        return projectRepresentativeUser;
     }
 }

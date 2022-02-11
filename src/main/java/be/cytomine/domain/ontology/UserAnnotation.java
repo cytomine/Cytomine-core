@@ -212,5 +212,10 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
         return user;
     }
 
+    @Override
+    public User userDomainCreator() {
+        return user;
+    }
+
 
 }

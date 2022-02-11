@@ -6,6 +6,7 @@ import be.cytomine.domain.command.Command;
 import be.cytomine.domain.command.DeleteCommand;
 import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.ontology.*;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
@@ -86,14 +87,10 @@ public class AnnotationTermService extends ModelService {
         return annotationTermRepository.findAllByUserAndUserAnnotation(user, annotation);
     }
 
-    //TODO: seems to be useless, migration required?
-//    def list(Project project) {
-//        return AnnotationTerm.withCriteria{
-//            createAlias('userAnnotation', 'ua')
-//            eq('ua.project', project)
-//            isNull("deleted")
-//        }
-//    }
+    public List<AnnotationTerm> list(Project project) {
+        securityACLService.check(project.container(),READ);
+        return annotationTermRepository.findAllByUserAnnotation_Project(project);
+    }
 
     public List<AnnotationTerm> listAnnotationTermNotDefinedByUser(UserAnnotation userAnnotation, User user) {
         securityACLService.check(userAnnotation.container(),READ);

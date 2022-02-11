@@ -3,6 +3,7 @@ package be.cytomine.repository.ontology;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.AnnotationIndex;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.service.dto.AnnotationIndexLightDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,5 +29,14 @@ public interface AnnotationDomainRepository extends JpaRepository<AnnotationDoma
             "WHERE annotation.image_id = :image\n" +
             "AND ST_Intersects(annotation.location,ST_GeometryFromText(:location,0))", nativeQuery = true)
     List<Tuple> findAllIntersectForReviewedAnnotations(Long image, String location);
+
+    @Query(value = "SELECT count(annotation.id) FROM user_annotation annotation WHERE annotation.project_id = :projectId", nativeQuery = true)
+    Long countAllUserAnnotationAndProject(Long projectId);
+
+    @Query(value = "SELECT count(annotation.id) FROM algo_annotation annotation WHERE annotation.project_id = :projectId", nativeQuery = true)
+    Long countAllAlgoAnnotationAndProject(Long projectId);
+
+    @Query(value = "SELECT count(annotation.id) FROM reviewed_annotation annotation WHERE annotation.project_id = :projectId", nativeQuery = true)
+    Long countAllReviewedAnnotationAndProject(Long projectId);
 
 }

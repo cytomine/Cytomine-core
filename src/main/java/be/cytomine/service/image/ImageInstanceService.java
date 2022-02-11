@@ -195,8 +195,8 @@ public class ImageInstanceService extends ModelService {
     }
 
     private List<SearchParameterEntry> getDomainAssociatedSearchParameters(List<SearchParameterEntry> searchParameters, boolean blinded) {
-
         for (SearchParameterEntry parameter : searchParameters){
+            log.debug(parameter.toString());
             if(parameter.getProperty().equals("name") || parameter.getProperty().equals("instanceFilename")){
                 parameter.setProperty(blinded ? "blindedName" : "instanceFilename");
             }
@@ -224,6 +224,7 @@ public class ImageInstanceService extends ModelService {
                         x -> new SearchParameterEntry("mime."+x.getProperty(), x.getOperation(), x.getValue())).collect(Collectors.toList()));
 
         for (SearchParameterEntry parameter : searchParameters){
+            log.debug(parameter.toString());
             String property;
             switch(parameter.getProperty()) {
                 case "tag" :
@@ -324,7 +325,7 @@ public class ImageInstanceService extends ModelService {
             search += abstractImageCondition;
         }
         if(!tagsCondition.isBlank()){
-            from += "LEFT OUTER JOIN tag_domain_association tda ON ui.id = tda.domain_ident AND tda.domain_class_name = 'be.cytomine.image.ImageInstance' "; //TODO: class name will change!
+            from += "LEFT OUTER JOIN tag_domain_association tda ON ui.id = tda.domain_ident AND tda.domain_class_name = 'be.cytomine.domain.image.ImageInstance' ";
             search +=" AND ";
             search += tagsCondition;
         }
@@ -518,7 +519,7 @@ public class ImageInstanceService extends ModelService {
             search += mimeCondition;
         }
         if(!tagsCondition.isBlank()){
-            from += "LEFT OUTER JOIN tag_domain_association tda ON ii.id = tda.domain_ident AND tda.domain_class_name = 'be.cytomine.image.ImageInstance' "; //TODO: package will change
+            from += "LEFT OUTER JOIN tag_domain_association tda ON ii.id = tda.domain_ident AND tda.domain_class_name = 'be.cytomine.domain.image.ImageInstance' ";
             search +=" AND ";
             search += tagsCondition;
         }
@@ -564,6 +565,8 @@ public class ImageInstanceService extends ModelService {
 
         Query query = getEntityManager().createNativeQuery(request, Tuple.class);
         Map<String, Object> mapParams = sqlSearchConditions.getSqlParameters();
+        log.debug(request);
+        log.debug(mapParams.toString());
         if(blindedNameSearch!=null){
             mapParams.put("name", blindedNameSearch.getValue());
         }

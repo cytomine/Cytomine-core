@@ -3,11 +3,13 @@ package be.cytomine.utils.filters;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Map;
 
 @Getter
 @Setter
+@ToString
 public class SearchParameterEntry {
 
     public SearchParameterEntry() {
@@ -29,4 +31,5 @@ public class SearchParameterEntry {
     String sql;
 
     Map<String, Object> sqlParameter;
+
 }

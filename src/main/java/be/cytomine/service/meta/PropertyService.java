@@ -86,10 +86,10 @@ public class PropertyService extends ModelService {
 
     @Override
     public CommandResponse add(JsonObject jsonObject) {
-        return add(jsonObject, null);
+        return add(jsonObject, null, null);
     }
 
-    public CommandResponse add(JsonObject jsonObject, Transaction transaction) {
+    public CommandResponse add(JsonObject jsonObject, Transaction transaction, Task task) {
 
         CytomineDomain domain = null;
         try {

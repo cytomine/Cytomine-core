@@ -4,6 +4,7 @@ import be.cytomine.domain.command.Command;
 import be.cytomine.domain.command.RedoStackItem;
 import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.command.UndoStackItem;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -54,5 +55,11 @@ public interface CommandRepository extends JpaRepository<Command, Long> {
     }
 
 
+    void deleteAllByProject(Project project);
 
+    @Query("DELETE FROM UndoStackItem usi WHERE usi.command.project = :project")
+    void deleteAllUndoStackItemByProject(Project project);
+
+    @Query("DELETE FROM RedoStackItem usi WHERE usi.command.project = :project")
+    void deleteAllRedoStackItemByProject(Project project);
 }
