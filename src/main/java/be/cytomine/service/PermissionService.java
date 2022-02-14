@@ -11,12 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.security.acls.model.Permission;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.util.List;
 
 @Slf4j
 @Service
+@Transactional
 public class PermissionService {
 
     @Autowired
@@ -58,6 +60,8 @@ public class PermissionService {
                 throw new ObjectNotFoundException("User " + username + " or Object " + domain.getId() + " are not in ACL");
             }
             aclRepository.deleteAclEntry(aclObjectIdentity, mask, sid);
+
+            log.info("User " + username + " right " + permission.getMask() + " in domain " + domain + " => " + hasACLPermission(domain, username, permission));
         }
     }
 

@@ -68,7 +68,7 @@ public class Project extends CytomineDomain {
         Project project = (Project)this;
         project.id = json.getJSONAttrLong("id",null);
         project.name = json.getJSONAttrStr("name");
-        project.ontology = (Ontology) json.getJSONAttrDomain(entityManager, "ontology", new Ontology(), true);
+        project.ontology = (Ontology) json.getJSONAttrDomain(entityManager, "ontology", new Ontology(), false);
         project.blindMode = json.getJSONAttrBoolean("blindMode", false);
         project.areImagesDownloadable = json.getJSONAttrBoolean("areImagesDownloadable", false);
         project.isClosed = json.getJSONAttrBoolean("isClosed", false);

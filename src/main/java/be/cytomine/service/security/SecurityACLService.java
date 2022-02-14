@@ -159,6 +159,7 @@ public class SecurityACLService {
         return right;
     }
 
+
 //    /**
 //     * Check if user has ACL entry for this permission and this domain.
 //     * IT DOESN'T CHECK IF CURRENT USER IS ADMIN
@@ -222,7 +223,7 @@ public class SecurityACLService {
                             "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid,  Project as project "+
                             "where aclObjectId.objectId = project.id " +
                             "and aclEntry.aclObjectIdentity = aclObjectId "+
-                            (ontology!=null? "and project.ontology.id = ${ontology.id} " : " ") +
+                            (ontology!=null? "and project.ontology.id = " + ontology.getId() : " ") +
                             "and aclEntry.sid = aclSid and aclSid.sid like '"+user.getUsername() +"'");
             return query.getResultList();
         }

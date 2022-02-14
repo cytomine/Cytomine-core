@@ -81,7 +81,48 @@ public class RestProjectController extends RestCytomineController {
     ) {
         log.debug("REST request to list projects bounds");
         // TODO: implement...
-
+//{
+//   "created":{
+//      "min":"1621322930120",
+//      "max":"1643883047804"
+//   },
+//   "deleted":{
+//      "min":null,
+//      "max":null
+//   },
+//   "mode":{
+//      "min":null,
+//      "max":null
+//   },
+//   "name":{
+//      "min":"Cytomine Team",
+//      "max":"lrollus-test"
+//   },
+//   "updated":{
+//      "min":null,
+//      "max":"1643883476317"
+//   },
+//   "numberOfAnnotations":{
+//      "min":0,
+//      "max":31
+//   },
+//   "numberOfJobAnnotations":{
+//      "min":0,
+//      "max":0
+//   },
+//   "numberOfReviewedAnnotations":{
+//      "min":0,
+//      "max":2
+//   },
+//   "numberOfImages":{
+//      "min":0,
+//      "max":5
+//   },
+//   "members":{
+//      "min":1,
+//      "max":5
+//   }
+//}
 
         return ResponseEntity.status(200).body(
                 "{\"created\":{\"min\":\"1621022930120\",\"max\":\"1634961982641\"},\"deleted\":{\"min\":null,\"max\":null},\"mode\":{\"min\":null,\"max\":null},\"name\":{\"min\":\"Cytomine Team\",\"max\":\"lrollus-test\"},\"updated\":{\"min\":null,\"max\":null},\"numberOfAnnotations\":{\"min\":3,\"max\":5},\"numberOfJobAnnotations\":{\"min\":0,\"max\":1000000},\"numberOfReviewedAnnotations\":{\"min\":0,\"max\":1000000},\"numberOfImages\":{\"min\":0,\"max\":10000000},\"members\":{\"min\":0,\"max\":10000}}"

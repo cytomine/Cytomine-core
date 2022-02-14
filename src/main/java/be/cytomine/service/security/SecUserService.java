@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ReflectionUtils;
 
 import javax.persistence.Query;
@@ -46,6 +47,7 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Slf4j
 @Service
+@Transactional
 public class SecUserService extends ModelService {
 
     @Autowired
@@ -586,6 +588,7 @@ public class SecUserService extends ModelService {
             }
             if(admin) {
                 permissionService.deletePermission(project, user.getUsername(), ADMINISTRATION);
+                log.info("deleteUserFromProject " + permissionService.hasACLPermission(project, user.getUsername(), ADMINISTRATION));
             }
             else {
                 permissionService.deletePermission(project, user.getUsername(), READ);
@@ -598,7 +601,7 @@ public class SecUserService extends ModelService {
             if (projectRepresentativeUserService.listByProject(project).size()==0) {
                 if (!securityACLService.getProjectList(currentUserService.getCurrentUser(), null).contains(project)) {
                     // if current user is not in project (= SUPERADMIN), add to the project
-                    addUserToProject(user, project, true);
+                    addUserToProject(currentUserService.getCurrentUser(), project, true);
                 }
                 log.info("add current user "+currentUserService.getCurrentUsername()+" as representative for project " + project.getId());
                 ProjectRepresentativeUser pru = new ProjectRepresentativeUser();
@@ -606,6 +609,7 @@ public class SecUserService extends ModelService {
                 pru.setUser((User) currentUserService.getCurrentUser());
                 projectRepresentativeUserService.add(pru.toJsonObject());
             }
+            log.info("deleteUserFromProject " + permissionService.hasACLPermission(project, user.getUsername(), ADMINISTRATION));
         }
     }
 

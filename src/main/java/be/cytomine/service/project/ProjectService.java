@@ -1,26 +1,54 @@
 package be.cytomine.service.project;
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.command.CommandHistory;
-import be.cytomine.domain.command.Transaction;
+import be.cytomine.domain.command.*;
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.ontology.AnnotationTerm;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.exceptions.WrongArgumentException;
+import be.cytomine.dto.DatedCytomineDomain;
+import be.cytomine.dto.NamedCytomineDomain;
+import be.cytomine.exceptions.*;
 import be.cytomine.repository.command.CommandHistoryRepository;
+import be.cytomine.repository.command.CommandRepository;
+import be.cytomine.repository.image.ImageInstanceRepository;
+import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.repository.project.ProjectRepository;
+import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
+import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
+import be.cytomine.service.PermissionService;
+import be.cytomine.service.dto.ImageInstanceBounds;
+import be.cytomine.service.dto.ProjectBounds;
+import be.cytomine.service.image.ImageInstanceService;
+import be.cytomine.service.ontology.AlgoAnnotationTermService;
+import be.cytomine.service.ontology.AnnotationTermService;
+import be.cytomine.service.ontology.OntologyService;
+import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.search.ProjectSearchExtension;
+import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
+import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SQLSearchParameter;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import be.cytomine.utils.filters.SearchParameterProcessed;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.model.Accumulators;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DateUtils;
+import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.Query;
@@ -31,8 +59,16 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.springframework.security.acls.domain.BasePermission.READ;
+import static be.cytomine.service.social.ImageConsultationService.DATABASE_NAME;
+import static com.mongodb.client.model.Aggregates.*;
+import static com.mongodb.client.model.Aggregates.sort;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.gte;
+import static com.mongodb.client.model.Sorts.ascending;
+import static com.mongodb.client.model.Sorts.descending;
+import static org.springframework.security.acls.domain.BasePermission.*;
 
+@Slf4j
 @Service
 @Transactional
 public class ProjectService extends ModelService {
@@ -49,6 +85,55 @@ public class ProjectService extends ModelService {
     @Autowired
     private SecurityACLService securityACLService;
 
+    @Autowired
+    private TaskService taskService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private SecUserService secUserService;
+
+    @Autowired
+    private AnnotationTermService annotationTermService;
+
+    @Autowired
+    private AlgoAnnotationTermService algoAnnotationTermService;
+
+    @Autowired
+    private ReviewedAnnotationService reviewedAnnotationService;
+
+    @Autowired
+    private OntologyService ontologyService;
+
+    @Autowired
+    private PermissionService permissionService;
+
+    @Autowired
+    private ProjectRepresentativeUserService projectRepresentativeUserService;
+
+    @Autowired
+    private AnnotationDomainRepository annotationDomainRepository;
+
+    @Autowired
+    private ImageInstanceRepository imageInstanceRepository;
+
+    @Autowired
+    private CommandRepository commandRepository;
+
+    @Autowired
+    private ImageInstanceService imageInstanceService;
+
+    @Autowired
+    MongoClient mongoClient;
+
+    @Autowired
+    private CurrentRoleService currentRoleService;
+
+    public Project get(Long id) {
+        return find(id).orElse(null);
+    }
+
     public Optional<Project> find(Long id) {
         Optional<Project> project = projectRepository.findById(id);
         project.ifPresent(value -> securityACLService.check(value, READ));
@@ -63,36 +148,63 @@ public class ProjectService extends ModelService {
         return projects;
     }
 
+    public ProjectBounds computeBounds(Boolean withMembersCount) {
+        SecUser user = currentUserService.getCurrentUser();
+        if(currentRoleService.isAdminByNow(user)) {
+            //if user is admin, we print all available project
+            user = null;
+        } else {
+            securityACLService.checkGuest(user);
+        }
+        ProjectSearchExtension projectSearchExtension = new ProjectSearchExtension();
+        projectSearchExtension.setWithMembersCount(withMembersCount);
+
+        Page<JsonObject> results = this.list(user, projectSearchExtension, new ArrayList<>(), "created", "desc", 0L, 0L);
+        ProjectBounds projectBounds = new ProjectBounds();
+        results.forEach(projectBounds::submit);
+        return projectBounds;
+    }
+
     /**
      * List last project opened by user
      * If the user has less than "max" project opened, add last created project to complete list
      */
-    public List<LastOpenedProject> listLastOpened(User user, Long offset, Long max) {
-        // TODO:
-        throw new RuntimeException("TODO");
+    public List<Map<String, Object>> listLastOpened(User user, Long max) {
+        securityACLService.checkIsSameUser(user,currentUserService.getCurrentUser());
+
+        List<Bson> requests = new ArrayList<>();
+        requests.add(match(eq("user", user.getId())));
+        requests.add(group("$project", Accumulators.max("date", "$created")));
+        requests.add(sort(descending("date")));
+        requests.add(limit(max==null ? 5 : max.intValue()));
+
+        MongoCollection<Document> persistentImageConsultation = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentProjectConnection");
+
+        List<Document> results = persistentImageConsultation.aggregate(requests)
+                .into(new ArrayList<>());
+        List<Map<String, Object>> data = results.stream().map(x -> JsonObject.of("id", x.get("_id"), "date", x.get("date"), "opened", true))
+                .collect(Collectors.toList());
+        if (data.size()<max) {
+            //user has open less than max project, so we add last created project
+            List<DatedCytomineDomain> unopened = data.isEmpty() ?
+                    projectRepository.listLastCreated() :
+                    projectRepository.listLastCreated(data.stream().map(x -> (Long)x.get("id")).collect(Collectors.toList()));
+            for (DatedCytomineDomain datedCytomineDomain : unopened) {
+                data.add(JsonObject.of("id", datedCytomineDomain.getId(), "date", datedCytomineDomain.getDate(), "opened", false));
+            }
+
+        }
+        data.sort(Comparator.comparing(o -> ((Map<String, Object>) o).get("date")!=null ? (Date) ((Map<String, Object>) o).get("date") : new Date(0)).reversed());
+        data = data.subList(0, Math.min(data.size(), max.intValue()));
+        log.debug(data.toString());
+        return data;
     }
 
     public List<Project> listForCurrentUser() {
         return projectRepository.findAllProjectForUser(currentUserService.getCurrentUsername());
     }
 
-
-    List<Project> listByOntology(Ontology ontology) {
-        return projectRepository.findAllProjectForUserByOntology(currentUserService.getCurrentUsername(),ontology);
-    }
-
-//    List<Software> listBySoftware(Software software) {
-//        // TODO:
-//        throw new RuntimeException("TODO");
-//    }
-
-
-    List<CommandHistory> lastAction(Project project, int max) {
-        securityACLService.check(project, READ);
-        return commandHistoryRepository.findAllByProject(project, PageRequest.of(0, max, Sort.by("created").descending()));
-    }
-
-    public Page<Map<String, Object>> list(SecUser user, ProjectSearchExtension projectSearchExtension, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
+    public Page<JsonObject> list(SecUser user, ProjectSearchExtension projectSearchExtension, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
         if (user==null) {
             securityACLService.checkAdmin(currentUserService.getCurrentUser());
         } else {
@@ -123,7 +235,14 @@ public class ProjectService extends ModelService {
             throw new WrongArgumentException("Cannot sort on membersCount without argument withMembersCount");
         }
 
+        log.debug("searchParameters:");
+        searchParameters.stream().map(x -> x.toString()).forEach(log::debug);
+
         List<SearchParameterEntry> validParameters = SQLSearchParameter.getDomainAssociatedSearchParameters(Project.class, searchParameters, getEntityManager());
+
+        log.debug("validParameters:");
+        validParameters.stream().map(x -> x.toString()).forEach(log::debug);
+
         validParameters.forEach(searchParameterEntry -> searchParameterEntry.setProperty("p."+searchParameterEntry.getProperty()));
 
         for (SearchParameterEntry parameter : searchParameters){
@@ -150,6 +269,10 @@ public class ProjectService extends ModelService {
         }
 
         SearchParameterProcessed sqlSearchConditions = SQLSearchParameter.searchParametersToSQLConstraints(validParameters);
+        log.debug("sqlSearchConditions:");
+        sqlSearchConditions.getData().stream().map(x -> x.toString()).forEach(log::debug);
+        log.debug("sqlSearchConditions.params:");
+        sqlSearchConditions.getSqlParameters().entrySet().stream().map(Object::toString).forEach(log::debug);
 
         String project = sqlSearchConditions.getData().stream().filter(x -> x.getProperty().startsWith("p.")).map(x -> x.getSql()).collect(Collectors.joining(" AND "));
         String ontology = sqlSearchConditions.getData().stream().filter(x -> x.getProperty().startsWith("ontology.")).map(x -> x.getSql()).collect(Collectors.joining(" AND "));
@@ -172,7 +295,7 @@ public class ProjectService extends ModelService {
             where = "WHERE aclSid.sid like '"+user.getUsername()+"' and p.deleted is null ";
         }
         else {
-            select = "SELECT DISTINCT(p.id), p.* ";
+            select = "SELECT DISTINCT(p.id) as distinctId, p.* ";
             from = "FROM project p ";
             where = "WHERE p.deleted is null ";
         }
@@ -288,14 +411,14 @@ public class ProjectService extends ModelService {
             request += " OFFSET " + offset;
         }
 
-
+        log.debug(request);
         Query query = getEntityManager().createNativeQuery(request, Tuple.class);
         Map<String, Object> mapParams = sqlSearchConditions.getSqlParameters();
         for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
             query.setParameter(entry.getKey(), entry.getValue());
         }
         List<Tuple> resultList = query.getResultList();
-        List<Map<String, Object>> results = new ArrayList<>();
+        List<JsonObject> results = new ArrayList<>();
         for (Tuple rowResult : resultList) {
             JsonObject result = new JsonObject();
             for (TupleElement<?> element : rowResult.getElements()) {
@@ -316,6 +439,7 @@ public class ProjectService extends ModelService {
             object.put("numberOfImages", result.get("countImages"));
             object.put("numberOfAnnotations", result.get("countAnnotations"));
             object.put("numberOfJobAnnotations", result.get("countJobAnnotations"));
+            object.put("numberOfReviewedAnnotations", result.get("countReviewedAnnotations"));
 
             if(projectSearchExtension.isWithLastActivity()) {
                 object.put("lastActivity", result.get("maxDate"));
@@ -333,258 +457,410 @@ public class ProjectService extends ModelService {
         }
         request = "SELECT COUNT(DISTINCT p.id) " + from + where + search;
         query = getEntityManager().createNativeQuery(request);
+        for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
+            query.setParameter(entry.getKey(), entry.getValue());
+        }
         long count = ((BigInteger)query.getResultList().get(0)).longValue();
-        Page<Map<String, Object>> page = new PageImpl<>(results, PageUtils.buildPage(offset, max), count);
+        Page<JsonObject> page = new PageImpl<>(results, PageUtils.buildPage(offset, max), count);
         return page;
 
     }
 
-
-
-//
-//    public List<Project> list() {
-//        ProjectSearchExtension searchExtension = ProjectSearchExtension.builder()
-//                .withLastActivity(true)
-//                .withCurrentUserRoles(true)
-//                .build();
-//
-//        ProjectSearchParameter searchParameter = ProjectSearchParameter.builder()
-//                .user(SearchParameterEntry.builder().operation(SearchOperation.equals).value("admin").build())
-//                .countAnnotations(SearchParameterEntry.builder().operation(SearchOperation.gte).value(1l).build())
-//                .membersCount(SearchParameterEntry.builder().operation(SearchOperation.gte).value(1l).build())
-////                .project(SearchParameterEntry.builder().operation(SearchOperation.equals).value(313l).build())
-////                .ontology(SearchParameterEntry.builder().operation(SearchOperation.equals).value(303l).build())
-//                .build();
-//        Pageable pageable = PageRequest.of(0, 1, Sort.by("name").ascending());
-//        return list(searchExtension, searchParameter, pageable);
-//    }
-
-//    public List<Project> list(ProjectSearchExtension searchExtension, ProjectSearchParameter searchParameter, Pageable pageable) {
-//        Long currentUserId = 58l;
-////        CriteriaBuilder cb = em.getCriteriaBuilder();
-////        CriteriaQuery<Tuple> cq = cb.createTupleQuery();
-////        Root<Project> project = cq.from(Project.class);
-////        Join<Project, Ontology> ontologies = project.join(Project_.ontology, JoinType.LEFT);
-////        cq.select(cb.tuple(project, cb.count(ontologies)));
-//
-//
-////        Long userId = 58l;
-////        String username = "admin";
-////        Long numberOfUserAnnotation = 1l;
-////        Long membersCount = 2l;
-//
-//
-//        String column = pageable.getSort().stream().findFirst().get().getProperty();
-//        Sort.Direction direction = pageable.getSort().stream().findFirst().get().getDirection();
-//
-//        if (column.equals("lastActivity") && !searchExtension.withLastActivity) {
-//            throw new WrongArgumentException("Cannot sort on lastActivity without argument withLastActivity");
-//        }
-//        if (column.equals("membersCount") && !searchExtension.withMembersCount) {
-//            throw new WrongArgumentException("Cannot sort on membersCount without argument withMembersCount");
-//        }
-//
-//        if (searchParameter.members!=null && !searchExtension.withMembersCount) {
-//            throw new WrongArgumentException("Cannot search on members attributes without argument withMembersCount");
-//        }
-//
-//
-//
-//
-//
-//        CriteriaBuilder cb = em.getCriteriaBuilder();
-//        CriteriaQuery<Tuple> cq = cb.createTupleQuery();
-//
-//        Root<Project> project = cq.from(Project.class);
-//        Join<AclEntry, AclSid> aclSidJoincOUNT = null;
-//        Join<Project, CommandHistory> commandHistoryJoin = null;
-//        List<Selection> selects = new ArrayList<>();
-//        List<Predicate> wheres = new ArrayList<>();
-//        List<Predicate> havings = new ArrayList<>();
-//
-//        if(searchParameter.project!=null) {
-//            wheres.add(buildOperationFromEntry(cb, project, searchParameter.project));
-//        }
-//
-//        if(searchParameter.ontology!=null) {
-//            // TODO: really required?
-//            Join<Project, Ontology> ontology = project.join(Project_.ontology, JoinType.LEFT);
-//            wheres.add(buildOperationFromEntry(cb, ontology, searchParameter.ontology));
-//        }
-//
-//        if(searchParameter.tags!=null) {
-//            Root<TagDomainAssocitation> tags = cq.from(TagDomainAssocitation.class);
-//            Predicate condition = cb.and(cb.equal(project.get(Project_.id), tags.get(TagDomainAssocitation_.DOMAIN_IDENT)));
-//            wheres.add(condition);
-//            Join<TagDomainAssocitation, Tag> tag = tags.join(TagDomainAssocitation_.TAG, JoinType.INNER);
-//            wheres.add(buildOperationFromEntry(cb, tag, searchParameter.tags));
-//        }
-//
-//        if(searchParameter.user!=null) {
-//            Root<AclObjectIdentity> aclObjectIdentity = cq.from(AclObjectIdentity.class);
-//            Predicate condition = cb.and(cb.equal(project.get(Project_.id), aclObjectIdentity.get(AclObjectIdentity_.objectId)));
-//            wheres.add(condition);
-//
-//            Join<AclObjectIdentity, AclEntry> aclEntryJoin = aclObjectIdentity.join(AclObjectIdentity_.ACL_ENTRIES, JoinType.INNER);
-//            Join<AclEntry, AclSid> aclSidJoin = aclEntryJoin.join(AclEntry_.SID, JoinType.INNER);
-//            //aclSidJoin.on(cb.equal(aclSidJoin.get(AclSid_.SID), username));
-//            wheres.add(cb.and(buildOperationFromEntry(cb, aclSidJoin.get(AclSid_.SID), searchParameter.user)));
-//        }
-//
-//        if(searchParameter.membersCount!=null) {
-//            Root<AclObjectIdentity> aclObjectIdentity = cq.from(AclObjectIdentity.class);
-//            wheres.add(cb.and(cb.equal(project.get(Project_.id), aclObjectIdentity.get(AclObjectIdentity_.objectId))));
-//
-//            Join<AclObjectIdentity, AclEntry> aclEntryJoin = aclObjectIdentity.join(AclObjectIdentity_.ACL_ENTRIES, JoinType.INNER);
-//            aclSidJoincOUNT = aclEntryJoin.join(AclEntry_.SID, JoinType.INNER);
-//            //cq.groupBy(aclSidJoincOUNT);
-//        }
-//
-//        Join<Project, UserAnnotation> annotations = project.join(Project_.userAnnotations, JoinType.LEFT);
-//        cq.groupBy(project);
-//        cq.where(wheres.toArray(new Predicate[wheres.size()]));
-//
-//        if (searchParameter.countAnnotations!=null) {
-//            selects.add(cb.countDistinct(annotations));
-//            havings.add(buildOperationFromEntry(cb, cb.count(annotations), searchParameter.countAnnotations));
-//        }
-//        if(searchParameter.membersCount!=null) {
-//            selects.add(cb.countDistinct(annotations));
-//            havings.add(cb.and(buildOperationFromEntry(cb, cb.countDistinct(aclSidJoincOUNT), searchParameter.membersCount)));
-//        }
-//
-//        if(searchExtension.withLastActivity) {
-//            commandHistoryJoin = project.join(Project_.commandHistories, JoinType.LEFT);
-//            selects.add(cb.greatest(commandHistoryJoin.get(CommandHistory_.created)));
-//        }
-//
-////        if(searchExtension.withDescription) {
-////            Join<Description, Project> description = project.join(Description_.domainIdent, JoinType.LEFT);
-////
-//////            Root<Description> descriptionRoot = cq.from(Description.class);
-//////            wheres.add(cb.and(cb.equal(project.get(Project_.id), descriptionRoot.get(Description_.domainIdent))));
-//////            selects.add(descriptionRoot.get(Description_.data));
-////        }
-//
-//        Join<Project, AdminProjectView> adminProjectViewJoin = null;
-//        if(searchExtension.withCurrentUserRoles) {
-//            adminProjectViewJoin = project.join(Project_.adminProjectViews, JoinType.LEFT);
-//            wheres.add(cb.and(cb.equal(adminProjectViewJoin.get(AdminProjectView_.key).get(AdminProjectPK_.userId), currentUserId)));
-//            //selects.add(cb.isNull(adminProjectViewJoin.get(AdminProjectView_.key).get(AdminProjectPK_.id)));
-//            selects.add(cb.count(adminProjectViewJoin.get(AdminProjectView_.key).get(AdminProjectPK_.id)));
-//
-//            Join<Project, ProjectRepresentativeUser> projectProjectRepresentativeUserJoin = project.join(Project_.representativeUsers, JoinType.LEFT);
-//            wheres.add(cb.and(cb.equal(projectProjectRepresentativeUserJoin.get(ProjectRepresentativeUser_.user), currentUserId)));
-//            //selects.add(cb.isNull(projectProjectRepresentativeUserJoin.get(ProjectRepresentativeUser_.user)));
-//            selects.add(cb.count(projectProjectRepresentativeUserJoin.get(ProjectRepresentativeUser_.user)));
-//        }
-//
-//        if(searchParameter.currentUserRole!=null) {
-//            if (searchParameter.currentUserRole.value.equals("manager") && searchParameter.currentUserRole.value.equals("contributor")) {
-//                // do nothing
-//            } else if (searchParameter.currentUserRole.value.equals("manager")) {
-//                wheres.add(cb.and(cb.isNotNull(adminProjectViewJoin.get("userId"))));
-//            } else if (searchParameter.currentUserRole.value.equals("contributor")) {
-//                wheres.add(cb.and(cb.isNull(adminProjectViewJoin.get("userId"))));
-//            }
-//        }
-//
-//
-//        cq.having(havings.toArray(new Predicate[havings.size()]));
-//
-//        selects.add(0, project);
-//        cq.select(cb.tuple(selects.toArray(new Selection[selects.size()])));
-//
-//
-//
-//        cq.orderBy(direction.equals(Sort.Direction.ASC) ? cb.asc(project.get(column)) : cb.desc(project.get(column)));
-//
-//        //cq.having(cb.greaterThanOrEqualTo(cb.count(aclSidJoincOUNT), membersCount));
-//        List<Tuple> result = em.createQuery(cq).getResultList();
-//
-//
-//        System.out.println("Total = " + result.size());
-//
-//
-//        List<Map<String, Object>> results = new ArrayList<>(result.size());
-//        for (Tuple t : result) {
-//            Map<String, Object> projectRow = new HashMap<>();
-//
-//
-//            Project o = (Project) t.get(0);
-//            projectRow.putAll(o.toJsonObject());
-//
-//            Long cnt = (Long) t.get(1);
-//            System.out.println("***************** Project " + o.getName() + " *****************");
-//
-//            System.out.println("Number of users: " + (Long) t.get(2));
-//            System.out.println("Users = " + securityACLService.getProjectUsers(o));
-//
-//            System.out.println("umber of annotations = " + cnt);
-//            System.out.println("Annotations = " + em.createQuery(
-//                    "select count(userAnnotation.id) "+
-//                            "from UserAnnotation as userAnnotation where userAnnotation.project.id = " + o.getId()).getResultList().get(0));
-//
-//            results.add(projectRow);
-//        }
-//
-//
-////        final int start = (int)pageable.getOffset();
-////        final int end = Math.min((start + pageable.getPageSize()), results.size());
-//        final Page<Map<String, Object>> page = createPageFromList(results, pageable);
-//
-//        System.out.println("***************************************");
-//        System.out.println("***************** PAGE *****************");
-//        System.out.println("****************************************");
-//        for (Map<String, Object> stringObjectMap : page) {
-//            System.out.println("ROW");
-//            for (Map.Entry<String, Object> stringObjectEntry : stringObjectMap.entrySet()) {
-//                System.out.println(stringObjectEntry.getKey() + " = " + stringObjectEntry.getValue());
-//            }
-//            System.out.println("****************************************");
-//        }
-//
-//
-////        cq.where(... add some predicates here ...);
-////        cq.groupBy(customer.get(Customer_.id));
-////        cq.orderBy(cb.desc(cb.count(orders)));
-////        List<Tuple> result = em.createQuery(cq).getResultList();
-////        for (Tuple t : result) {
-////            Customer c = (Customer) t.get(0);
-////            Long cnt = (Long) t.get(1);
-////            System.out.println("Customer " + c.getName() + " has " + cnt + " orders");
-////        }
-//        return null;
-//    }
-
-    static <T> Page<T> createPageFromList(List<T> list, Pageable pageable) {
-        if (list == null) {
-            throw new IllegalArgumentException("To create a Page, the list mustn't be null!");
-        }
-
-        int startOfPage = pageable.getPageNumber() * pageable.getPageSize();
-        if (startOfPage > list.size()) {
-            return new PageImpl<>(new ArrayList<>(), pageable, 0);
-        }
-
-        int endOfPage = Math.min(startOfPage + pageable.getPageSize(), list.size());
-        return new PageImpl<>(list.subList(startOfPage, endOfPage), pageable, list.size());
+    public List<Project> listByOntology(Ontology ontology) {
+        return projectRepository.findAllProjectForUserByOntology(currentUserService.getCurrentUsername(),ontology);
     }
 
-//
-//    private Predicate buildOperationFromEntry(CriteriaBuilder build, Expression x, SearchParameterEntry searchParameterEntry) {
-//        if (searchParameterEntry.operation.equals(SearchOperation.equals)) {
-//            return build.equal(x, searchParameterEntry.value);
-//        } else if (searchParameterEntry.operation.equals(SearchOperation.gte)) {
-//            return build.greaterThanOrEqualTo(x, (Long)searchParameterEntry.value);
-//        }
-//        throw new RuntimeException(searchParameterEntry.operation + " not supported...");
+//    List<Software> listBySoftware(Software software) {
+//        // TODO:
+//        throw new RuntimeException("TODO");
 //    }
 
+    public List<CommandHistory> lastAction(Project project, int max) {
+        securityACLService.check(project, READ);
+        return commandHistoryRepository.findAllByProject(project, PageRequest.of(0, max, Sort.by("created").descending()));
+    }
+
+    public List<NamedCytomineDomain> listByCreator(User user) {
+        return projectRepository.listByCreator(user);
+    }
+
+    public List<NamedCytomineDomain> listByAdmin(User user) {
+        return projectRepository.listByAdmin(user);
+    }
+
+    public List<NamedCytomineDomain> listByUser(User user) {
+        return projectRepository.listByUser(user);
+    }
 
     @Override
     public CommandResponse add(JsonObject jsonObject) {
-        return null;
+        return add(jsonObject, null);
+    }
+
+    @Override
+    public CommandResponse add(JsonObject jsonObject, Task task) {
+        taskService.updateTask(task,5,"Start creating project " + jsonObject.getJSONAttrStr("name"));
+        SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
+
+        if(jsonObject.get("ontology")!=null) {
+            securityACLService.check(jsonObject.getJSONAttrLong("ontology"),Ontology.class, READ);
+        }
+
+        taskService.updateTask(task,10,"Check retrieval consistency");
+        CommandResponse commandResponse = executeCommand(new AddCommand(currentUser), null, jsonObject);
+        Project project = (Project)commandResponse.getObject();
+        taskService.updateTask(task,20,"Project " +project.getName()+ " created");
+
+        log.info("project=" + project + " json.users=" + jsonObject.get("users") + " json.admins=" + jsonObject.get("admins"));
+        int progress = 20;
+
+        List<Long> users = jsonObject.getJSONAttrListLong("users", new ArrayList<>());
+        List<Long> admins = jsonObject.getJSONAttrListLong("admins", new ArrayList<>());
+
+        users.addAll(admins);
+        users = users.stream().distinct().collect(Collectors.toList());
+
+        for (Long userId : users) {
+            Optional<User> optionalUser = userRepository.findById(userId);
+            if (optionalUser.isPresent()) {
+                log.info("addUserToProject project="+project.getId()+" user="+optionalUser.get().getId());
+                secUserService.addUserToProject(optionalUser.get(), project, false);
+                progress = progress + (40/users.size());
+                taskService.updateTask(task,Math.min(100,progress),"User "+optionalUser.get().getUsername()+" added as User");
+            }
+        }
+
+        for (Long userId : admins) {
+            Optional<User> optionalUser = userRepository.findById(userId);
+            if (optionalUser.isPresent() && !Objects.equals(optionalUser.get().getId(), currentUserService.getCurrentUser().getId())) {
+                // current user is already in project
+                log.info("addUserToProject (admin) project="+project.getId()+" user="+optionalUser.get().getId());
+                secUserService.addUserToProject(optionalUser.get(), project, true);
+                progress = progress + (40/admins.size());
+                taskService.updateTask(task,Math.min(100,progress),"User "+optionalUser.get().getUsername()+" added as Admin");
+            }
+        }
+
+        return commandResponse;
+    }
+
+
+    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
+        return update(domain, jsonNewData, transaction, null);
+    }
+
+    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction, Task task) {
+        Project project = (Project)domain;
+        taskService.updateTask(task,5,"Start editing project " + project.getName());
+        SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.check(project.container(),WRITE);
+        Ontology ontology = project.getOntology();
+
+
+        if(ontology!=null && !Objects.equals(ontology.getId(), jsonNewData.getJSONAttrLong("ontology", 0L))){
+            boolean deleteTerms = jsonNewData.getJSONAttrBoolean("forceOntologyUpdate", false);
+            long associatedTermsCount;
+            long userAssociatedTermsCount = 0L;
+            long algoAssociatedTermsCount = 0L;
+            long reviewedAssociatedTermsCount = 0L;
+            if(!deleteTerms) {
+                userAssociatedTermsCount += annotationTermService.list(project).size();
+            }
+            algoAssociatedTermsCount += algoAnnotationTermService.count(project);
+            reviewedAssociatedTermsCount += reviewedAnnotationService.countByProjectAndWithTerms(project);
+            associatedTermsCount = userAssociatedTermsCount + algoAssociatedTermsCount + reviewedAssociatedTermsCount;
+
+            if(associatedTermsCount > 0){
+                String message = "This project has " + associatedTermsCount + " associated terms: ";
+                if(!deleteTerms) {
+                    message += userAssociatedTermsCount + " from project members, ";
+                }
+                message += algoAssociatedTermsCount + " from jobs and ";
+                message += reviewedAssociatedTermsCount + " reviewed. ";
+                message += "The ontology cannot be updated.";
+                throw new ForbiddenException(message, Map.of(
+                        "userAssociatedTermsCount", userAssociatedTermsCount,
+                        "algoAssociatedTermsCount", algoAssociatedTermsCount,
+                        "reviewedAssociatedTermsCount", reviewedAssociatedTermsCount));
+            }
+            if(deleteTerms) {
+                for (AnnotationTerm annotationTerm : annotationTermService.list(project)) {
+                    annotationTermService.delete(annotationTerm, transaction, task, false);
+                }
+            }
+        }
+
+
+        CommandResponse commandResponse = executeCommand(new EditCommand(currentUser, transaction), domain, jsonNewData);
+        project = (Project) commandResponse.getObject();
+
+        taskService.updateTask(task,20,"Project "+project.getName()+" edited");
+
+        List<Long> users = jsonNewData.getJSONAttrListLong("users", null);
+        List<Long> admins = jsonNewData.getJSONAttrListLong("admins", null);
+        List<Long> representatives = jsonNewData.getJSONAttrListLong("representatives", null);
+
+
+
+        if(users!=null) {
+            List<Long> projectOldUsers = secUserService.listUsers(project).stream().map(CytomineDomain::getId).sorted().collect(Collectors.toList()); //[a,b,c]
+            List<Long> projectNewUsers = users.stream().sorted().collect(Collectors.toList()); //[a,b,x]
+            List<Long> nextAdmins;
+            if(admins!=null) {
+                nextAdmins = admins;
+            } else {
+                nextAdmins = secUserService.listAdmins(project).stream().map(CytomineDomain::getId).sorted().collect(Collectors.toList()); //[a,b,c]
+            }
+            projectNewUsers.addAll(nextAdmins);  //add admin as user too
+            projectNewUsers.add(currentUser.getId());
+            projectNewUsers = projectNewUsers.stream().distinct().collect(Collectors.toList());
+            log.info("projectOldUsers=" + projectOldUsers);
+            log.info("projectNewUsers=" + projectNewUsers);
+            changeProjectUser(project,projectNewUsers,projectOldUsers,false,task,20);
+        }
+
+
+        if(admins!=null) {
+            List<Long> projectOldAdmins = secUserService.listAdmins(project).stream().map(CytomineDomain::getId).sorted().collect(Collectors.toList()); //[a,b,c]
+            List<Long> projectNewAdmins = admins.stream().sorted().collect(Collectors.toList()); //[a,b,x]
+            projectNewAdmins.add(currentUser.getId());
+            projectNewAdmins = projectNewAdmins.stream().distinct().collect(Collectors.toList());
+            log.info("projectOldAdmins=" + projectOldAdmins);
+            log.info("projectNewAdmins=" + projectNewAdmins);
+            changeProjectUser(project,projectNewAdmins,projectOldAdmins,true,task,60);
+        }
+
+        // here, an empty array is a valid argument
+        if(representatives != null) {
+            List<Long> projectOldReprs = projectRepresentativeUserService.listByProject(project).stream().map (x -> x.getUser().getId()).sorted().collect(Collectors.toList()); //[a,b,c]
+            List<Long> projectNewReprs = representatives.stream().sorted().distinct().collect(Collectors.toList()); //[a,b,x]
+            log.info("projectOldReprs="+projectOldReprs);
+            log.info("projectNewReprs="+projectNewReprs);
+            List<Long> projectAddReprs = new ArrayList<>(projectNewReprs);
+            projectAddReprs.removeAll(projectOldReprs);
+            List<Long> projectDeleteReprs = new ArrayList<>(projectOldReprs);
+            projectDeleteReprs.removeAll(projectNewReprs);
+
+            log.info("projectAddUser="+projectAddReprs);
+            log.info("projectDeleteUser="+projectDeleteReprs);
+
+            for (Long projectAddRepr : projectAddReprs) {
+                Optional<User> optionalUser = userRepository.findById(projectAddRepr);
+                if (optionalUser.isPresent()) {
+                    log.info("projectAddReprs project="+project+" user="+ optionalUser.get().getId());
+                    ProjectRepresentativeUser pru = new ProjectRepresentativeUser();
+                    pru.setProject(project);
+                    pru.setUser(optionalUser.get());
+                    projectRepresentativeUserService.add(pru.toJsonObject());
+                }
+            }
+
+            for (Long projectDeleteRepr : projectDeleteReprs) {
+                Optional<User> optionalUser = userRepository.findById(projectDeleteRepr);
+                if (optionalUser.isPresent()) {
+                    log.info("projectDeleteReprs project="+project+" user="+ optionalUser.get().getId());
+                    Optional<ProjectRepresentativeUser> repr = projectRepresentativeUserService.find(project, optionalUser.get());
+                    repr.ifPresent(x -> projectRepresentativeUserService.delete(x, transaction, task, false));
+                }
+            }
+        }
+        if(ontology!=null && !Objects.equals(ontology.getId(), jsonNewData.getJSONAttrLong("ontology"))){
+            ontologyService.determineRightsForUsers(ontology, secUserService.listUsers(project));
+            if(project.getOntology()!=null) {
+                ontologyService.determineRightsForUsers(project.getOntology(), secUserService.listUsers(project));
+            }
+        }
+        return commandResponse;
+
+    }
+
+
+    private void changeProjectUser(Project project, List<Long> projectNewUsers, List<Long> projectOldUsers, boolean admin, Task task, int progressStart) {
+        int progress = progressStart;
+        List<Long> projectAddUser = new ArrayList<>(projectNewUsers);
+        projectAddUser.removeAll(projectOldUsers);
+
+        List<Long> projectDeleteUser = new ArrayList<>(projectOldUsers);
+        projectDeleteUser.removeAll(projectNewUsers);
+
+        log.info("projectAddUser="+projectAddUser);
+        log.info("projectDeleteUser="+projectDeleteUser);
+
+        for (Long userId : projectAddUser) {
+            Optional<User> optionalUser = userRepository.findById(userId);
+            if (optionalUser.isPresent()) {
+                log.info("addUserToProject project="+project.getId()+" user="+optionalUser.get().getId());
+                secUserService.addUserToProject(optionalUser.get(), project, admin);
+                progress = progress + (40/projectAddUser.size());
+                taskService.updateTask(task,Math.min(100,progress),"User "+optionalUser.get().getUsername()+" added as " + (admin? "Admin" : "User"));
+            }
+        }
+
+        for (Long userId : projectDeleteUser) {
+            Optional<User> optionalUser = userRepository.findById(userId);
+            if (optionalUser.isPresent()) {
+                log.info("projectDeleteUser project="+project.getId()+" user="+optionalUser.get().getId());
+                secUserService.deleteUserFromProject(optionalUser.get(), project, admin);
+                log.info("changeProjectUser " + permissionService.hasACLPermission(project, optionalUser.get().getUsername(), ADMINISTRATION));
+                progress = progress + (40/projectAddUser.size());
+                taskService.updateTask(task,Math.min(100,progress),"User "+optionalUser.get().getUsername()+" removed as " + (admin? "Admin" : "User"));
+            }
+        }
+    }
+
+    public List<Long> getActiveProjects() {
+        Date xSecondAgo = DateUtils.addSeconds(new Date(), -120);
+        List<Bson> requests = new ArrayList<>();
+        requests.add(match(gte("created", xSecondAgo)));
+        requests.add(group("$project"));
+        MongoCollection<Document> persistentImageConsultation = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentProjectConnection");
+        List<Document> results = persistentImageConsultation.aggregate(requests)
+                .into(new ArrayList<>());
+        return results.stream().map(x -> x.getLong("_id")).collect(Collectors.toList());
+    }
+
+    public List<Map<String, Object>> getActiveProjectsWithNumberOfUsers() {
+        Date xSecondAgo = DateUtils.addSeconds(new Date(), -120);
+        List<Bson> requests = new ArrayList<>();
+        requests.add(match(gte("created", xSecondAgo)));
+        requests.add(group(Document.parse("{project: '$project', user: '$user'}")));
+        requests.add(group("$_id.project", Accumulators.sum("users", 1)));
+
+        MongoCollection<Document> persistentImageConsultation = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentProjectConnection");
+        List<Document> results = persistentImageConsultation.aggregate(requests)
+                .into(new ArrayList<>());
+
+        List<Map<String, Object>> tmp = results.stream().map(x -> JsonObject.of("project", x.get("_id"), "users", x.get("users"))).collect(Collectors.toList());
+
+        List<Project> projects = projectRepository.findAllByIdIn(tmp.stream().map(x-> (Long)x.get("project")).collect(Collectors.toList()));
+
+
+        return projects.stream().map(x -> JsonObject.of("project", x, "users",
+                tmp.stream().filter(entry -> entry.get("project")==x.getId()).findFirst().orElse(new HashMap<>()).get("users"))).collect(Collectors.toList());
+    }
+
+
+    /**
+     * Delete this domain
+     * @param domain Domain to delete
+     * @param transaction Transaction link with this command
+     * @param task Task for this command
+     * @param printMessage Flag if client will print or not confirm message
+     * @return Response structure (code, old domain,..)
+     */
+    CommandResponse delete(Project domain, Transaction transaction, Task task, boolean printMessage) {
+        SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.check(domain.container(),ADMINISTRATION);
+        securityACLService.checkIsNotReadOnly(domain.container());
+        Command c = new DeleteCommand(currentUser, transaction);
+        return executeCommand(c,domain, null);
+    }
+
+    //TODO
+//    /**
+//     * Invite an user (not yet existing) in project user
+//     * @param sender User who send the invitation
+//     * @param project Project that will be accessed by user
+//     * @param json the name and the mail of the User to add in project
+//     * @return Response structure
+//     */
+//    def inviteUser(Project project, def json) {
+//
+//        def guestUser = [username : json.name, firstname : json.firstname?:'firstname',
+//                         lastname : json.lastname?:'lastname', email : json.mail,
+//                         password : 'passwordExpired', color : "#FF0000"]
+//
+//        secUserService.add(JSON.parse(JSONUtils.toJSONString(guestUser)))
+//        User user = (User) secUserService.findByUsername(guestUser.username)
+//        SecRole secRole = secRoleService.findByAuthority("ROLE_GUEST")
+//        secUserSecRoleService.add(JSON.parse(JSONUtils.toJSONString([ user : user.id, role : secRole.id])))
+//        if (project) {
+//            secUserService.addUserToProject(user, project, false)
+//        }
+//
+//        if (user) {
+//            user.passwordExpired = true
+//            user.save()
+//            ForgotPasswordToken forgotPasswordToken = new ForgotPasswordToken(
+//                    user : user,
+//                    tokenKey: UUID.randomUUID().toString(),
+//                    expiryDate: new Date() + 1
+//            ).save()
+//            def sender = cytomineService.currentUser
+//            notificationService.notifyWelcome(sender, user, forgotPasswordToken)
+//        } else {
+//            throw new ObjectNotFoundException("User with username "+guestUser.username+" not found")
+//        }
+//        return user
+//
+//    }
+
+    protected void afterAdd(CytomineDomain domain, CommandResponse response) {
+        log.info("Add permission on " + domain + " to " + currentUserService.getCurrentUsername());
+        if(!permissionService.hasACLPermission(domain, READ)) {
+            log.info("force to put it in list");
+            permissionService.addPermission(domain, currentUserService.getCurrentUsername(), BasePermission.READ);
+        }
+        if(!permissionService.hasACLPermission(domain, ADMINISTRATION)) {
+            log.info("force to put it in list");
+            permissionService.addPermission(domain, currentUserService.getCurrentUsername(), BasePermission.ADMINISTRATION);
+        }
+
+        if (projectRepresentativeUserService.find((Project)domain, (User)currentUserService.getCurrentUser()).isEmpty()) {
+            log.info("add creator "+currentUserService.getCurrentUsername()+" as representative for project " + domain);
+            ProjectRepresentativeUser pru = new ProjectRepresentativeUser();
+            pru.setProject((Project) domain);
+            pru.setUser((User) currentUserService.getCurrentUser());
+            projectRepresentativeUserService.add(pru.toJsonObject());
+        }
+
+    }
+
+
+    protected void beforeUpdate(CytomineDomain domain) {
+        Project project = (Project)domain;
+        project.setCountAnnotations(annotationDomainRepository.countAllUserAnnotationAndProject(domain.getId()));
+        project.setCountJobAnnotations(annotationDomainRepository.countAllAlgoAnnotationAndProject(domain.getId()));
+        project.setCountReviewedAnnotations(annotationDomainRepository.countAllReviewedAnnotationAndProject(domain.getId()));
+        project.setCountImages(imageInstanceRepository.countAllByProject(project));
+    }
+
+
+    protected void beforeDelete(CytomineDomain domain) {
+        Project project = (Project)domain;
+        commandHistoryRepository.deleteAllByProject(project);
+        commandRepository.deleteAllUndoStackItemByProject(project);
+        commandRepository.deleteAllRedoStackItemByProject(project);
+        commandRepository.deleteAllByProject(project);
+    }
+
+
+    public List<Object> getStringParamsI18n(CytomineDomain domain) {
+        return List.of(domain.getId(), ((Project)domain).getName());
+    }
+
+
+    public void checkDoNotAlreadyExist(CytomineDomain domain){
+        Project project = (Project)domain;
+        if(project!=null && project.getName()!=null) {
+            if(projectRepository.findByName(project.getName()).stream().anyMatch(x -> !Objects.equals(x.getId(), project.getId())))  {
+                throw new AlreadyExistException("Project " + project.getName() + " already exist!");
+            }
+        }
+    }
+
+    public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
+        deleteDependentImageInstance((Project) domain, transaction, task);
+        //TODO: only that? software project? ...
+    }
+
+    private void deleteDependentImageInstance(Project project, Transaction transaction, Task task) {
+         taskService.updateTask(task,(task!=null? "Delete " +imageInstanceRepository.countAllByProject(project)+ " images":""));
+        for (ImageInstance imageInstance : imageInstanceRepository.findAllByProject(project)) {
+            imageInstanceService.delete(imageInstance, transaction, task , false);
+        }
+
     }
 
     @Override
@@ -594,74 +870,6 @@ public class ProjectService extends ModelService {
 
     @Override
     public CytomineDomain createFromJSON(JsonObject json) {
-        return null;
+        return new Project().buildDomainFromJson(json, getEntityManager());
     }
-
-    @Override
-    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        return null;
-    }
-
-    @Override
-    public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        return null;
-    }
-
-
-
-    // working code for ontologies
-
-//    CriteriaBuilder cb = em.getCriteriaBuilder();
-//    CriteriaQuery<Tuple> cq = cb.createTupleQuery();
-//    Root<Ontology> ontology = cq.from(Ontology.class);
-//    Join<Ontology, Project> projects = ontology.join(Ontology_.projects, JoinType.LEFT);
-//        cq.select(cb.tuple(ontology, cb.count(projects)));
-//        cq.groupBy(ontology);
-//        cq.having(cb.greaterThanOrEqualTo(cb.count(projects), 1L));
-//    List<Tuple> result = em.createQuery(cq).getResultList();
-//        for (Tuple t : result) {
-//        Ontology o = (Ontology) t.get(0);
-//        Long cnt = (Long) t.get(1);
-//        System.out.println("Ontology " + o.getName() + " has " + cnt + " projects");
-//    }
-
-}
-
-@Getter
-@Setter
-@Builder
-class ProjectSearchParameter {
-
-    SearchParameterEntry user;
-
-    SearchParameterEntry membersCount;
-
-    SearchParameterEntry countImages;
-
-    SearchParameterEntry countAnnotations;
-
-    SearchParameterEntry countJobAnnotations;
-
-    SearchParameterEntry countReviewedAnnotations;
-
-    SearchParameterEntry ontology;
-
-    SearchParameterEntry project;
-
-    SearchParameterEntry tags;
-
-    SearchParameterEntry members;
-
-    SearchParameterEntry currentUserRole;
-
-}
-
-
-@Getter
-@Setter
-@AllArgsConstructor
-class LastOpenedProject {
-    Long id;
-    Date date;
-    boolean opened;
 }

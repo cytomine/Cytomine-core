@@ -9,8 +9,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import javax.persistence.Tuple;
+import java.math.BigInteger;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long>  {
@@ -35,32 +39,45 @@ public interface ProjectRepository extends JpaRepository<Project, Long>  {
 
 
     @Query(value = "select id, name from creator_project where user_id = :userId", nativeQuery = true)
-    List<NamedCytomineDomain> listByCreator(Long userId);
+    List<Tuple> listByCreator(Long userId);
 
     default List<NamedCytomineDomain> listByCreator(User user) {
-        return listByCreator(user.getId());
+        return listByCreator(user.getId()).stream().map(x -> new NamedCytomineDomain(((BigInteger)x.get(0)).longValue(), (String)x.get(1)))
+                .collect(Collectors.toList());
     }
 
     @Query(value = "select id, name from admin_project where user_id = :userId", nativeQuery = true)
-    List<NamedCytomineDomain> listByAdmin(Long userId);
+    List<Tuple> listByAdmin(Long userId);
 
     default List<NamedCytomineDomain> listByAdmin(User user) {
-        return listByAdmin(user.getId());
+        return listByAdmin(user.getId()).stream().map(x -> new NamedCytomineDomain(((BigInteger)x.get(0)).longValue(), (String)x.get(1)))
+                .collect(Collectors.toList());
     }
 
     @Query(value = "select id, name from user_project where user_id = :userId", nativeQuery = true)
-    List<NamedCytomineDomain> listByUser(Long userId);
+    List<Tuple> listByUser(Long userId);
 
     default List<NamedCytomineDomain> listByUser(User user) {
-        return listByUser(user.getId());
+        return listByUser(user.getId()).stream().map(x -> new NamedCytomineDomain(((BigInteger)x.get(0)).longValue(), (String)x.get(1)))
+                .collect(Collectors.toList());
     }
 
 
     @Query(value = "select id, created as date from project where id NOT IN (:ignoredProjectIds) order by date desc", nativeQuery = true)
-    List<DatedCytomineDomain> listLastCreated(List<Long> ignoredProjectIds);
+    List<Tuple> listLastCreatedTuple(List<Long> ignoredProjectIds);
 
     @Query(value = "select id, created as date from project order by date desc", nativeQuery = true)
-    List<DatedCytomineDomain> listLastCreated();
+    List<Tuple> listLastCreatedTuple();
+
+    default List<DatedCytomineDomain> listLastCreated(List<Long> ignoredProjectIds) {
+        return listLastCreatedTuple(ignoredProjectIds).stream().map(x -> new DatedCytomineDomain(((BigInteger)x.get(0)).longValue(), (Date)x.get(1)))
+                .collect(Collectors.toList());
+    }
+
+    default List<DatedCytomineDomain> listLastCreated() {
+        return listLastCreatedTuple().stream().map(x -> new DatedCytomineDomain(((BigInteger)x.get(0)).longValue(), (Date)x.get(1)))
+                .collect(Collectors.toList());
+    }
 
     List<Project> findAllByOntology(Ontology ontology);
 

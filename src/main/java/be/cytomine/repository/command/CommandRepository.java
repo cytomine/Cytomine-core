@@ -9,9 +9,12 @@ import be.cytomine.domain.security.SecUser;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -57,9 +60,12 @@ public interface CommandRepository extends JpaRepository<Command, Long> {
 
     void deleteAllByProject(Project project);
 
+    @Modifying
+    @Transactional
     @Query("DELETE FROM UndoStackItem usi WHERE usi.command.project = :project")
     void deleteAllUndoStackItemByProject(Project project);
 
+    @Modifying
     @Query("DELETE FROM RedoStackItem usi WHERE usi.command.project = :project")
     void deleteAllRedoStackItemByProject(Project project);
 }
