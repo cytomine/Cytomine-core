@@ -210,6 +210,12 @@ public class BasicInstanceBuilder {
         return ontology;
     }
 
+    public Project given_a_project_with_user(User user) {
+        Project project = given_a_project();
+        addUserToProject(project, user.getUsername(), ADMINISTRATION);
+        return project;
+    }
+
     public Project given_a_project() {
         return persistAndReturn(given_a_project_with_ontology(given_an_ontology()));
     }
@@ -233,7 +239,7 @@ public class BasicInstanceBuilder {
     }
 
     public void addUserToProject(Project project, String username) {
-        permissionService.addPermission(project, username, ADMINISTRATION);
+        permissionService.addPermission(project, username, ADMINISTRATION, this.given_superadmin());
     }
 
     public <T> T persistAndReturn(T instance) {
@@ -495,6 +501,18 @@ public class BasicInstanceBuilder {
         return annotation;
     }
 
+    public UserAnnotation given_a_user_annotation(SliceInstance sliceInstance) {
+        return persistAndReturn(given_a_user_annotation(sliceInstance, given_superadmin()));
+    }
+
+    public UserAnnotation given_a_user_annotation(SliceInstance sliceInstance, User user) {
+        UserAnnotation annotation = given_a_not_persisted_user_annotation();
+        annotation.setSlice(sliceInstance);
+        annotation.setImage(sliceInstance.getImage());
+        annotation.setProject(sliceInstance.getProject());
+        annotation.setUser(user);
+        return persistAndReturn(annotation);
+    }
 
     public UserAnnotation given_a_user_annotation() {
         return persistAndReturn(given_a_not_persisted_user_annotation());
