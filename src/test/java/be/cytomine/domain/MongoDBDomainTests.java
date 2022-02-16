@@ -367,7 +367,6 @@ public class MongoDBDomainTests {
                 "}";
 
         assertThat(objectMapper.readTree(document.toJson())).isEqualTo(objectMapper.readTree(expectedResults));
-
         // fails because in grails version, rotation is a string
     }
 

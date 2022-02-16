@@ -466,6 +466,7 @@ public class AnnotationDomainResourceTests {
                 .andReturn();
     }
 
+    @Disabled("Disabled until Software package is up!")
     @Test
     void list_user_annotation_with_suggested_term() {
         Assertions.fail("todo after job/algoannot/...");
@@ -997,7 +998,7 @@ public class AnnotationDomainResourceTests {
     }
 
 
-
+    @Disabled("Disabled until ReportService is up!")
     @Test
     @Transactional
     public void download_reports_from_listing() throws Exception {

@@ -14,6 +14,7 @@
     <logger name="org." level="trace"/>
     <logger name="com." level="trace"/>
     <logger name="be." level="trace"/>
+    <logger name="ch." level="trace"/>
     <logger name="org.mongodb" level="debug"/>
     <logger name="org.springframework.security" level="debug"/>
 

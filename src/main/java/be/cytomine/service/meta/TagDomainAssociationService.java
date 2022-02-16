@@ -124,7 +124,7 @@ public class TagDomainAssociationService extends ModelService {
     @Override
     public CommandResponse add(JsonObject jsonObject) {
         SecUser currentUser = currentUserService.getCurrentUser();
-
+        securityACLService.checkCurrentUserIsUser();
         CytomineDomain domain = null;
         try {
             domain = (CytomineDomain)getEntityManager()
@@ -155,7 +155,7 @@ public class TagDomainAssociationService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-
+        securityACLService.checkCurrentUserIsUser();
         if(!domain.getClass().getName().contains("AbstractImage")) {
             securityACLService.check(domain.container(),READ);
             CytomineDomain cytomineDomain = getCytomineDomain(((TagDomainAssociation) domain).getDomainClassName(), ((TagDomainAssociation) domain).getDomainIdent());

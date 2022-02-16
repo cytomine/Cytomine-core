@@ -42,8 +42,9 @@ dependencies {
 //	// https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-mongodb
 //	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-mongodb', version: '2.2.9.RELEASE'
 //	implementation 'org.springframework.data:spring-data-mongodb:2.2.9.RELEASE'
+//	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+//	implementation 'org.springframework.data:spring-data-mongodb:2.2.9.RELEASE'
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-
 	implementation "com.zaxxer:HikariCP"
 	implementation "org.postgresql:postgresql"
 

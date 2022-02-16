@@ -279,6 +279,10 @@ public class SecurityACLService {
         }
     }
 
+    public void checkCurrentUserIsUser() {
+        checkUser(currentUserService.getCurrentUser());
+    }
+
     public void checkUser(SecUser user) {
         if (!currentRoleService.isAdminByNow(user) && !currentRoleService.isUserByNow(user)) {
             throw new ForbiddenException("You don't have the right to perform this action! You must be user!");

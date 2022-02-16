@@ -20,6 +20,7 @@ import be.cytomine.utils.JsonObject;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -332,6 +333,7 @@ public class ProjectConnectionResourceTests {
                 .andExpect(status().isOk());
     }
 
+    @Disabled("Disabled until ReportService is up!")
     @Test
     @Transactional
     public void connection_history_with_export_csv() throws Exception {
@@ -361,6 +363,7 @@ public class ProjectConnectionResourceTests {
                 .andExpect(status().isOk());
     }
 
+    @Disabled("Disabled until ReportService is up!")
     @Test
     @Transactional
     public void activity_detail_with_export_csv() throws Exception {

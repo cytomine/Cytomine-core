@@ -90,7 +90,7 @@ public class PropertyService extends ModelService {
     }
 
     public CommandResponse add(JsonObject jsonObject, Transaction transaction, Task task) {
-
+        securityACLService.checkCurrentUserIsUser();
         CytomineDomain domain = null;
         try {
             domain = (CytomineDomain)getEntityManager()
@@ -134,6 +134,7 @@ public class PropertyService extends ModelService {
 
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
+        securityACLService.checkCurrentUserIsUser();
         Property property = (Property)domain;
         if(!property.getDomainClassName().contains("AbstractImage")) {
             securityACLService.check(property.container(),READ);
@@ -157,6 +158,7 @@ public class PropertyService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkCurrentUserIsUser();
         Property property = (Property)domain;
         if(!property.getDomainClassName().contains("AbstractImage")) {
             securityACLService.check(property.container(),READ);

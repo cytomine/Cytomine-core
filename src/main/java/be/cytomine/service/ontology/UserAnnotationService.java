@@ -452,6 +452,7 @@ public class UserAnnotationService extends ModelService {
      */
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(), READ);
         //securityACLService.checkIsSameUserOrAdminContainer(annotation,annotation.user,currentUser)
         securityACLService.checkFullOrRestrictedForOwner(domain, ((UserAnnotation)domain).getUser());

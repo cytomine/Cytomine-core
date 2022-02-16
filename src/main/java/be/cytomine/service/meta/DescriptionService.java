@@ -81,6 +81,7 @@ public class DescriptionService extends ModelService {
     }
 
     public CommandResponse add(JsonObject jsonObject) {
+        securityACLService.checkCurrentUserIsUser();
         if(jsonObject.getJSONAttrStr("domainClassName").equals(Project.class.getName())){
             securityACLService.check(jsonObject.getJSONAttrLong("domainIdent"),jsonObject.getJSONAttrStr("domainClassName"),READ);
             securityACLService.checkIsNotReadOnly(jsonObject.getJSONAttrLong("domainIdent"),jsonObject.getJSONAttrStr("domainClassName"));
@@ -102,7 +103,7 @@ public class DescriptionService extends ModelService {
 
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-
+        securityACLService.checkCurrentUserIsUser();
         Description description = (Description)domain;
         securityACLService.check(description.container(),READ);
 
@@ -117,6 +118,7 @@ public class DescriptionService extends ModelService {
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
+        securityACLService.checkCurrentUserIsUser();
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),READ);
         if (domain.userDomainCreator()!=null) {

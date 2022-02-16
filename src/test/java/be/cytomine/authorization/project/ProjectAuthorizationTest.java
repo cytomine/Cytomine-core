@@ -28,6 +28,7 @@ import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -495,6 +496,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         expectOK(() -> { imageInstanceService.delete(image, null, null, false); });
     }
 
+    @Disabled("wait for software package")
     @Test
     @WithMockUser(username = USER_ACL_ADMIN)
     public void classic_project_with_job_data(){
@@ -849,6 +851,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         expectOK(() -> { imageInstanceService.delete(image, null, null, false); });
     }
 
+    @Disabled("wait for software package")
     @Test
     @WithMockUser(username = SUPERADMIN)
     public void testRestrictedProjectWithJobData() {
@@ -1204,6 +1207,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         expectOK(() -> { imageInstanceService.delete(image, null, null, false); });
     }
 
+    @Disabled("wait for software package")
     @Test
     @WithMockUser(username = SUPERADMIN)
     void testReadOnlyProjectWithJobData() {
