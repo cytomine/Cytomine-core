@@ -94,7 +94,6 @@ public class AttachedFileService extends ModelService {
         if(recipientDomain instanceof Project || !(recipientDomain.container() instanceof Project)) {
             securityACLService.check(domainIdent,domainClassName,WRITE);
         } else {
-            securityACLService.check(domainIdent,domainClassName,WRITE);
             securityACLService.checkFullOrRestrictedForOwner(domainIdent,domainClassName, "user");
         }
 
@@ -119,10 +118,10 @@ public class AttachedFileService extends ModelService {
             throw new ObjectNotFoundException(attachedFile.getDomainClassName(), attachedFile.getDomainIdent());
         }
 
+        securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),READ);
         if(recipientDomain instanceof Project || !(recipientDomain.container() instanceof Project)) {
-            securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),DELETE);
+            securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),WRITE);
         } else {
-            securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),DELETE);
             securityACLService.checkFullOrRestrictedForOwner(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(), "user");
         }
         Command c = new DeleteCommand(currentUser, transaction);

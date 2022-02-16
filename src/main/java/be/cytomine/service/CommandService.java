@@ -6,6 +6,7 @@ import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.CytomineException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.command.CommandRepository;
+import be.cytomine.service.project.ProjectService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import lombok.extern.slf4j.Slf4j;
@@ -91,6 +92,10 @@ public class CommandService {
         //execute command
         CommandResponse result = c.execute(service);
         if (result.getStatus() == successCode) {
+            if ((service instanceof ProjectService && c instanceof DeleteCommand)) {
+                c.setProject(null); // project has been deleted in this command, so we cannot link the command to the deleted project
+            }
+
             List<ValidationError> validationErrors = c.validate();
             if (!validationErrors.isEmpty()) {
                 log.error(validationErrors.toString());

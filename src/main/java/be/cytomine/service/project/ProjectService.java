@@ -14,6 +14,8 @@ import be.cytomine.dto.NamedCytomineDomain;
 import be.cytomine.exceptions.*;
 import be.cytomine.repository.command.CommandHistoryRepository;
 import be.cytomine.repository.command.CommandRepository;
+import be.cytomine.repository.command.RedoStackItemRepository;
+import be.cytomine.repository.command.UndoStackItemRepository;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.repository.project.ProjectRepository;
@@ -123,6 +125,12 @@ public class ProjectService extends ModelService {
 
     @Autowired
     private ImageInstanceService imageInstanceService;
+
+    @Autowired
+    private UndoStackItemRepository undoStackItemRepository;
+
+    @Autowired
+    private RedoStackItemRepository redoStackItemRepository;
 
     @Autowired
     MongoClient mongoClient;
@@ -749,7 +757,8 @@ public class ProjectService extends ModelService {
      * @param printMessage Flag if client will print or not confirm message
      * @return Response structure (code, old domain,..)
      */
-    CommandResponse delete(Project domain, Transaction transaction, Task task, boolean printMessage) {
+    @Override
+    public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),ADMINISTRATION);
         securityACLService.checkIsNotReadOnly(domain.container());
@@ -830,8 +839,8 @@ public class ProjectService extends ModelService {
     protected void beforeDelete(CytomineDomain domain) {
         Project project = (Project)domain;
         commandHistoryRepository.deleteAllByProject(project);
-        commandRepository.deleteAllUndoStackItemByProject(project);
-        commandRepository.deleteAllRedoStackItemByProject(project);
+        undoStackItemRepository.deleteAllByCommand_Project(project);
+        redoStackItemRepository.deleteAllByCommand_Project(project);
         commandRepository.deleteAllByProject(project);
     }
 

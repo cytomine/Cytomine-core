@@ -35,10 +35,6 @@ public class Project extends CytomineDomain {
     @OneToMany(mappedBy = "project")
     private Set<ProjectRepresentativeUser> representativeUsers;
 
-    @OneToMany
-    @JoinColumn(name="id", referencedColumnName = "id")
-    private Set<AdminProjectView> adminProjectViews;
-
     private Boolean blindMode = false;
 
     private Boolean areImagesDownloadable = false;

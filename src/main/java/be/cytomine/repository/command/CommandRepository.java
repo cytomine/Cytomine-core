@@ -59,13 +59,4 @@ public interface CommandRepository extends JpaRepository<Command, Long> {
 
 
     void deleteAllByProject(Project project);
-
-    @Modifying
-    @Transactional
-    @Query("DELETE FROM UndoStackItem usi WHERE usi.command.project = :project")
-    void deleteAllUndoStackItemByProject(Project project);
-
-    @Modifying
-    @Query("DELETE FROM RedoStackItem usi WHERE usi.command.project = :project")
-    void deleteAllRedoStackItemByProject(Project project);
 }

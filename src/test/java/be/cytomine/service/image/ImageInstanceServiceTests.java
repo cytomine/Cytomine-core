@@ -755,6 +755,26 @@ public class ImageInstanceServiceTests {
 
 
 
+    @Test
+    void project_counter() {
+        Project project = builder.given_a_project();
+
+        entityManager.refresh(project);
+        assertThat(project.getCountImages()).isEqualTo(0);
+
+        ImageInstance imageInstance = builder.given_an_image_instance(project);
+
+        entityManager.refresh(project);
+        assertThat(project.getCountImages()).isEqualTo(1);
+
+        entityManager.remove(imageInstance);
+        entityManager.flush();
+
+        entityManager.refresh(project);
+        assertThat(project.getCountImages()).isEqualTo(0);
+
+    }
+
 
 
 

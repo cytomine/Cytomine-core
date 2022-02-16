@@ -530,6 +530,7 @@ public class UserAnnotationService extends ModelService {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(), READ);
         securityACLService.checkUser(currentUser);
+
         securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((UserAnnotation)domain).getUser());
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);

@@ -2,14 +2,9 @@ package be.cytomine.service.project;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.ontology.RelationTerm;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.project.ProjectRepresentativeUserRepository;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.PermissionService;
@@ -24,10 +19,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import javax.transaction.Transactional;
-import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.springframework.security.acls.domain.BasePermission.*;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
@@ -58,7 +51,7 @@ public class ProjectRepresentativeServiceTests {
 
     @Test
     void get_projectRepresentativeUser_with_success() {
-        ProjectRepresentativeUser projectRepresentativeUser = builder.given_an_project_representative_user();
+        ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_project_representative_user();
         assertThat(projectRepresentativeUser).isEqualTo(projectRepresentativeUserService.get(projectRepresentativeUser.getId()));
     }
 
@@ -69,7 +62,7 @@ public class ProjectRepresentativeServiceTests {
 
     @Test
     void find_projectRepresentativeUser_with_success() {
-        ProjectRepresentativeUser projectRepresentativeUser = builder.given_an_project_representative_user();
+        ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_project_representative_user();
         assertThat(projectRepresentativeUserService.find(projectRepresentativeUser.getId()).isPresent());
         assertThat(projectRepresentativeUser).isEqualTo(projectRepresentativeUserService.find(projectRepresentativeUser.getId()).get());
     }
@@ -81,7 +74,7 @@ public class ProjectRepresentativeServiceTests {
 
     @Test
     void find_projectRepresentativeUser_with_project_and_user_with_success() {
-        ProjectRepresentativeUser projectRepresentativeUser = builder.given_an_project_representative_user();
+        ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_project_representative_user();
         assertThat(projectRepresentativeUserService.find(projectRepresentativeUser.getProject(), projectRepresentativeUser.getUser()).isPresent());
         assertThat(projectRepresentativeUser).isEqualTo(projectRepresentativeUserService.find(projectRepresentativeUser.getProject(), projectRepresentativeUser.getUser()).get());
     }
@@ -94,8 +87,8 @@ public class ProjectRepresentativeServiceTests {
 
     @Test
     void list_all_projectRepresentativeUser_by_project_with_success() {
-        ProjectRepresentativeUser projectRepresentativeUser = builder.given_an_project_representative_user();
-        ProjectRepresentativeUser projectRepresentativeUserFromAnotherProject = builder.given_an_project_representative_user();
+        ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_project_representative_user();
+        ProjectRepresentativeUser projectRepresentativeUserFromAnotherProject = builder.given_a_project_representative_user();
         assertThat(projectRepresentativeUser).isIn(projectRepresentativeUserService.listByProject(projectRepresentativeUser.getProject()));
         assertThat(projectRepresentativeUserFromAnotherProject).isNotIn(projectRepresentativeUserService.listByProject(projectRepresentativeUser.getProject()));
 
@@ -133,7 +126,7 @@ public class ProjectRepresentativeServiceTests {
 
     @Test
     void add_already_existing_projectRepresentativeUser_fails() {
-        ProjectRepresentativeUser projectRepresentativeUser = builder.given_an_project_representative_user();
+        ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_project_representative_user();
         Assertions.assertThrows(AlreadyExistException.class, () -> {
             projectRepresentativeUserService.add(projectRepresentativeUser.toJsonObject().withChange("id", null));
         });
@@ -141,7 +134,7 @@ public class ProjectRepresentativeServiceTests {
 
     @Test
     void delete_projectRepresentativeUser_with_success() {
-        ProjectRepresentativeUser projectRepresentativeUser = builder.given_an_project_representative_user();
+        ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_project_representative_user();
 
         CommandResponse commandResponse = projectRepresentativeUserService.delete(projectRepresentativeUser, null, null, true);
 

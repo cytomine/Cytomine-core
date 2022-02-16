@@ -27,4 +27,6 @@ public class MongoConfig implements InitializingBean  {
         mappingMongoConverter.setTypeMapper(new DefaultMongoTypeMapper(null));
     }
 
+
+
 }

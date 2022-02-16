@@ -3,10 +3,10 @@ package be.cytomine.authorization.project;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.authorization.CRDAuthorizationTest;
-import be.cytomine.domain.project.ProjectRepresentativeUser;
+import be.cytomine.domain.project.ProjectDefaultLayer;
 import be.cytomine.domain.security.User;
 import be.cytomine.service.PermissionService;
-import be.cytomine.service.project.ProjectRepresentativeUserService;
+import be.cytomine.service.project.ProjectDefaultLayerService;
 import be.cytomine.service.security.SecurityACLService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,13 +23,13 @@ import java.util.Optional;
 @AutoConfigureMockMvc
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @Transactional
-public class ProjectRepresentativeUserAuthorizationTest extends CRDAuthorizationTest {
+public class ProjectDefaultLayerAuthorizationTest extends CRDAuthorizationTest {
 
 
-    private ProjectRepresentativeUser projectRepresentativeUser = null;
+    private ProjectDefaultLayer projectDefaultLayer = null;
 
     @Autowired
-    ProjectRepresentativeUserService projectRepresentativeUserService;
+    ProjectDefaultLayerService projectDefaultLayerService;
 
     @Autowired
     BasicInstanceBuilder builder;
@@ -42,62 +42,61 @@ public class ProjectRepresentativeUserAuthorizationTest extends CRDAuthorization
 
     @BeforeEach
     public void before() throws Exception {
-        if (projectRepresentativeUser == null) {
-            projectRepresentativeUser = builder.given_a_project_representative_user();
+        if (projectDefaultLayer == null) {
+            projectDefaultLayer = builder.given_a_project_default_layer();
             initUser();
-            initACL(projectRepresentativeUser.container());
+            initACL(projectDefaultLayer.container());
         }
     }
 
     @Test
     @WithMockUser(username = SUPERADMIN)
     public void admin_can_list_project_representative_user() {
-        expectOK (() -> { projectRepresentativeUserService
-                .listByProject(projectRepresentativeUser.getProject()); });
+        expectOK (() -> { projectDefaultLayerService
+                .listByProject(projectDefaultLayer.getProject()); });
     }
 
     @Test
     @WithMockUser(username = USER_ACL_READ)
     public void user_with_read_can_list_project_representative_user(){
-        expectOK (() -> { projectRepresentativeUserService
-                .listByProject(projectRepresentativeUser.getProject()); });
+        expectOK (() -> { projectDefaultLayerService
+                .listByProject(projectDefaultLayer.getProject()); });
     }
 
     @Test
     @WithMockUser(username = USER_NO_ACL)
     public void user_no_acl_cannot_list_project_representative_user(){
         expectForbidden(() -> {
-            projectRepresentativeUserService
-                    .listByProject(projectRepresentativeUser.getProject());
+            projectDefaultLayerService
+                    .listByProject(projectDefaultLayer.getProject());
         });
     }
 
     @Override
     public void when_i_get_domain() {
-        projectRepresentativeUserService.get(projectRepresentativeUser.getId());
-        projectRepresentativeUserService.find(
-                projectRepresentativeUser.getProject(), projectRepresentativeUser.getUser());
+        projectDefaultLayerService.get(projectDefaultLayer.getId());
+        projectDefaultLayerService.find(projectDefaultLayer.getId());
     }
 
     @Override
     protected void when_i_add_domain() {
         User user = builder.given_a_user();
-        builder.addUserToProject(projectRepresentativeUser.getProject(), user.getUsername());
-        projectRepresentativeUserService.add(
+        builder.addUserToProject(projectDefaultLayer.getProject(), user.getUsername());
+        projectDefaultLayerService.add(
                 builder.given_a_not_persisted_project_representative_user(
-                        projectRepresentativeUser.getProject(), user
+                        projectDefaultLayer.getProject(), user
                 ).toJsonObject()
         );
     }
 
     @Override
     protected void when_i_delete_domain() {
-        User user = projectRepresentativeUser.getUser();
-        builder.addUserToProject(projectRepresentativeUser.getProject(), user.getUsername());
-        ProjectRepresentativeUser projectRepresentativeUserToDelete = builder.given_a_not_persisted_project_representative_user(projectRepresentativeUser.getProject(),
+        User user = projectDefaultLayer.getUser();
+        builder.addUserToProject(projectDefaultLayer.getProject(), user.getUsername());
+        ProjectDefaultLayer projectDefaultLayerToDelete = builder.given_a_not_persisted_project_default_layer(projectDefaultLayer.getProject(),
                 user);
-        builder.persistAndReturn(projectRepresentativeUserToDelete);
-        projectRepresentativeUserService.delete(projectRepresentativeUserToDelete, null, null, true);
+        builder.persistAndReturn(projectDefaultLayerToDelete);
+        projectDefaultLayerService.delete(projectDefaultLayerToDelete, null, null, true);
     }
     @Override
     protected Optional<Permission> minimalPermissionForCreate() {

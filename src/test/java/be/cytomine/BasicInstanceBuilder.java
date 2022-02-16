@@ -7,6 +7,7 @@ import be.cytomine.domain.meta.*;
 import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.project.ProjectDefaultLayer;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.SecUserSecRole;
@@ -820,11 +821,11 @@ public class BasicInstanceBuilder {
         return tagDomainAssociation;
     }
 
-    public ProjectRepresentativeUser given_an_project_representative_user() {
+    public ProjectRepresentativeUser given_a_project_representative_user() {
         return persistAndReturn(given_a_not_persisted_project_representative_user(given_a_project(), given_superadmin()));
     }
 
-    public ProjectRepresentativeUser given_an_project_representative_user(Project project, User user) {
+    public ProjectRepresentativeUser given_a_project_representative_user(Project project, User user) {
         return persistAndReturn(given_a_not_persisted_project_representative_user(project, user));
     }
 
@@ -838,5 +839,27 @@ public class BasicInstanceBuilder {
         projectRepresentativeUser.setUser(user);
         projectRepresentativeUser.setProject(project);
         return projectRepresentativeUser;
+    }
+
+
+    public ProjectDefaultLayer given_a_project_default_layer() {
+        return persistAndReturn(given_a_not_persisted_project_default_layer(given_a_project(), given_superadmin()));
+    }
+
+    public ProjectDefaultLayer given_a_project_default_layer(Project project, User user) {
+        return persistAndReturn(given_a_not_persisted_project_default_layer(project, user));
+    }
+
+    public ProjectDefaultLayer given_a_not_persisted_project_default_layer() {
+        return given_a_not_persisted_project_default_layer(given_a_project(), given_superadmin());
+    }
+
+    public ProjectDefaultLayer given_a_not_persisted_project_default_layer(Project project, User user) {
+        addUserToProject(project, user.getUsername());
+        ProjectDefaultLayer projectDefaultLayer = new ProjectDefaultLayer();
+        projectDefaultLayer.setUser(user);
+        projectDefaultLayer.setProject(project);
+        projectDefaultLayer.setHideByDefault(false);
+        return projectDefaultLayer;
     }
 }

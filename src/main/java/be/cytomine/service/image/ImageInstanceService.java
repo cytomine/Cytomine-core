@@ -862,6 +862,7 @@ public class ImageInstanceService extends ModelService {
 
     private void deleteDependentUserAnnotation(ImageInstance image, Transaction transaction, Task task) {
         for (UserAnnotation userAnnotation : userAnnotationRepository.findAllByImage(image)) {
+            log.debug("Delete userAnnotation : " + userAnnotation.getUser());
             userAnnotationService.delete(userAnnotation, transaction, task, false);
         }
     }

@@ -320,8 +320,11 @@ public class SecurityACLService {
     //check if the container (e.g. Project) is not in readonly. If in readonly, only admins can edit this.
     public void checkIsNotReadOnly(CytomineDomain domain) {
         if (domain!=null) {
+            CytomineDomain container = retrieveContainer(domain);
+            log.debug("container " + container);
             boolean readOnly = !retrieveContainer(domain).canUpdateContent();
             boolean containerAdmin = permissionService.hasACLPermission(retrieveContainer(domain),ADMINISTRATION);
+
             if(readOnly && !containerAdmin) {
                 throw new ForbiddenException("The project for this data is in readonly mode! You must be project manager to add, edit or delete this resource in a readonly project.");
             }
@@ -370,12 +373,11 @@ public class SecurityACLService {
                     || currentRoleService.isAdminByNow(currentUserService.getCurrentUser())) return;
 
             CytomineDomain container = retrieveContainer(domain);
-            log.debug("Container is " + container);
-            log.debug("Container2 is " + container.container());
             switch (((Project) retrieveContainer(domain)).getMode()) {
                 case CLASSIC :
                     return;
                 case RESTRICTED :
+                    log.debug("Owner is " + (owner!=null? owner.getUsername() : "null"));
                     if(owner!=null) {
                         if (!Objects.equals(owner.getId(), currentUserService.getCurrentUser().getId())) {
                             throw new ForbiddenException("You don't have the right to do this. You must be the creator or the container admin");

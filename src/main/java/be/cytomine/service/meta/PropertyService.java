@@ -101,15 +101,18 @@ public class PropertyService extends ModelService {
             throw new WrongArgumentException("Property has no associated domain:"+ jsonObject.toJsonString());
         }
 
+        log.debug("check permission: " +  domain);
         if (!domain.getClass().getName().contains("AbstractImage")) {
             if (domain instanceof Project) {
                 securityACLService.check(domain.container(),WRITE);
-            } else {
-                securityACLService.check(domain.container(),READ);
             }
+            log.debug("check if userDomainCreator: " +  domain);
             if (domain.userDomainCreator()!=null) {
+                log.debug("userDomainCreator " + domain.userDomainCreator().getUsername() );
+                log.debug("current user " + currentUserService.getCurrentUsername() );
                 securityACLService.checkFullOrRestrictedForOwner(domain, domain.userDomainCreator());
             } else {
+                log.debug("check if not readonly " + domain);
                 securityACLService.checkIsNotReadOnly(domain);
             }
         }
