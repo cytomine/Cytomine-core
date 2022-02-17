@@ -334,6 +334,11 @@ public abstract class RestCytomineController {
         return JsonObject.toJsonString(o);
     }
 
+
+    public ResponseEntity<String> add(ModelService service, JsonObject json) {
+        return add(service, json, null);
+    }
+
     /**
      * Call add function for this service with the json
      * json parameter can be an array or a single item
@@ -343,12 +348,12 @@ public abstract class RestCytomineController {
      * @param json JSON data
      * @return response
      */
-    public ResponseEntity<String> add(ModelService service, JsonObject json) {
+    public ResponseEntity<String> add(ModelService service, JsonObject json, Task task) {
         try {
 //            if (json instanceof JSONArray) {
 //                responseResult(addMultiple(service, json))
 //            } else {
-            CommandResponse result = addOne(service, json);
+            CommandResponse result = addOne(service, json, task);
             if(result!=null) {
                 return responseSuccess(result);
             }
@@ -360,16 +365,20 @@ public abstract class RestCytomineController {
         return null;
     }
 
+    public ResponseEntity<String> update(ModelService service, JsonObject json) {
+        return update(service, json, null);
+    }
+
     /**
      * Call update function for this service with the json
      * @param service Service for this domain
      * @param json JSON data
      * @return response
      */
-    public ResponseEntity<String> update(ModelService service, JsonObject json) {
+    public ResponseEntity<String> update(ModelService service, JsonObject json, Task task) {
         try {
             CytomineDomain domain =  service.retrieve(json);
-            CommandResponse result = service.update(domain, json);
+            CommandResponse result = service.update(domain, json, null, task);
             return responseSuccess(result);
         } catch (CytomineException e) {
             log.error(e.toString());
@@ -402,6 +411,15 @@ public abstract class RestCytomineController {
      */
     public CommandResponse addOne(ModelService service, JsonObject json) {
         return service.add(json);
+    }
+
+    public CommandResponse addOne(ModelService service, JsonObject json, Task task) {
+        if (task == null) {
+            return service.add(json);
+        } else {
+            return service.add(json, task);
+        }
+
     }
 
     /**

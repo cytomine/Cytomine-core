@@ -40,11 +40,8 @@ public class PersistentConnection extends CytomineSocialDomain {
     protected Date updated;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
     protected Long user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(nullable = true)
     private Long project;
 
     private String session;
@@ -52,5 +49,17 @@ public class PersistentConnection extends CytomineSocialDomain {
     @Override
     public JsonObject toJsonObject() {
         throw new WrongArgumentException("getDataFromDomain is not implemented for this class");
+    }
+
+    @Override
+    public String toString() {
+        return "PersistentConnection{" +
+                "id=" + id +
+                ", created=" + created +
+                ", updated=" + updated +
+                ", user=" + user +
+                ", project=" + project +
+                ", session='" + session + '\'' +
+                '}';
     }
 }

@@ -899,7 +899,7 @@ public class ProjectResourceTests {
                         .param("user", "true"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[?(@.id=='"+project.getId()+"')]").doesNotExist());
+                .andExpect(jsonPath("$.collection[?(@.id=='"+project.getId()+"')]").exists());
 
         restProjectControllerMockMvc.perform(get("/api/user/{id}/project/light.json", user.getId())
                         .param("user", "true"))

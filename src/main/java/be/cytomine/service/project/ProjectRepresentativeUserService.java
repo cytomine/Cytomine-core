@@ -11,6 +11,7 @@ import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.project.ProjectRepresentativeUserRepository;
@@ -104,6 +105,9 @@ public class ProjectRepresentativeUserService extends ModelService {
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
+        if (listByProject(((ProjectRepresentativeUser)domain).getProject()).size()<2) {
+            throw new WrongArgumentException("You cannot remove the last representative role. Add someone else as representative");
+        }
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),WRITE);
         Command c = new DeleteCommand(currentUser, transaction);

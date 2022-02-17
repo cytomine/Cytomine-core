@@ -5,10 +5,12 @@ import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.project.ProjectRepresentativeUserRepository;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
+import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import org.junit.jupiter.api.Assertions;
@@ -20,7 +22,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import javax.transaction.Transactional;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
@@ -48,6 +51,9 @@ public class ProjectRepresentativeServiceTests {
 
     @Autowired
     SecurityACLService securityACLService;
+
+    @Autowired
+    SecUserService secUserService;
 
     @Test
     void get_projectRepresentativeUser_with_success() {
@@ -134,12 +140,89 @@ public class ProjectRepresentativeServiceTests {
 
     @Test
     void delete_projectRepresentativeUser_with_success() {
-        ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_project_representative_user();
-
-        CommandResponse commandResponse = projectRepresentativeUserService.delete(projectRepresentativeUser, null, null, true);
+        ProjectRepresentativeUser projectRepresentativeUser1 = builder.given_a_project_representative_user();
+        ProjectRepresentativeUser projectRepresentativeUser2 = builder.given_a_project_representative_user(projectRepresentativeUser1.getProject(), builder.given_a_user());
+        CommandResponse commandResponse = projectRepresentativeUserService.delete(projectRepresentativeUser1, null, null, true);
 
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);
-        assertThat(projectRepresentativeUserService.find(projectRepresentativeUser.getId()).isEmpty());
+        assertThat(projectRepresentativeUserService.find(projectRepresentativeUser1.getId()).isEmpty());
     }
+
+
+    @Test
+    void delete_projectRepresentativeUser_refused_if_only_one_representative() {
+        ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_project_representative_user();
+
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
+            projectRepresentativeUserService.delete(projectRepresentativeUser, null, null, true);
+        });
+    }
+
+
+    @Test
+    void deleting_last_representative_user_from_project_will_grant_current_user_as_representative() {
+        ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_project_representative_user(
+                builder.given_a_project(), builder.given_a_user()
+        );
+
+        assertThat(projectRepresentativeUserService.listByProject(projectRepresentativeUser.getProject())).hasSize(1);
+
+
+        secUserService.deleteUserFromProject(projectRepresentativeUser.getUser(), projectRepresentativeUser.getProject(), false);
+
+
+        assertThat(projectRepresentativeUserService.listByProject(projectRepresentativeUser.getProject())).hasSize(1);
+        assertThat(projectRepresentativeUserService.find(projectRepresentativeUser.getProject(), projectRepresentativeUser.getUser())).isEmpty();
+        assertThat(projectRepresentativeUserService.find(projectRepresentativeUser.getProject(), builder.given_superadmin())).isPresent();
+    }
+
+
+
+
+
+
+//
+//    void testRefuseToRemoveLastRepresentativeUser() {
+//        def user = BasicInstanceBuilder.getSuperAdmin(Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+//        def anotherUser = BasicInstanceBuilder.getUser2()
+//
+//        def result = ProjectAPI.create(BasicInstanceBuilder.getProjectNotExist().encodeAsJSON(),Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+//        Project project = result.data
+//
+//        def refToAdd = BasicInstanceBuilder.getProjectRepresentativeUserNotExist()
+//        refToAdd.setProject(project)
+//        refToAdd.setUser(anotherUser)
+//        Infos.addUserRight(anotherUser, project)
+//        result = ProjectRepresentativeUserAPI.create(refToAdd.encodeAsJSON(), Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+//        assert 200 == result.code // first creation
+//
+//        result = ProjectRepresentativeUserAPI.list(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+//        assert 200 == result.code
+//        def json = JSON.parse(result.data)
+//        assert json.collection instanceof JSONArray
+//        assert json.collection.collect{it.user+""}.contains(user.id+"")
+//        assert json.collection.collect{it.user+""}.contains(anotherUser.id+"")
+//
+//        result = ProjectRepresentativeUserAPI.deleteByUser(user.id, project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+//        assert 200 == result.code // it should be possible as there is another representative
+//
+//        result = ProjectRepresentativeUserAPI.list(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+//        assert 200 == result.code
+//        json = JSON.parse(result.data)
+//        assert json.collection instanceof JSONArray
+//        assert !json.collection.collect{it.user+""}.contains(user.id+"")
+//        assert json.collection.collect{it.user+""}.contains(anotherUser.id+"")
+//
+//        result =  ProjectAPI.deleteUserProject(project.id, anotherUser.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+//        assert 200 == result.code
+//
+//        // current user (superadmin) should now have the representative role
+//        result = ProjectRepresentativeUserAPI.list(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+//        assert 200 == result.code
+//        json = JSON.parse(result.data)
+//        assert json.collection instanceof JSONArray
+//        assert json.collection.collect{it.user+""}.contains(user.id+"")
+//        assert !json.collection.collect{it.user+""}.contains(anotherUser.id+"")
+//    }
 }

@@ -598,11 +598,14 @@ public class ProjectServiceTests {
                 .containsExactly(builder.given_superadmin().getUsername());
 
         assertThat(permissionService.hasACLPermission(projectCreated, builder.given_superadmin().getUsername(), ADMINISTRATION)).isTrue();
+
+        assertThat(projectRepresentativeUserService.find(projectCreated, builder.given_superadmin())).isPresent();
     }
 
     @Test
     void add_project_with_users_and_admins() {
         Project project = BasicInstanceBuilder.given_a_not_persisted_project();
+        project.setOntology(builder.given_an_ontology());
         User user = builder.given_a_user();
         User admin = builder.given_a_user();
 

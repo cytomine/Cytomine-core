@@ -594,11 +594,10 @@ public class SecUserService extends ModelService {
                 permissionService.deletePermission(project, user.getUsername(), READ);
             }
 
-            projectRepresentativeUserService.find(project, (User)user)
-                    .ifPresent(x -> projectRepresentativeUserService.delete(x, null, null, false));
+
 
             // if no representative, add current user as a representative
-            if (projectRepresentativeUserService.listByProject(project).size()==0) {
+            if (projectRepresentativeUserService.listByProject(project).size()==1) {
                 if (!securityACLService.getProjectList(currentUserService.getCurrentUser(), null).contains(project)) {
                     // if current user is not in project (= SUPERADMIN), add to the project
                     addUserToProject(currentUserService.getCurrentUser(), project, true);
@@ -608,6 +607,10 @@ public class SecUserService extends ModelService {
                 pru.setProject(project);
                 pru.setUser((User) currentUserService.getCurrentUser());
                 projectRepresentativeUserService.add(pru.toJsonObject());
+
+                projectRepresentativeUserService.find(project, (User)user)
+                        .ifPresent(x -> projectRepresentativeUserService.delete(x, null, null, false));
+
             }
             log.info("deleteUserFromProject " + permissionService.hasACLPermission(project, user.getUsername(), ADMINISTRATION));
         }

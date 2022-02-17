@@ -70,7 +70,9 @@ public class BasicInstanceBuilder {
             SecRoleRepository secRoleRepository,
             MimeRepository mimeRepository,
             ApplicationBootstrap applicationBootstrap) {
-        applicationBootstrap.init();
+        if (secRoleRepository.count()==0) {
+            applicationBootstrap.init();
+        }
         this.em = em;
         this.secUserRepository = secUserRepository;
         this.permissionService = permissionService;

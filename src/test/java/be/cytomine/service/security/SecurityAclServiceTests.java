@@ -90,15 +90,5 @@ public class SecurityAclServiceTests {
     }
 
 
-//    public boolean isUserInProject(User user, Project project) {
-//        this.check(project,READ);
-//        return (aclRepository.countEntries(project.getId(), user.getId()) > 0);
-//    }
-//
-//    public void checkIsUserInProject(User user, Project project) {
-//        boolean result = isUserInProject(user, project);
-//        if(!result) {
-//            throw new ConstraintException("Error: the user "+user.getId()+" is not into the project "+project.getId());
-//        }
-//    }
+
 }
