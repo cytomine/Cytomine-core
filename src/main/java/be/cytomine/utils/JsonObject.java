@@ -85,6 +85,18 @@ public class JsonObject extends HashMap<String, Object> {
         return jsonObject;
     }
 
+    public static JsonObject of(String key, Object value, String key2, Object value2, String key3, Object value3, String key4, Object value4, String key5, Object value5, String key6, Object value6, String key7, Object value7) {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.put(key, value);
+        jsonObject.put(key2, value2);
+        jsonObject.put(key3, value3);
+        jsonObject.put(key4, value4);
+        jsonObject.put(key5, value5);
+        jsonObject.put(key6, value6);
+        jsonObject.put(key7, value7);
+        return jsonObject;
+    }
+
     public String toJsonString() {
         return toJsonString(this);
     }

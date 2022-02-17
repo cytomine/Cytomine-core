@@ -9,6 +9,7 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
+import be.cytomine.domain.social.PersistentConnection;
 import be.cytomine.dto.DatedCytomineDomain;
 import be.cytomine.dto.NamedCytomineDomain;
 import be.cytomine.exceptions.*;
@@ -19,13 +20,12 @@ import be.cytomine.repository.command.UndoStackItemRepository;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.repository.project.ProjectRepository;
-import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repository.security.UserRepository;
+import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
-import be.cytomine.service.dto.ImageInstanceBounds;
 import be.cytomine.service.dto.ProjectBounds;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.ontology.AlgoAnnotationTermService;
@@ -43,7 +43,6 @@ import be.cytomine.utils.filters.SearchParameterProcessed;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Accumulators;
-import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.bson.Document;
@@ -179,19 +178,24 @@ public class ProjectService extends ModelService {
      */
     public List<Map<String, Object>> listLastOpened(User user, Long max) {
         securityACLService.checkIsSameUser(user,currentUserService.getCurrentUser());
-
+        if (max == null || max == 0L) {
+            max = 5L;
+        }
         List<Bson> requests = new ArrayList<>();
         requests.add(match(eq("user", user.getId())));
         requests.add(group("$project", Accumulators.max("date", "$created")));
         requests.add(sort(descending("date")));
-        requests.add(limit(max==null ? 5 : max.intValue()));
+        requests.add(limit(max.intValue()));
 
         MongoCollection<Document> persistentImageConsultation = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentProjectConnection");
 
         List<Document> results = persistentImageConsultation.aggregate(requests)
                 .into(new ArrayList<>());
+
+
         List<Map<String, Object>> data = results.stream().map(x -> JsonObject.of("id", x.get("_id"), "date", x.get("date"), "opened", true))
                 .collect(Collectors.toList());
+
         if (data.size()<max) {
             //user has open less than max project, so we add last created project
             List<DatedCytomineDomain> unopened = data.isEmpty() ?
@@ -203,8 +207,8 @@ public class ProjectService extends ModelService {
 
         }
         data.sort(Comparator.comparing(o -> ((Map<String, Object>) o).get("date")!=null ? (Date) ((Map<String, Object>) o).get("date") : new Date(0)).reversed());
+
         data = data.subList(0, Math.min(data.size(), max.intValue()));
-        log.debug(data.toString());
         return data;
     }
 
@@ -267,7 +271,7 @@ public class ProjectService extends ModelService {
                     validParameters.add(new SearchParameterEntry(property, parameter.getOperation(), parameter.getValue()));
                     break;
                 case "tag" :
-                    property = "tda.tag_id";
+                    property = "t.tag_id";
                     parameter.setValue(SQLSearchParameter.convertSearchParameter(Long.class, parameter.getValue(), getEntityManager()));
                     validParameters.add(new SearchParameterEntry(property, parameter.getOperation(), parameter.getValue()));
                     break;
@@ -300,17 +304,15 @@ public class ProjectService extends ModelService {
                     "JOIN acl_object_identity as aclObjectId ON aclObjectId.object_id_identity = p.id " +
                     "JOIN acl_entry as aclEntry ON aclEntry.acl_object_identity = aclObjectId.id " +
                     "JOIN acl_sid as aclSid ON aclEntry.sid = aclSid.id ";
-            where = "WHERE aclSid.sid like '"+user.getUsername()+"' and p.deleted is null ";
+            where = "WHERE aclSid.sid like '"+user.getUsername()+"' ";
         }
         else {
             select = "SELECT DISTINCT(p.id) as distinctId, p.* ";
             from = "FROM project p ";
-            where = "WHERE p.deleted is null ";
+            where = "WHERE true ";
         }
         select += ", ontology.name as ontology_name, ontology.id as ontology ";
         from += "LEFT OUTER JOIN ontology ON p.ontology_id = ontology.id ";
-        select += ", discipline.name as discipline_name, discipline.id as discipline ";
-        from += "LEFT OUTER JOIN discipline ON p.discipline_id = discipline.id ";
 
         search = "";sort = "";
         if(!project.isBlank()){
@@ -324,7 +326,7 @@ public class ProjectService extends ModelService {
         }
 
         if(!tags.isBlank()){
-            from += "LEFT OUTER JOIN tag_domain_association t ON p.id = t.domain_ident AND t.domain_class_name = 'be.cytomine.project.Project' "; //TODO: change class path
+            from += "LEFT OUTER JOIN tag_domain_association t ON p.id = t.domain_ident AND t.domain_class_name = 'be.cytomine.domain.project.Project' "; //TODO: change class path
             search +=" AND ";
             search += tags;
         }
@@ -366,7 +368,7 @@ public class ProjectService extends ModelService {
 
             SearchParameterEntry searchedRole = searchParameters.stream().filter(x -> x.getProperty().equals("currentUserRole")).findFirst().orElse(null);
             if(searchedRole!=null) {
-                String value = ((String)searchedRole.getValue());
+                List<String> value = (searchedRole.getValue() instanceof String? List.of((String)searchedRole.getValue()) : ((List)searchedRole.getValue()));
                 if(value.contains("manager") && value.contains("contributor")){} // nothing because null or not null
                 else if(value.contains("manager")) {
                     search += " AND admin_project.id IS NOT NULL  ";
@@ -473,6 +475,61 @@ public class ProjectService extends ModelService {
         return page;
 
     }
+
+    public List<JsonObject> findCommandHistory(List<Project> projects, Long user, Long max, Long offset,
+                                               Boolean fullData, Long startDate, Long endDate) {
+
+        if (max == 0) {
+            max = Long.MAX_VALUE;
+        }
+
+        String select = "SELECT ch.id as id, ch.created as created, ch.message as message, " +
+                "ch.prefix_action as prefixAction, ch.user_id as user, ch.project_id as project ";
+        String from = "FROM command_history ch ";
+        String where = "WHERE true " +
+                (projects!=null? "AND ch.project_id IN ("+projects.stream().map(x -> x.getId().toString()).collect(Collectors.joining(","))+") " : " ") +
+                (user!=null? "AND ch.user_id =  "+user+" " : " ") +
+                (startDate!=null ? "AND ch.created > '"+new Date(startDate)+"' " : "") +
+                (endDate!=null ? "AND ch.created < '"+new Date(endDate)+"' " : "");
+        String orderBy = "ORDER BY ch.created desc LIMIT "+max+" OFFSET " + offset;
+
+        if(fullData) {
+            select += ", c.data as data,c.service_name as serviceName, " +
+                    "c.class as className, c.action_message as actionMessage, u.username as username ";
+            from += "LEFT JOIN command c ON ch.command_id = c.id " +
+                    "LEFT JOIN sec_user u ON u.id = ch.user_id ";
+        }
+
+        List<JsonObject> data = new ArrayList<>();
+        Long start = System.currentTimeMillis();
+
+        Query nativeQuery = getEntityManager().createNativeQuery(select + from + where + orderBy, Tuple.class);
+        List<Tuple> resultList = nativeQuery.getResultList();
+        for (Tuple tuple : resultList) {
+            if(data.isEmpty()) {
+                start = System.currentTimeMillis();
+            }
+            JsonObject jsonObject = JsonObject.of(
+                  "id", tuple.get("id"),
+                  "created", tuple.get("created"),
+                  "message", tuple.get("message"),
+                  "prefix", tuple.get("prefixAction"),
+                  "prefixAction", tuple.get("prefixAction"),
+                  "user", tuple.get("user"),
+                  "project", tuple.get("project"));
+
+            if(fullData) {
+                jsonObject.put("data", tuple.get("data"));
+                jsonObject.put("serviceName", tuple.get("serviceName"));
+                jsonObject.put("className", tuple.get("className"));
+                jsonObject.put("action", tuple.get("actionMessage") + " by " +  tuple.get("username"));
+            }
+            data.add(jsonObject);
+        }
+        return data;
+    }
+
+
 
     public List<Project> listByOntology(Ontology ontology) {
         return projectRepository.findAllProjectForUserByOntology(currentUserService.getCurrentUsername(),ontology);
@@ -739,13 +796,18 @@ public class ProjectService extends ModelService {
         List<Document> results = persistentImageConsultation.aggregate(requests)
                 .into(new ArrayList<>());
 
-        List<Map<String, Object>> tmp = results.stream().map(x -> JsonObject.of("project", x.get("_id"), "users", x.get("users"))).collect(Collectors.toList());
+        List<JsonObject> tmp = results.stream().map(x -> JsonObject.of("project", x.get("_id"), "users", x.get("users"))).collect(Collectors.toList());
 
         List<Project> projects = projectRepository.findAllByIdIn(tmp.stream().map(x-> (Long)x.get("project")).collect(Collectors.toList()));
 
-
-        return projects.stream().map(x -> JsonObject.of("project", x, "users",
-                tmp.stream().filter(entry -> entry.get("project")==x.getId()).findFirst().orElse(new HashMap<>()).get("users"))).collect(Collectors.toList());
+        List<Map<String, Object>> data = new ArrayList<>();
+        for (Project project : projects) {
+            JsonObject jsonObject = JsonObject.of("project", project);
+            Optional<JsonObject> optEntry = tmp.stream().filter(entry -> Objects.equals(project.getId(), entry.getJSONAttrLong("project"))).findFirst();
+            jsonObject.put("users", optEntry.orElse(new JsonObject()).get("users"));
+            data.add(jsonObject);
+        }
+        return data;
     }
 
 
@@ -881,4 +943,7 @@ public class ProjectService extends ModelService {
     public CytomineDomain createFromJSON(JsonObject json) {
         return new Project().buildDomainFromJson(json, getEntityManager());
     }
+
+
+
 }

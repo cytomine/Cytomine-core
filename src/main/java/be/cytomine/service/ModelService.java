@@ -383,7 +383,11 @@ public abstract class ModelService<T extends CytomineDomain> {
     }
 
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction, Task task) {
-        throw new CytomineMethodNotYetImplementedException("No update method implemented with task");
+        if (task==null) {
+            return update(domain, jsonNewData, transaction);
+        } else {
+            throw new CytomineMethodNotYetImplementedException("No update method implemented with task");
+        }
     }
 
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {

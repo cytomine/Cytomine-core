@@ -270,6 +270,32 @@ public class ProjectServiceTests {
         assertThat(page.getContent().get(1).get("id")).isEqualTo(project2.getId());
     }
 
+    @Test
+    void list_command_history_for_project() {
+        Project project1 = builder.given_a_project();
+        Project project2 = builder.given_a_project();
+        UserAnnotation userAnnotation1 = builder.given_a_not_persisted_user_annotation(project1);
+        UserAnnotation userAnnotation2 = builder.given_a_not_persisted_user_annotation(project2);
+        userAnnotationService.add(userAnnotation1.toJsonObject());
+        userAnnotationService.add(userAnnotation2.toJsonObject());
+
+        assertThat(projectService.findCommandHistory(List.of(project1, project2), builder.given_superadmin().getId(), 0L, 0L, true, null, null))
+                .hasSize(2);
+
+        assertThat(projectService.findCommandHistory(List.of(project1, project2), null, 0L, 0L, true, null, null))
+                .hasSize(2);
+
+        assertThat(projectService.findCommandHistory(List.of(project1), builder.given_superadmin().getId(), 0L, 0L, false, null, null))
+                .hasSize(1);
+
+
+        assertThat(projectService.findCommandHistory(List.of(project1), builder.given_superadmin().getId(), 0L, 0L, true, DateUtils.addSeconds(new Date(), 10).getTime(), null))
+                .hasSize(0);
+
+        assertThat(projectService.findCommandHistory(List.of(project1), builder.given_superadmin().getId(), 0L, 0L, true, DateUtils.addSeconds(new Date(), -10).getTime(), DateUtils.addSeconds(new Date(), +10).getTime()))
+                .hasSize(1);
+
+    }
 
 
     @Test
@@ -556,7 +582,7 @@ public class ProjectServiceTests {
 
 
 
-        @Test
+    @Test
     void add_project() {
         Project project = BasicInstanceBuilder.given_a_not_persisted_project();
 
@@ -595,6 +621,10 @@ public class ProjectServiceTests {
         assertThat(permissionService.hasACLPermission(projectCreated, user.getUsername(), READ)).isTrue();
         assertThat(permissionService.hasACLPermission(projectCreated, admin.getUsername(), ADMINISTRATION)).isTrue();
         assertThat(permissionService.hasACLPermission(projectCreated, admin.getUsername(), READ)).isTrue();
+
+        // check ontology access
+        assertThat(permissionService.hasACLPermission(projectCreated.getOntology(), user.getUsername(), READ)).isTrue();
+        assertThat(permissionService.hasACLPermission(projectCreated.getOntology(), admin.getUsername(), READ)).isTrue();
     }
 
     @Test
@@ -763,10 +793,7 @@ public class ProjectServiceTests {
         given_a_persistent_connection_in_project(builder.given_superadmin(), project1, DateUtils.addSeconds(new Date(), -10));
         given_a_persistent_connection_in_project(user1, project2, DateUtils.addSeconds(new Date(), -5));
         
-        assertThat(projectService.getActiveProjectsWithNumberOfUsers()).hasSize(1);
-        assertThat(projectService.getActiveProjectsWithNumberOfUsers().get(0).get("project")).isEqualTo(project2);
-        assertThat(projectService.getActiveProjectsWithNumberOfUsers().get(0).get("users")).isEqualTo(2);
-        
+        assertThat(projectService.getActiveProjectsWithNumberOfUsers()).hasSize(2);
     }
 
     @Test
