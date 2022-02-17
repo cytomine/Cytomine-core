@@ -83,14 +83,15 @@ public class BasicInstanceBuilder {
         this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
-                given_default_user();
+                defaultUser = (User) secUserRepository.findByUsernameLikeIgnoreCase("user")
+                        .orElseGet(() -> given_default_user());
             }
         });
     }
 
     public User given_default_user() {
         if (defaultUser == null) {
-            defaultUser = given_a_user();
+            defaultUser = given_a_user("user");
         }
         return defaultUser;
     }
@@ -99,10 +100,21 @@ public class BasicInstanceBuilder {
         return given_a_user(randomString());
     }
 
+    public User given_a_guest() {
+        return given_a_guest(randomString());
+    }
+
     public User given_a_user(String username) {
         User user = persistAndReturn(given_a_user_not_persisted());
         user.setUsername(username);
         addRole(user, ROLE_USER);
+        return user;
+    }
+
+    public User given_a_guest(String username) {
+        User user = persistAndReturn(given_a_user_not_persisted());
+        user.setUsername(username);
+        addRole(user, ROLE_GUEST);
         return user;
     }
 
@@ -864,4 +876,6 @@ public class BasicInstanceBuilder {
         projectDefaultLayer.setHideByDefault(false);
         return projectDefaultLayer;
     }
+
+
 }

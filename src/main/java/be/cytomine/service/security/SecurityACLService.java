@@ -97,7 +97,7 @@ public class SecurityACLService {
 
     public void checkIsAdminContainer(CytomineDomain domain, SecUser currentUser) {
         if (domain!=null) {
-            if (!hasPermission(retrieveContainer(domain), ADMINISTRATION, currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
+            if (!hasPermission(retrieveContainer(domain), ADMINISTRATION, currentRoleService.isAdminByNow(currentUser))) {
                 throw new ForbiddenException("You don't have the right to do this. You must be the creator or the container admin");
             }
         } else {
@@ -106,28 +106,7 @@ public class SecurityACLService {
 
     }
 
-    private CytomineDomain retrieveContainer(CytomineDomain domain) {
-        if (domain.container() instanceof GenericCytomineDomainContainer) {
-            try {
-                Class className = Class.forName(((GenericCytomineDomainContainer) domain.container()).getContainerClass());
-                CytomineDomain parent = ((CytomineDomain)entityManager.find(className, domain.container().getId()));
-                return parent.container();
-            } catch (ClassNotFoundException e) {
-                throw new WrongArgumentException("Cannot load " + domain);
-            }
-        }
-        return domain.container();
-    }
 
-    //    public void check(Long id, Class className, String method, Permission permission) {
-//        CytomineDomain domain = (CytomineDomain)entityManager.find(className, id);
-//        if (domain!=null) {
-//            def containerObject = simpleObject."$method"()
-//            check(containerObject,permission)
-//        } else {
-//            throw new ObjectNotFoundException("ACL error: ${className} with id ${id} was not found! Unable to process auth checking")
-//        }
-//    }
     public void check(CytomineDomain domain, Permission permission, SecUser currentUser) {
         if (domain!=null) {
             if (!hasPermission(retrieveContainer(domain), permission, currentRoleService.isAdminByNow(currentUser))) {
@@ -142,7 +121,6 @@ public class SecurityACLService {
         check(domain, permission, currentUserService.getCurrentUser());
 
     }
-
 
     /**
      * Check if user has permission on the curret domain
@@ -159,21 +137,6 @@ public class SecurityACLService {
         return right;
     }
 
-
-//    /**
-//     * Check if user has ACL entry for this permission and this domain.
-//     * IT DOESN'T CHECK IF CURRENT USER IS ADMIN
-//     * @param permission Permission to check (READ,...)
-//     * @return true if user has this permission on current domain
-//     */
-//    boolean hasACLPermission(Permission permission) {
-//        try {
-//            return hasACLPermission(this,permission);
-//        } catch (Exception e) {}
-//        return false;
-//    }
-
-
     public boolean hasRightToReadAbstractImageWithProject(AbstractImage image) {
         if(currentRoleService.isAdminByNow(currentUserService.getCurrentUser())) {
             return true;
@@ -187,7 +150,6 @@ public class SecurityACLService {
         }
         return false;
     }
-
 
     public List<Storage> getStorageList(SecUser user, boolean adminByPass) {
         return getStorageList(user, adminByPass, null);
@@ -230,8 +192,6 @@ public class SecurityACLService {
     }
 
 
-
-
     public List<String> getProjectUsers(Project project) {
         // adminByPass TODO
         // userjob.user TODO
@@ -259,15 +219,10 @@ public class SecurityACLService {
         return ontologies;
     }
 
-
-    public void checkIsCurrentUserSameUser(SecUser user) {
-        checkIsSameUser(user, currentUserService.getCurrentUser());
-    }
-
     public void checkIsSameUser(SecUser user,SecUser currentUser) {
-        boolean sameUser = (user.getId() == currentUser.getId());
+        boolean sameUser = (Objects.equals(user.getId(), currentUser.getId()));
         sameUser |= currentRoleService.isAdminByNow(currentUser);
-        sameUser |= (currentUser instanceof UserJob && user.getId()==((UserJob)currentUser).getUser().getId());
+        sameUser |= (currentUser instanceof UserJob && Objects.equals(user.getId(), ((UserJob) currentUser).getUser().getId()));
         if (!sameUser) {
             throw new ForbiddenException("You don't have the right to read this resource! You must be the same user!");
         }
@@ -460,4 +415,16 @@ public class SecurityACLService {
         }
     }
 
+    private CytomineDomain retrieveContainer(CytomineDomain domain) {
+        if (domain.container() instanceof GenericCytomineDomainContainer) {
+            try {
+                Class className = Class.forName(((GenericCytomineDomainContainer) domain.container()).getContainerClass());
+                CytomineDomain parent = ((CytomineDomain)entityManager.find(className, domain.container().getId()));
+                return parent.container();
+            } catch (ClassNotFoundException e) {
+                throw new WrongArgumentException("Cannot load " + domain);
+            }
+        }
+        return domain.container();
+    }
 }
