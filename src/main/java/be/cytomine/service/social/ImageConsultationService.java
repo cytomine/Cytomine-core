@@ -216,10 +216,10 @@ public class ImageConsultationService {
         return persistentImageConsultationRepository.findAllByProjectAndUser(project.getId(), user.getId(), PageRequest.of(0, max, Sort.Direction.DESC, "created"));
     }
 
-    public List<Map<String, Object>> listImageConsultationByProjectAndUserWithDistinctImage(Project project, SecUser user) {
+    public List<JsonObject> listImageConsultationByProjectAndUserWithDistinctImage(Project project, SecUser user) {
         securityACLService.checkIsSameUserOrAdminContainer(project, user, currentUserService.getCurrentUser());
         List<Bson> requests = new ArrayList<>();
-        List<Map<String, Object>> data = new ArrayList<>();
+        List<JsonObject> data = new ArrayList<>();
 
         requests.add(match(eq("user", user.getId())));
         requests.add(match(eq("project", project.getId())));
@@ -263,13 +263,13 @@ public class ImageConsultationService {
                 //if user has data but has no access to picture,  ImageInstance.read will throw a forbiddenException
             }
         }
-        data.sort(Comparator.comparing(o -> (Date) ((Map<String, Object>) o).get("created")).reversed());
+        data.sort(Comparator.comparing(o -> (Date) ((JsonObject) o).get("created")).reversed());
         return data;
     }
 
-    public List<Map<String, Object>> lastImageOfUsersByProject(Project project, List<Long> userIds, String sortProperty, String sortDirection, Long max, Long offset) {
+    public List<JsonObject> lastImageOfUsersByProject(Project project, List<Long> userIds, String sortProperty, String sortDirection, Long max, Long offset) {
         securityACLService.check(project, READ);
-        List<Map<String, Object>> data = new ArrayList<>();
+        List<JsonObject> data = new ArrayList<>();
         List<Bson> matchsFilters = new ArrayList<>();
         matchsFilters.add(match(eq("project", project.getId())));
         if (userIds != null) {
@@ -316,8 +316,8 @@ public class ImageConsultationService {
     /**
      * return the last Image Of users in a Project. If a user (in the userIds array) doesn't have consulted an image yet, null values will be associated to the user id.
      */
-    public List<Map<String, Object>> lastImageOfGivenUsersByProject(Project project, List<Long> userIds, String sortProperty, String sortDirection, Long max, Long offset) {
-        List<Map<String, Object>> results = new ArrayList<>();
+    public List<JsonObject> lastImageOfGivenUsersByProject(Project project, List<Long> userIds, String sortProperty, String sortDirection, Long max, Long offset) {
+        List<JsonObject> results = new ArrayList<>();
 
         //        def connected = PersistentProjectConnection.createCriteria().list(sort: "user", order: sortDirection) {
 //            eq("project", project)
@@ -344,7 +344,7 @@ public class ImageConsultationService {
         List<Long> unconnectedIds = new ArrayList<>(userIds);
         unconnectedIds.removeAll(connected);
 
-        List<Map<String, Object>> unconnected = unconnectedIds.stream().map(x -> Map.of("user", (Object) x)).collect(Collectors.toList());
+        List<JsonObject> unconnected = unconnectedIds.stream().map(x -> JsonObject.of("user", (Object) x)).collect(Collectors.toList());
 
         if (max == 0) {
             max = unconnected.size() + connected.size() - offset;
@@ -376,12 +376,12 @@ public class ImageConsultationService {
     }
 
 
-    public List<Map<String, Object>> getImagesOfUsersByProjectBetween(User user, Project project, Date after, Date before) {
+    public List<JsonObject> getImagesOfUsersByProjectBetween(User user, Project project, Date after, Date before) {
         return getImagesOfUsersByProjectBetween(user.getId(), project.getId(), after, before);
     }
 
-    public List<Map<String, Object>> getImagesOfUsersByProjectBetween(Long userId, Long projectId, Date after, Date before) {
-        List<Map<String, Object>> data = new ArrayList<>();
+    public List<JsonObject> getImagesOfUsersByProjectBetween(Long userId, Long projectId, Date after, Date before) {
+        List<JsonObject> data = new ArrayList<>();
         List<Bson> requests = new ArrayList<>();
         if (after != null) {
             requests.add(match(gte("created", after)));
@@ -421,7 +421,7 @@ public class ImageConsultationService {
 
     }
 
-    public List<Map<String, Object>> resumeByUserAndProject(Long userId, Long projectId) {
+    public List<JsonObject> resumeByUserAndProject(Long userId, Long projectId) {
         Project project = projectRepository.findById(projectId).orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
         securityACLService.check(project, READ);
 //        // groupByImageId et get last imagename et imagethumb et
@@ -446,7 +446,7 @@ public class ImageConsultationService {
                 Accumulators.last("imageThumb", "$imageThumb")));
 
 
-        List<Map<String, Object>> data = new ArrayList<>();
+        List<JsonObject> data = new ArrayList<>();
 
         MongoCollection<Document> persistentImageConsultation = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentImageConsultation");
 
@@ -514,7 +514,7 @@ public class ImageConsultationService {
         requests.add(sort(descending("date")));
         requests.add(limit(max == null || max ==0 ? 5 : max.intValue()));
 
-        List<Map<String, Object>> data = new ArrayList<>();
+        List<JsonObject> data = new ArrayList<>();
 
         MongoCollection<Document> persistentImageConsultation = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentImageConsultation");
 
@@ -537,7 +537,7 @@ public class ImageConsultationService {
             }
 
         }
-        data.sort(Comparator.comparing(o -> (Date) ((Map<String, Object>) o).get("date")).reversed());
+        data.sort(Comparator.comparing(o -> (Date) ((JsonObject) o).get("date")).reversed());
         return data;
     }
 }

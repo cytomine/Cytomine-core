@@ -24,4 +24,6 @@ public interface AnnotationIndexRepository extends JpaRepository<AnnotationIndex
     List<AnnotationIndexLightDTO> findAllBySlice(SliceInstance slice);
 
     void deleteAllBySlice(SliceInstance sliceInstance);
+
+    void deleteAllByUser(SecUser user);
 }

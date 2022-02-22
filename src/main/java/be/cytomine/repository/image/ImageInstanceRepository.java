@@ -4,6 +4,7 @@ package be.cytomine.repository.image;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -44,4 +45,6 @@ public interface ImageInstanceRepository extends JpaRepository<ImageInstance, Lo
     Optional<ImageInstance> findTopByProjectAndCreatedGreaterThanOrderByCreatedAsc(Project project, Date created);
 
     Long countAllByProject(Project project);
+
+    List<ImageInstance> findAllByUser(User user);
 }

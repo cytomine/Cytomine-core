@@ -2,10 +2,13 @@ package be.cytomine.utils;
 
 import be.cytomine.domain.CytomineDomain;
 
+import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
 
 public class DateUtils {
+
+    public static SimpleDateFormat MONGO_DB_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
     public static String getTimeToString(Date date) {
         if (date == null) {

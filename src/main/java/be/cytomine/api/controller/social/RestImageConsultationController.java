@@ -109,7 +109,7 @@ public class RestImageConsultationController extends RestCytomineController {
         Project project = projectService.find(projectId)
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
 
-        List<Map<String, Object>> results = imageConsultationService.resumeByUserAndProject(userId, project.getId());
+        List<JsonObject> results = imageConsultationService.resumeByUserAndProject(userId, project.getId());
         if (export!=null && export.equals("csv")) {
             throw new CytomineMethodNotYetImplementedException("report must be implemented");
         } else {

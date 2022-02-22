@@ -10,8 +10,11 @@ import liquibase.pro.packaged.W;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static be.cytomine.utils.DateUtils.MONGO_DB_FORMAT;
 
 public class JsonObject extends HashMap<String, Object> {
 
@@ -237,8 +240,18 @@ public class JsonObject extends HashMap<String, Object> {
     }
 
     public Date getJSONAttrDate(String attr) {
-        if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
-            return new Date(Long.parseLong(this.get(attr).toString()));
+        if (this.get(attr) != null && this.get(attr) instanceof Date) {
+          return (Date) this.get(attr);
+        } if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
+            try {
+                return new Date(Long.parseLong(this.get(attr).toString()));
+            } catch (NumberFormatException exception) {
+                try {
+                    return MONGO_DB_FORMAT.parse(this.get(attr).toString());
+                } catch(Exception ex) {
+                    return null;
+                }
+            }
         } else {
             return null;
         }
@@ -330,5 +343,9 @@ public class JsonObject extends HashMap<String, Object> {
         } else {
             return defaultValue;
         }
+    }
+
+    public Long getId() {
+        return getJSONAttrLong("id");
     }
 }

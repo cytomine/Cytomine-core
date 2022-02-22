@@ -471,7 +471,7 @@ public class ProjectService extends ModelService {
             query.setParameter(entry.getKey(), entry.getValue());
         }
         long count = ((BigInteger)query.getResultList().get(0)).longValue();
-        Page<JsonObject> page = new PageImpl<>(results, PageUtils.buildPage(offset, max), count);
+        Page<JsonObject> page = PageUtils.buildPageFromPageResults(results, max, offset, count);
         return page;
 
     }

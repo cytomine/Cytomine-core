@@ -4,6 +4,7 @@ package be.cytomine.repository.ontology;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.AnnotationLight;
 import be.cytomine.service.UrlApi;
@@ -58,4 +59,6 @@ public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, 
 
 
     List<UserAnnotation> findAllByImage(ImageInstance image);
+
+    List<UserAnnotation> findAllByUser(User user);
 }

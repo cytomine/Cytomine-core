@@ -102,7 +102,7 @@ public class User extends SecUser {
         user.lastname = json.getJSONAttrStr("lastname");
         user.email = json.getJSONAttrStr("email");
         user.language = Language.findByCode(json.getJSONAttrStr("language", "ENGLISH"));
-        if(user.language != null) {
+        if(user.language == null) {
             user.language = Language.valueOf(json.getJSONAttrStr("language", "ENGLISH"));
         }
         user.origin = json.getJSONAttrStr("origin");

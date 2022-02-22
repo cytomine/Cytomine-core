@@ -9,10 +9,7 @@ import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.project.ProjectDefaultLayer;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.SecUserSecRole;
-import be.cytomine.domain.security.User;
-import be.cytomine.domain.security.UserJob;
+import be.cytomine.domain.security.*;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.MimeRepository;
 import be.cytomine.repository.security.SecRoleRepository;
@@ -104,19 +101,31 @@ public class BasicInstanceBuilder {
         return given_a_guest(randomString());
     }
 
+    public User given_a_admin() {
+        return given_a_admin(randomString());
+    }
+
     public User given_a_user(String username) {
-        User user = persistAndReturn(given_a_user_not_persisted());
+        User user = persistAndReturn(given_a_not_persisted_user());
         user.setUsername(username);
         addRole(user, ROLE_USER);
         return user;
     }
 
     public User given_a_guest(String username) {
-        User user = persistAndReturn(given_a_user_not_persisted());
+        User user = persistAndReturn(given_a_not_persisted_user());
         user.setUsername(username);
         addRole(user, ROLE_GUEST);
         return user;
     }
+
+    public User given_a_admin(String username) {
+        User user = persistAndReturn(given_a_not_persisted_user());
+        user.setUsername(username);
+        addRole(user, ROLE_ADMIN);
+        return user;
+    }
+
 
     public UserJob given_a_user_job() {
         return given_a_user_job(randomString());
@@ -144,7 +153,7 @@ public class BasicInstanceBuilder {
         return (UserJob)secUserRepository.findByUsernameLikeIgnoreCase("superadminjob").orElseThrow(() -> new ObjectNotFoundException("superadminjob not in db"));
     }
 
-    public static User given_a_user_not_persisted() {
+    public static User given_a_not_persisted_user() {
         //User user2 = new User();
         User user = new User();
         user.setFirstname("firstname");
@@ -875,6 +884,29 @@ public class BasicInstanceBuilder {
         projectDefaultLayer.setProject(project);
         projectDefaultLayer.setHideByDefault(false);
         return projectDefaultLayer;
+    }
+
+    public SecUserSecRole given_a_user_role() {
+        return persistAndReturn(given_a_not_persisted_user_role( given_a_guest(), secRoleRepository.findByAuthority(ROLE_USER).get()));
+    }
+
+    public SecUserSecRole given_a_user_role(User user) {
+        return persistAndReturn(given_a_not_persisted_user_role(user, secRoleRepository.findByAuthority(ROLE_USER).get()));
+    }
+
+    public SecUserSecRole given_a_user_role(User user, SecRole secRole) {
+        return persistAndReturn(given_a_not_persisted_user_role(user, secRole));
+    }
+
+    public SecUserSecRole given_a_not_persisted_user_role(User user, String authority) {
+        return persistAndReturn(given_a_not_persisted_user_role(user, secRoleRepository.findByAuthority(authority).get()));
+    }
+
+    public SecUserSecRole given_a_not_persisted_user_role(SecUser secUser, SecRole secRole) {
+        SecUserSecRole secUserSecRole = new SecUserSecRole();
+        secUserSecRole.setSecRole(secRole);
+        secUserSecRole.setSecUser(secUser);
+        return secUserSecRole;
     }
 
 

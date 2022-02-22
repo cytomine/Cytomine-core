@@ -13,6 +13,7 @@ import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.service.database.SequenceService;
+import be.cytomine.utils.JsonObject;
 import com.mongodb.client.MongoClient;
 import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -132,7 +133,7 @@ public class ProjectConnectionServiceTests {
         User anotherUser = builder.given_a_user();
 
 
-        List<Map<String, Object>> maps = projectConnectionService.lastConnectionInProject(projet, new ArrayList<Long>(), "created", "desc", 0L, 0L);
+        List<JsonObject> maps = projectConnectionService.lastConnectionInProject(projet, new ArrayList<Long>(), "created", "desc", 0L, 0L);
         assertThat(maps).isEmpty();
 
         Date start = new Date();
@@ -192,7 +193,7 @@ public class ProjectConnectionServiceTests {
 
         given_a_persistent_connection_in_project(user, projet);
 
-        List<Map<String, Object>> results = projectConnectionService.lastConnectionOfGivenUsersInProject
+        List<JsonObject> results = projectConnectionService.lastConnectionOfGivenUsersInProject
                 (projet, List.of(user.getId(), anotherUser.getId()), "created", "desc", 0L, 0L);
 
         assertThat(results).hasSize(2);
@@ -285,7 +286,7 @@ public class ProjectConnectionServiceTests {
         given_a_persistent_connection_in_project(user, projet);
         given_a_persistent_connection_in_project(user, projet);
 
-        Map<String, Object> result = projectConnectionService.numberOfConnectionsByProjectAndUser(projet, user);
+        JsonObject result = projectConnectionService.numberOfConnectionsByProjectAndUser(projet, user);
         assertThat(result.get("user")).isEqualTo(user.getId());
         assertThat(result.get("frequency")).isEqualTo(2L);
 
@@ -305,7 +306,7 @@ public class ProjectConnectionServiceTests {
         User anotherUser = builder.given_a_user();
 
 
-        List<Map<String, Object>> results;
+        List<JsonObject> results;
 
         results = projectConnectionService
                 .numberOfConnectionsByProjectAndUser(projet, List.of(user.getId(), anotherUser.getId()), "created", "desc", 100L ,0L);
@@ -341,7 +342,7 @@ public class ProjectConnectionServiceTests {
         User anotherUser = builder.given_a_user();
 
 
-        List<Map<String, Object>> results;
+        List<JsonObject> results;
 
         results = projectConnectionService
                 .numberOfConnectionsOfGivenByProject(projet, List.of(user.getId(), anotherUser.getId()), "created", "desc", 100L ,0L);
@@ -381,7 +382,7 @@ public class ProjectConnectionServiceTests {
         User user = builder.given_superadmin();
         User anotherUser = builder.given_a_user();
 
-        List<Map<String, Object>> results;
+        List<JsonObject> results;
 
         results = projectConnectionService.totalNumberOfConnectionsByProject();
         assertThat(results).isEmpty();
@@ -403,7 +404,7 @@ public class ProjectConnectionServiceTests {
         User user = builder.given_superadmin();
         User anotherUser = builder.given_a_user();
 
-        List<Map<String, Object>> results
+        List<JsonObject> results
                 = projectConnectionService.numberOfConnectionsByProjectOrderedByHourAndDays(projet, new Date().getTime(), user);
         assertThat(results).isEmpty();
 
@@ -442,7 +443,7 @@ public class ProjectConnectionServiceTests {
         User user = builder.given_superadmin();
         User anotherUser = builder.given_a_user();
 
-        List<Map<String, Object>> results;
+        List<JsonObject> results;
 
         results = projectConnectionService.totalNumberOfConnectionsByProject();
         assertThat(results).isEmpty();
@@ -470,7 +471,7 @@ public class ProjectConnectionServiceTests {
         Project projet = builder.given_a_project();
         User user = builder.given_superadmin();
 
-        List<Map<String, Object>> results
+        List<JsonObject> results
                 = projectConnectionService.numberOfProjectConnections("day", null, null, projet, user);
         assertThat(results).isEmpty();
 
@@ -487,7 +488,7 @@ public class ProjectConnectionServiceTests {
         results
                 = projectConnectionService.numberOfProjectConnections("hour", null, null, projet, user);
         assertThat(results).hasSize(2);
-        Optional<Map<String, Object>> entry = results.stream().filter(x -> x.get("frequency").equals(2)).findFirst();
+        Optional<JsonObject> entry = results.stream().filter(x -> x.get("frequency").equals(2)).findFirst();
         assertThat(entry).isPresent();
         assertThat(entry.get().get("time")).isEqualTo(simpleDateFormat.parse("2022-01-01T12:00:00"));
         entry = results.stream().filter(x -> x.get("frequency").equals(1)).findFirst();
@@ -516,7 +517,7 @@ public class ProjectConnectionServiceTests {
         Project projet = builder.given_a_project();
         User user = builder.given_superadmin();
 
-        List<Map<String, Object>> results
+        List<JsonObject> results
                 = projectConnectionService.averageOfProjectConnections("day", null, simpleDateFormat.parse("2022-02-01T12:00:00").getTime(), projet, user);
         assertThat(results).isEmpty();
 
@@ -533,10 +534,10 @@ public class ProjectConnectionServiceTests {
         results
                 = projectConnectionService.averageOfProjectConnections("hour", null, simpleDateFormat.parse("2022-02-01T12:00:00").getTime(), projet, user);
         assertThat(results).hasSize(2);
-        for (Map<String, Object> result : results) {
+        for (JsonObject result : results) {
             System.out.println(result);
         }
-        Optional<Map<String, Object>> entry = results.stream().filter(x -> (double)x.get("frequency") >= 0.65 && (double)x.get("frequency") <= 0.67d).findFirst();
+        Optional<JsonObject> entry = results.stream().filter(x -> (double)x.get("frequency") >= 0.65 && (double)x.get("frequency") <= 0.67d).findFirst();
         assertThat(entry).isPresent();
         assertThat(entry.get().get("time")).isEqualTo(simpleDateFormat.parse("2022-01-01T12:00:00"));
         entry = results.stream().filter(x -> (double)x.get("frequency") >= 0.32d && (double)x.get("frequency") <= 0.34d).findFirst();
@@ -549,7 +550,7 @@ public class ProjectConnectionServiceTests {
         results
                 = projectConnectionService.averageOfProjectConnections("week", null, simpleDateFormat.parse("2022-02-01T12:00:00").getTime(), projet, user);
         assertThat(results).hasSize(2);
-        for (Map<String, Object> result : results) {
+        for (JsonObject result : results) {
             System.out.println(result);
         }
         entry = results.stream().filter(x -> x.get("frequency").equals(0.75d)).findFirst();

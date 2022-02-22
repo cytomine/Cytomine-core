@@ -17,6 +17,7 @@ import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
 import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.dto.AreaDTO;
+import be.cytomine.utils.JsonObject;
 import com.mongodb.client.MongoClient;
 import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -141,7 +142,7 @@ public class ImageConsultationServiceTests {
         given_a_persistent_image_consultation(user, imageInstance1, new Date());
 
 
-        List<Map<String, Object>> results = imageConsultationService.listImageConsultationByProjectAndUserWithDistinctImage(
+        List<JsonObject> results = imageConsultationService.listImageConsultationByProjectAndUserWithDistinctImage(
                 imageInstance1.getProject(), user);
         assertThat(results).hasSize(1);
         assertThat(results.get(0).get("imageName")).isEqualTo(imageInstance1.getBlindInstanceFilename());
@@ -166,7 +167,7 @@ public class ImageConsultationServiceTests {
         given_a_persistent_image_consultation(user1, imageInstance2, DateUtils.addDays(new Date(), -2));
         given_a_persistent_image_consultation(user2, imageInstance1, DateUtils.addDays(new Date(), -1));
 
-        List<Map<String, Object>> results = imageConsultationService.lastImageOfUsersByProject(imageInstance1.getProject(),
+        List<JsonObject> results = imageConsultationService.lastImageOfUsersByProject(imageInstance1.getProject(),
                 List.of(user1.getId(), user2.getId()),
                 "created", "desc", 0L, 0L);
 
@@ -208,7 +209,7 @@ public class ImageConsultationServiceTests {
         ImageInstance imageInstance2 = builder.given_an_image_instance(imageInstance1.getProject());
 
 
-        List<Map<String, Object>> results = imageConsultationService.lastImageOfGivenUsersByProject(
+        List<JsonObject> results = imageConsultationService.lastImageOfGivenUsersByProject(
                 imageInstance1.getProject(), List.of(user1.getId(), user2.getId()), "created", "desc", 0L, 0L);
         assertThat(results).hasSize(2);
         assertThat(results.get(0).get("image")).isNull();
@@ -246,7 +247,7 @@ public class ImageConsultationServiceTests {
         ImageInstance imageInstance2 = builder.given_an_image_instance(imageInstance1.getProject());
 
 
-        List<Map<String, Object>> results = imageConsultationService.getImagesOfUsersByProjectBetween(user1.getId(), imageInstance1.getProject().getId(), null, null);
+        List<JsonObject> results = imageConsultationService.getImagesOfUsersByProjectBetween(user1.getId(), imageInstance1.getProject().getId(), null, null);
         assertThat(results).hasSize(0);
 
         given_a_persistent_image_consultation(user1, imageInstance1, DateUtils.addDays(new Date(), -10));
@@ -289,7 +290,7 @@ public class ImageConsultationServiceTests {
         ImageInstance imageInstance2 = builder.given_an_image_instance(imageInstance1.getProject());
 
 
-        List<Map<String, Object>> results = imageConsultationService.getImagesOfUsersByProjectBetween(user1.getId(), imageInstance1.getProject().getId(), null, null);
+        List<JsonObject> results = imageConsultationService.getImagesOfUsersByProjectBetween(user1.getId(), imageInstance1.getProject().getId(), null, null);
         assertThat(results).hasSize(0);
 
         given_a_persistent_image_consultation(user1, imageInstance1, DateUtils.addDays(new Date(), -10));
@@ -304,12 +305,12 @@ public class ImageConsultationServiceTests {
 
         assertThat(results).hasSize(2);
 
-        Optional<Map<String, Object>> user1image1 = results.stream().
+        Optional<JsonObject> user1image1 = results.stream().
                 filter(x -> x.get("user").equals(user1.getId()) && x.get("image").equals(imageInstance1.getId())).findFirst();
         assertThat(user1image1).isPresent();
         assertThat(user1image1.get().get("frequency")).isEqualTo(2);
 
-        Optional<Map<String, Object>> user1image2 = results.stream().
+        Optional<JsonObject> user1image2 = results.stream().
                 filter(x -> x.get("user").equals(user1.getId()) && x.get("image").equals(imageInstance2.getId())).findFirst();
         assertThat(user1image2).isPresent();
         assertThat(user1image2.get().get("frequency")).isEqualTo(1);
@@ -334,7 +335,7 @@ public class ImageConsultationServiceTests {
         given_a_persistent_image_consultation(anotherUser, imageInstance1, DateUtils.addDays(new Date(), -1));
         Date threeConnectionBefore = new Date();
 
-        List<Map<String, Object>> results;
+        List<JsonObject> results;
 
         AssertionsForClassTypes.assertThat(imageConsultationService.countByProject(projet, null, null))
                 .isEqualTo(3);

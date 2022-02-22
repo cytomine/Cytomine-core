@@ -6,6 +6,7 @@ import be.cytomine.domain.ontology.AlgoAnnotation;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
+import be.cytomine.domain.security.UserJob;
 import be.cytomine.dto.AnnotationLight;
 import be.cytomine.service.UrlApi;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -36,6 +37,8 @@ public interface AlgoAnnotationRepository extends JpaRepository<AlgoAnnotation, 
     Long countByProjectAndCreatedBetween(Project project, Date createdMin, Date createdMax);
 
     List<AlgoAnnotation> findAllByImage(ImageInstance image);
+
+    List<AlgoAnnotation> findAllByUser(UserJob user);
 
 //
 //    @Query(

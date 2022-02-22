@@ -4,6 +4,7 @@ import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.NestedImageInstance;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.User;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -23,4 +24,5 @@ public interface NestedImageInstanceRepository extends JpaRepository<NestedImage
 
     Optional<NestedImageInstance> findByBaseImageAndParentAndProject(AbstractImage baseImage, ImageInstance parent, Project project);
 
+    void deleteAllByUser(User user);
 }

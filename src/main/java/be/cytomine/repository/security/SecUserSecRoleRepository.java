@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -23,4 +24,7 @@ public interface SecUserSecRoleRepository extends JpaRepository<SecUserSecRole, 
     @Query("select distinct s.secRole from SecUserSecRole s where s.secUser = ?1")
     Set<SecRole> findAllRoleBySecUser(SecUser user);
 
+    List<SecUserSecRole> findAllBySecUser(SecUser user);
+
+    Optional<SecUserSecRole> findBySecUserAndSecRole(SecUser user, SecRole secRole);
 }

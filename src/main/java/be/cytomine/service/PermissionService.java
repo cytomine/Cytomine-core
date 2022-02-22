@@ -32,6 +32,11 @@ public class PermissionService {
         return masks.stream().max(Integer::compare).orElse(-1) >= permission.getMask();
     }
 
+    public boolean hasExactACLPermission(CytomineDomain domain, String username, Permission permission) {
+        List<Integer> masks = getPermissionInACL(domain,username);
+        return masks.contains(permission.getMask());
+    }
+
     public boolean hasACLPermission(CytomineDomain domain, Permission permission) {
         return hasACLPermission(domain, currentUserService.getCurrentUsername(), permission);
     }
@@ -50,8 +55,10 @@ public class PermissionService {
 
 
     public void deletePermission(CytomineDomain domain, String username, Permission permission) {
+        log.debug("Current mask for user {} on domain {} before request: {}", username, domain.getId(), aclRepository.listMaskForUsers(domain.getId(), username));
         if (hasACLPermission(domain, username, permission)) {
             log.info("Delete permission for {}, {}, {}", username, permission.getMask(), domain.getId());
+
             Long aclObjectIdentity = aclRepository.getAclObjectIdentityFromDomainId(domain.getId());
             int mask = permission.getMask();
             Long sid = aclRepository.getAclSid(username);
@@ -63,6 +70,7 @@ public class PermissionService {
 
             log.info("User " + username + " right " + permission.getMask() + " in domain " + domain + " => " + hasACLPermission(domain, username, permission));
         }
+        log.debug("Current mask for user {} on domain {} after request: {}", username, domain.getId(), aclRepository.listMaskForUsers(domain.getId(), username));
     }
 
     /**
@@ -80,7 +88,7 @@ public class PermissionService {
     }
 
     public void addPermission(CytomineDomain domain, String username, Permission permission, SecUser user) {
-        if (!hasACLPermission(domain, username, permission)) {
+        if (!hasExactACLPermission(domain, username, permission)) {
             //get domain class id
             Long aclClassId = getAclClassId(domain);
 

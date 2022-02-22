@@ -23,4 +23,8 @@ public interface LastConnectionRepository extends MongoRepository<LastConnection
     List<LastConnection> findByProjectAndUser(Long project, Long user);
 
     List<LastConnection> findByUserOrderByCreatedDesc(Long user);
+
+    List<LastConnection> findAllByCreatedAfter(Date date);
+
+    List<LastConnection> findAllByProjectAndCreatedAfter(Long project, Date date);
 }

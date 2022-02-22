@@ -1,6 +1,7 @@
 package be.cytomine.domain.security;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.ontology.Term;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
@@ -11,7 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Getter
@@ -60,6 +61,15 @@ public class SecUser extends CytomineDomain {
     protected Boolean accountLocked = false;
 
     protected Boolean passwordExpired = false;
+
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "sec_user_sec_role",
+            joinColumns = { @JoinColumn(name = "sec_user_id") },
+            inverseJoinColumns = { @JoinColumn(name = "sec_role_id") }
+    )
+    private Set<SecRole> roles = new HashSet<>();
 
     @NotBlank
     @Column(nullable = true)

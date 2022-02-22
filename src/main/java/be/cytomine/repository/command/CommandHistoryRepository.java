@@ -2,6 +2,7 @@ package be.cytomine.repository.command;
 
 import be.cytomine.domain.command.CommandHistory;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -14,4 +15,7 @@ public interface CommandHistoryRepository extends JpaRepository<CommandHistory, 
     List<CommandHistory> findAllByProject(Project project, Pageable pageable);
 
     void deleteAllByProject(Project project);
+
+    void deleteAllByUser(User user);
+
 }

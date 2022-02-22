@@ -416,7 +416,7 @@ public class ImageInstanceService extends ModelService {
             query.setParameter(entry.getKey(), entry.getValue());
         }
         long count = ((BigInteger)query.getResultList().get(0)).longValue();
-        Page<Map<String, Object>> page = new PageImpl<>(results, PageUtils.buildPage(offset, max), count);        // TODO: working? otherwise look in projectservice as  getFirstResult seems to return 0...
+        Page<Map<String, Object>> page = PageUtils.buildPageFromPageResults(results, max, offset, count);
         return page;
 
     }
@@ -618,8 +618,7 @@ public class ImageInstanceService extends ModelService {
             }
             results = lightResult;
         }
-
-        Page<Map<String, Object>> page = new PageImpl<>(results, PageUtils.buildPage(offset, max), count);        // TODO: working? otherwise look in projectservice as  getFirstResult seems to return 0...
+        Page<Map<String, Object>> page = PageUtils.buildPageFromPageResults(results, max, offset, count);
         return page;
 
     }

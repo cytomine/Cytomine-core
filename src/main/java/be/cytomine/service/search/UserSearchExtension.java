@@ -19,6 +19,12 @@ public class UserSearchExtension {
 
     private boolean withUserJob;
 
+    public static UserSearchExtension onlyWithRoles() {
+        UserSearchExtension userSearchExtension = new UserSearchExtension();
+        userSearchExtension.setWithRoles(true);
+        return userSearchExtension;
+    }
+
     public boolean noExtension() {
         return !withRoles && !withLastImage && !withLastConnection && !withNumberConnections && !withUserJob;
     }

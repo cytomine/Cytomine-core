@@ -2,6 +2,8 @@ package be.cytomine.repository.image;
 
 
 import be.cytomine.domain.image.UploadedFile;
+import be.cytomine.domain.image.server.Storage;
+import be.cytomine.domain.security.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -55,6 +57,10 @@ public interface UploadedFileRepository extends JpaRepository<UploadedFile, Long
     Integer countByParent(UploadedFile domain);
 
     List<UploadedFile> findAllByParent(UploadedFile uploadedFile);
+
+    void deleteAllByUser(User user);
+
+    long countByStorage(Storage storage);
 
 //
 //    @Query(value = "SELECT uf.* " +

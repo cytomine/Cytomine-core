@@ -12,13 +12,9 @@ import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.PermissionService;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.acls.domain.BasePermission;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -132,7 +128,7 @@ public abstract class AbstractAuthorizationTest {
             return alreadyExistingUser.get();
         }
 
-        User user = BasicInstanceBuilder.given_a_user_not_persisted();
+        User user = BasicInstanceBuilder.given_a_not_persisted_user();
         user.setUsername(login);
         user.setEmail(login + "@test.com");
 

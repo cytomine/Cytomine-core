@@ -29,4 +29,5 @@ public interface AnnotationTermRepository extends JpaRepository<AnnotationTerm, 
 
     List<AnnotationTerm> findAllByUserAnnotation_Project(Project project);
 
+    List<AnnotationTerm> findAllByUser(User user);
 }

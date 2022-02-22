@@ -459,6 +459,69 @@ public class ProjectServiceTests {
 
 
     @Test
+    void list_user_project_with_pagination() {
+        Project project1 = builder.given_a_project();
+        Project project2 = builder.given_a_project_with_ontology(project1.getOntology());
+        Project project3 = builder.given_a_project_with_ontology(project1.getOntology());
+        Project project4 = builder.given_a_project_with_ontology(project1.getOntology());
+        Project project5 = builder.given_a_project_with_ontology(project1.getOntology());
+        builder.addUserToProject(project1, builder.given_superadmin().getUsername());
+        builder.addUserToProject(project2, builder.given_superadmin().getUsername());
+        builder.addUserToProject(project3, builder.given_superadmin().getUsername());
+        builder.addUserToProject(project4, builder.given_superadmin().getUsername());
+        builder.addUserToProject(project5, builder.given_superadmin().getUsername());
+
+        ProjectSearchExtension projectSearchExtension = new ProjectSearchExtension();
+
+        Page<JsonObject> page = null;
+
+        page = projectService.list(builder.given_superadmin(), projectSearchExtension, new ArrayList<>(List.of(
+                new SearchParameterEntry("ontology", SearchOperation.in, List.of(project1.getOntology().getId()))
+        )), "created", "asc", 0L, 0L);
+        assertThat(page.getTotalElements()).isEqualTo(5);
+        assertThat(page.getContent()).hasSize(5);
+        assertThat(page.getContent().get(0).get("id")).isEqualTo(project1.getId());
+        assertThat(page.getContent().get(1).get("id")).isEqualTo(project2.getId());
+        assertThat(page.getContent().get(2).get("id")).isEqualTo(project3.getId());
+        assertThat(page.getContent().get(3).get("id")).isEqualTo(project4.getId());
+        assertThat(page.getContent().get(4).get("id")).isEqualTo(project5.getId());
+
+        page = projectService.list(builder.given_superadmin(), projectSearchExtension, new ArrayList<>(List.of(
+                new SearchParameterEntry("ontology", SearchOperation.in, List.of(project1.getOntology().getId()))
+        )), "created", "asc", 3L, 0L);
+        assertThat(page.getTotalElements()).isEqualTo(5);
+        assertThat(page.getContent()).hasSize(3);
+        assertThat(page.getContent().get(0).get("id")).isEqualTo(project1.getId());
+        assertThat(page.getContent().get(1).get("id")).isEqualTo(project2.getId());
+        assertThat(page.getContent().get(2).get("id")).isEqualTo(project3.getId());
+
+
+        page = projectService.list(builder.given_superadmin(), projectSearchExtension, new ArrayList<>(List.of(
+                new SearchParameterEntry("ontology", SearchOperation.in, List.of(project1.getOntology().getId()))
+        )), "created", "asc", 3L, 1L);
+        assertThat(page.getTotalElements()).isEqualTo(5);
+        assertThat(page.getContent()).hasSize(3);
+        assertThat(page.getContent().get(0).get("id")).isEqualTo(project2.getId());
+        assertThat(page.getContent().get(1).get("id")).isEqualTo(project3.getId());
+        assertThat(page.getContent().get(2).get("id")).isEqualTo(project4.getId());
+
+        page = projectService.list(builder.given_superadmin(), projectSearchExtension, new ArrayList<>(List.of(
+                new SearchParameterEntry("ontology", SearchOperation.in, List.of(project1.getOntology().getId()))
+        )), "created", "asc", 3L, 3L);
+        assertThat(page.getTotalElements()).isEqualTo(5);
+        assertThat(page.getContent()).hasSize(2);
+        assertThat(page.getContent().get(0).get("id")).isEqualTo(project4.getId());
+        assertThat(page.getContent().get(1).get("id")).isEqualTo(project5.getId());
+
+        page = projectService.list(builder.given_superadmin(), projectSearchExtension, new ArrayList<>(List.of(
+                new SearchParameterEntry("ontology", SearchOperation.in, List.of(project1.getOntology().getId()))
+        )), "created", "asc", 3L, 6L);
+        assertThat(page.getTotalElements()).isEqualTo(5);
+        assertThat(page.getContent()).hasSize(0);
+    }
+
+
+    @Test
     void list_user_project_with_no_user() {
         Project project1 = builder.given_a_project();
         Project projectWhereUserIsMissing = builder.given_a_project();

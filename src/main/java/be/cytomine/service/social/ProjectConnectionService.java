@@ -19,6 +19,7 @@ import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.security.SecurityACLService;
+import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -145,7 +146,7 @@ public class ProjectConnectionService {
         }
 
 
-    public List<Map<String, Object>> lastConnectionInProject(Project project, List<Long> users, String sortProperty, String sortDirection, Long max, Long offset){
+    public List<JsonObject> lastConnectionInProject(Project project, List<Long> users, String sortProperty, String sortDirection, Long max, Long offset){
         securityACLService.check(project, WRITE);
 
 //        def match = [project : project.id]
@@ -189,7 +190,7 @@ public class ProjectConnectionService {
 
         //TODO: bug?...seems that sometimes ProjectConnectionServiceTests.* tests are failing. the sorting on created does not work perfectly (only sort with s, not with ms)?
 
-        return results.stream().map(x -> Map.of("user", x.get("_id"), "created", x.get("created"))).collect(Collectors.toList());
+        return results.stream().map(x -> JsonObject.of("user", x.get("_id"), "created", x.get("created"))).collect(Collectors.toList());
     }
 
 
@@ -198,8 +199,8 @@ public class ProjectConnectionService {
      * return the last connection in a project by user. If a user (in the userIds array) doesn't have a connection yet, null values will be associated to the user id.
      */
     // Improve : Can be improved if we can do this in mongo directly
-    public List<Map<String, Object>> lastConnectionOfGivenUsersInProject(Project project, List<Long> userIds, String sortProperty, String sortDirection, Long max, Long offset){
-        List<Map<String, Object>> results = new ArrayList<>();
+    public List<JsonObject> lastConnectionOfGivenUsersInProject(Project project, List<Long> userIds, String sortProperty, String sortDirection, Long max, Long offset){
+        List<JsonObject> results = new ArrayList<>();
 
         //        def connected = PersistentProjectConnection.createCriteria().list(sort: "user", order: sortDirection) {
 //            eq("project", project)
@@ -226,7 +227,7 @@ public class ProjectConnectionService {
         List<Long> unconnectedIds =  new ArrayList<>(userIds);
         unconnectedIds.removeAll(connected);
 
-        List<Map<String, Object>> unconnected = unconnectedIds.stream().map(x -> Map.of("user", (Object)x)).collect(Collectors.toList());
+        List<JsonObject> unconnected = unconnectedIds.stream().map(x -> JsonObject.of("user", (Object)x)).collect(Collectors.toList());
 
         if(max == 0) {
             max = unconnected.size() + connected.size() - offset;
@@ -331,13 +332,13 @@ public class ProjectConnectionService {
         return new PageImpl<>(connections, Pageable.ofSize(limit), results.getTotalElements());
     }
 
-    public Map<String, Object> numberOfConnectionsByProjectAndUser(Project project, User user) {
+    public JsonObject numberOfConnectionsByProjectAndUser(Project project, User user) {
         securityACLService.check(project,WRITE);
         long rows = persistentProjectConnectionRepository.countAllByProjectAndUser(project.getId(), user.getId());
-        return  Map.of("user", user.getId(), "frequency", rows);
+        return  JsonObject.of("user", user.getId(), "frequency", rows);
     }
 
-    public List<Map<String, Object>> numberOfConnectionsByProjectAndUser(Project project, List<Long> users, String sortProperty, String sortDirection, Long max, Long offset) {
+    public List<JsonObject> numberOfConnectionsByProjectAndUser(Project project, List<Long> users, String sortProperty, String sortDirection, Long max, Long offset) {
         securityACLService.check(project,WRITE);
 
           // what we want
@@ -375,14 +376,14 @@ public class ProjectConnectionService {
                     .into(new ArrayList<>());
             results.forEach(printDocuments());
 
-            return results.stream().map(x -> Map.of("user", x.get("_id"), "frequency", x.get("frequency"))).collect(Collectors.toList());
+            return results.stream().map(x -> JsonObject.of("user", x.get("_id"), "frequency", x.get("frequency"))).collect(Collectors.toList());
     }
 
     /**
      * return the number of project connections by user in a Project. If a user (in the userIds array) doesn't have a connection yet, null values will be associated to the user id.
      */
-    public List<Map<String, Object>>  numberOfConnectionsOfGivenByProject(Project project, List<Long> userIds, String sortProperty, String sortDirection, Long max, Long offset){
-        List<Map<String, Object>> results = new ArrayList<>();
+    public List<JsonObject>  numberOfConnectionsOfGivenByProject(Project project, List<Long> userIds, String sortProperty, String sortDirection, Long max, Long offset){
+        List<JsonObject> results = new ArrayList<>();
 
         MongoCollection<Document> persistentProjectConnection = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentProjectConnection");
         List<Document> requestResults = persistentProjectConnection.
@@ -397,7 +398,7 @@ public class ProjectConnectionService {
         List<Long> unconnectedIds =  new ArrayList<>(userIds);
         unconnectedIds.removeAll(connected);
 
-        List<Map<String, Object>> unconnected = unconnectedIds.stream().map(x -> Map.of("user", (Object)x)).collect(Collectors.toList());
+        List<JsonObject> unconnected = unconnectedIds.stream().map(x -> JsonObject.of("user", (Object)x)).collect(Collectors.toList());
 
         if(max == 0) {
             max = unconnected.size() + connected.size() - offset;
@@ -421,32 +422,32 @@ public class ProjectConnectionService {
             }
             else if(offset + max > unconnected.size() && offset <= unconnected.size()) {
                 results = unconnected.subList(offset.intValue(),unconnected.size());
-                results.addAll(lastConnectionInProject(project, null, sortProperty, sortDirection, max-(unconnected.size()-offset), 0L));
+                results.addAll(numberOfConnectionsByProjectAndUser(project, null, sortProperty, sortDirection, max-(unconnected.size()-offset), 0L));
             } else {
-                results.addAll(lastConnectionInProject(project, null, sortProperty, sortDirection, max, offset - unconnected.size()));
+                results.addAll(numberOfConnectionsByProjectAndUser(project, null, sortProperty, sortDirection, max, offset - unconnected.size()));
             }
         }
         return results;
     }
 
 
-    public List<Map<String, Object>> totalNumberOfConnectionsByProject(){
+    public List<JsonObject> totalNumberOfConnectionsByProject(){
         securityACLService.checkAdmin(currentUserService.getCurrentUser());
 
-        List<Map<String, Object>> projectConnections = new ArrayList<>();
+        List<JsonObject> projectConnections = new ArrayList<>();
 
         // what we want
         // db.persistentProjectConnection.aggregate([{ $group : { _id : {project:"$project"} , total : { $sum : 1 }}}])
         AggregationResults aggregationResults = persistentProjectConnectionRepository.countConnectionByProject();
-        List<Map<String, Object>> results = (List<Map<String, Object>>)aggregationResults.getRawResults().get("results");
-        for (Map<String, Object> result : results) {
-            projectConnections.add(Map.of("project", result.get("_id"), "total", result.get("total")));
+        List<JsonObject> results = (List<JsonObject>)aggregationResults.getRawResults().get("results");
+        for (JsonObject result : results) {
+            projectConnections.add(JsonObject.of("project", result.get("_id"), "total", result.get("total")));
         }
         return projectConnections;
     }
 
 
-    public List<Map<String, Object>> numberOfConnectionsByProjectOrderedByHourAndDays(Project project, Long afterThan, SecUser user) {
+    public List<JsonObject> numberOfConnectionsByProjectOrderedByHourAndDays(Project project, Long afterThan, SecUser user) {
 
         securityACLService.check(project, WRITE);
         // what we want
@@ -472,7 +473,7 @@ public class ProjectConnectionService {
                 .into(new ArrayList<>());
         results.forEach(printDocuments());
 
-        List<Map<String, Object>> connections = new ArrayList<>();
+        List<JsonObject> connections = new ArrayList<>();
         for (Document result : results) {
             // TODO evolve when https://jira.mongodb.org/browse/SERVER-6310 is resolved
             // as we groupBy hours in UTC, the GMT + xh30 have problems.
@@ -493,7 +494,7 @@ public class ProjectConnectionService {
 
 //            connections << [/*year: year, month: month, day: day, hour: hour, */time : time, frequency: frequency]
 
-            connections.add(Map.of("time", result.get("time"), "frequency", result.get("frequency")));
+            connections.add(JsonObject.of("time", result.get("time"), "frequency", result.get("frequency")));
         }
         return connections;
     }
@@ -511,7 +512,7 @@ public class ProjectConnectionService {
     }
 
 
-    public List<Map<String, Object>> numberOfProjectConnections(String period, Long afterThan, Long beforeThan, Project project, SecUser user){
+    public List<JsonObject> numberOfProjectConnections(String period, Long afterThan, Long beforeThan, Project project, SecUser user){
         if (user!=null) {
             securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
         } else {
@@ -585,18 +586,18 @@ public class ProjectConnectionService {
         List<Document> results = persistentProjectConnection.aggregate(requests)
                 .into(new ArrayList<>());
 
-        List<Map<String, Object>> connections = new ArrayList<>();
+        List<JsonObject> connections = new ArrayList<>();
         for (Document result : results) {
             // TODO evolve when https://jira.mongodb.org/browse/SERVER-6310 is resolved
             // as we groupBy hours in UTC, the GMT + xh30 have problems.
-            connections.add(Map.of("time", result.get("time"), "frequency", result.get("frequency")));
+            connections.add(JsonObject.of("time", result.get("time"), "frequency", result.get("frequency")));
 
         }
         return connections;
     }
 
 
-    public List<Map<String, Object>> averageOfProjectConnections(String period, Long afterThan, Long beforeThan, Project project, SecUser user){
+    public List<JsonObject> averageOfProjectConnections(String period, Long afterThan, Long beforeThan, Project project, SecUser user){
         if (project != null) {
             securityACLService.check(project,READ);
             if (user!= null) {
@@ -679,11 +680,11 @@ public class ProjectConnectionService {
             total = 1;
         }
 
-        List<Map<String, Object>> connections = new ArrayList<>();
+        List<JsonObject> connections = new ArrayList<>();
         for (Document result : results) {
             // TODO evolve when https://jira.mongodb.org/browse/SERVER-6310 is resolved
             // as we groupBy hours in UTC, the GMT + xh30 have problems.
-            connections.add(Map.of("time", result.get("time"), "frequency", ((Integer)result.get("frequency")).doubleValue()/total.doubleValue()));
+            connections.add(JsonObject.of("time", result.get("time"), "frequency", ((Integer)result.get("frequency")).doubleValue()/total.doubleValue()));
 
         }
         return connections;

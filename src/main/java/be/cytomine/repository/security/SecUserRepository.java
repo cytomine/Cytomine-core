@@ -37,14 +37,24 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
             "and secUser.class = 'be.cytomine.security.User'")
     List<SecUser> findAllAdminsByProjectId(Long projectId);
 
+
+    default List<SecUser> findAllUsersByProjectId(Long projectId) {
+        return findAllUsersByContainer(projectId);
+    }
+
+    default List<SecUser> findAllUsersByStorageId(Long storageId) {
+        return findAllUsersByContainer(storageId);
+    }
+
     @Query("select distinct secUser " +
             "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, User as secUser "+
-            "where aclObjectId.objectId = :projectId " +
+            "where aclObjectId.objectId = :containerId " +
             "and aclEntry.aclObjectIdentity = aclObjectId.id " +
             "and aclEntry.sid = aclSid.id " +
             "and aclSid.sid = secUser.username " +
             "and secUser.class = 'be.cytomine.security.User'")
-    List<SecUser> findAllUsersByProjectId(Long projectId);
+    List<SecUser> findAllUsersByContainer(Long containerId);
+
 
     @Query(value = "SELECT DISTINCT u.id as id, u.username as username, " +
             "s.name as softwareName, s.software_version as softwareVersion, " +
@@ -76,4 +86,19 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
     List<SecUser> findAllByUsernameLikeIgnoreCase(String s);
 
     Optional<SecUser> findByPublicKeyAndEnabled(String accessKey, boolean enabled);
+
+
+    @Query(value = "select distinct secUser " +
+            "from AclSid as aclSid, AclEntry as aclEntry, SecUser as secUser "+
+            "where aclEntry.aclObjectIdentity in (select  aclEntry.aclObjectIdentity from aclEntry where sid.id = :sidId) " +
+            "and aclEntry.sid = aclSid and aclSid.sid = secUser.username and aclSid.id <> :sidId")
+    List<SecUser> findAllSecUsersSharingAccesToSameProject(Long sidId);
+
+    @Query(value = "SELECT id FROM acl_sid WHERE sid = :username", nativeQuery = true)
+    Long getAclSidFromUsername(String username);
+
+    default List<SecUser> findAllSecUsersSharingAccesToSameProject(String username) {
+        Long aclId = getAclSidFromUsername(username);
+        return findAllSecUsersSharingAccesToSameProject(aclId);
+    }
 }

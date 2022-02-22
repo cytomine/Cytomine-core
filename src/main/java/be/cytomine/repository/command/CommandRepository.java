@@ -6,6 +6,7 @@ import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.command.UndoStackItem;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -59,4 +60,5 @@ public interface CommandRepository extends JpaRepository<Command, Long> {
 
 
     void deleteAllByProject(Project project);
+    void deleteAllByUser(User user);
 }

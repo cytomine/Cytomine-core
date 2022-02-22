@@ -14,6 +14,22 @@ import java.util.Optional;
 @Repository
 public interface SecRoleRepository extends JpaRepository<SecRole, Long>, JpaSpecificationExecutor<SecRole> {
 
+    default SecRole getGuest() {
+        return getByAuthority("ROLE_GUEST");
+    }
+
+    default SecRole getUser() {
+        return getByAuthority("ROLE_USER");
+    }
+
+    default SecRole getAdmin() {
+        return getByAuthority("ROLE_ADMIN");
+    }
+
+    default SecRole getSuperAdmin() {
+        return getByAuthority("ROLE_SUPER_ADMIN");
+    }
+
     SecRole getByAuthority(String authority);
 
     Optional<SecRole> findByAuthority(String authority);

@@ -36,8 +36,8 @@ public class SecUserSecRole extends CytomineDomain implements Serializable {
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         SecUserSecRole secUserSecRole = this;
         secUserSecRole.id = json.getJSONAttrLong("id",null);
-        secUserSecRole.secUser = (User)json.getJSONAttrDomain(entityManager, "secUser", new SecUser(), true);
-        secUserSecRole.secRole = (SecRole)json.getJSONAttrDomain(entityManager, "secRole", new SecRole(), true);
+        secUserSecRole.secUser = (User)json.getJSONAttrDomain(entityManager, "user", new SecUser(), true);
+        secUserSecRole.secRole = (SecRole)json.getJSONAttrDomain(entityManager, "role", new SecRole(), true);
         secUserSecRole.created = json.getJSONAttrDate("created");
         secUserSecRole.updated = json.getJSONAttrDate("updated");
         return secUserSecRole;

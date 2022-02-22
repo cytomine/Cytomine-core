@@ -2,8 +2,6 @@ package be.cytomine.repository.ontology;
 
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -27,4 +25,5 @@ public interface AlgoAnnotationTermRepository extends JpaRepository<AlgoAnnotati
 
     long countByExpectedTerm(Term term);
 
+    List<AlgoAnnotationTerm> findAllByUserJob(UserJob user);
 }
