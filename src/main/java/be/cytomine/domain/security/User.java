@@ -62,11 +62,7 @@ public class User extends SecUser {
 
     @PreUpdate
     public void beforeUpdate() {
-        if (newPassword!=null) {
-            password = newPassword;
-            passwordExpired = false;
-            encodePassword();
-        }
+
     }
 
     /**

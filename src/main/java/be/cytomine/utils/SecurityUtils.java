@@ -3,6 +3,7 @@ package be.cytomine.utils;
 import be.cytomine.domain.security.SecUser;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.context.ApplicationContext;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -10,13 +11,15 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
+import org.springframework.security.web.authentication.switchuser.SwitchUserGrantedAuthority;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class SecurityUtils {
@@ -147,4 +150,71 @@ public class SecurityUtils {
     private static <T> T getBean(ApplicationContext applicationContext, final String name) {
         return (T)applicationContext.getBean(name);
     }
+
+
+    public static boolean isSwitched(ApplicationContext applicationContext) {
+        Collection<? extends GrantedAuthority> inferred = findInferredAuthorities(applicationContext, getPrincipalAuthorities());
+        for (GrantedAuthority authority : inferred) {
+            if (authority instanceof SwitchUserGrantedAuthority) {
+                return true;
+            }
+            if (SwitchUserFilter.ROLE_PREVIOUS_ADMINISTRATOR.equals(authority.getAuthority())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Get the username of the original user before switching to another.
+     * @return the original login name
+     */
+    public static String getSwitchedUserOriginalUsername(ApplicationContext applicationContext) {
+        if (isSwitched(applicationContext)) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            for (GrantedAuthority auth : authentication.getAuthorities()) {
+                if (auth instanceof SwitchUserGrantedAuthority) {
+                    return ((SwitchUserGrantedAuthority)auth).getSource().getName();
+                }
+            }
+        }
+        return null;
+    }
+
+    private static Collection<? extends GrantedAuthority> findInferredAuthorities(ApplicationContext applicationContext,
+            final Collection<GrantedAuthority> granted) {
+        RoleHierarchy roleHierarchy = getBean(applicationContext, "roleHierarchy");
+        Collection<? extends GrantedAuthority> reachable = roleHierarchy.getReachableGrantedAuthorities(granted);
+        if (reachable == null) {
+            return Collections.emptyList();
+        }
+        return reachable;
+    }
+
+    /**
+     * Get the current user's authorities.
+     * @return a list of authorities (empty if not authenticated).
+     */
+    public static Collection<GrantedAuthority> getPrincipalAuthorities() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return Collections.emptyList();
+        }
+
+        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+        if (authorities == null) {
+            return Collections.emptyList();
+        }
+
+        // remove the fake role if it's there
+        Collection<GrantedAuthority> copy = new ArrayList<GrantedAuthority>(authorities);
+        for (Iterator<GrantedAuthority> iter = copy.iterator(); iter.hasNext();) {
+            if (iter.next().getAuthority().equals("ROLE_NO_ROLES")) {
+                iter.remove();
+            }
+        }
+
+        return copy;
+    }
+
 }

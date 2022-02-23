@@ -2,6 +2,7 @@ package be.cytomine.service.social;
 
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
@@ -263,5 +264,38 @@ public class UserPositionService {
                         "frequency", x.get("frequency"),
                         "image", x.get("image"))).collect(Collectors.toList());
 
+    }
+
+
+    public List<JsonObject> findUsersPositions(Project project) {
+
+        //Get all user online and their pictures
+        Date thirtySecondsAgo = DateUtils.addSeconds(new Date(), -30);
+
+        List<Bson> request = new ArrayList<>();
+        request.add(match(eq("project", project.getId())));
+        request.add(match(gt("created", thirtySecondsAgo)));
+
+        request.add(project(Document.parse("{user: 1, image: 1, slice: 1, imageName: 1, created: 1}")));
+
+
+        request.add(group(Document.parse("{user: '$user', slice: '$slice'}"),
+                Accumulators.max("date", "$created"), Accumulators.first("image", "$image"), Accumulators.first("imageName", "$imageName")));
+
+        request.add(group(Document.parse("{user: '$_id.user'}"),
+                Accumulators.push("position", Document.parse("{id: '$_id.image',slice: '$_id.slice', image: '$image', filename: '$imageName', originalFilename: '$imageName', date: '$date'}"))));
+
+        MongoCollection<Document> persistentUserPosition = mongoClient.getDatabase(DATABASE_NAME).getCollection("lastUserPosition");
+
+        List<Document> results = persistentUserPosition.aggregate(request)
+                .into(new ArrayList<>());
+
+        List<JsonObject> usersWithPosition =  results.stream().map(x ->
+                JsonObject.of("id", ((Document) x.get("_id")).get("user"),
+                        "position", x.get("position"))).collect(Collectors.toList());
+
+
+
+        return usersWithPosition;
     }
 }

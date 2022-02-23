@@ -21,4 +21,6 @@ public interface AnnotationActionRepository extends MongoRepository<AnnotationAc
     Long countByProjectAndCreatedBetween(Long project, Date createdMin, Date createdMax);
 
     void deleteAllByImage(Long id);
+
+    Long countByProjectAndUserAndAction(Long project, Long user, String action);
 }

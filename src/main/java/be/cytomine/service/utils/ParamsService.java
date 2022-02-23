@@ -117,7 +117,7 @@ public class ParamsService {
     public List<SecUser> getParamsSecUserDomainList(String paramsUsers, Project project) {
         List<SecUser> userList = new ArrayList<>();
         if (paramsUsers != null && !paramsUsers.equals("null") && !paramsUsers.trim().equals("")) {
-            userList = secUserService.list(project, Arrays.stream(paramsUsers.split("_")).map(Long::parseLong).collect(Collectors.toList()));
+            userList = secUserService.list(Arrays.stream(paramsUsers.split("_")).map(Long::parseLong).collect(Collectors.toList()));
         }
         return userList;
     }

@@ -26,6 +26,8 @@ public class JsonObject extends HashMap<String, Object> {
         super(data);
     }
 
+
+
     public boolean isMissing(String key) {
         return !this.containsKey(key) || this.get(key)==null;
     }
@@ -40,6 +42,9 @@ public class JsonObject extends HashMap<String, Object> {
         return this;
     }
 
+    public static JsonObject of() {
+        return new JsonObject();
+    }
 
     public static JsonObject of(String key, Object value) {
         JsonObject jsonObject = new JsonObject();

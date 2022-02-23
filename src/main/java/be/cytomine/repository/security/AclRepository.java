@@ -73,4 +73,7 @@ public interface AclRepository extends JpaRepository<SecUser, Long> {
     @Query(value = "DELETE FROM acl_entry WHERE acl_object_identity = ? AND mask = ? AND sid = ?", nativeQuery = true)
     void deleteAclEntry(Long aclObjectIdentity, int mask, Long sid);
 
+    @Query(value = "select secUser from AclObjectIdentity as aclObjectId, AclSid as aclSid, SecUser as secUser where aclObjectId.objectId = :domainId and aclObjectId.ownerSid = aclSid and aclSid.sid = secUser.username")
+    List<SecUser> listCreators(Long domainId);
+
 }

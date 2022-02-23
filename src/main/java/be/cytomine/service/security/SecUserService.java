@@ -10,6 +10,7 @@ import be.cytomine.domain.project.ProjectDefaultLayer;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.*;
 import be.cytomine.domain.social.LastConnection;
+import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.dto.AuthInformation;
 import be.cytomine.dto.NamedCytomineDomain;
 import be.cytomine.exceptions.*;
@@ -24,11 +25,11 @@ import be.cytomine.repository.ontology.*;
 import be.cytomine.repository.project.ProjectDefaultLayerRepository;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.project.ProjectRepresentativeUserRepository;
-import be.cytomine.repository.security.SecRoleRepository;
-import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.repository.security.SecUserSecRoleRepository;
-import be.cytomine.repository.security.UserRepository;
+import be.cytomine.repository.security.*;
+import be.cytomine.repositorynosql.social.AnnotationActionRepository;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
+import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
+import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
@@ -43,14 +44,14 @@ import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.service.social.ImageConsultationService;
 import be.cytomine.service.social.ProjectConnectionService;
+import be.cytomine.service.social.UserPositionService;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ReflectionUtils;
@@ -69,6 +70,12 @@ import static org.springframework.security.acls.domain.BasePermission.*;
 @Service
 @Transactional
 public class SecUserService extends ModelService {
+
+    @Autowired
+    private UserPositionService userPositionService;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @Autowired
     private SecUserRepository secUserRepository;
@@ -190,6 +197,18 @@ public class SecUserService extends ModelService {
     @Autowired
     private StorageService storageService;
 
+    @Autowired
+    private AclRepository aclRepository;
+
+    @Autowired
+    private PersistentProjectConnectionRepository persistentProjectConnectionRepository;
+
+    @Autowired
+    private PersistentImageConsultationRepository persistentImageConsultationRepository;
+
+    @Autowired
+    private AnnotationActionRepository annotationActionRepository;
+
     public Optional<SecUser> find(Long id) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
         return secUserRepository.findById(id);
@@ -199,7 +218,7 @@ public class SecUserService extends ModelService {
         try {
             return find(Long.valueOf(id));
         } catch (NumberFormatException ex) {
-            return Optional.empty();
+            return findByUsername(id);
         }
     }
 
@@ -582,6 +601,11 @@ public class SecUserService extends ModelService {
         return secUserRepository.findAllAdminsByProjectId(project.getId());
     }
 
+    public Optional<SecUser> findCreator(Project project) {
+        securityACLService.check(project,READ);
+        return aclRepository.listCreators(project.getId()).stream().findFirst();
+    }
+
     public List<SecUser> listUsers(Project project) {
         return listUsers(project, false, true);
     }
@@ -608,8 +632,7 @@ public class SecUserService extends ModelService {
         return users;
     }
 
-    public List<SecUser> list(Project project, List<Long> ids) {
-        securityACLService.check(project, READ);
+    public List<SecUser> list(List<Long> ids) {
         return secUserRepository.findAllByIdIn(ids);
     }
 
@@ -753,11 +776,81 @@ public class SecUserService extends ModelService {
         return layersFormatted;
     }
 
+    public List<JsonObject> getAllOnlineUserWithTheirPositions(Project project) {
+//        //Get all project user online
+        List<Long> usersId = this.getAllFriendsUsersOnline(currentUserService.getCurrentUser(), project).stream().map(CytomineDomain::getId)
+                    .collect(Collectors.toList());
+        List<JsonObject> usersWithPosition = userPositionService.findUsersPositions(project);
+        usersId.removeAll(usersWithPosition.stream().map(JsonObject::getId).collect(Collectors.toList()));
+
+        for (Long userId : usersId) {
+            usersWithPosition.add(JsonObject.of("id", userId, "position", new ArrayList<>()));
+        }
+
+        return usersWithPosition;
+    }
+
+
+
+    public JsonObject getResumeActivities(Project project, User user) {
+        securityACLService.checkIsSameUserOrAdminContainer(project,user, currentUserService.getCurrentUser());
+        JsonObject jsonObject = new JsonObject();
+
+        jsonObject.put("firstConnection", persistentProjectConnectionRepository
+                .findAllByUserAndProject(user.getId(), project.getId(), PageRequest.of(0, 1, Sort.by(Sort.Direction.ASC, "created"))).stream().findFirst().map(x -> x.getCreated()).orElse(null));
+        jsonObject.put("lastConnection", persistentProjectConnectionRepository
+                .findAllByUserAndProject(user.getId(), project.getId(), PageRequest.of(0, 1, Sort.by(Sort.Direction.DESC, "created"))).stream().findFirst().map(x -> x.getCreated()).orElse(null));
+
+        jsonObject.put("totalAnnotations", userAnnotationService.count(user, project));
+        jsonObject.put("totalConnections", persistentProjectConnectionRepository.countAllByProjectAndUser(project.getId(), user.getId()));
+        jsonObject.put("totalConsultations", persistentImageConsultationRepository.countByProjectAndUser(project.getId(), user.getId()));
+        jsonObject.put("totalAnnotationSelections", annotationActionRepository.countByProjectAndUserAndAction(project.getId(), user.getId(), "select"));
+
+        return jsonObject;
+    }
+
+    
+    public List<JsonObject> getUsersWithLastActivities(Project project) {
+        List<JsonObject> results = new ArrayList<>();
+        List<SecUser> users = listUsers(project).stream().sorted(Comparator.comparing(CytomineDomain::getId)).collect(Collectors.toList());
+
+
+        Map<Long, JsonObject> connections = projectConnectionService.lastConnectionInProject(project, null, "user", "asc", 0L, 0L)
+                .stream().collect(Collectors.toMap(x -> x.getJSONAttrLong("user"), Function.identity()));
+        Map<Long, JsonObject> frequencies = projectConnectionService.numberOfConnectionsByProjectAndUser(project, null, "user", "asc", 0L, 0L)
+                .stream().collect(Collectors.toMap(x -> x.getJSONAttrLong("user"), Function.identity()));
+        Map<Long, JsonObject> images = imageConsultationService.lastImageOfUsersByProject(project, null, "user", "asc", 0L, 0L)
+                .stream().collect(Collectors.toMap(x -> x.getJSONAttrLong("user"), Function.identity()));
+
+        for (SecUser secUser : users) {
+            if (secUser instanceof User) {
+                User user = (User)secUser;
+
+                JsonObject image = images.get(user.getId());
+                JsonObject connection = connections.get(user.getId());
+                JsonObject frequency = frequencies.get(user.getId());
+
+                JsonObject jsonObject = new JsonObject();
+                jsonObject.put("id", user.getId());
+                jsonObject.put("username", user.getUsername());
+                jsonObject.put("firstname", user.getFirstname());
+                jsonObject.put("lastname", user.getLastname());
+                jsonObject.put("email", user.getEmail());
+                jsonObject.put("lastImageId", (image!=null? image.get("image") : null));
+                jsonObject.put("lastImageName", (image!=null? image.get("imageName") : null));
+                jsonObject.put("lastConnection", (connection!=null? connection.get("created") : null));
+                jsonObject.put("frequency", (frequency!=null? frequency.get("frequency") : 0));
+                results.add(jsonObject);
+            }
+
+        }
+        return results;
+    }
 
     /**
      * Get all online user
      */
-    List<SecUser> getAllOnlineUsers() {
+    public List<SecUser> getAllOnlineUsers() {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
         //get date with -X secondes
         Date xSecondAgo = DateUtils.addSeconds(new Date(), -300);
@@ -770,7 +863,7 @@ public class SecUserService extends ModelService {
     /**
      * Get all online userIds for a project
      */
-    List<Long> getAllOnlineUserIds(Project project) {
+    public List<Long> getAllOnlineUserIds(Project project) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
         //get date with -X secondes
         Date xSecondAgo = DateUtils.addSeconds(new Date(), -300);
@@ -783,7 +876,7 @@ public class SecUserService extends ModelService {
     /**
      * Get all online user for a project
      */
-    List<SecUser> getAllOnlineUsers(Project project) {
+    public List<SecUser> getAllOnlineUsers(Project project) {
         securityACLService.check(project, READ);
         return secUserRepository.findAllByIdIn(getAllOnlineUserIds(project));
     }
@@ -791,7 +884,7 @@ public class SecUserService extends ModelService {
     /**
      * Get all user that share at least a same project as user from argument
      */
-    List<SecUser> getAllFriendsUsers(SecUser user) {
+    public List<SecUser> getAllFriendsUsers(SecUser user) {
         securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
         return secUserRepository.findAllSecUsersSharingAccesToSameProject(user.getUsername());
     }
@@ -799,7 +892,7 @@ public class SecUserService extends ModelService {
     /**
      * Get all online user that share at least a same project as user from argument
      */
-    List<SecUser> getAllFriendsUsersOnline(SecUser user) {
+    public List<SecUser> getAllFriendsUsersOnline(SecUser user) {
         securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
         List<SecUser> friends = getAllFriendsUsers(user);
         List<SecUser> friendsOnline = getAllOnlineUsers().stream()
@@ -812,7 +905,7 @@ public class SecUserService extends ModelService {
     /**
      * Get all user that share at least a same project as user from argument and
      */
-    List<SecUser> getAllFriendsUsersOnline(SecUser user, Project project) {
+    public List<SecUser> getAllFriendsUsersOnline(SecUser user, Project project) {
         securityACLService.check(project, READ);
         //no need to make insterect because getAllOnlineUsers(project) contains only friends users
         return getAllOnlineUsers(project);
@@ -839,7 +932,13 @@ public class SecUserService extends ModelService {
                 json.put("user", currentUser.getId());
                 json.put("origin", "ADMINISTRATOR");
             }
-            return executeCommand(new AddCommand(currentUser), null, json);
+            CommandResponse response = executeCommand(new AddCommand(currentUser), null, json);
+
+            User user = (User)response.getObject();
+            user.setPassword(json.getJSONAttrStr("password", true));
+            user.encodePassword(passwordEncoder);
+
+            return response;
         }
     }
 
@@ -903,6 +1002,18 @@ public class SecUserService extends ModelService {
         if (userWithSameUsername.isPresent() && !Objects.equals(userWithSameUsername.get().getId(), user.getId())) {
             throw new AlreadyExistException("User " + user.getUsername() + " already exist!");
         }
+    }
+
+    public void changeUserPassword(User user, String newPassword) {
+        securityACLService.checkIsCreator(user,currentUserService.getCurrentUser());
+        user.setPassword(newPassword);
+        user.encodePassword(passwordEncoder);
+        this.saveDomain(user);
+    }
+
+    public boolean isUserPassword(User user, String password) {
+        securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
+        return passwordEncoder.matches(password, user.getPassword());
     }
 
 

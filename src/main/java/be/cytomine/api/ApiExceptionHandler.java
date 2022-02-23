@@ -43,6 +43,16 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(jsonObject.toJsonString());
     }
 
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<?> handleException(AuthenticationException exception) {
+        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()));
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(jsonObject.toJsonString());
+    }
+
+
+
     @ExceptionHandler(CytomineMethodNotYetImplementedException.class)
     public ResponseEntity<?> handleException(CytomineMethodNotYetImplementedException exception) {
         exception.printStackTrace();

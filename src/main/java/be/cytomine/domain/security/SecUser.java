@@ -22,9 +22,6 @@ import java.util.*;
         discriminatorType = DiscriminatorType.STRING)
 public class SecUser extends CytomineDomain {
 
-    @Autowired
-    @Transient
-    PasswordEncoder passwordEncoder;
 
 //    @Id
 //    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGen")
@@ -98,7 +95,7 @@ public class SecUser extends CytomineDomain {
         return username;
     }
 
-    protected void encodePassword() {
+    public void encodePassword(PasswordEncoder passwordEncoder) {
         byte minLength = 8;
         if(password.length() < minLength) {
             throw new WrongArgumentException("Your password must have at least $minLength characters!");

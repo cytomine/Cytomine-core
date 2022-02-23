@@ -3,6 +3,7 @@ package be.cytomine.service.security;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.AnnotationTerm;
@@ -15,10 +16,7 @@ import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
-import be.cytomine.domain.social.LastConnection;
-import be.cytomine.domain.social.PersistentConnection;
-import be.cytomine.domain.social.PersistentImageConsultation;
-import be.cytomine.domain.social.PersistentProjectConnection;
+import be.cytomine.domain.social.*;
 import be.cytomine.dto.AuthInformation;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ForbiddenException;
@@ -29,9 +27,12 @@ import be.cytomine.service.CommandService;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.database.SequenceService;
+import be.cytomine.service.dto.AreaDTO;
 import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.service.social.ImageConsultationService;
 import be.cytomine.service.social.ProjectConnectionService;
+import be.cytomine.service.social.UserPositionService;
+import be.cytomine.service.social.UserPositionServiceTests;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.filters.SearchOperation;
@@ -46,6 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.context.request.RequestContextHolder;
 
@@ -101,6 +103,12 @@ public class SecUserServiceTests {
     ProjectConnectionRepository projectConnectionRepository;
 
     @Autowired
+    PersistentUserPositionRepository persistentUserPositionRepository;
+
+    @Autowired
+    LastUserPositionRepository lastUserPositionRepository;
+
+    @Autowired
     SequenceService sequenceService;
 
     @Autowired
@@ -109,6 +117,9 @@ public class SecUserServiceTests {
     @Autowired
     EntityManager entityManager;
 
+    @Autowired
+    UserPositionService userPositionService;
+
     @BeforeEach
     public void init() {
         persistentConnectionRepository.deleteAll();
@@ -116,6 +127,8 @@ public class SecUserServiceTests {
         persistentImageConsultationRepository.deleteAll();
         persistentProjectConnectionRepository.deleteAll();
         projectConnectionRepository.deleteAll();
+        lastUserPositionRepository.deleteAll();
+        persistentUserPositionRepository.deleteAll();
     }
 
     PersistentProjectConnection given_a_persistent_connection_in_project(User user, Project project, Date created) {
@@ -603,6 +616,40 @@ public class SecUserServiceTests {
         assertThat(secUserService.listUsers(projectWithTwoUsers)).contains(user, anotherUser);
     }
 
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
+    @Test
+    void change_password() {
+        User user = builder.given_a_user();
+        user.setPassword(passwordEncoder.encode("oldPassword"));
+        builder.persistAndReturn(user);
+
+        secUserService.changeUserPassword(user, "newPassword");
+
+        assertThat(passwordEncoder.matches("newPassword", user.getPassword())).isTrue();
+    }
+
+    @Test
+    void check_password() {
+        User user = builder.given_a_user();
+        user.setPassword(passwordEncoder.encode("newPassword"));
+        builder.persistAndReturn(user);
+
+        assertThat(secUserService.isUserPassword(user, "newPassword")).isTrue();
+        assertThat(secUserService.isUserPassword(user, "badPassword")).isFalse();
+    }
+
+    @Test
+    void find_project_creator() {
+        User user = builder.given_superadmin();
+
+        Project projectWhereUserIsManager = builder.given_a_project();
+        builder.addUserToProject(projectWhereUserIsManager, "superadmin", ADMINISTRATION);
+
+        assertThat(secUserService.findCreator(projectWhereUserIsManager)).contains(user);
+    }
+
     @Disabled("software package")
     @Test
     void list_project_users_show_userjob() {
@@ -847,6 +894,83 @@ public class SecUserServiceTests {
                 .doesNotContain(userFriendOnlineButOnAnotherProject);
     }
 
+    @Test
+    void list_online_user_for_project_wit_their_activities() {
+        User userOnline = builder.given_default_user();
+
+        Project project = builder.given_a_project();
+
+        builder.addUserToProject(project, userOnline.getUsername());
+
+        PersistentProjectConnection lastConnection = given_a_persistent_connection_in_project(userOnline, project, DateUtils.addSeconds(new Date(), -15));
+
+        PersistentImageConsultation consultation = given_a_persistent_image_consultation(userOnline, builder.given_an_image_instance(project), new Date());
+
+        List<JsonObject> allOnlineUserWithTheirPositions = secUserService.getUsersWithLastActivities(project);
+        assertThat(allOnlineUserWithTheirPositions).hasSize(1);
+        assertThat(allOnlineUserWithTheirPositions.get(0).get("id")).isEqualTo(userOnline.getId());
+        assertThat(allOnlineUserWithTheirPositions.get(0).get("lastImageId")).isEqualTo(consultation.getImage());
+        assertThat(allOnlineUserWithTheirPositions.get(0).get("lastImageName")).isNotNull();
+        assertThat(allOnlineUserWithTheirPositions.get(0).get("lastConnection")).isNotNull();
+        assertThat(allOnlineUserWithTheirPositions.get(0).get("frequency")).isEqualTo(1);
+    }
+
+
+    @Test
+    void list_online_user_for_project_wit_their_position() {
+        User userOnline = builder.given_default_user();
+        User userOnlineButOnDifferentProject = builder.given_a_user();
+        User userOffline = builder.given_a_user();
+
+        Project project = builder.given_a_project();
+        Project anotherProject = builder.given_a_project();
+
+        given_a_last_connection(userOffline, project.getId(), DateUtils.addDays(new Date(), -15));
+        given_a_last_connection(userOnline, project.getId(), DateUtils.addSeconds(new Date(), -15));
+        given_a_last_connection(userOnlineButOnDifferentProject, anotherProject.getId(), DateUtils.addSeconds(new Date(), -10));
+
+        given_a_persistent_user_position(DateUtils.addSeconds(new Date(), -15), userOnline,
+                builder.given_a_not_persisted_slice_instance(builder.given_an_image_instance(project), builder.given_an_abstract_slice()), UserPositionServiceTests.USER_VIEW);
+
+        List<JsonObject> allOnlineUserWithTheirPositions = secUserService.getAllOnlineUserWithTheirPositions(project);
+        assertThat(allOnlineUserWithTheirPositions.stream().filter(x -> x.getId().equals(userOnline.getId())).findFirst()).isPresent();
+        assertThat(allOnlineUserWithTheirPositions.stream().filter(x -> x.getId().equals(userOnline.getId())).findFirst().get().get("position")).isNotNull();
+        assertThat(allOnlineUserWithTheirPositions.stream().filter(x -> x.getId().equals(userOnlineButOnDifferentProject.getId())).findFirst()).isEmpty();
+        assertThat(allOnlineUserWithTheirPositions.stream().filter(x -> x.getId().equals(userOffline.getId())).findFirst()).isEmpty();
+    }
+
+    PersistentUserPosition given_a_persistent_user_position(Date creation, User user, SliceInstance sliceInstance, AreaDTO areaDTO) {
+        PersistentUserPosition connection =
+                userPositionService.add(creation, user, sliceInstance, sliceInstance.getImage(), areaDTO,
+                        1,
+                        5.0,
+                        false
+                );
+        return connection;
+    }
+
+    @Test
+    void list_user_resume_activities() {
+        User userOnline = builder.given_default_user();
+        Project project = builder.given_a_project();
+        builder.addUserToProject(project, userOnline.getUsername());
+
+        PersistentProjectConnection firstConnection = given_a_persistent_connection_in_project(userOnline, project, DateUtils.addDays(new Date(), -15));
+        PersistentProjectConnection lastConnection = given_a_persistent_connection_in_project(userOnline, project, DateUtils.addSeconds(new Date(), -15));
+
+        given_a_persistent_image_consultation(userOnline, builder.given_an_image_instance(project), new Date());
+
+        JsonObject data = secUserService.getResumeActivities(project, userOnline);
+
+        assertThat(data.getJSONAttrDate("firstConnection")).isEqualTo(firstConnection.getCreated());
+        assertThat(data.getJSONAttrDate("lastConnection")).isEqualTo(lastConnection.getCreated());
+        assertThat(data.getJSONAttrInteger("totalAnnotations")).isEqualTo(0);
+        assertThat(data.getJSONAttrInteger("totalConnections")).isEqualTo(2);
+        assertThat(data.getJSONAttrInteger("totalConsultations")).isEqualTo(1);
+        assertThat(data.getJSONAttrInteger("totalAnnotationSelections")).isEqualTo(0);
+
+    }
+    
 
     @Test
     void add_valid_user() {

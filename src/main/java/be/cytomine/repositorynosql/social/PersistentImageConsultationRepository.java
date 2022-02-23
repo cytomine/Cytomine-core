@@ -42,4 +42,6 @@ public interface PersistentImageConsultationRepository extends MongoRepository<P
     List<PersistentImageConsultation> findAllByCreatedGreaterThanAndProjectConnectionOrderByCreatedDesc(Date created, Long activityId);
 
     void deleteAllByImage(Long id);
+
+    long countByProjectAndUser(Long project, Long user);
 }
