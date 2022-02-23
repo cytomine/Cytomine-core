@@ -223,7 +223,7 @@ public class SecUserSecRoleService extends ModelService {
         if(domain!=null) {
             if(secUserSecRoleRepository.findBySecUserAndSecRole(secUserSecRole.getSecUser(), secUserSecRole.getSecRole())
                     .stream().anyMatch(x -> !Objects.equals(x.getId(), secUserSecRole.getId())))  {
-                throw new AlreadyExistException("User " + secUserSecRole.getSecUser() + " has already role " + secUserSecRole.getSecRole());
+                throw new AlreadyExistException("User " + secUserSecRole.getSecUser().getUsername() + " has already role " + secUserSecRole.getSecRole().getAuthority());
             }
         }
     }

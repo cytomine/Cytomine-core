@@ -899,7 +899,7 @@ public class BasicInstanceBuilder {
     }
 
     public SecUserSecRole given_a_not_persisted_user_role(User user, String authority) {
-        return persistAndReturn(given_a_not_persisted_user_role(user, secRoleRepository.findByAuthority(authority).get()));
+        return given_a_not_persisted_user_role(user, secRoleRepository.findByAuthority(authority).get());
     }
 
     public SecUserSecRole given_a_not_persisted_user_role(SecUser secUser, SecRole secRole) {

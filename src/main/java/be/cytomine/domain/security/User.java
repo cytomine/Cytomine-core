@@ -159,4 +159,9 @@ public class User extends SecUser {
     public JsonObject toJsonObject() {
         return getDataFromDomain(this);
     }
+
+    @Override
+    public SecUser userDomainCreator() {
+        return this;
+    }
 }
