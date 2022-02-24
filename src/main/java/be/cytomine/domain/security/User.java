@@ -2,6 +2,7 @@ package be.cytomine.domain.security;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.SecurityUtils;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -130,7 +131,11 @@ public class User extends SecUser {
         returnArray.put("lastname", user.lastname);
         returnArray.put("email", user.email);
         returnArray.put("language", (user.language!=null? user.language.toString() : null));
-
+        if (SecurityUtils.getCurrentUserLogin().isPresent() && SecurityUtils.getCurrentUserLogin().get().equals(user.getUsername())) {
+            returnArray.put("publicKey", ((User)domain).getPublicKey());
+            returnArray.put("privateKey", ((User)domain).getPrivateKey());
+            returnArray.put("passwordExpired", ((User)domain).getPasswordExpired());
+        }
         returnArray.put("isDeveloper", user.isDeveloper);
         returnArray.put("enabled", user.enabled);
         returnArray.put("user", user.creator);
@@ -138,13 +143,11 @@ public class User extends SecUser {
     }
 
 
-    public static JsonObject getDataFromDomainWithPersonnalData(CytomineDomain domain) {
-        JsonObject json = User.getDataFromDomain(domain);
-        json.put("publicKey", ((User)domain).getPublicKey());
-        json.put("privateKey", ((User)domain).getPrivateKey());
-        json.put("passwordExpired", ((User)domain).getPasswordExpired());
-        return json;
-    }
+//    public static JsonObject getDataFromDomainWithPersonnalData(CytomineDomain domain) {
+//        JsonObject json = User.getDataFromDomain(domain);
+//
+//        return json;
+//    }
 
     @Override
     public String toJSON() {

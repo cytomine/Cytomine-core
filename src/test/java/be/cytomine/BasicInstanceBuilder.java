@@ -266,6 +266,22 @@ public class BasicInstanceBuilder {
         permissionService.addPermission(project, username, ADMINISTRATION, this.given_superadmin());
     }
 
+    public void addUserToOntology(Ontology ontology, String username, Permission permission) {
+        permissionService.addPermission(ontology, username, permission);
+    }
+
+    public void addUserToOntology(Ontology ontology, String username) {
+        permissionService.addPermission(ontology, username, ADMINISTRATION, this.given_superadmin());
+    }
+
+    public void addUserToStorage(Storage storage, String username, Permission permission) {
+        permissionService.addPermission(storage, username, permission);
+    }
+
+    public void addUserToStorage(Storage storage, String username) {
+        permissionService.addPermission(storage, username, ADMINISTRATION, this.given_superadmin());
+    }
+
     public <T> T persistAndReturn(T instance) {
         em.persist(instance);
         em.flush();

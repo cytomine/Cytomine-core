@@ -543,19 +543,27 @@ public class SecUserService extends ModelService {
         } else {
             sortColumn = "secUser." + sortColumn;
         }
-        order = "order by " + sortColumn + " " + sortDirection;
+        order = " order by " + sortColumn + " " + sortDirection;
 
         String request = select + from + where + groupBy + having + order;
 
-        if (max > 0) {
-            request += " LIMIT " + max;
-        }
-        if (offset > 0) {
-            request += " OFFSET " + offset;
-        }
+//        if (max > 0) {
+//            request += " LIMIT " + max;
+//        }
+//        if (offset > 0) {
+//            request += " OFFSET " + offset;
+//        }
 
 
         Query query = getEntityManager().createQuery(request, Object[].class);
+
+        if (max>0) {
+            query.setMaxResults(max.intValue());
+        }
+        if (offset>0) {
+            query.setFirstResult(offset.intValue());
+        }
+
         List<JsonObject> results = new ArrayList<>();
         List<Object[]> resultList = query.getResultList();
         for (Object[] row : resultList) {
@@ -937,7 +945,7 @@ public class SecUserService extends ModelService {
             User user = (User)response.getObject();
             user.setPassword(json.getJSONAttrStr("password", true));
             user.encodePassword(passwordEncoder);
-
+            user.setNewPassword(null);
             return response;
         }
     }
@@ -952,6 +960,7 @@ public class SecUserService extends ModelService {
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkIsCreator((SecUser) domain, currentUser);
+        jsonNewData.withChange("password", null);
         return executeCommand(new EditCommand(currentUser, null), domain, jsonNewData);
     }
 
@@ -998,6 +1007,9 @@ public class SecUserService extends ModelService {
 
     public void checkDoNotAlreadyExist(CytomineDomain domain) {
         SecUser user = (SecUser) domain;
+        if (user.getUsername()==null) {
+            throw new WrongArgumentException("Username is not set");
+        }
         Optional<SecUser> userWithSameUsername = secUserRepository.findByUsernameLikeIgnoreCase(user.getUsername());
         if (userWithSameUsername.isPresent() && !Objects.equals(userWithSameUsername.get().getId(), user.getId())) {
             throw new AlreadyExistException("User " + user.getUsername() + " already exist!");

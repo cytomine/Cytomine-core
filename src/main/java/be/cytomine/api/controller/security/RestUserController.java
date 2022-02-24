@@ -109,7 +109,7 @@ public class RestUserController extends RestCytomineController {
     @GetMapping("/project/{id}/userlayer.json")
     public ResponseEntity<String> showLayerByProject(
             @PathVariable Long id,
-            @RequestParam(value = "image", required = false) Long idImage
+            @RequestParam(value = "image", required = false, defaultValue = "0") Long idImage
     ) {
         log.debug("REST request to list user layers from project {}", id);
         Project project = projectService.find(id)
@@ -133,7 +133,6 @@ public class RestUserController extends RestCytomineController {
 
     @GetMapping("/user.json")
     public ResponseEntity<String> list(
-            @PathVariable Long id,
             @RequestParam(value = "publicKey", required = false) String publicKey,
             @RequestParam(value = "withRoles", defaultValue = "false", required = false) Boolean withRoles,
             @RequestParam(value = "withLastConsultation", defaultValue = "false", required = false) Boolean withLastConsultation,
@@ -174,7 +173,7 @@ public class RestUserController extends RestCytomineController {
             object.put("admin", authMaps.getAdmin());
             object.put("user", authMaps.getUser());
             object.put("guest", authMaps.getGuest());
-            return responseSuccess(object);
+            return responseSuccess(object, isFilterRequired());
         }).orElseGet(() -> responseNotFound("User", id));
     }
 
@@ -185,15 +184,14 @@ public class RestUserController extends RestCytomineController {
         securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
         return responseSuccess(JsonObject.of("privateKey", user.getPrivateKey(), "publicKey", user.getPublicKey()));
     }
-    @GetMapping("/userkey/{id}/keys.json")
+
+    @GetMapping("/user/{id}/keys.json")
     public ResponseEntity<String> keysById(@PathVariable String id) {
         SecUser user = secUserService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("User", Map.of("id or username", id).toString()));
         securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
         return responseSuccess(JsonObject.of("privateKey", user.getPrivateKey(), "publicKey", user.getPublicKey()));
     }
-
-
 
     @GetMapping("/signature.json")
     public ResponseEntity<String> signature(
@@ -465,8 +463,6 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(JsonObject.of("data", JsonObject.of("message", "OK")).toJsonString());
     }
 
-
-
     @PostMapping("/storage/{storage}/user/{user}.json")
     public ResponseEntity<String> addUserToStorage(@PathVariable("storage") Long storageId, @PathVariable("user") Long userId) {
         log.debug("REST request to add User {} to storage {}", userId, storageId);
@@ -477,6 +473,7 @@ public class RestUserController extends RestCytomineController {
         secUserService.addUserToStorage(user, storage);
         return responseSuccess(JsonObject.of("data", JsonObject.of("message", "OK")).toJsonString());
     }
+
     @DeleteMapping("/storage/{storage}/user/{user}.json")
     public ResponseEntity<String> deleteUserFromStorage(@PathVariable("storage") Long storageId, @PathVariable("user") Long userId) {
         log.debug("REST request to remove User {} from storage {}", userId, storageId);
@@ -488,8 +485,10 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(JsonObject.of("data", JsonObject.of("message", "OK")).toJsonString());
     }
 
+
     @PutMapping("/user/{user}/password.json")
-    public ResponseEntity<String> resetPassword(@PathVariable("user") Long userId, @RequestBody JsonObject json) {
+    public ResponseEntity<String> resetPassword(@PathVariable("user") Long userId,
+                                                @RequestBody JsonObject json) {
         log.debug("REST request to resetpassword for User {}", userId);
         SecUser user = secUserService.find(userId)
                 .orElseThrow(() -> new ObjectNotFoundException("User", userId));
@@ -556,7 +555,7 @@ public class RestUserController extends RestCytomineController {
 
     @GetMapping("/project/{project}/online/user.json")
     public ResponseEntity<String> listOnlineFriendsWithPosition(
-            @RequestParam(value = "project", required = false) Long projectId
+            @PathVariable(value = "project") Long projectId
     ) {
         log.debug("REST request to list online user for project {}", projectId);
 
@@ -565,9 +564,9 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(secUserService.getAllOnlineUserWithTheirPositions(project), isFilterRequired());
     }
 
-    @GetMapping("/project/{project}/online/usersActivity.json")
+    @GetMapping("/project/{project}/usersActivity.json")
     public ResponseEntity<String> usersActivity(
-            @RequestParam(value = "project", required = false) Long projectId
+            @PathVariable(value = "project") Long projectId
     ) {
         log.debug("REST request to list online user for project {}", projectId);
 
@@ -596,8 +595,8 @@ public class RestUserController extends RestCytomineController {
 
     @GetMapping("/project/{project}/resumeActivity/{user}.json")
     public ResponseEntity<String> resumeActivity(
-            @RequestParam(value = "project", required = false) Long projectId,
-            @RequestParam(value = "user", required = false) Long userId
+            @PathVariable(value = "project") Long projectId,
+            @PathVariable(value = "user") Long userId
     ) {
         log.debug("REST request to list activities for user {} and for project {}", userId, projectId);
 
@@ -618,6 +617,7 @@ public class RestUserController extends RestCytomineController {
         return true;
     }
 
+    @Override
     protected void filterOneElement(Map<String, Object> element) {
         if (element.get("id")!=null && !element.get("id").equals(currentUserService.getCurrentUser().getId())) {
             element.remove("email");

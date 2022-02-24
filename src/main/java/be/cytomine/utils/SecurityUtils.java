@@ -153,15 +153,15 @@ public class SecurityUtils {
 
 
     public static boolean isSwitched(ApplicationContext applicationContext) {
-        Collection<? extends GrantedAuthority> inferred = findInferredAuthorities(applicationContext, getPrincipalAuthorities());
-        for (GrantedAuthority authority : inferred) {
-            if (authority instanceof SwitchUserGrantedAuthority) {
-                return true;
-            }
-            if (SwitchUserFilter.ROLE_PREVIOUS_ADMINISTRATOR.equals(authority.getAuthority())) {
-                return true;
-            }
-        }
+//        Collection<? extends GrantedAuthority> inferred = findInferredAuthorities(applicationContext, getPrincipalAuthorities());
+//        for (GrantedAuthority authority : inferred) {
+//            if (authority instanceof SwitchUserGrantedAuthority) {
+//                return true;
+//            }
+//            if (SwitchUserFilter.ROLE_PREVIOUS_ADMINISTRATOR.equals(authority.getAuthority())) {
+//                return true;
+//            }
+//        }
         return false;
     }
 
