@@ -53,7 +53,7 @@ class SecurityACLService {
     }
 
     void checkAtLeastOne(def id, String className, String method, Permission permission) {
-        if(currentRoleServiceProxy.isAdminByNow(cytomineService.currentUser)) return;
+        if(isAdminByNow(cytomineService.currentUser)) return;
         def simpleObject =  Class.forName(className, false, Thread.currentThread().contextClassLoader).read(id)
         if (simpleObject) {
             def containerObjects = simpleObject."$method"()
@@ -61,7 +61,7 @@ class SecurityACLService {
                 throw new ForbiddenException("ACL error: ${className} with id ${id}. Cannot find any related object to check permission")
             }
             def atLeastOne = containerObjects.find {
-                it.checkPermission(permission,currentRoleServiceProxy.isAdminByNow(cytomineService.currentUser))
+                it.checkPermission(permission,isAdminByNow(cytomineService.currentUser))
             }
             if (!atLeastOne) throw new ForbiddenException("You don't have the right to read or modity this resource! ${className} ${id}")
 
@@ -79,7 +79,7 @@ class SecurityACLService {
         if (simpleObject) {
             def containerObjects = simpleObject."$method"()
             def atLeastOne = containerObjects.find {
-                !it.checkPermission(permission,currentRoleServiceProxy.isAdminByNow(cytomineService.currentUser))
+                !it.checkPermission(permission,isAdminByNow(cytomineService.currentUser))
             }
             if (atLeastOne) throw new ForbiddenException("You don't have the right to read or modity this resource! ${className} ${id}")
         } else {
@@ -114,7 +114,7 @@ class SecurityACLService {
 
     void check(CytomineDomain domain, Permission permission) {
         if (domain) {
-            if (!domain.container().checkPermission(permission,currentRoleServiceProxy.isAdminByNow(cytomineService.currentUser))) {
+            if (!domain.container().checkPermission(permission,isAdminByNow(cytomineService.currentUser))) {
                 throw new ForbiddenException("You don't have the right to read or modity this resource! ${domain.class.getName()} ${domain.id}")
             }
 
@@ -180,8 +180,9 @@ class SecurityACLService {
     //check if the container (e.g. Project) has the minimal editing mode or is Admin. If not, exception will be thown
     void checkFullOrRestrictedForOwner(CytomineDomain domain, SecUser owner = null) {
         if (domain) {
-            if(domain.container().hasACLPermission(domain.container(),ADMINISTRATION)
-                    || currentRoleServiceProxy.isAdminByNow(cytomineService.currentUser)) return;
+            if(domain.container().mode.equals(Project.EditingMode.LOCKED)) throw new ForbiddenException("You don't have the right to do this. The project is locked")
+            if(isAdminByNow(cytomineService.currentUser) || domain.container().hasACLPermission(domain.container(),ADMINISTRATION))
+                return;
             switch (domain.container().mode) {
                 case Project.EditingMode.CLASSIC :
                     return;
@@ -211,7 +212,7 @@ class SecurityACLService {
 
     public List<Storage> getStorageList(SecUser user, def adminByPass = true, String searchString) {
         //faster method
-        if (adminByPass && currentRoleServiceProxy.isAdminByNow(user)){
+        if (adminByPass && isAdminByNow(user)){
             if(searchString && !searchString.isEmpty()) return Storage.list();
             else return Storage.findAllByNameIlike('%'+searchString+'%');
         }
@@ -229,7 +230,7 @@ class SecurityACLService {
 
     public List<Ontology> getOntologyList(SecUser user) {
         //faster method
-        if (currentRoleServiceProxy.isAdminByNow(user)) return Ontology.findAllByDeletedIsNull()
+        if (isAdminByNow(user)) return Ontology.findAllByDeletedIsNull()
         else {
             return Ontology.executeQuery(
                     "select distinct ontology "+
@@ -243,7 +244,7 @@ class SecurityACLService {
 
     public List<Project> getProjectList(SecUser user) {
         //faster method
-        if (currentRoleServiceProxy.isAdminByNow(user)) {
+        if (isAdminByNow(user)) {
             Project.findAllByDeletedIsNull()
         }
         else {
@@ -258,7 +259,7 @@ class SecurityACLService {
 
     public List<Project> getProjectList(SecUser user, Ontology ontology) {
         //faster method
-        if (currentRoleServiceProxy.isAdminByNow(user)) {
+        if (isAdminByNow(user)) {
             def projects = Project.findAllByOntologyAndDeletedIsNull(ontology)
             return projects
         }
@@ -275,7 +276,7 @@ class SecurityACLService {
 
     public List<Project> getProjectList(SecUser user, Software software) {
         //faster method
-        if (currentRoleServiceProxy.isAdminByNow(user)) {
+        if (isAdminByNow(user)) {
             SoftwareProject.findAllBySoftware(software).collect{it.project}.findAll{!it.checkDeleted()}
         }
         else {
@@ -291,7 +292,7 @@ class SecurityACLService {
 
     public def getLightStoragesWithMaxPermission(SecUser user) {
         def data = []
-        if (currentRoleServiceProxy.isAdminByNow(user)) {
+        if (isAdminByNow(user)) {
             return Storage.list().collect {[id:it.id, name:it.name, permission: PermissionService.retrievePermissionFromInt(ADMINISTRATION.mask)]}
         }
 
@@ -312,26 +313,26 @@ class SecurityACLService {
 
 
     public def checkAdmin(SecUser user) {
-        if (!currentRoleServiceProxy.isAdminByNow(user)) {
+        if (!isAdminByNow(user)) {
             throw new ForbiddenException("You don't have the right to read this resource! You must be admin!")
         }
     }
 
     public def checkGuest(SecUser user) {
-        if (!currentRoleServiceProxy.isAdminByNow(user) && !currentRoleServiceProxy.isUserByNow(user) && !currentRoleServiceProxy.isGuestByNow(user)) {
+        if (!isAdminByNow(user) && !currentRoleServiceProxy.isUserByNow(user) && !currentRoleServiceProxy.isGuestByNow(user)) {
             throw new ForbiddenException("You don't have the right to read this resource! You must be user!")
         }
     }
 
     public def checkUser(SecUser user) {
-        if (!currentRoleServiceProxy.isAdminByNow(user) && !currentRoleServiceProxy.isUserByNow(user)) {
+        if (!isAdminByNow(user) && !currentRoleServiceProxy.isUserByNow(user)) {
             throw new ForbiddenException("You don't have the right to read this resource! You must be user!")
         }
     }
 
     public def checkIsSameUser(SecUser user,SecUser currentUser) {
         boolean sameUser = (user?.id == currentUser.id)
-        sameUser |= currentRoleServiceProxy.isAdminByNow(currentUser)
+        sameUser |= isAdminByNow(currentUser)
         sameUser |= (currentUser instanceof UserJob && user.id==((UserJob)currentUser).user.id)
         if (!sameUser) {
             throw new ForbiddenException("You don't have the right to read this resource! You must be the same user!")
@@ -340,10 +341,10 @@ class SecurityACLService {
 
     public def checkIsSameUserOrCreator(SecUser user,SecUser currentUser, CytomineDomain domain) {
         boolean sameUser = (user.id == currentUser.id)
-        sameUser |= currentRoleServiceProxy.isAdminByNow(currentUser)
+        sameUser |= isAdminByNow(currentUser)
         sameUser |= (currentUser instanceof UserJob && user.id==((UserJob)currentUser).user.id)
 
-        boolean creator = (currentRoleServiceProxy.isAdminByNow(currentUser) || (currentUser.id==domain.userDomainCreator().id))
+        boolean creator = (isAdminByNow(currentUser) || (currentUser.id==domain.userDomainCreator().id))
 
         if (!sameUser && !creator) {
             throw new ForbiddenException("You don't have the right to read this resource!")
@@ -352,7 +353,7 @@ class SecurityACLService {
 
     public def checkIsAdminContainer(CytomineDomain domain,SecUser currentUser = null) {
         if (domain) {
-            if (!domain.container().checkPermission(ADMINISTRATION,currentRoleServiceProxy.isAdminByNow(cytomineService.currentUser))) {
+            if (!domain.container().checkPermission(ADMINISTRATION,isAdminByNow(cytomineService.currentUser))) {
                 throw new ForbiddenException("You don't have the right to do this. You must be the creator or the container admin")
             }
         } else {
@@ -362,10 +363,10 @@ class SecurityACLService {
     }
 
     public def checkIsSameUserOrAdminContainer(CytomineDomain domain,SecUser user,SecUser currentUser) {
-        boolean isNotSameUser = (!currentRoleServiceProxy.isAdminByNow(currentUser) && (user.id!=currentUser.id))
+        boolean isNotSameUser = (!isAdminByNow(currentUser) && (user.id!=currentUser.id))
         if (isNotSameUser) {
             if (domain) {
-                if (!domain.container().checkPermission(ADMINISTRATION,currentRoleServiceProxy.isAdminByNow(cytomineService.currentUser))) {
+                if (!domain.container().checkPermission(ADMINISTRATION,isAdminByNow(cytomineService.currentUser))) {
                     throw new ForbiddenException("You don't have the right to do this. You must be the creator or the container admin")
                 }
             } else {
@@ -376,7 +377,7 @@ class SecurityACLService {
     }
 
     public def checkIsCreator(CytomineDomain domain,SecUser currentUser) {
-        if (!currentRoleServiceProxy.isAdminByNow(currentUser) && (currentUser.id!=domain.userDomainCreator().id)) {
+        if (!isAdminByNow(currentUser) && (currentUser.id!=domain.userDomainCreator().id)) {
             throw new ForbiddenException("You don't have the right to read this resource! You must be the same user!")
         }
     }
@@ -401,13 +402,14 @@ class SecurityACLService {
                 return true
             }
         }
-        if (!isInside && !currentRoleServiceProxy.isAdminByNow(user))
+        if (!isInside && !isAdminByNow(user))
             throw new ForbiddenException("User must be in this group!")
     }
 
 
     public def isAdminByNow(SecUser user) {
-        return currentRoleServiceProxy.isAdminByNow(user)
+        // we first check id user is "superadmin" as this username is the one use in GRAILS JOBS, this loading currentRoleServiceProxy which will fails as it is a session service
+        return user.username=="superadmin" || currentRoleServiceProxy.isAdminByNow(user)
     }
 
 }

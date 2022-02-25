@@ -27,6 +27,8 @@ class DeleteOldProjectsJob {
 
     def projectService
 
+    //def sessionRequired = true
+
     def transactionService
     def notificationService
     def secUserService
