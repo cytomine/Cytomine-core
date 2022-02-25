@@ -408,7 +408,7 @@ class SecurityACLService {
 
 
     public def isAdminByNow(SecUser user) {
-        // we first check id user is "superadmin" as this username is the one use in GRAILS JOBS, this loading currentRoleServiceProxy which will fails as it is a session service
+        // we first check id user is "superadmin" as this username is the one that we use in GRAILS JOBS, the loading of currentRoleServiceProxy which will fails as it is a session service
         return user.username=="superadmin" || currentRoleServiceProxy.isAdminByNow(user)
     }
 
