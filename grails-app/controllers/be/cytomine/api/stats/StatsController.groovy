@@ -20,6 +20,7 @@ import be.cytomine.Exception.WrongArgumentException
 */
 
 import be.cytomine.api.RestController
+import be.cytomine.image.AbstractImage
 import be.cytomine.image.ImageInstance
 import be.cytomine.ontology.AlgoAnnotation
 import be.cytomine.ontology.Ontology
@@ -52,6 +53,7 @@ class StatsController extends RestController {
         result["users"] = statsService.total(User).total
         result["projects"] = statsService.total(Project).total
         result["images"] = statsService.total(ImageInstance).total
+        result["abstractImages"] = statsService.total(AbstractImage).total
         result["userAnnotations"] = statsService.total(UserAnnotation).total
         result["jobAnnotations"] = statsService.total(AlgoAnnotation).total
         result["terms"] = statsService.total(Term).total
