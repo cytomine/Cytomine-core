@@ -48,7 +48,7 @@ class NotificationService {
                 mailFrom: grailsApplication.config.grails.instanceHostSupportMail,
                 phoneNumber: grailsApplication.config.grails.instanceHostPhoneNumber
         ])
-        String mailTitle = "Project " + project.name + " will be deleted soon"
+        String mailTitle = "Du har et Cytomine prosjekt som vil ble slettet nå"
 
         println message
 
