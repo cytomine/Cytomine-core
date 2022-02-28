@@ -39,16 +39,47 @@ class NotificationService {
     def imageServerService
 
     def notifyProjectDelete(def receiversEmail, Project project) {
+
+        String HV_instance_specific;
+
+        switch(grailsApplication.config.cytomine.HV_instance.toString()) {
+            case "DEVELOPMENT" :
+                HV_instance_specific = "Test Utvikling"
+                break
+            case "QA_UNDERVISNING" :
+                HV_instance_specific = "Test Undervisning"
+                break
+            case "UNDERVISNING" :
+                HV_instance_specific = "Undervisning"
+                break
+            case "QA_LABO" :
+                HV_instance_specific = "Test Laboratorienettverk"
+                break
+            case "LABO" :
+                HV_instance_specific = "Laboratorienettverk"
+                break
+            case "QA_KOLLEGIAL" :
+                HV_instance_specific = "Test Kollegialrådføring"
+                break
+            case "KOLLEGIAL" :
+                HV_instance_specific = "Kollegialrådføring"
+                break
+            default:
+                HV_instance_specific = ""
+        }
+
         String message = renderService.createProjectDeleteWarning([
                 projectId : project.id,
                 projectName : project.name,
                 toDeleteAt: new SimpleDateFormat("dd/MM/YYYY").format(project.toDeleteAt),
+                hv_instance: HV_instance_specific,
                 by: grailsApplication.config.grails.serverURL,
                 website: grailsApplication.config.grails.instanceHostWebsite,
                 mailFrom: grailsApplication.config.grails.instanceHostSupportMail,
                 phoneNumber: grailsApplication.config.grails.instanceHostPhoneNumber
         ])
-        String mailTitle = "Du har et Cytomine prosjekt som vil ble slettet nå"
+        String mailTitle = "Varsel om sletting av et prosjekt i Cytomine"
+        mailTitle += HV_instance_specific
 
         println message
 

@@ -10,17 +10,17 @@
                 <table>
                     <tr>
                         <td>
-                            <h3>Hei.</h3>
+                            <h3>Til prosjekteier</h3>
 
                             <p class="lead">
-                                Du mottar denne e-posten fordi du har et prosjekt som vil bli slettet snart (<%= toDeleteAt %>)
+                                Du mottar denne e-post da du er registert som eier av et prosjekt i <%= hv_instance %> som slettes (<%= toDeleteAt %>)
                             </p>
 
                             <p>
-                                Klikk på <a href='<%= by %>/#/project/<%= projectId %>/information'> Hold deg i live-knappen</a> hvis du vil utsette den slettede datoen. <br />
+                                Trykk på <a href='<%= by %>/#/project/<%= projectId %>/information'> utsett sletting</a> hvis du vil forlenge prosjektets levetid. <br />
                             </p>
                             <p>
-                                Merk: Etter sletting er data mulig å hente tilbake fra backup fra kort periode. (Det påløper kostnader ved å hente data tilbake fra backup.) <br />
+                                Merk: Når data slettes fra Cytomine er det ikke mulig gjenskape disse data. <br />
                             </p>
 
                             <!-- social & contact -->

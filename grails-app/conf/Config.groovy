@@ -510,3 +510,4 @@ grails.defaultLanguage = "ENGLISH"
 
 grails.useHTTPInternally = true
 
+cytomine.HV_instance="DEVELOPMENT"
