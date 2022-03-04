@@ -180,7 +180,6 @@ class SecurityACLService {
     //check if the container (e.g. Project) has the minimal editing mode or is Admin. If not, exception will be thown
     void checkFullOrRestrictedForOwner(CytomineDomain domain, SecUser owner = null) {
         if (domain) {
-            if(domain.container().mode.equals(Project.EditingMode.LOCKED)) throw new ForbiddenException("You don't have the right to do this. The project is locked")
             if(isAdminByNow(cytomineService.currentUser) || domain.container().hasACLPermission(domain.container(),ADMINISTRATION))
                 return;
             switch (domain.container().mode) {
