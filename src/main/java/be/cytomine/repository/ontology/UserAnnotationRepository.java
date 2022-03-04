@@ -21,6 +21,8 @@ import java.util.List;
 
 public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, Long>, JpaSpecificationExecutor<UserAnnotation>  {
 
+    List<UserAnnotation> findAllByProjectAndUserIdIn(Project project, List<Long> layers);
+
     List<UserAnnotation> findAllByUserAndImage(User user, ImageInstance imageInstance);
 
     Long countByProject(Project project);

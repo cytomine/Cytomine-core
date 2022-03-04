@@ -1,4 +1,6 @@
 spring:
+
+
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     url: jdbc:postgresql://localhost:5442/docker
@@ -28,6 +30,21 @@ spring:
       port: 27017
       host: localhost
       auto-index-creation: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: username
+    password: password
+    properties:
+      smtp:
+        auth: true
+        starttls:
+          enable: true
+          required: true
+        debug: true
+      transport:
+        protocol: smtp
 
 server:
   port: 8080
@@ -65,3 +82,9 @@ application:
     password: password
     smtpHost: host
     smtpPort: 1
+#    smtpProtocol: smtp
+#    smtpStarttlsRequired: true
+#    smtpStarttlsEnable: true
+#    smtpDebug: false
+
+

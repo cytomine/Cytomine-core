@@ -126,7 +126,7 @@ public class CurrentRoleService {
     }
 
 
-    boolean hasCurrentUserAdminRole(SecUser user) {
+    public boolean hasCurrentUserAdminRole(SecUser user) {
         Set<String> authorities = findRealRole(user).stream().map(SecRole::getAuthority).collect(Collectors.toSet());
         return authorities.contains("ROLE_ADMIN") || authorities.contains("ROLE_SUPER_ADMIN");
     }

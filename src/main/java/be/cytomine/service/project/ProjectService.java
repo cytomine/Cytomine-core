@@ -532,6 +532,9 @@ public class ProjectService extends ModelService {
 
 
     public List<Project> listByOntology(Ontology ontology) {
+        if (currentRoleService.isAdminByNow(currentUserService.getCurrentUser())) {
+            return projectRepository.findAllByOntology(ontology);
+        }
         return projectRepository.findAllProjectForUserByOntology(currentUserService.getCurrentUsername(),ontology);
     }
 
@@ -785,7 +788,7 @@ public class ProjectService extends ModelService {
         return results.stream().map(x -> x.getLong("_id")).collect(Collectors.toList());
     }
 
-    public List<Map<String, Object>> getActiveProjectsWithNumberOfUsers() {
+    public List<JsonObject> getActiveProjectsWithNumberOfUsers() {
         Date xSecondAgo = DateUtils.addSeconds(new Date(), -120);
         List<Bson> requests = new ArrayList<>();
         requests.add(match(gte("created", xSecondAgo)));
@@ -800,7 +803,7 @@ public class ProjectService extends ModelService {
 
         List<Project> projects = projectRepository.findAllByIdIn(tmp.stream().map(x-> (Long)x.get("project")).collect(Collectors.toList()));
 
-        List<Map<String, Object>> data = new ArrayList<>();
+        List<JsonObject> data = new ArrayList<>();
         for (Project project : projects) {
             JsonObject jsonObject = JsonObject.of("project", project);
             Optional<JsonObject> optEntry = tmp.stream().filter(entry -> Objects.equals(project.getId(), entry.getJSONAttrLong("project"))).findFirst();

@@ -15,4 +15,12 @@ public class NotificationConfiguration {
     private String smtpHost;
 
     private String smtpPort;
+
+    private String smtpProtocol;
+
+    private Boolean smtpStarttlsRequired;
+
+    private Boolean smtpStarttlsEnable;
+
+    private Boolean smtpDebug;
 }

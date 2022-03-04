@@ -57,7 +57,9 @@ public class BasicInstanceBuilder {
 
     ApplicationBootstrap applicationBootstrap;
 
-    private static User defaultUser;
+    private static User aUser;
+    private static User anAdmin;
+    private static User aGuest;
 
     public BasicInstanceBuilder(
             EntityManager em,
@@ -80,18 +82,36 @@ public class BasicInstanceBuilder {
         this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
-                defaultUser = (User) secUserRepository.findByUsernameLikeIgnoreCase("user")
+                aUser = (User) secUserRepository.findByUsernameLikeIgnoreCase("user")
                         .orElseGet(() -> given_default_user());
+                anAdmin = (User) secUserRepository.findByUsernameLikeIgnoreCase("admin")
+                        .orElseGet(() -> given_default_admin());
             }
         });
     }
 
     public User given_default_user() {
-        if (defaultUser == null) {
-            defaultUser = given_a_user("user");
+        if (aUser == null) {
+            aUser = given_a_user("user");
         }
-        return defaultUser;
+        return aUser;
     }
+
+    public User given_default_admin() {
+        if (anAdmin == null) {
+            anAdmin = given_a_admin("admin");
+        }
+        return anAdmin;
+    }
+
+
+    public User given_default_guest() {
+        if (aGuest == null) {
+            aGuest = given_a_guest("guest");
+        }
+        return aGuest;
+    }
+
 
     public User given_a_user() {
         return given_a_user(randomString());
@@ -230,7 +250,7 @@ public class BasicInstanceBuilder {
     public static Ontology given_a_not_persisted_ontology() {
         Ontology ontology = new Ontology();
         ontology.setName(randomString());
-        ontology.setUser(defaultUser);
+        ontology.setUser(aUser);
         return ontology;
     }
 
@@ -533,6 +553,14 @@ public class BasicInstanceBuilder {
         return annotation;
     }
 
+    public UserAnnotation given_a_user_annotation(Project project) {
+        UserAnnotation annotation = given_a_not_persisted_user_annotation();
+        annotation.getSlice().setProject(project);
+        annotation.getImage().setProject(project);
+        annotation.setProject(project);
+        return persistAndReturn(annotation);
+    }
+
     public UserAnnotation given_a_not_persisted_user_annotation(Project project) {
         UserAnnotation annotation = given_a_not_persisted_user_annotation();
         annotation.getSlice().setProject(project);
@@ -640,6 +668,15 @@ public class BasicInstanceBuilder {
         return persistAndReturn(given_a_not_persisted_reviewed_annotation());
     }
 
+    public ReviewedAnnotation given_a_reviewed_annotation(Project project) throws ParseException {
+        SliceInstance sliceInstance = given_a_slice_instance(given_an_image_instance(project), given_an_abstract_slice());
+        return given_a_reviewed_annotation(
+                sliceInstance,
+                "POLYGON ((1983 2168, 2107 2160, 2047 2074, 1983 2168))",
+                given_superadmin(),
+                given_a_term(project.getOntology()));
+    }
+
     public ReviewedAnnotation given_a_reviewed_annotation(SliceInstance sliceInstance, String location, User user, Term term) throws ParseException {
         UserAnnotation userAnnotation =
                 given_a_user_annotation(sliceInstance, location, user, term);
@@ -683,6 +720,10 @@ public class BasicInstanceBuilder {
         annotation.setImage(annotation.getSlice().getImage());
         annotation.setProject(annotation.getImage().getProject());
         return annotation;
+    }
+
+    public AlgoAnnotation given_a_algo_annotation(Project project) {
+        return persistAndReturn(given_a_not_persisted_algo_annotation(project));
     }
 
     public AlgoAnnotation given_a_not_persisted_algo_annotation(Project project) {
