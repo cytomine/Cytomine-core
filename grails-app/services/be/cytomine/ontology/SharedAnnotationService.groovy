@@ -186,9 +186,14 @@ class SharedAnnotationService extends ModelService {
 
         if (result) {
             log.info "send mail to " + receiversEmail
+            Configuration configuration
             try {
-                Configuration configuration = configurationService.readByKey("SHARED_ANNOTATION_EMAIL_MODE")
-                notificationService.notifyShareAnnotation(sender, receiversEmail, json, attachments, cid, (configuration? configuration.value : "classic"))
+                configuration = configurationService.readByKey("SHARED_ANNOTATION_EMAIL_MODE")
+            } catch(ObjectNotFoundException) {
+                configuration = null
+            }
+            try {
+                notificationService.notifyShareAnnotation(sender, receiversEmail, json, attachments, cid, (configuration ? configuration.value : "classic"))
             } catch (MiddlewareException e) {
                 if(Environment.getCurrent() == Environment.DEVELOPMENT){
                     e.printStackTrace()
