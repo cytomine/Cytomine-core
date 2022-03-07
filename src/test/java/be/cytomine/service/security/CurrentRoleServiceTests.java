@@ -2,8 +2,10 @@ package be.cytomine.service.security;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.service.CurrentRoleService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -134,4 +136,18 @@ public class CurrentRoleServiceTests {
         assertThat(currentRoleService.isUserByNow(builder.given_default_admin())).isTrue();
     }
 
+    @Test
+    @WithMockUser(username = "user")
+    public void open_close_admin_session_as_user() {
+
+        assertThat(currentRoleService.isAdminByNow(builder.given_default_user())).isFalse();
+        assertThat(currentRoleService.isUserByNow(builder.given_default_user())).isTrue();
+
+        Assertions.assertThrows(ForbiddenException.class, () -> {
+            currentRoleService.activeAdminSession(builder.given_default_user());
+        });
+
+        assertThat(currentRoleService.isAdminByNow(builder.given_default_user())).isFalse();
+        assertThat(currentRoleService.isUserByNow(builder.given_default_user())).isTrue();
+    }
 }

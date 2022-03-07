@@ -162,7 +162,7 @@ public class CommandService {
         throw new RuntimeException("not yet implemented");
     }
 
-    private List<CommandResponse> undo(UndoStackItem undoItem, SecUser user) {
+    public List<CommandResponse> undo(UndoStackItem undoItem, SecUser user) {
         CommandResponse result;
         List<CommandResponse> results = new ArrayList<>();
 
@@ -233,7 +233,7 @@ public class CommandService {
         throw new RuntimeException("not yet implemented");
     }
 
-    private List<CommandResponse> redo(RedoStackItem redoItem, SecUser user) {
+    public List<CommandResponse> redo(RedoStackItem redoItem, SecUser user) {
         CommandResponse result;
         List<CommandResponse> results = new ArrayList<>();
 

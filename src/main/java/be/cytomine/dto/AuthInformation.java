@@ -19,4 +19,6 @@ public class AuthInformation {
     private Boolean userByNow;
 
     private Boolean guestByNow;
+
+
 }

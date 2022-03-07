@@ -26,6 +26,8 @@ public class ApplicationConfiguration {
 
     private String storagePath;
 
+    private CustomUIConfiguration customUI;
+
     @NotNull
     @NotBlank
     private String adminPassword;
