@@ -1,5 +1,6 @@
 package be.cytomine.utils;
 
+import be.cytomine.service.utils.TaskService;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,16 +33,15 @@ public class Task {
 
     private boolean printInActivity = false;
 
-//
-//    def getMap(taskService) {
-//        def map = [:]
-//        map.id = id
-//        map.progress = progress
-//        map.project = projectIdent
-//        map.user = userIdent
-//        map.printInActivity = printInActivity
-//        map.comments = taskService.getLastComments(this,5)
-//        return map
-//    }
+
+    public JsonObject toJsonObject() {
+        JsonObject map = new JsonObject();
+        map.put("id", id);
+        map.put("progress", progress);
+        map.put("project", projectIdent);
+        map.put("user", userIdent);
+        map.put("printInActivity", printInActivity);
+        return map;
+    }
 
 }

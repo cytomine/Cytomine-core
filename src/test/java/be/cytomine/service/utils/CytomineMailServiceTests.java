@@ -1,6 +1,7 @@
 package be.cytomine.service.utils;
 
 import be.cytomine.CytomineCoreApplication;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -23,6 +24,7 @@ public class CytomineMailServiceTests {
     CytomineMailService cytomineMailService;
 
     @Test
+    @Disabled("no spam please...")
     public void test_send_email() throws MessagingException {
         cytomineMailService.send(
                 "loic.rollus@cytomine.com",
@@ -30,7 +32,7 @@ public class CytomineMailServiceTests {
                 new String[] {},
                 new String[] {},
                 "Congratulations",
-                "Congratulations!!!! Loïc ROLLUS, your best dev just sent an email with Mailgun from Cytomine spring core!  You are truly awesome! "
+                "HELLOOOOOOO!!!!"
                 );
     }
 
