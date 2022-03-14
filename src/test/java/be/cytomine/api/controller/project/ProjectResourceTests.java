@@ -98,7 +98,7 @@ public class ProjectResourceTests {
         builder.addUserToProject(project, builder.given_superadmin().getUsername());
 
         restProjectControllerMockMvc.perform(get("/api/project.json")
-                        .param("max", "10")
+                        .param("max", "1000")
                         .param("offset", "0")
                         .param("withLastActivity", "true")
                         .param("withMembersCount", "true")
@@ -314,6 +314,47 @@ public class ProjectResourceTests {
                 .andExpect(jsonPath("$.collection[?(@.id=='"+projectWithoutCriteria.getId()+"')]").doesNotExist());
     }
 
+    @Test
+    @Transactional
+    public void list_all_projects_with_filters_ontologies() throws Exception {
+        Project projectWithCriteria = builder.given_a_project();
+        builder.persistAndReturn(projectWithCriteria);
+        Project projectWithoutCriteria = builder.given_a_project();
+        Project projectWithNoOntology = builder.given_a_project_with_ontology(null);
+
+        builder.addUserToProject(projectWithCriteria, builder.given_superadmin().getUsername());
+
+        restProjectControllerMockMvc.perform(get("/api/project.json")
+                        .param("ontology[in]", projectWithCriteria.getOntology().getId().toString())
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
+                .andExpect(jsonPath("$.collection[?(@.id=='"+projectWithCriteria.getId()+"')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id=='"+projectWithoutCriteria.getId()+"')]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id=='"+projectWithNoOntology.getId()+"')]").doesNotExist());
+
+        // all ontology or no ontology
+        restProjectControllerMockMvc.perform(get("/api/project.json")
+                        .param("ontology[in]", "null," + projectWithCriteria.getOntology().getId().toString())
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
+                .andExpect(jsonPath("$.collection[?(@.id=='"+projectWithCriteria.getId()+"')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id=='"+projectWithoutCriteria.getId()+"')]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id=='"+projectWithNoOntology.getId()+"')]").exists());
+
+        restProjectControllerMockMvc.perform(get("/api/project.json")
+                        .param("ontology[in]", "null")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
+                .andExpect(jsonPath("$.collection[?(@.id=='"+projectWithCriteria.getId()+"')]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id=='"+projectWithoutCriteria.getId()+"')]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.id=='"+projectWithNoOntology.getId()+"')]").exists());
+    }
 
 
     @Test
@@ -963,7 +1004,7 @@ public class ProjectResourceTests {
                 .andExpect(jsonPath("$.numberOfReviewedAnnotations.max").value(40))
                 .andExpect(jsonPath("$.numberOfImages.min").value(0))
                 .andExpect(jsonPath("$.numberOfImages.max").value(10))
-                .andExpect(jsonPath("$.members.min").value(1))
+                .andExpect(jsonPath("$.members.min").value(lessThanOrEqualTo(1)))
                 .andExpect(jsonPath("$.members.max").value(2));
 
     }
@@ -986,7 +1027,7 @@ public class ProjectResourceTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.project=="+project.getId()+")]").exists());
 
-        restProjectControllerMockMvc.perform(get("/api/project/{id}/listCommandHistory.json", project.getId())
+        restProjectControllerMockMvc.perform(get("/api/project/{id}/commandHistory.json", project.getId())
                         .param("user", builder.given_superadmin().getId().toString()))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -1009,21 +1050,21 @@ public class ProjectResourceTests {
         Date stop = DateUtils.addSeconds(new Date(), 5);
 
 
-        restProjectControllerMockMvc.perform(get("/api/project/{id}/listCommandHistory.json", project.getId())
+        restProjectControllerMockMvc.perform(get("/api/project/{id}/commandHistory.json", project.getId())
                         .param("startDate", start.getTime()+"")
                         .param("endDate", stop.getTime()+""))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.project=="+project.getId()+")]").exists());
 
-        restProjectControllerMockMvc.perform(get("/api/project/{id}/listCommandHistory.json", project.getId())
+        restProjectControllerMockMvc.perform(get("/api/project/{id}/commandHistory.json", project.getId())
                         .param("startDate", DateUtils.addSeconds(start, -5).getTime()+"")
                         .param("endDate", DateUtils.addSeconds(start, -3).getTime()+""))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.project=="+project.getId()+")]").doesNotExist());
 
-        restProjectControllerMockMvc.perform(get("/api/project/{id}/listCommandHistory.json", project.getId())
+        restProjectControllerMockMvc.perform(get("/api/project/{id}/commandHistory.json", project.getId())
                         .param("startDate", DateUtils.addSeconds(start, 3).getTime()+"")
                         .param("endDate", DateUtils.addSeconds(start, 5).getTime()+""))
                 .andDo(print())

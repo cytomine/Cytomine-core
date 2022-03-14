@@ -139,7 +139,7 @@ public class SQLSearchParameter {
                     sql += ") ";
 
                     if(values.contains(null) || values.contains("null")){
-                        parameter.value = values.stream().filter(x -> x != null && !x.equals("null"));
+                        parameter.value = values.stream().filter(x -> x != null && !x.equals("null")).collect(Collectors.toList());
                         sql = "("+sql+" OR "+parameter.property+" IS NULL) ";
                     } else {
                         break;

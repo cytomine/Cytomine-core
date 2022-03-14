@@ -19,7 +19,7 @@ public class ContentTypeRequestWrapper extends HttpServletRequestWrapper {
 
     @Override
     public String getContentType() {
-        return "application/json";
+        return super.getContentType();
     }
 
     @Override

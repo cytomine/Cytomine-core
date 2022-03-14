@@ -11,6 +11,7 @@ import be.cytomine.service.CommandService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -65,6 +66,7 @@ public class AlgoAnnotationTermServiceTests {
         assertThat(algoAnnotationTermService.count(algoAnnotationTerm.getProject())).isEqualTo(1);
     }
 
+    @Disabled("wait software package")
     @Test
     void list_algo_annotation_term_by_job() {
         Assertions.fail("TODO: 'job' has to be implemented");

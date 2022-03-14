@@ -1,8 +1,10 @@
 package be.cytomine.config;
 
+import be.cytomine.config.security.ApiKeyFilter;
 import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.repository.security.UserRepository;
 import be.cytomine.security.*;
+import be.cytomine.config.security.JWTConfigurer;
+import be.cytomine.security.jwt.TokenProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -22,13 +24,15 @@ import javax.servlet.http.HttpServletResponse;
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
+    private final TokenProvider tokenProvider;
 
     private final DomainUserDetailsService domainUserDetailsService;
 
     private final SecUserRepository secUserRepository;
 
 
-    public SecurityConfiguration(DomainUserDetailsService domainUserDetailsService, SecUserRepository secUserRepository) {
+    public SecurityConfiguration(TokenProvider tokenProvider, DomainUserDetailsService domainUserDetailsService, SecUserRepository secUserRepository) {
+        this.tokenProvider = tokenProvider;
         this.domainUserDetailsService = domainUserDetailsService;
         this.secUserRepository = secUserRepository;
     }
@@ -82,47 +86,55 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/test/**");
     }
 
+    private JWTConfigurer securityConfigurerAdapter() {
+        return new JWTConfigurer(tokenProvider);
+    }
+
     @Override
     public void configure(HttpSecurity http) throws Exception {
-        // @formatter:off
+// @formatter:off
         http
-                .csrf()
-                .disable()
-                .addFilterBefore(new TokenKeyFilter(domainUserDetailsService, secUserRepository), BasicAuthenticationFilter.class)
-                .exceptionHandling().authenticationEntryPoint(
-                        (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
-                .and()
-                .rememberMe()
-                .key("change_me")
-                .rememberMeParameter("remember_me")
-                .and()
-                .formLogin()
-                .loginProcessingUrl("/j_spring_security_check")
-                .usernameParameter("j_username")
-                .passwordParameter("j_password")
-                .successHandler(ajaxAuthenticationSuccessHandler())
-                .failureHandler(ajaxAuthenticationFailureHandler())
-                .permitAll()
-                .and()
-                .logout()
-                .logoutUrl("/api/logout")
-                .logoutSuccessHandler(ajaxLogoutSuccessHandler())
-                .permitAll()
-                .and()
-                .authorizeRequests()
-                .antMatchers("/api/authenticate").permitAll()
-                .antMatchers("/api/register").permitAll()
-                .antMatchers("/api/activate").permitAll()
-                .antMatchers("/api/countries").permitAll()
-                .antMatchers("/api/account/resetPassword/init").permitAll()
-                .antMatchers("/api/account/resetPassword/finish").permitAll()
-                .antMatchers("/api/**").authenticated()
-                .antMatchers("/api/login/impersonate*").hasAuthority("ADMIN")
-                .antMatchers("/api/logout/impersonate*").authenticated()
-                .antMatchers(HttpMethod.POST, "/server/**").permitAll()
-                .antMatchers("/**").permitAll()
-                .and()
-                .addFilter(switchUserFilter());
+            .csrf()
+            .disable()
+            .addFilterBefore(new ApiKeyFilter(domainUserDetailsService, secUserRepository), BasicAuthenticationFilter.class)
+            .exceptionHandling().authenticationEntryPoint(
+                    (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+//        .and()
+//            .rememberMe()
+//            .key("change_me")
+//            .rememberMeParameter("remember_me")
+//        .and()
+//            .formLogin()
+//            .loginProcessingUrl("/j_spring_security_check")
+//            .usernameParameter("j_username")
+//            .passwordParameter("j_password")
+//            .successHandler(ajaxAuthenticationSuccessHandler())
+//            .failureHandler(ajaxAuthenticationFailureHandler())
+//            .permitAll()
+        .and()
+            .logout()
+            .logoutUrl("/api/logout")
+            .logoutSuccessHandler(ajaxLogoutSuccessHandler())
+            .permitAll()
+        .and()
+            .authorizeRequests()
+            .antMatchers("/api/authenticate").permitAll()
+            .antMatchers("/api/register").permitAll()
+            .antMatchers("/api/activate").permitAll()
+            .antMatchers("/api/countries").permitAll()
+            .antMatchers("/api/account/resetPassword/init").permitAll()
+            .antMatchers("/api/account/resetPassword/finish").permitAll()
+            .antMatchers("/api/**").authenticated()
+            .antMatchers("/api/login/impersonate*").hasAuthority("ADMIN")
+            .antMatchers("/api/logout/impersonate*").authenticated()
+            .antMatchers(HttpMethod.POST, "/server/**").permitAll()
+            .antMatchers("/**").permitAll()
+        .and()
+            .httpBasic()
+        .and()
+            .apply(securityConfigurerAdapter())
+        .and()
+            .addFilter(switchUserFilter());
         // @formatter:on
     }
 

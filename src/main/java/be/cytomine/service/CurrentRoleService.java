@@ -5,8 +5,10 @@ import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
+import be.cytomine.utils.WeakConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,19 +18,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.context.annotation.SessionScope;
 
 import javax.persistence.EntityManager;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@SessionScope
 public class CurrentRoleService {
 
     @Autowired
     private SecUserSecRoleRepository secUserSecRoleRepository;
 
-    public boolean isAdmin = false;
+    public Map<String, Date> currentAdmins = new WeakConcurrentHashMap<>(20 * 60 * 1000); //admin session = 20 min
 
     /**
      * Active an admin session for a user
@@ -37,7 +36,7 @@ public class CurrentRoleService {
      */
     public void activeAdminSession(SecUser user) {
         if(hasCurrentUserAdminRole(user)) {
-            isAdmin = true;
+            currentAdmins.put(user.getUsername(), new Date());
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             List<GrantedAuthority> authorities = new ArrayList<>(auth.getAuthorities());
             authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
@@ -54,7 +53,7 @@ public class CurrentRoleService {
      */
     public void closeAdminSession(SecUser user) {
         if(hasCurrentUserAdminRole(user)) {
-            isAdmin = false;
+            currentAdmins.remove(user.getUsername());
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>(auth.getAuthorities());
             authorities.removeIf(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_ADMIN"));
@@ -80,7 +79,7 @@ public class CurrentRoleService {
         boolean isSuperAdmin = roles.stream().anyMatch(role -> role.getAuthority().equals("ROLE_SUPER_ADMIN"));
         //role super admin don't need to open a admin session, so we don't remove the role admin from the current role
         //log.info "isSuperAdmin=$isSuperAdmin isAdmin=$isAdmin"
-        if(!isAdmin && !isSuperAdmin) {
+        if(!currentAdmins.containsKey(user.getUsername()) && !isSuperAdmin) {
             roles = roles.stream().filter(role -> !role.getAuthority().equals("ROLE_ADMIN")).collect(Collectors.toSet());
         }
         return roles;

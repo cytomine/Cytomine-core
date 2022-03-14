@@ -28,6 +28,8 @@ public class ApplicationConfiguration {
 
     private CustomUIConfiguration customUI;
 
+    private AuthenticationConfiguration authentication = new AuthenticationConfiguration();
+
     @NotNull
     @NotBlank
     private String adminPassword;

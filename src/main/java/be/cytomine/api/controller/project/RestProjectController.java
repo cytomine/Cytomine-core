@@ -218,7 +218,7 @@ public class RestProjectController extends RestCytomineController {
     }
 
 
-    @GetMapping({"/commandhistory.json", "/project/{id}/listCommandHistory.json"})
+    @GetMapping({"/commandhistory.json", "/project/{id}/commandHistory.json"})
     public ResponseEntity<String> listCommandHistory(
             @PathVariable(required = false) Long id,
             @RequestParam(required = false) Long user,

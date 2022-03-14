@@ -470,7 +470,7 @@ public class UserAnnotationResourceTests {
         return userAnnotation;
     }
 
-
+    @Disabled("wait mail....")
     @Test
     @Transactional
     public void create_comments_for_annotation() throws Exception {

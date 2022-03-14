@@ -280,6 +280,8 @@ public class RestPropertyController extends RestCytomineController {
         log.debug("REST request to add property for domain {} {}", domainClassName, domainIdent);
         CytomineDomain domain = Optional.ofNullable(projectService.getCytomineDomain(domainClassName, domainIdent))
                 .orElseThrow(() -> new ObjectNotFoundException("Domain", domainClassName + "/" + domainIdent));
+        jsonObject.putIfAbsent("domainClassName", domainClassName);
+        jsonObject.putIfAbsent("domainIdent", domainIdent);
         return responseSuccess(propertyService.add(jsonObject));
     }
 

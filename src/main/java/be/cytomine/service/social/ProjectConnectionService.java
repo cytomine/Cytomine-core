@@ -439,8 +439,8 @@ public class ProjectConnectionService {
         // what we want
         // db.persistentProjectConnection.aggregate([{ $group : { _id : {project:"$project"} , total : { $sum : 1 }}}])
         AggregationResults aggregationResults = persistentProjectConnectionRepository.countConnectionByProject();
-        List<JsonObject> results = (List<JsonObject>)aggregationResults.getRawResults().get("results");
-        for (JsonObject result : results) {
+        List<Document> results = (List<Document>)aggregationResults.getRawResults().get("results");
+        for (Document result : results) {
             projectConnections.add(JsonObject.of("project", result.get("_id"), "total", result.get("total")));
         }
         return projectConnections;

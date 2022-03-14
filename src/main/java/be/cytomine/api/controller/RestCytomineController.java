@@ -222,9 +222,9 @@ public abstract class RestCytomineController {
             }
         }
 
-        if (list.isEmpty() || list.get(0) instanceof CytomineDomain) {
+        if (filtered.isEmpty() || filtered.get(0) instanceof CytomineDomain) {
             return responseSuccessDomainList((List<? extends CytomineDomain>) filtered, offsetParameter, maxParameter);
-        } else if (list.isEmpty() || list.get(0) instanceof CytomineSocialDomain) {
+        } else if (filtered.isEmpty() || filtered.get(0) instanceof CytomineSocialDomain) {
             return responseSuccessSocialDomainList((List<? extends CytomineSocialDomain>) filtered, offsetParameter, maxParameter);
         } else {
             return responseSuccessGenericList(filtered, offsetParameter, maxParameter);

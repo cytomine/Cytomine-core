@@ -49,6 +49,7 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 import static org.springframework.security.acls.domain.BasePermission.READ;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -181,6 +182,24 @@ public class UserResourceTests {
         
     }
 
+    @Test
+    @Transactional
+    public void list_project_admin_as_non_admin_user() throws Exception {
+        User projectAdmin = builder.given_a_user();
+        User projectUser = builder.given_a_user();
+        Project project = builder.given_a_project();
+        builder.addUserToProject(project, projectAdmin.getUsername(), ADMINISTRATION);
+        builder.addUserToProject(project, projectUser.getUsername(), READ);
+
+        restUserControllerMockMvc.perform(get("/api/project/{id}/admin.json", project.getId()).with(user(projectAdmin.getUsername())))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
+                .andExpect(jsonPath("$.collection[?(@.username=='"+projectAdmin.getUsername()+"')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='"+projectUser.getUsername()+"')]").doesNotExist());
+
+    }
+
 
     @Test
     @Transactional
@@ -299,10 +318,9 @@ public class UserResourceTests {
                 )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[0].username").value(simpleUser.getUsername()))
-                .andExpect(jsonPath("$.collection[0].role").value("ROLE_USER"))
-                .andExpect(jsonPath("$.collection[1].username").value(projectUser.getUsername()))
-                .andExpect(jsonPath("$.collection[2].username").value(projectAdmin.getUsername()));
+                .andExpect(jsonPath("$.collection[?(@.username=='"+simpleUser.getUsername()+"')].role").value("ROLE_USER"))
+                .andExpect(jsonPath("$.collection[?(@.username=='"+projectUser.getUsername()+"')].role").value("ROLE_USER"))
+                .andExpect(jsonPath("$.collection[?(@.username=='"+simpleUser.getUsername()+"')].role").value("ROLE_USER"));
     }
 
     @Test

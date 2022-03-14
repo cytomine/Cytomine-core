@@ -1,9 +1,8 @@
-package be.cytomine.security;
+package be.cytomine.config.security;
 
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.repository.security.UserRepository;
+import be.cytomine.security.DomainUserDetailsService;
 import be.cytomine.utils.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,16 +19,16 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
 
-public class TokenKeyFilter extends OncePerRequestFilter {
+public class ApiKeyFilter extends OncePerRequestFilter {
 
-    private final Logger log = LoggerFactory.getLogger(TokenKeyFilter.class);
+    private final Logger log = LoggerFactory.getLogger(ApiKeyFilter.class);
 
     private final DomainUserDetailsService domainUserDetailsService;
 
     private final SecUserRepository secUserRepository;
 
 
-    public TokenKeyFilter(DomainUserDetailsService domainUserDetailsService, SecUserRepository secUserRepository) {
+    public ApiKeyFilter(DomainUserDetailsService domainUserDetailsService, SecUserRepository secUserRepository) {
         this.domainUserDetailsService = domainUserDetailsService;
         this.secUserRepository = secUserRepository;
     }

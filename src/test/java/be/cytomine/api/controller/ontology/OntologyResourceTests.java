@@ -237,11 +237,4 @@ public class OntologyResourceTests {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());
     }
-
-    @Test
-    @Transactional
-    public void delete_ontology_with_task() throws Exception {
-        org.assertj.core.api.Assertions.fail("not yet implemented");
-    }
-
 }
