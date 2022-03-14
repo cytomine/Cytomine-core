@@ -214,7 +214,7 @@ public class BootstrapUtilsService {
 
     public void createMultipleImageServer() {
         for (ImageServer imageServer : imageServerRepository.findAll()) {
-            if(applicationConfiguration.getCytomine().getImageServerURL().contains(imageServer.getUrl())) {
+            if(!applicationConfiguration.getCytomine().getImageServerURL().contains(imageServer.getUrl())) {
                 imageServer.setAvailable(false);
                 imageServerRepository.save(imageServer);
             }

@@ -27,7 +27,7 @@ spring:
 #      username: root
 #      password: root
       database: cytomine
-      port: 27017
+      port: 27027
       host: localhost
       auto-index-creation: true
 
@@ -78,7 +78,7 @@ application:
 
   cytomine:
     defaultLanguage: ENGLISH
-    imageServerURL: [http://imageServerURL/]
+    imageServerURL: [http://localhost-ims]
     messageBrokerServerURL: messageBrokerServerURL
     annotation:
       maxNumberOfPoint: 200
