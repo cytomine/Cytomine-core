@@ -125,6 +125,10 @@ class NotificationService {
 
     def notifyShareAnnotation(User sender, def receiversEmail, def request, def attachments, def cid, String mode = "classic") {
         String subject = request.subject
+
+        String instanceHostSupportMail = grailsApplication.config.grails.instanceHostSupportMail
+        if(!instanceHostSupportMail) instanceHostSupportMail = grailsApplication.config.grails.admin.email
+
         String shareMessage = renderService.createShareMessage([
                 from: request.from,
                 comment: request.comment,
@@ -133,7 +137,7 @@ class NotificationService {
                 cid : cid,
                 by: grailsApplication.config.grails.serverURL,
                 website: grailsApplication.config.grails.instanceHostWebsite,
-                mailFrom: grailsApplication.config.grails.instanceHostSupportMail,
+                mailFrom: instanceHostSupportMail,
                 phoneNumber: grailsApplication.config.grails.instanceHostPhoneNumber
         ], mode)
 
