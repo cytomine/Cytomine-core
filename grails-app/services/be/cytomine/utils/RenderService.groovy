@@ -24,7 +24,7 @@ class RenderService {
 
     String createShareMessage(def model, String mode) {
         if (mode == "restricted") {
-            groovyPageRenderer.render view: '/mail/share_restricted', model: model
+            groovyPageRenderer.render view: '/mail/share_restricted_no', model: model
         } else {
             groovyPageRenderer.render view: '/mail/share', model: model
         }
