@@ -141,7 +141,7 @@ class SharedAnnotationService extends ModelService {
         }
 
         //do receivers email list
-        String[] receiversEmail
+        def receiversEmail
         List<User> receivers = [];
 
         if (json.receivers) {
@@ -193,6 +193,9 @@ class SharedAnnotationService extends ModelService {
                 configuration = null
             }
             try {
+                receiversEmail = receiversEmail.unique()
+                receiversEmail.removeAll{it == sender.email}
+                if(receiversEmail.size() == 0) receiversEmail = [sender.email]
                 notificationService.notifyShareAnnotation(sender, receiversEmail, json, attachments, cid, (configuration ? configuration.value : "classic"))
             } catch (MiddlewareException e) {
                 if(Environment.getCurrent() == Environment.DEVELOPMENT){
