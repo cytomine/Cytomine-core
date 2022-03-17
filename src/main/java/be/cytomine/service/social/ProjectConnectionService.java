@@ -274,9 +274,10 @@ public class ProjectConnectionService {
 //        );
 
         AggregationResults connections = projectConnectionRepository.retrieve(connection.getProject(), connection.getUser(), before, after, new Date(0));
+        List<LinkedHashMap> aggregation = connections.getMappedResults();
 
-
-        List<Long> continuousConnections = (List<Long>)connections.getMappedResults().stream().map(x -> ((PersistentProjectConnection) x).computeDateInMillis()).collect(Collectors.toList());
+        List<Long> continuousConnections = (List<Long>)aggregation.stream().map(x ->
+                be.cytomine.utils.DateUtils.computeDateInMillis((Date)((LinkedHashMap) x).get("created"))).collect(Collectors.toList());
 
         //we calculated the gaps between connections to identify the period of non activity
         List<Long> continuousConnectionIntervals = new ArrayList<>();

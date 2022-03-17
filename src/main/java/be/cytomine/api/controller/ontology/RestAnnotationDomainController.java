@@ -103,6 +103,18 @@ public class RestAnnotationDomainController extends RestCytomineController {
         return responseSuccess(annotations);
     }
 
+    @RequestMapping(value = {"/project/{project}/annotation/download"}, method = {RequestMethod.GET})
+    public ResponseEntity<String> download(
+            @RequestParam String format
+    ) throws IOException {
+        JsonObject params = mergeQueryParamsAndBodyParams();
+        AnnotationListing annotationListing = buildAnnotationListing(params);
+        List annotations = annotationListingService.listGeneric(annotationListing);
+        // downloadDocument(lists.result,lists.project)
+        return responseSuccess(annotations);
+    }
+
+
 
     //TODO:
 //    @RestApiMethod(description="Download report for annotation. !!! See doc for /annotation/search to filter annotations!!!", listing = true)
@@ -128,7 +140,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
 //            String datePrefix = simpleFormat.format(new Date())
 //            response.setHeader("Content-disposition", "attachment; filename=${datePrefix}_annotations.${params.format}")
 //
-//            def terms = termService.list(project)
+//            def terms = termService.list(project) // TODO: project.getOntology().getTerms()
 //            def termsIndex = [:]
 //            terms.each {
 //                termsIndex.put(it.id,it)

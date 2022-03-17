@@ -467,6 +467,12 @@ public class BasicInstanceBuilder {
         return given_a_not_persisted_slice_instance(given_an_image_instance(), given_an_abstract_slice());
     }
 
+    public SliceInstance given_a_slice_instance(Project project) {
+        AbstractImage image = given_an_abstract_image();
+        SliceInstance sliceInstance = given_a_slice_instance(given_an_image_instance(image, project), given_an_abstract_slice(image, 0,0,0));
+        return persistAndReturn(sliceInstance);
+    }
+
     public SliceInstance given_a_not_persisted_slice_instance(ImageInstance imageInstance, AbstractSlice abstractSlice) {
         SliceInstance slice = new SliceInstance();
         slice.setImage(imageInstance);

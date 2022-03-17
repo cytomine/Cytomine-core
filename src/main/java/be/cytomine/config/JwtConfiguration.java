@@ -10,4 +10,6 @@ public class JwtConfiguration {
     Long tokenValidityInSeconds;
 
     Long tokenValidityInSecondsForRememberMe;
+
+    Long tokenValidityInSecondsForShortTerm;
 }

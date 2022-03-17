@@ -137,8 +137,8 @@ public class RestUserController extends RestCytomineController {
             @RequestParam(value = "withRoles", defaultValue = "false", required = false) Boolean withRoles,
             @RequestParam(value = "withLastConsultation", defaultValue = "false", required = false) Boolean withLastConsultation,
             @RequestParam(value = "withNumberConsultations", defaultValue = "false", required = false) Boolean withNumberConsultations,
-            @RequestParam(value = "sortColumn", defaultValue = "created", required = false) String sortColumn,
-            @RequestParam(value = "sortDirection", defaultValue = "desc", required = false) String sortDirection,
+            @RequestParam(value = "sort", defaultValue = "created", required = false) String sortColumn,
+            @RequestParam(value = "order", defaultValue = "desc", required = false) String sortDirection,
             @RequestParam(value = "offset", defaultValue = "0", required = false) Long offset,
             @RequestParam(value = "max", defaultValue = "0", required = false) Long max
     ) {
@@ -502,11 +502,10 @@ public class RestUserController extends RestCytomineController {
 
     }
 
-    @RequestMapping(path = {"/user/{user}/security_check.json"}, method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> checkPassword(@PathVariable("user") Long userId, @RequestBody JsonObject json) {
-        log.debug("REST request to check password for User {}", userId);
-        User user = secUserService.findUser(userId)
-                .orElseThrow(() -> new ObjectNotFoundException("User", userId));
+    @RequestMapping(path = {"/user/security_check.json"}, method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<String> checkPassword(@RequestBody JsonObject json) {
+        log.debug("REST request to check password for current user");
+        User user = (User)secUserService.getCurrentUser();
         String newPassword = json.getJSONAttrStr("password");
         if(secUserService.isUserPassword(user, newPassword)) {
             return responseSuccess(JsonObject.of(), isFilterRequired());

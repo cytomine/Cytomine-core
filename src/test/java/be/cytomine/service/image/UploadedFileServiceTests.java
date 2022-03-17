@@ -298,6 +298,8 @@ public class UploadedFileServiceTests {
     @Test
     void delete_uploadedFile_with_dependencies_with_success() {
         UploadedFile uploadedFile = builder.given_a_uploaded_file();
+        uploadedFile.setProjects(new Long[] {123L});
+        builder.persistAndReturn(uploadedFile);
 
         AbstractImage abstractImage = builder.given_an_abstract_image();
         abstractImage.setUploadedFile(uploadedFile);

@@ -17,6 +17,7 @@ import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
 import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.dto.AreaDTO;
+import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.utils.JsonObject;
 import com.mongodb.client.MongoClient;
 import org.apache.commons.lang3.time.DateUtils;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static be.cytomine.service.social.UserPositionServiceTests.USER_VIEW;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 
@@ -62,21 +64,41 @@ public class ImageConsultationServiceTests {
     @Autowired
     MongoClient mongoClient;
 
+    @Autowired
+    UserPositionService userPositionService;
+
+    @Autowired
+    SliceCoordinatesService sliceCoordinatesService;
 
     @BeforeEach
     public void cleanDB() {
         persistentImageConsultationRepository.deleteAll();
     }
 
-
     PersistentImageConsultation given_a_persistent_image_consultation(SecUser user, ImageInstance imageInstance, Date created) {
+        given_a_persistent_user_position(created,  (User)user, sliceCoordinatesService.getReferenceSlice(imageInstance), USER_VIEW);
         return imageConsultationService.add(user, imageInstance.getId(), "xxx", "mode", created);
+    }
+
+    PersistentUserPosition given_a_persistent_user_position(Date creation, User user, SliceInstance sliceInstance, AreaDTO areaDTO) {
+        PersistentUserPosition connection =
+                userPositionService.add(
+                        creation,
+                        user,
+                        sliceInstance,
+                        sliceInstance.getImage(),
+                        areaDTO,
+                        1,
+                        5.0,
+                        false
+                );
+        return connection;
     }
 
     @Test
     void creation_and_close() {
         User user = builder.given_superadmin();
-        ImageInstance imageInstance = builder.given_an_image_instance();
+        ImageInstance imageInstance = builder.given_a_slice_instance().getImage();
         Date before = new Date(new Date().getTime()-1000);
         PersistentImageConsultation consultation = given_a_persistent_image_consultation(user, imageInstance, new Date());
         AssertionsForClassTypes.assertThat(consultation).isNotNull();
@@ -98,7 +120,7 @@ public class ImageConsultationServiceTests {
     void fill_project_connection_update_annotations_counter() {
         User user = builder.given_superadmin();
         Project projet = builder.given_a_project();
-        ImageInstance imageInstance = builder.given_an_image_instance(projet);
+        ImageInstance imageInstance = builder.given_a_slice_instance(projet).getImage();
 
         PersistentImageConsultation consultation = given_a_persistent_image_consultation(user, imageInstance, DateUtils.addSeconds(new Date(), -10));
         assertThat(consultation.getCountCreatedAnnotations()).isNull();
@@ -124,7 +146,7 @@ public class ImageConsultationServiceTests {
     @Test
     void list_image_consultation_by_project_and_user_do_not_distinct_image() {
         User user = builder.given_superadmin();
-        ImageInstance imageInstance = builder.given_an_image_instance();
+        ImageInstance imageInstance = builder.given_a_slice_instance().getImage();
 
         given_a_persistent_image_consultation(user, imageInstance, new Date());
 
@@ -135,8 +157,8 @@ public class ImageConsultationServiceTests {
     @Test
     void list_image_consultation_by_project_and_user_with_distinct_image() {
         User user = builder.given_superadmin();
-        ImageInstance imageInstance1 = builder.given_an_image_instance();
-        ImageInstance imageInstance2 = builder.given_an_image_instance(imageInstance1.getProject());
+        ImageInstance imageInstance1 = builder.given_a_slice_instance().getImage();
+        ImageInstance imageInstance2 = builder.given_a_slice_instance(imageInstance1.getProject()).getImage();
 
         given_a_persistent_image_consultation(user, imageInstance1, new Date());
         given_a_persistent_image_consultation(user, imageInstance1, new Date());
@@ -160,8 +182,8 @@ public class ImageConsultationServiceTests {
         User user1 = builder.given_superadmin();
         User user2 = builder.given_a_user();
 
-        ImageInstance imageInstance1 = builder.given_an_image_instance();
-        ImageInstance imageInstance2 = builder.given_an_image_instance(imageInstance1.getProject());
+        ImageInstance imageInstance1 = builder.given_a_slice_instance().getImage();
+        ImageInstance imageInstance2 = builder.given_a_slice_instance(imageInstance1.getProject()).getImage();
 
         given_a_persistent_image_consultation(user1, imageInstance1, DateUtils.addDays(new Date(), -3));
         given_a_persistent_image_consultation(user1, imageInstance2, DateUtils.addDays(new Date(), -2));
@@ -205,8 +227,8 @@ public class ImageConsultationServiceTests {
         User user2 = builder.given_a_user();
         User userWithNoConsultation = builder.given_a_user();
 
-        ImageInstance imageInstance1 = builder.given_an_image_instance();
-        ImageInstance imageInstance2 = builder.given_an_image_instance(imageInstance1.getProject());
+        ImageInstance imageInstance1 = builder.given_a_slice_instance().getImage();
+        ImageInstance imageInstance2 = builder.given_a_slice_instance(imageInstance1.getProject()).getImage();
 
 
         List<JsonObject> results = imageConsultationService.lastImageOfGivenUsersByProject(
@@ -243,8 +265,8 @@ public class ImageConsultationServiceTests {
         User user1 = builder.given_superadmin();
         User user2 = builder.given_a_user();
 
-        ImageInstance imageInstance1 = builder.given_an_image_instance();
-        ImageInstance imageInstance2 = builder.given_an_image_instance(imageInstance1.getProject());
+        ImageInstance imageInstance1 = builder.given_a_slice_instance().getImage();
+        ImageInstance imageInstance2 = builder.given_a_slice_instance(imageInstance1.getProject()).getImage();
 
 
         List<JsonObject> results = imageConsultationService.getImagesOfUsersByProjectBetween(user1.getId(), imageInstance1.getProject().getId(), null, null);
@@ -286,8 +308,8 @@ public class ImageConsultationServiceTests {
         User user1 = builder.given_superadmin();
         User user2 = builder.given_a_user();
 
-        ImageInstance imageInstance1 = builder.given_an_image_instance();
-        ImageInstance imageInstance2 = builder.given_an_image_instance(imageInstance1.getProject());
+        ImageInstance imageInstance1 = builder.given_a_slice_instance().getImage();
+        ImageInstance imageInstance2 = builder.given_a_slice_instance(imageInstance1.getProject()).getImage();
 
 
         List<JsonObject> results = imageConsultationService.getImagesOfUsersByProjectBetween(user1.getId(), imageInstance1.getProject().getId(), null, null);
@@ -325,8 +347,8 @@ public class ImageConsultationServiceTests {
         User user1 = builder.given_superadmin();
         User anotherUser = builder.given_a_user();
 
-        ImageInstance imageInstance1 = builder.given_an_image_instance(projet);
-        ImageInstance imageInstance2 = builder.given_an_image_instance(projet);
+        ImageInstance imageInstance1 = builder.given_a_slice_instance(projet).getImage();
+        ImageInstance imageInstance2 = builder.given_a_slice_instance(projet).getImage();
 
         Date noConnectionBefore = DateUtils.addDays(new Date(), -100);
         given_a_persistent_image_consultation(user1, imageInstance1, DateUtils.addDays(new Date(), -10));

@@ -1,6 +1,9 @@
 package be.cytomine.config.security;
 
+import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.security.jwt.TokenProvider;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
@@ -12,6 +15,10 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.Locale;
+
+import static be.cytomine.security.jwt.TokenType.SHORT_TERM;
+import static org.springframework.jmx.export.naming.IdentityNamingStrategy.TYPE_KEY;
 
 /**
  * Filters incoming requests and installs a Spring Security principal if a header corresponding to a valid user is
@@ -32,8 +39,16 @@ public class JWTFilter extends GenericFilterBean {
         throws IOException, ServletException {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         String jwt = resolveToken(httpServletRequest);
-        if (StringUtils.hasText(jwt) && this.tokenProvider.validateToken(jwt)) {
-            Authentication authentication = this.tokenProvider.getAuthentication(jwt);
+
+        Jws<Claims> claimsJws = this.tokenProvider.decodeToken(jwt);
+
+        if (StringUtils.hasText(jwt) && claimsJws!=null) {
+
+            if (isShortTermToken(claimsJws) && !((HttpServletRequest) servletRequest).getMethod().toUpperCase(Locale.ROOT).equals("GET")) {
+                throw new ForbiddenException("Short term token can only be use with GET request");
+            }
+
+            Authentication authentication = this.tokenProvider.getAuthentication(jwt, claimsJws.getBody());
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(servletRequest, servletResponse);
@@ -44,6 +59,14 @@ public class JWTFilter extends GenericFilterBean {
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
+        bearerToken = request.getParameter(AUTHORIZATION_HEADER);
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
         return null;
+    }
+
+    private boolean isShortTermToken(Jws<Claims> claimsJws) {
+        return claimsJws.getBody().containsKey(TYPE_KEY) && claimsJws.getBody().get(TYPE_KEY).equals(SHORT_TERM.toString());
     }
 }

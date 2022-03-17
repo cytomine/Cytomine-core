@@ -235,7 +235,7 @@ public class RestStatsController extends RestCytomineController {
         JsonObject result = new JsonObject();
         result.put("users", statsService.numberOfCurrentUsers());
         result.put("projects", statsService.numberOfActiveProjects());
-        result.put("mostActiveProject", statsService.mostActiveProjects());
+        result.put("mostActiveProject", statsService.mostActiveProjects().orElse(null));
         return responseSuccess(result);
     }
 

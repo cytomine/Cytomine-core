@@ -13,6 +13,7 @@ import be.cytomine.repositorynosql.social.LastUserPositionRepository;
 import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
 import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
 import be.cytomine.service.dto.AreaDTO;
+import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.social.ImageConsultationService;
 import be.cytomine.service.social.UserPositionService;
 import be.cytomine.service.social.UserPositionServiceTests;
@@ -76,6 +77,12 @@ public class ImageConsultationResourceTests {
     @Autowired
     ImageConsultationService imageConsultationService;
 
+    @Autowired
+    UserPositionService userPositionService;
+
+    @Autowired
+    SliceCoordinatesService sliceCoordinatesService;
+
 
     @BeforeEach
     public void cleanDB() {
@@ -115,6 +122,7 @@ public class ImageConsultationResourceTests {
         assertThat(persisted).hasSize(1);
         assertThat(persisted.getContent().get(0).getMode()).isEqualTo("view");
     }
+
 
     @Test
     @Transactional

@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 /**
  * Authenticate a user from the database.
@@ -43,9 +44,6 @@ public class DomainUserDetailsService implements UserDetailsService {
         if (!user.getEnabled()) {
             throw new ForbiddenException("User " + lowercaseLogin + " was not permitted");
         }
-
-        //TODO: load authorities
-
-        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), Arrays.asList(new SimpleGrantedAuthority("ROLE_USER")));
+        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), user.getRoles().stream().map(x -> new SimpleGrantedAuthority(x.getAuthority())).collect(Collectors.toList()));
     }
 }

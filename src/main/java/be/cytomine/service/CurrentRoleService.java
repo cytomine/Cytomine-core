@@ -27,7 +27,11 @@ public class CurrentRoleService {
     @Autowired
     private SecUserSecRoleRepository secUserSecRoleRepository;
 
-    public Map<String, Date> currentAdmins = new WeakConcurrentHashMap<>(20 * 60 * 1000); //admin session = 20 min
+    public Map<String, Date> currentAdmins = new WeakConcurrentHashMap<>(120 * 60 * 1000); //admin session = 120 min max
+
+    public void clearAllAdminSession() {
+        currentAdmins.clear();
+    }
 
     /**
      * Active an admin session for a user

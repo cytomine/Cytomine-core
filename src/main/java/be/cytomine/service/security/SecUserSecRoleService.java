@@ -34,7 +34,7 @@ import static org.springframework.security.acls.domain.BasePermission.*;
 
 @Slf4j
 @Service
-@Transactional(readOnly = true)
+@Transactional
 public class SecUserSecRoleService extends ModelService {
 
 

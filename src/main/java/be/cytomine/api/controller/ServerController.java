@@ -6,6 +6,8 @@ import be.cytomine.domain.social.LastConnection;
 import be.cytomine.domain.social.PersistentConnection;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
+import be.cytomine.security.jwt.TokenProvider;
+import be.cytomine.security.jwt.TokenType;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.utils.JsonObject;
@@ -15,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 
@@ -37,6 +40,8 @@ public class ServerController extends RestCytomineController {
 
     private final LastConnectionRepository lastConnectionRepository;
 
+    private final TokenProvider tokenProvider;
+
     //@Secured("IS_AUTHENTICATED_REMEMBERED") //TODO????
     @PostMapping("/server/ping.json")
     public ResponseEntity<String> ping(@RequestBody JsonObject json,  HttpSession session) {
@@ -51,6 +56,8 @@ public class ServerController extends RestCytomineController {
         if (SecurityUtils.isAuthenticated()) {
             SecUser user = currentUserService.getCurrentUser();
             response.put("user", user.getId());
+            response.put("shortTermToken", tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM));
+
             if (!user.getEnabled()) {
                 log.info("Disabled user. Invalidation of its sessions");
                 session.invalidate();
@@ -72,6 +79,7 @@ public class ServerController extends RestCytomineController {
             connection.setId(sequenceService.generateID());
             connection.setUser(user.getId());
             connection.setDate(new Date());
+            connection.setCreated(connection.getDate());
             connection.setProject(idProject);
             lastConnectionRepository.insert(connection); //don't use save (stateless collection)
 
@@ -79,6 +87,7 @@ public class ServerController extends RestCytomineController {
             connectionPersist.setId(sequenceService.generateID());
             connectionPersist.setUser(user.getId());
             connectionPersist.setProject(idProject);
+            connectionPersist.setCreated(new Date());
             connectionPersist.setSession(RequestContextHolder.currentRequestAttributes().getSessionId());
             persistentConnectionRepository.insert(connectionPersist); //don't use save (stateless collection)
         } catch (NonTransientDataAccessException e) {

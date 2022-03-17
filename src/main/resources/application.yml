@@ -23,13 +23,12 @@ spring:
 
   data:
     mongodb:
-#      authentication-database: admin
-#      username: root
-#      password: root
+      authentication-database: admin
+      username: mongoadmin
+      password: secret
       database: cytomine
-      port: 27027
+      port: 27028
       host: localhost
-      auto-index-creation: true
 
   mail:
     host: smtp.gmail.com
@@ -74,6 +73,8 @@ application:
       # Token is valid 24 hours
       token-validity-in-seconds: 86400
       token-validity-in-seconds-for-remember-me: 2592000
+      token-validity-in-seconds-for-short-term: 240
+
 
 
   cytomine:
@@ -100,7 +101,7 @@ application:
       project: [ "ALL" ]
       ontology: [ "ROLE_ADMIN" ]
       storage: [ "ROLE_USER","ROLE_ADMIN" ]
-      software: [ "ROLE_USER", "ROLE_ADMIN" ]
+      software: [ "ROLE_ADMIN" ]
       activity: [ "ALL" ]
       admin: [ "ROLE_ADMIN" ]
       help: [ "ALL" ]

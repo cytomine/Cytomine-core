@@ -5,6 +5,7 @@ import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.security.*;
 import be.cytomine.config.security.JWTConfigurer;
 import be.cytomine.security.jwt.TokenProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -13,6 +14,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
@@ -30,6 +32,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final SecUserRepository secUserRepository;
 
+    @Value("${application.authentication.jwt.token-validity-in-seconds}")
+    Long tokenValidityInSeconds;
+
 
     public SecurityConfiguration(TokenProvider tokenProvider, DomainUserDetailsService domainUserDetailsService, SecUserRepository secUserRepository) {
         this.tokenProvider = tokenProvider;
@@ -41,8 +46,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     public SwitchUserFilter switchUserFilter() {
         SwitchUserFilter filter = new SwitchUserFilter();
         filter.setUserDetailsService(domainUserDetailsService);
-        filter.setSuccessHandler(ajaxAuthenticationSuccessHandler());
-        filter.setFailureHandler(ajaxAuthenticationFailureHandler());
+        filter.setSuccessHandler(switchUserSuccessHandler());
+        filter.setFailureHandler(switchUserFailureHandler());
         filter.setUsernameParameter("username");
         filter.setSwitchUserUrl("/api/login/impersonate");
         //filter.setSwitchFailureUrl("/api/login/switchUser");
@@ -51,13 +56,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    public AjaxAuthenticationSuccessHandler ajaxAuthenticationSuccessHandler() {
-        return new AjaxAuthenticationSuccessHandler();
+    public SwitchUserSuccessHandler switchUserSuccessHandler() {
+        return new SwitchUserSuccessHandler(tokenProvider, tokenValidityInSeconds);
     }
 
     @Bean
-    public AjaxAuthenticationFailureHandler ajaxAuthenticationFailureHandler() {
-        return new AjaxAuthenticationFailureHandler();
+    public SwitchUserFailureHandler switchUserFailureHandler() {
+        return new SwitchUserFailureHandler();
     }
 
     @Bean
@@ -93,7 +98,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(HttpSecurity http) throws Exception {
 // @formatter:off
-        http
+        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
             .csrf()
             .disable()
             .addFilterBefore(new ApiKeyFilter(domainUserDetailsService, secUserRepository), BasicAuthenticationFilter.class)
@@ -121,16 +126,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/authenticate").permitAll()
             .antMatchers("/api/register").permitAll()
             .antMatchers("/api/activate").permitAll()
-            .antMatchers("/api/countries").permitAll()
             .antMatchers("/api/account/resetPassword/init").permitAll()
             .antMatchers("/api/account/resetPassword/finish").permitAll()
+            .antMatchers("/api/login/impersonate*").hasAuthority("ROLE_ADMIN")
             .antMatchers("/api/**").authenticated()
-            .antMatchers("/api/login/impersonate*").hasAuthority("ADMIN")
-            .antMatchers("/api/logout/impersonate*").authenticated()
             .antMatchers(HttpMethod.POST, "/server/**").permitAll()
             .antMatchers("/**").permitAll()
-        .and()
-            .httpBasic()
+//        .and()
+//            .httpBasic()
         .and()
             .apply(securityConfigurerAdapter())
         .and()

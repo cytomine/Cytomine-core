@@ -7,9 +7,14 @@ services:
     ports: [ "5442:5432" ]
 
   mongodbdev:
-    image: cytomine/mongodb:v1.1.2
+    image: mongo:4.4
     restart: unless-stopped
-    ports: [ "27027:27017" ]
+    ports: [ "27028:27017" ]
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=mongoadmin
+      - MONGO_INITDB_ROOT_PASSWORD=secret
+      - MONGO_INITDB_DATABASE=cytomine
+
 
   rabbitmqdev:
     image: cytomine/rabbitmq:v1.1.2

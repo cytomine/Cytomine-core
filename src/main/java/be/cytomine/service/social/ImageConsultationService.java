@@ -175,7 +175,12 @@ public class ImageConsultationService {
                 .retrieve(consultation.getProject(), consultation.getUser(), consultation.getImage(), before, after, new Date(0));
 
 
-        List<Long> continuousConnections = (List<Long>) positions.getMappedResults().stream().map(x -> ((PersistentUserPosition) x).computeDateInMillis()).collect(Collectors.toList());
+        if (!positions.getMappedResults().isEmpty()) {
+            log.debug(positions.toString());
+        }
+
+        List<Long> continuousConnections = (List<Long>) positions.getMappedResults().stream().map(x ->
+                be.cytomine.utils.DateUtils.computeDateInMillis((Date)((LinkedHashMap) x).get("created"))).collect(Collectors.toList());
 
         //we calculated the gaps between connections to identify the period of non activity
         List<Long> continuousConnectionIntervals = new ArrayList<>();

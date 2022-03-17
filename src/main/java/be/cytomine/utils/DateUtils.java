@@ -18,6 +18,14 @@ public class DateUtils {
         }
     }
 
+    public static Long computeDateInMillis(Date created) {
+        return created != null ? created.getTime() - new Date(0).getTime() : null;
+    }
+
+    public static Long computeDateInMillis(Long l) {
+        return l != null ? l - new Date(0).getTime() : null;
+    }
+
     public static Comparator<CytomineDomain> descCreatedComparator() {
         return (lhs, rhs) -> {
             if (lhs==null) {

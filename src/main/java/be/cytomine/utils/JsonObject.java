@@ -324,6 +324,8 @@ public class JsonObject extends HashMap<String, Object> {
         if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
             if (this.get(attr) instanceof List) {
                 return (List<Long>)((List)this.get(attr)).stream().map(x -> Long.parseLong(String.valueOf(x))).collect(Collectors.toList());
+            } else if(this.get(attr) instanceof Long[]) {
+                return Arrays.asList((Long[]) this.get(attr));
             } else if(this.get(attr) instanceof String) {
                 return Arrays.stream(this.get(attr).toString().split(",")).map(x -> Long.parseLong(String.valueOf(x))).collect(Collectors.toList());
             }
@@ -335,6 +337,8 @@ public class JsonObject extends HashMap<String, Object> {
         if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
             if (this.get(attr) instanceof List) {
                 return (List<Long>)((List)this.get(attr)).stream().map(x -> Long.parseLong(String.valueOf(x))).collect(Collectors.toList());
+            } else if(this.get(attr) instanceof Long[]) {
+                return Arrays.asList((Long[]) this.get(attr));
             } else if(this.get(attr) instanceof String) {
                 return Arrays.stream(this.get(attr).toString().split(",")).map(x -> Long.parseLong(String.valueOf(x))).collect(Collectors.toList());
             }
