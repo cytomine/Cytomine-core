@@ -503,7 +503,7 @@ grails.notification.smtp.starttls.enable = "true"
 grails.notification.smtp.debug= "false"
 
 grails.instanceHostWebsite = "https://www.cytomine.org"
-grails.instanceHostSupportMail = "support@cytomine.coop"
+grails.instanceHostSupportMail = ""
 grails.instanceHostPhoneNumber = null
 
 grails.defaultLanguage = "ENGLISH"
