@@ -1,5 +1,7 @@
 package be.cytomine.utils
 
+import be.cytomine.AnnotationDomain
+
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
 *
@@ -19,6 +21,7 @@ package be.cytomine.utils
 import be.cytomine.api.UrlApi
 import be.cytomine.image.AbstractImage
 import be.cytomine.image.ImageInstance
+import be.cytomine.project.ProjectRepresentativeUser
 import be.cytomine.security.ForgotPasswordToken
 import be.cytomine.security.SecUser
 import be.cytomine.security.User
@@ -133,6 +136,9 @@ class NotificationService {
                 mailFrom: grailsApplication.config.grails.instanceHostSupportMail,
                 phoneNumber: grailsApplication.config.grails.instanceHostPhoneNumber
         ], mode)
+
+        /*AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(request.annotationIdent, request.annotationClassName)
+        println (ProjectRepresentativeUser.findAllByProject(annotation.project)*.user.email)*/
 
         cytomineMailService.send(
                 cytomineMailService.NO_REPLY_EMAIL,
