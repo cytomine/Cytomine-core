@@ -161,6 +161,7 @@ class JWTFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
+
     @Test
     void testSpeed() {
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(

@@ -30,6 +30,12 @@ public class ApplicationConfiguration {
 
     private AuthenticationConfiguration authentication = new AuthenticationConfiguration();
 
+    private String instanceHostWebsite;
+
+    private String instanceHostSupportMail;
+
+    private String instanceHostPhoneNumber;
+
     @NotNull
     @NotBlank
     private String adminPassword;

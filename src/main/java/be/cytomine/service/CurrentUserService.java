@@ -1,6 +1,7 @@
 package be.cytomine.service;
 
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ServerException;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.utils.SecurityUtils;
@@ -8,6 +9,7 @@ import be.cytomine.utils.WeakConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.*;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -31,19 +33,26 @@ public class CurrentUserService {
     }
 
     public Optional<SecUser> readCurrentUser() {
-        return secUserRepository.findByUsernameLikeIgnoreCase(SecurityUtils.getCurrentUserLogin().get());
+        Optional<SecUser> opt = secUserRepository.findByUsernameLikeIgnoreCase(SecurityUtils.getCurrentUserLogin().get());
+        opt.ifPresent(this::checkAccountStatus);
+        return opt;
     }
 
     public SecUser getCurrentUser() {
-        return secUserRepository.findByUsernameLikeIgnoreCase(SecurityUtils.getCurrentUserLogin().get()).orElseThrow(() -> new ServerException("Cannot read current user"));
+        SecUser secUser =  secUserRepository.findByUsernameLikeIgnoreCase(SecurityUtils.getCurrentUserLogin().get()).orElseThrow(() -> new ServerException("Cannot read current user"));
+        checkAccountStatus(secUser);
+        return secUser;
     }
 
-    boolean isUserAlgo() {
-        return getCurrentUser().isAlgo();
-    }
+    private void checkAccountStatus(SecUser secUser) {
+        if (secUser.getAccountExpired()) {
+            throw new ForbiddenException("Account expired");
+        } else if (secUser.getAccountLocked()) {
+            throw new ForbiddenException("Account locked");
+        } else if (!secUser.getEnabled()) {
+            throw new ForbiddenException("Account disabled");
+        }
 
-//    public CytomineDomain getDomain(Long id,String className) {
-//        Class.forName(className, false, Thread.currentThread().contextClassLoader).read(id)
-//    }
+    }
 
 }

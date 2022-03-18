@@ -265,11 +265,11 @@ public class SecUserService extends ModelService {
     }
 
     public Optional<SecUser> findCurrentUser() {
-        return secUserRepository.findByUsernameLikeIgnoreCase(SecurityUtils.getCurrentUserLogin().get());
+        return currentUserService.readCurrentUser();
     }
 
     public SecUser getCurrentUser() {
-        return secUserRepository.findByUsernameLikeIgnoreCase(SecurityUtils.getCurrentUserLogin().get()).orElseThrow(() -> new ServerException("Cannot read current user"));
+        return currentUserService.getCurrentUser();
     }
 
     public Page<Map<String, Object>> list(UserSearchExtension userSearchExtension, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {

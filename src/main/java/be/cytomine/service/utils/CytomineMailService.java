@@ -5,6 +5,7 @@ import be.cytomine.config.NotificationConfiguration;
 import be.cytomine.exceptions.MiddlewareException;
 import be.cytomine.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
@@ -18,10 +19,7 @@ import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -37,10 +35,10 @@ public class CytomineMailService {
 
 
     public void send(String from, String[] to, String[] cc, String[] bcc, String subject, String message) throws MessagingException {
-        send(from, to, cc, bcc, subject, message, new ArrayList<>());
+        send(from, to, cc, bcc, subject, message, new HashMap<>());
     }
 
-    public void send(String from, String[] to, String[] cc, String[] bcc, String subject, String message, List<byte[]> attachment) throws MessagingException {
+    public void send(String from, String[] to, String[] cc, String[] bcc, String subject, String message, Map<String,Byte[]> attachment) throws MessagingException {
         NotificationConfiguration notificationConfiguration = applicationConfiguration.getNotification();
         String defaultEmail = notificationConfiguration.getEmail();
 
@@ -90,9 +88,14 @@ public class CytomineMailService {
         helper.setSubject(subject);
         helper.setText("",message);
 
-        for (byte[] bytes : attachment) {
-            helper.addInline(UUID.randomUUID().toString(), new ByteArrayResource(bytes)); // id?
+        for (Map.Entry<String, Byte[]> entry : attachment.entrySet()) {
+            helper.addInline(entry.getKey(), new ByteArrayResource(ArrayUtils.toPrimitive(entry.getValue())));
         }
+
+
+//        for (Byte[] bytes : attachment) {
+//            helper.addInline(UUID.randomUUID().toString(), new ByteArrayResource(bytes)); // id?
+//        }
 
         log.info("send " + mail);
         try {

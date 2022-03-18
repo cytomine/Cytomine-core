@@ -25,6 +25,8 @@ public class ForgotPasswordToken {
     @NotNull
     private Date expiryDate;
 
+    private String tokenKey;
+
     public boolean isValid(){
         return expiryDate.toInstant().isAfter(new Date().toInstant());
     }
