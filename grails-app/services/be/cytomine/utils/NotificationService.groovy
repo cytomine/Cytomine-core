@@ -204,7 +204,7 @@ class NotificationService {
                 cytomineMailService.NO_REPLY_EMAIL,
                 [sender.getEmail()] as String[],
                 null,
-                receiversEmail,
+                receiversEmail as String[],
                 subject,
                 shareMessage,
                 attachments)
