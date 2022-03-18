@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
-class JWTControllerTests {
+class LoginControllerTests {
 
     @Autowired
     private UserRepository userRepository;

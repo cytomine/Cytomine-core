@@ -10,6 +10,7 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.security.jwt.TokenProvider;
 import be.cytomine.security.jwt.TokenType;
+import be.cytomine.service.utils.NotificationService;
 import be.cytomine.utils.JsonObject;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -24,6 +25,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
+import javax.mail.MessagingException;
 import javax.validation.Valid;
 
 @Slf4j
@@ -37,6 +39,8 @@ public class LoginController extends RestCytomineController {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
     private final UserRepository userRepository;
+
+    private final NotificationService notificationService;
 
 
     @PostMapping("/api/authenticate")
@@ -68,14 +72,14 @@ public class LoginController extends RestCytomineController {
 
 
 
-    @RequestMapping(path = {"/user/forgotUsername.json"}, method = {RequestMethod.POST})
-    public ResponseEntity<String> checkPassword(@RequestBody MultiValueMap<String, String> formData) {
+    @RequestMapping(path = {"/login/forgotUsername"}, method = {RequestMethod.POST})
+    public ResponseEntity<String> checkPassword(@RequestBody MultiValueMap<String, String> formData) throws MessagingException {
         log.debug("REST request to retrieve username");
 
         User user = userRepository.findByEmailLikeIgnoreCase(formData.getFirst("j_email"))
                 .orElseThrow(() -> new ObjectNotFoundException("User", JsonObject.of("email", formData.getFirst("j_email")).toJsonString()));
-        //notificationService.notifyForgotUsername(user);
-       return responseSuccess(JsonObject.of("message","Check your inbox"));
+        notificationService.notifyForgotUsername(user);
+        return responseSuccess(JsonObject.of("message","Check your inbox"));
     }
 
 

@@ -97,7 +97,11 @@ public class CytomineMailService {
 //            helper.addInline(UUID.randomUUID().toString(), new ByteArrayResource(bytes)); // id?
 //        }
 
-        log.info("send " + mail);
+        log.debug("Sending email...");
+        log.debug("from " + from);
+        log.debug("to " + Arrays.toString(to));
+        log.debug("cc " + Arrays.toString(cc));
+        log.debug("bcc " + Arrays.toString(bcc));
         try {
             sender.send(mail);
         } catch (Exception e) {

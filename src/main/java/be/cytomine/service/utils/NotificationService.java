@@ -28,7 +28,7 @@ public class NotificationService {
     public void notifyWelcome(User sender, User guestUser, ForgotPasswordToken forgotPasswordToken) throws MessagingException {
         String mailTitle = sender.getFirstname() + " " + sender.getLastname() + " invited you to join Cytomine";
         String welcomeMessage = buildNotifyWelcomeMessage(sender,forgotPasswordToken);
-        cytomineMailService.send(null, new String[] {guestUser.getEmail()}, null, null, mailTitle, welcomeMessage);
+        cytomineMailService.send(null, new String[] {guestUser.getEmail()},  new String[] {},  new String[] {}, mailTitle, welcomeMessage);
     }
 
     public String buildNotifyWelcomeMessage(User sender, ForgotPasswordToken forgotPasswordToken) {
@@ -59,7 +59,7 @@ public class NotificationService {
             Map<String, Byte[]> attachments,
             String cid) throws MessagingException {
         String sharedMessage = buildNotifyShareAnnotationMessage(from, comment, annotationURL, shareAnnotationURL, cid);
-        cytomineMailService.send(CytomineMailService.NO_REPLY_EMAIL, new String[] {sender.getEmail()}, null, receiversEmail.toArray(new String[receiversEmail.size()]), subject, sharedMessage, attachments);
+        cytomineMailService.send(CytomineMailService.NO_REPLY_EMAIL, new String[] {sender.getEmail()},  new String[] {}, receiversEmail.toArray(new String[receiversEmail.size()]), subject, sharedMessage, attachments);
     }
 
     public String buildNotifyShareAnnotationMessage (
@@ -87,7 +87,7 @@ public class NotificationService {
     public void notifyForgotUsername (User user) throws MessagingException {
         String message = buildNotifyForgotUsername(user.getUsername());
         String subject = "Cytomine : your username is " + user.getUsername();
-        cytomineMailService.send(CytomineMailService.NO_REPLY_EMAIL, new String[] {user.getEmail()}, null, new String[]{user.getUsername()}, subject, message);
+        cytomineMailService.send(CytomineMailService.NO_REPLY_EMAIL, new String[] {user.getEmail()},  new String[] {}, new String[]{}, subject, message);
     }
 
     public String buildNotifyForgotUsername(String username) {
@@ -104,7 +104,7 @@ public class NotificationService {
     public void notifyForgotPassword (User user, ForgotPasswordToken forgotPasswordToken) throws MessagingException {
         String message = buildNotifyForgotPassword(user.getUsername(), forgotPasswordToken);
         String subject = "Cytomine : reset your password";
-        cytomineMailService.send(CytomineMailService.NO_REPLY_EMAIL, new String[] {user.getEmail()}, null, new String[]{user.getUsername()}, subject, message);
+        cytomineMailService.send(CytomineMailService.NO_REPLY_EMAIL, new String[] {user.getEmail()},  new String[] {}, new String[]{}, subject, message);
     }
 
     public String buildNotifyForgotPassword(String username, ForgotPasswordToken forgotPasswordToken) {
