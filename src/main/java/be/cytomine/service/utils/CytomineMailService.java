@@ -38,7 +38,7 @@ public class CytomineMailService {
         send(from, to, cc, bcc, subject, message, new HashMap<>());
     }
 
-    public void send(String from, String[] to, String[] cc, String[] bcc, String subject, String message, Map<String,Byte[]> attachment) throws MessagingException {
+    public void send(String from, String[] to, String[] cc, String[] bcc, String subject, String message, Map<String,File> attachment) throws MessagingException {
         NotificationConfiguration notificationConfiguration = applicationConfiguration.getNotification();
         String defaultEmail = notificationConfiguration.getEmail();
 
@@ -88,8 +88,8 @@ public class CytomineMailService {
         helper.setSubject(subject);
         helper.setText("",message);
 
-        for (Map.Entry<String, Byte[]> entry : attachment.entrySet()) {
-            helper.addInline(entry.getKey(), new ByteArrayResource(ArrayUtils.toPrimitive(entry.getValue())));
+        for (Map.Entry<String, File> entry : attachment.entrySet()) {
+            helper.addInline(entry.getKey(), entry.getValue());
         }
 
 

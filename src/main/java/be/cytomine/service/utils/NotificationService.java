@@ -11,6 +11,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import javax.mail.MessagingException;
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +57,7 @@ public class NotificationService {
             String comment,
             String annotationURL,
             String shareAnnotationURL,
-            Map<String, Byte[]> attachments,
+            Map<String, File> attachments,
             String cid) throws MessagingException {
         String sharedMessage = buildNotifyShareAnnotationMessage(from, comment, annotationURL, shareAnnotationURL, cid);
         cytomineMailService.send(CytomineMailService.NO_REPLY_EMAIL, new String[] {sender.getEmail()},  new String[] {}, receiversEmail.toArray(new String[receiversEmail.size()]), subject, sharedMessage, attachments);

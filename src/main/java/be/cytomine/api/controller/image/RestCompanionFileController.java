@@ -5,6 +5,7 @@ import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.CompanionFile;
 import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.repository.image.AbstractImageRepository;
 import be.cytomine.service.image.AbstractImageService;
 import be.cytomine.service.image.CompanionFileService;
 import be.cytomine.service.image.UploadedFileService;
@@ -32,12 +33,14 @@ public class RestCompanionFileController extends RestCytomineController {
 
     private final ImageServerService imageServerService;
 
+    private final AbstractImageRepository abstractImageRepository;
+
     @GetMapping("/abstractimage/{id}/companionfile.json")
     public ResponseEntity<String> listByAbstractImage(
             @PathVariable Long id
     ) {
         log.debug("REST request to list companion file for abstract image {}", id);
-        AbstractImage abstractImage = abstractImageService.find(id)
+        AbstractImage abstractImage = abstractImageRepository.findById(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
         return responseSuccess(companionFileService.list(abstractImage));
     }

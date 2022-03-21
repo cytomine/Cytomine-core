@@ -4,15 +4,10 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecRole;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.SecUserSecRole;
-import be.cytomine.domain.security.User;
-import be.cytomine.exceptions.AlreadyExistException;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
-import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.exceptions.WrongArgumentException;
+import be.cytomine.domain.security.*;
+import be.cytomine.exceptions.*;
 import be.cytomine.repository.ontology.*;
+import be.cytomine.repository.security.ForgotPasswordTokenRepository;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.service.CurrentRoleService;
@@ -22,16 +17,20 @@ import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
+import be.cytomine.service.utils.NotificationService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
+import javax.mail.MessagingException;
 import javax.transaction.Transactional;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -66,6 +65,12 @@ public class SharedAnnotationService extends ModelService {
 
     @Autowired
     private SecUserSecRoleRepository secUserSecRoleRepository;
+
+    @Autowired
+    private ForgotPasswordTokenRepository forgotPasswordTokenRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     private ImageServerService imageServerService;
 
@@ -117,6 +122,7 @@ public class SharedAnnotationService extends ModelService {
      * @return Response structure (created domain data,..)
      */
     @Override
+    @Transactional(dontRollbackOn = IOException.class)
     public CommandResponse add(JsonObject jsonObject) {
         User sender = (User)currentUserService.getCurrentUser();
         securityACLService.checkUser(sender);
@@ -160,7 +166,7 @@ public class SharedAnnotationService extends ModelService {
             throw new WrongArgumentException("Cannot retrieve crop:" + e);
         }
 
-        Map<String, Object> attachments = new LinkedHashMap<>();
+        Map<String, File> attachments = new LinkedHashMap<>();
         if (annotationCrop != null) {
             attachments.put(cid, annotationCrop);
         }
@@ -201,14 +207,18 @@ public class SharedAnnotationService extends ModelService {
 
                     user.setPasswordExpired(true);
                     getEntityManager().persist(user);
-                    throw new CytomineMethodNotYetImplementedException("todo");
-                    //TODO:
-//                    ForgotPasswordToken forgotPasswordToken = new ForgotPasswordToken(
-//                            user : user,
-//                            tokenKey: UUID.randomUUID().toString(),
-//                            expiryDate: new Date() + 1
-//                        ).save()
-//                    notificationService.notifyWelcome(sender, user, forgotPasswordToken)
+
+                    ForgotPasswordToken forgotPasswordToken = new ForgotPasswordToken();
+                    forgotPasswordToken.setUser(user);
+                    forgotPasswordToken.setTokenKey(UUID.randomUUID().toString());
+                    forgotPasswordToken.setExpiryDate(DateUtils.addDays(new Date(), 1));
+                    forgotPasswordTokenRepository.save(forgotPasswordToken);
+
+                    try {
+                        notificationService.notifyWelcome(sender, user, forgotPasswordToken);
+                    } catch (Exception e) {
+                        log.error("Cannot send welcome message to user " + user.getEmail(), e);
+                    }
                 }
                 receivers.add((User)secUserService.findByUsername(email).get());
             }
@@ -217,23 +227,24 @@ public class SharedAnnotationService extends ModelService {
 
         securityACLService.checkFullOrRestrictedForOwner(annotation, annotation.user());
         CommandResponse result =  executeCommand(new AddCommand(sender), null, jsonObject);
-
-        throw new CytomineMethodNotYetImplementedException("todo");
-        //TODO
-//        if (result!=null) {
-//            log.info("send mail to " + receiversEmail);
-//            try {
-//                notificationService.notifyShareAnnotation(sender, receiversEmail, json, attachments, cid)
-//            } catch (MiddlewareException e) {
-//                if(Environment.getCurrent() == Environment.DEVELOPMENT){
-//                    e.printStackTrace()
-//                } else {
-//                    throw e
-//                }
-//            }
-//        }
-//
-//        return result;
+        if (result!=null) {
+            log.info("send mail to " + receiversEmail);
+            try {
+                notificationService.notifyShareAnnotationMessage(
+                        sender,
+                        receiversEmail,
+                        jsonObject.getJSONAttrStr("subject"),
+                        jsonObject.getJSONAttrStr("from"),
+                        jsonObject.getJSONAttrStr("comment"),
+                        jsonObject.getJSONAttrStr("annotationURL"),
+                        jsonObject.getJSONAttrStr("shareAnnotationURL"),
+                        attachments,
+                        cid);
+            } catch (Exception e) {
+                log.error("Cannot send email for shared annotation", e);
+            }
+        }
+        return result;
     }
 
 

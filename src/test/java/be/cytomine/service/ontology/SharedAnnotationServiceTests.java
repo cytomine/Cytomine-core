@@ -89,7 +89,7 @@ public class SharedAnnotationServiceTests {
         json.put("annotationIdent", sharedAnnotation.getAnnotationIdent());
         json.put("annotationClassName", sharedAnnotation.getAnnotationClassName());
 
-        CommandResponse commandResponse = sharedAnnotationService.add(sharedAnnotation.toJsonObject());
+        CommandResponse commandResponse = sharedAnnotationService.add(json);
 
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);

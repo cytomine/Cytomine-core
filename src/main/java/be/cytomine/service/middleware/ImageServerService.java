@@ -224,9 +224,14 @@ public class ImageServerService extends ModelService {
         LinkedHashMap<String, Object> parameters = retrieveImageServerParameters(slice);
 
         Object geometry = cropParameter.getGeometry();
+        if (geometry!=null && geometry instanceof String) {
+            geometry = new WKTReader().read((String)geometry);
+        }
+
         if (StringUtils.isBlank(cropParameter.getGeometry()) && StringUtils.isNotBlank(cropParameter.getLocation())) {
             geometry = new WKTReader().read(cropParameter.getLocation());
         }
+
         // In the window service, boundaries are already set and do not correspond to geometry/location boundaries
         BoundariesCropParameter boundaries = cropParameter.getBoundaries();
         if (boundaries==null && geometry!=null) {
