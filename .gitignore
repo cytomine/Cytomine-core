@@ -40,3 +40,5 @@ out/
 *.sql
 ci/
 .ideal/
+
+application.properties

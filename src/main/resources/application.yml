@@ -33,8 +33,8 @@ spring:
   mail:
     host: smtp.mailgun.org
     port: 587
-    username: postmaster@sandboxdcb415e3e7c84c6f942004c60c005909.mailgun.org
-    password: 0da253cf5a779af0f8c26945860c4a23-b2f5ed24-4662f38e
+    username: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: postmaster@sandboxdcb41...5909.mailgun.org
+    password: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: 0da253cf5...24-4662f38e
 
 server:
   port: 8080

@@ -24,7 +24,7 @@ public class CytomineMailServiceTests {
     CytomineMailService cytomineMailService;
 
     @Test
-    @Disabled("no spam please...")
+    @Disabled("no spam please...:-)")
     public void test_send_email() throws MessagingException {
         cytomineMailService.send(
                 "loic.rollus@cytomine.com",
