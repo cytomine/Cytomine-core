@@ -1034,6 +1034,7 @@ public class SecUserServiceTests {
     @Test
     void edit_valid_user_with_success() {
         User user = builder.given_a_user();
+        String originalPasswordHash = user.getPassword();
 
         CommandResponse commandResponse = secUserService.update(user, user.toJsonObject().withChange("lastname", "NEW LASTNAME"));
 
@@ -1041,6 +1042,21 @@ public class SecUserServiceTests {
         assertThat(commandResponse.getStatus()).isEqualTo(200);
         Optional<SecUser> edited = secUserService.findByUsername(user.getUsername());
         assertThat(((User)edited.get()).getLastname()).isEqualTo("NEW LASTNAME");
+        assertThat(((User)edited.get()).getPassword()).isEqualTo(originalPasswordHash);
+    }
+
+
+    @Test
+    void edit_valid_user_with_password() {
+        User user = builder.given_a_user();
+
+        CommandResponse commandResponse = secUserService.update(user, user.toJsonObject().withChange("password", "NEWPASSWORD"));
+
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        Optional<SecUser> edited = secUserService.findByUsername(user.getUsername());
+
+        assertThat(passwordEncoder.matches("NEWPASSWORD", edited.get().getPassword())).isTrue();
     }
 
 

@@ -18,6 +18,9 @@ public class ForgotPasswordToken {
     @GenericGenerator(name = "myGenerator", strategy = "be.cytomine.config.CustomIdentifierGenerator")
     private Long id;
 
+    @Version
+    protected Integer version = 0;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = true)
     private User user;

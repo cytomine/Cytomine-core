@@ -3,9 +3,11 @@ package be.cytomine.api;
 
 import be.cytomine.exceptions.*;
 import be.cytomine.utils.JsonObject;
+import com.sun.mail.smtp.SMTPSendFailedException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -23,6 +25,24 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  ex.getMessage()));
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .body(jsonObject.toJsonString());
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
+        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  ex.getMessage()));
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(jsonObject.toJsonString());
+    }
+
+
+    @ExceptionHandler(MiddlewareException.class)
+    public ResponseEntity<?> handleException(MiddlewareException exception) {
+        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  "Internal error"));
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(jsonObject.toJsonString());
     }
 

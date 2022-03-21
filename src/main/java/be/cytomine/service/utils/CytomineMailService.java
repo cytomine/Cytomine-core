@@ -102,6 +102,7 @@ public class CytomineMailService {
         log.debug("to " + Arrays.toString(to));
         log.debug("cc " + Arrays.toString(cc));
         log.debug("bcc " + Arrays.toString(bcc));
+        log.debug(message);
         try {
             sender.send(mail);
         } catch (Exception e) {

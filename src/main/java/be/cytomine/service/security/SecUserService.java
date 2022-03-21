@@ -960,7 +960,9 @@ public class SecUserService extends ModelService {
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkIsCreator((SecUser) domain, currentUser);
-        jsonNewData.withChange("password", null);
+        if (!jsonNewData.isMissing("password")) {
+            changeUserPassword((User)domain, jsonNewData.getJSONAttrStr("password"));
+        }
         return executeCommand(new EditCommand(currentUser, null), domain, jsonNewData);
     }
 
@@ -1020,6 +1022,7 @@ public class SecUserService extends ModelService {
         securityACLService.checkIsCreator(user,currentUserService.getCurrentUser());
         user.setPassword(newPassword);
         user.encodePassword(passwordEncoder);
+        user.setPasswordExpired(false);
         this.saveDomain(user);
     }
 

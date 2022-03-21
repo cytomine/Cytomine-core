@@ -1,8 +1,11 @@
 package be.cytomine.api.controller;
 
+import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.domain.security.ForgotPasswordToken;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.LoginVM;
+import be.cytomine.repository.security.ForgotPasswordTokenRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.config.security.JWTFilter;
 import be.cytomine.security.jwt.TokenProvider;
@@ -13,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +45,9 @@ class LoginControllerTests {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private BasicInstanceBuilder builder;
+
     @Test
     @Transactional
     void authorize_valide_credentials() throws Exception {
@@ -61,8 +68,8 @@ class LoginControllerTests {
         mockMvc
             .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id_token").isString())
-            .andExpect(jsonPath("$.id_token").isNotEmpty())
+            .andExpect(jsonPath("$.token").isString())
+            .andExpect(jsonPath("$.token").isNotEmpty())
             .andExpect(header().string("Authorization", not(nullValue())))
             .andExpect(header().string("Authorization", not(is(emptyString()))));
     }
@@ -89,8 +96,8 @@ class LoginControllerTests {
             .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andDo(print())
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id_token").isString())
-            .andExpect(jsonPath("$.id_token").isNotEmpty())
+            .andExpect(jsonPath("$.token").isString())
+            .andExpect(jsonPath("$.token").isNotEmpty())
             .andExpect(header().string("Authorization", not(nullValue())))
             .andExpect(header().string("Authorization", not(is(emptyString()))));
     }
@@ -103,7 +110,7 @@ class LoginControllerTests {
         mockMvc
             .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
             .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.id_token").doesNotExist())
+            .andExpect(jsonPath("$.token").doesNotExist())
             .andExpect(header().doesNotExist("Authorization"));
     }
 
@@ -128,7 +135,7 @@ class LoginControllerTests {
         mockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.id_token").doesNotExist())
+                .andExpect(jsonPath("$.token").doesNotExist())
                 .andExpect(header().doesNotExist("Authorization"));
     }
 
@@ -154,7 +161,7 @@ class LoginControllerTests {
         mockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.id_token").doesNotExist())
+                .andExpect(jsonPath("$.token").doesNotExist())
                 .andExpect(header().doesNotExist("Authorization"));
     }
 
@@ -180,7 +187,7 @@ class LoginControllerTests {
         mockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.id_token").doesNotExist())
+                .andExpect(jsonPath("$.token").doesNotExist())
                 .andExpect(header().doesNotExist("Authorization"));
     }
 
@@ -204,13 +211,13 @@ class LoginControllerTests {
         MvcResult mvcResult = mockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id_token").isString())
-                .andExpect(jsonPath("$.id_token").isNotEmpty())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(header().string("Authorization", not(nullValue())))
                 .andExpect(header().string("Authorization", not(is(emptyString())))).andReturn();
         JsonObject jsonObject = JsonObject.toJsonObject(mvcResult.getResponse().getContentAsString());
 
-        String token = jsonObject.getJSONAttrStr("id_token");
+        String token = jsonObject.getJSONAttrStr("token");
         assertThat(tokenProvider.validateToken(token)).isTrue();
 
 
@@ -241,13 +248,13 @@ class LoginControllerTests {
         MvcResult mvcResult = mockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id_token").isString())
-                .andExpect(jsonPath("$.id_token").isNotEmpty())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(header().string("Authorization", not(nullValue())))
                 .andExpect(header().string("Authorization", not(is(emptyString())))).andReturn();
         JsonObject jsonObject = JsonObject.toJsonObject(mvcResult.getResponse().getContentAsString());
 
-        String token = jsonObject.getJSONAttrStr("id_token");
+        String token = jsonObject.getJSONAttrStr("token");
         assertThat(tokenProvider.validateToken(token)).isTrue();
 
         // locked user now...
@@ -280,13 +287,13 @@ class LoginControllerTests {
         MvcResult mvcResult = mockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id_token").isString())
-                .andExpect(jsonPath("$.id_token").isNotEmpty())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(header().string("Authorization", not(nullValue())))
                 .andExpect(header().string("Authorization", not(is(emptyString())))).andReturn();
         JsonObject jsonObject = JsonObject.toJsonObject(mvcResult.getResponse().getContentAsString());
 
-        String token = jsonObject.getJSONAttrStr("id_token");
+        String token = jsonObject.getJSONAttrStr("token");
         assertThat(tokenProvider.validateToken(token)).isTrue();
 
         // expired user now...
@@ -319,13 +326,13 @@ class LoginControllerTests {
         MvcResult mvcResult = mockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id_token").isString())
-                .andExpect(jsonPath("$.id_token").isNotEmpty())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(header().string("Authorization", not(nullValue())))
                 .andExpect(header().string("Authorization", not(is(emptyString())))).andReturn();
         JsonObject jsonObject = JsonObject.toJsonObject(mvcResult.getResponse().getContentAsString());
 
-        String token = jsonObject.getJSONAttrStr("id_token");
+        String token = jsonObject.getJSONAttrStr("token");
         assertThat(tokenProvider.validateToken(token)).isTrue();
 
         // expired user now...
@@ -337,4 +344,71 @@ class LoginControllerTests {
                 .andExpect(status().isForbidden());
     }
 
+
+
+    @Test
+    @Transactional
+    @WithMockUser("superadmin")
+    void build_token() throws Exception {
+
+        User user = builder.given_default_user();
+
+        MvcResult mvcResult = mockMvc
+                .perform(post("/api/token.json").contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonObject.of("username", user.getUsername(), "validity", "60").toJsonString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").isNotEmpty()).andReturn();
+        JsonObject jsonObject = JsonObject.toJsonObject(mvcResult.getResponse().getContentAsString());
+
+        String token = jsonObject.getJSONAttrStr("token");
+
+
+        mockMvc.perform(post("/login/loginWithToken")
+                        .param("username", user.getUsername()).param("tokenKey", token))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.token").isString())
+                    .andExpect(jsonPath("$.token").isNotEmpty())
+                .andReturn();
+        jsonObject = JsonObject.toJsonObject(mvcResult.getResponse().getContentAsString());
+
+
+        mockMvc.perform(get("/api/user/current.json")
+                        .header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jsonObject.getJSONAttrStr("token")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("user"));
+    }
+
+    @Autowired
+    ForgotPasswordTokenRepository forgotPasswordTokenRepository;
+
+    @Test
+    @Transactional
+    void forgot_password_token() throws Exception {
+
+        User user = builder.given_default_user();
+
+        forgotPasswordTokenRepository.deleteAll();
+
+            mockMvc
+                    .perform(post("/login/forgotPassword").contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                            .content("j_username=" + user.getUsername()));
+
+        assertThat(forgotPasswordTokenRepository.findAll()).hasSize(1);
+
+        ForgotPasswordToken token = forgotPasswordTokenRepository.findAll().get(0);
+
+        MvcResult mvcResult = mockMvc.perform(post("/login/loginWithToken")
+                        .param("username", user.getUsername()).param("tokenKey", token.getTokenKey()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andReturn();
+        JsonObject jsonObject = JsonObject.toJsonObject(mvcResult.getResponse().getContentAsString());
+
+        mockMvc.perform(get("/api/user/current.json")
+                        .header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jsonObject.getJSONAttrStr("token")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("user"));
+    }
 }

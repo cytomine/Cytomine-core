@@ -18,12 +18,17 @@ public class AuthWithToken {
     @GenericGenerator(name = "myGenerator", strategy = "be.cytomine.config.CustomIdentifierGenerator")
     private Long id;
 
+    @Version
+    protected Integer version = 0;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
     @NotNull
     private Date expiryDate;
+
+    String tokenKey;
 
     public boolean isValid(){
         return expiryDate.toInstant().isAfter(new Date().toInstant());
