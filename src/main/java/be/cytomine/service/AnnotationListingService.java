@@ -1,23 +1,15 @@
 package be.cytomine.service;
 
-import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.ReviewedAnnotation;
-import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.AlgoAnnotationListing;
 import be.cytomine.repository.AnnotationListing;
 import be.cytomine.repository.UserAnnotationListing;
-import be.cytomine.repository.ontology.AnnotationDomainRepository;
-import be.cytomine.repository.ontology.ReviewedAnnotationRepository;
-import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.dto.AnnotationResult;
 import be.cytomine.service.dto.Point;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.KmeansGeometryService;
 import be.cytomine.utils.GisUtils;
 import be.cytomine.utils.JsonObject;
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,9 +20,7 @@ import javax.persistence.TupleElement;
 import javax.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Transactional
