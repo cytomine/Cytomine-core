@@ -3,6 +3,7 @@ package be.cytomine.service.social;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
+import be.cytomine.domain.social.PersistentConnection;
 import be.cytomine.domain.social.PersistentImageConsultation;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
@@ -274,10 +275,15 @@ public class ProjectConnectionService {
 //        );
 
         AggregationResults connections = projectConnectionRepository.retrieve(connection.getProject(), connection.getUser(), before, after, new Date(0));
-        List<LinkedHashMap> aggregation = connections.getMappedResults();
+        List aggregation = connections.getMappedResults();
 
-        List<Long> continuousConnections = (List<Long>)aggregation.stream().map(x ->
-                be.cytomine.utils.DateUtils.computeDateInMillis((Date)((LinkedHashMap) x).get("created"))).collect(Collectors.toList());
+        List<Long> continuousConnections = new ArrayList<>();
+        // don't understand why sometime it is LinkedHashMap and sometimes PersistentConnection :-/
+        if (!aggregation.isEmpty() && aggregation.get(0) instanceof LinkedHashMap) {
+            continuousConnections = (List<Long>)aggregation.stream().map(x ->
+                    x instanceof LinkedHashMap ? be.cytomine.utils.DateUtils.computeDateInMillis((Date)((LinkedHashMap) x).get("created")) :
+                            be.cytomine.utils.DateUtils.computeDateInMillis((Date)((PersistentConnection) x).getCreated())).collect(Collectors.toList());
+        }
 
         //we calculated the gaps between connections to identify the period of non activity
         List<Long> continuousConnectionIntervals = new ArrayList<>();

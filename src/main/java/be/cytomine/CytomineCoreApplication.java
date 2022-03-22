@@ -8,6 +8,8 @@ import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
+import java.util.Date;
+
 @Slf4j
 @SpringBootApplication
 @EnableMongoRepositories("be.cytomine.repositorynosql")

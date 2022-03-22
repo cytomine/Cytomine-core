@@ -6,7 +6,9 @@
 
     <include file="config/liquibase/changelog/00000000_0_init.xml" relativeToChangelogFile="false"/>
 
-    <include file="config/liquibase/changelog/00000000_1_trigger.sql" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/00000000_1_domain.xml" relativeToChangelogFile="false"/>
 
     <include file="config/liquibase/changelog/00000000_2_grant.xml" relativeToChangelogFile="false"/>
+
+    <include file="config/liquibase/changelog/00000000_3_trigger.sql" relativeToChangelogFile="false"/>
 </databaseChangeLog>

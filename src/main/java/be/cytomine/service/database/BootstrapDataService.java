@@ -100,10 +100,10 @@ public class BootstrapDataService {
 
         bootstrapUtilsService.createConfigurations("WELCOME", "<p>Welcome to the Cytomine software.</p><p>This software is supported by the <a href='https://cytomine.coop'>Cytomine company</a></p>", ConfigurationReadingRole.ALL);
         bootstrapUtilsService.createConfigurations("admin_email", applicationConfiguration.getAdminEmail(), ConfigurationReadingRole.ADMIN);
-        bootstrapUtilsService.createConfigurations("notification_email", applicationConfiguration.getNotification().getEmail(), ConfigurationReadingRole.ADMIN);
-        bootstrapUtilsService.createConfigurations("notification_password", applicationConfiguration.getNotification().getPassword(), ConfigurationReadingRole.ADMIN);
-        bootstrapUtilsService.createConfigurations("notification_smtp_host", applicationConfiguration.getNotification().getSmtpHost(), ConfigurationReadingRole.ADMIN);
-        bootstrapUtilsService.createConfigurations("notification_smtp_port", applicationConfiguration.getNotification().getSmtpPort(), ConfigurationReadingRole.ADMIN);
+//        bootstrapUtilsService.createConfigurations("notification_email", applicationConfiguration.getNotification().getEmail(), ConfigurationReadingRole.ADMIN);
+//        bootstrapUtilsService.createConfigurations("notification_password", applicationConfiguration.getNotification().getPassword(), ConfigurationReadingRole.ADMIN);
+//        bootstrapUtilsService.createConfigurations("notification_smtp_host", applicationConfiguration.getNotification().getSmtpHost(), ConfigurationReadingRole.ADMIN);
+//        bootstrapUtilsService.createConfigurations("notification_smtp_port", applicationConfiguration.getNotification().getSmtpPort(), ConfigurationReadingRole.ADMIN);
 
 //        SecUser admin = secUserRepository.findByUsernameLikeIgnoreCase("admin")
 //                .orElseThrow(() -> new ObjectNotFoundException("admin user does not exists"));

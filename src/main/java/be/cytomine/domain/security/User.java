@@ -16,7 +16,7 @@ import javax.validation.constraints.Size;
 @Entity
 @Getter
 @Setter
-@DiscriminatorValue("be.cytomine.security.User")
+@DiscriminatorValue("be.cytomine.domain.security.User")
 public class User extends SecUser {
 
 //    @Id

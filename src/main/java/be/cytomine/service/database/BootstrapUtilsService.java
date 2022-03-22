@@ -116,7 +116,7 @@ public class BootstrapUtilsService {
             user.setLastname(lastname);
             user.setEmail(email);
             user.setPassword(password);
-            user.setLanguage(Language.valueOf(applicationConfiguration.getCytomine().getDefaultLanguage()));
+            user.setLanguage(Language.valueOf(applicationConfiguration.getDefaultLanguage()));
             user.setEnabled(true);
             user.setIsDeveloper(false);
             user.setOrigin("BOOTSTRAP");
@@ -214,14 +214,14 @@ public class BootstrapUtilsService {
 
     public void createMultipleImageServer() {
         for (ImageServer imageServer : imageServerRepository.findAll()) {
-            if(!applicationConfiguration.getCytomine().getImageServerURL().contains(imageServer.getUrl())) {
+            if(!applicationConfiguration.getImageServerURL().contains(imageServer.getUrl())) {
                 imageServer.setAvailable(false);
                 imageServerRepository.save(imageServer);
             }
         }
 
-        for (int i=0; i<applicationConfiguration.getCytomine().getImageServerURL().size(); i++) {
-            createImageServer("IMS " + i, applicationConfiguration.getCytomine().getImageServerURL().get(i), applicationConfiguration.getStoragePath());
+        for (int i=0; i<applicationConfiguration.getImageServerURL().size(); i++) {
+            createImageServer("IMS " + i, applicationConfiguration.getImageServerURL().get(i), applicationConfiguration.getStoragePath());
         }
     }
     
@@ -244,7 +244,7 @@ public class BootstrapUtilsService {
    }
 
     public ImagingServer createImagingServer() {
-        String imageServerURL = applicationConfiguration.getCytomine().getImageServerURL().stream().findFirst()
+        String imageServerURL = applicationConfiguration.getImageServerURL().stream().findFirst()
                 .orElseThrow(() -> new ObjectNotFoundException("No image server defined in configuration"));
         if (imagingServerRepository.findByUrl(imageServerURL).isEmpty()) {
             ImagingServer imagingServer = new ImagingServer();

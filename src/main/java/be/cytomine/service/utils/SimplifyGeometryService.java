@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class SimplifyGeometryService {
 
-    @Value("${application.cytomine.annotation.maxNumberOfPoint}")
+    @Value("${application.annotation.maxNumberOfPoint}")
     Double maxNumberOfPoint;
 
     public SimplifiedAnnotation simplifyPolygon(String form, Long minPoint, Long maxPoint) {

@@ -4,6 +4,7 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
+import be.cytomine.domain.social.PersistentConnection;
 import be.cytomine.domain.social.PersistentImageConsultation;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.domain.social.PersistentUserPosition;
@@ -179,8 +180,10 @@ public class ImageConsultationService {
             log.debug(positions.toString());
         }
 
-        List<Long> continuousConnections = (List<Long>) positions.getMappedResults().stream().map(x ->
-                be.cytomine.utils.DateUtils.computeDateInMillis((Date)((LinkedHashMap) x).get("created"))).collect(Collectors.toList());
+        List<Long> continuousConnections = (List<Long>)positions.getMappedResults().stream().map(x ->
+                x instanceof LinkedHashMap ? be.cytomine.utils.DateUtils.computeDateInMillis((Date)((LinkedHashMap) x).get("created")) :
+                        be.cytomine.utils.DateUtils.computeDateInMillis((Date)((PersistentUserPosition) x).getCreated())).collect(Collectors.toList());
+
 
         //we calculated the gaps between connections to identify the period of non activity
         List<Long> continuousConnectionIntervals = new ArrayList<>();

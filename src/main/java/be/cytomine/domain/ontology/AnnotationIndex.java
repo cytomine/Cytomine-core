@@ -15,8 +15,7 @@ import javax.persistence.*;
 public class AnnotationIndex {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGenerator")
-    @GenericGenerator(name = "myGenerator", strategy = "be.cytomine.config.CustomIdentifierGenerator")
+    @GeneratedValue(generator = "myGenerator")
     Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

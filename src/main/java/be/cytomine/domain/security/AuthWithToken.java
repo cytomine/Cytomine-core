@@ -14,8 +14,7 @@ import java.util.Date;
 public class AuthWithToken {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGenerator")
-    @GenericGenerator(name = "myGenerator", strategy = "be.cytomine.config.CustomIdentifierGenerator")
+    @GeneratedValue(generator = "myGenerator")
     private Long id;
 
     @Version

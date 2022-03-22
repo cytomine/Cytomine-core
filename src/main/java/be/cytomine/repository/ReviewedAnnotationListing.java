@@ -18,7 +18,7 @@ public class ReviewedAnnotationListing extends AnnotationListing {
     }
 
     public String getDomainClass() {
-        return "be.cytomine.ontology.ReviewedAnnotation";
+        return "be.cytomine.domain.ontology.ReviewedAnnotation";
     }
 
     @Override

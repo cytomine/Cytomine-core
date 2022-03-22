@@ -11,7 +11,7 @@ public class RoiAnnotationListing extends AnnotationListing {
     }
 
     public String getDomainClass() {
-        return "be.cytomine.processing.RoiAnnotation";
+        return "be.cytomine.domain.processing.RoiAnnotation";
     }
 
     @Override

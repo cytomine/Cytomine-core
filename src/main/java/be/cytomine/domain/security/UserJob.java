@@ -9,7 +9,7 @@ import javax.persistence.*;
 @Entity
 @Getter
 @Setter
-@DiscriminatorValue("be.cytomine.security.UserJob")
+@DiscriminatorValue("be.cytomine.domain.security.UserJob")
 public class UserJob extends SecUser {
 
     @ManyToOne(fetch = FetchType.LAZY)

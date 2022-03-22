@@ -1,5 +1,7 @@
 spring:
-
+  main:
+    lazy-initialization: true
+    allow-circular-references: true
 
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
@@ -59,7 +61,7 @@ application:
 
   instanceHostWebsite: instanceHostWebsite.com
   instanceHostSupportMail: instanceHostSupportMail@email.com
-  instanceHostPhoneNumber:  0999999999
+  instanceHostPhoneNumber:
 
   authentication:
     jwt:
@@ -72,21 +74,21 @@ application:
 
 
 
-  cytomine:
-    defaultLanguage: ENGLISH
-    imageServerURL: [http://localhost-ims]
-    messageBrokerServerURL: messageBrokerServerURL
-    annotation:
-      maxNumberOfPoint: 200
-    software:
-      path:
-        softwareImages: softwareImages/
+
+  defaultLanguage: ENGLISH
+  imageServerURL: [http://localhost-ims]
+  messageBrokerServerURL: messageBrokerServerURL
+  annotation:
+    maxNumberOfPoint: 200
+  software:
+    path:
+      softwareImages: softwareImages/
 
   notification:
     email: email@email.com
-    password: password
-    smtpHost: host
-    smtpPort: 1
+#    password: password
+#    smtpHost: host
+#    smtpPort: 1
 
 
   customUI:

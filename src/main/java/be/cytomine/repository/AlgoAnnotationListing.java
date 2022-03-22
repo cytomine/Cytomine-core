@@ -13,7 +13,7 @@ public class AlgoAnnotationListing extends AnnotationListing {
     //algo rate
 
     public String getDomainClass() {
-        return "be.cytomine.ontology.AlgoAnnotation";
+        return "be.cytomine.domain.ontology.AlgoAnnotation";
     }
 
 

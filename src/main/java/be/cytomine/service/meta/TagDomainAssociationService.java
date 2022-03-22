@@ -3,7 +3,6 @@ package be.cytomine.service.meta;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.AbstractImage_;
 import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.meta.Tag;

@@ -51,7 +51,6 @@ public class TokenProvider {
         String secret = applicationConfiguration.getAuthentication().getJwt().getSecret();
         keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         this.key = Keys.hmacShaKeyFor(keyBytes);
-        log.debug("KEY1: " + Base64.getEncoder().encodeToString(key.getEncoded()));
         jwtParser = Jwts.parserBuilder().setSigningKey(key).build();
         this.tokenValidityInMilliseconds =
                 1000 * applicationConfiguration.getAuthentication().getJwt().getTokenValidityInSeconds();
@@ -59,10 +58,6 @@ public class TokenProvider {
                 1000 * applicationConfiguration.getAuthentication().getJwt().getTokenValidityInSecondsForRememberMe();
         this.tokenValidityInMillisecondsForShortTerm =
                 1000 * applicationConfiguration.getAuthentication().getJwt().getTokenValidityInSecondsForShortTerm();
-
-        log.debug("tokenValidityInMilliseconds: " + tokenValidityInMilliseconds);
-        log.debug("tokenValidityInMillisecondsForRememberMe: " + tokenValidityInMillisecondsForRememberMe);
-        log.debug("tokenValidityInMillisecondsForShortTerm: " + tokenValidityInMillisecondsForShortTerm);
     }
 
     public String createToken(Authentication authentication, TokenType tokenType) {

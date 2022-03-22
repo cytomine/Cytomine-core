@@ -13,7 +13,7 @@ import javax.persistence.Entity;
 import java.util.HashMap;
 
 @Entity
-@DiscriminatorValue("be.cytomine.command.EditCommand")
+@DiscriminatorValue("be.cytomine.domain.command.EditCommand")
 public class EditCommand extends Command {
 
     public EditCommand(SecUser currentUser, Transaction transaction) {

@@ -1,6 +1,8 @@
 package be.cytomine.config;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.internal.MongoClientImpl;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -26,7 +28,4 @@ public class MongoConfig implements InitializingBean  {
     public void afterPropertiesSet() throws Exception {
         mappingMongoConverter.setTypeMapper(new DefaultMongoTypeMapper(null));
     }
-
-
-
 }

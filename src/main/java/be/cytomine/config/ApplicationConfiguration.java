@@ -4,10 +4,12 @@ package be.cytomine.config;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
 @Getter
@@ -19,8 +21,6 @@ public class ApplicationConfiguration {
     private String version;
 
     private String serverURL;
-
-    private CytomineConfiguration cytomine;
 
     private NotificationConfiguration notification;
 
@@ -73,4 +73,70 @@ public class ApplicationConfiguration {
 
     private Boolean useHTTPInternally;
 
+
+    private String defaultLanguage;
+
+    private List<String> imageServerURL;
+
+    private String messageBrokerServerURL;
+
+    private Software software;
+
+    private Annotation annotation;
+
+    public Software getSoftware() {
+        return software;
+    }
+
+    public void setSoftware(Software software) {
+        this.software = software;
+    }
+
+    public Annotation getAnnotation() {
+        return annotation;
+    }
+
+    public void setAnnotation(Annotation annotation) {
+        this.annotation = annotation;
+    }
+
+
+
+
+}
+@ToString
+class Software {
+    public Path path;
+
+    public Path getPath() {
+        return path;
+    }
+
+    public void setPath(Path path) {
+        this.path = path;
+    }
+}
+@ToString
+class Path {
+    private String softwareImages;
+
+    public String getSoftwareImages() {
+        return softwareImages;
+    }
+
+    public void setSoftwareImages(String softwareImages) {
+        this.softwareImages = softwareImages;
+    }
+}
+@ToString
+class Annotation {
+    int maxNumberOfPoint;
+
+    public int getMaxNumberOfPoint() {
+        return maxNumberOfPoint;
+    }
+
+    public void setMaxNumberOfPoint(int maxNumberOfPoint) {
+        this.maxNumberOfPoint = maxNumberOfPoint;
+    }
 }

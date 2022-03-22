@@ -1,4 +1,8 @@
 spring:
+  main:
+    lazy-initialization: true
+    allow-circular-references: true
+
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     url: jdbc:postgresql://localhost:5433/docker
@@ -79,22 +83,18 @@ application:
       token-validity-in-seconds-for-short-term: 300
 
 
-  cytomine:
-    defaultLanguage: ENGLISH
-    imageServerURL: [http://imageServerURL/]
-    messageBrokerServerURL: messageBrokerServerURL
-    annotation:
-      maxNumberOfPoint: 200
-    software:
-      path:
-        softwareImages: softwareImages/
+
+  defaultLanguage: ENGLISH
+  imageServerURL: [http://localhost-ims]
+  messageBrokerServerURL: messageBrokerServerURL
+  annotation:
+    maxNumberOfPoint: 200
+  software:
+    path:
+      softwareImages: softwareImages/
 
   notification:
     email: email@email.com
-    password: password
-    smtpHost: host
-    smtpPort: 1
-    
 
   customUI:
     global:

@@ -18,7 +18,7 @@ import java.util.Optional;
 @Setter
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = {"base_image_id", "project_id" }))
 @DiscriminatorColumn(name = "class")
-@DiscriminatorValue("be.cytomine.image.ImageInstance")
+@DiscriminatorValue("be.cytomine.domain.image.ImageInstance")
 public class ImageInstance extends CytomineDomain {
 
     @ManyToOne(fetch = FetchType.EAGER)

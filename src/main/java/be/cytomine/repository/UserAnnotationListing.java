@@ -11,7 +11,7 @@ public class UserAnnotationListing extends AnnotationListing {
     }
 
     public String getDomainClass() {
-        return "be.cytomine.ontology.UserAnnotation";
+        return "be.cytomine.domain.ontology.UserAnnotation";
     }
 
 

@@ -21,15 +21,20 @@ import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.utils.Dataset;
 import be.cytomine.utils.EnvironmentUtils;
+import be.cytomine.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.env.Environment;
+import org.springframework.core.env.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,8 +42,11 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.io.File;
 import java.lang.management.ManagementFactory;
-import java.util.Arrays;
-import java.util.List;
+import java.lang.management.MemoryMXBean;
+import java.nio.charset.Charset;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
@@ -49,6 +57,9 @@ import static org.springframework.security.acls.domain.BasePermission.ADMINISTRA
 @EnableConfigurationProperties({LiquibaseProperties.class,ApplicationConfiguration.class})
 @Transactional
 class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent> {
+
+    @Value("${spring.mail.password}")
+    public String password;
 
     private final SecUserRepository secUserRepository;
 
@@ -99,9 +110,9 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
 
     public void init() {
 
+        printConfiguration();
 
         initialSetupMigration.changeSet();
-
 
         SecUser secUser = secUserRepository.findByUsernameLikeIgnoreCase("admin").orElse(null);
         if (secUser!=null) {
@@ -218,16 +229,76 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
         log.info("create multiple IS and Retrieval...");
         bootstrapUtilDataService.createMultipleImageServer();
         bootstrapUtilDataService.updateProcessingServerRabbitQueues();
+    }
 
-        log.info ("#############################################################################");
-        // TODO!
-//        bootstrapUtilDataService.fillProjectConnections();
-//        bootstrapUtilDataService.fillImageConsultations();
+    private void printConfiguration() {
+        log.info("Cytomine-core: " + applicationConfiguration.getVersion());
+        MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
+        log.info("*************** SYSTEM CONFIGURATION ******************");
+        log.info("Max memory:" + memoryBean.getHeapMemoryUsage().getMax() / (1024 * 1024) + "MB");
+        log.info("Used memory:" + memoryBean.getHeapMemoryUsage().getUsed() / (1024 * 1024) + "MB");
+        log.info("Init memory:" + memoryBean.getHeapMemoryUsage().getInit() / (1024 * 1024) + "MB");
+        log.info("Default charset: " + Charset.defaultCharset());
+//        log.info("*************** JAVA CONFIGURATION ******************");
+//        for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+//            log.info(entry.getKey() + "=" + entry.getValue());
+//        }
+        log.info("*************** APPLICATION CONFIGURATION ******************");
+        log.info(applicationConfiguration.toString());
+         final Environment env = applicationContext.getEnvironment();
 
+        log.info("====== Environment and configuration ======");
+        log.info("Active profiles: {}", Arrays.toString(env.getActiveProfiles()));
+        MutablePropertySources sources = ((AbstractEnvironment) env).getPropertySources();
+        StreamSupport.stream(sources.spliterator(), false)
+                .filter(ps -> ps instanceof EnumerablePropertySource)
+                .map(ps -> ((EnumerablePropertySource) ps).getPropertyNames())
+                .flatMap(Arrays::stream)
+                .distinct()
+                .sorted()
+                .forEach(prop -> log.info("ACTIVE {}: {}", prop, mustBeObscurify(prop) ? StringUtils.obscurify(env.getProperty(prop), 2) : env.getProperty(prop)));
 
     }
 
+    private boolean mustBeObscurify(String prop) {
+        return (prop.contains("credentials") || prop.contains("password") || prop.contains("PrivateKey") || prop.contains("secret"));
 
+    }
 
+//
+    @Autowired
+    ApplicationContext applicationContext;
+
+//
+//    @EventListener
+//    public void handleContextRefreshed(ContextRefreshedEvent event) {
+//        printActiveProperties((ConfigurableEnvironment) event.getApplicationContext().getEnvironment());
+//    }
+//
+//    private void printActiveProperties(ConfigurableEnvironment env) {
+//
+//        System.out.println("************************* ACTIVE APP PROPERTIES ******************************");
+//
+//        List<MapPropertySource> propertySources = new ArrayList<>();
+//
+//        env.getPropertySources().forEach(it -> {
+//            propertySources.add((MapPropertySource) it);
+//        });
+//
+//
+//        propertySources.stream()
+//                .map(propertySource -> propertySource.getSource().keySet())
+//                .flatMap(Collection::stream)
+//                .distinct()
+//                .sorted()
+//                .forEach(key -> {
+//                    try {
+//                        System.out.println(key + "=" + env.getProperty(key));
+//                    } catch (Exception e) {
+//                        log.warn("{} -> {}", key, e.getMessage());
+//                    }
+//                });
+//        System.out.println("******************************************************************************");
+//    }
 
 }

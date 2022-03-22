@@ -29,9 +29,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static be.cytomine.domain.security.SecUserSecRole_.secUser;
-import static org.springframework.security.acls.domain.BasePermission.*;
-
 @Slf4j
 @Service
 @Transactional

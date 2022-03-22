@@ -12,7 +12,7 @@ import java.util.Optional;
 @Entity
 @Getter
 @Setter
-@DiscriminatorValue("be.cytomine.image.NestedImageInstance")
+@DiscriminatorValue("be.cytomine.domain.image.NestedImageInstance")
 public class NestedImageInstance extends ImageInstance {
 
     @NotNull

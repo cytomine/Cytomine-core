@@ -212,15 +212,15 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
         Class domain = null;
         if (className!=null) {
             switch (className) {
-                case "be.cytomine.ontology.UserAnnotation": //TODO: migration
+                case "be.cytomine.domain.ontology.UserAnnotation":
                     domain = UserAnnotation.class;
                     break;
-                case "be.cytomine.ontology.AlgoAnnotation":
+                case "be.cytomine.domain.ontology.AlgoAnnotation":
                     domain = AlgoAnnotation.class;
-                case "be.cytomine.ontology.ReviewedAnnotation":
+                case "be.cytomine.domain.ontology.ReviewedAnnotation":
                     domain = ReviewedAnnotation.class;
                     break;
-                case "be.cytomine.processing.RoiAnnotation":
+                case "be.cytomine.domain.processing.RoiAnnotation":
                     throw new CytomineMethodNotYetImplementedException("migration");
                     //domain = RoiAnnotation.class;
                     //break;

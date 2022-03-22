@@ -16,7 +16,7 @@ import javax.persistence.Transient;
 @Getter
 @Setter
 @Entity
-@DiscriminatorValue("be.cytomine.command.DeleteCommand")
+@DiscriminatorValue("be.cytomine.domain.command.DeleteCommand")
 public class DeleteCommand extends Command {
 
 

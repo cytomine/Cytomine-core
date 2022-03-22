@@ -15,7 +15,7 @@ import javax.persistence.Entity;
  * It provide an execute method that create domain from command, an undo method that drop domain and an redo method that recreate domain
  */
 @Entity
-@DiscriminatorValue("be.cytomine.command.AddCommand")
+@DiscriminatorValue("be.cytomine.domain.command.AddCommand")
 public class AddCommand extends Command {
 
     public AddCommand(SecUser currentUser) {

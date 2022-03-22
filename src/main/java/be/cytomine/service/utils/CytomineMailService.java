@@ -7,6 +7,7 @@ import be.cytomine.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.MailAuthenticationException;
@@ -33,6 +34,9 @@ public class CytomineMailService {
     @Autowired
     ApplicationConfiguration applicationConfiguration;
 
+    @Value("${spring.mail.host}")
+    public String smtpHost;
+
 
     public void send(String from, String[] to, String[] cc, String[] bcc, String subject, String message) throws MessagingException {
         send(from, to, cc, bcc, subject, message, new HashMap<>());
@@ -46,7 +50,7 @@ public class CytomineMailService {
             from = defaultEmail;
         }
 
-        if (notificationConfiguration.getSmtpHost().equals("disabled")) {
+        if (smtpHost.equals("disabled")) {
             return;
         }
 

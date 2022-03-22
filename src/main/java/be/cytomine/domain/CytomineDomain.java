@@ -24,10 +24,19 @@ import java.util.stream.Collectors;
 @EntityListeners(AuditingEntityListener.class)
 public abstract class CytomineDomain {
 
+//    @Id
+//    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGenerator")
+//    //@SequenceGenerator(name = "myGen", sequenceName = "hibernate_sequence", allocationSize=1)
+//    @GenericGenerator(name = "myGenerator", strategy = "be.cytomine.config.CustomIdentifierGenerator")
+    @GenericGenerator(
+            name = "myGenerator",
+            strategy = "be.cytomine.config.CustomIdentifierGenerator",
+            parameters = {
+                    @org.hibernate.annotations.Parameter(name = "sequence_name", value = "hibernate_sequence")
+            }
+    )
+    @GeneratedValue(generator = "myGenerator")
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGenerator")
-    //@SequenceGenerator(name = "myGen", sequenceName = "hibernate_sequence", allocationSize=1)
-    @GenericGenerator(name = "myGenerator", strategy = "be.cytomine.config.CustomIdentifierGenerator")
     protected Long id;
 
     @CreatedDate
