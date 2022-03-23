@@ -515,7 +515,7 @@ public abstract class RestCytomineController {
                 response.setHeader("Content-Type", "application/pdf");
                 break;
             case "csv":
-                response.setHeader("Content-Type", "csv");
+                response.setHeader("Content-Type", "text/csv");
                 break;
             case "xls":
                 response.setHeader("Content-Type", "application/octet-stream");

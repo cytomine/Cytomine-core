@@ -35,13 +35,13 @@ public class AnnotationBuilder extends RestCytomineController {
 
     private final AnnotationListingService annotationListingService;
 
-    public List<AnnotationResult> buildAnnotationList(JsonObject params, String users){
+    public List<Map<String, Object>> buildAnnotationList(JsonObject params, String users){
         AnnotationListing annotationListing = buildAnnotationListing(params);
         return filterAnnotationByUsers(annotationListingService.listGeneric(annotationListing), users);
     }
 
-    private List<AnnotationResult> filterAnnotationByUsers(List<AnnotationResult> annotations, String users){
-        List<AnnotationResult> filteredAnnotations = new ArrayList<>();
+    private List<Map<String, Object>> filterAnnotationByUsers(List<AnnotationResult> annotations, String users){
+        List<Map<String, Object>> filteredAnnotations = new ArrayList<>();
         List<Long> userIds = Arrays.stream(users.split(","))
                 .sequential()
                 .filter(id -> !id.isEmpty())

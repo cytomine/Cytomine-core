@@ -28,10 +28,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -151,12 +148,12 @@ public class RestAlgoAnnotationController extends RestCytomineController {
     ) throws IOException {
 
         JsonObject params = mergeQueryParamsAndBodyParams();
-        List<AnnotationResult> annotations = annotationBuilder.buildAnnotationList(params, users);
+        List<Map<String, Object>> annotations = annotationBuilder.buildAnnotationList(params, users);
 
         Set<String> termNames = annotationBuilder.getTermNames(terms);
         Set<String> userNames = annotationBuilder.getUserNames(users);
-        byte[] report = reportService.generateReport(projectService.get(project).getName(), termNames, userNames, annotations, format);
-        responseReportFile(reportService.getReportFileName(format, project), report, format);
+        byte[] report = reportService.generateAnnotationsReport(projectService.get(project).getName(), termNames, userNames, annotations, format);
+        responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
     }
     // TODO
 //    @RestApiMethod(description="Download a report (pdf, xls,...) with software annotation data from a specific project")

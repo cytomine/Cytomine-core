@@ -1,7 +1,6 @@
 package be.cytomine.service.utils;
 
 import be.cytomine.domain.ontology.UserAnnotation;
-import be.cytomine.service.dto.AnnotationResult;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.ontology.UserAnnotationService;
@@ -31,57 +30,67 @@ public class ReportFormatService {
      * with headers corresponding to given columns.
      *
      * @param  columns
-     * @param  annotations
+     * @param  data
+     * @param  isAnnotation
      * @return Object[][]
      */
-    public Object[][] formatDataForReport(List<ReportColumn> columns, List<AnnotationResult> annotations){
+    public Object[][] formatDataForReport(List<ReportColumn> columns, List<Map<String, Object>> data, boolean isAnnotation){
         Object[] headers = getColumnHeaders(columns);
-        Object[][] reportFormat = new Object[annotations.size() + 1][headers.length];
-        reportFormat[0] = headers;
+        Object[][] report = new Object[data.size() + 1][headers.length];
+        report[0] = headers;
 
-        for(int i = 0; i < annotations.size(); i++){
-            Map<String, Object> annotation = annotations.get(i);
-
+        for(int i = 0; i < data.size(); i++){
+            Map<String, Object> element = data.get(i);
             for(int j = 0; j < headers.length; j++){
-                Object value = annotation.get(headers[j]);
-                UserAnnotation userAnnotation = userAnnotationService.get((long) annotation.get("id"));
-                DecimalFormat df = new DecimalFormat("0.00");
+                Object value = element.get(headers[j]);
 
-                switch (headers[j].toString()){
-                    case "user":
-                        if(value != null){
-                            value = secUserService.findUser((long) value).get().humanUsername();
-                        }
-                        break;
-                    case "filename":
-                        value = imageInstanceService.find((long) annotation.get("image")).get().getBlindInstanceFilename();
-                        break;
-                    case "term":
-                        value = String.join("- ", getTermsName(value));
-                        break;
-                    case "area":
-                        value = df.format(userAnnotation.getArea());
-                        break;
-                    case "perimeter":
-                        value = df.format(userAnnotation.getPerimeter());
-                        break;
-                    case "X":
-                        value = df.format(userAnnotation.getCentroid().getX());
-                        break;
-                    case "Y":
-                        value = df.format(userAnnotation.getCentroid().getY());
-                        break;
-                    default:
-                        break;
+                if(isAnnotation){
+                    value = formatAnnotationForReport(value, element, headers[j].toString());
                 }
                 if(value == null){
                     value = "";
                 }
-                reportFormat[i + 1][j] = value;
+                report[i + 1][j] = value;
             }
         }
-        headerPropertyToTitle(columns, reportFormat);
-        return reportFormat;
+        headerPropertyToTitle(columns, report);
+        return report;
+    }
+
+    /**
+     * Get value for annotation report
+     *
+     * @param  value
+     * @param  annotation
+     * @param  header
+     * @return String
+     */
+    public Object formatAnnotationForReport(Object value, Map<String, Object> annotation, String header){
+
+        UserAnnotation userAnnotation = userAnnotationService.get((long) annotation.get("id"));
+        DecimalFormat df = new DecimalFormat("0.00");
+
+        switch (header){
+            case "user":
+                if(value != null){
+                    value = secUserService.findUser((long) value).get().humanUsername();
+                }
+                return value;
+            case "filename":
+                return imageInstanceService.find((long) annotation.get("image")).get().getBlindInstanceFilename();
+            case "term":
+                return String.join("- ", getTermsName(value));
+            case "area":
+                return df.format(userAnnotation.getArea());
+            case "perimeter":
+                return df.format(userAnnotation.getPerimeter());
+            case "X":
+                return df.format(userAnnotation.getCentroid().getX());
+            case "Y":
+                return df.format(userAnnotation.getCentroid().getY());
+            default:
+                return value;
+        }
     }
 
     /**

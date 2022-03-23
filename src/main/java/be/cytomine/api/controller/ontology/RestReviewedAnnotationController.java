@@ -30,10 +30,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
@@ -279,13 +276,13 @@ public class RestReviewedAnnotationController extends RestCytomineController {
     ) throws IOException {
 
         JsonObject params = mergeQueryParamsAndBodyParams();
-        List<AnnotationResult> annotations = annotationBuilder.buildAnnotationList(params, reviewUsers);
+        List<Map<String, Object>> annotations = annotationBuilder.buildAnnotationList(params, reviewUsers);
 
         Set<String> termNames = annotationBuilder.getTermNames(terms);
         Set<String> userNames = annotationBuilder.getUserNames(reviewUsers);
-        byte[] report = reportService.generateReport(projectService.get(project).getName(), termNames, userNames, annotations, format);
+        byte[] report = reportService.generateAnnotationsReport(projectService.get(project).getName(), termNames, userNames, annotations, format);
 
-        responseReportFile(reportService.getReportFileName(format, project), report, format);
+        responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
     }
 //TODO:
 //    @RestApiMethod(description="Download a report (pdf, xls,...) with reviewed annotation data from a specific project")
