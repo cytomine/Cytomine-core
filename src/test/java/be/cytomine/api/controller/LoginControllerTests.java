@@ -43,7 +43,7 @@ class LoginControllerTests {
     private TokenProvider tokenProvider;
 
     @Autowired
-    private MockMvc mockMvc;
+    private MockMvc loginControllerMockMvc;
 
     @Autowired
     private BasicInstanceBuilder builder;
@@ -65,7 +65,7 @@ class LoginControllerTests {
         LoginVM login = new LoginVM();
         login.setUsername("user-jwt-controller");
         login.setPassword("test");
-        mockMvc
+        loginControllerMockMvc
             .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.token").isString())
@@ -92,7 +92,7 @@ class LoginControllerTests {
         login.setUsername("user-jwt-controller-remember-me");
         login.setPassword("test");
         login.setRememberMe(true);
-        mockMvc
+        loginControllerMockMvc
             .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andDo(print())
             .andExpect(status().isOk())
@@ -107,7 +107,7 @@ class LoginControllerTests {
         LoginVM login = new LoginVM();
         login.setUsername("wrong-user");
         login.setPassword("wrong password");
-        mockMvc
+        loginControllerMockMvc
             .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.token").doesNotExist())
@@ -132,7 +132,7 @@ class LoginControllerTests {
         LoginVM login = new LoginVM();
         login.setUsername("user-disabled");
         login.setPassword("test");
-        mockMvc
+        loginControllerMockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.token").doesNotExist())
@@ -158,7 +158,7 @@ class LoginControllerTests {
         LoginVM login = new LoginVM();
         login.setUsername("user-disabled");
         login.setPassword("test");
-        mockMvc
+        loginControllerMockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.token").doesNotExist())
@@ -184,7 +184,7 @@ class LoginControllerTests {
         LoginVM login = new LoginVM();
         login.setUsername("user-expired");
         login.setPassword("test");
-        mockMvc
+        loginControllerMockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.token").doesNotExist())
@@ -208,7 +208,7 @@ class LoginControllerTests {
         LoginVM login = new LoginVM();
         login.setUsername("user-jwt-controller-workflow");
         login.setPassword("test");
-        MvcResult mvcResult = mockMvc
+        MvcResult mvcResult = loginControllerMockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isString())
@@ -221,7 +221,7 @@ class LoginControllerTests {
         assertThat(tokenProvider.validateToken(token)).isTrue();
 
 
-        mockMvc.perform(get("/api/user/current.json")
+        loginControllerMockMvc.perform(get("/api/user/current.json")
                         .header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("user-jwt-controller-workflow"));
@@ -245,7 +245,7 @@ class LoginControllerTests {
         LoginVM login = new LoginVM();
         login.setUsername("user-locked-request");
         login.setPassword("test");
-        MvcResult mvcResult = mockMvc
+        MvcResult mvcResult = loginControllerMockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isString())
@@ -261,7 +261,7 @@ class LoginControllerTests {
         user.setAccountLocked(true);
         userRepository.save(user);
 
-        mockMvc.perform(get("/api/user/current.json")
+        loginControllerMockMvc.perform(get("/api/user/current.json")
                         .header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token))
                 .andExpect(status().isForbidden());
     }
@@ -284,7 +284,7 @@ class LoginControllerTests {
         LoginVM login = new LoginVM();
         login.setUsername("user-expired-request");
         login.setPassword("test");
-        MvcResult mvcResult = mockMvc
+        MvcResult mvcResult = loginControllerMockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isString())
@@ -300,7 +300,7 @@ class LoginControllerTests {
         user.setAccountExpired(true);
         userRepository.save(user);
 
-        mockMvc.perform(get("/api/user/current.json")
+        loginControllerMockMvc.perform(get("/api/user/current.json")
                         .header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token))
                 .andExpect(status().isForbidden());
     }
@@ -323,7 +323,7 @@ class LoginControllerTests {
         LoginVM login = new LoginVM();
         login.setUsername("user-disabled-request");
         login.setPassword("test");
-        MvcResult mvcResult = mockMvc
+        MvcResult mvcResult = loginControllerMockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isString())
@@ -339,7 +339,7 @@ class LoginControllerTests {
         user.setEnabled(false);
         userRepository.save(user);
 
-        mockMvc.perform(get("/api/user/current.json")
+        loginControllerMockMvc.perform(get("/api/user/current.json")
                         .header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token))
                 .andExpect(status().isForbidden());
     }
@@ -353,7 +353,7 @@ class LoginControllerTests {
 
         User user = builder.given_default_user();
 
-        MvcResult mvcResult = mockMvc
+        MvcResult mvcResult = loginControllerMockMvc
                 .perform(post("/api/token.json").contentType(MediaType.APPLICATION_JSON)
                         .content(JsonObject.of("username", user.getUsername(), "validity", "60").toJsonString()))
                 .andExpect(status().isOk())
@@ -364,7 +364,7 @@ class LoginControllerTests {
         String token = jsonObject.getJSONAttrStr("token");
 
 
-        mockMvc.perform(post("/login/loginWithToken")
+        loginControllerMockMvc.perform(post("/login/loginWithToken")
                         .param("username", user.getUsername()).param("tokenKey", token))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.token").isString())
@@ -373,7 +373,7 @@ class LoginControllerTests {
         jsonObject = JsonObject.toJsonObject(mvcResult.getResponse().getContentAsString());
 
 
-        mockMvc.perform(get("/api/user/current.json")
+        loginControllerMockMvc.perform(get("/api/user/current.json")
                         .header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jsonObject.getJSONAttrStr("token")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("user"));
@@ -390,7 +390,7 @@ class LoginControllerTests {
 
         forgotPasswordTokenRepository.deleteAll();
 
-            mockMvc
+        loginControllerMockMvc
                     .perform(post("/login/forgotPassword").contentType(MediaType.APPLICATION_FORM_URLENCODED)
                             .content("j_username=" + user.getUsername()));
 
@@ -398,7 +398,7 @@ class LoginControllerTests {
 
         ForgotPasswordToken token = forgotPasswordTokenRepository.findAll().get(0);
 
-        MvcResult mvcResult = mockMvc.perform(post("/login/loginWithToken")
+        MvcResult mvcResult = loginControllerMockMvc.perform(post("/login/loginWithToken")
                         .param("username", user.getUsername()).param("tokenKey", token.getTokenKey()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isString())
@@ -406,7 +406,7 @@ class LoginControllerTests {
                 .andReturn();
         JsonObject jsonObject = JsonObject.toJsonObject(mvcResult.getResponse().getContentAsString());
 
-        mockMvc.perform(get("/api/user/current.json")
+        loginControllerMockMvc.perform(get("/api/user/current.json")
                         .header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jsonObject.getJSONAttrStr("token")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("user"));

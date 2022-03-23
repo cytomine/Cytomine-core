@@ -206,11 +206,6 @@ public class UploadedFileServiceTests {
     }
 
     @Test
-    void search_uploadedFile_by_storage() {
-        Assertions.fail("to implement in corporate version (?) ; some issues in the current version");
-    }
-
-    @Test
     void get_uploaded_file_by_user() {
         UploadedFile uploadedFile = builder.given_a_uploaded_file();
         assertThat(uploadedFile).isEqualTo(uploadedFileService.get(uploadedFile.getId()));

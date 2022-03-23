@@ -217,6 +217,7 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
                     break;
                 case "be.cytomine.domain.ontology.AlgoAnnotation":
                     domain = AlgoAnnotation.class;
+                    break;
                 case "be.cytomine.domain.ontology.ReviewedAnnotation":
                     domain = ReviewedAnnotation.class;
                     break;

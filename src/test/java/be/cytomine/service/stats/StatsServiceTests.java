@@ -13,6 +13,7 @@ import be.cytomine.domain.social.*;
 import be.cytomine.dto.NamedCytomineDomain;
 import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.ForbiddenException;
+import be.cytomine.repository.middleware.ImageServerRepository;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repositorynosql.social.*;
 import be.cytomine.service.CommandService;
@@ -120,6 +121,9 @@ public class StatsServiceTests {
 
     @Autowired
     AnnotationActionService annotationActionService;
+
+    @Autowired
+    ImageServerRepository imageServerRepository;
 
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
@@ -434,6 +438,7 @@ public class StatsServiceTests {
 
     @Test
     void retrieve_storage_spaces() {
+
         ImageServer imageServer = builder.given_an_image_server();
         imageServer.setUrl("http://localhost:8888");
         imageServer = builder.persistAndReturn(imageServer);
@@ -448,9 +453,10 @@ public class StatsServiceTests {
 
         JsonObject response = statsService.statUsedStorage();
         assertThat(response).isNotNull();
-        assertThat(response.getJSONAttrLong("total")).isEqualTo(193396892+445132860);
-        assertThat(response.getJSONAttrLong("available")).isEqualTo(445132860);
-        assertThat(response.getJSONAttrLong("used")).isEqualTo(193396892);
+        // expected to be Greather than or eq because localhost:8888 may not be the only one
+        assertThat(response.getJSONAttrLong("total")).isGreaterThanOrEqualTo(193396892+445132860);
+        assertThat(response.getJSONAttrLong("available")).isGreaterThanOrEqualTo(445132860);
+        assertThat(response.getJSONAttrLong("used")).isGreaterThanOrEqualTo(193396892);
 
     }
 

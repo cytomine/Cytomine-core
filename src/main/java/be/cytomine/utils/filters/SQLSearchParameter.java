@@ -77,6 +77,13 @@ public class SQLSearchParameter {
         return output;
     }
 
+    private static Object replaceJocker(Object value) {
+        if (value!=null && value instanceof String) {
+            return ((String)value).replaceAll("\\*", "%");
+        }
+        return value;
+    }
+
 
     public static SearchParameterProcessed searchParametersToSQLConstraints(List<SearchParameterEntry> parameters) {
         for (SearchParameterEntry parameter : parameters){
@@ -152,10 +159,10 @@ public class SQLSearchParameter {
             if(parameter.value!=null && (parameter.value.getClass().isArray() || (parameter.value instanceof List))){
                 List values = (List)parameter.value;
                 for(int i=1; i<= values.size(); i++) {
-                    parameter.sqlParameter.put(parameter.property.replaceAll("\\.","_")+"_"+i, values.get(i-1));
+                    parameter.sqlParameter.put(parameter.property.replaceAll("\\.","_")+"_"+i, replaceJocker(values.get(i-1)));
                 }
             } else {
-                parameter.sqlParameter.put(parameter.property.replaceAll("\\.","_"), parameter.value);
+                parameter.sqlParameter.put(parameter.property.replaceAll("\\.","_"), replaceJocker(parameter.value));
             }
         }
 

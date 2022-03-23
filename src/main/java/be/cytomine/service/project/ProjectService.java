@@ -345,7 +345,7 @@ public class ProjectService extends ModelService {
             from += "LEFT OUTER JOIN " +
                     " ( SELECT aclObjectId.object_id_identity as project_id, COUNT(DISTINCT secUser.id) as member_count " +
                     "   FROM acl_object_identity as aclObjectId, acl_entry as aclEntry, acl_sid as aclSid, sec_user as secUser " +
-                    "   WHERE aclEntry.acl_object_identity = aclObjectId.id and aclEntry.sid = aclSid.id and aclSid.sid = secUser.username and secUser.class = 'be.cytomine.security.User' " +
+                    "   WHERE aclEntry.acl_object_identity = aclObjectId.id and aclEntry.sid = aclSid.id and aclSid.sid = secUser.username and secUser.class = 'be.cytomine.domain.security.User' " +
                     "   GROUP BY aclObjectId.object_id_identity " +
                     ") members ON p.id = members.project_id ";
 

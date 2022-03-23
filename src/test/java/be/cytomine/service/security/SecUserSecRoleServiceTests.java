@@ -68,9 +68,9 @@ public class SecUserSecRoleServiceTests {
     }
 
     @Test
-    void get_unexisting_secUserSecRole_return_null() {
+    void get_unexisting_secUserSecRole() {
         SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_user(), "ROLE_ADMIN");
-        assertThat(secUserSecRoleService.find(secUserSecRole.getSecUser(), secUserSecRole.getSecRole())).isPresent();
+        assertThat(secUserSecRoleService.find(secUserSecRole.getSecUser(), secUserSecRole.getSecRole())).isEmpty();
     }
 
     @Test

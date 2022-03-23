@@ -346,8 +346,9 @@ public class ImageConsultationService {
 //        criteria.add(Restrictions.eq("project", project));
 
         AggregationResults queryResults = persistentImageConsultationRepository.retrieve(project.getId(), sortProperty, (sortDirection.equals("desc") ? -1 : 1));
-        List<LinkedHashMap> aggregation = queryResults.getMappedResults();
-        List<Long> connected = aggregation.stream().map(x -> (Long)x.get("user")).distinct().collect(Collectors.toList());
+        List aggregation = queryResults.getMappedResults();
+
+        List<Long> connected = (List<Long>) aggregation.stream().map(x -> x instanceof LinkedHashMap ? (Long)((LinkedHashMap)x).get("user") : (Long)((PersistentImageConsultation)x).getUser()).distinct().collect(Collectors.toList());
 
         List<Long> unconnectedIds = new ArrayList<>(userIds);
         unconnectedIds.removeAll(connected);

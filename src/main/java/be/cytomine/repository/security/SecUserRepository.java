@@ -34,7 +34,7 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
             "and aclEntry.mask = 16 " +
             "and aclEntry.sid = aclSid.id " +
             "and aclSid.sid = secUser.username " +
-            "and secUser.class = 'be.cytomine.security.User'")
+            "and secUser.class = 'be.cytomine.domain.security.User'")
     List<SecUser> findAllAdminsByProjectId(Long projectId);
 
 
@@ -52,7 +52,7 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
             "and aclEntry.aclObjectIdentity = aclObjectId.id " +
             "and aclEntry.sid = aclSid.id " +
             "and aclSid.sid = secUser.username " +
-            "and secUser.class = 'be.cytomine.security.User'")
+            "and secUser.class = 'be.cytomine.domain.security.User'")
     List<SecUser> findAllUsersByContainer(Long containerId);
 
 
@@ -78,7 +78,7 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
                 " AND acl_entry.acl_object_identity=acl_object_identity.id\n" +
                 " AND acl_entry.sid = acl_sid.id " +
                 " AND acl_sid.sid = sec_user.username " +
-                " AND sec_user.class = 'be.cytomine.security.User'", nativeQuery = true)
+                " AND sec_user.class = 'be.cytomine.domain.security.User'", nativeQuery = true)
     List<Long> findAllAllowedUserIdList(Long domainId);
 
     List<SecUser> findAllByIdIn(List<Long> ids);

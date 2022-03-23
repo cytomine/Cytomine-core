@@ -124,7 +124,7 @@ public class SimplifyGeometryServiceTests {
     @Test
     public void simplify_annotation_with_rate() throws ParseException {
 
-        String expected = "POLYGON ((120 120, 140 199, 160 200, 180 199, 220 120, 122 122, 120 120))";
+        String expected = "POLYGON ((120 120, 140 199, 160 200, 180 199, 220 120, 120 120))";
         Double geometryCompression = 10.0;
 
         String location = "POLYGON ((120 120, 121 121, 122 122, 220 120, 180 199, 160 200, 140 199, 120 120))";

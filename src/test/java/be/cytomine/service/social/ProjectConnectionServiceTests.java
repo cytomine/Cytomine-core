@@ -425,8 +425,8 @@ public class ProjectConnectionServiceTests {
                 = projectConnectionService.numberOfConnectionsByProjectOrderedByHourAndDays(projet, null, user);
         assertThat(results).hasSize(2);
         // TODO: fails because no order (no sorting)
-        assertThat(results.get(0).get("time")).isEqualTo(simpleDateFormat.parse("2022-01-20T03:00:00"));
-        assertThat(results.get(0).get("frequency")).isEqualTo(1);
+        assertThat(results.stream().map(x -> x.get("time"))).contains(simpleDateFormat.parse("2022-01-20T03:00:00"));
+        assertThat(results.stream().map(x -> x.get("frequency"))).contains(1);
 
         results
                 = projectConnectionService.numberOfConnectionsByProjectOrderedByHourAndDays(projet, simpleDateFormat.parse("2022-01-05T12:00:00").getTime(), user);

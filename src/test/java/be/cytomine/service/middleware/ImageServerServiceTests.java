@@ -165,20 +165,6 @@ public class ImageServerServiceTests {
     }
 
     @Test
-    void compute_profile() throws IOException {
-        // companionfile required
-        // TODO
-        Assertions.fail("TODO");
-    }
-
-    @Test
-    void compute_profile_with_annotation() throws IOException {
-        // companionfile required
-        // TODO
-        Assertions.fail("TODO");
-    }
-
-    @Test
     void get_associated_abstract_image() throws IOException {
         AbstractImage image = builder.given_an_abstract_image();
         image.getUploadedFile().getImageServer().setBasePath("/data/images");

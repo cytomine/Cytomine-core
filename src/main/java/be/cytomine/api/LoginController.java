@@ -183,7 +183,7 @@ public class LoginController extends RestCytomineController {
                 username,
                 password
         );
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        Authentication authentication = authenticationManagerBuilder.getOrBuild().authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = tokenProvider.createToken(authentication, isRememberMe ? TokenType.REMEMBER_ME : TokenType.SESSION);
         String shortTermToken=  tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM);

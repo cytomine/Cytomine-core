@@ -1,6 +1,6 @@
 spring:
   main:
-    lazy-initialization: true
+#    lazy-initialization: true
     allow-circular-references: true
 
   datasource:

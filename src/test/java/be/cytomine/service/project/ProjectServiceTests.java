@@ -420,18 +420,18 @@ public class ProjectServiceTests {
         assertThat(page.getContent().get(0).get("id")).isEqualTo(project2.getId());
 
         page = projectService.list(builder.given_superadmin(), projectSearchExtension, new ArrayList<>(List.of(
-                new SearchParameterEntry("name", SearchOperation.like, "S*2")
-        )), "created", "desc", 0L, 0L);
-        assertThat(page.getTotalElements()).isEqualTo(2);
-        assertThat(page.getContent().get(0).get("id")).isEqualTo(project2.getId());
-        assertThat(page.getContent().get(1).get("id")).isEqualTo(project3.getId());
-
-        page = projectService.list(builder.given_superadmin(), projectSearchExtension, new ArrayList<>(List.of(
                 new SearchParameterEntry("name", SearchOperation.like, "S%2")
         )), "created", "desc", 0L, 0L);
         assertThat(page.getTotalElements()).isEqualTo(2);
-        assertThat(page.getContent().get(0).get("id")).isEqualTo(project2.getId());
-        assertThat(page.getContent().get(1).get("id")).isEqualTo(project3.getId());
+        assertThat(page.getContent().get(0).get("id")).isEqualTo(project3.getId());
+        assertThat(page.getContent().get(1).get("id")).isEqualTo(project2.getId());
+
+        page = projectService.list(builder.given_superadmin(), projectSearchExtension, new ArrayList<>(List.of(
+                new SearchParameterEntry("name", SearchOperation.like, "S*2")
+        )), "created", "desc", 0L, 0L);
+        assertThat(page.getTotalElements()).isEqualTo(2);
+        assertThat(page.getContent().get(0).get("id")).isEqualTo(project3.getId());
+        assertThat(page.getContent().get(1).get("id")).isEqualTo(project2.getId());
     }
 
     @Test

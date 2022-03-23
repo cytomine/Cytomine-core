@@ -294,7 +294,7 @@ public class SecUserService extends ModelService {
 
         String select = "SELECT u.* ";
         String from = "FROM sec_user u ";
-        String where = "WHERE job_id IS NULL AND u.class LIKE 'be.cytomine.security.User' " ; //TODO: change for migration
+        String where = "WHERE job_id IS NULL AND u.class LIKE 'be.cytomine.domain.security.User' " ; //TODO: change for migration
         String search = "";
         String groupBy = "";
         String sort;
@@ -504,7 +504,7 @@ public class SecUserService extends ModelService {
                 "and aclEntry.aclObjectIdentity = aclObjectId.id " +
                 "and aclEntry.sid = aclSid.id " +
                 "and aclSid.sid = secUser.username " +
-                "and secUser.class = 'be.cytomine.security.User' ";
+                "and secUser.class = 'be.cytomine.domain.security.User' ";
         String groupBy = "";
         String order = "";
         String having = "";
@@ -672,7 +672,7 @@ public class SecUserService extends ModelService {
 //                " AND acl_entry.acl_object_identity=acl_object_identity.id\n" +
 //                " AND acl_entry.sid = acl_sid.id " +
 //                " AND acl_sid.sid = sec_user.username " +
-//                " AND sec_user.class = 'be.cytomine.security.User' "
+//                " AND sec_user.class = 'be.cytomine.domain.security.User' "
 //       public void data = []
 //       public void sql = new Sql(dataSource)
 //        sql.eachRow(request) {
