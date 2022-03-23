@@ -81,7 +81,7 @@ class NotificationService {
                 mailFrom: grailsApplication.config.grails.instanceHostSupportMail,
                 phoneNumber: grailsApplication.config.grails.instanceHostPhoneNumber
         ])
-        String mailTitle = "Varsel om sletting av et prosjekt i Cytomine"
+        String mailTitle = "Varsel om sletting av et prosjekt i Cytomine "
         mailTitle += HV_instance_specific
 
         println message
