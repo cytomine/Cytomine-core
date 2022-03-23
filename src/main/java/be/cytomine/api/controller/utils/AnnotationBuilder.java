@@ -6,6 +6,9 @@ import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.*;
+import be.cytomine.service.AnnotationListingService;
+import be.cytomine.service.dto.AnnotationResult;
+import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.utils.GeometryUtils;
@@ -15,8 +18,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.EntityManager;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
@@ -28,6 +30,33 @@ public class AnnotationBuilder extends RestCytomineController {
     private final EntityManager entityManager;
 
     private final ParamsService paramsService;
+
+    private final TermService termService;
+
+    private final AnnotationListingService annotationListingService;
+
+    public List<AnnotationResult> buildAnnotationList(JsonObject params, String users){
+        AnnotationListing annotationListing = buildAnnotationListing(params);
+        return filterAnnotationByUsers(annotationListingService.listGeneric(annotationListing), users);
+    }
+
+    private List<AnnotationResult> filterAnnotationByUsers(List<AnnotationResult> annotations, String users){
+        List<AnnotationResult> filteredAnnotations = new ArrayList<>();
+        List<Long> userIds = Arrays.stream(users.split(","))
+                .sequential()
+                .filter(id -> !id.isEmpty())
+                .map(id -> Long.parseLong(id))
+                .collect(Collectors.toList());
+
+        for(AnnotationResult annotation : annotations){
+            if(userIds.contains((long)annotation.get("user"))){
+                filteredAnnotations.add(annotation);
+            }
+        }
+
+        return filteredAnnotations;
+    }
+
 
     public AnnotationListing buildAnnotationListing(JsonObject params) {
         AnnotationListing al;
@@ -80,11 +109,8 @@ public class AnnotationBuilder extends RestCytomineController {
         al.setUserForTermAlgo(params.getJSONAttrLong("userForTermAlgo"));
         al.setUsersForTermAlgo(extractListFromParameter(params.getJSONAttrStr("usersForTermAlgo")));
 
-
-
         // Jobs
         if(params.getJSONAttrLong("job")!=null) {
-
             al.setUser(secUserService.findByJobId(params.getJSONAttrLong("job")).map(SecUser::getId).orElse(null));
         }
 
@@ -101,7 +127,6 @@ public class AnnotationBuilder extends RestCytomineController {
         // Terms
         al.setTerm(params.getJSONAttrLong("term"));
         al.setTerms(extractListFromParameter(params.getJSONAttrStr("terms")));
-
 
         // Suggested terms
         al.setSuggestedTerm(params.getJSONAttrLong("suggestedTerm"));
@@ -190,5 +215,31 @@ public class AnnotationBuilder extends RestCytomineController {
         }
         //if no other filter, just take user annotation
         return false;
+    }
+
+    /**
+     * From a string representing the list of terms ids, get a set of terms name.
+     */
+    public Set<String> getTermNames(String terms){
+        Set<String> termNames = new HashSet<>();
+        for (String termId : terms.split(",")){
+            if(!termId.equals("0") && !termId.equals("-1") && !termId.isEmpty()){
+                termNames.add(termService.find(Long.parseLong(termId)).get().getName());
+            }
+        }
+        return termNames;
+    }
+
+    /**
+     * From a string representing the list of users ids, get a set of users name.
+     */
+    public Set<String> getUserNames(String users) {
+        Set<String> userNames = new HashSet<>();
+        for (String userId : users.split(",")){
+            if(!userId.isEmpty()){
+                userNames.add(secUserService.get(Long.parseLong(userId)).getUsername());
+            }
+        }
+        return userNames;
     }
 }

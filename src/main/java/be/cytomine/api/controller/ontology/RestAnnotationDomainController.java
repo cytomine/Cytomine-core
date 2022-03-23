@@ -12,7 +12,6 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.*;
 import be.cytomine.service.AnnotationListingService;
-import be.cytomine.service.dto.AnnotationResult;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.middleware.ImageServerService;
@@ -37,8 +36,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
 @RestController
 @RequestMapping("/api")
@@ -105,7 +102,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
     }
 
     @RequestMapping(value = {"/project/{project}/annotation/download"}, method = {RequestMethod.GET})
-    public ResponseEntity<byte[]> download(
+    public void download(
             @PathVariable Long project,
             @RequestParam String format,
             @RequestParam Boolean reviewed,
@@ -117,15 +114,14 @@ public class RestAnnotationDomainController extends RestCytomineController {
     ) throws IOException {
 
         if(reviewed) {
-            // return restReviewedAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
+            restReviewedAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
         } else {
-            if (false) { //!users.isEmpty() && SecUser.read(users.first()).algo()
-                // return restAlgoAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
+            if (!users.isEmpty() && false) { // SecUser.read(users.first()).algo()
+                restAlgoAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
             } else {
-                return restUserAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
+                restUserAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
             }
         }
-        return null;
     }
 
     //TODO:

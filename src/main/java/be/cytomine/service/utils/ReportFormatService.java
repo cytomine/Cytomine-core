@@ -1,6 +1,5 @@
 package be.cytomine.service.utils;
 
-import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.service.dto.AnnotationResult;
 import be.cytomine.service.image.ImageInstanceService;
@@ -8,7 +7,7 @@ import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.report.ReportColumn;
 import be.cytomine.service.security.SecUserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.text.DecimalFormat;
@@ -16,19 +15,16 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@AllArgsConstructor
 public class ReportFormatService {
 
-    @Autowired
-    private SecUserService secUserService;
+    private final SecUserService secUserService;
 
-    @Autowired
-    private ImageInstanceService imageInstanceService;
+    private final ImageInstanceService imageInstanceService;
 
-    @Autowired
-    private TermService termService;
+    private final TermService termService;
 
-    @Autowired
-    private UserAnnotationService userAnnotationService;
+    private final UserAnnotationService userAnnotationService;
 
     /**
      * Transform a List<Map<String,Object>> into a simple Object[][]

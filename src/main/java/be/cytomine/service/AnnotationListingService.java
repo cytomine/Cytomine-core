@@ -70,7 +70,7 @@ public class AnnotationListingService  {
     /**
      * Execute request and format result into a list of map
      */
-    List<AnnotationResult> selectGenericAnnotation(AnnotationListing al) {
+    private List<AnnotationResult> selectGenericAnnotation(AnnotationListing al) {
 
         List<AnnotationResult> data = new ArrayList<>();
         long lastAnnotationId = -1;

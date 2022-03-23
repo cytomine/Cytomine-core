@@ -2,8 +2,6 @@ package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.api.controller.utils.AnnotationBuilder;
-import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.SharedAnnotation;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
@@ -12,7 +10,6 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.AnnotationListing;
 import be.cytomine.service.AnnotationListingService;
-import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.AnnotationResult;
 import be.cytomine.service.dto.CropParameter;
@@ -23,22 +20,17 @@ import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
 import be.cytomine.service.security.SecUserService;
-import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.ReportFormatService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.text.DateFormat;
 import java.util.*;
 
 @RestController
@@ -110,7 +102,7 @@ public class RestUserAnnotationController extends RestCytomineController {
      * Download report with annotation
      */
     @GetMapping("/project/{project}/userannotation/download")
-    public ResponseEntity<byte[]> downloadDocumentByProject(
+    public void downloadDocumentByProject(
             @PathVariable Long project,
             @RequestParam String format,
             @RequestParam String terms,
@@ -121,62 +113,14 @@ public class RestUserAnnotationController extends RestCytomineController {
     ) throws IOException {
 
         JsonObject params = mergeQueryParamsAndBodyParams();
-        AnnotationListing annotationListing = annotationBuilder.buildAnnotationListing(params);
-        List<AnnotationResult> annotations = annotationListingService.listGeneric(annotationListing);
+        List<AnnotationResult> annotations = annotationBuilder.buildAnnotationList(params, users);
 
-        HttpHeaders httpHeaders = getReportHttpHeaders(format);
-        String filename = reportService.getReportFileName(format, project);
-        httpHeaders.setContentDispositionFormData(filename, filename);
-
-        String projectName = projectService.get(project).getName();
-
-        byte[] report = reportService.generateReport(projectName, getTerms(terms), getUsers(users), annotations, format);
-        ResponseEntity<byte[]> response = new ResponseEntity<>(report, httpHeaders, HttpStatus.OK);
-        return response;
+        Set<String> termNames = annotationBuilder.getTermNames(terms);
+        Set<String> userNames = annotationBuilder.getUserNames(users);
+        byte[] report = reportService.generateReport(projectService.get(project).getName(), termNames, userNames, annotations, format);
+        responseReportFile(reportService.getReportFileName(format, project), report, format);
     }
 
-    /**
-     * From a string representing the list of terms ids, get a set of terms name.
-     */
-    private Set<String> getTerms(String terms){
-        Set<String> termNames = new HashSet<>();
-        for (String termId : terms.split(",")){
-            if(!termId.equals("0") && !termId.equals("-1")){
-                termNames.add(termService.find(Long.parseLong(termId)).get().getName());
-            }
-        }
-        return termNames;
-    }
-
-    /**
-     * From a string representing the list of users ids, get a set of users name.
-     */
-    private Set<String> getUsers(String users) {
-        Set<String> userNames = new HashSet<>();
-        for (String userId : users.split(",")){
-            userNames.add(secUserService.get(Long.parseLong(userId)).getUsername());
-        }
-        return userNames;
-    }
-
-    /**
-     * Get HttpHeader with content type depending on format (format can be "pdf", "csv" or "xls")
-     */
-    private HttpHeaders getReportHttpHeaders(String format){
-        HttpHeaders headers = new HttpHeaders();
-        switch (format){
-            case "pdf":
-                headers.setContentType(MediaType.APPLICATION_PDF);
-                break;
-            case "csv":
-                headers.setContentType(new MediaType("text", "csv"));
-                break;
-            case "xls":
-                headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-                break;
-        }
-        return headers;
-    }
 //    @RestApiMethod(description = "Download a report (pdf, xls,...) with user annotation data from a specific project")
 //    @RestApiResponseObject(objectIdentifier = "file")
 //    @RestApiParams(params = [
