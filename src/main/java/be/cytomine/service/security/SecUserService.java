@@ -817,7 +817,14 @@ public class SecUserService extends ModelService {
         return jsonObject;
     }
 
-    
+    public String getUsersIdsFromProject(Long project){
+        String users = "";
+        for (SecUser user: listUsers(projectService.get(project))) {
+            users += user.getId() + ",";
+        }
+        return users;
+    }
+
     public List<JsonObject> getUsersWithLastActivities(Project project) {
         List<JsonObject> results = new ArrayList<>();
         List<SecUser> users = listUsers(project).stream().sorted(Comparator.comparing(CytomineDomain::getId)).collect(Collectors.toList());

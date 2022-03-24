@@ -5,6 +5,7 @@ import be.cytomine.api.controller.utils.AnnotationListingBuilder;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.*;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.dto.SimplifiedAnnotation;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
@@ -19,6 +20,7 @@ import be.cytomine.service.ontology.AlgoAnnotationService;
 import be.cytomine.service.ontology.GenericAnnotationService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.ontology.UserAnnotationService;
+import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.service.utils.SimplifyGeometryService;
@@ -73,6 +75,8 @@ public class RestAnnotationDomainController extends RestCytomineController {
 
     private final AnnotationListingBuilder annotationListingBuilder;
 
+    private final ProjectService projectService;
+
     /**
      * List all ontology visible for the current user
      * For each ontology, print the terms tree
@@ -114,8 +118,11 @@ public class RestAnnotationDomainController extends RestCytomineController {
             @RequestParam(required = false) Long afterThan
     ) throws IOException {
         if(reviewed) {
+            reviewUsers = fillEmptyUserIds(reviewUsers, project);
             restReviewedAnnotationController.downloadDocumentByProject(project, format, terms, reviewUsers, images, beforeThan, afterThan);
-        } else {
+        }
+        else {
+            users = fillEmptyUserIds(users, project);
             if (!users.isEmpty() && false) { // SecUser.read(users.first()).algo()
                 restAlgoAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
             } else {
@@ -124,6 +131,12 @@ public class RestAnnotationDomainController extends RestCytomineController {
         }
     }
 
+    private String fillEmptyUserIds(String users, Long project){
+        if (users == null || users == "") {
+            users = secUserService.getUsersIdsFromProject(project);
+        }
+        return users;
+    }
     //TODO:
 //    @RestApiMethod(description="Download report for annotation. !!! See doc for /annotation/search to filter annotations!!!", listing = true)
 //    @RestApiResponseObject(objectIdentifier =  "file")

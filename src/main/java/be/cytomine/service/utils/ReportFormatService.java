@@ -1,15 +1,12 @@
 package be.cytomine.service.utils;
 
 import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.ReviewedAnnotation;
-import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.report.ReportColumn;
 import be.cytomine.service.security.SecUserService;
-import liquibase.pro.packaged.S;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
