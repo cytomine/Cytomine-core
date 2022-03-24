@@ -616,9 +616,6 @@ public class RestUserController extends RestCytomineController {
 //    }
 //
 
-
-
-
     @GetMapping("/project/{project}/resumeActivity/{user}.json")
     public ResponseEntity<String> resumeActivity(
             @PathVariable(value = "project") Long projectId,

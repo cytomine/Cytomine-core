@@ -120,14 +120,6 @@ public abstract class RestCytomineController {
         return SearchParametersUtils.getSearchParameters(retrieveRequestParam());
     }
 
-    protected List<Long> extractListFromParameter(String parameter) {
-        if (parameter==null ||  parameter.isEmpty()) {
-            return null;
-        }
-        return Arrays.stream(parameter.replaceAll("_",",").split(",")).map(Long::parseLong)
-                .collect(Collectors.toList());
-    }
-
     private JsonObject buildJsonList(List list, Integer offsetParameter, Integer maxParameter) {
 
         Integer offset = offsetParameter != null ? offsetParameter : 0;

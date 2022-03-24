@@ -2,12 +2,11 @@ package be.cytomine.service.report;
 
 import be.cytomine.exceptions.ServerException;
 import be.cytomine.service.utils.ReportFormatService;
+import be.cytomine.utils.StringUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Slf4j
@@ -43,21 +42,17 @@ public class ReportService {
     private final ReportFormatService reportFormatService;
 
     public byte[] generateUsersReport(String projectName, List<Map<String, Object>> data, String format) throws ServerException {
-        Object[][] dataForReport = reportFormatService.formatDataForReport(USER_REPORT_COLUMNS, data, false);
-        return generateReport(getUserReportTitle(projectName), dataForReport, format, USER_REPORT_COLUMNS);
+        Object[][] dataForReport = reportFormatService.formatDataForReport(USER_REPORT_COLUMNS, data, false, false);
+        return generateReport(getUserReportTitle(projectName), dataForReport, USER_REPORT_COLUMNS, format);
     }
 
-    public byte[] generateAnnotationsReport(String projectName, Set<String> terms, Set<String> users, List<Map<String, Object>> data, String format) throws ServerException {
-        Object[][] dataForReport = reportFormatService.formatDataForReport(ANNOTATION_REPORT_COLUMNS, data, true);
-        return generateReport(getAnnotationReportTitle(projectName, terms, users), dataForReport, format, ANNOTATION_REPORT_COLUMNS);
+    public byte[] generateAnnotationsReport(String projectName, Set<String> terms, Set<String> users, List<Map<String, Object>> data, String format, boolean isReview) throws ServerException {
+        Object[][] dataForReport = reportFormatService.formatDataForReport(ANNOTATION_REPORT_COLUMNS, data, true, isReview);
+        return generateReport(getAnnotationReportTitle(projectName, terms, users), dataForReport, ANNOTATION_REPORT_COLUMNS, format);
     }
 
-    public byte[] generateReport(String title, Object[][] data, String format, List<ReportColumn> columns) throws ServerException {
+    public byte[] generateReport(String title, Object[][] data, List<ReportColumn> columns, String format) throws ServerException {
         float[] columnWidth = reportFormatService.getColumnWidth(columns);
-        return generateReport(title, data, columnWidth, format);
-    }
-
-    public byte[] generateReport(String title, Object[][] data, float[] columnWidth, String format) throws ServerException {
         switch (format){
             case "csv":
                 return spreadsheetReportService.writeCSV(data);
@@ -72,28 +67,18 @@ public class ReportService {
     }
 
     private String getAnnotationReportTitle(String projectName, Set<String> terms, Set<String> users) {
-        return "Annotations in " + projectName + " created by " + String.join(" or ", users) + " and associated with " + String.join(" or ", terms) + " @ " + getLocaleDate();
+        return "Annotations in " + projectName + " created by " + String.join(" or ", users) + " and associated with " + String.join(" or ", terms) + " @ " + StringUtils.getLocaleDate();
     }
 
     private String getUserReportTitle(String projectName) {
-        return "User in " + projectName + " created @ " + getLocaleDate();
+        return "User in " + projectName + " created @ " + StringUtils.getLocaleDate();
     }
 
     public String getAnnotationReportFileName(String format, Long projectId){
-        return getSimpleFormatLocaleDate() + "_annotations_project" + projectId + "." + format;
+        return StringUtils.getSimpleFormatLocaleDate() + "_annotations_project" + projectId + "." + format;
     }
 
     public String getUsersReportFileName(String format, Long projectId){
-        return getSimpleFormatLocaleDate() + "_users_project" + projectId + "." + format;
-    }
-
-    private String getLocaleDate(){
-        DateFormat DFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, Locale.getDefault());
-        return DFormat.format(new Date());
-    }
-
-    private String getSimpleFormatLocaleDate(){
-        SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyyMMdd_hhmmss");
-        return simpleFormat.format(new Date());
+        return StringUtils.getSimpleFormatLocaleDate() + "_users_project" + projectId + "." + format;
     }
 }

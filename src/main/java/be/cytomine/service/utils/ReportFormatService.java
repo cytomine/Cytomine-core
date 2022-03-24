@@ -1,11 +1,15 @@
 package be.cytomine.service.utils;
 
+import be.cytomine.domain.ontology.AnnotationDomain;
+import be.cytomine.domain.ontology.ReviewedAnnotation;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.service.image.ImageInstanceService;
+import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.report.ReportColumn;
 import be.cytomine.service.security.SecUserService;
+import liquibase.pro.packaged.S;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +29,8 @@ public class ReportFormatService {
 
     private final UserAnnotationService userAnnotationService;
 
+    private final ReviewedAnnotationService reviewedAnnotationService;
+
     /**
      * Transform a List<Map<String,Object>> into a simple Object[][]
      * with headers corresponding to given columns.
@@ -34,7 +40,7 @@ public class ReportFormatService {
      * @param  isAnnotation
      * @return Object[][]
      */
-    public Object[][] formatDataForReport(List<ReportColumn> columns, List<Map<String, Object>> data, boolean isAnnotation){
+    public Object[][] formatDataForReport(List<ReportColumn> columns, List<Map<String, Object>> data, boolean isAnnotation, boolean isReview){
         Object[] headers = getColumnHeaders(columns);
         Object[][] report = new Object[data.size() + 1][headers.length];
         report[0] = headers;
@@ -45,7 +51,7 @@ public class ReportFormatService {
                 Object value = element.get(headers[j]);
 
                 if(isAnnotation){
-                    value = formatAnnotationForReport(value, element, headers[j].toString());
+                    value = formatAnnotationForReport(value, element, headers[j].toString(), isReview);
                 }
                 if(value == null){
                     value = "";
@@ -65,9 +71,14 @@ public class ReportFormatService {
      * @param  header
      * @return String
      */
-    public Object formatAnnotationForReport(Object value, Map<String, Object> annotation, String header){
-
-        UserAnnotation userAnnotation = userAnnotationService.get((long) annotation.get("id"));
+    public Object formatAnnotationForReport(Object value, Map<String, Object> annotation, String header, boolean isReview){
+        AnnotationDomain userAnnotation;
+        Long annotationId = (long) annotation.get("id");
+        if(isReview){
+            userAnnotation = reviewedAnnotationService.get(annotationId);
+        } else{
+            userAnnotation = userAnnotationService.get(annotationId);
+        }
         DecimalFormat df = new DecimalFormat("0.00");
 
         switch (header){

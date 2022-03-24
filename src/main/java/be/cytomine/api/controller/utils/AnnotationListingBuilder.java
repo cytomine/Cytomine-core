@@ -1,6 +1,5 @@
 package be.cytomine.api.controller.utils;
 
-import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -13,6 +12,7 @@ import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.utils.GeometryUtils;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.StringUtils;
 import com.vividsolutions.jts.io.ParseException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Component
-public class AnnotationBuilder extends RestCytomineController {
+public class AnnotationListingBuilder {
 
     private final SecUserService secUserService;
 
@@ -83,15 +83,15 @@ public class AnnotationBuilder extends RestCytomineController {
 
         // Images
         al.setImage(params.getJSONAttrLong("image"));
-        al.setImages(extractListFromParameter(params.getJSONAttrStr("images")));
+        al.setImages(StringUtils.extractListFromParameter(params.getJSONAttrStr("images")));
 
         // Slices
         al.setSlice(params.getJSONAttrLong("slice"));
-        al.setSlices(extractListFromParameter(params.getJSONAttrStr("slices")));
+        al.setSlices(StringUtils.extractListFromParameter(params.getJSONAttrStr("slices")));
 
         // Tracks
         al.setTrack(params.getJSONAttrLong("track"));
-        al.setTracks(extractListFromParameter(params.getJSONAttrStr("tracks")));
+        al.setTracks(StringUtils.extractListFromParameter(params.getJSONAttrStr("tracks")));
 
         if (al.getTrack()!=null || al.getTracks()!=null) {
             al.setBeforeSlice(params.getJSONAttrLong("beforeSlice"));
@@ -101,13 +101,13 @@ public class AnnotationBuilder extends RestCytomineController {
 
         // Users
         al.setUser(params.getJSONAttrLong("user"));
-        al.setUsers(extractListFromParameter(params.getJSONAttrStr("users")));
+        al.setUsers(StringUtils.extractListFromParameter(params.getJSONAttrStr("users")));
 
-        al.setUsersForTerm(extractListFromParameter(params.getJSONAttrStr("usersForTerm")));
+        al.setUsersForTerm(StringUtils.extractListFromParameter(params.getJSONAttrStr("usersForTerm")));
 
         // Users for term algo
         al.setUserForTermAlgo(params.getJSONAttrLong("userForTermAlgo"));
-        al.setUsersForTermAlgo(extractListFromParameter(params.getJSONAttrStr("usersForTermAlgo")));
+        al.setUsersForTermAlgo(StringUtils.extractListFromParameter(params.getJSONAttrStr("usersForTermAlgo")));
 
         // Jobs
         if(params.getJSONAttrLong("job")!=null) {
@@ -121,16 +121,16 @@ public class AnnotationBuilder extends RestCytomineController {
 
         // Tags
         al.setTag(params.getJSONAttrLong("tag"));
-        al.setTags(extractListFromParameter(params.getJSONAttrStr("tags")));
+        al.setTags(StringUtils.extractListFromParameter(params.getJSONAttrStr("tags")));
         al.setNoTag(params.getJSONAttrBoolean("noTag", false));
 
         // Terms
         al.setTerm(params.getJSONAttrLong("term"));
-        al.setTerms(extractListFromParameter(params.getJSONAttrStr("terms")));
+        al.setTerms(StringUtils.extractListFromParameter(params.getJSONAttrStr("terms")));
 
         // Suggested terms
         al.setSuggestedTerm(params.getJSONAttrLong("suggestedTerm"));
-        al.setSuggestedTerms(extractListFromParameter(params.getJSONAttrStr("suggestedTerms")));
+        al.setSuggestedTerms(StringUtils.extractListFromParameter(params.getJSONAttrStr("suggestedTerms")));
 
         // Boolean for terms
         al.setNoTerm(params.getJSONAttrBoolean("noTerm", false));
@@ -144,7 +144,7 @@ public class AnnotationBuilder extends RestCytomineController {
 
         // Review users
         // TODO: reviewUser ?
-        al.setReviewUsers(extractListFromParameter(params.getJSONAttrStr("reviewUsers")));
+        al.setReviewUsers(StringUtils.extractListFromParameter(params.getJSONAttrStr("reviewUsers")));
 
         // Kmeans
         al.setKmeans(params.getJSONAttrBoolean("kmeans", false));

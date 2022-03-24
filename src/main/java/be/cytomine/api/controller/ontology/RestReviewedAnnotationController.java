@@ -1,16 +1,14 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.api.controller.utils.AnnotationBuilder;
+import be.cytomine.api.controller.utils.AnnotationListingBuilder;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.ReviewedAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.repository.AnnotationListing;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
-import be.cytomine.service.dto.AnnotationResult;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.middleware.ImageServerService;
@@ -46,7 +44,7 @@ public class RestReviewedAnnotationController extends RestCytomineController {
 
     private final AnnotationListingService annotationListingService;
 
-    private final AnnotationBuilder annotationBuilder;
+    private final AnnotationListingBuilder annotationListingBuilder;
 
     private final ReportService reportService;
 
@@ -124,7 +122,6 @@ public class RestReviewedAnnotationController extends RestCytomineController {
                 .orElseGet(() -> responseNotFound("ReviewedAnnotation", id));
     }
 
-
     /**
      * Add reviewed annotation
      * Only use to create a reviewed annotation with all json data.
@@ -169,7 +166,6 @@ public class RestReviewedAnnotationController extends RestCytomineController {
         ));
     }
 
-
     /**
      * Start the review mode on an image
      * To review annotation, a user must enable review mode in the current image
@@ -196,8 +192,6 @@ public class RestReviewedAnnotationController extends RestCytomineController {
     }
 
 
-
-
     @RequestMapping(value = "/annotation/{annotation}/review.json", method = {GET, POST,PUT})
     public ResponseEntity<String> addAnnotationReview(
             @PathVariable(value = "annotation") Long idAnnotation
@@ -210,7 +204,6 @@ public class RestReviewedAnnotationController extends RestCytomineController {
 
         return responseSuccess(response);
     }
-
 
 
     @DeleteMapping(value = "/annotation/{annotation}/review.json")
@@ -242,10 +235,6 @@ public class RestReviewedAnnotationController extends RestCytomineController {
         return responseSuccess(reviewedAnnotationService.reviewLayer(idImage, params.getJSONAttrListLong("users"), task));
     }
 
-
-
-
-
     /**
      * Unreview all annotation for all layers in params
      */
@@ -276,11 +265,11 @@ public class RestReviewedAnnotationController extends RestCytomineController {
     ) throws IOException {
 
         JsonObject params = mergeQueryParamsAndBodyParams();
-        List<Map<String, Object>> annotations = annotationBuilder.buildAnnotationList(params, reviewUsers);
+        List<Map<String, Object>> annotations = annotationListingBuilder.buildAnnotationList(params, reviewUsers);
 
-        Set<String> termNames = annotationBuilder.getTermNames(terms);
-        Set<String> userNames = annotationBuilder.getUserNames(reviewUsers);
-        byte[] report = reportService.generateAnnotationsReport(projectService.get(project).getName(), termNames, userNames, annotations, format);
+        Set<String> termNames = annotationListingBuilder.getTermNames(terms);
+        Set<String> userNames = annotationListingBuilder.getUserNames(reviewUsers);
+        byte[] report = reportService.generateAnnotationsReport(projectService.get(project).getName(), termNames, userNames, annotations, format, true);
 
         responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
     }
