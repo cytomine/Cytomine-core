@@ -61,7 +61,7 @@ node {
     sh 'scripts/ciBuildJar.sh'
     }
 
-    stage ('Publish war') {
+    stage ('Publish jar') {
             sh 'scripts/ciPublishJar.sh'
 
             stage 'Build docker image'
