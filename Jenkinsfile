@@ -25,7 +25,7 @@ node {
 
 
     lock('cytomine-instance-test') {
-        stage ('Run cytomine instance') {
+        stage ('Run external tools (db, amqp,...)') {
            catchError {
                     sh 'docker-compose -f scripts/docker-compose.yml down -v'
                 }
@@ -57,5 +57,22 @@ node {
     stage ('Final') {
         sh 'echo finish'
     }
+   stage ('Build war') {
+    sh 'scriptsCI/ciBuildWar.sh'
+    }
 
+    stage ('Publish war') {
+            sh 'scriptsCI/ciPublishWar.sh'
+
+            stage 'Build docker image'
+            withCredentials(
+                [
+                    usernamePassword(credentialsId: 'DOCKERHUB_CREDENTIAL', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_TOKEN')
+                ]
+                ) {
+                    docker.withRegistry('https://index.docker.io/v1/', 'DOCKERHUB_CREDENTIAL') {
+                        sh 'scripts/ciBuildDockerImage.sh'
+                    }
+                }
+    }
 }

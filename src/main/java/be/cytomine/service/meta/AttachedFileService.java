@@ -91,7 +91,9 @@ public class AttachedFileService extends ModelService {
         securityACLService.checkUser(currentUserService.getCurrentUser());
         CytomineDomain recipientDomain = (CytomineDomain)getEntityManager().find(Class.forName(domainClassName), domainIdent);
 
-        if(recipientDomain instanceof Project || !(recipientDomain.container() instanceof Project)) {
+        if (recipientDomain instanceof AbstractImage) {
+            securityACLService.check(domainIdent,domainClassName,READ);
+        } else if(recipientDomain instanceof Project || !(recipientDomain.container() instanceof Project)) {
             securityACLService.check(domainIdent,domainClassName,WRITE);
         } else {
             securityACLService.checkFullOrRestrictedForOwner(domainIdent,domainClassName, "user");
@@ -119,8 +121,10 @@ public class AttachedFileService extends ModelService {
         }
 
         securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),READ);
-        if(recipientDomain instanceof Project || !(recipientDomain.container() instanceof Project)) {
-            securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),WRITE);
+        if (recipientDomain instanceof AbstractImage) {
+            securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),READ);
+        } else if(recipientDomain instanceof Project || !(recipientDomain.container() instanceof Project)) {
+            securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),DELETE);
         } else {
             securityACLService.checkFullOrRestrictedForOwner(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(), "user");
         }

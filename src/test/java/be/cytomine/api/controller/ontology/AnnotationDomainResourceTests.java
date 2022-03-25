@@ -1674,7 +1674,7 @@ public class AnnotationDomainResourceTests {
                 .andExpect(status().isOk()).andReturn();
         Map<String, Object> map = JsonObject.toMap(mvcResult.getResponse().getContentAsString());
         Map<String, Object> annotation = (Map<String, Object>)(reviewMode? map.get("reviewedannotation") : map.get("annotation"));
-        assertThat(new WKTReader().read(expectedLocation)).isEqualTo(new WKTReader().read(annotation.get("location").toString())); // may be retrieving the merge would be better?
+        assertThat(new WKTReader().read(expectedLocation).getEnvelope()).isEqualTo(new WKTReader().read(annotation.get("location").toString()).getEnvelope()); // may be retrieving the merge would be better?
     }
 
 

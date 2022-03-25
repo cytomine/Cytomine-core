@@ -5,8 +5,14 @@ plugins {
 	id 'jacoco'
 }
 
+
+bootJar {
+	archiveFileName = 'cytomine.jar'
+}
+
+
 group = 'be.cytomine'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.0'
 sourceCompatibility = '11'
 
 configurations {
@@ -17,6 +23,10 @@ configurations {
 
 repositories {
 	mavenCentral()
+}
+
+springBoot {
+	mainClassName = "be.cytomine.CytomineCoreApplication"
 }
 
 
@@ -96,3 +106,15 @@ jacocoTestCoverageVerification {
 		}
 	}
 }
+
+////create a single Jar with all dependencies
+//task fatJar(type: Jar) {
+//	manifest {
+//		attributes 'Implementation-Title': 'Gradle Jar File Example',
+//				'Implementation-Version': version,
+//				'Main-Class': 'com.mkyong.DateUtils'
+//	}
+//	baseName = project.name + '-all'
+//	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+//	with jar
+//}

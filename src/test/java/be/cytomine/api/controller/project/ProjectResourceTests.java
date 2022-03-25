@@ -12,12 +12,16 @@ import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.AclRepository;
+import be.cytomine.repository.security.ForgotPasswordTokenRepository;
+import be.cytomine.repository.security.SecRoleRepository;
+import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.social.ProjectConnectionService;
 import be.cytomine.utils.CommandResponse;
+import be.cytomine.utils.JsonObject;
 import liquibase.pro.packaged.A;
 import org.apache.commons.lang3.time.DateUtils;
 import org.hamcrest.Matchers;
@@ -28,10 +32,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.mail.MessagingException;
 import javax.persistence.EntityManager;
 
 import java.util.Date;
@@ -74,6 +83,15 @@ public class ProjectResourceTests {
 
     @Autowired
     private PersistentProjectConnectionRepository persistentProjectConnectionRepository;
+
+    @Autowired
+    ForgotPasswordTokenRepository forgotPasswordTokenRepository;
+
+    @Autowired
+    SecRoleRepository secRoleRepository;
+
+    @Autowired
+    SecUserRepository secUserRepository;
 
     @BeforeEach
     public void cleanActivities() {
@@ -573,7 +591,7 @@ public class ProjectResourceTests {
     @Test
     @Transactional
     public void add_project_with_task() throws Exception {
-        org.assertj.core.api.Assertions.fail("not yet implemented");
+
     }
 
 
@@ -1073,9 +1091,36 @@ public class ProjectResourceTests {
 
     }
 
-    @Disabled("implement mail/notif first")
+
     @Test
-    public void invite_user_in_project() {
+    public void invite_user_in_project() throws Exception {
+
+        Project project = builder.given_a_project();
+        forgotPasswordTokenRepository.deleteAll();
+
+        // invite user
+        restProjectControllerMockMvc.perform(post("/api/project/{id}/invitation.json", project.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonObject.of(
+                                "name", "invitedUser",
+                                "firstname", "firstname",
+                                "lastname", "lastname",
+                                "mail", "invitedUser@example.com").toJsonString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("invitedUser"));
+
+
+        assertThat(forgotPasswordTokenRepository.findAll()).hasSize(1);
+
+        assertThat(secUserRepository.findByUsernameLikeIgnoreCase("invitedUser")).isPresent();
+
+        assertThat(secUserRepository.findByUsernameLikeIgnoreCase("invitedUser").get().getPasswordExpired()).isTrue();
+
+        assertThat(permissionService.hasACLPermission(project, "invitedUser", READ)).isTrue();
+
+
+
 
     }
 

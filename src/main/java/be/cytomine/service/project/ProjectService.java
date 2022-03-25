@@ -7,6 +7,8 @@ import be.cytomine.domain.ontology.AnnotationTerm;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
+import be.cytomine.domain.security.ForgotPasswordToken;
+import be.cytomine.domain.security.SecRole;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.PersistentConnection;
@@ -20,6 +22,7 @@ import be.cytomine.repository.command.UndoStackItemRepository;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.repository.project.ProjectRepository;
+import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
 import be.cytomine.service.CurrentRoleService;
@@ -33,8 +36,11 @@ import be.cytomine.service.ontology.AnnotationTermService;
 import be.cytomine.service.ontology.OntologyService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.search.ProjectSearchExtension;
+import be.cytomine.service.security.SecRoleService;
+import be.cytomine.service.security.SecUserSecRoleService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
+import be.cytomine.service.utils.NotificationService;
 import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SQLSearchParameter;
@@ -52,6 +58,7 @@ import org.springframework.data.domain.*;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.stereotype.Service;
 
+import javax.mail.MessagingException;
 import javax.persistence.Query;
 import javax.persistence.Tuple;
 import javax.persistence.TupleElement;
@@ -132,10 +139,19 @@ public class ProjectService extends ModelService {
     private RedoStackItemRepository redoStackItemRepository;
 
     @Autowired
+    private SecUserSecRoleService secUserSecRoleService;
+
+    @Autowired
     MongoClient mongoClient;
 
     @Autowired
     private CurrentRoleService currentRoleService;
+
+    @Autowired
+    private SecRoleRepository secRoleRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     public Project get(Long id) {
         return find(id).orElse(null);
@@ -832,43 +848,44 @@ public class ProjectService extends ModelService {
     }
 
     //TODO
-//    /**
-//     * Invite an user (not yet existing) in project user
-//     * @param sender User who send the invitation
-//     * @param project Project that will be accessed by user
-//     * @param json the name and the mail of the User to add in project
-//     * @return Response structure
-//     */
-//    def inviteUser(Project project, def json) {
-//
-//        def guestUser = [username : json.name, firstname : json.firstname?:'firstname',
-//                         lastname : json.lastname?:'lastname', email : json.mail,
-//                         password : 'passwordExpired', color : "#FF0000"]
-//
-//        secUserService.add(JSON.parse(JSONUtils.toJSONString(guestUser)))
-//        User user = (User) secUserService.findByUsername(guestUser.username)
-//        SecRole secRole = secRoleService.findByAuthority("ROLE_GUEST")
-//        secUserSecRoleService.add(JSON.parse(JSONUtils.toJSONString([ user : user.id, role : secRole.id])))
-//        if (project) {
-//            secUserService.addUserToProject(user, project, false)
-//        }
-//
-//        if (user) {
-//            user.passwordExpired = true
-//            user.save()
-//            ForgotPasswordToken forgotPasswordToken = new ForgotPasswordToken(
-//                    user : user,
-//                    tokenKey: UUID.randomUUID().toString(),
-//                    expiryDate: new Date() + 1
-//            ).save()
-//            def sender = cytomineService.currentUser
-//            notificationService.notifyWelcome(sender, user, forgotPasswordToken)
-//        } else {
-//            throw new ObjectNotFoundException("User with username "+guestUser.username+" not found")
-//        }
-//        return user
-//
-//    }
+    /**
+     * Invite an user (not yet existing) in project user
+     * @param sender User who send the invitation
+     * @param project Project that will be accessed by user
+     * @param json the name and the mail of the User to add in project
+     * @return Response structure
+     */
+    public User inviteUser(Project project, String username, String firstname, String lastname, String email) throws MessagingException {
+
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.put("username", username);
+        jsonObject.put("firstname", firstname);
+        jsonObject.put("lastname", lastname);
+        jsonObject.put("email", email);
+        jsonObject.put("password", "passwordExpired");
+
+        secUserService.add(jsonObject);
+        User user = (User) secUserService.findByUsername(jsonObject.getJSONAttrStr("username")).get();
+        SecRole secRole = secRoleRepository.getGuest();
+        secUserSecRoleService.add(JsonObject.of("user", user.getId(), "role", secRole.getId()));
+        if (project!=null) {
+            secUserService.addUserToProject(user, project, false);
+        }
+
+        user.setPasswordExpired(true);
+        userRepository.save(user);
+
+        ForgotPasswordToken forgotPasswordToken = new ForgotPasswordToken();
+        forgotPasswordToken.setUser(user);
+        forgotPasswordToken.setTokenKey(UUID.randomUUID().toString());
+        forgotPasswordToken.setExpiryDate(DateUtils.addDays(new Date(), 1));
+        getEntityManager().persist(forgotPasswordToken);
+
+        SecUser sender = currentUserService.getCurrentUser();
+        notificationService.notifyWelcome((User) sender, user, forgotPasswordToken);
+        return user;
+
+    }
 
     protected void afterAdd(CytomineDomain domain, CommandResponse response) {
         log.info("Add permission on " + domain + " to " + currentUserService.getCurrentUsername());

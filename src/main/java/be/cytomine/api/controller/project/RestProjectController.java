@@ -24,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.mail.MessagingException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -244,34 +245,24 @@ public class RestProjectController extends RestCytomineController {
 
 
 
-    // TODO:
-//
-//        "/api/project/$id/invitation.$format" (controller: "restProject") {
-//            action = [POST:"inviteNewUser"]
-//        }
-//    @RestApiMethod(description="Count the number of project visits")
-//    @RestApiResponseObject(objectIdentifier = "[total:x]")
-//    def countByUser() {
-//        responseSuccess([total:reviewedAnnotationService.count(cytomineService.currentUser)])
-//    }
-//
+
 //    @RestApiMethod(description="Invite a not yer existing user to the project")
 //    @RestApiParams(params=[
 //            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The project id"),
 //            @RestApiParam(name="json", type="string", paramType = RestApiParamType.QUERY,description = "The user name and email of the invited user"),
 //    ])
 //
-//    def inviteNewUser() {
-//        Project project = projectService.read(params.long('id'))
-//
-//        try {
-//            def result = projectService.inviteUser(project, request.JSON);
-//            responseSuccess(result)
-//        } catch (CytomineException e) {
-//            log.error(e)
-//            response([success: false, errors: e.msg], e.code)
-//        }
-//    }
-
-
+    @PostMapping("/project/{id}/invitation.json")
+    public ResponseEntity<String> inviteNewUser(
+            @PathVariable Long id,
+            @RequestBody JsonObject json
+    ) throws MessagingException {
+        Project project = projectService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("Project", id));
+        User user = projectService.inviteUser(project, json.getJSONAttrStr("name"),
+                json.getJSONAttrStr("firstname", "firstname"),
+                json.getJSONAttrStr("lastname", "lastname"),
+                json.getJSONAttrStr("mail"));
+        return responseSuccess(user);
+    }
 }

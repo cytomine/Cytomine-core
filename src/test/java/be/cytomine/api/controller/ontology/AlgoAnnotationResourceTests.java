@@ -400,7 +400,6 @@ public class AlgoAnnotationResourceTests {
     }
 
 
-    @Disabled("wait mail....")
     @Test
     @Transactional
     @WithMockUser(authorities = "ROLE_SUPER_ADMIN", username = "superadmin")

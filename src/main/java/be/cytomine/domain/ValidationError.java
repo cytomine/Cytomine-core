@@ -22,4 +22,12 @@ public class ValidationError {
         this.property = violation.getPropertyPath().toString();
     }
 
+    @Override
+    public String toString() {
+        return "ValidationError{" +
+                "message='" + message + '\'' +
+                ", property='" + property + '\'' +
+                ", invalidValue=" + invalidValue +
+                '}';
+    }
 }

@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
+import java.io.File;
 import java.util.Date;
 
 @Slf4j
@@ -18,6 +19,13 @@ public class CytomineCoreApplication {
 
 	public static void main(String[] args) {
 		log.info("CytomineCoreApplication.main");
+		log.info("Current directory: " + new File(".").getAbsolutePath());
+		for (File file : new File("./").listFiles()) {
+			log.info("sub directories/files: " + file.getAbsolutePath());
+		}
+
+		log.info("application.yml found? " + new File("./application.yml").exists());
+
 		SpringApplication.run(CytomineCoreApplication.class, args);
 	}
 

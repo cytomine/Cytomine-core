@@ -19,7 +19,7 @@ spring:
         format_sql: true
 
   mail:
-    host: smtp.mailgun.org
+    host: disabled
     port: 587
     username: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: postmaster@sandboxdcb41...5909.mailgun.org
     password: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: 0da253cf5...24-4662f38e
