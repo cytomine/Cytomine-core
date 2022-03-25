@@ -57,12 +57,12 @@ node {
     stage ('Final') {
         sh 'echo finish'
     }
-   stage ('Build war') {
-    sh 'scriptsCI/ciBuildWar.sh'
+   stage ('Build jar') {
+    sh 'scriptsCI/ciBuildJar.sh'
     }
 
     stage ('Publish war') {
-            sh 'scriptsCI/ciPublishWar.sh'
+            sh 'scriptsCI/ciPublishJar.sh'
 
             stage 'Build docker image'
             withCredentials(
