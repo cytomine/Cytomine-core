@@ -1,9 +1,9 @@
 package be.cytomine.utils;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.Page;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,4 +23,29 @@ public class StringUtilsTests {
         assertThat(StringUtils.obscurify("", 0)).isEqualTo("");
         assertThat(StringUtils.obscurify("", 10)).isEqualTo("");
     }
+
+    @Test
+    public void null_or_empty_parameters_extracted_as_null() {
+        assertThat(StringUtils.extractListFromParameter("")).isNull();
+        assertThat(StringUtils.extractListFromParameter(null)).isNull();
+    }
+
+    @Test
+    public void parameters_extracted_as_list_of_long() {
+        List<Long> expectedList = new ArrayList<>(Arrays.asList((long)145, (long)146, (long)0, (long)-1));
+        assertThat(StringUtils.extractListFromParameter("145,146,0,-1")).isEqualTo(expectedList);
+    }
+
+    @Test
+    public void get_local_date_as_string() {
+        List<Long> expectedList = new ArrayList<>(Arrays.asList((long)145, (long)146, (long)0, (long)-1));
+        assertThat(StringUtils.extractListFromParameter("145,146,0,-1")).isEqualTo(expectedList);
+    }
+
+    @Test
+    public void get_simple_format_local_date_as_string() {
+        List<Long> expectedList = new ArrayList<>(Arrays.asList((long)145, (long)146, (long)0, (long)-1));
+        assertThat(StringUtils.extractListFromParameter("145,146,0,-1")).isEqualTo(expectedList);
+    }
+
 }

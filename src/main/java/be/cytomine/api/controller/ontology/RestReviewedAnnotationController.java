@@ -15,6 +15,7 @@ import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
+import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.CommandResponse;
@@ -57,6 +58,8 @@ public class RestReviewedAnnotationController extends RestCytomineController {
     private final ImageInstanceService imageInstanceService;
 
     private final TaskService taskService;
+
+    private final SecUserService secUserService;
 
     @GetMapping("/reviewedannotation.json")
     public ResponseEntity<String> list(
@@ -263,6 +266,8 @@ public class RestReviewedAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Long beforeThan,
             @RequestParam(required = false) Long afterThan
     ) throws IOException {
+
+        reviewUsers = secUserService.fillEmptyUserIds(reviewUsers, project);
 
         JsonObject params = mergeQueryParamsAndBodyParams();
         List<Map<String, Object>> annotations = annotationListingBuilder.buildAnnotationList(params, reviewUsers);

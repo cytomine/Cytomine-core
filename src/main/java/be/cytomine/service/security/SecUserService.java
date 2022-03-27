@@ -817,6 +817,13 @@ public class SecUserService extends ModelService {
         return jsonObject;
     }
 
+    public String fillEmptyUserIds(String users, Long project){
+        if (users == null || users.equals("")) {
+            users = getUsersIdsFromProject(project);
+        }
+        return users;
+    }
+
     public String getUsersIdsFromProject(Long project){
         String users = "";
         for (SecUser user: listUsers(projectService.get(project))) {
@@ -1370,5 +1377,7 @@ public class SecUserService extends ModelService {
     public void deleteDependentMessageBrokerServer(SecUser user, Transaction transaction, Task task) {
 
     }
+
+
 
 }

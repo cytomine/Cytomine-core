@@ -89,6 +89,7 @@ public class AnnotationListingService  {
 
 
         Query nativeQuery = entityManager.createNativeQuery(request, Tuple.class);
+        System.out.println("Request : " + request);
         List<Tuple> resultList = nativeQuery.getResultList();
 
         for (Tuple rowResult : resultList) {

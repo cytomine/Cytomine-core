@@ -7,10 +7,10 @@ import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.report.ReportColumn;
 import be.cytomine.service.security.SecUserService;
+import be.cytomine.utils.StringUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -76,8 +76,6 @@ public class ReportFormatService {
         } else{
             userAnnotation = userAnnotationService.get(annotationId);
         }
-        DecimalFormat df = new DecimalFormat("0.00");
-
         switch (header){
             case "user":
                 if(value != null){
@@ -89,13 +87,13 @@ public class ReportFormatService {
             case "term":
                 return String.join("- ", getTermsName(value));
             case "area":
-                return df.format(userAnnotation.getArea());
+                return StringUtils.decimalFormatter(userAnnotation.getArea());
             case "perimeter":
-                return df.format(userAnnotation.getPerimeter());
+                return StringUtils.decimalFormatter(userAnnotation.getPerimeter());
             case "X":
-                return df.format(userAnnotation.getCentroid().getX());
+                return StringUtils.decimalFormatter(userAnnotation.getCentroid().getX());
             case "Y":
-                return df.format(userAnnotation.getCentroid().getY());
+                return StringUtils.decimalFormatter(userAnnotation.getCentroid().getY());
             default:
                 return value;
         }

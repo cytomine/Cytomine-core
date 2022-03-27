@@ -2,6 +2,7 @@ package be.cytomine.service.report;
 
 import be.cytomine.exceptions.ServerException;
 import be.cytomine.service.utils.ReportFormatService;
+import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.StringUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,18 +68,18 @@ public class ReportService {
     }
 
     private String getAnnotationReportTitle(String projectName, Set<String> terms, Set<String> users) {
-        return "Annotations in " + projectName + " created by " + String.join(" or ", users) + " and associated with " + String.join(" or ", terms) + " @ " + StringUtils.getLocaleDate();
+        return "Annotations in " + projectName + " created by " + String.join(" or ", users) + " and associated with " + String.join(" or ", terms) + " @ " + DateUtils.getLocaleDate(new Date());
     }
 
     private String getUserReportTitle(String projectName) {
-        return "User in " + projectName + " created @ " + StringUtils.getLocaleDate();
+        return "User in " + projectName + " created @ " + DateUtils.getLocaleDate(new Date());
     }
 
     public String getAnnotationReportFileName(String format, Long projectId){
-        return StringUtils.getSimpleFormatLocaleDate() + "_annotations_project" + projectId + "." + format;
+        return DateUtils.getSimpleFormatLocaleDate(new Date()) + "_annotations_project" + projectId + "." + format;
     }
 
     public String getUsersReportFileName(String format, Long projectId){
-        return StringUtils.getSimpleFormatLocaleDate() + "_users_project" + projectId + "." + format;
+        return DateUtils.getSimpleFormatLocaleDate(new Date()) + "_users_project" + projectId + "." + format;
     }
 }

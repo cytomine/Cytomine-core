@@ -75,8 +75,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
 
     private final AnnotationListingBuilder annotationListingBuilder;
 
-    private final ProjectService projectService;
-
     /**
      * List all ontology visible for the current user
      * For each ontology, print the terms tree
@@ -118,24 +116,15 @@ public class RestAnnotationDomainController extends RestCytomineController {
             @RequestParam(required = false) Long afterThan
     ) throws IOException {
         if(reviewed) {
-            reviewUsers = fillEmptyUserIds(reviewUsers, project);
             restReviewedAnnotationController.downloadDocumentByProject(project, format, terms, reviewUsers, images, beforeThan, afterThan);
         }
         else {
-            users = fillEmptyUserIds(users, project);
             if (!users.isEmpty() && false) { // SecUser.read(users.first()).algo()
                 restAlgoAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
             } else {
                 restUserAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
             }
         }
-    }
-
-    private String fillEmptyUserIds(String users, Long project){
-        if (users == null || users == "") {
-            users = secUserService.getUsersIdsFromProject(project);
-        }
-        return users;
     }
     //TODO:
 //    @RestApiMethod(description="Download report for annotation. !!! See doc for /annotation/search to filter annotations!!!", listing = true)

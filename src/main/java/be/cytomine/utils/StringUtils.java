@@ -1,11 +1,8 @@
 package be.cytomine.utils;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.text.DecimalFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class StringUtils {
@@ -41,13 +38,8 @@ public class StringUtils {
                 .collect(Collectors.toList());
     }
 
-    public static String getLocaleDate(){
-        DateFormat DFormat = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG, Locale.getDefault());
-        return DFormat.format(new Date());
-    }
-
-    public static String getSimpleFormatLocaleDate(){
-        SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyyMMdd_hhmmss");
-        return simpleFormat.format(new Date());
+    public static String decimalFormatter(Object value){
+        DecimalFormat df = new DecimalFormat("0.00");
+        return df.format(value);
     }
 }

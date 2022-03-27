@@ -16,6 +16,7 @@ import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.StringUtils;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.common.Json;
@@ -33,11 +34,13 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -45,11 +48,11 @@ import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
@@ -63,16 +66,19 @@ public class UserAnnotationResourceTests {
     private BasicInstanceBuilder builder;
 
     @Autowired
-    private CommandService commandService;
-
-    @Autowired
     private MockMvc restUserAnnotationControllerMockMvc;
 
     @Autowired
-    private UserAnnotationService userAnnotationService;
+    private MockMvc restAnnotationDomainControllerMockMvc;
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
 
+    private Project project;
+    private ImageInstance image;
+    private SliceInstance slice;
+    private Term term;
+    private User me;
+    private UserAnnotation userAnnotation;
 
     @BeforeAll
     public static void beforeAll() {
@@ -248,11 +254,73 @@ public class UserAnnotationResourceTests {
     }
 
 
-    @Disabled("Disabled until ReportService is up!")
     @Test
     @Transactional
-    public void download_user_annotation_document() throws Exception {
-        Assertions.fail("todo...");
+    public void download_user_annotation_csv_document() throws Exception {
+        buildDownloadContext();
+        MvcResult mvcResult = performDownload("csv");
+        checkResult(",", mvcResult);
+    }
+
+    @Test
+    @Transactional
+    public void download_user_annotation_xls_document() throws Exception {
+        buildDownloadContext();
+        MvcResult mvcResult = performDownload("xls");
+        checkResult(";", mvcResult);
+    }
+
+    @Test
+    @Transactional
+    public void download_user_annotation_pdf_document() throws Exception {
+        buildDownloadContext();
+        restAnnotationDomainControllerMockMvc.perform(get("/api/project/{project}/userannotation/download", this.project.getId())
+                        .param("format", "pdf")
+                        .param("users", this.me.getId().toString())
+                        .param("reviewed", "false")
+                        .param("terms", this.term.getId().toString())
+                        .param("images", this.image.getId().toString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/pdf"))
+                .andReturn();
+    }
+
+    private void buildDownloadContext() throws ParseException {
+        this.project = builder.given_a_project();
+        this.image = builder.given_an_image_instance(this.project);
+        this.slice = builder.given_a_slice_instance(this.image,0,0,0);
+        this.term =  builder.given_a_term(this.project.getOntology());
+        this.me = builder.given_superadmin();
+        this.userAnnotation = builder.given_a_user_annotation(this.slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", this.me, this.term);
+    }
+
+    private void checkResult(String delimiter, MvcResult result) throws UnsupportedEncodingException {
+        String[] rows = result.getResponse().getContentAsString().split("\n");
+        String[] userAnnotationResult = rows[1].split(delimiter);
+        assertThat(userAnnotationResult[0]).isEqualTo(this.userAnnotation.getId().toString());
+        assertThat(userAnnotationResult[1]).isEqualTo(StringUtils.decimalFormatter(this.userAnnotation.getArea()));
+        assertThat(userAnnotationResult[2]).isEqualTo(StringUtils.decimalFormatter(this.userAnnotation.getPerimeter()));
+        assertThat(userAnnotationResult[3]).isEqualTo(StringUtils.decimalFormatter(this.userAnnotation.getCentroid().getX()));
+        assertThat(userAnnotationResult[4]).isEqualTo(StringUtils.decimalFormatter(this.userAnnotation.getCentroid().getY()));
+        assertThat(userAnnotationResult[5]).isEqualTo(this.image.getId().toString());
+        assertThat(userAnnotationResult[6]).isEqualTo(this.image.getBlindInstanceFilename());
+        assertThat(userAnnotationResult[7]).isEqualTo(this.me.getUsername());
+        assertThat(userAnnotationResult[8]).isEqualTo(this.term.getName());
+        assertThat(userAnnotationResult[9]).isEqualTo("http://localhost:8080/api/userannotation/"+ this.userAnnotation.getId() +"/crop.png");
+        assertThat(userAnnotationResult[10].replace("\r","")).isEqualTo("http://localhost:8080/#/project/"+this.project.getId()+"/image/"+this.image.getId()+"/annotation/"+this.userAnnotation.getId());
+    }
+
+    private MvcResult performDownload(String format) throws Exception {
+        return restAnnotationDomainControllerMockMvc.perform(get("/api/project/{project}/userannotation/download", this.project.getId())
+                        .param("format", format)
+                        .param("users", this.me.getId().toString())
+                        .param("reviewed", "false")
+                        .param("terms", this.term.getId().toString())
+                        .param("images", this.image.getId().toString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
     }
 
     @Test

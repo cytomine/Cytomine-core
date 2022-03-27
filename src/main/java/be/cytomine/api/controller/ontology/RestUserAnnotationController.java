@@ -109,6 +109,7 @@ public class RestUserAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Long beforeThan,
             @RequestParam(required = false) Long afterThan
     ) throws IOException {
+        users = secUserService.fillEmptyUserIds(users, project);
 
         JsonObject params = mergeQueryParamsAndBodyParams();
         List<Map<String, Object>> annotations = annotationListingBuilder.buildAnnotationList(params, users);
@@ -116,6 +117,7 @@ public class RestUserAnnotationController extends RestCytomineController {
         Set<String> termNames = annotationListingBuilder.getTermNames(terms);
         Set<String> userNames = annotationListingBuilder.getUserNames(users);
         byte[] report = reportService.generateAnnotationsReport(projectService.get(project).getName(), termNames, userNames, annotations, format, false);
+
         responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
     }
 

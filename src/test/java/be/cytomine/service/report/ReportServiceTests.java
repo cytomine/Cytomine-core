@@ -1,0 +1,128 @@
+package be.cytomine.service.report;
+
+import be.cytomine.CytomineCoreApplication;
+import be.cytomine.exceptions.ServerException;
+import be.cytomine.service.utils.ReportFormatService;
+import liquibase.pro.packaged.S;
+import org.junit.jupiter.api.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
+
+import javax.transaction.Transactional;
+import java.util.*;
+
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+
+@SpringBootTest(classes = CytomineCoreApplication.class)
+@AutoConfigureMockMvc
+@WithMockUser(authorities = "ROLE_SUPER_ADMIN", username = "superadmin")
+@Transactional
+@RunWith(MockitoJUnitRunner.class)
+public class ReportServiceTests {
+
+    ReportFormatService mockReportFormatService = mock(ReportFormatService.class);
+    PDFReportService mockPdfWriterService = mock(PDFReportService.class);
+    SpreadsheetReportService mockSpreadsheetWriterService = mock(SpreadsheetReportService.class);
+    ReportService reportService = new ReportService(mockPdfWriterService, mockSpreadsheetWriterService, mockReportFormatService);
+
+    List<Map<String, Object>> dataMap =  List.of(
+            Map.of("id", "Hello"),
+            Map.of("id", "World")
+    );
+    public static List<ReportColumn> columns = new ArrayList<>(){{
+        add(new ReportColumn("id", "ID", (float) 0.05));
+    }};
+    Set<String> terms = new HashSet<>(Arrays.asList("term1", "term2"));
+    Set<String> users = new HashSet<>(Arrays.asList("user1", "user2"));
+    byte[] returnedReport = {1};
+
+    @Test
+    public void generate_pdf_report_with_annotations() throws ServerException {
+        when(mockPdfWriterService.writePDF(any(),any(),any(),anyBoolean(),anyBoolean()))
+                .thenReturn(returnedReport);
+        byte[] generatedReport = reportService.generateAnnotationsReport("projectName", terms, users, dataMap, "pdf", false);
+        verify(mockReportFormatService, times(1))
+                .formatDataForReport(any(), any(), anyBoolean(), anyBoolean());
+        verify(mockPdfWriterService, times(1))
+                .writePDF(any(),any(),any(),anyBoolean(),anyBoolean());
+        assertArrayEquals(returnedReport, generatedReport);
+    }
+
+    @Test
+    public void generate_csv_report_with_annotations() throws ServerException {
+        when(mockSpreadsheetWriterService.writeCSV(any()))
+                .thenReturn(returnedReport);
+        byte[] generatedReport = reportService.generateAnnotationsReport("projectName" ,terms, users, dataMap, "csv", false);
+        verify(mockReportFormatService, times(1))
+                .formatDataForReport(any(), any(), anyBoolean(), anyBoolean());
+        verify(mockSpreadsheetWriterService, times(1))
+                .writeCSV(any());
+        assertArrayEquals(returnedReport, generatedReport);
+    }
+
+    @Test
+    public void generate_xls_report_with_annotations() throws ServerException {
+        when(mockSpreadsheetWriterService.writeXLS(any()))
+                .thenReturn(returnedReport);
+        byte[] generatedReport = reportService.generateAnnotationsReport("projectName", terms, users, dataMap, "xls", false);
+        verify(mockReportFormatService, times(1))
+                .formatDataForReport(any(), any(), anyBoolean(), anyBoolean());
+        verify(mockSpreadsheetWriterService, times(1))
+                .writeXLS(any());
+        assertArrayEquals(returnedReport, generatedReport);
+    }
+
+    @Test
+    public void generate_pdf_report_with_users() throws ServerException {
+        when(mockPdfWriterService.writePDF(any(),any(),any(),anyBoolean(),anyBoolean()))
+                .thenReturn(returnedReport);
+        byte[] generatedReport = reportService.generateUsersReport("projectName", dataMap, "pdf");
+        verify(mockReportFormatService, times(1))
+                .formatDataForReport(any(), any(), anyBoolean(), anyBoolean());
+        verify(mockPdfWriterService, times(1))
+                .writePDF(any(),any(),any(),anyBoolean(),anyBoolean());
+        assertArrayEquals(returnedReport, generatedReport);
+    }
+
+    @Test
+    public void generate_csv_report_with_users() throws ServerException {
+        when(mockSpreadsheetWriterService.writeCSV(any()))
+                .thenReturn(returnedReport);
+        byte[] generatedReport = reportService.generateUsersReport("projectName", dataMap, "csv");
+        verify(mockReportFormatService, times(1))
+                .formatDataForReport(any(), any(), anyBoolean(), anyBoolean());
+        verify(mockSpreadsheetWriterService, times(1))
+                .writeCSV(any());
+        assertArrayEquals(returnedReport, generatedReport);
+    }
+
+    @Test
+    public void generate_xls_report_with_users() throws ServerException {
+        when(mockSpreadsheetWriterService.writeXLS(any()))
+                .thenReturn(returnedReport);
+        byte[] generatedReport = reportService.generateUsersReport("projectName", dataMap, "xls");
+        verify(mockReportFormatService, times(1))
+                .formatDataForReport(any(), any(), anyBoolean(), anyBoolean());
+        verify(mockSpreadsheetWriterService, times(1))
+                .writeXLS(any());
+        assertArrayEquals(returnedReport, generatedReport);
+    }
+
+    @Test
+    public void invalid_report_format_return_server_error(){
+        ServerException expectedError = new ServerException(
+                "Failed to generate report, invalid format. Format should be one of these types: 'pdf', 'csv' or 'xls'."
+        );
+        ServerException error = assertThrows(ServerException.class, () -> {
+            reportService.generateReport("title", new Object[][]{}, columns ,"invalidFormat");
+        });
+        assertEquals(expectedError.getMessage(),  error.getMessage());
+    }
+}

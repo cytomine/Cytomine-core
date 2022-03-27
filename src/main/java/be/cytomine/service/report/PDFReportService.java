@@ -40,7 +40,6 @@ public class PDFReportService {
     private PDDocument document;
     private PDPage page;
     private PDRectangle pageSize;
-    private float margin;
     private float contentWidth;
     private float contentHeight;
     private float maxPercentWidth;
