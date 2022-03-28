@@ -8,6 +8,8 @@ import be.cytomine.repository.*;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.dto.AnnotationResult;
 import be.cytomine.service.ontology.TermService;
+import be.cytomine.service.project.ProjectService;
+import be.cytomine.service.report.ReportService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.utils.GeometryUtils;
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Component
-public class AnnotationListingBuilder {
+public class AnnotationBuilder {
 
     private final SecUserService secUserService;
 
@@ -34,6 +36,18 @@ public class AnnotationListingBuilder {
     private final TermService termService;
 
     private final AnnotationListingService annotationListingService;
+
+    private final ReportService reportService;
+
+    private final ProjectService projectService;
+
+
+    public byte[] buildAnnotationReport(Long project, String users, JsonObject params, String terms, String format, boolean isReview){
+        List<Map<String, Object>> annotations = buildAnnotationList(params, users);
+        Set<String> termNames = getTermNames(terms);
+        Set<String> userNames = getUserNames(users);
+        return reportService.generateAnnotationsReport(projectService.get(project).getName(), termNames, userNames, annotations, format, isReview);
+    }
 
     public List<Map<String, Object>> buildAnnotationList(JsonObject params, String users){
         AnnotationListing annotationListing = buildAnnotationListing(params);

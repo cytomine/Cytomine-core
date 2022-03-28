@@ -1,13 +1,12 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.api.controller.utils.AnnotationListingBuilder;
+import be.cytomine.api.controller.utils.AnnotationBuilder;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.ReviewedAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.image.ImageInstanceService;
@@ -43,9 +42,7 @@ public class RestReviewedAnnotationController extends RestCytomineController {
 
     private final ProjectService projectService;
 
-    private final AnnotationListingService annotationListingService;
-
-    private final AnnotationListingBuilder annotationListingBuilder;
+    private final AnnotationBuilder annotationBuilder;
 
     private final ReportService reportService;
 
@@ -266,38 +263,11 @@ public class RestReviewedAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Long beforeThan,
             @RequestParam(required = false) Long afterThan
     ) throws IOException {
-
         reviewUsers = secUserService.fillEmptyUserIds(reviewUsers, project);
-
         JsonObject params = mergeQueryParamsAndBodyParams();
-        List<Map<String, Object>> annotations = annotationListingBuilder.buildAnnotationList(params, reviewUsers);
-
-        Set<String> termNames = annotationListingBuilder.getTermNames(terms);
-        Set<String> userNames = annotationListingBuilder.getUserNames(reviewUsers);
-        byte[] report = reportService.generateAnnotationsReport(projectService.get(project).getName(), termNames, userNames, annotations, format, true);
-
+        byte[] report = annotationBuilder.buildAnnotationReport(project, reviewUsers, params, terms, format, true);
         responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
     }
-//TODO:
-//    @RestApiMethod(description="Download a report (pdf, xls,...) with reviewed annotation data from a specific project")
-//    @RestApiResponseObject(objectIdentifier = "file")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The project id"),
-//            @RestApiParam(name="terms", type="list", paramType = RestApiParamType.QUERY,description = "The annotation terms id (if empty: all terms)"),
-//            @RestApiParam(name="reviewUsers", type="list", paramType = RestApiParamType.QUERY,description = "The annotation reviewers id (if empty: all users)"),
-//            @RestApiParam(name="images", type="list", paramType = RestApiParamType.QUERY,description = "The annotation images id (if empty: all images)"),
-//            @RestApiParam(name="afterThan", type="Long", paramType = RestApiParamType.QUERY, description = "(Optional) Annotations created before this date will not be returned"),
-//            @RestApiParam(name="beforeThan", type="Long", paramType = RestApiParamType.QUERY, description = "(Optional) Annotations created after this date will not be returned"),
-//            @RestApiParam(name="format", type="string", paramType = RestApiParamType.QUERY,description = "The report format (pdf, xls,...)")
-//            ])
-//    def downloadDocumentByProject() {
-//        Long afterThan = params.getLong('afterThan')
-//        Long beforeThan = params.getLong('beforeThan')
-//        reportService.createAnnotationDocuments(params.long('id'), params.terms, params.boolean("noTerm", false), params.boolean("multipleTerms", false),
-//        params.reviewUsers, params.images, afterThan, beforeThan, params.format, response, "REVIEWEDANNOTATION")
-//    }
-
-
 
     @RequestMapping(value = "/reviewedannotation/{id}/crop.{format}", method = {GET, POST})
     public void crop(

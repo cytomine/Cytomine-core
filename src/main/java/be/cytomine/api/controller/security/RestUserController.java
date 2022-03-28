@@ -601,20 +601,6 @@ public class RestUserController extends RestCytomineController {
         byte[] report = reportService.generateUsersReport(project.getName(), users, format);
         responseReportFile(reportService.getUsersReportFileName(format, projectId), report, format);
     }
-    //TODO:
-//    @RestApiMethod(description="Download a report (pdf, xls,...) with user listing from a specific project")
-//    @RestApiResponseObject(objectIdentifier =  "file")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The project id"),
-//            @RestApiParam(name="terms", type="list", paramType = RestApiParamType.QUERY,description = "The annotation terms id (if empty: all terms)"),
-//            @RestApiParam(name="users", type="list", paramType = RestApiParamType.QUERY,description = "The annotation users id (if empty: all users)"),
-//            @RestApiParam(name="images", type="list", paramType = RestApiParamType.QUERY,description = "The annotation images id (if empty: all images)"),
-//            @RestApiParam(name="format", type="string", paramType = RestApiParamType.QUERY,description = "The report format (pdf, xls,...)")
-//    ])
-//    def downloadUserListingLightByProject() {
-//        reportService.createUserListingLightDocuments(params.long('id'),params.format,response)
-//    }
-//
 
     @GetMapping("/project/{project}/resumeActivity/{user}.json")
     public ResponseEntity<String> resumeActivity(

@@ -1,13 +1,12 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.api.controller.utils.AnnotationListingBuilder;
+import be.cytomine.api.controller.utils.AnnotationBuilder;
 import be.cytomine.api.controller.utils.RequestParams;
 import be.cytomine.domain.ontology.AlgoAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.middleware.ImageServerService;
@@ -15,6 +14,7 @@ import be.cytomine.service.ontology.AlgoAnnotationService;
 import be.cytomine.service.ontology.SharedAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
+import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -38,7 +38,7 @@ public class RestAlgoAnnotationController extends RestCytomineController {
 
     private final ProjectService projectService;
 
-    private final AnnotationListingBuilder annotationListingBuilder;
+    private final AnnotationBuilder annotationBuilder;
 
     private final ImageServerService imageServerService;
 
@@ -47,6 +47,8 @@ public class RestAlgoAnnotationController extends RestCytomineController {
     private final SharedAnnotationService sharedAnnotationService;
 
     private final ReportService reportService;
+
+    private final SecUserService secUserService;
 
     /**
      * List all annotation (created by algo) visible for the current user
@@ -142,13 +144,9 @@ public class RestAlgoAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Long beforeThan,
             @RequestParam(required = false) Long afterThan
     ) throws IOException {
-
+        users = secUserService.fillEmptyUserIds(users, project);
         JsonObject params = mergeQueryParamsAndBodyParams();
-        List<Map<String, Object>> annotations = annotationListingBuilder.buildAnnotationList(params, users);
-
-        Set<String> termNames = annotationListingBuilder.getTermNames(terms);
-        Set<String> userNames = annotationListingBuilder.getUserNames(users);
-        byte[] report = reportService.generateAnnotationsReport(projectService.get(project).getName(), termNames, userNames, annotations, format, false);
+        byte[] report = annotationBuilder.buildAnnotationReport(project, users, params, terms, format, false);
         responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
     }
     // TODO
