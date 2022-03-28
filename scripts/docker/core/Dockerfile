@@ -40,9 +40,11 @@ RUN cd /tmp/logrotate-3.18.0 && autoreconf -fiv && ./configure && make
 
 RUN cp /tmp/logrotate-3.18.0/logrotate /usr/sbin/logrotate
 
+ADD scripts/docker/core/deploy.sh /app/deploy.sh
+RUN chmod +x /app/deploy.sh
 ADD ci/cytomine.jar /app/cytomine.jar
-
+RUN touch /tmp/addHosts.sh && chmod +x /tmp/addHosts.sh
 RUN ls -ln /app/cytomine.jar
 WORKDIR /app
-ENTRYPOINT ["java", "-jar", "/app/cytomine.jar"]
+ENTRYPOINT "/app/deploy.sh"
 #ENTRYPOINT ["java -Djava.awt.headless=true -Xms512m -Xmx4096m -XX:MaxPermSize=512M -XX:+UseConcMarkSweepGC -Djavax.servlet.request.encoding=UTF-8 -Dfile.encoding=UTF-8 -cp /app/cytomine.jar -Dloader.main=be.cytomine.CytomineCoreApplication -Djava.awt.headless=true org.springframework.boot.loader.PropertiesLauncher"]
