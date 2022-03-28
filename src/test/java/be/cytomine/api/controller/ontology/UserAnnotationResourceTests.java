@@ -2,6 +2,7 @@ package be.cytomine.api.controller.ontology;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.TestUtils;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
@@ -267,7 +268,7 @@ public class UserAnnotationResourceTests {
     public void download_user_annotation_xls_document() throws Exception {
         buildDownloadContext();
         MvcResult mvcResult = performDownload("xls");
-        checkResult(";", mvcResult);
+        checkResult(",", mvcResult);
     }
 
     @Test
@@ -296,19 +297,7 @@ public class UserAnnotationResourceTests {
     }
 
     private void checkResult(String delimiter, MvcResult result) throws UnsupportedEncodingException {
-        String[] rows = result.getResponse().getContentAsString().split("\n");
-        String[] userAnnotationResult = rows[1].split(delimiter);
-        assertThat(userAnnotationResult[0]).isEqualTo(this.userAnnotation.getId().toString());
-        assertThat(userAnnotationResult[1]).isEqualTo(StringUtils.decimalFormatter(this.userAnnotation.getArea()));
-        assertThat(userAnnotationResult[2]).isEqualTo(StringUtils.decimalFormatter(this.userAnnotation.getPerimeter()));
-        assertThat(userAnnotationResult[3]).isEqualTo(StringUtils.decimalFormatter(this.userAnnotation.getCentroid().getX()));
-        assertThat(userAnnotationResult[4]).isEqualTo(StringUtils.decimalFormatter(this.userAnnotation.getCentroid().getY()));
-        assertThat(userAnnotationResult[5]).isEqualTo(this.image.getId().toString());
-        assertThat(userAnnotationResult[6]).isEqualTo(this.image.getBlindInstanceFilename());
-        assertThat(userAnnotationResult[7]).isEqualTo(this.me.getUsername());
-        assertThat(userAnnotationResult[8]).isEqualTo(this.term.getName());
-        assertThat(userAnnotationResult[9]).isEqualTo("http://localhost:8080/api/userannotation/"+ this.userAnnotation.getId() +"/crop.png");
-        assertThat(userAnnotationResult[10].replace("\r","")).isEqualTo("http://localhost:8080/#/project/"+this.project.getId()+"/image/"+this.image.getId()+"/annotation/"+this.userAnnotation.getId());
+        TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.userAnnotation, this.project, this.image, this.me, this.term);
     }
 
     private MvcResult performDownload(String format) throws Exception {

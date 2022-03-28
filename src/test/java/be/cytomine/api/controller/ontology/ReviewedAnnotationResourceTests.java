@@ -2,6 +2,7 @@ package be.cytomine.api.controller.ontology;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.TestUtils;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
@@ -213,6 +214,7 @@ public class ReviewedAnnotationResourceTests {
     }
 
 
+    // TODO (TO FIX), when try to fetch reviewed annotations, they doesn't not exists in DB despite I try to create them in buildDownloadContext()
     @Test
     @Transactional
     public void download_reviewed_annotation_csv_document() throws Exception {
@@ -221,6 +223,7 @@ public class ReviewedAnnotationResourceTests {
         checkResult(",", mvcResult);
     }
 
+    // TODO (TO FIX), when try to fetch reviewed annotations, they doesn't not exists in DB despite I try to create them in buildDownloadContext()
     @Test
     @Transactional
     public void download_reviewed_annotation_xls_document() throws Exception {
@@ -251,22 +254,7 @@ public class ReviewedAnnotationResourceTests {
         this.term = builder.given_a_term(this.project.getOntology());
         this.me = builder.given_superadmin();
         this.reviewedAnnotation = builder.given_a_reviewed_annotation(this.slice, "POLYGON((1 1,5 1,5 5,1 5,1 1))", this.me, this.term);
-    }
-
-    private void checkResult(String delimiter, MvcResult result) throws UnsupportedEncodingException {
-        String[] rows = result.getResponse().getContentAsString().split("\n");
-        String[] userAnnotationResult = rows[1].split(delimiter);
-        AssertionsForClassTypes.assertThat(userAnnotationResult[0]).isEqualTo(this.reviewedAnnotation.getId().toString());
-        AssertionsForClassTypes.assertThat(userAnnotationResult[1]).isEqualTo(StringUtils.decimalFormatter(this.reviewedAnnotation.getArea()));
-        AssertionsForClassTypes.assertThat(userAnnotationResult[2]).isEqualTo(StringUtils.decimalFormatter(this.reviewedAnnotation.getPerimeter()));
-        AssertionsForClassTypes.assertThat(userAnnotationResult[3]).isEqualTo(StringUtils.decimalFormatter(this.reviewedAnnotation.getCentroid().getX()));
-        AssertionsForClassTypes.assertThat(userAnnotationResult[4]).isEqualTo(StringUtils.decimalFormatter(this.reviewedAnnotation.getCentroid().getY()));
-        AssertionsForClassTypes.assertThat(userAnnotationResult[5]).isEqualTo(this.image.getId().toString());
-        AssertionsForClassTypes.assertThat(userAnnotationResult[6]).isEqualTo(this.image.getBlindInstanceFilename());
-        AssertionsForClassTypes.assertThat(userAnnotationResult[7]).isEqualTo(this.me.getUsername());
-        AssertionsForClassTypes.assertThat(userAnnotationResult[8]).isEqualTo(this.term.getName());
-        AssertionsForClassTypes.assertThat(userAnnotationResult[9]).isEqualTo("http://localhost:8080/api/userannotation/"+ this.reviewedAnnotation.getId() +"/crop.png");
-        AssertionsForClassTypes.assertThat(userAnnotationResult[10].replace("\r","")).isEqualTo("http://localhost:8080/#/project/"+this.project.getId()+"/image/"+this.image.getId()+"/annotation/"+this.reviewedAnnotation.getId());
+        builder.addUserToProject(project, this.me.getUsername());
     }
 
     private MvcResult performDownload(String format) throws Exception {
@@ -278,6 +266,10 @@ public class ReviewedAnnotationResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
+    }
+
+    private void checkResult(String delimiter, MvcResult result) throws UnsupportedEncodingException {
+        TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.reviewedAnnotation, this.project, this.image, this.me, this.term);
     }
 
     @Test

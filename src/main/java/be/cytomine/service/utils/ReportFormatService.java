@@ -69,12 +69,13 @@ public class ReportFormatService {
      * @return String
      */
     public Object formatAnnotationForReport(Object value, Map<String, Object> annotation, String header, boolean isReview){
-        AnnotationDomain userAnnotation;
+        AnnotationDomain annotationDomain;
         Long annotationId = (long) annotation.get("id");
+        System.out.println("Annotation id : " + annotationId);
         if(isReview){
-            userAnnotation = reviewedAnnotationService.get(annotationId);
+            annotationDomain = reviewedAnnotationService.get(annotationId);
         } else{
-            userAnnotation = userAnnotationService.get(annotationId);
+            annotationDomain = userAnnotationService.get(annotationId);
         }
         switch (header){
             case "user":
@@ -87,13 +88,13 @@ public class ReportFormatService {
             case "term":
                 return String.join("- ", getTermsName(value));
             case "area":
-                return StringUtils.decimalFormatter(userAnnotation.getArea());
+                return StringUtils.decimalFormatter(annotationDomain.getArea());
             case "perimeter":
-                return StringUtils.decimalFormatter(userAnnotation.getPerimeter());
+                return StringUtils.decimalFormatter(annotationDomain.getPerimeter());
             case "X":
-                return StringUtils.decimalFormatter(userAnnotation.getCentroid().getX());
+                return StringUtils.decimalFormatter(annotationDomain.getCentroid().getX());
             case "Y":
-                return StringUtils.decimalFormatter(userAnnotation.getCentroid().getY());
+                return StringUtils.decimalFormatter(annotationDomain.getCentroid().getY());
             default:
                 return value;
         }
