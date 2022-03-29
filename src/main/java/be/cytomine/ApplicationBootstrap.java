@@ -116,46 +116,6 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
 
         initialSetupMigration.changeSet();
 
-        SecUser secUser = secUserRepository.findByUsernameLikeIgnoreCase("admin").orElse(null);
-        if (secUser!=null) {
-            secUser.setPassword(passwordEncoder.encode("password"));
-            secUserRepository.save(secUser);
-
-            if (ontologyRepository.count()==0) {
-                Ontology ontology = new Ontology();
-                ontology.setName("ONTOLOGY_DEMO1");
-                ontology.setUser((User)secUser);
-                ontology = ontologyRepository.save(ontology);
-
-                Term term1 = new Term();
-                term1.setName("term1");
-                term1.setColor("#FF0000");
-                term1.setOntology(ontology);
-                entityManager.persist(term1);
-                Term term2 = new Term();
-                term2.setName("term2");
-                term2.setColor("#00FF00");
-                term2.setOntology(ontology);
-                entityManager.persist(term2);
-
-                Project project = new Project();
-                project.setName("PROJECT_DEMO1");
-                project.setOntology(ontology);
-
-                project = projectRepository.save(project);
-
-                permissionService.addPermission(project, secUser.getUsername(), ADMINISTRATION, secUser);
-                permissionService.addPermission(ontology, secUser.getUsername(), ADMINISTRATION, secUser);
-            }
-
-
-
-        }
-
-
-
-
-        // TODO: print config
         log.info ("#############################################################################");
         log.info ("#############################################################################");
         log.info ("#############################################################################");
