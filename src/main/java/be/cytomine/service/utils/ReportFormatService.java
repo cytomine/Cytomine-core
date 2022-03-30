@@ -1,6 +1,7 @@
 package be.cytomine.service.utils;
 
 import be.cytomine.domain.ontology.AnnotationDomain;
+import be.cytomine.service.dto.Point;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.ontology.TermService;
@@ -18,18 +19,12 @@ import java.util.Map;
 @AllArgsConstructor
 public class ReportFormatService {
 
-    private final SecUserService secUserService;
-
-    private final ImageInstanceService imageInstanceService;
-
     private final TermService termService;
 
     private final UserAnnotationService userAnnotationService;
 
     private final ReviewedAnnotationService reviewedAnnotationService;
 
-    private Map<Long,String> userNameCache;
-    private Map<Long,String> imageNameCache;
     private Map<Long,String> termNameCache;
 
     /**
@@ -38,10 +33,9 @@ public class ReportFormatService {
      *
      * @param  columns
      * @param  data
-     * @param  isReview
      * @return Object[][]
      */
-    public Object[][] formatAnnotationsForReport(List<ReportColumn> columns, List<Map<String, Object>> data, boolean isReview){
+    public Object[][] formatAnnotationsForReport(List<ReportColumn> columns, List<Map<String, Object>> data){
         Object[] headers = getColumnHeaders(columns);
         Object[][] report = initReport(data, headers);
 
@@ -49,16 +43,7 @@ public class ReportFormatService {
             Map<String, Object> element = data.get(i);
             for(int j = 0; j < headers.length; j++){
 
-                AnnotationDomain annotationDomain;
-                Long annotationId = (long) element.get("id");
-
-                if(isReview){
-                    annotationDomain = reviewedAnnotationService.get(annotationId);
-                } else{
-                    annotationDomain = userAnnotationService.get(annotationId);
-                }
-
-                Object value = getAnnotationValue(element.get(headers[j]), element, headers[j].toString(), annotationDomain);
+                Object value = getAnnotationValue(element.get(headers[j]), element, headers[j].toString());
 
                 if(value == null){
                     value = "";
@@ -106,25 +91,21 @@ public class ReportFormatService {
      * @param  header
      * @return String
      */
-    private Object getAnnotationValue(Object value, Map<String, Object> annotation, String header, AnnotationDomain annotationDomain){
+    private Object getAnnotationValue(Object value, Map<String, Object> annotation, String header){
+        Point centroid = (Point) annotation.get("centroid");
         switch (header){
             case "user":
-                if(value != null){
-                    value = getUserName((long) value);
-                }
-                return value;
+                return annotation.get("creator");
             case "filename":
-                return getImageName((long) annotation.get("image"));
+                return annotation.get("instanceFilename");
             case "term":
                 return String.join("- ", getTermsName(value));
-            case "area":
-                return StringUtils.decimalFormatter(annotationDomain.getArea());
-            case "perimeter":
-                return StringUtils.decimalFormatter(annotationDomain.getPerimeter());
+            case "area" : case "perimeter":
+                return StringUtils.decimalFormatter(value);
             case "X":
-                return StringUtils.decimalFormatter(annotationDomain.getCentroid().getX());
+                return StringUtils.decimalFormatter(centroid.getX());
             case "Y":
-                return StringUtils.decimalFormatter(annotationDomain.getCentroid().getY());
+                return StringUtils.decimalFormatter(centroid.getY());
             default:
                 return value;
         }
@@ -190,36 +171,6 @@ public class ReportFormatService {
     private static void headerPropertyToTitle(List<ReportColumn> columns, Object[][] data){
         for(int i=0; i<data[0].length; i++){
             data[0][i] = columns.get(i).title;
-        }
-    }
-
-    /**
-     * Check if user is already in cache. If yes return username, if not add it.
-     * @param  userID
-     * @return String username
-     */
-    private String getUserName(Long userID) {
-        if(userNameCache.containsKey(userID)){
-            return userNameCache.get(userID);
-        }else{
-            String termName = secUserService.find(userID).get().getUsername();
-            userNameCache.put(userID, termName);
-            return termName;
-        }
-    }
-
-    /**
-     * Check if image is already in cache. If yes return image name, if not add it.
-     * @param  imageId
-     * @return String image name
-     */
-    private String getImageName(Long imageId) {
-        if(imageNameCache.containsKey(imageId)){
-            return imageNameCache.get(imageId);
-        }else{
-            String termName = imageInstanceService.find(imageId).get().getBlindInstanceFilename();
-            imageNameCache.put(imageId, termName);
-            return termName;
         }
     }
 

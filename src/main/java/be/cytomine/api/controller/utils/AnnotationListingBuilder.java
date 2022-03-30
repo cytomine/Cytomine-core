@@ -51,6 +51,9 @@ public class AnnotationListingBuilder {
 
     public List<Map<String, Object>> buildAnnotationList(JsonObject params, String users){
         AnnotationListing annotationListing = buildAnnotationListing(params);
+        annotationListing.getColumnsToPrint().add("gis");
+        annotationListing.getColumnsToPrint().add("image");
+        annotationListing.getColumnsToPrint().add("user");
         return filterAnnotationByUsers(annotationListingService.listGeneric(annotationListing), users);
     }
 
@@ -86,6 +89,7 @@ public class AnnotationListingBuilder {
         else {
             al = new UserAnnotationListing(entityManager);
         }
+
         return buildAnnotationListing(al, params);
     }
 

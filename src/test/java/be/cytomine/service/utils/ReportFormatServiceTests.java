@@ -7,6 +7,7 @@ import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.security.User;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
+import be.cytomine.service.dto.Point;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.ontology.TermService;
@@ -65,8 +66,7 @@ public class ReportFormatServiceTests {
     public void annotations_to_report_format() {
         Object[][] dataObject = reportFormatService.formatAnnotationsForReport(
                 ReportService.ANNOTATION_REPORT_COLUMNS,
-                buildAnnotations(true, false),
-                false);
+                buildAnnotations(true, false));
         assertArrayEquals(expectedDataObject, dataObject);
     }
 
@@ -74,8 +74,7 @@ public class ReportFormatServiceTests {
     public void incomplete_annotations_to_report_format() {
         Object[][] dataObject = reportFormatService.formatAnnotationsForReport(
                 ReportService.ANNOTATION_REPORT_COLUMNS,
-                buildAnnotations(false, false),
-                false);
+                buildAnnotations(false, false));
         assertArrayEquals(expectedDataObject, dataObject);
     }
 
@@ -83,16 +82,14 @@ public class ReportFormatServiceTests {
     public void reviewed_annotations_to_report_format() {
         Object[][] dataObject = reportFormatService.formatAnnotationsForReport(
                 ReportService.ANNOTATION_REPORT_COLUMNS,
-                buildAnnotations(true, true),
-                true);
+                buildAnnotations(true, true));
         assertArrayEquals(expectedDataObject, dataObject);
     }
     @Test
     public void incomplete_reviewed_annotations_to_report_format() {
         Object[][] dataObject = reportFormatService.formatAnnotationsForReport(
                 ReportService.ANNOTATION_REPORT_COLUMNS,
-                buildAnnotations(false, true),
-                true);
+                buildAnnotations(false, true));
         assertArrayEquals(expectedDataObject, dataObject);
     }
 
@@ -113,36 +110,33 @@ public class ReportFormatServiceTests {
     }
 
     private List<Map<String,Object>> buildAnnotations(boolean isComplete, boolean isReviewed){
-        AnnotationDomain userAnnotation = builder.given_a_user_annotation();
-        if(isReviewed){
-            userAnnotation = builder.given_a_reviewed_annotation();
-        }
-        User user = builder.given_a_user();
-
-        ImageInstance imageInstance = builder.given_an_image_instance();
         Term term1 = builder.given_a_term();
         Term term2 = builder.given_a_term();
-
+        Point point = new Point(2545454.231212, 2545454.23111);
         expectedDataObject = new Object[][]{
                 {"Id", "Area (microns²)", "Perimeter (mm)", "X", "Y", "Image Id", "Image Filename", "User", "Term", "View annotation picture", "View annotation on image"},
                 {
-                    userAnnotation.getId(),
-                    StringUtils.decimalFormatter(userAnnotation.getArea()),
-                    StringUtils.decimalFormatter(userAnnotation.getPerimeter()),
-                    StringUtils.decimalFormatter(userAnnotation.getCentroid().getX()),
-                    StringUtils.decimalFormatter(userAnnotation.getCentroid().getY()),
-                    imageInstance.getId(),
-                    imageInstanceService.find(imageInstance.getId()).get().getBlindInstanceFilename(),
-                    secUserService.findUser(user.getId()).get().humanUsername(),
+                    "2",
+                    "2545454.23",
+                    "2545.23",
+                    "2545454.23",
+                    "2545454.23",
+                    "1234567",
+                    "Beautiful image",
+                    "Paul",
                     termService.find(term1.getId()).get().getName() + "- " + termService.find(term2.getId()).get().getName(),
                     "http://cropURL",
                     "http://imageURL"
                 },
         };
         Map<String,Object> annotations = new HashMap<>(Map.of(
-                "id", userAnnotation.getId(),
-                "image", imageInstance.getId(),
-                "user", user.getId(),
+                "id", "2",
+                "image", "1234567",
+                "instanceFilename", "Beautiful image",
+                "area", 2545454.23,
+                "perimeter", 2545.23,
+                "creator", "Paul",
+                "centroid", point,
                 "term", term1.getId() + "," + term2.getId(),
                 "cropURL", "http://cropURL",
                 "imageURL", "http://imageURL"

@@ -48,7 +48,7 @@ public class ReportServiceTests {
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateAnnotationsReport("projectName", terms, users, dataMap, "pdf", false);
         verify(mockReportFormatService, times(1))
-                .formatAnnotationsForReport(any(), any(), anyBoolean());
+                .formatAnnotationsForReport(any(), any());
         verify(mockPdfWriterService, times(1))
                 .writePDF(any(),any(),any(),anyBoolean(),anyBoolean());
         assertArrayEquals(returnedReport, generatedReport);
@@ -60,7 +60,7 @@ public class ReportServiceTests {
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateAnnotationsReport("projectName" ,terms, users, dataMap, "csv", false);
         verify(mockReportFormatService, times(1))
-                .formatAnnotationsForReport(any(), any(), anyBoolean());
+                .formatAnnotationsForReport(any(), any());
         verify(mockSpreadsheetWriterService, times(1))
                 .writeSpreadsheet(any());
         assertArrayEquals(returnedReport, generatedReport);
@@ -72,7 +72,7 @@ public class ReportServiceTests {
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateAnnotationsReport("projectName", terms, users, dataMap, "xls", false);
         verify(mockReportFormatService, times(1))
-                .formatAnnotationsForReport(any(), any(), anyBoolean());
+                .formatAnnotationsForReport(any(), any());
         verify(mockSpreadsheetWriterService, times(1))
                 .writeSpreadsheet(any());
         assertArrayEquals(returnedReport, generatedReport);
