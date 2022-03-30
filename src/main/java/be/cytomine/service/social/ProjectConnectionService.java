@@ -55,8 +55,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.mongodb.client.model.Projections.include;
-import static org.springframework.security.acls.domain.BasePermission.READ;
-import static org.springframework.security.acls.domain.BasePermission.WRITE;
+import static org.springframework.security.acls.domain.BasePermission.*;
 
 @Slf4j
 @Service
@@ -520,10 +519,12 @@ public class ProjectConnectionService {
 
 
     public List<JsonObject> numberOfProjectConnections(String period, Long afterThan, Long beforeThan, Project project, SecUser user){
-        if (user!=null) {
-            securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
-        } else {
+        if (user==null && project==null) {
             securityACLService.checkAdmin(currentUserService.getCurrentUser());
+        } else if(project!=null) {
+            securityACLService.check(project, ADMINISTRATION);
+        } else if(user!=null) {
+            securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
         }
 
         if (beforeThan == null) {
