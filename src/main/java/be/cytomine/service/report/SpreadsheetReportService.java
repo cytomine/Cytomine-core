@@ -15,35 +15,14 @@ import java.io.OutputStreamWriter;
 public class SpreadsheetReportService {
 
     /**
-     * Write a CSV report
+     * Write a spreadsheet report (xls / csv)
      *
      * @param  dataArray
-     * @return CSV byte array report encoded in base 64
-     */
-    public byte[] writeCSV(Object[][] dataArray) throws ServerException {
-        return writeSpreadsheet(dataArray, ',');
-    }
-
-    /**
-     * Write a XLS report
-     *
-     * @param  dataArray
-     * @return XLS byte array report encoded in base 64
-     */
-    public byte[] writeXLS(Object[][] dataArray) throws ServerException {
-        return writeSpreadsheet(dataArray, ';');
-    }
-
-    /**
-     * Write a spreadsheet report with a specific delimiter
-     *
-     * @param  dataArray
-     * @param  delimiter
      * @return Spreadsheet byte array report encoded in base 64
      */
-    private byte[] writeSpreadsheet(Object[][] dataArray, char delimiter) throws ServerException {
-        log.info(String.format("Generating spread sheet with delimiter: '%s'", delimiter));
-        CSVFormat format = CSVFormat.EXCEL.withDelimiter(delimiter);
+    public byte[] writeSpreadsheet(Object[][] dataArray) throws ServerException {
+        log.info(String.format("Generating spread sheet with delimiter: '%s'", ";"));
+        CSVFormat format = CSVFormat.EXCEL.withDelimiter(';');
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         try (CSVPrinter csvPrinter = new CSVPrinter(new OutputStreamWriter(output), format)){
 

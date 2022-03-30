@@ -1,7 +1,7 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.api.controller.utils.AnnotationBuilder;
+import be.cytomine.api.controller.utils.AnnotationListingBuilder;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
@@ -46,7 +46,7 @@ public class RestUserAnnotationController extends RestCytomineController {
 
     private final SharedAnnotationService sharedAnnotationService;
 
-    private final AnnotationBuilder annotationBuilder;
+    private final AnnotationListingBuilder annotationListingBuilder;
 
     @GetMapping("/userannotation.json")
     public ResponseEntity<String> listLight(
@@ -102,7 +102,7 @@ public class RestUserAnnotationController extends RestCytomineController {
     ) throws IOException {
         users = secUserService.fillEmptyUserIds(users, project);
         JsonObject params = mergeQueryParamsAndBodyParams();
-        byte[] report = annotationBuilder.buildAnnotationReport(project, users, params, terms, format, false);
+        byte[] report = annotationListingBuilder.buildAnnotationReport(project, users, params, terms, format, false);
         responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
     }
 

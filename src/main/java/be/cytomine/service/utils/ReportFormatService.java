@@ -71,7 +71,6 @@ public class ReportFormatService {
     public Object formatAnnotationForReport(Object value, Map<String, Object> annotation, String header, boolean isReview){
         AnnotationDomain annotationDomain;
         Long annotationId = (long) annotation.get("id");
-        System.out.println("Annotation id : " + annotationId);
         if(isReview){
             annotationDomain = reviewedAnnotationService.get(annotationId);
         } else{

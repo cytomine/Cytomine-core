@@ -3,10 +3,9 @@ package be.cytomine.service.report;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.exceptions.ServerException;
 import be.cytomine.service.utils.ReportFormatService;
-import liquibase.pro.packaged.S;
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -14,7 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import javax.transaction.Transactional;
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.*;
@@ -24,7 +23,7 @@ import static org.mockito.Mockito.times;
 @AutoConfigureMockMvc
 @WithMockUser(authorities = "ROLE_SUPER_ADMIN", username = "superadmin")
 @Transactional
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ReportServiceTests {
 
     ReportFormatService mockReportFormatService = mock(ReportFormatService.class);
@@ -57,25 +56,25 @@ public class ReportServiceTests {
 
     @Test
     public void generate_csv_report_with_annotations() throws ServerException {
-        when(mockSpreadsheetWriterService.writeCSV(any()))
+        when(mockSpreadsheetWriterService.writeSpreadsheet(any()))
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateAnnotationsReport("projectName" ,terms, users, dataMap, "csv", false);
         verify(mockReportFormatService, times(1))
                 .formatDataForReport(any(), any(), anyBoolean(), anyBoolean());
         verify(mockSpreadsheetWriterService, times(1))
-                .writeCSV(any());
+                .writeSpreadsheet(any());
         assertArrayEquals(returnedReport, generatedReport);
     }
 
     @Test
     public void generate_xls_report_with_annotations() throws ServerException {
-        when(mockSpreadsheetWriterService.writeXLS(any()))
+        when(mockSpreadsheetWriterService.writeSpreadsheet(any()))
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateAnnotationsReport("projectName", terms, users, dataMap, "xls", false);
         verify(mockReportFormatService, times(1))
                 .formatDataForReport(any(), any(), anyBoolean(), anyBoolean());
         verify(mockSpreadsheetWriterService, times(1))
-                .writeXLS(any());
+                .writeSpreadsheet(any());
         assertArrayEquals(returnedReport, generatedReport);
     }
 
@@ -93,25 +92,25 @@ public class ReportServiceTests {
 
     @Test
     public void generate_csv_report_with_users() throws ServerException {
-        when(mockSpreadsheetWriterService.writeCSV(any()))
+        when(mockSpreadsheetWriterService.writeSpreadsheet(any()))
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateUsersReport("projectName", dataMap, "csv");
         verify(mockReportFormatService, times(1))
                 .formatDataForReport(any(), any(), anyBoolean(), anyBoolean());
         verify(mockSpreadsheetWriterService, times(1))
-                .writeCSV(any());
+                .writeSpreadsheet(any());
         assertArrayEquals(returnedReport, generatedReport);
     }
 
     @Test
     public void generate_xls_report_with_users() throws ServerException {
-        when(mockSpreadsheetWriterService.writeXLS(any()))
+        when(mockSpreadsheetWriterService.writeSpreadsheet(any()))
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateUsersReport("projectName", dataMap, "xls");
         verify(mockReportFormatService, times(1))
                 .formatDataForReport(any(), any(), anyBoolean(), anyBoolean());
         verify(mockSpreadsheetWriterService, times(1))
-                .writeXLS(any());
+                .writeSpreadsheet(any());
         assertArrayEquals(returnedReport, generatedReport);
     }
 

@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Component
-public class AnnotationBuilder {
+public class AnnotationListingBuilder {
 
     private final SecUserService secUserService;
 

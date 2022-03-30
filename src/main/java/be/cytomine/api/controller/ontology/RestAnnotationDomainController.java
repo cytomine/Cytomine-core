@@ -1,7 +1,7 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.api.controller.utils.AnnotationBuilder;
+import be.cytomine.api.controller.utils.AnnotationListingBuilder;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.*;
@@ -71,7 +71,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
 
     private final SimplifyGeometryService simplifyGeometryService;
 
-    private final AnnotationBuilder annotationBuilder;
+    private final AnnotationListingBuilder annotationListingBuilder;
 
     /**
      * List all ontology visible for the current user
@@ -86,7 +86,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
     @RequestMapping(value = {"/annotation.json"}, method = {RequestMethod.GET})
     public ResponseEntity<String> search() throws IOException {
         JsonObject params = mergeQueryParamsAndBodyParams();
-        AnnotationListing annotationListing = annotationBuilder.buildAnnotationListing(params);
+        AnnotationListing annotationListing = annotationListingBuilder.buildAnnotationListing(params);
         List annotations = annotationListingService.listGeneric(annotationListing);
 
         if (annotationListing instanceof AlgoAnnotationListing) {
@@ -94,7 +94,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
             params.put("suggestedTerm", params.get("term"));
             params.remove("term");
             params.remove("usersForTermAlgo");
-            annotationListing = annotationBuilder.buildAnnotationListing(new UserAnnotationListing(entityManager), params);
+            annotationListing = annotationListingBuilder.buildAnnotationListing(new UserAnnotationListing(entityManager), params);
             annotations.addAll(annotationListingService.listGeneric(annotationListing));
         }
 

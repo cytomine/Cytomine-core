@@ -44,8 +44,8 @@ dependencies {
 //	}
 //	implementation "org.springframework.boot:spring-boot-starter-undertow"
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-    implementation 'junit:junit:4.13.1'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	implementation 'org.springframework.security:spring-security-acl'
 

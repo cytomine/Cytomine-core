@@ -1,7 +1,7 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.api.controller.utils.AnnotationBuilder;
+import be.cytomine.api.controller.utils.AnnotationListingBuilder;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.ReviewedAnnotation;
 import be.cytomine.domain.project.Project;
@@ -42,7 +42,7 @@ public class RestReviewedAnnotationController extends RestCytomineController {
 
     private final ProjectService projectService;
 
-    private final AnnotationBuilder annotationBuilder;
+    private final AnnotationListingBuilder annotationListingBuilder;
 
     private final ReportService reportService;
 
@@ -266,7 +266,7 @@ public class RestReviewedAnnotationController extends RestCytomineController {
         reviewUsers = secUserService.fillEmptyUserIds(reviewUsers, project);
         System.out.println("REVIEW USERS : " + reviewUsers);
         JsonObject params = mergeQueryParamsAndBodyParams();
-        byte[] report = annotationBuilder.buildAnnotationReport(project, reviewUsers, params, terms, format, true);
+        byte[] report = annotationListingBuilder.buildAnnotationReport(project, reviewUsers, params, terms, format, true);
         responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
     }
 
