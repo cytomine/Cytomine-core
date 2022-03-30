@@ -124,7 +124,6 @@ public class RestStatsController extends RestCytomineController {
     ) {
         Project project = projectService.find(projectId)
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
-        securityACLService.checkAdmin(currentUserService.getCurrentUser());
 
         Term term = null;
         if (termId !=null) {
@@ -153,7 +152,6 @@ public class RestStatsController extends RestCytomineController {
     ) {
         Project project = projectService.find(projectId)
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
-        securityACLService.checkAdmin(currentUserService.getCurrentUser());
 
         Term term = null;
         if (termId !=null) {
@@ -182,7 +180,6 @@ public class RestStatsController extends RestCytomineController {
     ) {
         Project project = projectService.find(projectId)
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
-        securityACLService.checkAdmin(currentUserService.getCurrentUser());
 
         Term term = null;
         if (termId !=null) {
@@ -257,7 +254,6 @@ public class RestStatsController extends RestCytomineController {
         Project project = projectService.find(projectId)
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
         securityACLService.check(project, READ);
-        securityACLService.checkAdmin(currentUserService.getCurrentUser());
 
         Date startDate = startDateLong != null ? new Date(startDateLong) : null;
         Date endDate = endDateLong != null ? new Date(endDateLong) : null;
@@ -277,7 +273,6 @@ public class RestStatsController extends RestCytomineController {
         Project project = projectService.find(projectId)
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
         securityACLService.check(project, READ);
-        securityACLService.checkAdmin(currentUserService.getCurrentUser());
 
         Date startDate = startDateLong != null ? new Date(startDateLong) : null;
         Date endDate = endDateLong != null ? new Date(endDateLong) : null;
@@ -300,7 +295,6 @@ public class RestStatsController extends RestCytomineController {
         Project project = projectService.find(projectId)
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
         securityACLService.check(project, READ);
-        securityACLService.checkAdmin(currentUserService.getCurrentUser());
 
         Date startDate = startDateLong != null ? new Date(startDateLong) : null;
         Date endDate = endDateLong != null ? new Date(endDateLong) : null;

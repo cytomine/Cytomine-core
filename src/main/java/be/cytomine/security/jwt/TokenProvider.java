@@ -97,7 +97,7 @@ public class TokenProvider {
     public Authentication getAuthentication(String token, Claims claims) {
         Collection<? extends GrantedAuthority> authorities;
 
-        if (!claims.get(TYPE_KEY).equals(TokenType.IMPERSONATE.name())) {
+        if (claims.get(TYPE_KEY)!=null && !claims.get(TYPE_KEY).equals(TokenType.IMPERSONATE.name())) {
             authorities = Arrays
                     .stream(claims.get(AUTHORITIES_KEY).toString().split(","))
                     .filter(auth -> !auth.trim().isEmpty())

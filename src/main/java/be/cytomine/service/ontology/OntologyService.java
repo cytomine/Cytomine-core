@@ -138,12 +138,18 @@ public class OntologyService extends ModelService {
         if(projects.stream().anyMatch(project -> secUserService.listAdmins(project).contains(user))) {
             permissionService.addPermission(ontology, user.getUsername(), BasePermission.ADMINISTRATION);
         } else {
-            permissionService.deletePermission(ontology, user.getUsername(), BasePermission.ADMINISTRATION);
+            if (ontology.getUser()!=user) {
+                // if user is creator, he keep access to the ontology
+                permissionService.deletePermission(ontology, user.getUsername(), BasePermission.ADMINISTRATION);
+            }
         }
         if(projects.stream().anyMatch(project -> secUserService.listUsers(project).contains(user))) {
             permissionService.addPermission(ontology, user.getUsername(), BasePermission.READ);
         } else {
-            permissionService.deletePermission(ontology, user.getUsername(), BasePermission.READ);
+            if (ontology.getUser()!=user) {
+                // if user is creator, he keep access to the ontology
+                permissionService.deletePermission(ontology, user.getUsername(), BasePermission.READ);
+            }
         }
     }
 

@@ -300,15 +300,19 @@ public class StatsService {
 
         List<Tuple> rows = entityManager.createNativeQuery(request, Tuple.class).getResultList();
         for (Tuple row : rows) {
-            String name = (String) idsRevert.get(String.valueOf(row.get(0)));
-            if (name != null) {
-                stats.put(name, (row.get(1) instanceof BigInteger ? ((BigInteger)row.get(1)).longValue() : row.get(1)));
+            if (row.get(0) == null) {
+                stats.put("0", ((BigInteger)row.get(1)).longValue());
+            } else {
+                String name = (String) idsRevert.get(String.valueOf(row.get(0)));
+                if (name != null) {
+                    stats.put(name, (row.get(1) instanceof BigInteger ? ((BigInteger)row.get(1)).longValue() : row.get(1)));
+                }
             }
         }
         //return new ArrayList<>(result.values());
 
         for (Map.Entry<String, Object> entry : stats.entrySet()) {
-            list.add(JsonObject.of("id", ids.get(entry.getKey()), "key", entry.getKey(), "value", entry.getValue(), "color", color.get(entry.getKey())));
+            list.add(JsonObject.of("id", ids.get(entry.getKey()), "key", (entry.getKey().equals("0") ? null : entry.getKey()), "value", entry.getValue(), "color", color.get(entry.getKey())));
         }
         return list;
     }

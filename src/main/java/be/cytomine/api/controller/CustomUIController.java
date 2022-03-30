@@ -141,8 +141,8 @@ public class CustomUIController extends RestCytomineController {
                 result.put(it.getKey(), (Map<String, Boolean>)it.getValue());
             }
         }
-        result.get("project-activities-tab").put("ADMIN_PROJECT", false);
-        result.get("project-activities-tab").put("CONTRIBUTOR_PROJECT", false);
+//        result.get("project-activities-tab").put("ADMIN_PROJECT", false);
+//        result.get("project-activities-tab").put("CONTRIBUTOR_PROJECT", false);
         return result;
     }
 

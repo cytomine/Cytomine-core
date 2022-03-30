@@ -61,8 +61,8 @@ application:
   useHTTPInternally: true
   storagePath: "/data/images"
 
-  instanceHostWebsite: instanceHostWebsite.com
-  instanceHostSupportMail: instanceHostSupportMail@email.com
+  instanceHostWebsite: "https://www.cytomine.org"
+  instanceHostSupportMail: "support@cytomine.coop"
   instanceHostPhoneNumber:
 
   authentication:

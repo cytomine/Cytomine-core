@@ -658,7 +658,7 @@ public class ImageInstanceService extends ModelService {
         for (ImageInstance imageInstance : imageInstanceRepository.findAllByProject(project)) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("id", imageInstance.getId());
-            row.put("instanceFilename", imageInstance.getInstanceFilename());
+            row.put("instanceFilename", imageInstance.getBlindInstanceFilename());
             data.add(row);
         }
         return data;
