@@ -88,7 +88,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
         JsonObject params = mergeQueryParamsAndBodyParams();
         AnnotationListing annotationListing = annotationListingBuilder.buildAnnotationListing(params);
         List annotations = annotationListingService.listGeneric(annotationListing);
-
         if (annotationListing instanceof AlgoAnnotationListing) {
             //if algo, we look for user_annotation JOIN algo_annotation_term  too
             params.put("suggestedTerm", params.get("term"));

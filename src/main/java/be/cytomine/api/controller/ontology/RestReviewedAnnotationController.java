@@ -264,7 +264,6 @@ public class RestReviewedAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Long afterThan
     ) throws IOException {
         reviewUsers = secUserService.fillEmptyUserIds(reviewUsers, project);
-        System.out.println("REVIEW USERS : " + reviewUsers);
         JsonObject params = mergeQueryParamsAndBodyParams();
         byte[] report = annotationListingBuilder.buildAnnotationReport(project, reviewUsers, params, terms, format, true);
         responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);

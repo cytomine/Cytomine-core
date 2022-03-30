@@ -28,28 +28,66 @@ public class ReportFormatService {
 
     private final ReviewedAnnotationService reviewedAnnotationService;
 
+    private Map<Long,String> userNameCache;
+    private Map<Long,String> imageNameCache;
+    private Map<Long,String> termNameCache;
+
     /**
-     * Transform a List<Map<String,Object>> into a simple Object[][]
+     * Transform a List<Map<String,Object>> of annotation into an Object[][]
      * with headers corresponding to given columns.
      *
      * @param  columns
      * @param  data
-     * @param  isAnnotation
+     * @param  isReview
      * @return Object[][]
      */
-    public Object[][] formatDataForReport(List<ReportColumn> columns, List<Map<String, Object>> data, boolean isAnnotation, boolean isReview){
+    public Object[][] formatAnnotationsForReport(List<ReportColumn> columns, List<Map<String, Object>> data, boolean isReview){
         Object[] headers = getColumnHeaders(columns);
-        Object[][] report = new Object[data.size() + 1][headers.length];
-        report[0] = headers;
+        Object[][] report = initReport(data, headers);
 
         for(int i = 0; i < data.size(); i++){
             Map<String, Object> element = data.get(i);
             for(int j = 0; j < headers.length; j++){
+
+                AnnotationDomain annotationDomain;
+                Long annotationId = (long) element.get("id");
+
+                if(isReview){
+                    annotationDomain = reviewedAnnotationService.get(annotationId);
+                } else{
+                    annotationDomain = userAnnotationService.get(annotationId);
+                }
+
+                Object value = getAnnotationValue(element.get(headers[j]), element, headers[j].toString(), annotationDomain);
+
+                if(value == null){
+                    value = "";
+                }
+                report[i + 1][j] = value;
+            }
+        }
+        headerPropertyToTitle(columns, report);
+        return report;
+    }
+
+    /**
+     * Transform a List<Map<String,Object>> of users into an Object[][]
+     * with headers corresponding to given columns.
+     *
+     * @param  columns
+     * @param  data
+     * @return Object[][]
+     */
+    public Object[][] formatUsersForReport(List<ReportColumn> columns, List<Map<String, Object>> data){
+        Object[] headers = getColumnHeaders(columns);
+        Object[][] report = initReport(data, headers);
+
+        for(int i = 0; i < data.size(); i++){
+            Map<String, Object> element = data.get(i);
+            for(int j = 0; j < headers.length; j++){
+
                 Object value = element.get(headers[j]);
 
-                if(isAnnotation){
-                    value = formatAnnotationForReport(value, element, headers[j].toString(), isReview);
-                }
                 if(value == null){
                     value = "";
                 }
@@ -68,22 +106,15 @@ public class ReportFormatService {
      * @param  header
      * @return String
      */
-    public Object formatAnnotationForReport(Object value, Map<String, Object> annotation, String header, boolean isReview){
-        AnnotationDomain annotationDomain;
-        Long annotationId = (long) annotation.get("id");
-        if(isReview){
-            annotationDomain = reviewedAnnotationService.get(annotationId);
-        } else{
-            annotationDomain = userAnnotationService.get(annotationId);
-        }
+    private Object getAnnotationValue(Object value, Map<String, Object> annotation, String header, AnnotationDomain annotationDomain){
         switch (header){
             case "user":
                 if(value != null){
-                    value = secUserService.findUser((long) value).get().humanUsername();
+                    value = getUserName((long) value);
                 }
                 return value;
             case "filename":
-                return imageInstanceService.find((long) annotation.get("image")).get().getBlindInstanceFilename();
+                return getImageName((long) annotation.get("image"));
             case "term":
                 return String.join("- ", getTermsName(value));
             case "area":
@@ -101,18 +132,19 @@ public class ReportFormatService {
 
     /**
      * @param  value Object representing the list of term ids
-     * @return String terms name
+     * @return String[] terms name
      */
     public String[] getTermsName(Object value){
         String[] termsId = value.toString()
                 .replace("[", "")
                 .replace("]", "")
                 .split(",");
+
         String[] termNames = new String[termsId.length];
         if(!termsId[0].trim().isEmpty()){
             int k = 0;
             for (String termId:termsId) {
-                termNames[k] = termService.find(Long.parseLong(termId.trim())).get().getName();
+                termNames[k] = getTermName(Long.parseLong(termId.trim()));
                 k++;
             }
         }
@@ -159,5 +191,56 @@ public class ReportFormatService {
         for(int i=0; i<data[0].length; i++){
             data[0][i] = columns.get(i).title;
         }
+    }
+
+    /**
+     * Check if user is already in cache. If yes return username, if not add it.
+     * @param  userID
+     * @return String username
+     */
+    private String getUserName(Long userID) {
+        if(userNameCache.containsKey(userID)){
+            return userNameCache.get(userID);
+        }else{
+            String termName = secUserService.find(userID).get().getUsername();
+            userNameCache.put(userID, termName);
+            return termName;
+        }
+    }
+
+    /**
+     * Check if image is already in cache. If yes return image name, if not add it.
+     * @param  imageId
+     * @return String image name
+     */
+    private String getImageName(Long imageId) {
+        if(imageNameCache.containsKey(imageId)){
+            return imageNameCache.get(imageId);
+        }else{
+            String termName = imageInstanceService.find(imageId).get().getBlindInstanceFilename();
+            imageNameCache.put(imageId, termName);
+            return termName;
+        }
+    }
+
+    /**
+     * Check if term is already in cache. If yes return term name, if not add it.
+     * @param  termId
+     * @return String term name
+     */
+    private String getTermName(Long termId) {
+        if(termNameCache.containsKey(termId)){
+            return termNameCache.get(termId);
+        }else{
+            String termName = termService.find(termId).get().getName();
+            termNameCache.put(termId, termName);
+            return termName;
+        }
+    }
+
+    private Object[][] initReport(List<Map<String, Object>> data, Object[] headers){
+        Object[][] report = new Object[data.size() + 1][headers.length];
+        report[0] = headers;
+        return report;
     }
 }

@@ -43,12 +43,12 @@ public class ReportService {
     private final ReportFormatService reportFormatService;
 
     public byte[] generateUsersReport(String projectName, List<Map<String, Object>> data, String format) throws ServerException {
-        Object[][] dataForReport = reportFormatService.formatDataForReport(USER_REPORT_COLUMNS, data, false, false);
+        Object[][] dataForReport = reportFormatService.formatUsersForReport(USER_REPORT_COLUMNS, data);
         return generateReport(getUserReportTitle(projectName), dataForReport, USER_REPORT_COLUMNS, format);
     }
 
     public byte[] generateAnnotationsReport(String projectName, Set<String> terms, Set<String> users, List<Map<String, Object>> data, String format, boolean isReview) throws ServerException {
-        Object[][] dataForReport = reportFormatService.formatDataForReport(ANNOTATION_REPORT_COLUMNS, data, true, isReview);
+        Object[][] dataForReport = reportFormatService.formatAnnotationsForReport(ANNOTATION_REPORT_COLUMNS, data, isReview);
         return generateReport(getAnnotationReportTitle(projectName, terms, users), dataForReport, ANNOTATION_REPORT_COLUMNS, format);
     }
 

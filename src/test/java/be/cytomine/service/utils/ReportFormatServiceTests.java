@@ -4,11 +4,7 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.ReviewedAnnotation;
 import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.UserAnnotation;
-import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.service.image.ImageInstanceService;
@@ -16,10 +12,8 @@ import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.project.ProjectService;
-import be.cytomine.service.report.ReportColumn;
 import be.cytomine.service.report.ReportService;
 import be.cytomine.service.security.SecUserService;
-import be.cytomine.service.security.SecUserServiceTests;
 import be.cytomine.utils.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,60 +63,52 @@ public class ReportFormatServiceTests {
 
     @Test
     public void annotations_to_report_format() {
-        Object[][] dataObject = reportFormatService.formatDataForReport(
+        Object[][] dataObject = reportFormatService.formatAnnotationsForReport(
                 ReportService.ANNOTATION_REPORT_COLUMNS,
                 buildAnnotations(true, false),
-                true,
                 false);
         assertArrayEquals(expectedDataObject, dataObject);
     }
 
     @Test
     public void incomplete_annotations_to_report_format() {
-        Object[][] dataObject = reportFormatService.formatDataForReport(
+        Object[][] dataObject = reportFormatService.formatAnnotationsForReport(
                 ReportService.ANNOTATION_REPORT_COLUMNS,
                 buildAnnotations(false, false),
-                true,
                 false);
         assertArrayEquals(expectedDataObject, dataObject);
     }
 
     @Test
     public void reviewed_annotations_to_report_format() {
-        Object[][] dataObject = reportFormatService.formatDataForReport(
+        Object[][] dataObject = reportFormatService.formatAnnotationsForReport(
                 ReportService.ANNOTATION_REPORT_COLUMNS,
                 buildAnnotations(true, true),
-                true,
                 true);
         assertArrayEquals(expectedDataObject, dataObject);
     }
     @Test
     public void incomplete_reviewed_annotations_to_report_format() {
-        Object[][] dataObject = reportFormatService.formatDataForReport(
+        Object[][] dataObject = reportFormatService.formatAnnotationsForReport(
                 ReportService.ANNOTATION_REPORT_COLUMNS,
                 buildAnnotations(false, true),
-                true,
                 true);
         assertArrayEquals(expectedDataObject, dataObject);
     }
 
     @Test
     public void users_to_report_format() {
-        Object[][] dataObject = reportFormatService.formatDataForReport(
+        Object[][] dataObject = reportFormatService.formatUsersForReport(
                 ReportService.USER_REPORT_COLUMNS,
-                buildUsers(true),
-                false,
-                false);
+                buildUsers(true));
         assertArrayEquals(expectedDataObject, dataObject);
     }
 
     @Test
     public void incomplete_users_to_report_format() {
-        Object[][] dataObject = reportFormatService.formatDataForReport(
+        Object[][] dataObject = reportFormatService.formatUsersForReport(
                 ReportService.USER_REPORT_COLUMNS,
-                buildUsers(false),
-                false,
-                false);
+                buildUsers(false));
         assertArrayEquals(expectedDataObject, dataObject);
     }
 

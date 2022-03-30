@@ -220,7 +220,7 @@ public class ReviewedAnnotationResourceTests {
     public void download_reviewed_annotation_csv_document() throws Exception {
         buildDownloadContext();
         MvcResult mvcResult = performDownload("csv");
-        checkResult(",", mvcResult);
+        checkResult(";", mvcResult);
     }
 
     // TODO (TO FIX), when try to fetch reviewed annotations, they doesn't not exists in DB despite I try to create them in buildDownloadContext()

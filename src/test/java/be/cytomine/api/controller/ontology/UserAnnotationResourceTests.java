@@ -260,7 +260,7 @@ public class UserAnnotationResourceTests {
     public void download_user_annotation_csv_document() throws Exception {
         buildDownloadContext();
         MvcResult mvcResult = performDownload("csv");
-        checkResult(",", mvcResult);
+        checkResult(";", mvcResult);
     }
 
     @Test
@@ -268,7 +268,7 @@ public class UserAnnotationResourceTests {
     public void download_user_annotation_xls_document() throws Exception {
         buildDownloadContext();
         MvcResult mvcResult = performDownload("xls");
-        checkResult(",", mvcResult);
+        checkResult(";", mvcResult);
     }
 
     @Test
