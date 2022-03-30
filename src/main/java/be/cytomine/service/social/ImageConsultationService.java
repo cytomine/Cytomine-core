@@ -133,7 +133,7 @@ public class ImageConsultationService {
         consultation.setSession(session);
         consultation.setMode(mode);
         consultation.setImageName(imageInstance.getBlindInstanceFilename());
-        consultation.setImageThumb(UrlApi.getImageInstanceThumbUrlWithMaxSize(imageInstance.getId(), 256, "png"));
+        consultation.setImageThumb(UrlApi.getImageInstanceThumbUrlWithMaxSize(imageInstance.getId(), 512, "png"));
 
 
         persistentImageConsultationRepository.insert(consultation);
@@ -262,7 +262,7 @@ public class ImageConsultationService {
                 jsonObject.put("image", imageInstanceId);
                 jsonObject.put("user", result.get("user"));
                 jsonObject.put("time", result.get("time"));
-                jsonObject.put("imageThumb", UrlApi.getImageInstanceThumbUrlWithMaxSize(image.getId()));
+                jsonObject.put("imageThumb", UrlApi.getImageInstanceThumbUrl(image.getId()));
                 jsonObject.put("imageName", filename);
                 jsonObject.put("project", image.getProject().getId());
                 jsonObject.put("countCreatedAnnotations", result.get("countCreatedAnnotations"));
@@ -537,7 +537,7 @@ public class ImageConsultationService {
                 JsonObject jsonObject = new JsonObject();
                 jsonObject.put("id", result.get("_id"));
                 jsonObject.put("date", result.get("date"));
-                jsonObject.put("thumb", UrlApi.getImageInstanceThumbUrlWithMaxSize(imageInstance.getId()));
+                jsonObject.put("thumb", UrlApi.getImageInstanceThumbUrl(imageInstance.getId()));
                 jsonObject.put("instanceFilename", imageInstance.getBlindInstanceFilename());
                 jsonObject.put("project", imageInstance.getProject().getId());
                 data.add(jsonObject);
