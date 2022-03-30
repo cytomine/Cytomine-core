@@ -100,7 +100,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
             annotations.addAll(annotationListingService.listGeneric(annotationListing));
         }
 
-        return responseSuccess(annotations);
+        return responseSuccess(annotations, params.getJSONAttrLong("offset", 0L),params.getJSONAttrLong("max", 0L));
     }
 
     @RequestMapping(value = {"/project/{project}/annotation/download"}, method = {RequestMethod.GET})
@@ -242,6 +242,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
         cropParameter.setColormap(colormap);
         cropParameter.setInverse(inverse);
         cropParameter.setGamma(gamma);
+        cropParameter.setMaxSize(maxSize);
         cropParameter.setAlpha(alpha);
         cropParameter.setContrast(contrast);
         cropParameter.setThickness(thickness);
