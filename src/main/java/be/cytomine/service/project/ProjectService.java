@@ -22,6 +22,7 @@ import be.cytomine.repository.command.UndoStackItemRepository;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.repository.project.ProjectRepository;
+import be.cytomine.repository.project.ProjectRepresentativeUserRepository;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
@@ -152,6 +153,9 @@ public class ProjectService extends ModelService {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private ProjectRepresentativeUserRepository projectRepresentativeUserRepository;
 
     public Project get(Long id) {
         return find(id).orElse(null);
@@ -943,7 +947,12 @@ public class ProjectService extends ModelService {
 
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         deleteDependentImageInstance((Project) domain, transaction, task);
+        deleteDependentRepresentativeUser((Project) domain, transaction, task);
         //TODO: only that? software project? ...
+    }
+
+    private void deleteDependentRepresentativeUser(Project domain, Transaction transaction, Task task) {
+        projectRepresentativeUserRepository.deleteAll(projectRepresentativeUserService.listByProject(domain));
     }
 
     private void deleteDependentImageInstance(Project project, Transaction transaction, Task task) {
