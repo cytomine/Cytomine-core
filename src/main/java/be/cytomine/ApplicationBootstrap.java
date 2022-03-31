@@ -191,6 +191,10 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
         log.info("create multiple IS and Retrieval...");
         bootstrapUtilDataService.createMultipleImageServer();
         bootstrapUtilDataService.updateProcessingServerRabbitQueues();
+        log.info ("#############################################################################");
+        log.info ("###################              READY              #########################");
+        log.info ("#############################################################################");
+
     }
 
     private void printConfiguration() {
