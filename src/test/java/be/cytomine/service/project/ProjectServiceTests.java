@@ -873,6 +873,26 @@ public class ProjectServiceTests {
         AssertionsForClassTypes.assertThat(projectService.find(project.getId()).isEmpty());
     }
 
+
+
+    @Test
+    void delete_project_just_beeing_created() {
+        Project project = BasicInstanceBuilder.given_a_not_persisted_project();
+
+        CommandResponse commandResponse = projectService.add(project.toJsonObject());
+
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        assertThat(projectService.find(commandResponse.getObject().getId())).isPresent();
+        Project projectCreated = projectService.find(commandResponse.getObject().getId()).get();
+
+        commandResponse = projectService.delete(projectCreated, null, null, true);
+
+        AssertionsForClassTypes.assertThat(commandResponse).isNotNull();
+        AssertionsForClassTypes.assertThat(commandResponse.getStatus()).isEqualTo(200);
+    }
+
+
     @Test
     void delete_project_with_dependencies() {
         Project project = builder.given_a_project();

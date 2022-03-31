@@ -718,7 +718,7 @@ public class UserResourceTests {
 
     @Test
     @Transactional
-    public void edit_valid_user_does_not_alter_password() throws Exception {
+    public void edit_valid_user_may_alter_password() throws Exception {
 
         User user = builder.given_a_user();
         user.setPassword("secretPassword");
@@ -727,7 +727,7 @@ public class UserResourceTests {
 
         restUserControllerMockMvc.perform(put("/api/user/{id}.json", user.getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(user.toJsonObject().withChange("password", "mustBeIgnored").toJsonString()))
+                        .content(user.toJsonObject().withChange("password", "mustBeChanged").toJsonString()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
@@ -736,38 +736,7 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.command").exists())
                 .andExpect(jsonPath("$.user.id").exists());
 
-        em.refresh(user);
-        assertThat(user.getPassword()).isNotEqualTo("secretPassword");
-        assertThat(user.getNewPassword()).isNull();
-        assertThat(passwordEncoder.matches("secretPassword", user.getPassword())).isTrue();
-
-    }
-
-    @Test
-    @Transactional
-    public void edit_valid_user_with_password_change() throws Exception {
-
-        User user = builder.given_a_user();
-        user.setPassword("secretPassword");
-        user.encodePassword(passwordEncoder);
-        builder.persistAndReturn(user);
-
-        restUserControllerMockMvc.perform(put("/api/user/{id}.json", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(user.toJSON()))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.printMessage").value(true))
-                .andExpect(jsonPath("$.callback").exists())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.command").exists())
-                .andExpect(jsonPath("$.user.id").exists());
-
-
-        assertThat(user.getPassword()).isNotEqualTo("secretPassword");
-        assertThat(user.getNewPassword()).isNull();
-        assertThat(passwordEncoder.matches("secretPassword", user.getPassword())).isTrue();
-
+        assertThat(passwordEncoder.matches("mustBeChanged", user.getPassword())).isTrue();
     }
 
     @Test
@@ -1158,7 +1127,8 @@ public class UserResourceTests {
         user.encodePassword(passwordEncoder);
         builder.persistAndReturn(user);
 
-        restUserControllerMockMvc.perform(post("/api/user/{user}/security_check.json", user.getId())
+        restUserControllerMockMvc.perform(post("/api/user/security_check.json")
+                        .with(user(user.getUsername()))
                         .contentType(MediaType.APPLICATION_JSON).content(JsonObject.of("password", "newPassword").toJsonString()))
                 .andDo(print())
                 .andExpect(status().isOk());
@@ -1173,8 +1143,8 @@ public class UserResourceTests {
         user.encodePassword(passwordEncoder);
         builder.persistAndReturn(user);
 
-        restUserControllerMockMvc.perform(post("/api/user/{user}/security_check.json", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON).content(JsonObject.of("password", "xxxxxxxxxx").toJsonString()))
+        restUserControllerMockMvc.perform(post("/api/user/security_check.json")
+                        .contentType(MediaType.APPLICATION_JSON).content(JsonObject.of("username", user.getUsername(), "password", "xxxxxxxxxx").toJsonString()))
                 .andDo(print())
                 .andExpect(status().isUnauthorized());
     }

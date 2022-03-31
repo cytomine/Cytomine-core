@@ -825,7 +825,7 @@ public class ProjectService extends ModelService {
 
         List<JsonObject> data = new ArrayList<>();
         for (Project project : projects) {
-            JsonObject jsonObject = JsonObject.of("project", project);
+            JsonObject jsonObject = JsonObject.of("project", Project.getDataFromDomain(project));
             Optional<JsonObject> optEntry = tmp.stream().filter(entry -> Objects.equals(project.getId(), entry.getJSONAttrLong("project"))).findFirst();
             jsonObject.put("users", optEntry.orElse(new JsonObject()).get("users"));
             data.add(jsonObject);

@@ -7,6 +7,7 @@ import be.cytomine.domain.ontology.RelationTerm;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.OntologyRepository;
@@ -17,6 +18,7 @@ import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.ontology.OntologyService;
 import be.cytomine.service.ontology.TermService;
+import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import org.junit.jupiter.api.Assertions;
@@ -302,5 +304,45 @@ public class OntologyServiceTests {
         assertThat(permissionService.hasACLPermission(ontology, userNotInProject.getUsername(), ADMINISTRATION)).isFalse();
         assertThat(permissionService.hasACLPermission(ontology, userNotInProject.getUsername(), READ)).isFalse();
 
+    }
+
+    @Autowired
+    ProjectService projectService;
+
+    @Test
+    @WithMockUser("user")
+    void determine_rights_for_users_keep_rights_for_ontology_creator() {
+
+        // create ontology for user
+        Ontology ontology = BasicInstanceBuilder.given_a_not_persisted_ontology();
+        CommandResponse commandResponse = ontologyService.add(ontology.toJsonObject());
+        ontology = (Ontology) commandResponse.getObject();
+
+        assertThat(ontology.getUser().getUsername()).isEqualTo("user");
+        assertThat(permissionService.hasACLPermission(ontology, "user", ADMINISTRATION)).isTrue();
+        assertThat(permissionService.hasACLPermission(ontology, "user", READ)).isTrue();
+
+        // create project with ontology
+        Project project = BasicInstanceBuilder.given_a_not_persisted_project();
+        project.setOntology(ontology);
+        commandResponse = projectService.add(project.toJsonObject());
+        project = (Project)commandResponse.getObject() ;
+
+        assertThat(ontology.getUser().getUsername()).isEqualTo("user");
+        assertThat(permissionService.hasACLPermission(ontology, "user", ADMINISTRATION)).isTrue();
+        assertThat(permissionService.hasACLPermission(ontology, "user", READ)).isTrue();
+        assertThat(permissionService.hasACLPermission(project, "user", ADMINISTRATION)).isTrue();
+        assertThat(permissionService.hasACLPermission(project, "user", READ)).isTrue();
+
+        // change project ontology
+        commandResponse = projectService.update(project, project.toJsonObject()
+                .withChange("ontology", null));
+
+        // check that use still keep its rights to access ontology
+        assertThat(ontology.getUser().getUsername()).isEqualTo("user");
+        assertThat(permissionService.hasACLPermission(ontology, "user", ADMINISTRATION)).isTrue();
+        assertThat(permissionService.hasACLPermission(ontology, "user", READ)).isTrue();
+        assertThat(permissionService.hasACLPermission(project, "user", ADMINISTRATION)).isTrue();
+        assertThat(permissionService.hasACLPermission(project, "user", READ)).isTrue();
     }
 }
