@@ -587,13 +587,6 @@ public class ProjectResourceTests {
                 .andExpect(jsonPath("$.errors").value(containsString("already exist")));
     }
 
-    @Disabled("task must be implemented")
-    @Test
-    @Transactional
-    public void add_project_with_task() throws Exception {
-
-    }
-
 
     @Test
     @Transactional
@@ -688,13 +681,6 @@ public class ProjectResourceTests {
 
     }
 
-    @Disabled("task must be implemented")
-    @Test
-    @Transactional
-    public void edit_project_with_task() throws Exception {
-        org.assertj.core.api.Assertions.fail("not yet implemented");
-    }
-
     @Test
     @Transactional
     public void delete_project() throws Exception {
@@ -723,13 +709,6 @@ public class ProjectResourceTests {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());
-    }
-
-    @Disabled("task must be implemented")
-    @Test
-    @Transactional
-    public void delete_project_with_task() throws Exception {
-        org.assertj.core.api.Assertions.fail("not yet implemented");
     }
 
 
@@ -1043,13 +1022,13 @@ public class ProjectResourceTests {
                         .param("fullData", "true"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[?(@.project=="+project.getId()+")]").exists());
+                .andExpect(jsonPath("$[?(@.project=="+project.getId()+")]").exists());
 
-        restProjectControllerMockMvc.perform(get("/api/project/{id}/commandHistory.json", project.getId())
+        restProjectControllerMockMvc.perform(get("/api/project/{id}/commandhistory.json", project.getId())
                         .param("user", builder.given_superadmin().getId().toString()))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[?(@.project=="+project.getId()+")]").exists());
+                .andExpect(jsonPath("$[?(@.project=="+project.getId()+")]").exists());
 
 
     }
@@ -1068,26 +1047,26 @@ public class ProjectResourceTests {
         Date stop = DateUtils.addSeconds(new Date(), 5);
 
 
-        restProjectControllerMockMvc.perform(get("/api/project/{id}/commandHistory.json", project.getId())
+        restProjectControllerMockMvc.perform(get("/api/project/{id}/commandhistory.json", project.getId())
                         .param("startDate", start.getTime()+"")
                         .param("endDate", stop.getTime()+""))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[?(@.project=="+project.getId()+")]").exists());
+                .andExpect(jsonPath("$[?(@.project=="+project.getId()+")]").exists());
 
-        restProjectControllerMockMvc.perform(get("/api/project/{id}/commandHistory.json", project.getId())
+        restProjectControllerMockMvc.perform(get("/api/project/{id}/commandhistory.json", project.getId())
                         .param("startDate", DateUtils.addSeconds(start, -5).getTime()+"")
                         .param("endDate", DateUtils.addSeconds(start, -3).getTime()+""))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[?(@.project=="+project.getId()+")]").doesNotExist());
+                .andExpect(jsonPath("$[?(@.project=="+project.getId()+")]").doesNotExist());
 
-        restProjectControllerMockMvc.perform(get("/api/project/{id}/commandHistory.json", project.getId())
+        restProjectControllerMockMvc.perform(get("/api/project/{id}/commandhistory.json", project.getId())
                         .param("startDate", DateUtils.addSeconds(start, 3).getTime()+"")
                         .param("endDate", DateUtils.addSeconds(start, 5).getTime()+""))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[?(@.project=="+project.getId()+")]").doesNotExist());
+                .andExpect(jsonPath("$[?(@.project=="+project.getId()+")]").doesNotExist());
 
     }
 
@@ -1097,27 +1076,27 @@ public class ProjectResourceTests {
 
         Project project = builder.given_a_project();
         forgotPasswordTokenRepository.deleteAll();
-
+        String username = "invitedUser"+System.currentTimeMillis();
         // invite user
         restProjectControllerMockMvc.perform(post("/api/project/{id}/invitation.json", project.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonObject.of(
-                                "name", "invitedUser",
+                                "name", username,
                                 "firstname", "firstname",
                                 "lastname", "lastname",
-                                "mail", "invitedUser@example.com").toJsonString()))
+                                "mail", username+"@example.com").toJsonString()))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("invitedUser"));
+                .andExpect(jsonPath("$.username").value(username));
 
 
         assertThat(forgotPasswordTokenRepository.findAll()).hasSize(1);
 
-        assertThat(secUserRepository.findByUsernameLikeIgnoreCase("invitedUser")).isPresent();
+        assertThat(secUserRepository.findByUsernameLikeIgnoreCase(username)).isPresent();
 
-        assertThat(secUserRepository.findByUsernameLikeIgnoreCase("invitedUser").get().getPasswordExpired()).isTrue();
+        assertThat(secUserRepository.findByUsernameLikeIgnoreCase(username).get().getPasswordExpired()).isTrue();
 
-        assertThat(permissionService.hasACLPermission(project, "invitedUser", READ)).isTrue();
+        assertThat(permissionService.hasACLPermission(project, username, READ)).isTrue();
 
 
 

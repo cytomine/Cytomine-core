@@ -65,7 +65,7 @@ public class GrantRoleTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.adminByNow").value(true))
-                .andExpect(jsonPath("$.userByNow").value(false));
+                .andExpect(jsonPath("$.userByNow").value(true));
 
 
         restGrandRoleControllerMockMvc.perform(get("/session/admin/close.json")

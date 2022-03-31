@@ -170,6 +170,13 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
                 project, user
         );
 
+
+        // add another representative so that we can delete the first one
+        expectOK(() -> {secUserService.addUserToProject(builder.given_superadmin(), project, false); });
+        expectOK(() -> {projectRepresentativeUserService.add(builder.given_a_not_persisted_project_representative_user(
+                project, builder.given_superadmin()
+        ).toJsonObject());});
+
         expectOK(() -> {projectRepresentativeUserService.add(projectRepresentativeUser.toJsonObject());});
         expectOK(() -> {projectRepresentativeUserService.delete(
                 projectRepresentativeUserService.find(project, user).get(), null, null, false
@@ -198,6 +205,12 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_not_persisted_project_representative_user(
                 project, user
         );
+
+        // add another representative so that we can try to delete the first one
+        expectOK(() -> {secUserService.addUserToProject(builder.given_superadmin(), project, false); });
+        expectOK(() -> {projectRepresentativeUserService.add(builder.given_a_not_persisted_project_representative_user(
+                project, builder.given_superadmin()
+        ).toJsonObject());});
 
         expectForbidden(() -> {projectRepresentativeUserService.add(projectRepresentativeUser.toJsonObject());});
         builder.persistAndReturn(projectRepresentativeUser);
@@ -522,6 +535,14 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
                 project, user
         );
 
+
+
+        // add another representative so that we can delete the first one
+        expectOK(() -> {secUserService.addUserToProject(builder.given_superadmin(), project, false); });
+        expectOK(() -> {projectRepresentativeUserService.add(builder.given_a_not_persisted_project_representative_user(
+                project, builder.given_superadmin()
+        ).toJsonObject());});
+
         expectOK(() -> {projectRepresentativeUserService.add(projectRepresentativeUser.toJsonObject());});
         expectOK(() -> {projectRepresentativeUserService.delete(
                 projectRepresentativeUserService.find(project, user).get(), null, null, false
@@ -553,6 +574,13 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_not_persisted_project_representative_user(
                 project, user
         );
+
+
+        // add another representative so that we can try to delete the first one
+        expectOK(() -> {secUserService.addUserToProject(builder.given_superadmin(), project, false); });
+        expectOK(() -> {projectRepresentativeUserService.add(builder.given_a_not_persisted_project_representative_user(
+                project, builder.given_superadmin()
+        ).toJsonObject());});
 
         expectForbidden(() -> {projectRepresentativeUserService.add(projectRepresentativeUser.toJsonObject());});
         builder.persistAndReturn(projectRepresentativeUser);
@@ -879,6 +907,13 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
                 project, user
         );
 
+
+        // add another representative so that we can delete the first one
+        expectOK(() -> {secUserService.addUserToProject(builder.given_superadmin(), project, false); });
+        expectOK(() -> {projectRepresentativeUserService.add(builder.given_a_not_persisted_project_representative_user(
+                project, builder.given_superadmin()
+        ).toJsonObject());});
+
         expectOK(() -> {projectRepresentativeUserService.add(projectRepresentativeUser.toJsonObject());});
         expectOK(() -> {projectRepresentativeUserService.delete(
                 projectRepresentativeUserService.find(project, user).get(), null, null, false
@@ -910,6 +945,12 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_not_persisted_project_representative_user(
                 project, user
         );
+
+        // add another representative so that we can try to delete the first one
+        expectOK(() -> {secUserService.addUserToProject(builder.given_superadmin(), project, false); });
+        expectOK(() -> {projectRepresentativeUserService.add(builder.given_a_not_persisted_project_representative_user(
+                project, builder.given_superadmin()
+        ).toJsonObject());});
 
         expectForbidden(() -> {projectRepresentativeUserService.add(projectRepresentativeUser.toJsonObject());});
         builder.persistAndReturn(projectRepresentativeUser);

@@ -53,7 +53,7 @@ public class CytomineDomainTests {
         assertThat(ontology.getCreated()).isNull();
         ontology = builder.persistAndReturn(ontology);
         Date afterCreate = new Date();
-        assertThat(ontology.getCreated()).isBetween(beforeCreate, afterCreate);
+        assertThat(ontology.getCreated()).isBetween(beforeCreate, afterCreate, true, true);
     }
 
     @Test
@@ -63,13 +63,13 @@ public class CytomineDomainTests {
         assertThat(ontology.getUpdated()).isNull();
         ontology = builder.persistAndReturn(ontology);
         Date afterCreate = new Date();
-        assertThat(ontology.getUpdated()).isBetween(beforeCreate, afterCreate);
+        assertThat(ontology.getUpdated()).isBetween(beforeCreate, afterCreate, true, true);
 
         Date beforeUpdate = new Date();
         ontology.setName(UUID.randomUUID().toString());
         ontology = builder.persistAndReturn(ontology);
         Date afterUpdate = new Date();
 
-        assertThat(ontology.getUpdated()).isBetween(beforeUpdate, afterUpdate);
+        assertThat(ontology.getUpdated()).isBetween(beforeUpdate, afterUpdate, true, true);
     }
 }

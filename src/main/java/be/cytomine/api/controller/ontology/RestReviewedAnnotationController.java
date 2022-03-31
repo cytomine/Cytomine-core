@@ -308,6 +308,7 @@ public class RestReviewedAnnotationController extends RestCytomineController {
         cropParameter.setLocation(location);
         cropParameter.setComplete(complete);
         cropParameter.setZoom(zoom);
+        cropParameter.setMaxSize(maxSize);
         cropParameter.setIncreaseArea(increaseArea);
         cropParameter.setSafe(safe);
         cropParameter.setSquare(square);

@@ -264,6 +264,7 @@ public class RestUserAnnotationController extends RestCytomineController {
         cropParameter.setMask(mask);
         cropParameter.setAlphaMask(alphaMask);
         cropParameter.setDrawScaleBar(drawScaleBar);
+        cropParameter.setMaxSize(maxSize);
         cropParameter.setResolution(resolution);
         cropParameter.setMagnification(magnification);
         cropParameter.setColormap(colormap);
@@ -317,6 +318,7 @@ public class RestUserAnnotationController extends RestCytomineController {
         cropParameter.setGeometry(geometry);
         cropParameter.setLocation(location);
         cropParameter.setComplete(complete);
+        cropParameter.setMaxSize(maxSize);
         cropParameter.setZoom(zoom);
         cropParameter.setIncreaseArea(increaseArea);
         cropParameter.setSafe(safe);

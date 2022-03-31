@@ -513,14 +513,14 @@ public class ReviewedAnnotationResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
 
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=crop";
+        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&maxSize=512&type=crop";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
         );
 
-        MvcResult mvcResult = restReviewedAnnotationControllerMockMvc.perform(get("/api/reviewedannotation/{id}/crop.png", annotation.getId()))
+        MvcResult mvcResult = restReviewedAnnotationControllerMockMvc.perform(get("/api/reviewedannotation/{id}/crop.png?maxSize=512", annotation.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();

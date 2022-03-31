@@ -1037,6 +1037,7 @@ public class SecUserService extends ModelService {
         user.setPassword(newPassword);
         user.encodePassword(passwordEncoder);
         user.setPasswordExpired(false);
+        user.setNewPassword(null);
         this.saveDomain(user);
     }
 

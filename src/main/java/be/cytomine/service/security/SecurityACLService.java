@@ -301,7 +301,7 @@ public class SecurityACLService {
         boolean isNotSameUser = (!currentRoleService.isAdminByNow(currentUser) && (!Objects.equals(user.getId(), currentUser.getId())));
         if (isNotSameUser) {
             if (domain!=null) {
-                if (hasPermission(retrieveContainer(domain), ADMINISTRATION,currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
+                if (!hasPermission(retrieveContainer(domain), ADMINISTRATION,currentRoleService.isAdminByNow(currentUserService.getCurrentUser()))) {
                     throw new ForbiddenException("You don't have the right to do this. You must be the creator or the container admin");
                 }
             } else {

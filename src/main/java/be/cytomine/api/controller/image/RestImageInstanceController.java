@@ -288,6 +288,7 @@ public class RestImageInstanceController extends RestCytomineController {
         cropParameter.setGeometry(geometry);
         cropParameter.setLocation(location);
 //        cropParameter.setBoundaries(boundaries);
+        cropParameter.setMaxSize(maxSize);
         cropParameter.setComplete(complete);
         cropParameter.setZoom(zoom);
         cropParameter.setIncreaseArea(increaseArea);

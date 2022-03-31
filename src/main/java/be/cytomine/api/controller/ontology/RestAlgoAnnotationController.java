@@ -212,6 +212,7 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         cropParameter.setSafe(safe);
         cropParameter.setSquare(square);
         cropParameter.setType(type);
+        cropParameter.setMaxSize(maxSize);
         cropParameter.setDraw(draw);
         cropParameter.setMask(mask);
         cropParameter.setAlphaMask(alphaMask);

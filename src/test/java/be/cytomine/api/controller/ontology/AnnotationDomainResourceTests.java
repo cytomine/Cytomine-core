@@ -20,6 +20,7 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.assertj.core.api.AssertionsForClassTypes;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
@@ -463,6 +464,76 @@ public class AnnotationDomainResourceTests {
                 .andExpect(jsonPath("$.collection[?(@.id==" + intersectAnnotation.getId() + ")]").doesNotExist())
                 .andReturn();
     }
+
+    @Test
+    @Transactional
+    public void list_user_annotation_with_pagination() throws Exception {
+        Project project = builder.given_a_project();
+
+        UserAnnotation a1 = builder.given_a_user_annotation(project);
+        UserAnnotation a2 = builder.given_a_user_annotation(project);
+        UserAnnotation a3 = builder.given_a_user_annotation(project);
+        UserAnnotation a4 = builder.given_a_user_annotation(project);
+        UserAnnotation a5 = builder.given_a_user_annotation(project);
+        UserAnnotation a6 = builder.given_a_user_annotation(project);
+        UserAnnotation a7 = builder.given_a_user_annotation(project);
+        UserAnnotation a8 = builder.given_a_user_annotation(project);
+
+        assertThat(userAnnotationRepository.countByProject(project)).isEqualTo(8);
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/search.json")
+                        .param("project", project.getId().toString())
+                        .param("max", "10")
+                        .param("offset", "0"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.perPage").value(8))
+                .andExpect(jsonPath("$.offset").value(0))
+                .andExpect(jsonPath("$.size").value(8))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.collection[*].id").value(Matchers.contains(
+                        a8.getId().intValue(),
+                        a7.getId().intValue(),
+                        a6.getId().intValue(),
+                        a5.getId().intValue(),
+                        a4.getId().intValue(),
+                        a3.getId().intValue(),
+                        a2.getId().intValue(),
+                        a1.getId().intValue())))
+                .andReturn();
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/search.json")
+                        .param("project", project.getId().toString())
+                        .param("max", "5")
+                        .param("offset", "0"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.perPage").value(5))
+                .andExpect(jsonPath("$.offset").value(0))
+                .andExpect(jsonPath("$.size").value(8))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.collection[0].id").value(a8.getId().intValue()))
+                .andExpect(jsonPath("$.collection[4].id").value(a4.getId().intValue()))
+                .andReturn();
+
+
+        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/search.json")
+                        .param("project", project.getId().toString())
+                        .param("max", "5")
+                        .param("offset", "5"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.perPage").value(5))
+                .andExpect(jsonPath("$.offset").value(5))
+                .andExpect(jsonPath("$.size").value(8))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.collection[0].id").value(a3.getId().intValue()))
+                .andExpect(jsonPath("$.collection[2].id").value(a1.getId().intValue()))
+                .andReturn();
+    }
+
+
+
 
     @Disabled("Disabled until Software package is up!")
     @Test
@@ -1090,14 +1161,14 @@ public class AnnotationDomainResourceTests {
         configureFor("localhost", 8888);
         byte[] mockResponse = UUID.randomUUID().toString().getBytes();
 
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=crop";
+        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&maxSize=512&type=crop";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
         );
 
-        MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}/crop.png", annotation.getId()))
+        MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}/crop.png?maxSize=512", annotation.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
@@ -1114,14 +1185,14 @@ public class AnnotationDomainResourceTests {
         configureFor("localhost", 8888);
         byte[] mockResponse = UUID.randomUUID().toString().getBytes();
 
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=crop";
+        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&maxSize=512&type=crop";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
         );
 
-        MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}/crop.png", annotation.getId()))
+        MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}/crop.png?maxSize=512", annotation.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
@@ -1139,14 +1210,14 @@ public class AnnotationDomainResourceTests {
         configureFor("localhost", 8888);
         byte[] mockResponse = UUID.randomUUID().toString().getBytes();
 
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=crop";
+        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&maxSize=512&type=crop";
         stubFor(get(urlEqualTo(url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
         );
 
-        MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}/crop.png", annotation.getId()))
+        MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}/crop.png?maxSize=512", annotation.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();

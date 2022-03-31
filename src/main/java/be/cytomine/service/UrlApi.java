@@ -29,6 +29,10 @@ public class UrlApi {
         return  serverUrl + "/api/abstractimage/" + idImage + "/thumb." + format;
     }
 
+    public static String getImageInstanceThumbUrl(Long idImage) {
+        return serverUrl + "/api/imageinstance/"+idImage+"/thumb.png";
+    }
+
     public static String getImageInstanceThumbUrlWithMaxSize(Long idImage) {
         return (getImageInstanceThumbUrlWithMaxSize(idImage, 256, "png"));
     }

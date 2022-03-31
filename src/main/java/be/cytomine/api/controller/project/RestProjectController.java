@@ -219,7 +219,7 @@ public class RestProjectController extends RestCytomineController {
     }
 
 
-    @GetMapping({"/commandhistory.json", "/project/{id}/commandHistory.json"})
+    @GetMapping({"/commandhistory.json", "/project/{id}/commandhistory.json"})
     public ResponseEntity<String> listCommandHistory(
             @PathVariable(required = false) Long id,
             @RequestParam(required = false) Long user,
@@ -240,7 +240,7 @@ public class RestProjectController extends RestCytomineController {
             projects.addAll(projectService.listForCurrentUser());
         }
 
-        return responseSuccess(projectService.findCommandHistory(projects, user, max, offset, fullData, startDate, endDate));
+        return responseSuccess(JsonObject.toJsonString(projectService.findCommandHistory(projects, user, max, offset, fullData, startDate, endDate)));
     }
 
 
