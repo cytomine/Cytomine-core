@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -101,6 +102,9 @@ public class BootstrapUtilsService {
     private Environment environment;
 
     @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
     private ParameterConstraintRepository parameterConstraintRepository;
 
     public void createRole(String role) {
@@ -116,6 +120,7 @@ public class BootstrapUtilsService {
             user.setLastname(lastname);
             user.setEmail(email);
             user.setPassword(password);
+            user.encodePassword(passwordEncoder);
             user.setLanguage(Language.valueOf(applicationConfiguration.getDefaultLanguage()));
             user.setEnabled(true);
             user.setIsDeveloper(false);

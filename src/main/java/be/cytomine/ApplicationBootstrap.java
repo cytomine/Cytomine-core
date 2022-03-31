@@ -223,8 +223,7 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
     }
 
     private boolean mustBeObscurify(String prop) {
-        return (prop.contains("credentials") || prop.contains("password") || prop.contains("PrivateKey") || prop.contains("secret"));
-
+        return (prop.toLowerCase().contains("credentials") || prop.toLowerCase().contains("password") || prop.toLowerCase().contains("privatekey") || prop.toLowerCase().contains("secret"));
     }
 
 //
