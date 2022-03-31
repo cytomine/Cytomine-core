@@ -2,8 +2,6 @@ package be.cytomine.service.utils;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.security.User;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
@@ -15,7 +13,7 @@ import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
 import be.cytomine.service.security.SecUserService;
-import be.cytomine.utils.StringUtils;
+import be.cytomine.utils.JsonObject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -63,6 +61,22 @@ public class ReportFormatServiceTests {
     TermService termService;
 
     @Test
+    public void image_consultation_to_report_format() {
+        Object[][] dataObject = reportFormatService.formatImageConsultationForReport(
+                ReportService.IMAGE_CONSULTATION_COLUMNS,
+                buildUserImageConsultation(true));
+        assertArrayEquals(expectedDataObject, dataObject);
+    }
+
+    @Test
+    public void incomplete_image_consultation_to_report_format() {
+        Object[][] dataObject = reportFormatService.formatImageConsultationForReport(
+                ReportService.IMAGE_CONSULTATION_COLUMNS,
+                buildUserImageConsultation(false));
+        assertArrayEquals(expectedDataObject, dataObject);
+    }
+
+    @Test
     public void annotations_to_report_format() {
         Object[][] dataObject = reportFormatService.formatAnnotationsForReport(
                 ReportService.ANNOTATION_REPORT_COLUMNS,
@@ -107,6 +121,28 @@ public class ReportFormatServiceTests {
                 ReportService.USER_REPORT_COLUMNS,
                 buildUsers(false));
         assertArrayEquals(expectedDataObject, dataObject);
+    }
+
+    private List<JsonObject> buildUserImageConsultation(boolean isComplete){
+        expectedDataObject = new Object[][]{
+                {"Cumulated duration (ms)", "First consultation", "Last consultation", "Number of consultations", "Id of image", "Name", "Thumb", "Number of created annotations"},
+                {"200", "Wed Mar 30 07:33:31 UTC 2022", "Wed Mar 31 07:33:31 UTC 2022", "5", "25454", "Beautiful image", "http://thumbURL", "2"},
+        };
+        JsonObject imageConsultation = new JsonObject(Map.of(
+                "time", "200",
+                "first", "Wed Mar 30 07:33:31 UTC 2022",
+                "last", "Wed Mar 31 07:33:31 UTC 2022",
+                "frequency", 5,
+                "image", 25454,
+                "imageName", "Beautiful image",
+                "imageThumb", "http://thumbURL",
+                "countCreatedAnnotations", "2"
+        ));
+        if(!isComplete){
+            expectedDataObject[1][6] = "";
+            imageConsultation.remove("imageThumb");
+        }
+        return new ArrayList<>(List.of(imageConsultation));
     }
 
     private List<Map<String,Object>> buildAnnotations(boolean isComplete, boolean isReviewed){

@@ -3,14 +3,11 @@ package be.cytomine.service.utils;
 import be.cytomine.service.dto.Point;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.report.ReportColumn;
-import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.StringUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.*;
 
 @Service
@@ -29,7 +26,7 @@ public class ReportFormatService {
      * @param  data
      * @return Object[][]
      */
-    public Object[][] formatImageConsultationForReport(List<ReportColumn> columns, List<JsonObject> data) throws ParseException {
+    public Object[][] formatImageConsultationForReport(List<ReportColumn> columns, List<JsonObject> data){
 
         List<Map<String, Object>> imageConsultations = new ArrayList<>();
         for(JsonObject json : data){

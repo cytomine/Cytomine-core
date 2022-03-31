@@ -37,7 +37,7 @@ public class ReportService {
         add(new ReportColumn("firstname", "First Name", (float) 0.33));
         add(new ReportColumn("lastname", "Last Name", (float) 0.34));
     }};
-    public static final List<ReportColumn> BY_USER_AND_PROJECT = new ArrayList<>(){{
+    public static final List<ReportColumn> IMAGE_CONSULTATION_COLUMNS = new ArrayList<>(){{
         add(new ReportColumn("time", "Cumulated duration (ms)", (float) 0.10));
         add(new ReportColumn("first", "First consultation", (float) 0.15));
         add(new ReportColumn("last", "Last consultation", (float) 0.15));
@@ -54,10 +54,10 @@ public class ReportService {
 
     private final ReportFormatService reportFormatService;
 
-    public byte[] generateImageConsultationReport(String projectName, String userName, List<JsonObject> data) throws ParseException {
+    public byte[] generateImageConsultationReport(String projectName, String userName, List<JsonObject> data) {
         String title = getImageConsultationReportTitle(projectName, userName);
-        Object[][] dataForReport = reportFormatService.formatImageConsultationForReport(BY_USER_AND_PROJECT, data);
-        return generateReport(title, dataForReport, BY_USER_AND_PROJECT, "csv");
+        Object[][] dataForReport = reportFormatService.formatImageConsultationForReport(IMAGE_CONSULTATION_COLUMNS, data);
+        return generateReport(title, dataForReport, IMAGE_CONSULTATION_COLUMNS, "csv");
     }
 
     public byte[] generateUsersReport(String projectName, List<Map<String, Object>> data, String format) throws ServerException {

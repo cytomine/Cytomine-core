@@ -3,6 +3,7 @@ package be.cytomine.service.report;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.exceptions.ServerException;
 import be.cytomine.service.utils.ReportFormatService;
+import be.cytomine.utils.JsonObject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -11,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import javax.transaction.Transactional;
+import java.text.ParseException;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,6 +33,8 @@ public class ReportServiceTests {
     SpreadsheetReportService mockSpreadsheetWriterService = mock(SpreadsheetReportService.class);
     ReportService reportService = new ReportService(mockPdfWriterService, mockSpreadsheetWriterService, mockReportFormatService);
 
+
+    List<JsonObject> imageConsultationData = new ArrayList<>();
     List<Map<String, Object>> dataMap =  List.of(
             Map.of("id", "Hello"),
             Map.of("id", "World")
@@ -43,12 +47,24 @@ public class ReportServiceTests {
     byte[] returnedReport = {1};
 
     @Test
+    public void generate_csv_report_with_image_consultation() throws ServerException, ParseException {
+        when(mockSpreadsheetWriterService.writeSpreadsheet(any()))
+                .thenReturn(returnedReport);
+        byte[] generatedReport = reportService.generateImageConsultationReport("projectName", "userName", imageConsultationData);
+        verify(mockReportFormatService, times(1))
+                .formatImageConsultationForReport(ReportService.IMAGE_CONSULTATION_COLUMNS, imageConsultationData);
+        verify(mockSpreadsheetWriterService, times(1))
+                .writeSpreadsheet(any());
+        assertArrayEquals(returnedReport, generatedReport);
+    }
+
+    @Test
     public void generate_pdf_report_with_annotations() throws ServerException {
         when(mockPdfWriterService.writePDF(any(),any(),any(),anyBoolean(),anyBoolean()))
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateAnnotationsReport("projectName", terms, users, dataMap, "pdf", false);
         verify(mockReportFormatService, times(1))
-                .formatAnnotationsForReport(any(), any());
+                .formatAnnotationsForReport(ReportService.ANNOTATION_REPORT_COLUMNS, dataMap);
         verify(mockPdfWriterService, times(1))
                 .writePDF(any(),any(),any(),anyBoolean(),anyBoolean());
         assertArrayEquals(returnedReport, generatedReport);
@@ -60,7 +76,7 @@ public class ReportServiceTests {
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateAnnotationsReport("projectName" ,terms, users, dataMap, "csv", false);
         verify(mockReportFormatService, times(1))
-                .formatAnnotationsForReport(any(), any());
+                .formatAnnotationsForReport(ReportService.ANNOTATION_REPORT_COLUMNS, dataMap);
         verify(mockSpreadsheetWriterService, times(1))
                 .writeSpreadsheet(any());
         assertArrayEquals(returnedReport, generatedReport);
@@ -72,7 +88,7 @@ public class ReportServiceTests {
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateAnnotationsReport("projectName", terms, users, dataMap, "xls", false);
         verify(mockReportFormatService, times(1))
-                .formatAnnotationsForReport(any(), any());
+                .formatAnnotationsForReport(ReportService.ANNOTATION_REPORT_COLUMNS, dataMap);
         verify(mockSpreadsheetWriterService, times(1))
                 .writeSpreadsheet(any());
         assertArrayEquals(returnedReport, generatedReport);
@@ -84,7 +100,7 @@ public class ReportServiceTests {
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateUsersReport("projectName", dataMap, "pdf");
         verify(mockReportFormatService, times(1))
-                .formatUsersForReport(any(), any());
+                .formatUsersForReport(ReportService.USER_REPORT_COLUMNS, dataMap);
         verify(mockPdfWriterService, times(1))
                 .writePDF(any(),any(),any(),anyBoolean(),anyBoolean());
         assertArrayEquals(returnedReport, generatedReport);
@@ -96,7 +112,7 @@ public class ReportServiceTests {
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateUsersReport("projectName", dataMap, "csv");
         verify(mockReportFormatService, times(1))
-                .formatUsersForReport(any(), any());
+                .formatUsersForReport(ReportService.USER_REPORT_COLUMNS, dataMap);
         verify(mockSpreadsheetWriterService, times(1))
                 .writeSpreadsheet(any());
         assertArrayEquals(returnedReport, generatedReport);
@@ -108,7 +124,7 @@ public class ReportServiceTests {
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateUsersReport("projectName", dataMap, "xls");
         verify(mockReportFormatService, times(1))
-                .formatUsersForReport(any(), any());
+                .formatUsersForReport(ReportService.USER_REPORT_COLUMNS, dataMap);
         verify(mockSpreadsheetWriterService, times(1))
                 .writeSpreadsheet(any());
         assertArrayEquals(returnedReport, generatedReport);

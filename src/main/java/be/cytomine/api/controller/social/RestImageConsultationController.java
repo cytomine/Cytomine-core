@@ -110,7 +110,7 @@ public class RestImageConsultationController extends RestCytomineController {
             @RequestParam(value = "user") Long userId,
             @RequestParam(value = "project") Long projectId,
             @RequestParam(required = false, value = "export") String export
-    ) throws IOException, ParseException {
+    ) throws IOException {
         List<JsonObject> results = imageConsultationService.resumeByUserAndProject(userId, projectId);
         if (export!=null && export.equals("csv")) {
 
