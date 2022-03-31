@@ -61,8 +61,24 @@ public class ReportFormatServiceTests {
     TermService termService;
 
     @Test
+    public void connection_history_to_report_format() {
+        Object[][] dataObject = reportFormatService.formatJsonObjectForReport(
+                ReportService.CONNECTION_HISTORY_REPORT_COLUMNS,
+                buildUserConnectionHistory(true));
+        assertArrayEquals(expectedDataObject, dataObject);
+    }
+
+    @Test
+    public void incomplete_connection_history_to_report_format() {
+        Object[][] dataObject = reportFormatService.formatJsonObjectForReport(
+                ReportService.CONNECTION_HISTORY_REPORT_COLUMNS,
+                buildUserConnectionHistory(false));
+        assertArrayEquals(expectedDataObject, dataObject);
+    }
+
+    @Test
     public void image_consultation_to_report_format() {
-        Object[][] dataObject = reportFormatService.formatImageConsultationForReport(
+        Object[][] dataObject = reportFormatService.formatJsonObjectForReport(
                 ReportService.IMAGE_CONSULTATION_COLUMNS,
                 buildUserImageConsultation(true));
         assertArrayEquals(expectedDataObject, dataObject);
@@ -70,7 +86,7 @@ public class ReportFormatServiceTests {
 
     @Test
     public void incomplete_image_consultation_to_report_format() {
-        Object[][] dataObject = reportFormatService.formatImageConsultationForReport(
+        Object[][] dataObject = reportFormatService.formatJsonObjectForReport(
                 ReportService.IMAGE_CONSULTATION_COLUMNS,
                 buildUserImageConsultation(false));
         assertArrayEquals(expectedDataObject, dataObject);
@@ -109,7 +125,7 @@ public class ReportFormatServiceTests {
 
     @Test
     public void users_to_report_format() {
-        Object[][] dataObject = reportFormatService.formatUsersForReport(
+        Object[][] dataObject = reportFormatService.formatMapForReport(
                 ReportService.USER_REPORT_COLUMNS,
                 buildUsers(true));
         assertArrayEquals(expectedDataObject, dataObject);
@@ -117,10 +133,31 @@ public class ReportFormatServiceTests {
 
     @Test
     public void incomplete_users_to_report_format() {
-        Object[][] dataObject = reportFormatService.formatUsersForReport(
+        Object[][] dataObject = reportFormatService.formatMapForReport(
                 ReportService.USER_REPORT_COLUMNS,
                 buildUsers(false));
         assertArrayEquals(expectedDataObject, dataObject);
+    }
+
+    private List<JsonObject> buildUserConnectionHistory(boolean isComplete){
+        expectedDataObject = new Object[][]{
+                {"Date", "Duration (ms)", "Number of viewed images", "Number of created annotations", "Operating System", "Browser", "Browser Version"},
+                {"Wed Mar 30 07:33:31 UTC 2022", "5878", "10", "5", "Linux for life", "Firefox", "97.0.568"},
+        };
+        JsonObject userConnectionHistory = new JsonObject(Map.of(
+                "created", "Wed Mar 30 07:33:31 UTC 2022",
+                "time", 5878,
+                "countViewedImages", 10,
+                "countCreatedAnnotations", 5,
+                "os", "Linux for life",
+                "browser", "Firefox",
+                "browserVersion", "97.0.568"
+        ));
+        if(!isComplete){
+            expectedDataObject[1][5] = "";
+            userConnectionHistory.remove("browser");
+        }
+        return new ArrayList<>(List.of(userConnectionHistory));
     }
 
     private List<JsonObject> buildUserImageConsultation(boolean isComplete){

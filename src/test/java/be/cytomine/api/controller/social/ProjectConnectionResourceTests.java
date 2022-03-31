@@ -18,6 +18,7 @@ import be.cytomine.service.social.ImageConsultationService;
 import be.cytomine.service.social.ProjectConnectionService;
 import be.cytomine.utils.JsonObject;
 import org.apache.commons.lang3.time.DateUtils;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -30,6 +31,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -116,9 +118,6 @@ public class ProjectConnectionResourceTests {
         
     }
 
-
-
-
     @Test
     @Transactional
     public void get_connection_by_user_and_project() throws Exception {
@@ -150,7 +149,6 @@ public class ProjectConnectionResourceTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(2))));
     }
-
 
     @Test
     @Transactional
@@ -333,22 +331,38 @@ public class ProjectConnectionResourceTests {
                 .andExpect(status().isOk());
     }
 
-    @Disabled("Disabled until ReportService is up!")
     @Test
     @Transactional
     public void connection_history_with_export_csv() throws Exception {
         User user = builder.given_a_user();
         Project project1 = builder.given_a_project();
 
-        given_a_persistent_connection_in_project(user, project1, DateUtils.addSeconds(new Date(), -3));
-        given_a_persistent_connection_in_project(user, project1, DateUtils.addSeconds(new Date(), -2));
+        Date firstDate = DateUtils.addSeconds(new Date(), -3);
+        Date secondDate = DateUtils.addSeconds(new Date(), -2);
+        given_a_persistent_connection_in_project(user, project1, firstDate);
+        given_a_persistent_connection_in_project(user, project1, secondDate);
 
-        restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/connectionHistory/{user}.json", project1.getId(), user.getId())
+        MvcResult mvcResult = restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/connectionHistory/{user}.json", project1.getId(), user.getId())
                         .param("export", "csv"))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk()).andReturn();
+
+        String[] rows = mvcResult.getResponse().getContentAsString().split("\n");
+        String[] firstConnection = rows[1].split(";");
+        checkConnectionHistoryResult(firstConnection, secondDate, "0", "0", "0", "linux", "chrome", "123");
+        String[] secondConnection = rows[2].split(";");
+        checkConnectionHistoryResult(secondConnection, firstDate, "0", "0", "0", "linux", "chrome", "123");
     }
 
+    private void checkConnectionHistoryResult(String[] result, Date date, String time, String countViewedImages, String countCreatedAnnotations, String os, String browser, String browserVersion){
+        AssertionsForClassTypes.assertThat(result[0]).isEqualTo(be.cytomine.utils.DateUtils.getTimeToString(date));
+        AssertionsForClassTypes.assertThat(result[1]).isEqualTo(time);
+        AssertionsForClassTypes.assertThat(result[2]).isEqualTo(countViewedImages);
+        AssertionsForClassTypes.assertThat(result[3]).isEqualTo(countCreatedAnnotations);
+        AssertionsForClassTypes.assertThat(result[4]).isEqualTo(os);
+        AssertionsForClassTypes.assertThat(result[5]).isEqualTo(browser);
+        AssertionsForClassTypes.assertThat(result[6].replace("\r", "")).isEqualTo(browserVersion);
+    }
 
     @Test
     @Transactional
@@ -361,6 +375,7 @@ public class ProjectConnectionResourceTests {
         restProjectConnectionControllerMockMvc.perform(get("/api/projectConnection/{id}.json", connection.getId()))
                 .andDo(print())
                 .andExpect(status().isOk());
+
     }
 
     @Disabled("Disabled until ReportService is up!")

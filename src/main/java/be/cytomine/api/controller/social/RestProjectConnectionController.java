@@ -4,10 +4,12 @@ import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.social.PersistentImageConsultation;
+import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.project.ProjectService;
+import be.cytomine.service.report.ReportService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.social.ProjectConnectionService;
 import be.cytomine.utils.JsonObject;
@@ -18,6 +20,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -33,6 +37,8 @@ public class RestProjectConnectionController extends RestCytomineController {
     private final ProjectService projectService;
 
     private final SecUserService secUserService;
+
+    private final ReportService reportService;
 
     @PostMapping("/project/{project}/userconnection.json")
     public ResponseEntity<String> add(
@@ -169,17 +175,25 @@ public class RestProjectConnectionController extends RestCytomineController {
             @PathVariable("user") Long userId,
             @RequestParam(required = false, defaultValue = "0") Integer max,
             @RequestParam(required = false, defaultValue = "0") Integer offset,
-            @RequestParam(required = false) String export
-    ) {
+            @RequestParam(required = false, value = "export") String export
+    ) throws IOException {
         Project project = projectService.find(projectId)
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
         SecUser user = secUserService.find(userId)
                 .orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
 
-        Page page = projectConnectionService.getConnectionByUserAndProject(user, project, max, offset);
+        Page<PersistentProjectConnection> page = projectConnectionService.getConnectionByUserAndProject(user, project, max, offset);
 
         if (export!=null && export.equals("csv")) {
-            throw new CytomineMethodNotYetImplementedException("todo");
+
+            List<JsonObject> projectConnectionDataList = new ArrayList<>();
+            for(PersistentProjectConnection projectConnection : page){
+                projectConnectionDataList.add(PersistentProjectConnection.getDataFromDomain(projectConnection));
+            }
+
+            byte[] report = reportService.generateConnectionHistoryReport(project.getName(), user.getUsername(), projectConnectionDataList);
+            responseReportFile(reportService.getConnectionHistoryReportFileName(export, projectId, userId), report, export);
+            return null;
         } else {
             return responseSuccess(page);
         }

@@ -19,15 +19,14 @@ public class ReportFormatService {
     private Map<Long,String> termNameCache;
 
     /**
-     * Transform a List<Map<String,Object>> of annotation into an Object[][]
-     * with headers corresponding to given columns.
+     * Transform a List<JsonObject> into an Object[][]
+     * with headers (first row) corresponding to given columns.
      *
      * @param  columns
      * @param  data
      * @return Object[][]
      */
-    public Object[][] formatImageConsultationForReport(List<ReportColumn> columns, List<JsonObject> data){
-
+    public Object[][] formatJsonObjectForReport(List<ReportColumn> columns, List<JsonObject> data){
         List<Map<String, Object>> imageConsultations = new ArrayList<>();
         for(JsonObject json : data){
             Map<String, Object> imageConsultation = new HashMap<>();
@@ -47,12 +46,40 @@ public class ReportFormatService {
             }
             imageConsultations.add(imageConsultation);
         }
-        return formatUsersForReport(columns, imageConsultations);
+        return formatMapForReport(columns, imageConsultations);
+    }
+
+    /**
+     * Transform a List<Map<String,Object>> of users into an Object[][]
+     * with headers (first row) corresponding to given columns.
+     *
+     * @param  columns
+     * @param  data
+     * @return Object[][]
+     */
+    public Object[][] formatMapForReport(List<ReportColumn> columns, List<Map<String, Object>> data){
+        Object[] headers = getColumnHeaders(columns);
+        Object[][] report = initReport(data, headers);
+
+        for(int i = 0; i < data.size(); i++){
+            Map<String, Object> element = data.get(i);
+            for(int j = 0; j < headers.length; j++){
+
+                Object value = element.get(headers[j]);
+
+                if(value == null){
+                    value = "";
+                }
+                report[i + 1][j] = value;
+            }
+        }
+        headerPropertyToTitle(columns, report);
+        return report;
     }
 
     /**
      * Transform a List<Map<String,Object>> of annotation into an Object[][]
-     * with headers corresponding to given columns.
+     * with headers (first row) corresponding to given columns.
      *
      * @param  columns
      * @param  data
@@ -67,34 +94,6 @@ public class ReportFormatService {
             for(int j = 0; j < headers.length; j++){
 
                 Object value = getAnnotationValue(element.get(headers[j]), element, headers[j].toString());
-
-                if(value == null){
-                    value = "";
-                }
-                report[i + 1][j] = value;
-            }
-        }
-        headerPropertyToTitle(columns, report);
-        return report;
-    }
-
-    /**
-     * Transform a List<Map<String,Object>> of users into an Object[][]
-     * with headers corresponding to given columns.
-     *
-     * @param  columns
-     * @param  data
-     * @return Object[][]
-     */
-    public Object[][] formatUsersForReport(List<ReportColumn> columns, List<Map<String, Object>> data){
-        Object[] headers = getColumnHeaders(columns);
-        Object[][] report = initReport(data, headers);
-
-        for(int i = 0; i < data.size(); i++){
-            Map<String, Object> element = data.get(i);
-            for(int j = 0; j < headers.length; j++){
-
-                Object value = element.get(headers[j]);
 
                 if(value == null){
                     value = "";
