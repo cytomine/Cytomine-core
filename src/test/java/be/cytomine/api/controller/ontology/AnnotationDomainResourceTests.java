@@ -3,15 +3,12 @@ package be.cytomine.api.controller.ontology;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.TestUtils;
-import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
-import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.CommandService;
@@ -20,41 +17,39 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Tuple;
 import javax.transaction.Transactional;
-import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 import static be.cytomine.service.utils.SimplifyGeometryServiceTests.getPointMultiplyByGeometriesOrInteriorRings;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
@@ -77,29 +72,27 @@ public class AnnotationDomainResourceTests {
     @Autowired
     private AnnotationDomainRepository annotationDomainRepository;
 
-    @Autowired
-    private CommandService commandService;
-
-
     Project project;
     ImageInstance image;
     SliceInstance slice;
     User me;
+    User randomUser;
     Term term;
     UserAnnotation a1;
     UserAnnotation a2;
     UserAnnotation a3;
     UserAnnotation a4;
+    UserAnnotation a5;
     ReviewedAnnotation r1;
     ReviewedAnnotation r2;
     ReviewedAnnotation r3;
     ReviewedAnnotation r4;
+    ReviewedAnnotation r5;
+    ReviewedAnnotation r6;
 
     AlgoAnnotation algoAnnotation;
 
-
     private static WireMockServer wireMockServer = new WireMockServer(8888);
-
 
     @BeforeAll
     public static void beforeAll() {
@@ -119,18 +112,26 @@ public class AnnotationDomainResourceTests {
         project = builder.given_a_project();
         image = builder.given_an_image_instance(project);
         slice = builder.given_a_slice_instance(image,0,0,0);
-        me = builder.given_superadmin();
         term =  builder.given_a_term(project.getOntology());
+
+        me = builder.given_superadmin();
+        randomUser = builder.given_a_user();
+        builder.addUserToProject(project, me.getUsername());
+        builder.addUserToProject(project, randomUser.getUsername());
 
         a1 =  builder.given_a_user_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, term);
         a2 =  builder.given_a_user_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, term);
         a3 =  builder.given_a_user_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, term);
+        a3 =  builder.given_a_user_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, term);
         a4 =  builder.given_a_user_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, null);
+        a5 = builder.given_a_user_annotation(slice,"POLYGON((1 1,5 1,5 1,1 5,1 1))", randomUser,term);
 
         r1 =  builder.given_a_reviewed_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, term);
         r2 =  builder.given_a_reviewed_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, term);
         r3 =  builder.given_a_reviewed_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, term);
         r4 =  builder.given_a_reviewed_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, null);
+        r5 = builder.given_a_reviewed_annotation(slice,"POLYGON((1 1,5 1,5 1,1 5,1 1))", randomUser, null);
+        r6 = builder.given_a_reviewed_annotation(slice,"POLYGON((1 1,5 1,5 1,1 5,1 1))", randomUser, term);
 
         algoAnnotation = builder.given_a_algo_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", builder.given_a_user_job(), term);
     }
@@ -138,8 +139,6 @@ public class AnnotationDomainResourceTests {
     public void BeforeEach() throws ParseException {
         createAnnotationSet();
     }
-
-
 
     @Test
     @Transactional
@@ -202,7 +201,6 @@ public class AnnotationDomainResourceTests {
                 .andExpect(status().isNotFound())
                 .andReturn();
     }
-
 
     @Test
     @Transactional
@@ -1069,11 +1067,90 @@ public class AnnotationDomainResourceTests {
     }
 
 
-    @Disabled("Disabled until ReportService is up!")
     @Test
     @Transactional
-    public void download_reports_from_listing() throws Exception {
-        Assertions.fail("todo");
+    public void download_user_annotation_reports_for_all_users() throws Exception {
+        MvcResult mvcResult = performDownload("csv", "", false)
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+        Object[] users = getUsersFromResult(mvcResult).stream().distinct().toArray();
+        assertThat(users.length).isEqualTo(2);
+    }
+
+    @Test
+    @Transactional
+    public void download_user_annotation_reports_for_specific_user() throws Exception {
+        MvcResult mvcResult = performDownload("csv", this.randomUser.getId().toString(), false)
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+        Object[] users = getUsersFromResult(mvcResult).stream().distinct().toArray();
+        assertThat(users.length).isEqualTo(1);
+    }
+
+    @Test
+    @Transactional
+    public void download_reviewed_annotation() throws Exception {
+        MvcResult mvcResult = performDownload("csv", this.randomUser.getId().toString(), true)
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+        String[] rows = mvcResult.getResponse().getContentAsString().split("\n");
+        assertThat(rows.length).isEqualTo(2);
+    }
+
+    //TODO Download algo annotations
+
+    @Test
+    @Transactional
+    public void download_csv_reports() throws Exception {
+        performDownload("csv", "", false)
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "text/csv"))
+                .andReturn();
+    }
+
+    @Test
+    @Transactional
+    public void download_xls_reports() throws Exception {
+        performDownload("xls", this.me.getId().toString(), false)
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/octet-stream"))
+                .andReturn();
+    }
+
+    @Test
+    @Transactional
+    public void download_pdf_reports() throws Exception {
+        performDownload("pdf", this.me.getId().toString(), false)
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/pdf"))
+                .andReturn();
+    }
+
+    private ResultActions performDownload(String format, String users, boolean reviewed) throws Exception {
+        return restAnnotationDomainControllerMockMvc.perform(get("/api/project/{project}/annotation/download", project.getId())
+                .param("format", format)
+                .param("users", users)
+                .param("reviewed", String.valueOf(reviewed))
+                .param("terms", this.term.getId().toString())
+                .param("images", this.image.getId().toString()));
+    }
+
+    private List<String> getUsersFromResult(MvcResult mvcResult) throws UnsupportedEncodingException {
+        String[] rows = mvcResult.getResponse().getContentAsString().split("\n");
+        List<String> users = new ArrayList<>();
+        for (int i = 0; i < rows.length - 1; i++) {
+            String[] columns = rows[i + 1].split(",");
+            for (int j = 0; j < columns.length; j++) {
+                users.add(columns[7]);
+            }
+        }
+        return users;
     }
 
     @Test

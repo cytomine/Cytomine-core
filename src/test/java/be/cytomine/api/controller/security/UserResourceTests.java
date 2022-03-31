@@ -23,6 +23,8 @@ import be.cytomine.service.social.ProjectConnectionService;
 import be.cytomine.service.social.UserPositionService;
 import be.cytomine.service.social.UserPositionServiceTests;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.StringUtils;
+import com.vividsolutions.jts.io.ParseException;
 import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.assertj.core.api.AssertionsForInterfaceTypes;
@@ -35,12 +37,15 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 
 import javax.persistence.EntityManager;
 import javax.swing.plaf.BorderUIResource;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.List;
 
@@ -52,8 +57,7 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
@@ -1322,5 +1326,47 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.totalConsultations").value(1))
                 .andExpect(jsonPath("$.totalAnnotationSelections").value(0));
 
+    }
+
+    @Test
+    @Transactional
+    public void download_user_list_from_project_xls_document() throws Exception {
+        User user = builder.given_a_user("Paul");
+        Project project = builder.given_a_project_with_user(user);
+        MvcResult mvcResult = performDownload("xls", project, "application/octet-stream");
+        checkResult(";", mvcResult, user);
+    }
+
+    @Test
+    @Transactional
+    public void download_user_list_from_project_csv_document() throws Exception {
+        User user = builder.given_a_user("Paul");
+        Project project = builder.given_a_project_with_user(user);
+        MvcResult mvcResult = performDownload("csv", project, "text/csv");
+        checkResult(",", mvcResult, user);
+    }
+
+    @Test
+    @Transactional
+    public void download_user_list_from_project_pdf_document() throws Exception {
+        Project project = builder.given_a_project_with_user(builder.given_a_user());
+        performDownload("pdf", project, "application/pdf");
+    }
+
+    private void checkResult(String delimiter, MvcResult result, User user) throws UnsupportedEncodingException {
+        String[] rows = result.getResponse().getContentAsString().split("\n");
+        String[] userAnnotationResult = rows[1].split(delimiter);
+        AssertionsForClassTypes.assertThat(userAnnotationResult[0]).isEqualTo(user.getUsername());
+        AssertionsForClassTypes.assertThat(userAnnotationResult[1]).isEqualTo(user.humanUsername());
+        AssertionsForClassTypes.assertThat(userAnnotationResult[2].replace("\r", "")).isEqualTo(user.humanUsername());
+    }
+
+    private MvcResult performDownload(String format, Project project, String type) throws Exception {
+        return restUserControllerMockMvc.perform(get("/api//project/{project}/user/download", project.getId())
+                        .param("format", format))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", type))
+                .andReturn();
     }
 }

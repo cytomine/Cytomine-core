@@ -2,6 +2,7 @@ package be.cytomine.api.controller.ontology;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.TestUtils;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
@@ -17,6 +18,7 @@ import be.cytomine.repository.ontology.ReviewedAnnotationRepository;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.StringUtils;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
@@ -34,6 +36,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -49,8 +52,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
@@ -77,6 +79,12 @@ public class ReviewedAnnotationResourceTests {
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
 
+    private Project project;
+    private ImageInstance image;
+    private SliceInstance slice;
+    private Term term;
+    private User me;
+    private ReviewedAnnotation reviewedAnnotation;
 
     @BeforeAll
     public static void beforeAll() {
@@ -206,11 +214,62 @@ public class ReviewedAnnotationResourceTests {
     }
 
 
-    @Disabled("Disabled until ReportService is up!")
+    // TODO (TO FIX), when try to fetch reviewed annotations, they doesn't not exists in DB despite I try to create them in buildDownloadContext()
     @Test
     @Transactional
-    public void download_reviewed_annotation_document() throws Exception {
-        Assertions.fail("todo...");
+    public void download_reviewed_annotation_csv_document() throws Exception {
+        buildDownloadContext();
+        MvcResult mvcResult = performDownload("csv");
+        checkResult(";", mvcResult);
+    }
+
+    // TODO (TO FIX), when try to fetch reviewed annotations, they doesn't not exists in DB despite I try to create them in buildDownloadContext()
+    @Test
+    @Transactional
+    public void download_reviewed_annotation_xls_document() throws Exception {
+        buildDownloadContext();
+        MvcResult mvcResult = performDownload("xls");
+        checkResult(";", mvcResult);
+    }
+
+    @Test
+    @Transactional
+    public void download_reviewed_annotation_pdf_document() throws Exception {
+        this.buildDownloadContext();
+        restReviewedAnnotationControllerMockMvc.perform(get("/api/project/{project}/reviewedannotation/download", this.project.getId())
+                        .param("format", "pdf")
+                        .param("reviewUsers", "")
+                        .param("terms", this.term.getId().toString())
+                        .param("images", this.image.getId().toString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/pdf"))
+                .andReturn();
+    }
+
+    private void buildDownloadContext() throws ParseException {
+        this.project = builder.given_a_project();
+        this.image = builder.given_an_image_instance(this.project);
+        this.slice = builder.given_a_slice_instance(this.image, 0, 0, 0);
+        this.term = builder.given_a_term(this.project.getOntology());
+        this.me = builder.given_superadmin();
+        this.reviewedAnnotation = builder.given_a_reviewed_annotation(this.slice, "POLYGON((1 1,5 1,5 5,1 5,1 1))", this.me, this.term);
+        builder.addUserToProject(project, this.me.getUsername());
+    }
+
+    private MvcResult performDownload(String format) throws Exception {
+        return restReviewedAnnotationControllerMockMvc.perform(get("/api/project/{project}/reviewedannotation/download", this.project.getId())
+                        .param("format", format)
+                        .param("reviewUsers", "")
+                        .param("terms", this.term.getId().toString())
+                        .param("images", this.image.getId().toString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+    }
+
+    private void checkResult(String delimiter, MvcResult result) throws UnsupportedEncodingException {
+        TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.reviewedAnnotation, this.project, this.image, this.me, this.term);
     }
 
     @Test

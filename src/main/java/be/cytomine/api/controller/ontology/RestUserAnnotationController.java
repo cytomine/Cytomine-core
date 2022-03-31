@@ -1,23 +1,22 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.SharedAnnotation;
+import be.cytomine.api.controller.utils.AnnotationListingBuilder;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.service.CurrentUserService;
+import be.cytomine.repository.UserAnnotationListing;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.SharedAnnotationService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.project.ProjectService;
+import be.cytomine.service.report.ReportService;
 import be.cytomine.service.security.SecUserService;
-import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import com.vividsolutions.jts.io.ParseException;
@@ -26,8 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.Date;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -41,13 +41,13 @@ public class RestUserAnnotationController extends RestCytomineController {
 
     private final SecUserService secUserService;
 
-    private final SecurityACLService securityACLService;
-
-    private final CurrentUserService currentUserService;
+    private final ReportService reportService;
 
     private final ImageServerService imageServerService;
 
     private final SharedAnnotationService sharedAnnotationService;
+
+    private final AnnotationListingBuilder annotationListingBuilder;
 
     @GetMapping("/userannotation.json")
     public ResponseEntity<String> listLight(
@@ -88,29 +88,24 @@ public class RestUserAnnotationController extends RestCytomineController {
         return responseSuccess(JsonObject.of("total", userAnnotationService.countByProject(project, start, end)));
     }
 
-
-    // TODO
     /**
-     * Download report with annotation
+     * Download a report (pdf, xls,...) with user annotation data from a specific project
      */
-//    @RestApiMethod(description = "Download a report (pdf, xls,...) with user annotation data from a specific project")
-//    @RestApiResponseObject(objectIdentifier = "file")
-//    @RestApiParams(params = [
-//            @RestApiParam(name = "id", type = "long", paramType = RestApiParamType.PATH, description = "The project id"),
-//            @RestApiParam(name = "terms", type = "list", paramType = RestApiParamType.QUERY, description = "The annotation terms id (if empty: all terms)"),
-//            @RestApiParam(name = "users", type = "list", paramType = RestApiParamType.QUERY, description = "The annotation users id (if empty: all users)"),
-//            @RestApiParam(name = "images", type = "list", paramType = RestApiParamType.QUERY, description = "The annotation images id (if empty: all images)"),
-//            @RestApiParam(name = "afterThan", type = "Long", paramType = RestApiParamType.QUERY, description = "(Optional) Annotations created before this date will not be returned"),
-//            @RestApiParam(name = "beforeThan", type = "Long", paramType = RestApiParamType.QUERY, description = "(Optional) Annotations created after this date will not be returned"),
-//            @RestApiParam(name = "format", type = "string", paramType = RestApiParamType.QUERY, description = "The report format (pdf, xls,...)")
-//            ])
-//    def downloadDocumentByProject() {
-//        Long afterThan = params.getLong('afterThan')
-//        Long beforeThan = params.getLong('beforeThan')
-//        reportService.createAnnotationDocuments(params.long('id'), params.terms, params.boolean("noTerm", false), params.boolean("multipleTerms", false),
-//        params.users, params.images, afterThan, beforeThan, params.format, response, "USERANNOTATION")
-//    }
-
+    @GetMapping("/project/{project}/userannotation/download")
+    public void downloadDocumentByProject(
+            @PathVariable Long project,
+            @RequestParam String format,
+            @RequestParam String terms,
+            @RequestParam String users,
+            @RequestParam String images,
+            @RequestParam(required = false) Long beforeThan,
+            @RequestParam(required = false) Long afterThan
+    ) throws IOException {
+        users = secUserService.fillEmptyUserIds(users, project);
+        JsonObject params = mergeQueryParamsAndBodyParams();
+        byte[] report = annotationListingBuilder.buildAnnotationReport(project, users, params, terms, format, false);
+        responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
+    }
 
     /**
      * Add comment on an annotation to other user

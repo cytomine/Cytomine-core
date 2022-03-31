@@ -1,5 +1,10 @@
 package be.cytomine.utils;
 
+import java.text.DecimalFormat;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class StringUtils {
 
     public static boolean isNotBlank(String str) {
@@ -23,6 +28,18 @@ public class StringUtils {
         } else {
             return property;
         }
+    }
 
+    public static List<Long> extractListFromParameter(String parameter) {
+        if (parameter==null ||  parameter.isEmpty()) {
+            return null;
+        }
+        return Arrays.stream(parameter.replaceAll("_",",").split(",")).map(Long::parseLong)
+                .collect(Collectors.toList());
+    }
+
+    public static String decimalFormatter(Object value){
+        DecimalFormat df = new DecimalFormat("0.00");
+        return df.format(value);
     }
 }

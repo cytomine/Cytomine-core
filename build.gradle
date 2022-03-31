@@ -44,6 +44,7 @@ dependencies {
 //	}
 //	implementation "org.springframework.boot:spring-boot-starter-undertow"
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	implementation 'org.springframework.security:spring-security-acl'
@@ -77,6 +78,10 @@ dependencies {
 			// Uncomment the next line if you want to use RSASSA-PSS (PS256, PS384, PS512) algorithms:
 			//'org.bouncycastle:bcprov-jdk15on:1.60',
 			'io.jsonwebtoken:jjwt-jackson:0.11.2' // or 'io.jsonwebtoken:jjwt-gson:0.11.2' for gson
+
+	implementation "org.apache.pdfbox:pdfbox:2.0.25"
+	implementation "org.apache.commons:commons-csv:1.5"
+	implementation 'com.github.dhorions:boxable:1.6'
 }
 
 test {

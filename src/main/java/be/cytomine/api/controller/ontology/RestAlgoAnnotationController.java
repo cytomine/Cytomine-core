@@ -1,23 +1,20 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
+import be.cytomine.api.controller.utils.AnnotationListingBuilder;
 import be.cytomine.api.controller.utils.RequestParams;
 import be.cytomine.domain.ontology.AlgoAnnotation;
-import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.AlgoAnnotationService;
 import be.cytomine.service.ontology.SharedAnnotationService;
 import be.cytomine.service.project.ProjectService;
+import be.cytomine.service.report.ReportService;
 import be.cytomine.service.security.SecUserService;
-import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -29,9 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -43,17 +38,17 @@ public class RestAlgoAnnotationController extends RestCytomineController {
 
     private final ProjectService projectService;
 
-    private final SecUserService secUserService;
-
-    private final SecurityACLService securityACLService;
-
-    private final CurrentUserService currentUserService;
+    private final AnnotationListingBuilder annotationListingBuilder;
 
     private final ImageServerService imageServerService;
 
     private final ParamsService paramsService;
 
     private final SharedAnnotationService sharedAnnotationService;
+
+    private final ReportService reportService;
+
+    private final SecUserService secUserService;
 
     /**
      * List all annotation (created by algo) visible for the current user
@@ -136,7 +131,24 @@ public class RestAlgoAnnotationController extends RestCytomineController {
     }
 
 
-
+    /**
+     * DDownload a report (pdf, xls,...) with software annotation data from a specific project
+     */
+    @GetMapping("/project/{project}/algoannotation/download")
+    public void downloadDocumentByProject(
+            @PathVariable Long project,
+            @RequestParam String format,
+            @RequestParam String terms,
+            @RequestParam String users,
+            @RequestParam String images,
+            @RequestParam(required = false) Long beforeThan,
+            @RequestParam(required = false) Long afterThan
+    ) throws IOException {
+        users = secUserService.fillEmptyUserIds(users, project);
+        JsonObject params = mergeQueryParamsAndBodyParams();
+        byte[] report = annotationListingBuilder.buildAnnotationReport(project, users, params, terms, format, false);
+        responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
+    }
     // TODO
 //    @RestApiMethod(description="Download a report (pdf, xls,...) with software annotation data from a specific project")
 //    @RestApiResponseObject(objectIdentifier =  "file")

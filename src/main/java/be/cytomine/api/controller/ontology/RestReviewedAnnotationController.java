@@ -1,22 +1,20 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
+import be.cytomine.api.controller.utils.AnnotationListingBuilder;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.ReviewedAnnotation;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.CurrentUserService;
-import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.project.ProjectService;
+import be.cytomine.service.report.ReportService;
 import be.cytomine.service.security.SecUserService;
-import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.CommandResponse;
@@ -30,9 +28,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
@@ -46,9 +42,9 @@ public class RestReviewedAnnotationController extends RestCytomineController {
 
     private final ProjectService projectService;
 
-    private final SecUserService secUserService;
+    private final AnnotationListingBuilder annotationListingBuilder;
 
-    private final SecurityACLService securityACLService;
+    private final ReportService reportService;
 
     private final CurrentUserService currentUserService;
 
@@ -59,6 +55,8 @@ public class RestReviewedAnnotationController extends RestCytomineController {
     private final ImageInstanceService imageInstanceService;
 
     private final TaskService taskService;
+
+    private final SecUserService secUserService;
 
     @GetMapping("/reviewedannotation.json")
     public ResponseEntity<String> list(
@@ -124,7 +122,6 @@ public class RestReviewedAnnotationController extends RestCytomineController {
                 .orElseGet(() -> responseNotFound("ReviewedAnnotation", id));
     }
 
-
     /**
      * Add reviewed annotation
      * Only use to create a reviewed annotation with all json data.
@@ -169,7 +166,6 @@ public class RestReviewedAnnotationController extends RestCytomineController {
         ));
     }
 
-
     /**
      * Start the review mode on an image
      * To review annotation, a user must enable review mode in the current image
@@ -196,8 +192,6 @@ public class RestReviewedAnnotationController extends RestCytomineController {
     }
 
 
-
-
     @RequestMapping(value = "/annotation/{annotation}/review.json", method = {GET, POST,PUT})
     public ResponseEntity<String> addAnnotationReview(
             @PathVariable(value = "annotation") Long idAnnotation
@@ -210,7 +204,6 @@ public class RestReviewedAnnotationController extends RestCytomineController {
 
         return responseSuccess(response);
     }
-
 
 
     @DeleteMapping(value = "/annotation/{annotation}/review.json")
@@ -242,10 +235,6 @@ public class RestReviewedAnnotationController extends RestCytomineController {
         return responseSuccess(reviewedAnnotationService.reviewLayer(idImage, params.getJSONAttrListLong("users"), task));
     }
 
-
-
-
-
     /**
      * Unreview all annotation for all layers in params
      */
@@ -261,27 +250,24 @@ public class RestReviewedAnnotationController extends RestCytomineController {
     }
 
 
-
-//TODO:
-//    @RestApiMethod(description="Download a report (pdf, xls,...) with reviewed annotation data from a specific project")
-//    @RestApiResponseObject(objectIdentifier = "file")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The project id"),
-//            @RestApiParam(name="terms", type="list", paramType = RestApiParamType.QUERY,description = "The annotation terms id (if empty: all terms)"),
-//            @RestApiParam(name="reviewUsers", type="list", paramType = RestApiParamType.QUERY,description = "The annotation reviewers id (if empty: all users)"),
-//            @RestApiParam(name="images", type="list", paramType = RestApiParamType.QUERY,description = "The annotation images id (if empty: all images)"),
-//            @RestApiParam(name="afterThan", type="Long", paramType = RestApiParamType.QUERY, description = "(Optional) Annotations created before this date will not be returned"),
-//            @RestApiParam(name="beforeThan", type="Long", paramType = RestApiParamType.QUERY, description = "(Optional) Annotations created after this date will not be returned"),
-//            @RestApiParam(name="format", type="string", paramType = RestApiParamType.QUERY,description = "The report format (pdf, xls,...)")
-//            ])
-//    def downloadDocumentByProject() {
-//        Long afterThan = params.getLong('afterThan')
-//        Long beforeThan = params.getLong('beforeThan')
-//        reportService.createAnnotationDocuments(params.long('id'), params.terms, params.boolean("noTerm", false), params.boolean("multipleTerms", false),
-//        params.reviewUsers, params.images, afterThan, beforeThan, params.format, response, "REVIEWEDANNOTATION")
-//    }
-
-
+    /**
+     * Download a report (pdf, xls,...) with reviewed annotation data from a specific project
+     */
+    @GetMapping("/project/{project}/reviewedannotation/download")
+    public void downloadDocumentByProject(
+            @PathVariable Long project,
+            @RequestParam String format,
+            @RequestParam String terms,
+            @RequestParam String reviewUsers,
+            @RequestParam String images,
+            @RequestParam(required = false) Long beforeThan,
+            @RequestParam(required = false) Long afterThan
+    ) throws IOException {
+        reviewUsers = secUserService.fillEmptyUserIds(reviewUsers, project);
+        JsonObject params = mergeQueryParamsAndBodyParams();
+        byte[] report = annotationListingBuilder.buildAnnotationReport(project, reviewUsers, params, terms, format, true);
+        responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
+    }
 
     @RequestMapping(value = "/reviewedannotation/{id}/crop.{format}", method = {GET, POST})
     public void crop(

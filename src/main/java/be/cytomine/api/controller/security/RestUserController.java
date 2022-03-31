@@ -19,6 +19,7 @@ import be.cytomine.service.image.server.StorageService;
 import be.cytomine.service.ontology.OntologyService;
 import be.cytomine.service.project.ProjectRepresentativeUserService;
 import be.cytomine.service.project.ProjectService;
+import be.cytomine.service.report.ReportService;
 import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
@@ -31,6 +32,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -62,6 +64,8 @@ public class RestUserController extends RestCytomineController {
     private final StorageService storageService;
 
     private final ApplicationContext applicationContext;
+
+    private final ReportService reportService;
 
 
     @GetMapping("/project/{id}/admin.json")
@@ -574,23 +578,29 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(secUserService.getUsersWithLastActivities(project), isFilterRequired());
     }
 
-    //TODO:
-//    @RestApiMethod(description="Download a report (pdf, xls,...) with user listing from a specific project")
-//    @RestApiResponseObject(objectIdentifier =  "file")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The project id"),
-//            @RestApiParam(name="terms", type="list", paramType = RestApiParamType.QUERY,description = "The annotation terms id (if empty: all terms)"),
-//            @RestApiParam(name="users", type="list", paramType = RestApiParamType.QUERY,description = "The annotation users id (if empty: all users)"),
-//            @RestApiParam(name="images", type="list", paramType = RestApiParamType.QUERY,description = "The annotation images id (if empty: all images)"),
-//            @RestApiParam(name="format", type="string", paramType = RestApiParamType.QUERY,description = "The report format (pdf, xls,...)")
-//    ])
-//    def downloadUserListingLightByProject() {
-//        reportService.createUserListingLightDocuments(params.long('id'),params.format,response)
-//    }
-//
 
+    @GetMapping("/project/{project}/user/download")
+    public void download(
+            @PathVariable(value = "project") Long projectId,
+            @RequestParam String format
+    ) throws IOException {
+        log.debug("REST request to download user listing from a specific project : {}", projectId);
 
+        Project project = projectService.find(projectId)
+                .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
 
+        List<SecUser> projectUsers = secUserService.listUsers(project);
+        List<Map<String, Object>> users = new ArrayList<>();
+        for(SecUser user : projectUsers){
+            users.add(Map.of(
+                    "username", user.getUsername(),
+                    "firstname", user.humanUsername(),
+                    "lastname", user.humanUsername()
+            ));
+        }
+        byte[] report = reportService.generateUsersReport(project.getName(), users, format);
+        responseReportFile(reportService.getUsersReportFileName(format, projectId), report, format);
+    }
 
     @GetMapping("/project/{project}/resumeActivity/{user}.json")
     public ResponseEntity<String> resumeActivity(

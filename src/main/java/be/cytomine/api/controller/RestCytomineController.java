@@ -19,7 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -116,14 +118,6 @@ public abstract class RestCytomineController {
 
     protected List<SearchParameterEntry> retrieveSearchParameters() {
         return SearchParametersUtils.getSearchParameters(retrieveRequestParam());
-    }
-
-    protected List<Long> extractListFromParameter(String parameter) {
-        if (parameter==null ||  parameter.isEmpty()) {
-            return null;
-        }
-        return Arrays.stream(parameter.replaceAll("_",",").split(",")).map(Long::parseLong)
-                .collect(Collectors.toList());
     }
 
     private JsonObject buildJsonList(List list, Integer offsetParameter, Integer maxParameter) {
@@ -499,6 +493,26 @@ public abstract class RestCytomineController {
     protected void responseFile(String name, byte[] array) throws IOException {
         response.setStatus(200);
         response.setHeader("Content-Type", "application/octet-stream");
+        response.setHeader("Content-disposition", "attachment; filename=" + name);
+        try(OutputStream os = response.getOutputStream()) {
+            os.write(array , 0, array.length);
+            os.flush();
+        }
+    }
+
+    protected void responseReportFile(String name, byte[] array, String format) throws IOException {
+        response.setStatus(200);
+        switch (format) {
+            case "pdf":
+                response.setHeader("Content-Type", "application/pdf");
+                break;
+            case "csv":
+                response.setHeader("Content-Type", "text/csv");
+                break;
+            case "xls":
+                response.setHeader("Content-Type", "application/octet-stream");
+                break;
+        }
         response.setHeader("Content-disposition", "attachment; filename=" + name);
         try(OutputStream os = response.getOutputStream()) {
             os.write(array , 0, array.length);

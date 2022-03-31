@@ -1,11 +1,10 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
+import be.cytomine.api.controller.utils.AnnotationListingBuilder;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.ontology.AlgoAnnotation;
-import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.Term;
+import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.dto.SimplifiedAnnotation;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
@@ -25,22 +24,18 @@ import be.cytomine.service.utils.ParamsService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.utils.GeometryUtils;
 import be.cytomine.utils.JsonObject;
-import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
 @RestController
 @RequestMapping("/api")
@@ -75,6 +70,9 @@ public class RestAnnotationDomainController extends RestCytomineController {
     private final AlgoAnnotationService algoAnnotationService;
 
     private final SimplifyGeometryService simplifyGeometryService;
+
+    private final AnnotationListingBuilder annotationListingBuilder;
+
     /**
      * List all ontology visible for the current user
      * For each ontology, print the terms tree
@@ -88,15 +86,14 @@ public class RestAnnotationDomainController extends RestCytomineController {
     @RequestMapping(value = {"/annotation.json"}, method = {RequestMethod.GET})
     public ResponseEntity<String> search() throws IOException {
         JsonObject params = mergeQueryParamsAndBodyParams();
-        AnnotationListing annotationListing = buildAnnotationListing(params);
+        AnnotationListing annotationListing = annotationListingBuilder.buildAnnotationListing(params);
         List annotations = annotationListingService.listGeneric(annotationListing);
-
         if (annotationListing instanceof AlgoAnnotationListing) {
             //if algo, we look for user_annotation JOIN algo_annotation_term  too
             params.put("suggestedTerm", params.get("term"));
             params.remove("term");
             params.remove("usersForTermAlgo");
-            annotationListing = buildAnnotationListing(new UserAnnotationListing(entityManager), params);
+            annotationListing = annotationListingBuilder.buildAnnotationListing(new UserAnnotationListing(entityManager), params);
             annotations.addAll(annotationListingService.listGeneric(annotationListing));
         }
 
@@ -104,92 +101,28 @@ public class RestAnnotationDomainController extends RestCytomineController {
     }
 
     @RequestMapping(value = {"/project/{project}/annotation/download"}, method = {RequestMethod.GET})
-    public ResponseEntity<String> download(
-            @RequestParam String format
+    public void download(
+            @PathVariable Long project,
+            @RequestParam String format,
+            @RequestParam(required = false) String users,
+            @RequestParam(required = false) String reviewUsers,
+            @RequestParam Boolean reviewed,
+            @RequestParam String terms,
+            @RequestParam String images,
+            @RequestParam(required = false) Long beforeThan,
+            @RequestParam(required = false) Long afterThan
     ) throws IOException {
-        JsonObject params = mergeQueryParamsAndBodyParams();
-        AnnotationListing annotationListing = buildAnnotationListing(params);
-        List annotations = annotationListingService.listGeneric(annotationListing);
-        // downloadDocument(lists.result,lists.project)
-        return responseSuccess(annotations);
+        if(reviewed) {
+            restReviewedAnnotationController.downloadDocumentByProject(project, format, terms, reviewUsers, images, beforeThan, afterThan);
+        }
+        else {
+            if (!users.isEmpty() && false) { // SecUser.read(users.first()).algo()
+                restAlgoAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
+            } else {
+                restUserAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
+            }
+        }
     }
-
-
-
-    //TODO:
-//    @RestApiMethod(description="Download report for annotation. !!! See doc for /annotation/search to filter annotations!!!", listing = true)
-//    @RestApiResponseObject(objectIdentifier =  "file")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="format", type="string", paramType = RestApiParamType.QUERY, description = "(Optional) Output file format (pdf, xls,...)")
-//            ])
-//    def downloadSearched() {
-//        def lists = doSearch(params)
-//        downloadDocument(lists.result,lists.project)
-//    }
-
-//    private downloadDocument(def annotations, Project project) {
-//        def ignoredField = ['class','image','project','user','container','userByTerm']
-//
-//        if (params?.format && params.format != "html") {
-//            def exporterIdentifier = params.format;
-//            if (exporterIdentifier == "xls") {
-//                exporterIdentifier = "excel"
-//            }
-//            response.contentType = grailsApplication.config.grails.mime.types[params.format]
-//            SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyyMMdd_hhmmss");
-//            String datePrefix = simpleFormat.format(new Date())
-//            response.setHeader("Content-disposition", "attachment; filename=${datePrefix}_annotations.${params.format}")
-//
-//            def terms = termService.list(project) // TODO: project.getOntology().getTerms()
-//            def termsIndex = [:]
-//            terms.each {
-//                termsIndex.put(it.id,it)
-//            }
-//
-//            def exportResult = []
-//
-//            def fields = ['indice']
-//
-//
-//            if(!annotations.isEmpty()) {
-//                annotations.first().each {
-//                    if(!ignoredField.contains(it.key)) {
-//                        fields << it.key
-//                    }
-//                }
-//            }
-//            annotations.eachWithIndex { annotation, i ->
-//
-//                    def data = annotation
-//                annotation.indice = i+1
-//                annotation.eachWithIndex {
-//                    if(it.key.equals("updated") || it.key.equals("created")) {
-//                        it.value = it.value? new Date((long)it.value) : null
-//                    }
-//                    if(it.key.equals("area") || it.key.equals("perimeter") || it.key.equals("x") || it.key.equals("y")) {
-//                        it.value = (int)Math.floor(it.value)
-//                    }
-//
-//                    if(it.key.equals("term")) {
-//                        def termList = []
-//                        it.value.each { termId ->
-//                                termList << termsIndex[termId]
-//                        }
-//                        it.value = termList
-//                    }
-//                }
-//
-//                exportResult.add(data)
-//            }
-//
-//            def labels = [:]
-//            fields.each {
-//                labels[it]=it
-//            }
-//
-//            exportService.export(exporterIdentifier, response.outputStream, exportResult,fields,labels,[:],[:])
-//        }
-//    }
 
     @RequestMapping(value = "/annotation/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public void crop(
@@ -319,132 +252,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
         result.put("location", result.get("location").toString());
         return responseSuccess(JsonObject.toJsonString(result));
     }
-
-    private AnnotationListing buildAnnotationListing(JsonObject params) {
-        AnnotationListing al;
-        if(isReviewedAnnotationAsked(params)) {
-            al = new ReviewedAnnotationListing(entityManager);
-        }
-        else if(isRoiAnnotationAsked(params)) {
-            al = new RoiAnnotationListing(entityManager);
-        }
-        else if(isAlgoAnnotationAsked(params)) {
-            al = new AlgoAnnotationListing(entityManager);
-        }
-        else {
-            al = new UserAnnotationListing(entityManager);
-        }
-        return buildAnnotationListing(al, params);
-    }
-    private AnnotationListing buildAnnotationListing(AnnotationListing al, JsonObject params) {
-
-        al.setColumnsToPrint(paramsService.getPropertyGroupToShow(params));
-
-        // Project
-        al.setProject(params.getJSONAttrLong("project"));
-
-        // Images
-        al.setImage(params.getJSONAttrLong("image"));
-        al.setImages(extractListFromParameter(params.getJSONAttrStr("images")));
-
-        // Slices
-        al.setSlice(params.getJSONAttrLong("slice"));
-        al.setSlices(extractListFromParameter(params.getJSONAttrStr("slices")));
-
-        // Tracks
-        al.setTrack(params.getJSONAttrLong("track"));
-        al.setTracks(extractListFromParameter(params.getJSONAttrStr("tracks")));
-
-        if (al.getTrack()!=null || al.getTracks()!=null) {
-            al.setBeforeSlice(params.getJSONAttrLong("beforeSlice"));
-            al.setAfterSlice(params.getJSONAttrLong("afterSlice"));
-            al.setSliceDimension(params.getJSONAttrLong("sliceDimension"));
-        }
-
-        // Users
-        al.setUser(params.getJSONAttrLong("user"));
-        al.setUsers(extractListFromParameter(params.getJSONAttrStr("users")));
-
-        al.setUsersForTerm(extractListFromParameter(params.getJSONAttrStr("usersForTerm")));
-
-        // Users for term algo
-        al.setUserForTermAlgo(params.getJSONAttrLong("userForTermAlgo"));
-        al.setUsersForTermAlgo(extractListFromParameter(params.getJSONAttrStr("usersForTermAlgo")));
-
-
-
-        // Jobs
-        if(params.getJSONAttrLong("job")!=null) {
-
-            al.setUser(secUserService.findByJobId(params.getJSONAttrLong("job")).map(SecUser::getId).orElse(null));
-        }
-
-        // Jobs for term algo
-        if(params.getJSONAttrLong("jobForTermAlgo")!=null) {
-            al.setUserForTermAlgo(secUserService.findByJobId(params.getJSONAttrLong("jobjobForTermAlgo")).map(SecUser::getId).orElse(null));
-        }
-
-        // Tags
-        al.setTag(params.getJSONAttrLong("tag"));
-        al.setTags(extractListFromParameter(params.getJSONAttrStr("tags")));
-        al.setNoTag(params.getJSONAttrBoolean("noTag", false));
-
-        // Terms
-        al.setTerm(params.getJSONAttrLong("term"));
-        al.setTerms(extractListFromParameter(params.getJSONAttrStr("terms")));
-
-
-        // Suggested terms
-        al.setSuggestedTerm(params.getJSONAttrLong("suggestedTerm"));
-        al.setSuggestedTerms(extractListFromParameter(params.getJSONAttrStr("suggestedTerms")));
-
-        // Boolean for terms
-        al.setNoTerm(params.getJSONAttrBoolean("noTerm", false));
-        al.setNoAlgoTerm(params.getJSONAttrBoolean("noAlgoTerm", false));
-        al.setMultipleTerm(params.getJSONAttrBoolean("multipleTerm", false));
-        al.setNoTrack(params.getJSONAttrBoolean("noTrack", false));
-        al.setMultipleTrack(params.getJSONAttrBoolean("multipleTrack", false));
-
-        // Review
-        al.setNotReviewedOnly(params.getJSONAttrBoolean("notReviewedOnly", false));
-
-        // Review users
-        // TODO: reviewUser ?
-        al.setReviewUsers(extractListFromParameter(params.getJSONAttrStr("reviewUsers")));
-
-        // Kmeans
-        al.setKmeans(params.getJSONAttrBoolean("kmeans", false));
-        al.setKmeansValue(params.getJSONAttrInteger("kmeansValue", null));
-
-        // BBOX
-        if(params.get("bbox")!=null) {
-            try {
-                al.setBbox(GeometryUtils.createBoundingBox(params.getJSONAttrStr("bbox")).toText());
-            } catch (ParseException e) {
-                throw new WrongArgumentException("Geometry cannot be parsed for annotation search request:" + e);
-            }
-        }
-        if(params.get("bboxAnnotation")!=null) {
-            AnnotationDomain annotationDomain = AnnotationDomain.getAnnotationDomain(entityManager, params.getJSONAttrLong("bboxAnnotation"));
-            al.setBboxAnnotation(annotationDomain.getWktLocation());
-        }
-
-        // Base annotation
-        al.setBaseAnnotation(params.getJSONAttrLong("baseAnnotation")!=null?
-                params.getJSONAttrLong("baseAnnotation") : // can be an annotation id
-                params.getJSONAttrStr("baseAnnotation")); // can be a string (wkt) too
-        al.setMaxDistanceBaseAnnotation(params.getJSONAttrLong("maxDistanceBaseAnnotation"));
-
-        // Date
-        al.setAfterThan(params.getJSONAttrDate("afterThan"));
-        al.setBeforeThan(params.getJSONAttrDate("beforeThan"));
-
-        al.setExcludedAnnotation(params.getJSONAttrLong("excludedAnnotation")); // TODO ?
-
-        return al;
-    }
-
-
 
 
 //            @RestApiParam(name="idImage", type="long", paramType = RestApiParamType.QUERY,description = "The image id"),
@@ -686,47 +493,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
             return responseSuccess(reviewedAnnotationService.update(annotation, jsonObject));
         }
     }
-
-    /**
-     * Check if we ask reviewed annotation
-     */
-    private boolean isReviewedAnnotationAsked(JsonObject params) {
-        return params.getJSONAttrBoolean("reviewed", false);
-    }
-
-    /**
-     * Check if we ask reviewed annotation
-     */
-    private boolean isRoiAnnotationAsked(JsonObject params) {
-        return params.getJSONAttrBoolean("roi", false);
-    }
-
-    /**
-     * Check if we ask algo annotation
-     */
-    private boolean isAlgoAnnotationAsked(JsonObject params) {
-        if(params.getJSONAttrBoolean("includeAlgo", false)) {
-            return true;
-        }
-
-        Long idUser = params.getJSONAttrLong("user");
-        if(idUser!=null) {
-            return secUserService.find(idUser)
-                    .orElseThrow(() -> new ObjectNotFoundException("User", idUser))
-                    .isAlgo();
-        } else {
-            String idUsers = params.getJSONAttrStr("users");
-            if(idUsers!=null && !idUsers.isEmpty()) {
-                List<Long> collect = Arrays.stream(idUsers.replaceAll("_", ",")
-                        .split(",")).map(Long::parseLong).collect(Collectors.toList());
-                return collect.stream().anyMatch(secUserService::isUserJob);
-            }
-        }
-        //if no other filter, just take user annotation
-        return false;
-    }
-
-
 
     /**
      * Add/Remove a geometry Y to/from the annotation geometry X.
