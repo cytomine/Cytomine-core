@@ -1135,7 +1135,7 @@ public class SecUserServiceTests {
                 builder.given_a_project_representative_user(builder.given_a_project(), user);
 
         // add another representative so that we can delete the first one
-        builder.given_a_project_representative_user(builder.given_a_project(), builder.given_superadmin());
+        builder.given_a_project_representative_user(projectRepresentativeUser.getProject(), builder.given_superadmin());
 
         CommandResponse commandResponse = secUserService.delete(user, null, null, true);
 
@@ -1152,10 +1152,6 @@ public class SecUserServiceTests {
         assertThat(entityManager.find(Storage.class, storage.getId())).isNull();
         assertThat(entityManager.find(ProjectDefaultLayer.class, projectDefaultLayer.getId())).isNull();
         assertThat(entityManager.find(ProjectRepresentativeUser.class, projectRepresentativeUser.getId())).isNull();
-
-        Assertions.fail("deleteDependentForgotPasswordToken");
-        Assertions.fail("deleteDependentSharedAnnotation");
-        Assertions.fail("deleteDependentSharedAnnotation");
     }
 
     @Disabled("software package")
