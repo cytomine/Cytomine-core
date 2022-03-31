@@ -853,7 +853,7 @@ public class ProjectServiceTests {
         given_a_persistent_connection_in_project(user1, project2, DateUtils.addSeconds(new Date(), -5));
 
         assertThat(projectService.getActiveProjectsWithNumberOfUsers()).hasSize(1);
-        assertThat(projectService.getActiveProjectsWithNumberOfUsers().get(0).get("project")).isEqualTo(project2);
+        assertThat(((JsonObject)projectService.getActiveProjectsWithNumberOfUsers().get(0).get("project")).getId()).isEqualTo(project2.getId());
         assertThat(projectService.getActiveProjectsWithNumberOfUsers().get(0).get("users")).isEqualTo(1);
 
         given_a_persistent_connection_in_project(builder.given_superadmin(), project1, DateUtils.addSeconds(new Date(), -10));

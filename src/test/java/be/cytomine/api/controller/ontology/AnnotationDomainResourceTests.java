@@ -39,6 +39,7 @@ import javax.persistence.Tuple;
 import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static be.cytomine.service.utils.SimplifyGeometryServiceTests.getPointMultiplyByGeometriesOrInteriorRings;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -1143,14 +1144,8 @@ public class AnnotationDomainResourceTests {
 
     private List<String> getUsersFromResult(MvcResult mvcResult) throws UnsupportedEncodingException {
         String[] rows = mvcResult.getResponse().getContentAsString().split("\n");
-        List<String> users = new ArrayList<>();
-        for (int i = 0; i < rows.length - 1; i++) {
-            String[] columns = rows[i + 1].split(",");
-            for (int j = 0; j < columns.length; j++) {
-                users.add(columns[7]);
-            }
-        }
-        return users;
+        return Arrays.stream(rows).skip(1).map(x -> x.split(";")[7])
+                .collect(Collectors.toList());
     }
 
     @Test

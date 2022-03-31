@@ -1343,7 +1343,7 @@ public class UserResourceTests {
         User user = builder.given_a_user("Paul");
         Project project = builder.given_a_project_with_user(user);
         MvcResult mvcResult = performDownload("csv", project, "text/csv");
-        checkResult(",", mvcResult, user);
+        checkResult(";", mvcResult, user);
     }
 
     @Test

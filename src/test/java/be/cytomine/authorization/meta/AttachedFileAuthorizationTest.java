@@ -7,6 +7,8 @@ import be.cytomine.authorization.CRUDAuthorizationTest;
 import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.Term;
+import be.cytomine.domain.project.EditingMode;
+import be.cytomine.domain.project.Project;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.meta.AttachedFileService;
 import be.cytomine.service.ontology.TermService;
@@ -31,6 +33,8 @@ public class AttachedFileAuthorizationTest extends CRDAuthorizationTest {
 
     private AttachedFile attachedFile = null;
 
+    private Project project = null;
+
     private AnnotationDomain attachedFileAnnotation = null;
 
     @Autowired
@@ -49,10 +53,66 @@ public class AttachedFileAuthorizationTest extends CRDAuthorizationTest {
     public void before() throws Exception {
         if (attachedFile == null) {
             attachedFileAnnotation = builder.given_a_user_annotation();
+            project = attachedFileAnnotation.getProject();
             attachedFile = builder.given_a_attached_file(attachedFileAnnotation);
             initUser();
             initACL(attachedFileAnnotation.container());
         }
+        project.setMode(EditingMode.CLASSIC);
+    }
+
+    @Override
+    @Test
+    @WithMockUser(username = USER_ACL_CREATE)
+    public void user_with_create_permission_delete_domain() {
+        expectOK(this::when_i_delete_domain);
+        project.setMode(EditingMode.RESTRICTED);
+        expectForbidden(this::when_i_delete_domain);
+        project.setMode(EditingMode.READ_ONLY);
+        expectForbidden(this::when_i_delete_domain);
+    }
+
+    @Override
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_permission_add_domain() {
+        expectOK(this::when_i_add_domain);
+        project.setMode(EditingMode.RESTRICTED);
+        expectForbidden(this::when_i_add_domain);
+        project.setMode(EditingMode.READ_ONLY);
+        expectForbidden(this::when_i_add_domain);
+    }
+
+    @Override
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_permission_delete_domain() {
+        expectOK(this::when_i_delete_domain);
+        project.setMode(EditingMode.RESTRICTED);
+        expectForbidden(this::when_i_delete_domain);
+        project.setMode(EditingMode.READ_ONLY);
+        expectForbidden(this::when_i_delete_domain);
+    }
+
+    @Override
+    @Test
+    @WithMockUser(username = USER_ACL_WRITE)
+    public void user_with_write_permission_delete_domain() {
+        expectOK(this::when_i_delete_domain);
+        project.setMode(EditingMode.RESTRICTED);
+        expectForbidden(this::when_i_delete_domain);
+        project.setMode(EditingMode.READ_ONLY);
+        expectForbidden(this::when_i_delete_domain);
+    }
+
+    @Test
+    @WithMockUser(username = USER_NO_ACL)
+    public void user_without_permission_add_domain() {
+        expectForbidden(this::when_i_add_domain);
+        project.setMode(EditingMode.RESTRICTED);
+        expectForbidden(this::when_i_add_domain);
+        project.setMode(EditingMode.READ_ONLY);
+        expectForbidden(this::when_i_add_domain);
     }
 
     @Test

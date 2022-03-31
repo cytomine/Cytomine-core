@@ -1134,6 +1134,8 @@ public class SecUserServiceTests {
         ProjectRepresentativeUser projectRepresentativeUser =
                 builder.given_a_project_representative_user(builder.given_a_project(), user);
 
+        // add another representative so that we can delete the first one
+        builder.given_a_project_representative_user(builder.given_a_project(), builder.given_superadmin());
 
         CommandResponse commandResponse = secUserService.delete(user, null, null, true);
 

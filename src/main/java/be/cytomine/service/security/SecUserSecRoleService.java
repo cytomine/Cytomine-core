@@ -23,10 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -107,11 +105,22 @@ public class SecUserSecRoleService extends ModelService {
         SecUser currentUser = currentUserService.getCurrentUser();
         SecRole role = secRoleRepository.findById(jsonObject.getJSONAttrLong("role"))
                 .orElseThrow(() -> new ObjectNotFoundException("Role", jsonObject.getJSONAttrStr("role")));
+        SecUser user = secUserRepository.findById(jsonObject.getJSONAttrLong("user"))
+                .orElseThrow(() -> new ObjectNotFoundException("User", jsonObject.getJSONAttrStr("user")));
+        Set<String> userRoles = secUserSecRoleRepository.findAllBySecUser(user).stream().map(x -> x.getSecRole().getAuthority())
+                .collect(Collectors.toSet());
+
         if (role.getAuthority().equals("ROLE_ADMIN") || role.getAuthority().equals("ROLE_SUPER_ADMIN")) {
             securityACLService.checkAdmin(currentUser);
-        } else {
+        } else if (userRoles.size()==1 && userRoles.contains("ROLE_GUEST")) {
+            securityACLService.checkAdmin(currentUser);
+        }else {
             securityACLService.checkUser(currentUser);
         }
+
+
+
+
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
     }
 

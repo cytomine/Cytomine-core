@@ -96,6 +96,7 @@ public class AttachedFileService extends ModelService {
         } else if(recipientDomain instanceof Project || !(recipientDomain.container() instanceof Project)) {
             securityACLService.check(domainIdent,domainClassName,WRITE);
         } else {
+            securityACLService.check(domainIdent,domainClassName,READ);
             securityACLService.checkFullOrRestrictedForOwner(domainIdent,domainClassName, "user");
         }
 

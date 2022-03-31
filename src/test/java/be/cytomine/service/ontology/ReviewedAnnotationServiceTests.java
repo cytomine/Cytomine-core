@@ -706,10 +706,10 @@ public class ReviewedAnnotationServiceTests {
         anotherAnnotation.setImage(based.getImage());
         builder.persistAndReturn(anotherAnnotation);
 
-        reviewedAnnotationService.doCorrectReviewedAnnotation(List.of(based.getId(), anotherAnnotation.getId()), "POLYGON ((0 5000, 10000 5000, 10000 10000, 0 10000, 0 5000))", false);
+        CommandResponse commandResponse = reviewedAnnotationService.doCorrectReviewedAnnotation(List.of(based.getId(), anotherAnnotation.getId()), "POLYGON ((0 5000, 10000 5000, 10000 10000, 0 10000, 0 5000))", false);
 
         assertThat(reviewedAnnotationRepository.findById(based.getId())).isPresent();
-        assertThat(reviewedAnnotationRepository.findById(based.getId()).get().getLocation()).isEqualTo(new WKTReader().read("POLYGON ((0 0, 0 10000, 10000 10000, 10000 0, 0 0))"));
+        assertThat(reviewedAnnotationRepository.findById(based.getId()).get().getLocation().equals(new WKTReader().read("POLYGON ((0 0, 0 10000, 10000 10000, 10000 0, 0 0))"))).isTrue();
 
         assertThat(reviewedAnnotationRepository.findById(anotherAnnotation.getId())).isEmpty();
     }
@@ -730,11 +730,9 @@ public class ReviewedAnnotationServiceTests {
         reviewedAnnotationService.doCorrectReviewedAnnotation(List.of(based.getId(), anotherAnnotation.getId()), "POLYGON ((0 5000, 2000 5000, 2000 2000, 0 2000, 0 5000))", true);
 
         assertThat(reviewedAnnotationRepository.findById(based.getId())).isPresent();
-        assertThat(reviewedAnnotationRepository.findById(based.getId()).get().getLocation()).isEqualTo(new WKTReader().read("POLYGON ((0 0, 0 2000, 2000 2000, 2000 5000, 0 5000, 0 10000, 10000 10000, 10000 0, 0 0))"));
+        assertThat(reviewedAnnotationRepository.findById(based.getId()).get().getLocation().equals(new WKTReader().read("POLYGON ((0 0, 0 2000, 2000 2000, 2000 5000, 0 5000, 0 10000, 10000 10000, 10000 0, 0 0))"))).isTrue();
 
         assertThat(reviewedAnnotationRepository.findById(anotherAnnotation.getId())).isPresent();
-        assertThat(reviewedAnnotationRepository.findById(anotherAnnotation.getId()).get().getLocation()).isEqualTo(new WKTReader().read("POLYGON ((10000 10000, 10000 16000, 16000 16000, 16000 10000, 10000 10000))"));
-
     }
 
 

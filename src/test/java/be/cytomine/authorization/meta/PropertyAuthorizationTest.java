@@ -95,7 +95,7 @@ public class PropertyAuthorizationTest extends CRUDAuthorizationTest {
     @Test
     @WithMockUser(username = USER_ACL_READ)
     public void user_cannot_add_in_restricted_mode(){
-        annotationDomain.getProject().setMode(EditingMode.RESTRICTED);
+        project.setMode(EditingMode.RESTRICTED);
         expectForbidden(() -> when_i_add_domain());
     }
 
@@ -108,10 +108,14 @@ public class PropertyAuthorizationTest extends CRUDAuthorizationTest {
 
     @Test
     @WithMockUser(username = USER_ACL_READ)
-    public void user_canadd_in_restricted_mode_for_annotation_if_owner(){
+    public void user_can_add_in_restricted_mode_for_annotation_if_owner(){
         project.setMode(EditingMode.RESTRICTED);
         ((UserAnnotation)annotationDomain).setUser((User)userWithRead);
-        expectOK(() -> when_i_add_domain());
+        expectOK(() -> {
+            AnnotationDomain annotationDomain = builder.persistAndReturn(builder.given_a_not_persisted_user_annotation(project));
+            ((UserAnnotation)annotationDomain).setUser((User)userWithRead);
+            propertyService.add(builder.given_a_not_persisted_property(annotationDomain, "key", "value").toJsonObject());
+        });
     }
 
 

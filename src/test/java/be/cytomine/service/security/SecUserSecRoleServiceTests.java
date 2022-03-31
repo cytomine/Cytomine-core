@@ -23,6 +23,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,6 +61,9 @@ public class SecUserSecRoleServiceTests {
 
     @Autowired
     SecRoleRepository secRoleRepository;
+
+    @Autowired
+    EntityManager entityManager;
 
     @Test
     void get_secUserSecRole_with_success() {
@@ -128,13 +132,6 @@ public class SecUserSecRoleServiceTests {
 
 
     @Test
-    @WithMockUser(username = "user")
-    void add_valid_secUser_SecRole_with_success_with_user_as_a_user() {
-        SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_guest(), secRoleRepository.getUser());
-        secUserSecRoleService.add(secUserSecRole.toJsonObject());
-    }
-
-    @Test
     void add_already_existing_secUserSecRole_fails() {
         SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_user(), secRoleRepository.getAdmin());
         builder.persistAndReturn(secUserSecRole);
@@ -145,8 +142,13 @@ public class SecUserSecRoleServiceTests {
 
 
     @Test
-    void user_can_add_user_role_to_a_guest() {
-        Assertions.fail("should we allow that???");
+    @WithMockUser(username = "user")
+    void user_cannot_add_user_role_to_a_guest() {
+        SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_guest(), secRoleRepository.getUser());
+        entityManager.refresh(secUserSecRole.getSecUser());
+        Assertions.assertThrows(ForbiddenException.class, () -> {
+            secUserSecRoleService.add(secUserSecRole.toJsonObject().withChange("id", null));
+        });
     }
 
     @Test

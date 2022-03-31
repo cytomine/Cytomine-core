@@ -102,6 +102,7 @@ public class PropertyService extends ModelService {
         }
 
         log.debug("check permission: " +  domain);
+        securityACLService.check(domain.container(),READ);
         if (!domain.getClass().getName().contains("AbstractImage")) {
             if (domain instanceof Project) {
                 securityACLService.check(domain.container(),WRITE);
