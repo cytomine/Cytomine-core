@@ -1,19 +1,17 @@
 package be.cytomine.service.utils;
 
-import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.service.dto.Point;
-import be.cytomine.service.image.ImageInstanceService;
-import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.ontology.TermService;
-import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.report.ReportColumn;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.utils.DateUtils;
+import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.StringUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.util.*;
 
 @Service
 @AllArgsConstructor
@@ -21,11 +19,39 @@ public class ReportFormatService {
 
     private final TermService termService;
 
-    private final UserAnnotationService userAnnotationService;
-
-    private final ReviewedAnnotationService reviewedAnnotationService;
-
     private Map<Long,String> termNameCache;
+
+    /**
+     * Transform a List<Map<String,Object>> of annotation into an Object[][]
+     * with headers corresponding to given columns.
+     *
+     * @param  columns
+     * @param  data
+     * @return Object[][]
+     */
+    public Object[][] formatImageConsultationForReport(List<ReportColumn> columns, List<JsonObject> data) throws ParseException {
+
+        List<Map<String, Object>> imageConsultations = new ArrayList<>();
+        for(JsonObject json : data){
+            Map<String, Object> imageConsultation = new HashMap<>();
+            for(ReportColumn column : columns){
+                String key = column.property;
+                switch (key){
+                    case "imageId":
+                        imageConsultation.put(key, json.getJSONAttrStr("image"));
+                        break;
+                    case "numberOfCreatedAnnotations":
+                        imageConsultation.put(key, json.getJSONAttrStr("countCreatedAnnotations"));
+                        break;
+                    default:
+                        imageConsultation.put(key, json.getJSONAttrStr(key));
+                        break;
+                }
+            }
+            imageConsultations.add(imageConsultation);
+        }
+        return formatUsersForReport(columns, imageConsultations);
+    }
 
     /**
      * Transform a List<Map<String,Object>> of annotation into an Object[][]
