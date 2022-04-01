@@ -14,10 +14,10 @@ echo $gitLongTag
 # check if tag is an official release (v1.2.3) + no other commit behind (or dirty)
 if [[ $gitLongTag =~ v[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+-0-[0-9a-g]{8,9}$ ]]; then
   echo "BETA"
-  versionNumber=$(echo $gitLongTag | sed -r "s/v([0-9]+\.[0-9]+\.[0-9]+-beta.[0-9]+)-[0-9]+-.+/\1/")
+  versionNumber=$(echo $gitLongTag | sed -r "s/([0-9]+\.[0-9]+\.[0-9]+-beta.[0-9]+)-[0-9]+-.+/\1/")
 elif [[ $gitLongTag =~ v[0-9]+.[0-9]+.[0-9]+-0-[0-9a-g]{8,9}$ ]]; then
   echo "OFFICIAL"
-  versionNumber=$(echo $gitLongTag | sed -r "s/v([0-9]+\.[0-9]+\.[0-9]+)-[0-9]+-.+/\1/")
+  versionNumber=$(echo $gitLongTag | sed -r "s/([0-9]+\.[0-9]+\.[0-9]+)-[0-9]+-.+/\1/")
 else
   echo "WARNING: invalid tag for an official release $gitLongTag"
   versionNumber=$branchName-$(date "+%Y%m%d%H%M%S")-SNAPSHOT
