@@ -592,11 +592,13 @@ public class RestUserController extends RestCytomineController {
         List<SecUser> projectUsers = secUserService.listUsers(project);
         List<Map<String, Object>> users = new ArrayList<>();
         for(SecUser user : projectUsers){
-            users.add(Map.of(
-                    "username", user.getUsername(),
-                    "firstname", user.humanUsername(),
-                    "lastname", user.humanUsername()
-            ));
+            if (user instanceof User) {
+                users.add(Map.of(
+                        "username", user.getUsername(),
+                        "firstname", (((User) user).getFirstname()),
+                        "lastname", (((User) user).getLastname())
+                ));
+            }
         }
         byte[] report = reportService.generateUsersReport(project.getName(), users, format);
         responseReportFile(reportService.getUsersReportFileName(format, projectId), report, format);
