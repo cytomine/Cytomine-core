@@ -45,6 +45,7 @@ server:
 
 
 application:
+  version: '0.0.0' # do not modify this, it will be replace during build (ci)
   serverId: default
   serverURL: http://localhost-core
   adminPassword: adminPassword
