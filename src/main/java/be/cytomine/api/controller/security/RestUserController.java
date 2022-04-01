@@ -591,7 +591,8 @@ public class RestUserController extends RestCytomineController {
 
         List<SecUser> projectUsers = secUserService.listUsers(project);
         List<Map<String, Object>> users = new ArrayList<>();
-        for(SecUser user : projectUsers){
+
+        for (SecUser user : projectUsers) {
             if (user instanceof User) {
                 users.add(Map.of(
                         "username", user.getUsername(),
@@ -599,9 +600,10 @@ public class RestUserController extends RestCytomineController {
                         "lastname", (((User) user).getLastname())
                 ));
             }
+
+            byte[] report = reportService.generateUsersReport(project.getName(), users, format);
+            responseReportFile(reportService.getUsersReportFileName(format, projectId), report, format);
         }
-        byte[] report = reportService.generateUsersReport(project.getName(), users, format);
-        responseReportFile(reportService.getUsersReportFileName(format, projectId), report, format);
     }
 
     @GetMapping("/project/{project}/resumeActivity/{user}.json")
