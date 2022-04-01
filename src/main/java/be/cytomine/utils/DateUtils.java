@@ -38,6 +38,8 @@ public class DateUtils {
         return l != null ? l - new Date(0).getTime() : null;
     }
 
+    public static Date computeMillisInDate(long millis) {return new Date(millis);}
+
     public static Comparator<CytomineDomain> descCreatedComparator() {
         return (lhs, rhs) -> {
             if (lhs==null) {

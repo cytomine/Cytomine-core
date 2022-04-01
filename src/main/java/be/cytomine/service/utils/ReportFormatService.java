@@ -3,6 +3,7 @@ package be.cytomine.service.utils;
 import be.cytomine.service.dto.Point;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.report.ReportColumn;
+import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.StringUtils;
 import lombok.AllArgsConstructor;
@@ -33,11 +34,19 @@ public class ReportFormatService {
             for(ReportColumn column : columns){
                 String key = column.property;
                 switch (key){
+                    case "time":
+                        long time = Long.parseLong(json.getJSONAttrStr("time"));
+                        imageConsultation.put(key, Math.abs(time));
+                        break;
                     case "imageId":
                         imageConsultation.put(key, json.getJSONAttrStr("image"));
                         break;
                     case "numberOfCreatedAnnotations":
                         imageConsultation.put(key, json.getJSONAttrStr("countCreatedAnnotations"));
+                        break;
+                    case "created":
+                        long millis = Long.parseLong(json.getJSONAttrStr("created"));
+                        imageConsultation.put("created", DateUtils.computeMillisInDate(millis));
                         break;
                     default:
                         imageConsultation.put(key, json.getJSONAttrStr(key));
