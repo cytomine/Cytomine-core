@@ -42,11 +42,11 @@ public class AnnotationListingBuilder {
     private final ProjectService projectService;
 
 
-    public byte[] buildAnnotationReport(Long project, String users, JsonObject params, String terms, String format, boolean isReview){
+    public byte[] buildAnnotationReport(Long project, String users, JsonObject params, String terms, String format){
         List<Map<String, Object>> annotations = buildAnnotationList(params, users);
         Set<String> termNames = getTermNames(terms);
         Set<String> userNames = getUserNames(users);
-        return reportService.generateAnnotationsReport(projectService.get(project).getName(), termNames, userNames, annotations, format, isReview);
+        return reportService.generateAnnotationsReport(projectService.get(project).getName(), termNames, userNames, annotations, format);
     }
 
     public List<Map<String, Object>> buildAnnotationList(JsonObject params, String users){

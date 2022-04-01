@@ -6,8 +6,6 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.ontology.RelationTerm;
-import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
@@ -17,17 +15,13 @@ import be.cytomine.repositorynosql.social.*;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.dto.AreaDTO;
-import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.social.ImageConsultationService;
 import be.cytomine.service.social.ProjectConnectionService;
 import be.cytomine.service.social.UserPositionService;
 import be.cytomine.service.social.UserPositionServiceTests;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.StringUtils;
-import com.vividsolutions.jts.io.ParseException;
 import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.assertj.core.api.AssertionsForInterfaceTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,16 +32,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 
 import javax.persistence.EntityManager;
-import javax.swing.plaf.BorderUIResource;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -63,9 +54,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @WithMockUser(username = "superadmin")
 public class UserResourceTests {
-
-    @Autowired
-    private EntityManager em;
 
     @Autowired
     private BasicInstanceBuilder builder;
@@ -340,10 +328,6 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.username").value(simpleUser.getUsername()));
     }
 
-
-
-
-
     @Test
     @Transactional
     public void get_user_as_superadmin() throws Exception {
@@ -371,8 +355,6 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.email").value(currentUser.getEmail()))
                 .andExpect(jsonPath("$.username").value(currentUser.getUsername()));
 
-
-
 //current user:
 //        {
 //            "firstname":"Loïc",
@@ -396,12 +378,7 @@ public class UserResourceTests {
 //                "email":"loic.rollus@cytomine.com",
 //                "username":"lrollus"
 //        }
-
-
-
-
     }
-
 
     @Test
     @Transactional
@@ -506,8 +483,6 @@ public class UserResourceTests {
 //                "email": null,
 //                "username": "cmarchal"
 //        }
-
-
     }
 
     @Test
@@ -624,10 +599,6 @@ public class UserResourceTests {
 //                "email":"loic.rollus@cytomine.com",
 //                "username":"lrollus"
 //        }
-
-
-
-
     }
 
 
@@ -670,7 +641,6 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.success").value(false));
     }
 
-
     @Test
     @Transactional
     public void add_user_refused_if_username_not_set() throws Exception {
@@ -682,10 +652,6 @@ public class UserResourceTests {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
-
-
-
-
 
     @Test
     @Transactional
@@ -715,9 +681,6 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.command").exists())
                 .andExpect(jsonPath("$.user.id").exists())
                 .andExpect(jsonPath("$.user.lastname").value("TEST_CREATE_CHANGE"));
-
-
-
     }
 
     @Test
@@ -776,7 +739,6 @@ public class UserResourceTests {
                 .andExpect(status().isOk());
 
         assertThat(user.getEnabled()).isFalse();
-
     }
 
     @Test
@@ -797,10 +759,7 @@ public class UserResourceTests {
 
     }
 
-
-
 //max=25&offset=0&projectRole[in]=contributor,manager,representative&sort=&order=
-
 
     @Test
     @Transactional
@@ -1052,9 +1011,6 @@ public class UserResourceTests {
 
     }
 
-
-
-
     @Test
     @Transactional
     public void delete_admin_from_project() throws Exception {
@@ -1072,9 +1028,6 @@ public class UserResourceTests {
         assertThat(permissionService.hasACLPermission(project, user.getUsername(), ADMINISTRATION)).isFalse();
 
     }
-
-
-
 
     @Test
     @Transactional
@@ -1357,8 +1310,8 @@ public class UserResourceTests {
         String[] rows = result.getResponse().getContentAsString().split("\n");
         String[] userAnnotationResult = rows[1].split(delimiter);
         AssertionsForClassTypes.assertThat(userAnnotationResult[0]).isEqualTo(user.getUsername());
-        AssertionsForClassTypes.assertThat(userAnnotationResult[1]).isEqualTo(user.humanUsername());
-        AssertionsForClassTypes.assertThat(userAnnotationResult[2].replace("\r", "")).isEqualTo(user.humanUsername());
+        AssertionsForClassTypes.assertThat(userAnnotationResult[1]).isEqualTo(user.getFirstname());
+        AssertionsForClassTypes.assertThat(userAnnotationResult[2].replace("\r", "")).isEqualTo(user.getLastname());
     }
 
     private MvcResult performDownload(String format, Project project, String type) throws Exception {

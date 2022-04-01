@@ -297,7 +297,7 @@ public class UserAnnotationResourceTests {
     }
 
     private void checkResult(String delimiter, MvcResult result) throws UnsupportedEncodingException {
-        TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.userAnnotation, this.project, this.image, this.me, this.term);
+        TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.userAnnotation, this.project, this.image, this.me, this.term, "userannotation");
     }
 
     private MvcResult performDownload(String format) throws Exception {

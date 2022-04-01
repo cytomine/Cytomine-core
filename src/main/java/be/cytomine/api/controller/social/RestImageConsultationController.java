@@ -10,6 +10,7 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.project.ProjectService;
+import be.cytomine.service.report.ReportService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.social.ImageConsultationService;
 import be.cytomine.utils.JsonObject;
@@ -20,6 +21,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 
+import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -38,6 +41,8 @@ public class RestImageConsultationController extends RestCytomineController {
     private final ProjectService projectService;
 
     private final SecUserService secUserService;
+
+    private final ReportService reportService;
 
     @PostMapping("/imageinstance/{id}/consultation.json")
     public ResponseEntity<String> add(
@@ -102,16 +107,21 @@ public class RestImageConsultationController extends RestCytomineController {
 
     @GetMapping("/imageconsultation/resume.json")
     public ResponseEntity<String> resumeByUserAndProject(
-            @RequestParam(required = true, value = "user") Long userId,
-            @RequestParam(required = true, value = "project") Long projectId,
+            @RequestParam(value = "user") Long userId,
+            @RequestParam(value = "project") Long projectId,
             @RequestParam(required = false, value = "export") String export
-    ) {
-        Project project = projectService.find(projectId)
-                .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
-
-        List<JsonObject> results = imageConsultationService.resumeByUserAndProject(userId, project.getId());
+    ) throws IOException {
+        List<JsonObject> results = imageConsultationService.resumeByUserAndProject(userId, projectId);
         if (export!=null && export.equals("csv")) {
-            throw new CytomineMethodNotYetImplementedException("report must be implemented");
+
+            Project project = projectService.find(projectId)
+                    .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
+            User user = secUserService.findUser(userId)
+                    .orElseThrow(() -> new ObjectNotFoundException("User", userId));
+
+            byte[] report = reportService.generateImageConsultationReport(project.getName(), user.getUsername(), results);
+            responseReportFile(reportService.getImageConsultationReportFileName(export, projectId, userId), report, export);
+            return null;
         } else {
             return responseSuccess(results);
         }

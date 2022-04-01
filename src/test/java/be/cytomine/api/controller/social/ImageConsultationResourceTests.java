@@ -6,51 +6,35 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.domain.social.PersistentImageConsultation;
-import be.cytomine.domain.social.PersistentUserPosition;
-import be.cytomine.repositorynosql.social.LastUserPositionRepository;
 import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
-import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
-import be.cytomine.service.dto.AreaDTO;
 import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.social.ImageConsultationService;
 import be.cytomine.service.social.UserPositionService;
-import be.cytomine.service.social.UserPositionServiceTests;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.SecurityUtils;
 import org.apache.commons.lang3.time.DateUtils;
-import org.junit.jupiter.api.Assertions;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
-import static be.cytomine.service.social.UserPositionServiceTests.ANOTHER_USER_VIEW;
-import static be.cytomine.service.social.UserPositionServiceTests.USER_VIEW;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
@@ -59,20 +43,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class ImageConsultationResourceTests {
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
     private BasicInstanceBuilder builder;
 
     @Autowired
     private MockMvc restImageConsultationControllerMockMvc;
 
     @Autowired
-    private MockMvc restImageInstanceControllerMockMvc;
-
-    @Autowired
     PersistentImageConsultationRepository persistentImageConsultationRepository;
-
 
     @Autowired
     ImageConsultationService imageConsultationService;
@@ -82,7 +59,6 @@ public class ImageConsultationResourceTests {
 
     @Autowired
     SliceCoordinatesService sliceCoordinatesService;
-
 
     @BeforeEach
     public void cleanDB() {
@@ -251,27 +227,36 @@ public class ImageConsultationResourceTests {
 
     }
 
-    @Disabled("Disabled until ReportService is up!")
     @Test
     @Transactional
     public void resume_by_user_and_project_export_as_csv() throws Exception {
         User user = builder.given_superadmin();
         ImageInstance imageInstance1 =builder.given_an_image_instance();
-        ImageInstance imageInstance2 =builder.given_an_image_instance(imageInstance1.getProject());
+        SliceInstance slice = builder.given_a_slice_instance(imageInstance1, 1, 0, 1);
+        builder.given_a_user_annotation(slice);
 
-        given_a_persistent_image_consultation(user, imageInstance1, DateUtils.addSeconds(new Date(), -3));
-        given_a_persistent_image_consultation(user, imageInstance1, DateUtils.addSeconds(new Date(), -3));
+        Date currentDate = DateUtils.addSeconds(new Date(), -3);
+        given_a_persistent_image_consultation(user, imageInstance1, currentDate);
+        given_a_persistent_image_consultation(user, imageInstance1, currentDate);
 
-
-        restImageConsultationControllerMockMvc.perform(get("/api/imageconsultation/resume.json")
+        MvcResult mvcResult = restImageConsultationControllerMockMvc.perform(get("/api/imageconsultation/resume.json")
                         .param("project", imageInstance1.getProject().getId().toString())
                         .param("user", user.getId().toString())
                         .param("export", "csv"))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(header().string("Content-Type", "text/csv"))
+                .andExpect(status().isOk()).andReturn();
 
-        Assertions.fail("todo");
-
+        String[] rows = mvcResult.getResponse().getContentAsString().split("\n");
+        String[] imageConsultationResult = rows[1].split(";");
+        AssertionsForClassTypes.assertThat(imageConsultationResult[0]).isEqualTo("0");
+        AssertionsForClassTypes.assertThat(imageConsultationResult[1]).isEqualTo(currentDate.toString());
+        AssertionsForClassTypes.assertThat(imageConsultationResult[2]).isEqualTo(currentDate.toString());
+        AssertionsForClassTypes.assertThat(imageConsultationResult[3]).isEqualTo("2");
+        AssertionsForClassTypes.assertThat(imageConsultationResult[4]).isEqualTo(imageInstance1.getId().toString());
+        AssertionsForClassTypes.assertThat(imageConsultationResult[5]).isEqualTo(imageInstance1.getBlindInstanceFilename());
+        AssertionsForClassTypes.assertThat(imageConsultationResult[6]).isEqualTo("http://localhost:8080/api/imageinstance/"+imageInstance1.getId()+"/thumb.png?maxSize=512");
+        AssertionsForClassTypes.assertThat(imageConsultationResult[7].replace("\r", "")).isEqualTo("0");
     }
 
     @Test
