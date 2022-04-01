@@ -21,4 +21,4 @@ mkdir ./ci
 
 #./scripts/ciPublishJar.sh
 
-./scripts/ciBuildDockerImage.sh
+#./scripts/ciBuildDockerImage.sh
