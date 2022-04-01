@@ -146,7 +146,7 @@ public class RestAlgoAnnotationController extends RestCytomineController {
     ) throws IOException {
         users = secUserService.fillEmptyUserIds(users, project);
         JsonObject params = mergeQueryParamsAndBodyParams();
-        byte[] report = annotationListingBuilder.buildAnnotationReport(project, users, params, terms, format, false);
+        byte[] report = annotationListingBuilder.buildAnnotationReport(project, users, params, terms, format);
         responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
     }
     // TODO

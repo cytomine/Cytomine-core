@@ -214,7 +214,6 @@ public class ReviewedAnnotationResourceTests {
     }
 
 
-    // TODO (TO FIX), when try to fetch reviewed annotations, they doesn't not exists in DB despite I try to create them in buildDownloadContext()
     @Test
     @Transactional
     public void download_reviewed_annotation_csv_document() throws Exception {
@@ -223,7 +222,6 @@ public class ReviewedAnnotationResourceTests {
         checkResult(";", mvcResult);
     }
 
-    // TODO (TO FIX), when try to fetch reviewed annotations, they doesn't not exists in DB despite I try to create them in buildDownloadContext()
     @Test
     @Transactional
     public void download_reviewed_annotation_xls_document() throws Exception {
@@ -269,7 +267,7 @@ public class ReviewedAnnotationResourceTests {
     }
 
     private void checkResult(String delimiter, MvcResult result) throws UnsupportedEncodingException {
-        TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.reviewedAnnotation, this.project, this.image, this.me, this.term);
+        TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.reviewedAnnotation, this.project, this.image, this.me, this.term, "reviewedannotation");
     }
 
     @Test

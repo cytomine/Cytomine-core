@@ -74,7 +74,7 @@ public class ReportServiceTests {
     public void generate_pdf_report_with_annotations() throws ServerException {
         when(mockPdfWriterService.writePDF(any(),any(),any(),anyBoolean(),anyBoolean()))
                 .thenReturn(returnedReport);
-        byte[] generatedReport = reportService.generateAnnotationsReport("projectName", terms, users, dataMap, "pdf", false);
+        byte[] generatedReport = reportService.generateAnnotationsReport("projectName", terms, users, dataMap, "pdf");
         verify(mockReportFormatService, times(1))
                 .formatAnnotationsForReport(ReportService.ANNOTATION_REPORT_COLUMNS, dataMap);
         verify(mockPdfWriterService, times(1))
@@ -86,7 +86,7 @@ public class ReportServiceTests {
     public void generate_csv_report_with_annotations() throws ServerException {
         when(mockSpreadsheetWriterService.writeSpreadsheet(any()))
                 .thenReturn(returnedReport);
-        byte[] generatedReport = reportService.generateAnnotationsReport("projectName" ,terms, users, dataMap, "csv", false);
+        byte[] generatedReport = reportService.generateAnnotationsReport("projectName" ,terms, users, dataMap, "csv");
         verify(mockReportFormatService, times(1))
                 .formatAnnotationsForReport(ReportService.ANNOTATION_REPORT_COLUMNS, dataMap);
         verify(mockSpreadsheetWriterService, times(1))
@@ -98,7 +98,7 @@ public class ReportServiceTests {
     public void generate_xls_report_with_annotations() throws ServerException {
         when(mockSpreadsheetWriterService.writeSpreadsheet(any()))
                 .thenReturn(returnedReport);
-        byte[] generatedReport = reportService.generateAnnotationsReport("projectName", terms, users, dataMap, "xls", false);
+        byte[] generatedReport = reportService.generateAnnotationsReport("projectName", terms, users, dataMap, "xls");
         verify(mockReportFormatService, times(1))
                 .formatAnnotationsForReport(ReportService.ANNOTATION_REPORT_COLUMNS, dataMap);
         verify(mockSpreadsheetWriterService, times(1))
