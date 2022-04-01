@@ -533,7 +533,7 @@ public class ImageConsultationService {
         for (Document result : results) {
             try {
                 ImageInstance imageInstance = imageInstanceService.find(result.getLong("_id"))
-                        .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", result.getString("_id")));
+                        .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", result.get("_id")));
                 JsonObject jsonObject = new JsonObject();
                 jsonObject.put("id", result.get("_id"));
                 jsonObject.put("date", result.get("date"));

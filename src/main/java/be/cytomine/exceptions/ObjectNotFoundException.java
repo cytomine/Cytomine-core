@@ -36,6 +36,11 @@ public class ObjectNotFoundException extends CytomineException {
         log.warn(message);
     }
 
+    public ObjectNotFoundException(String objectType, Object objectId) {
+        super(objectType + " " + objectId + " not found",404);
+        log.warn(super.getMessage());
+    }
+
     public ObjectNotFoundException(String objectType, String objectId) {
         super(objectType + " " + objectId + " not found",404);
         log.warn(super.getMessage());
