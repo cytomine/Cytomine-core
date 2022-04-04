@@ -755,7 +755,6 @@ public class MongoDBDomainTests {
 
         Document document = retrieveDocument("persistentUserPosition", lastPosition.getId());
 
-        MongoClient mongoClient = MongoClients.create();
         MongoCollection<Document> persistentProjectConnectionFromGrails = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentUserPosition");
         ArrayList<Document> results = persistentProjectConnectionFromGrails.find(eq("_id", 3977L))
                 .into(new ArrayList<>());
