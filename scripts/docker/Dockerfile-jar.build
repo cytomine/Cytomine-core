@@ -31,5 +31,5 @@ RUN cat /app/src/main/resources/application.yml
 WORKDIR /app
 RUN du $HOME/.gradle
 RUN ls -lh $HOME/.gradle
-RUN gradle build  --console=verbose || return 0
+
 CMD gradle bootJar --console=verbose
