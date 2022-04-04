@@ -1472,7 +1472,6 @@ public class AnnotationDomainResourceTests {
                         .param("minPoint", String.valueOf(minPoint)).param("maxPoint", String.valueOf(maxPoint))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
         Map<String, Object> annotationResponse = (Map<String, Object>) JsonObject.toMap(mvcResult.getResponse().getContentAsString()).get("annotation");
         Integer  id = (Integer)annotationResponse.get("id");
@@ -1490,7 +1489,6 @@ public class AnnotationDomainResourceTests {
                         .param("minPoint", String.valueOf(minPoint)).param("maxPoint", String.valueOf(maxPoint))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
         annotationResponse = (Map<String, Object>) JsonObject.toMap(mvcResult.getResponse().getContentAsString()).get("annotation");
         id = (Integer)annotationResponse.get("id");
@@ -1519,7 +1517,6 @@ public class AnnotationDomainResourceTests {
                         .param("minPoint", String.valueOf(minPoint)).param("maxPoint", String.valueOf(maxPoint))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
 
         assertThat(annotation.getLocation().getNumPoints()).isLessThanOrEqualTo(getPointMultiplyByGeometriesOrInteriorRings(annotation.getLocation(), maxPoint));
@@ -1546,7 +1543,6 @@ public class AnnotationDomainResourceTests {
                         .param("minPoint", String.valueOf(minPoint)).param("maxPoint", String.valueOf(maxPoint))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonObject.of("wkt", TestUtils.getResourceFileAsString("dataset/very_big_annotation.txt")).toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
         String wkt = (String)JsonObject.toMap(mvcResult.getResponse().getContentAsString()).get("wkt");
         Geometry geometry = new WKTReader().read(wkt);

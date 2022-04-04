@@ -129,7 +129,7 @@ public class RestReviewedAnnotationController extends RestCytomineController {
      */
     @PostMapping("/reviewedannotation.json")
     public ResponseEntity<String> add(@RequestBody JsonObject json) {
-        log.debug("REST request to save reviewed annotation : " + json);
+        log.debug("REST request to save reviewed annotation");
         return add(reviewedAnnotationService, json);
     }
 

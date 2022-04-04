@@ -176,7 +176,7 @@ public class RestUserAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Long minPoint,
             @RequestParam(required = false) Long maxPoint
     ) {
-        log.debug("REST request to save user annotation : " + json);
+        log.debug("REST request to save user annotation");
         json.putIfAbsent("minPoint", minPoint);
         json.putIfAbsent("maxPoint", maxPoint);
         return add(userAnnotationService, json);
