@@ -96,7 +96,7 @@ public class ReportFormatServiceTests {
     public void annotations_to_report_format() {
         Object[][] dataObject = reportFormatService.formatAnnotationsForReport(
                 ReportService.ANNOTATION_REPORT_COLUMNS,
-                buildAnnotations(true, false));
+                buildAnnotations(true));
         assertArrayEquals(expectedDataObject, dataObject);
     }
 
@@ -104,7 +104,7 @@ public class ReportFormatServiceTests {
     public void incomplete_annotations_to_report_format() {
         Object[][] dataObject = reportFormatService.formatAnnotationsForReport(
                 ReportService.ANNOTATION_REPORT_COLUMNS,
-                buildAnnotations(false, false));
+                buildAnnotations(false));
         assertArrayEquals(expectedDataObject, dataObject);
     }
 
@@ -112,14 +112,14 @@ public class ReportFormatServiceTests {
     public void reviewed_annotations_to_report_format() {
         Object[][] dataObject = reportFormatService.formatAnnotationsForReport(
                 ReportService.ANNOTATION_REPORT_COLUMNS,
-                buildAnnotations(true, true));
+                buildAnnotations(true));
         assertArrayEquals(expectedDataObject, dataObject);
     }
     @Test
     public void incomplete_reviewed_annotations_to_report_format() {
         Object[][] dataObject = reportFormatService.formatAnnotationsForReport(
                 ReportService.ANNOTATION_REPORT_COLUMNS,
-                buildAnnotations(false, true));
+                buildAnnotations(false));
         assertArrayEquals(expectedDataObject, dataObject);
     }
 
@@ -140,12 +140,13 @@ public class ReportFormatServiceTests {
     }
 
     private List<JsonObject> buildUserConnectionHistory(boolean isComplete){
+        Date date = new Date();
         expectedDataObject = new Object[][]{
                 {"Date", "Duration (ms)", "Number of viewed images", "Number of created annotations", "Operating System", "Browser", "Browser Version"},
-                {"Wed Mar 30 07:33:31 UTC 2022", "5878", "10", "5", "Linux for life", "Firefox", "97.0.568"},
+                {date, (long)5878, "10", "5", "Linux for life", "Firefox", "97.0.568"},
         };
         JsonObject userConnectionHistory = new JsonObject(Map.of(
-                "created", "Wed Mar 30 07:33:31 UTC 2022",
+                "created", date.getTime(),
                 "time", 5878,
                 "countViewedImages", 10,
                 "countCreatedAnnotations", 5,
@@ -163,7 +164,7 @@ public class ReportFormatServiceTests {
     private List<JsonObject> buildUserImageConsultation(boolean isComplete){
         expectedDataObject = new Object[][]{
                 {"Cumulated duration (ms)", "First consultation", "Last consultation", "Number of consultations", "Id of image", "Name", "Thumb", "Number of created annotations"},
-                {"200", "Wed Mar 30 07:33:31 UTC 2022", "Wed Mar 31 07:33:31 UTC 2022", "5", "25454", "Beautiful image", "http://thumbURL", "2"},
+                {(long)200, "Wed Mar 30 07:33:31 UTC 2022", "Wed Mar 31 07:33:31 UTC 2022", "5", "25454", "Beautiful image", "http://thumbURL", "2"},
         };
         JsonObject imageConsultation = new JsonObject(Map.of(
                 "time", "200",
@@ -182,7 +183,7 @@ public class ReportFormatServiceTests {
         return new ArrayList<>(List.of(imageConsultation));
     }
 
-    private List<Map<String,Object>> buildAnnotations(boolean isComplete, boolean isReviewed){
+    private List<Map<String,Object>> buildAnnotations(boolean isComplete){
         Term term1 = builder.given_a_term();
         Term term2 = builder.given_a_term();
         Point point = new Point(2545454.231212, 2545454.23111);

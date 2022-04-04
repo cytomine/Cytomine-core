@@ -2,32 +2,22 @@ package be.cytomine.api.controller.social;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.domain.social.LastConnection;
-import be.cytomine.domain.social.PersistentImageConsultation;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
-import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.service.database.SequenceService;
-import be.cytomine.service.social.ImageConsultationService;
 import be.cytomine.service.social.ProjectConnectionService;
 import be.cytomine.utils.JsonObject;
 import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.Date;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -355,7 +344,7 @@ public class ProjectConnectionResourceTests {
     }
 
     private void checkConnectionHistoryResult(String[] result, Date date, String time, String countViewedImages, String countCreatedAnnotations, String os, String browser, String browserVersion){
-        AssertionsForClassTypes.assertThat(result[0]).isEqualTo(be.cytomine.utils.DateUtils.getTimeToString(date));
+        AssertionsForClassTypes.assertThat(result[0]).isEqualTo(be.cytomine.utils.DateUtils.computeMillisInDate(date.getTime()).toString());
         AssertionsForClassTypes.assertThat(result[1]).isEqualTo(time);
         AssertionsForClassTypes.assertThat(result[2]).isEqualTo(countViewedImages);
         AssertionsForClassTypes.assertThat(result[3]).isEqualTo(countCreatedAnnotations);
