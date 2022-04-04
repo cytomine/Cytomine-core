@@ -1,3 +1,4 @@
 *
 !src
 !build.gradle
+!scripts/docker
