@@ -12,4 +12,5 @@ docker build --rm -f scripts/docker/core/Dockerfile -t  cytomine/core:$VERSION_N
 
 docker push cytomine/core:$VERSION_NUMBER
 
-docker rmi cytomine/core:$VERSION_NUMBER
+# comment to keep cache during build
+#docker rmi cytomine/core:$VERSION_NUMBER
