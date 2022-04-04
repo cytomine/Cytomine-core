@@ -170,7 +170,10 @@ public class MongoDBDomainTests {
                         "\t\"version\": 0\n" +
                         "}";
 
-        assertThat(objectMapper.readTree(document.toJson())).isEqualTo(objectMapper.readTree(expectedResults));
+
+        String expectedResultsAnotherTimeZone = expectedResults.replaceAll("2022-02-02T06:30:23.384Z", "2022-02-02T07:30:23.384Z");
+
+        assertThat(objectMapper.readTree(document.toJson())).isIn(objectMapper.readTree(expectedResults), objectMapper.readTree(expectedResultsAnotherTimeZone));
 
     }
 
@@ -360,13 +363,15 @@ public class MongoDBDomainTests {
                 "[-109.0, 2028.0]\n" +
                 "],\n" +
                 "\"project\": 22782,\n" +
-                "\"rotation\": \"0.0\",\n" + // ???????????
+                "\"rotation\": 0.0,\n" + // ???????????
                 "\"slice\": 29241,\n" +
                 "\"user\": 58,\n" +
                 "\"zoom\": 5\n" +
                 "}";
 
-        assertThat(objectMapper.readTree(document.toJson())).isEqualTo(objectMapper.readTree(expectedResults));
+        String expectedResultsAnotherTimeZone = expectedResults.replaceAll("2022-02-02T06:40:46.71Z", "2022-02-02T07:40:46.71Z");
+
+        assertThat(objectMapper.readTree(document.toJson())).isIn(objectMapper.readTree(expectedResults), objectMapper.readTree(expectedResultsAnotherTimeZone));
         // fails because in grails version, rotation is a string
     }
 
@@ -459,7 +464,10 @@ public class MongoDBDomainTests {
                         "   \"session\":\"B7850470EED8CD7570E05C50FD5F02F6\"\n" +
                         "}";
 
-        assertThat(objectMapper.readTree(document.toJson())).isEqualTo(objectMapper.readTree(expectedResults));
+
+        String expectedResultsAnotherTimeZone = expectedResults.replaceAll("2021-09-22T07:06:32.472Z", "2021-09-22T09:06:32.472Z");
+
+        assertThat(objectMapper.readTree(document.toJson())).isIn(objectMapper.readTree(expectedResults), objectMapper.readTree(expectedResultsAnotherTimeZone));
     }
 
 
@@ -522,7 +530,9 @@ public class MongoDBDomainTests {
                         "   \"time\":139164\n" +
                         "}";
 
-        assertThat(objectMapper.readTree(document.toJson())).isEqualTo(objectMapper.readTree(expectedResults));
+        String expectedResultsAnotherTimeZone = expectedResults.replaceAll("2021-09-22T07:06:32.472Z","2021-09-22T07:06:32.472Z");
+
+        assertThat(objectMapper.readTree(document.toJson())).isIn(objectMapper.readTree(expectedResults), objectMapper.readTree(expectedResultsAnotherTimeZone));
         // TODO: test index
     }
 
@@ -591,7 +601,9 @@ public class MongoDBDomainTests {
                         "\"time\": 12149\n" +
                         "}";
 
-        assertThat(objectMapper.readTree(document.toJson())).isEqualTo(objectMapper.readTree(expectedResults));
+        String expectedResultsAnotherTimeZone = expectedResults.replaceAll("2021-09-23T06:55:02.602Z", "2021-09-23T08:55:02.602Z");
+
+        assertThat(objectMapper.readTree(document.toJson())).isIn(objectMapper.readTree(expectedResults), objectMapper.readTree(expectedResultsAnotherTimeZone));
         // TODO: issue with Date: created seems to have issue with UTC
 
         // TODO: test index
@@ -778,7 +790,7 @@ public class MongoDBDomainTests {
                         "[-3338.0, -160.0]\n" +
                         "],\n" +
                         "\"project\": 3063,\n" +
-                        "\"rotation\": \"0.0\",\n" +
+                        "\"rotation\": 0.0,\n" +
                         "\"session\": \"B6AC04394B9D9F746A15E511C5DC243B\",\n" +
                         "\"slice\": 3963,\n" +
                         "\"user\": 58,\n" +
