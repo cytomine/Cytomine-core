@@ -106,10 +106,10 @@ public class GenericAnnotationService {
                 }
             }
 
-            annotations = new ArrayList<>();
+//            annotations = new ArrayList<>();
             for (AnnotationDomain annotation : annotations) {
-                if (annotation.termsId().contains(goodTerm)) {
-                    annotations.add(annotation);
+                if (!annotation.termsId().contains(goodTerm)) {
+                    annotations.remove(annotation);
                 }
             }
         }
