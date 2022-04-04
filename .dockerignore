@@ -1,5 +1,5 @@
-.gradle/
-.idea/
-.build/
-*.sql
-deploy
+*
+!src
+!build.gradle
+!scripts/docker
+!ci/cytomine.jar
