@@ -1,5 +1,3 @@
-.gradle/
-.idea/
-.build/
-*.sql
-deploy
+*
+!src
+!build.gradle
