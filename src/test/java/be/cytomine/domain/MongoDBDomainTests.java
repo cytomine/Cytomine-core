@@ -530,7 +530,7 @@ public class MongoDBDomainTests {
                         "   \"time\":139164\n" +
                         "}";
 
-        String expectedResultsAnotherTimeZone = expectedResults.replaceAll("2021-09-22T07:06:32.472Z","2021-09-22T07:06:32.472Z");
+        String expectedResultsAnotherTimeZone = expectedResults.replaceAll("2021-09-22T07:06:32.472Z","2021-09-22T09:06:32.472Z");
 
         assertThat(objectMapper.readTree(document.toJson())).isIn(objectMapper.readTree(expectedResults), objectMapper.readTree(expectedResultsAnotherTimeZone));
         // TODO: test index
@@ -797,7 +797,9 @@ public class MongoDBDomainTests {
                         "\"zoom\": 2\n" +
                         "}";
 
-        assertThat(objectMapper.readTree(document.toJson())).isEqualTo(objectMapper.readTree(expectedResults));
+        String expectedResultsAnotherTimeZone = expectedResults.replaceAll("2021-09-23T06:55:03.608Z", "2021-09-23T08:55:03.608Z");
+
+        assertThat(objectMapper.readTree(document.toJson())).isIn(objectMapper.readTree(expectedResults), objectMapper.readTree(expectedResultsAnotherTimeZone));
        //Fails because rotation is a string
     }
 
