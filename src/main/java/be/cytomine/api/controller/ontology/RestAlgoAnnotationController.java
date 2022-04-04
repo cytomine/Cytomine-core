@@ -97,7 +97,7 @@ public class RestAlgoAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Long minPoint,
             @RequestParam(required = false) Long maxPoint
     ) {
-        log.debug("REST request to save algo annotation : " + json);
+        log.debug("REST request to save algo annotation");
         json.putIfAbsent("minPoint", minPoint);
         json.putIfAbsent("maxPoint", maxPoint);
         return add(algoAnnotationService, json);
