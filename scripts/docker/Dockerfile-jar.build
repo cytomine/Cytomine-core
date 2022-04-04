@@ -19,7 +19,7 @@ ARG VERSION_NUMBER
 ENV VERSION_NUMBER_ENV=$VERSION_NUMBER
 
 RUN sed -i -- 's/version: 0.0.0/version: '$VERSION_NUMBER'/g' /app/src/main/resources/application.yml
-RUN sed -i -- 's/version = '0.0.0'/version = '$VERSION_NUMBER'/g' /app/build.gradle
+
 RUN cat /app/src/main/resources/application.yml
 WORKDIR /app
 CMD  gradle bootJar
