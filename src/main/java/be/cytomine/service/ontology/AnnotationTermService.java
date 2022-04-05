@@ -73,7 +73,7 @@ public class AnnotationTermService extends ModelService {
     public Optional<AnnotationTerm> find(AnnotationDomain annotation, Term term, SecUser user) {
         securityACLService.check(annotation.container(),READ);
         List<AnnotationTerm> annotationTerms = annotationTermRepository.findAllByUserAnnotationId(annotation.getId());
-        return annotationTerms.stream().filter(x -> x.getTerm()==term && (user==null || x.getUser()==user)).findFirst();
+        return annotationTerms.stream().filter(x -> x.getTerm()==term && (user==null || x.getUser().getId().equals(user.getId()))).findFirst();
     }
 
     public List<AnnotationTerm> list(UserAnnotation userAnnotation) {
@@ -94,7 +94,7 @@ public class AnnotationTermService extends ModelService {
 
     public List<AnnotationTerm> listAnnotationTermNotDefinedByUser(UserAnnotation userAnnotation, User user) {
         securityACLService.check(userAnnotation.container(),READ);
-        return list(userAnnotation).stream().filter(x -> x.getUser()!=user).collect(Collectors.toList());
+        return list(userAnnotation).stream().filter(x -> !x.getUser().equals(user)).collect(Collectors.toList());
     }
 
 

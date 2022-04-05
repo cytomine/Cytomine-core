@@ -942,7 +942,7 @@ public class ImageInstanceService extends ModelService {
         if (imageInstance.getReviewStart() == null || imageInstance.getReviewUser() == null) {
             throw new WrongArgumentException("Image is not in review mode: image.reviewStart="+imageInstance.getReviewStart()+" and image.reviewUser=" + imageInstance.getReviewUser());
         }
-        if (currentUserService.getCurrentUser() != imageInstance.getReviewUser()) {
+        if (!currentUserService.getCurrentUser().getId().equals(imageInstance.getReviewUser().getId())) {
             throw new WrongArgumentException("Review can only be validate or stop by "+imageInstance.getReviewUser().getUsername());
         }
 

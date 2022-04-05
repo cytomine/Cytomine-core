@@ -35,6 +35,8 @@ import static org.springframework.security.acls.domain.BasePermission.ADMINISTRA
 @Transactional
 public class BasicInstanceBuilder {
 
+    private User SUPERADMIN;
+
     public static final String ROLE_SUPER_ADMIN = "ROLE_SUPER_ADMIN";
 
     public static final String ROLE_ADMIN = "ROLE_ADMIN";
@@ -575,6 +577,21 @@ public class BasicInstanceBuilder {
         return annotation;
     }
 
+
+    public UserAnnotation given_a_not_persisted_user_annotation(SliceInstance sliceInstance) {
+        UserAnnotation annotation = new UserAnnotation();
+        annotation.setUser(given_superadmin());
+        try {
+            annotation.setLocation(new WKTReader().read("POLYGON ((1983 2168, 2107 2160, 2047 2074, 1983 2168))"));
+        } catch (ParseException ignored) {
+
+        }
+        annotation.setSlice(sliceInstance);
+        annotation.setImage(annotation.getSlice().getImage());
+        annotation.setProject(annotation.getImage().getProject());
+        return annotation;
+    }
+
     public UserAnnotation given_a_user_annotation(SliceInstance sliceInstance) {
         return persistAndReturn(given_a_user_annotation(sliceInstance, given_superadmin()));
     }
@@ -593,12 +610,9 @@ public class BasicInstanceBuilder {
     }
 
     public UserAnnotation given_a_user_annotation(SliceInstance sliceInstance, String location, User user, Term term) throws ParseException {
-        UserAnnotation annotation = given_a_not_persisted_user_annotation(sliceInstance.getProject());
-        annotation.setImage(sliceInstance.getImage());
-        annotation.setSlice(sliceInstance);
+        UserAnnotation annotation = given_a_not_persisted_user_annotation(sliceInstance);
         annotation.setLocation(new WKTReader().read(location));
         annotation.setUser(user);
-        annotation.setProject(sliceInstance.getProject());
         persistAndReturn(annotation);
 
         if (term!=null) {
@@ -609,7 +623,6 @@ public class BasicInstanceBuilder {
             persistAndReturn(annotationTerm);
             em.refresh(annotation);
         }
-
         return annotation;
     }
 
