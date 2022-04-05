@@ -45,7 +45,7 @@ public class AnnotationTrackAuthorizationTest extends CRDAuthorizationTest {
     public void before() throws Exception {
         if (annotationTrack == null) {
             annotationTrack = builder.given_a_annotation_track();
-            initUser();
+            ;
             initACL(annotationTrack.container());
         }
     }

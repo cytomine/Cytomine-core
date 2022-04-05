@@ -54,7 +54,7 @@ public class StorageAuthorizationTest extends CRUDAuthorizationTest {
     public void before() throws Exception {
         if (storage == null) {
             storage = builder.given_a_storage();
-            initUser();
+            ;
             initACL(storage);
         }
     }

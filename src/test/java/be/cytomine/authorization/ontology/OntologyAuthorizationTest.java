@@ -45,7 +45,7 @@ public class OntologyAuthorizationTest extends CRUDAuthorizationTest {
     public void before() throws Exception {
         if (ontology == null) {
             ontology = builder.given_an_ontology();
-            initUser();
+            ;
             initACL(ontology);
         }
     }

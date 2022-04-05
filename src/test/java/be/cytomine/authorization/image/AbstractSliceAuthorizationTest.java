@@ -46,7 +46,6 @@ public class AbstractSliceAuthorizationTest extends CRUDAuthorizationTest {
     public void before() throws Exception {
         if (abstractSlice == null) {
             abstractSlice = builder.given_an_abstract_slice();
-            initUser();
             initACL(abstractSlice.container());
         }
     }

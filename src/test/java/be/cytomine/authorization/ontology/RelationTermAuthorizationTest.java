@@ -46,7 +46,7 @@ public class RelationTermAuthorizationTest extends CRDAuthorizationTest {
     public void before() throws Exception {
         if (relationTerm == null) {
             relationTerm = builder.given_a_relation_term();
-            initUser();
+            ;
             initACL(relationTerm.container());
         }
     }

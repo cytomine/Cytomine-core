@@ -53,7 +53,7 @@ public class UserAnnotationAuthorizationTest extends CRUDAuthorizationTest {
     public void before() throws Exception {
         if (userAnnotation == null) {
             userAnnotation = builder.given_a_user_annotation();
-            initUser();
+            ;
             initACL(userAnnotation.container());
         }
         userAnnotation.getProject().setMode(EditingMode.CLASSIC);

@@ -63,7 +63,7 @@ public class DescriptionAuthorizationTest extends CRUDAuthorizationTest {
             descriptionForAnnotation = builder.given_a_description(annotationDomain);
             descriptionForAbstractImage = builder.given_a_description(abstractImage);
 
-            initUser();
+            ;
             initACL(project);
             initACL(annotationDomain.getProject());
             initACL(abstractImage.getUploadedFile().getStorage());
@@ -111,7 +111,7 @@ public class DescriptionAuthorizationTest extends CRUDAuthorizationTest {
     @WithMockUser(username = USER_ACL_READ)
     public void user_canadd_in_restricted_mode_for_annotation_if_owner(){
         annotationDomain.getProject().setMode(EditingMode.RESTRICTED);
-        ((UserAnnotation)annotationDomain).setUser((User)userWithRead);
+        ((UserAnnotation)annotationDomain).setUser(userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get());
         expectOK(() -> when_i_add_domain());
     }
 

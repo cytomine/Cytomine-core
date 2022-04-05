@@ -55,7 +55,7 @@ public class ReviewedAnnotationAuthorizationTest extends CRUDAuthorizationTest {
             reviewedAnnotation.getImage().setReviewStart(null);
             reviewedAnnotation.getImage().setReviewUser(null);
             reviewedAnnotation.getImage().setReviewStop(null);
-            initUser();
+            ;
             initACL(reviewedAnnotation.container());
         }
         reviewedAnnotation.getProject().setMode(EditingMode.CLASSIC);
@@ -70,7 +70,7 @@ public class ReviewedAnnotationAuthorizationTest extends CRUDAuthorizationTest {
         annotation.setImage(this.reviewedAnnotation.getImage());
         annotation.setProject(this.reviewedAnnotation.getProject());
         annotation.getImage().setReviewStart(new Date());
-        annotation.getImage().setReviewUser(userWithAdmin);
+        annotation.getImage().setReviewUser(userRepository.findByUsernameLikeIgnoreCase(USER_ACL_ADMIN).get());
 
         expectOK (() -> {
             reviewedAnnotationService.reviewAnnotation(annotation.getId(), null);

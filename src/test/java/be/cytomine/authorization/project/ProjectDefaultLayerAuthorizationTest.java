@@ -44,7 +44,7 @@ public class ProjectDefaultLayerAuthorizationTest extends CRDAuthorizationTest {
     public void before() throws Exception {
         if (projectDefaultLayer == null) {
             projectDefaultLayer = builder.given_a_project_default_layer();
-            initUser();
+            ;
             initACL(projectDefaultLayer.container());
         }
     }

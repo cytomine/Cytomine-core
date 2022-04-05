@@ -55,7 +55,6 @@ public class AttachedFileAuthorizationTest extends CRDAuthorizationTest {
             attachedFileAnnotation = builder.given_a_user_annotation();
             project = attachedFileAnnotation.getProject();
             attachedFile = builder.given_a_attached_file(attachedFileAnnotation);
-            initUser();
             initACL(attachedFileAnnotation.container());
         }
         project.setMode(EditingMode.CLASSIC);

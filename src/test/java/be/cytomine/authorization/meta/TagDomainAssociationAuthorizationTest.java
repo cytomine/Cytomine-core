@@ -66,7 +66,7 @@ public class TagDomainAssociationAuthorizationTest extends CRDAuthorizationTest 
             tagDomainAssociationForAnnotation = builder.given_a_tag_association(builder.given_a_tag(), annotationDomain);
             tagDomainAssociationForAbstractImage = builder.given_a_tag_association(builder.given_a_tag(), abstractImage);
 
-            initUser();
+            ;
             initACL(project);
             initACL(annotationDomain.getProject());
             initACL(abstractImage.getUploadedFile().getStorage());
@@ -130,7 +130,7 @@ public class TagDomainAssociationAuthorizationTest extends CRDAuthorizationTest 
     @WithMockUser(username = USER_ACL_READ)
     public void user_canadd_in_restricted_mode_for_annotation_if_owner(){
         annotationDomain.getProject().setMode(EditingMode.RESTRICTED);
-        ((UserAnnotation)annotationDomain).setUser((User)userWithRead);
+        ((UserAnnotation)annotationDomain).setUser(userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get());
         expectOK(() -> when_i_add_domain());
     }
 

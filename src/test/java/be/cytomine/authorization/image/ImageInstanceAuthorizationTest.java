@@ -51,7 +51,6 @@ public class ImageInstanceAuthorizationTest extends CRUDAuthorizationTest {
     public void before() throws Exception {
         if (imageInstance == null) {
             imageInstance = builder.given_an_image_instance();
-            initUser();
             initACL(imageInstance.container());
         }
         imageInstance.getProject().setMode(EditingMode.CLASSIC);
@@ -138,7 +137,7 @@ public class ImageInstanceAuthorizationTest extends CRUDAuthorizationTest {
         ImageInstance imageInstance = builder.given_an_image_instance();
         imageInstance.setProject(this.imageInstance.getProject());
         imageInstance.setReviewStart(new Date());
-        imageInstance.setReviewUser(userWithAdmin);
+        imageInstance.setReviewUser(userRepository.findByUsernameLikeIgnoreCase(USER_ACL_ADMIN).get());
         imageInstanceService.stopReview(imageInstance, false);
     }
 

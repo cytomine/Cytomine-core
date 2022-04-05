@@ -46,7 +46,6 @@ public class CompanionFileAuthorizationTest extends CRUDAuthorizationTest {
     public void before() throws Exception {
         if (companionFile == null) {
             companionFile = builder.given_a_companion_file(builder.given_an_abstract_image());
-            initUser();
             initACL(companionFile.container());
         }
     }

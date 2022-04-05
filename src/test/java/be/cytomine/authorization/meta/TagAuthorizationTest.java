@@ -48,7 +48,7 @@ public class TagAuthorizationTest extends AbstractAuthorizationTest {
     public void before() throws Exception {
         if (tag == null) {
             tag = builder.given_a_tag();
-            initUser();
+            ;
         }
     }
 
@@ -95,7 +95,7 @@ public class TagAuthorizationTest extends AbstractAuthorizationTest {
     @WithMockUser(username = CREATOR)
     public void creator_cannot_update_tag_if_linked_with_associations() {
         Tag tagToEdit = builder.given_a_tag();
-        tagToEdit.setUser((User) creator);
+        tagToEdit.setUser((User) userRepository.findByUsernameLikeIgnoreCase(CREATOR).get());
         builder.persistAndReturn(tagToEdit);
         TagDomainAssociation association = builder.given_a_tag_association(tagToEdit, builder.given_a_project());
         expectForbidden (() -> tagService.update(tagToEdit, tagToEdit.toJsonObject()));
@@ -105,7 +105,7 @@ public class TagAuthorizationTest extends AbstractAuthorizationTest {
     @WithMockUser(username = CREATOR)
     public void creator_can_update_tag_if_not_linked_with_associations() {
         Tag tagToEdit = builder.given_a_tag();
-        tagToEdit.setUser((User) creator);
+        tagToEdit.setUser((User) userRepository.findByUsernameLikeIgnoreCase(CREATOR).get());
         builder.persistAndReturn(tagToEdit);
         expectOK (() -> tagService.update(tagToEdit, tagToEdit.toJsonObject()));
     }
@@ -122,7 +122,7 @@ public class TagAuthorizationTest extends AbstractAuthorizationTest {
     @WithMockUser(username = CREATOR)
     public void creator_cannot_delete_tag_if_linked_with_associations() {
         Tag tagToDelete = builder.given_a_tag();
-        tagToDelete.setUser((User) creator);
+        tagToDelete.setUser((User) userRepository.findByUsernameLikeIgnoreCase(CREATOR).get());
         builder.persistAndReturn(tagToDelete);
         TagDomainAssociation association = builder.given_a_tag_association(tagToDelete, builder.given_a_project());
         expectForbidden (() -> tagService.delete(tagToDelete, null, null, false));
@@ -133,7 +133,7 @@ public class TagAuthorizationTest extends AbstractAuthorizationTest {
     @WithMockUser(username = CREATOR)
     public void creator_can_delete_tag_if_not_linked_with_associations() {
         Tag tagToDelete = builder.given_a_tag();
-        tagToDelete.setUser((User) creator);
+        tagToDelete.setUser((User) userRepository.findByUsernameLikeIgnoreCase(CREATOR).get());
         builder.persistAndReturn(tagToDelete);
         expectOK (() -> tagService.delete(tagToDelete, null, null, false));
     }

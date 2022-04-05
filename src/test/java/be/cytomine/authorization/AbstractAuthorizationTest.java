@@ -10,6 +10,7 @@ import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
+import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.PermissionService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.function.Executable;
@@ -20,14 +21,13 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 
 import static be.cytomine.BasicInstanceBuilder.*;
+import static be.cytomine.service.database.BootstrapTestsDataService.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.*;
 
 @Transactional
 public abstract class AbstractAuthorizationTest {
-
-
 
     public static final String SUPERADMIN = "SUPER_ADMIN_ACL";
 
@@ -49,39 +49,6 @@ public abstract class AbstractAuthorizationTest {
 
     public static final String CREATOR = "CREATOR";
 
-    protected SecUser superadmin;
-
-    protected SecUser userWithRead;
-
-    protected SecUser userWithWrite;
-
-    protected SecUser userWithCreate;
-
-    protected SecUser userWithDelete;
-
-    protected SecUser userWithAdmin;
-
-    protected SecUser userNoAcl;
-
-    protected SecUser userGuest;
-
-    protected SecUser creator;
-
-    public static final Map<String, List<String>> ROLES = new HashMap<>();
-
-    static {
-        ROLES.put(SUPERADMIN, List.of(ROLE_SUPER_ADMIN));
-        ROLES.put(ADMIN, List.of(ROLE_ADMIN));
-        ROLES.put(USER_NO_ACL, List.of(ROLE_USER));
-        ROLES.put(USER_ACL_READ, List.of(ROLE_USER));
-        ROLES.put(USER_ACL_WRITE, List.of(ROLE_USER));
-        ROLES.put(USER_ACL_CREATE, List.of(ROLE_USER));
-        ROLES.put(USER_ACL_DELETE, List.of(ROLE_USER));
-        ROLES.put(USER_ACL_ADMIN, List.of(ROLE_USER));
-        ROLES.put(CREATOR, List.of(ROLE_USER));
-        ROLES.put(GUEST, List.of(ROLE_GUEST));
-    }
-
     @Autowired
     protected EntityManager entityManager;
 
@@ -96,76 +63,34 @@ public abstract class AbstractAuthorizationTest {
 
     @Autowired
     protected PermissionService permissionService;
-//    protected final EntityManager entityManager;
-//
-//    protected final UserRepository userRepository;
-//
-//    protected final SecUserSecRoleRepository secUserSecRoleRepository;
-//
-//    protected final SecRoleRepository secRoleRepository;
-//
-//    protected final PermissionService permissionService;
 
-    public SecUser given_a_user(String login) throws Exception {
-        Optional<User> alreadyExistingUser = userRepository.findByUsernameLikeIgnoreCase(login.toLowerCase());
-        if (!ROLES.containsKey(login)) {
-            throw new RuntimeException("Cannot execute test because user has not authority defined");
-        }
-        List<String> authoritiesConstants = ROLES.get(login);
-
-        if (alreadyExistingUser.isPresent()) {
-            Set<SecRole> allRoleBySecUser = secUserSecRoleRepository.findAllRoleBySecUser(alreadyExistingUser.get());
-            for (String authoritiesConstant : authoritiesConstants) {
-                if (!allRoleBySecUser.stream().anyMatch(x -> x.getAuthority().equals(authoritiesConstant))) {
-                    throw new RuntimeException("Cannot execute test because already existing user " + login + "  has not same roles: not present - " + authoritiesConstant);
-                }
-            }
-            for (SecRole secRole : allRoleBySecUser) {
-                if (!authoritiesConstants.stream().anyMatch(x -> x.equals(secRole.getAuthority()))) {
-                    throw new RuntimeException("Cannot execute test because already existing user " + login + " has not same roles: should not be there - " + secRole.getAuthority());
-                }
-            }
-            return alreadyExistingUser.get();
-        }
-
-        User user = BasicInstanceBuilder.given_a_not_persisted_user();
-        user.setUsername(login);
-        user.setEmail(login + "@test.com");
-
-        user = userRepository.save(user);
-        userRepository.findById(user.getId()); // flush
-
-        for (String authority : authoritiesConstants) {
-            SecRole secRole = secRoleRepository.getByAuthority(authority);
-            SecUserSecRole secUserSecRole = new SecUserSecRole();
-            secUserSecRole.setSecUser(user);
-            secUserSecRole.setSecRole(secRole);
-            secUserSecRoleRepository.save(secUserSecRole);
-        }
-        userRepository.findById(user.getId()); // flush
-        return user;
-    }
-
-    protected void initUser() throws Exception {
-        superadmin = given_a_user(SUPERADMIN);
-        userWithRead = given_a_user(USER_ACL_READ);
-        userWithWrite = given_a_user(USER_ACL_WRITE);
-        userWithCreate = given_a_user(USER_ACL_CREATE);
-        userWithDelete = given_a_user(USER_ACL_DELETE);
-        userWithAdmin = given_a_user(USER_ACL_ADMIN);
-        userNoAcl = given_a_user(USER_NO_ACL);
-        userGuest = given_a_user(GUEST);
-        creator = given_a_user(CREATOR);
-    }
+    @Autowired
+    protected CurrentUserService currentUserService;
 
     protected void initACL(CytomineDomain container) {
-        permissionService.addPermission(container, USER_ACL_READ, BasePermission.READ);
-        permissionService.addPermission(container, USER_ACL_WRITE, BasePermission.WRITE);
-        permissionService.addPermission(container, USER_ACL_CREATE, BasePermission.CREATE);
-        permissionService.addPermission(container, USER_ACL_DELETE, BasePermission.DELETE);
-        permissionService.addPermission(container, USER_ACL_ADMIN, BasePermission.ADMINISTRATION);
-        permissionService.addPermission(container, GUEST, BasePermission.READ);
-        permissionService.addPermission(container, CREATOR, BasePermission.CREATE);
+        User user = (User) currentUserService.getCurrentUser();
+
+        Long aclClassId = permissionService.getAclClassId(container);
+        //get acl sid for current user (run request)
+        Long sidCurrentUser = permissionService.getAclSid(user.getUsername());
+        //get acl object id
+        Long aclObjectIdentity = permissionService.getAclObjectIdentity(container, aclClassId, sidCurrentUser);
+
+        permissionService.addPermissionOptimised(aclObjectIdentity, USER_ACL_READ, BasePermission.READ,100);
+        permissionService.addPermissionOptimised(aclObjectIdentity, USER_ACL_WRITE, BasePermission.WRITE,101);
+        permissionService.addPermissionOptimised(aclObjectIdentity, USER_ACL_CREATE, BasePermission.CREATE,102);
+        permissionService.addPermissionOptimised(aclObjectIdentity, USER_ACL_DELETE, BasePermission.DELETE,103);
+        permissionService.addPermissionOptimised(aclObjectIdentity, USER_ACL_ADMIN, BasePermission.ADMINISTRATION,104);
+        permissionService.addPermissionOptimised(aclObjectIdentity, GUEST, BasePermission.READ,105);
+        permissionService.addPermissionOptimised(aclObjectIdentity, CREATOR, BasePermission.CREATE,106);
+
+//        permissionService.addPermission(container, USER_ACL_READ, BasePermission.READ);
+//        permissionService.addPermission(container, USER_ACL_WRITE, BasePermission.WRITE);
+//        permissionService.addPermission(container, USER_ACL_CREATE, BasePermission.CREATE);
+//        permissionService.addPermission(container, USER_ACL_DELETE, BasePermission.DELETE);
+//        permissionService.addPermission(container, USER_ACL_ADMIN, BasePermission.ADMINISTRATION);
+//        permissionService.addPermission(container, GUEST, BasePermission.READ);
+//        permissionService.addPermission(container, CREATOR, BasePermission.CREATE);
     }
 
     protected void expectForbidden(Executable executable) {

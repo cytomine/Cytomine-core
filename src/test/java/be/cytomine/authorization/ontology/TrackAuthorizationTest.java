@@ -43,7 +43,7 @@ public class TrackAuthorizationTest extends CRUDAuthorizationTest {
     public void before() throws Exception {
         if (track == null) {
             track = builder.given_a_track();
-            initUser();
+            ;
             initACL(track.container());
         }
     }

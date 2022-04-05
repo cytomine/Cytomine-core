@@ -48,7 +48,6 @@ public class UploadedFileAuthorizationTest extends CRUDAuthorizationTest {
     public void before() throws Exception {
         if (uploadedFile == null) {
             uploadedFile = builder.given_a_uploaded_file();
-            initUser();
             initACL(uploadedFile.container());
         }
     }

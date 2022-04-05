@@ -58,7 +58,7 @@ public class ConfigurationAuthorizationTest extends AbstractAuthorizationTest {
             configForAdmin = builder.given_a_not_persisted_configuration("ADMIN");
             configForAdmin.setReadingRole(ConfigurationReadingRole.ADMIN);
             builder.persistAndReturn(configForAdmin);
-            initUser();
+            ;
         }
         if (configForUser == null) {
             configForUser = builder.given_a_not_persisted_configuration("USER");

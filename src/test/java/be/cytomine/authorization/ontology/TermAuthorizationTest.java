@@ -69,7 +69,7 @@ public class TermAuthorizationTest extends CRUDAuthorizationTest {
     public void before() throws Exception {
         if (term == null) {
             term = builder.given_a_term();
-            initUser();
+            ;
             initACL(term.container());
         }
     }

@@ -48,9 +48,14 @@ public class AbstractImageAuthorizationTest extends CRUDAuthorizationTest {
     @BeforeEach
     public void before() throws Exception {
         if (abstractImage == null) {
+            Long start = System.currentTimeMillis();
             abstractImage = builder.given_an_abstract_image();
-            initUser();
+            System.out.println("EXECUTION given_an_abstract_image:"+ (System.currentTimeMillis()-start));
+            start = System.currentTimeMillis();
+            System.out.println("EXECUTION initUser:"+ (System.currentTimeMillis()-start));
+            start = System.currentTimeMillis();
             initACL(abstractImage.container());
+            System.out.println("EXECUTION initACL:"+ (System.currentTimeMillis()-start));
         }
     }
 

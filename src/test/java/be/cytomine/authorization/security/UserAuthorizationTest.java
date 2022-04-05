@@ -51,13 +51,14 @@ public class UserAuthorizationTest extends AbstractAuthorizationTest {
 
     @BeforeEach
     public void before() throws Exception {
-        initUser();
+        ;
     }
 
 
     @Test
     @WithMockUser(username = GUEST)
     public void every_body_can_read_user() {
+        User userNoAcl = userRepository.findByUsernameLikeIgnoreCase(USER_NO_ACL).get();
         assertThat(secUserService.findUser(userNoAcl.getId())).isPresent();
         assertThat(secUserService.find(userNoAcl.getId())).isPresent();
         assertThat(secUserService.get(userNoAcl.getId())).isNotNull();
@@ -120,7 +121,7 @@ public class UserAuthorizationTest extends AbstractAuthorizationTest {
     @Test
     @WithMockUser(username = USER_NO_ACL)
     public void user_can_modify_himself() {
-        User user = (User)userNoAcl;
+        User user = userRepository.findByUsernameLikeIgnoreCase(USER_NO_ACL).get();
         expectOK(() -> secUserService.update(user, user.toJsonObject().withChange("lastname", "user_can_modify_himself")));
         assertThat(user.getLastname()).isEqualTo("user_can_modify_himself");
     }
@@ -128,7 +129,7 @@ public class UserAuthorizationTest extends AbstractAuthorizationTest {
     @Test
     @WithMockUser(username = SUPERADMIN)
     public void admin_can_modify_a_user() {
-        User user = (User)userNoAcl;
+        User user = userRepository.findByUsernameLikeIgnoreCase(USER_NO_ACL).get();
         expectOK(() -> secUserService.update(user, user.toJsonObject().withChange("lastname", "admin_can_modify_a_user")));
         assertThat(user.getLastname()).isEqualTo("admin_can_modify_a_user");
     }
@@ -137,7 +138,7 @@ public class UserAuthorizationTest extends AbstractAuthorizationTest {
     @Test
     @WithMockUser(username = USER_NO_ACL)
     public void user_cannot_modify_another_user() {
-        User user = (User)userGuest;
+        User user =userRepository.findByUsernameLikeIgnoreCase(GUEST).get();
         expectForbidden(() -> secUserService.update(user, user.toJsonObject().withChange("lastname", "user_can_modify_himself")));
     }
 
@@ -151,7 +152,7 @@ public class UserAuthorizationTest extends AbstractAuthorizationTest {
     @Test
     @WithMockUser(username = USER_NO_ACL)
     public void user_cannot_delete_himself() {
-        User user = (User) userNoAcl;
+        User user = userRepository.findByUsernameLikeIgnoreCase(USER_NO_ACL).get();
         expectForbidden(() -> secUserService.delete(user, null, null, false));
     }
 

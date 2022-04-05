@@ -48,7 +48,6 @@ public class NestedImageInstanceAuthorizationTest extends CRUDAuthorizationTest 
     public void before() throws Exception {
         if (nestedImageInstance == null) {
             nestedImageInstance = builder.given_a_nested_image_instance();
-            initUser();
             initACL(nestedImageInstance.container());
         }
     }

@@ -48,7 +48,7 @@ public class AnnotationTermAuthorizationTest extends CRDAuthorizationTest {
     public void before() throws Exception {
         if (annotationTerm == null) {
             annotationTerm = builder.given_an_annotation_term();
-            initUser();
+            ;
             initACL(annotationTerm.container());
         }
         annotationTerm.getUserAnnotation().getProject().setMode(EditingMode.CLASSIC);

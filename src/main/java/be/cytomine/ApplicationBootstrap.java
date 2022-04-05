@@ -11,11 +11,11 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.server.StorageRepository;
 import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.project.ProjectRepository;
-import be.cytomine.repository.security.AclRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.UrlApi;
 import be.cytomine.service.database.BootstrapDataService;
+import be.cytomine.service.database.BootstrapTestsDataService;
 import be.cytomine.service.database.BootstrapUtilsService;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.project.ProjectService;
@@ -50,6 +50,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static be.cytomine.service.database.BootstrapTestsDataService.*;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
 @Component
@@ -60,23 +61,7 @@ import static org.springframework.security.acls.domain.BasePermission.ADMINISTRA
 @Transactional
 class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent> {
 
-    @Value("${spring.mail.password}")
-    public String password;
-
     private final SecUserRepository secUserRepository;
-
-    private final AclRepository aclRepository;
-
-    private final StorageRepository storageRepository;
-
-    private final OntologyRepository ontologyRepository;
-
-    private final ProjectService projectService;
-
-    private final EntityManager entityManager;
-
-    private final SequenceService sequenceService;
-
 
     private final ApplicationConfiguration applicationConfiguration;
 
@@ -103,6 +88,9 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
+    @Autowired
+    BootstrapTestsDataService bootstrapTestsDataService;
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
@@ -159,7 +147,18 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
             bootstrapUtilDataService.createUserJob("superadminjob", dataset.ADMINPASSWORD,
                     (User)secUserRepository.findByUsernameLikeIgnoreCase("superadmin").orElseThrow(() -> new ObjectNotFoundException("User", "superadmin")),
                     List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
-            //mockServicesForTests() TODO in test?
+
+            bootstrapTestsDataService.createUserForTests(SUPERADMIN);
+            bootstrapTestsDataService.createUserForTests(USER_ACL_READ);
+            bootstrapTestsDataService.createUserForTests(USER_ACL_WRITE);
+            bootstrapTestsDataService.createUserForTests(USER_ACL_CREATE);
+            bootstrapTestsDataService.createUserForTests(USER_ACL_DELETE);
+            bootstrapTestsDataService.createUserForTests(USER_ACL_ADMIN);
+            bootstrapTestsDataService.createUserForTests(USER_NO_ACL);
+            bootstrapTestsDataService.createUserForTests(GUEST);
+            bootstrapTestsDataService.createUserForTests(CREATOR);
+
+
         } else if (secUserRepository.count() == 0) {
             //if database is empty, put minimal data
             bootstrapDataService.initData();

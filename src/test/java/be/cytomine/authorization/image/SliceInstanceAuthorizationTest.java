@@ -47,7 +47,6 @@ public class SliceInstanceAuthorizationTest extends CRUDAuthorizationTest {
     public void before() throws Exception {
         if (sliceInstance == null) {
             sliceInstance = builder.given_a_slice_instance();
-            initUser();
             initACL(sliceInstance.container());
         }
         sliceInstance.getProject().setMode(EditingMode.CLASSIC);

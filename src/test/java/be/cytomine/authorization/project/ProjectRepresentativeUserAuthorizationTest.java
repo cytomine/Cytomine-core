@@ -44,7 +44,7 @@ public class ProjectRepresentativeUserAuthorizationTest extends CRDAuthorization
     public void before() throws Exception {
         if (projectRepresentativeUser == null) {
             projectRepresentativeUser = builder.given_a_project_representative_user();
-            initUser();
+            ;
             initACL(projectRepresentativeUser.container());
         }
     }

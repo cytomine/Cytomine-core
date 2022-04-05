@@ -107,6 +107,12 @@ public class PermissionService {
     }
 
 
+    public void addPermissionOptimised(Long aclObjectIdentity, String username, Permission permission, Integer index) {
+        //get acl sid for the user
+        Long sid = getAclSid(username);
+        aclRepository.insertAclEntry(index, aclObjectIdentity, permission.getMask(), sid);
+    }
+
 
 
     public Long createAclEntry(Long aoi, Long sid, Integer mask) {

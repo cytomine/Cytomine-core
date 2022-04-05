@@ -102,7 +102,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
     public void before() throws Exception {
         if (project == null) {
             project = builder.given_a_project();
-            initUser();
+            ;
             initACL(project);
         }
         project.setMode(CLASSIC);
@@ -120,7 +120,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
     @Test
     @WithMockUser(username = USER_ACL_READ)
     public void user_with_at_least_read_permission_can_list_projects(){
-        assertThat(projectService.list(userWithRead, new ProjectSearchExtension(), new ArrayList<>(), "created", "desc", 0L, 0L)
+        assertThat(projectService.list((User) userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get(), new ProjectSearchExtension(), new ArrayList<>(), "created", "desc", 0L, 0L)
                 .stream().map(x -> x.get("id")))
                 .contains(project.getId());
     }
@@ -700,7 +700,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
 
 
         //add annotation on my layer
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(sliceUser, (User) userWithRead).toJsonObject()); });
+        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(sliceUser, userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get()).toJsonObject()); });
         //add annotation on other layers
         expectForbidden(() -> { userAnnotationService.add(builder.given_a_user_annotation(slice).toJsonObject()); });
         expectForbidden(() -> { userAnnotationService.add(builder.given_a_user_annotation(sliceAdmin).toJsonObject()); });
@@ -1263,7 +1263,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         Map<String, Object> result = new HashMap<>();
 
         //Add a simple project user
-        User simpleUser = (User) userWithRead;
+        User simpleUser = (User) userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get();
 //                builder.given_a_user();
 //        builder.addUserToProject(project, simpleUser.getUsername(), READ);
 

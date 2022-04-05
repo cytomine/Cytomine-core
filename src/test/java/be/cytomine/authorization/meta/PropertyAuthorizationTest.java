@@ -62,7 +62,6 @@ public class PropertyAuthorizationTest extends CRUDAuthorizationTest {
             propertyForAnnotation = builder.given_a_property(annotationDomain);
             propertyForAbstractImage = builder.given_a_property(abstractImage);
 
-            initUser();
             initACL(project);
             initACL(annotationDomain.getProject());
             initACL(abstractImage.getUploadedFile().getStorage());
@@ -110,10 +109,10 @@ public class PropertyAuthorizationTest extends CRUDAuthorizationTest {
     @WithMockUser(username = USER_ACL_READ)
     public void user_can_add_in_restricted_mode_for_annotation_if_owner(){
         project.setMode(EditingMode.RESTRICTED);
-        ((UserAnnotation)annotationDomain).setUser((User)userWithRead);
+        ((UserAnnotation)annotationDomain).setUser(userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get());
         expectOK(() -> {
             AnnotationDomain annotationDomain = builder.persistAndReturn(builder.given_a_not_persisted_user_annotation(project));
-            ((UserAnnotation)annotationDomain).setUser((User)userWithRead);
+            ((UserAnnotation)annotationDomain).setUser(userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get());
             propertyService.add(builder.given_a_not_persisted_property(annotationDomain, "key", "value").toJsonObject());
         });
     }
