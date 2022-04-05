@@ -68,6 +68,10 @@ public abstract class AbstractAuthorizationTest {
     protected CurrentUserService currentUserService;
 
     protected void initACL(CytomineDomain container) {
+
+        // This code is called every execution of an authorization (a lot...)
+        // So it is a "ugly" implementation of the 'addPermission' that is very fast.
+
         User user = (User) currentUserService.getCurrentUser();
 
         Long aclClassId = permissionService.getAclClassId(container);
@@ -83,14 +87,6 @@ public abstract class AbstractAuthorizationTest {
         permissionService.addPermissionOptimised(aclObjectIdentity, USER_ACL_ADMIN, BasePermission.ADMINISTRATION,104);
         permissionService.addPermissionOptimised(aclObjectIdentity, GUEST, BasePermission.READ,105);
         permissionService.addPermissionOptimised(aclObjectIdentity, CREATOR, BasePermission.CREATE,106);
-
-//        permissionService.addPermission(container, USER_ACL_READ, BasePermission.READ);
-//        permissionService.addPermission(container, USER_ACL_WRITE, BasePermission.WRITE);
-//        permissionService.addPermission(container, USER_ACL_CREATE, BasePermission.CREATE);
-//        permissionService.addPermission(container, USER_ACL_DELETE, BasePermission.DELETE);
-//        permissionService.addPermission(container, USER_ACL_ADMIN, BasePermission.ADMINISTRATION);
-//        permissionService.addPermission(container, GUEST, BasePermission.READ);
-//        permissionService.addPermission(container, CREATOR, BasePermission.CREATE);
     }
 
     protected void expectForbidden(Executable executable) {

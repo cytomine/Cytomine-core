@@ -148,6 +148,8 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
                     (User)secUserRepository.findByUsernameLikeIgnoreCase("superadmin").orElseThrow(() -> new ObjectNotFoundException("User", "superadmin")),
                     List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
 
+            // We need these users for all authorization tests
+            // So we create them at the beginning in order to avoid creating them before each authorization tests
             bootstrapTestsDataService.createUserForTests(SUPERADMIN);
             bootstrapTestsDataService.createUserForTests(USER_ACL_READ);
             bootstrapTestsDataService.createUserForTests(USER_ACL_WRITE);
