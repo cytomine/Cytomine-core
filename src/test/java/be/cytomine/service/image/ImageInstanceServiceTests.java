@@ -128,6 +128,7 @@ public class ImageInstanceServiceTests {
         List<String> stringChoices = new ArrayList<>(List.of("aaa", "zzzz", "AAAA"));
         Collections.shuffle(stringChoices);
 
+
         for (int k = 0 ; k < 2 ; k++) { // execute twice the creation of images (6 images)
             for (int i = 0; i < 3; i++) {
                 ImageInstance imageInstance = builder.given_an_image_instance(project);
