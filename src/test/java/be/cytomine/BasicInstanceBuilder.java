@@ -700,7 +700,7 @@ public class BasicInstanceBuilder {
         UserAnnotation userAnnotation =
                 given_a_user_annotation(sliceInstance, location, user, term);
 
-        ReviewedAnnotation annotation = given_a_reviewed_annotation();
+        ReviewedAnnotation annotation = new ReviewedAnnotation();
         annotation.setImage(sliceInstance.getImage());
         annotation.setSlice(sliceInstance);
         annotation.setLocation(new WKTReader().read(location));
