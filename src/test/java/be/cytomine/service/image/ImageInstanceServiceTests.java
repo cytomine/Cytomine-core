@@ -1,6 +1,7 @@
 package be.cytomine.service.image;
 
 import be.cytomine.BasicInstanceBuilder;
+import be.cytomine.CytomineCoreApplication;
 import be.cytomine.TestApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.NestedImageInstance;
@@ -53,7 +54,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.fail;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 
-@SpringBootTest(classes = TestApplication.class)
+@SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
 @WithMockUser(username = "superadmin")
 @Transactional
