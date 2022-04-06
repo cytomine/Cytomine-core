@@ -2,8 +2,10 @@ package be.cytomine.service;
 
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ForbiddenException;
+import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.ServerException;
 import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.security.current.CurrentUser;
 import be.cytomine.utils.SecurityUtils;
 import be.cytomine.utils.WeakConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
@@ -29,17 +31,27 @@ public class CurrentUserService {
 
 
     public String getCurrentUsername() {
-        return SecurityUtils.getCurrentUserLogin().get();
-    }
-
-    public Optional<SecUser> readCurrentUser() {
-        Optional<SecUser> opt = secUserRepository.findByUsernameLikeIgnoreCase(SecurityUtils.getCurrentUserLogin().get());
-        opt.ifPresent(this::checkAccountStatus);
-        return opt;
+        CurrentUser currentUser = SecurityUtils.getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
+        if (currentUser.isFullObjectProvided() || currentUser.isUsernameProvided()) {
+            return currentUser.getUser().getUsername();
+        } else {
+            throw new ObjectNotFoundException("User", "Cannot read current username. Object " + currentUser + " is not supported");
+        }
     }
 
     public SecUser getCurrentUser() {
-        SecUser secUser =  secUserRepository.findByUsernameLikeIgnoreCase(SecurityUtils.getCurrentUserLogin().get()).orElseThrow(() -> new ServerException("Cannot read current user"));
+        CurrentUser currentUser = SecurityUtils.getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
+        SecUser secUser;
+        if (currentUser.isFullObjectProvided()) {
+            secUser = currentUser.getUser();
+        } else if(currentUser.isUsernameProvided()) {
+//            for (SecUser it : secUserRepository.findAll()) {
+//                System.out.println(it.getUsername());
+//            }
+            secUser = secUserRepository.findByUsernameLikeIgnoreCase(currentUser.getUser().getUsername()).orElseThrow(() -> new ServerException("Cannot find current user with username " + currentUser.getUser().getUsername()));
+        } else {
+            throw new ObjectNotFoundException("User", "Cannot read current user. Object " + currentUser + " is not supported");
+        }
         checkAccountStatus(secUser);
         return secUser;
     }

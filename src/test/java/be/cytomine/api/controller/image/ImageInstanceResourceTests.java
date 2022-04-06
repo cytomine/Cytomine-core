@@ -7,8 +7,10 @@ import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.repository.meta.PropertyRepository;
+import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
@@ -194,6 +196,8 @@ public class ImageInstanceResourceTests {
 
     }
 
+    @Autowired
+    SecUserRepository secUserRepository;
 
     @WithMockUser(username = "list_image_instance_by_user")
     @Test
@@ -204,7 +208,6 @@ public class ImageInstanceResourceTests {
         ImageInstance imageFromOtherProjectNotAccessibleForUser = builder.given_an_image_instance();
         User user = builder.given_a_user("list_image_instance_by_user");
         builder.addUserToProject(image.getProject(), user.getUsername(), BasePermission.WRITE); // contributor
-
 
         restImageInstanceControllerMockMvc.perform(get("/api/user/{id}/imageinstance.json", user.getId()))
                 .andDo(print())

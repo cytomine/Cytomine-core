@@ -2,7 +2,9 @@ package be.cytomine.security;
 
 import be.cytomine.config.ApplicationConfiguration;
 import be.cytomine.config.security.JWTFilter;
+import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ForbiddenException;
+import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.security.jwt.TokenProvider;
 import be.cytomine.security.jwt.TokenType;
 import io.jsonwebtoken.io.Decoders;
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestTemplate;
+import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -21,14 +24,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 
 class JWTFilterTest {
 
     private TokenProvider tokenProvider;
 
     private JWTFilter jwtFilter;
+    private SecUserRepository secUserRepository;
 
     @BeforeEach
     public void setup() {
@@ -39,7 +45,13 @@ class JWTFilterTest {
         applicationConfiguration.getAuthentication().getJwt().setTokenValidityInSecondsForRememberMe(60000L);
         applicationConfiguration.getAuthentication().getJwt().setTokenValidityInSecondsForShortTerm(300L);
 
-        tokenProvider = new TokenProvider(applicationConfiguration);
+        secUserRepository = Mockito.mock(SecUserRepository.class);
+
+        SecUser secUser = new SecUser();
+        secUser.setUsername("test-user");
+        Mockito.when(secUserRepository.findByUsernameLikeIgnoreCase(eq("test-user"))).thenReturn(Optional.of(secUser));
+
+        tokenProvider = new TokenProvider(applicationConfiguration, secUserRepository);
 //        ReflectionTestUtils.setField(tokenProvider, "key", Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
 //        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", 6000000);
 //        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMillisecondsForRememberMe", 6000000);

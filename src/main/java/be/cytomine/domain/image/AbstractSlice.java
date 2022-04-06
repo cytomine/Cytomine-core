@@ -21,7 +21,7 @@ public class AbstractSlice extends CytomineDomain {
     @ManyToOne
     private AbstractImage image;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     private UploadedFile uploadedFile;
 
     @ManyToOne(fetch = FetchType.EAGER)

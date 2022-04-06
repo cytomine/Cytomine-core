@@ -163,6 +163,15 @@ public class ProjectService extends ModelService {
 
     public Optional<Project> find(Long id) {
         Optional<Project> project = projectRepository.findById(id);
+        projectRepository.findById(id);
+        projectRepository.findById(id);
+        projectRepository.findById(id);
+        currentUserService.getCurrentUser();
+        currentUserService.getCurrentUser();
+        currentUserService.getCurrentUser();
+        currentUserService.getCurrentUser();
+        currentUserService.getCurrentUser();
+        currentUserService.getCurrentUser();
         project.ifPresent(value -> securityACLService.check(value, READ));
         return project;
     }

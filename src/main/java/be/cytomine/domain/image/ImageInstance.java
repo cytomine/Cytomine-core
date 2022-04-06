@@ -24,10 +24,10 @@ public class ImageInstance extends CytomineDomain {
     @ManyToOne(fetch = FetchType.EAGER)
     private AbstractImage baseImage;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Project project;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private SecUser user; //owner
 
     private String instanceFilename;
@@ -42,7 +42,7 @@ public class ImageInstance extends CytomineDomain {
 
     private Date reviewStop;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private SecUser reviewUser;
 
     private Integer magnification;

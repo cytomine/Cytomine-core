@@ -21,10 +21,10 @@ public class SliceInstance extends CytomineDomain implements Serializable {
     @ManyToOne(fetch = FetchType.EAGER)
     private AbstractSlice baseSlice;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private ImageInstance image;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Project project;
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {

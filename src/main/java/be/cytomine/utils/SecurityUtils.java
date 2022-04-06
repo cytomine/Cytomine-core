@@ -1,6 +1,10 @@
 package be.cytomine.utils;
 
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.security.current.CurrentUser;
+import be.cytomine.security.current.FullCurrentUser;
+import be.cytomine.security.current.PartialCurrentUser;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
@@ -44,9 +48,31 @@ public class SecurityUtils {
         return signature;
     }
 
-    /**
-     * Get the login of the current user.
-     */
+    public static Optional<CurrentUser> getSecurityCurrentUser() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+
+        return Optional.ofNullable(extractCurrentUser(securityContext.getAuthentication()));
+    }
+
+    private static CurrentUser extractCurrentUser(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        } else if (authentication.getDetails() instanceof SecUser) {
+            FullCurrentUser fullCurrentUser = new FullCurrentUser();
+            fullCurrentUser.setUser((SecUser)authentication.getDetails());
+            return fullCurrentUser;
+        } else if (authentication.getPrincipal() instanceof String) {
+            PartialCurrentUser partialCurrentUser = new PartialCurrentUser();
+            partialCurrentUser.setUsername((String)authentication.getPrincipal());
+            return partialCurrentUser;
+        } else if (authentication.getPrincipal() instanceof UserDetails) {
+            PartialCurrentUser partialCurrentUser = new PartialCurrentUser();
+            partialCurrentUser.setUsername(((UserDetails) authentication.getPrincipal()).getUsername());
+            return partialCurrentUser;
+        }
+        return null;
+    }
+
     public static Optional<String> getCurrentUserLogin() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(extractPrincipal(securityContext.getAuthentication()));

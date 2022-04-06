@@ -130,6 +130,7 @@ public class BasicInstanceBuilder {
     public User given_a_user(String username) {
         User user = persistAndReturn(given_a_not_persisted_user());
         user.setUsername(username);
+        user = persistAndReturn(user);
         addRole(user, ROLE_USER);
         return user;
     }
@@ -137,6 +138,7 @@ public class BasicInstanceBuilder {
     public User given_a_guest(String username) {
         User user = persistAndReturn(given_a_not_persisted_user());
         user.setUsername(username);
+        user = persistAndReturn(user);
         addRole(user, ROLE_GUEST);
         return user;
     }
@@ -144,6 +146,7 @@ public class BasicInstanceBuilder {
     public User given_a_admin(String username) {
         User user = persistAndReturn(given_a_not_persisted_user());
         user.setUsername(username);
+        user = persistAndReturn(user);
         addRole(user, ROLE_ADMIN);
         return user;
     }
@@ -156,6 +159,7 @@ public class BasicInstanceBuilder {
     public UserJob given_a_user_job(String username) {
         UserJob user = persistAndReturn(given_a_user_job_not_persisted(given_a_user()));
         user.setUsername(username);
+        user = persistAndReturn(user);
         addRole(user, ROLE_USER);
         return user;
     }
@@ -165,6 +169,9 @@ public class BasicInstanceBuilder {
         secUserSecRole.setSecUser(user);
         secUserSecRole.setSecRole(secRoleRepository.findByAuthority(authority).orElseThrow(() -> new ObjectNotFoundException("authority " + authority + " does not exists")));
         em.persist(secUserSecRole);
+        em.flush();
+        em.refresh(user);
+        System.out.println(user + " => " + user.getRoles());
     }
 
     public User given_superadmin() {
@@ -281,7 +288,7 @@ public class BasicInstanceBuilder {
     }
 
     public void addUserToProject(Project project, String username, Permission permission) {
-        permissionService.addPermission(project, username, permission);
+        permissionService.addPermission(project, username, permission, this.given_superadmin());
     }
 
     public void addUserToProject(Project project, String username) {

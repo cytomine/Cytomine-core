@@ -59,7 +59,7 @@ public class AbstractImage extends CytomineDomain {
 
     private String colorspace;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private SecUser user; //owner
 
     @Transient

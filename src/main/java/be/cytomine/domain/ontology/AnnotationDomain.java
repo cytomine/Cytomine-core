@@ -31,15 +31,15 @@ import java.util.Optional;
 public abstract class AnnotationDomain extends CytomineDomain implements Serializable {
 
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "slice_id", nullable = true)
     protected SliceInstance slice;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "image_id", nullable = false)
     protected ImageInstance image; // Redundant with slice, used for speed up in security checks
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = true)
     protected Project project;
 

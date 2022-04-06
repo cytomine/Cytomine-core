@@ -4,6 +4,7 @@ package be.cytomine.repository.security;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.service.dto.JobLayerDTO;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -18,14 +19,14 @@ import java.util.Optional;
 @Repository
 public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpecificationExecutor<User> {
 
+    @EntityGraph(attributePaths = "roles")
     Optional<SecUser> findById(String id);
 
+    @EntityGraph(attributePaths = "roles")
     Optional<SecUser> findByUsernameLikeIgnoreCase(String username);
 
+    @EntityGraph(attributePaths = "roles")
     Optional<SecUser> findByPublicKey(String publicKey);
-
-//    Optional<SecUser> findByPublicKeyAndEnabled(String publicKey, Boolean enabled);
-
 
     @Query("select distinct secUser " +
             "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, SecUser as secUser "+
@@ -83,10 +84,8 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
 
     List<SecUser> findAllByIdIn(List<Long> ids);
 
-    List<SecUser> findAllByUsernameLikeIgnoreCase(String s);
-
+    @EntityGraph(attributePaths = "roles")
     Optional<SecUser> findByPublicKeyAndEnabled(String accessKey, boolean enabled);
-
 
     @Query(value = "select distinct secUser " +
             "from AclSid as aclSid, AclEntry as aclEntry, SecUser as secUser "+

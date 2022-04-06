@@ -72,7 +72,7 @@ public class CurrentRoleService {
      * Get all user roles (even disabled role)
      */
     public Set<SecRole> findRealRole(SecUser user) {
-        return secUserSecRoleRepository.findAllRoleBySecUser(user);
+        return user.getRoles();
     }
 
     /**

@@ -1,6 +1,8 @@
 package be.cytomine.security.jwt;
 
 import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.SecurityUtils;
 import io.jsonwebtoken.*;
@@ -46,12 +48,15 @@ public class TokenProvider {
 
     private final long tokenValidityInMillisecondsForShortTerm;
 
-    public TokenProvider(ApplicationConfiguration applicationConfiguration) {
+    private final SecUserRepository secUserRepository;
+
+    public TokenProvider(ApplicationConfiguration applicationConfiguration, SecUserRepository secUserRepository) {
         byte[] keyBytes;
         String secret = applicationConfiguration.getAuthentication().getJwt().getSecret();
         keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         jwtParser = Jwts.parserBuilder().setSigningKey(key).build();
+        this.secUserRepository = secUserRepository;
         this.tokenValidityInMilliseconds =
                 1000 * applicationConfiguration.getAuthentication().getJwt().getTokenValidityInSeconds();
         this.tokenValidityInMillisecondsForRememberMe =
@@ -112,8 +117,9 @@ public class TokenProvider {
         }
 
         User principal = new User(claims.getSubject(), "", authorities);
-
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        usernamePasswordAuthenticationToken.setDetails(secUserRepository.findByUsernameLikeIgnoreCase(claims.getSubject()).orElseThrow(() -> new ObjectNotFoundException("User", claims.getSubject())));
+        return usernamePasswordAuthenticationToken;
     }
 
     public boolean validateToken(String authToken) {

@@ -223,26 +223,23 @@ public class RestUserController extends RestCytomineController {
     ) {
         log.debug("REST request to get current User");
 
-        Optional<SecUser> user = secUserService.findCurrentUser();
+        SecUser secUser = secUserService.getCurrentUser();
 
-        return user.map( secUser -> {
-
-            JsonObject object = User.getDataFromDomain(secUser);
-            if(!secUser.isAlgo()){
-                AuthInformation authMaps = secUserService.getAuthenticationRoles(secUser);
-                object.put("admin", authMaps.getAdmin());
-                object.put("user", authMaps.getUser());
-                object.put("guest", authMaps.getGuest());
-                object.put("adminByNow", authMaps.getAdminByNow());
-                object.put("userByNow", authMaps.getUserByNow());
-                object.put("guestByNow", authMaps.getGuestByNow());
-                object.put("isSwitched", SecurityUtils.isSwitched(applicationContext));
-                if(object.getJSONAttrBoolean("isSwitched", false)) {
-                    object.put("realUser", SecurityUtils.getSwitchedUserOriginalUsername(applicationContext));
-                }
+        JsonObject object = User.getDataFromDomain(secUser);
+        if(!secUser.isAlgo()){
+            AuthInformation authMaps = secUserService.getAuthenticationRoles(secUser);
+            object.put("admin", authMaps.getAdmin());
+            object.put("user", authMaps.getUser());
+            object.put("guest", authMaps.getGuest());
+            object.put("adminByNow", authMaps.getAdminByNow());
+            object.put("userByNow", authMaps.getUserByNow());
+            object.put("guestByNow", authMaps.getGuestByNow());
+            object.put("isSwitched", SecurityUtils.isSwitched(applicationContext));
+            if(object.getJSONAttrBoolean("isSwitched", false)) {
+                object.put("realUser", SecurityUtils.getSwitchedUserOriginalUsername(applicationContext));
             }
-            return responseSuccess(object);
-        }).orElseGet(() -> responseNotFound("User", "current"));
+        }
+        return responseSuccess(object);
     }
 
 

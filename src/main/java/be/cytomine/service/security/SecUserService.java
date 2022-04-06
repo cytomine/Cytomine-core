@@ -264,10 +264,6 @@ public class SecUserService extends ModelService {
         return authInformation;
     }
 
-    public Optional<SecUser> findCurrentUser() {
-        return currentUserService.readCurrentUser();
-    }
-
     public SecUser getCurrentUser() {
         return currentUserService.getCurrentUser();
     }

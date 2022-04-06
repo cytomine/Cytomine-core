@@ -52,7 +52,7 @@ public class AlgoAnnotationTerm extends CytomineDomain implements Serializable {
     Double rate;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_job_id", nullable = false)
     private UserJob userJob;
 
@@ -60,7 +60,7 @@ public class AlgoAnnotationTerm extends CytomineDomain implements Serializable {
      * Project for the prediction
      * rem: redundance for optim (we should get it with retrieveAnnotationDomain().project)
      */
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = true)
     private Project project;
 
