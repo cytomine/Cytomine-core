@@ -40,16 +40,16 @@ public class JWTFilter extends GenericFilterBean {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         String jwt = resolveToken(httpServletRequest);
 
-        Jws<Claims> claimsJws = this.tokenProvider.decodeToken(jwt);
+        if (StringUtils.hasText(jwt)) {
+            Jws<Claims> claimsJws = this.tokenProvider.decodeToken(jwt);
+            if (claimsJws!=null) {
+                if (isShortTermToken(claimsJws) && !((HttpServletRequest) servletRequest).getMethod().toUpperCase(Locale.ROOT).equals("GET")) {
+                    throw new ForbiddenException("Short term token can only be use with GET request");
+                }
 
-        if (StringUtils.hasText(jwt) && claimsJws!=null) {
-
-            if (isShortTermToken(claimsJws) && !((HttpServletRequest) servletRequest).getMethod().toUpperCase(Locale.ROOT).equals("GET")) {
-                throw new ForbiddenException("Short term token can only be use with GET request");
+                Authentication authentication = this.tokenProvider.getAuthentication(jwt, claimsJws.getBody());
+                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-
-            Authentication authentication = this.tokenProvider.getAuthentication(jwt, claimsJws.getBody());
-            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         filterChain.doFilter(servletRequest, servletResponse);
     }
