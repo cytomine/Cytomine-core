@@ -86,6 +86,9 @@ dependencies {
 	implementation "org.apache.pdfbox:pdfbox:2.0.25"
 	implementation "org.apache.commons:commons-csv:1.5"
 	implementation 'com.github.dhorions:boxable:1.6'
+
+	implementation "net.bull.javamelody:javamelody-spring-boot-starter:1.91.0"
+
 }
 
 test {

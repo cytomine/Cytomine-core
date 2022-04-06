@@ -48,6 +48,9 @@ mongock:
 
   port: 8080
 
+javamelody:
+  enabled: false
+
 logging:
   level:
     org.springframework.data.mongodb.core.MongoTemplate: DEBUG

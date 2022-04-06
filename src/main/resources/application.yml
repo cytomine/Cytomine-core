@@ -15,7 +15,7 @@ spring:
       auto-commit: false
   jpa:
     database-platform: be.cytomine.config.CustomPostgreSQLDialect
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -43,6 +43,11 @@ spring:
 server:
   port: 8080
 
+javamelody:
+  enabled: true
+#  url-exclude-pattern: /notify*
+  init-parameters:
+    authorized-users: null #to overwrite for a server
 
 application:
   version: 0.0.0 # do not modify this, it will be replace during build (ci)
