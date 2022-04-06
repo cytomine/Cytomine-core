@@ -17,7 +17,6 @@ public class ForbiddenException extends CytomineException {
     }
     public ForbiddenException(String message, Map<Object, Object> values) {
         super(message,403, values);
-        log.warn(message);
     }
 
 }
