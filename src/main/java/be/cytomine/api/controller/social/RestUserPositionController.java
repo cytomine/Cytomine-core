@@ -63,7 +63,7 @@ public class RestUserPositionController extends RestCytomineController {
             @PathVariable Long id,
             @RequestBody JsonObject json
     ) {
-        log.debug("REST request add user position for sliceinstance {id}");
+        log.debug("REST request add user position for sliceinstance {}", id);
         SliceInstance referenceSlice = sliceInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", id));
         return add(referenceSlice.getImage(), referenceSlice, json);
