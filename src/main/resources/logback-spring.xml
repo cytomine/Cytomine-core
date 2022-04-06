@@ -58,6 +58,9 @@
     <logger name="springfox.documentation.schema.property" level="ERROR"/>
     <logger name="sun.rmi.transport" level="WARN"/>
 
+    <logger name="org.hibernate.engine.internal.StatefulPersistenceContext" level="ERROR"/>
+    <!-->Ignore HHH000179: Narrowing proxy to class be.cytomine.domain.security.User - this operation breaks ==  ; as we have custom equals/hashcode<!-->
+
     <!-- https://logback.qos.ch/manual/configuration.html#shutdownHook and https://jira.qos.ch/browse/LOGBACK-1090 -->
     <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook"/>
 
