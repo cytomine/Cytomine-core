@@ -171,7 +171,6 @@ public class BasicInstanceBuilder {
         em.persist(secUserSecRole);
         em.flush();
         em.refresh(user);
-        System.out.println(user + " => " + user.getRoles());
     }
 
     public User given_superadmin() {
