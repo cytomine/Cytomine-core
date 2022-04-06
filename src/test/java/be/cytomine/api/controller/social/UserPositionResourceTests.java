@@ -330,7 +330,7 @@ public class UserPositionResourceTests {
         jsonObject.put("topRightY", 2336);
         jsonObject.put("broadcast", false);
 
-        restUserPositionControllerMockMvc.perform(post("/api/imageinstance/{image}/position.json", imageInstance.getId())
+        restUserPositionControllerMockMvc.perform(post("/api/sliceinstance/{image}/position.json", sliceInstance.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
                 .andDo(print())
