@@ -7,7 +7,7 @@
                 <tr>
                     <td>
                         <h5 class="">Contact Info:</h5>
-                        <p>Website : <a th:with="url=(@{|${website}/#/account?token=${tokenKey}&username=${username}|})" th:href="${url}"><span th:text="${website}"></span></a><br/>
+                        <p>Website : <a th:with="url=(@{|${website}/#|})" th:href="${url}"><span th:text="${website}"></span></a><br/>
                             Email : <a th:mailto="${mailFrom}"><span th:text="${mailFrom}"></span></a><br/>
                             <span th:if="${phoneNumber!=null && phoneNumber.trim()!= ''}">
                                 Phone: <strong th:text="${phoneNumber}"></strong><br/>
