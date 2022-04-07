@@ -151,7 +151,7 @@ public class RestUserPositionController extends RestCytomineController {
             sliceInstance = sliceInstanceService.find(sliceId)
                     .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", sliceId));
         }
-        return responseSuccess(userPositionService.listOnlineUsersByImage(imageInstance, sliceInstance, broadcast));
+        return responseSuccess(JsonObject.of("users", userPositionService.listOnlineUsersByImage(imageInstance, sliceInstance, broadcast)));
     }
 
 }
