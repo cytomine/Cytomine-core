@@ -105,8 +105,8 @@ public class UserPositionResourceTests {
         restUserPositionControllerMockMvc.perform(get("/api/imageinstance/{image}/online.json", imageInstance.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
-                .andExpect(jsonPath("$.collection[0]").value(user.getId()));
+                .andExpect(jsonPath("$.users", hasSize(equalTo(1))))
+                .andExpect(jsonPath("$.users[0]").value(user.getId()));
     }
 
     @Test
@@ -122,7 +122,7 @@ public class UserPositionResourceTests {
                         .param("broadcast", "true"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
+                .andExpect(jsonPath("$.users", hasSize(equalTo(0))));
 
         given_a_persistent_user_position(new Date(), user, sliceInstance, true);
 
@@ -130,8 +130,8 @@ public class UserPositionResourceTests {
                         .param("broadcast", "true"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
-                .andExpect(jsonPath("$.collection[0]").value(user.getId()));
+                .andExpect(jsonPath("$.users", hasSize(equalTo(1))))
+                .andExpect(jsonPath("$.users[0]").value(user.getId()));
     }
 
     @Test
@@ -262,7 +262,7 @@ public class UserPositionResourceTests {
         restUserPositionControllerMockMvc.perform(get("/api/imageinstance/{image}/online.json", imageInstance.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
+                .andExpect(jsonPath("$.users", hasSize(equalTo(0))));
 
         JsonObject jsonObject = new JsonObject();
         jsonObject.put("image", imageInstance.getId());
@@ -287,8 +287,8 @@ public class UserPositionResourceTests {
         restUserPositionControllerMockMvc.perform(get("/api/imageinstance/{image}/online.json", imageInstance.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
-                .andExpect(jsonPath("$.collection[0]").value(user.getId()));
+                .andExpect(jsonPath("$.users", hasSize(equalTo(1))))
+                .andExpect(jsonPath("$.users[0]").value(user.getId()));
 
         List<PersistentUserPosition> persisted = persistentUserPositionRepository.findAll(Sort.by(Sort.Direction.DESC, "created"));
         assertThat(persisted).hasSize(1);
