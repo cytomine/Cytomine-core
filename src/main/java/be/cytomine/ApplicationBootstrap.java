@@ -67,6 +67,8 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
 
     private final Environment environment;
 
+    private boolean initAlreadyDone;
+
 
     @Autowired
     BootstrapDataService bootstrapDataService;
@@ -95,7 +97,11 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
         log.info("ApplicationListener#onApplicationEvent()");
-        init();
+        if (!initAlreadyDone) {
+            // onApplicationEvent can be called multiple times (if cyclcic dependencies)
+            init();
+        }
+        this.initAlreadyDone = true;
     }
 
     public void init() {
