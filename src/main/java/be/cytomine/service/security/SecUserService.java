@@ -1100,7 +1100,7 @@ public class SecUserService extends ModelService {
                 removeOntologyRightIfNecessary(project, (User) user, admin);
             }
             // if no representative, add current user as a representative
-            if (projectRepresentativeUserService.listByProject(project).size() == 1) {
+            if (!permissionService.hasACLPermission(project, user.getUsername(), READ) && projectRepresentativeUserService.listByProject(project).size() == 1) {
                 if (!securityACLService.getProjectList(currentUserService.getCurrentUser(), null).contains(project)) {
                     // if current user is not in project (= SUPERADMIN), add to the project
                     addUserToProject(currentUserService.getCurrentUser(), project, true);
