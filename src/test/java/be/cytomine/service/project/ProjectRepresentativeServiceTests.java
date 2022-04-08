@@ -23,6 +23,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import javax.transaction.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
@@ -165,11 +166,12 @@ public class ProjectRepresentativeServiceTests {
         ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_project_representative_user(
                 builder.given_a_project(), builder.given_a_user()
         );
+        builder.addUserToProject(projectRepresentativeUser.getProject(), projectRepresentativeUser.getUser().getUsername(), ADMINISTRATION);
 
         assertThat(projectRepresentativeUserService.listByProject(projectRepresentativeUser.getProject())).hasSize(1);
 
 
-        secUserService.deleteUserFromProject(projectRepresentativeUser.getUser(), projectRepresentativeUser.getProject(), false);
+        secUserService.deleteUserFromProject(projectRepresentativeUser.getUser(), projectRepresentativeUser.getProject(), true);
 
 
         assertThat(projectRepresentativeUserService.listByProject(projectRepresentativeUser.getProject())).hasSize(1);
