@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
 
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
 import java.util.Date;
 
 @RestController
@@ -43,9 +44,10 @@ public class ServerController extends RestCytomineController {
     private final TokenProvider tokenProvider;
 
     //@Secured("IS_AUTHENTICATED_REMEMBERED") //TODO????
-    @PostMapping("/server/ping.json")
-    public ResponseEntity<String> ping(@RequestBody JsonObject json,  HttpSession session) {
+    @RequestMapping(value = "/server/ping.json", method = {RequestMethod.GET, RequestMethod.POST})
+    public ResponseEntity<String> ping(HttpSession session) throws IOException {
         log.debug("REST request to ping");
+        JsonObject json = super.mergeQueryParamsAndBodyParams();
         JsonObject response = new JsonObject();
         response.put("alive", true);
         response.put("authenticated", SecurityUtils.isAuthenticated());

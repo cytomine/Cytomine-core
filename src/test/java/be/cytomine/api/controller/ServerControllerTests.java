@@ -103,6 +103,27 @@ public class ServerControllerTests {
     @Test
     @Transactional
     @WithMockUser(username = "superadmin")
+    public void ping_as_auth_with_get() throws Exception {
+        restConfigurationControllerMockMvc.perform(get("/server/ping.json"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.alive").value(true))
+                .andExpect(jsonPath("$.authenticated").value(true))
+                .andExpect(jsonPath("$.shortTermToken").exists())
+                .andExpect(jsonPath("$.version").hasJsonPath())
+                .andExpect(jsonPath("$.serverURL").hasJsonPath())
+                .andExpect(jsonPath("$.serverID").hasJsonPath())
+                .andExpect(jsonPath("$.user").value(builder.given_superadmin().getId()));
+
+        List<LastConnection> lastConnection = lastConnectionRepository.findByUserOrderByCreatedDesc(builder.given_superadmin().getId());
+        assertThat(lastConnection).hasSize(1);
+        assertThat(lastConnection.get(0).getProject()).isNull();
+    }
+
+
+    @Test
+    @Transactional
+    @WithMockUser(username = "superadmin")
     public void ping_as_auth_with_short_term_token() throws Exception {
         ResultActions resultActions = restConfigurationControllerMockMvc.perform(post("/server/ping.json")
                         .contentType(MediaType.APPLICATION_JSON)
