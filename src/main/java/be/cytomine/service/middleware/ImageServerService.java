@@ -326,10 +326,12 @@ public class ImageServerService extends ModelService {
         try {
             parameterUrl = makeParameterUrl(parameters);
             fullUrl = imageServerInternalUrl + path + "?" + parameterUrl;
+            log.debug(fullUrl);
             HttpClient httpClient = HttpClient.newBuilder()
                     .version(HttpClient.Version.HTTP_1_1)
                     .build();
         if ((fullUrl).length() < GET_URL_MAX_LENGTH && (httpMethod==null || httpMethod.equals("GET"))) {
+            log.debug(fullUrl);
             HttpRequest request = HttpRequest.newBuilder()
                     .GET()
                     .uri(URI.create(fullUrl))
@@ -339,6 +341,7 @@ public class ImageServerService extends ModelService {
             HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
             return response.body();
         } else {
+            log.debug(imageServerInternalUrl + path);
             HttpRequest request = HttpRequest.newBuilder()
                     .POST(HttpRequest.BodyPublishers.ofString(parameterUrl))
                     .uri(URI.create(imageServerInternalUrl + path))

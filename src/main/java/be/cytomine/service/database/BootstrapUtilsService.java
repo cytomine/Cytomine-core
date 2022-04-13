@@ -233,7 +233,7 @@ public class BootstrapUtilsService {
     }
     
    public void createImageServer(String name, String url, String basePath) {
-       if (imageServerRepository.findByUrl(url).isEmpty()) {
+       if (imageServerRepository.findAll().stream().map(x -> x.getUrl().equals(url)).toList().isEmpty()) {
            ImageServer imageServer = new ImageServer();
            imageServer.setName(name);
            imageServer.setUrl(url);
