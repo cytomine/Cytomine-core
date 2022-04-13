@@ -35,6 +35,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ import java.util.Set;
 
 @Service
 @Slf4j
+@Transactional
 public class BootstrapUtilsService {
 
     @Autowired
@@ -221,9 +223,13 @@ public class BootstrapUtilsService {
 
     public void createMultipleImageServer() {
         for (ImageServer imageServer : imageServerRepository.findAll()) {
+            log.info("imageServer '" + imageServer.getUrl() + "'");
             if(!applicationConfiguration.getImageServerURL().contains(imageServer.getUrl())) {
+                log.info("ImageServer not in config, disable it");
                 imageServer.setAvailable(false);
                 imageServerRepository.save(imageServer);
+            } else {
+                log.info("ImageServer in config");
             }
         }
 
@@ -233,7 +239,9 @@ public class BootstrapUtilsService {
     }
     
    public void createImageServer(String name, String url, String basePath) {
-       if (imageServerRepository.findAll().stream().map(x -> x.getUrl().equals(url)).toList().isEmpty()) {
+       log.info("Check if '" + url + "' is in database " + imageServerRepository.findAll().stream().map(ImageServer::getUrl).toList());
+       if (!imageServerRepository.findAll().stream().anyMatch(x -> x.getUrl().equals(url))) {
+           log.info("ImageServer '" + url + "'  not in database " + imageServerRepository.findAll().stream().map(ImageServer::getUrl).toList());
            ImageServer imageServer = new ImageServer();
            imageServer.setName(name);
            imageServer.setUrl(url);
