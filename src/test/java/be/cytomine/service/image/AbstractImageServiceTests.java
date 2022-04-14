@@ -204,15 +204,6 @@ public class AbstractImageServiceTests {
     }
 
     @Test
-    void add_valid_abstract_image_with_null_uploaded_file_fails() {
-        AbstractImage abstractImage = builder.given_a_not_persisted_abstract_image();
-        abstractImage.setUploadedFile(null);
-        Assertions.assertThrows(WrongArgumentException.class, () -> {
-            abstractImageService.add(abstractImage.toJsonObject());
-        });
-    }
-
-    @Test
     void add_valid_abstract_image_with_bad_num_field_width() {
         AbstractImage abstractImage = builder.given_a_not_persisted_abstract_image();
         abstractImage.setWidth(0);
