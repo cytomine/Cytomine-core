@@ -68,7 +68,7 @@ public class RestUploadedFileController extends RestCytomineController {
     }
 
     @PostMapping(value = "/uploadedfile.json")
-    public ResponseEntity<String> add(@RequestBody JsonObject json) {
+    public ResponseEntity<String> add(@RequestBody String json) {
         log.debug("REST request to save uploadedFile : " + json);
         return add(uploadedFileService, json);
     }

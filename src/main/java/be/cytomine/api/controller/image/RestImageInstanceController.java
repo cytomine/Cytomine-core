@@ -143,11 +143,8 @@ public class RestImageInstanceController extends RestCytomineController {
     }
 
     @PostMapping("/imageinstance.json")
-    public ResponseEntity<String> add(@RequestBody JsonObject json) {
+    public ResponseEntity<String> add(@RequestBody String json) {
         log.debug("REST request to save imageinstance : " + json);
-        if(json.isMissing("baseImage")) throw new InvalidRequestException("abstract image not set");
-        if(json.isMissing("project")) throw new InvalidRequestException("project not set");
-
         return add(imageInstanceService, json);
     }
 

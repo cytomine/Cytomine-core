@@ -66,7 +66,7 @@ public class RestCompanionFileController extends RestCytomineController {
     }
 
     @PostMapping("/companionfile.json")
-    public ResponseEntity<String> add(@RequestBody JsonObject json) {
+    public ResponseEntity<String> add(@RequestBody String json) {
         log.debug("REST request to save companionfile : " + json);
         return add(companionFileService, json);
     }

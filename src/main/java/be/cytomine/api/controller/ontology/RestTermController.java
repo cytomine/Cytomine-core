@@ -1,11 +1,17 @@
 package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
+import be.cytomine.dto.JsonInput;
+import be.cytomine.dto.JsonMultipleObject;
+import be.cytomine.dto.JsonSingleObject;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.utils.JsonObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -48,8 +54,8 @@ public class RestTermController extends RestCytomineController {
      * @return Response map with .code = http response code and .data.term = new created Term
      */
     @PostMapping("/term.json")
-    public ResponseEntity<String> add(@RequestBody JsonObject json) {
-        log.debug("REST request to save Term : " + json);
+    public ResponseEntity<String> add(@RequestBody String json) throws JsonProcessingException {
+        log.debug("REST request to save Term: " + json);
         return add(termService, json);
     }
 

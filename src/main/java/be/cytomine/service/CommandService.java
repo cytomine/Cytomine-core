@@ -90,6 +90,7 @@ public class CommandService {
      */
     CommandResponse processCommand(Command c, ModelService service, int successCode) throws CytomineException {
         //execute command
+        log.debug("processCommand");
         CommandResponse result = c.execute(service);
         if (result.getStatus() == successCode) {
             if ((service instanceof ProjectService && c instanceof DeleteCommand)) {

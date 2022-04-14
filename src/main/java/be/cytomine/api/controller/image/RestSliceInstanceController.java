@@ -79,7 +79,7 @@ public class RestSliceInstanceController extends RestCytomineController {
     }
     
     @PostMapping("/sliceinstance.json")
-    public ResponseEntity<String> add(@RequestBody JsonObject json) {
+    public ResponseEntity<String> add(@RequestBody String json) {
         log.debug("REST request to save sliceinstance : " + json);
         return add(sliceInstanceService, json);
     }

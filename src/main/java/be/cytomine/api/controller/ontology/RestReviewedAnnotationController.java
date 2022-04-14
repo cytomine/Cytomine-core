@@ -128,7 +128,7 @@ public class RestReviewedAnnotationController extends RestCytomineController {
      * Its better to use 'addAnnotationReview' that needs only the annotation id and a list of term
      */
     @PostMapping("/reviewedannotation.json")
-    public ResponseEntity<String> add(@RequestBody JsonObject json) {
+    public ResponseEntity<String> add(@RequestBody String json) {
         log.debug("REST request to save reviewed annotation");
         return add(reviewedAnnotationService, json);
     }

@@ -53,7 +53,7 @@ public class RestConfigurationController extends RestCytomineController {
     }
 
     @PostMapping("/configuration.json")
-    public ResponseEntity<String> add(@RequestBody JsonObject json) {
+    public ResponseEntity<String> add(@RequestBody String json) {
         log.debug("REST request to save Configuration : " + json);
         return add(configurationService, json);
     }

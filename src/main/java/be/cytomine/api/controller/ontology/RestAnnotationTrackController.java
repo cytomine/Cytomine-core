@@ -76,7 +76,7 @@ public class RestAnnotationTrackController extends RestCytomineController {
     }
 
     @PostMapping("/annotationtrack.json")
-    public ResponseEntity<String> add(@RequestBody JsonObject json) {
+    public ResponseEntity<String> add(@RequestBody String json) {
         log.debug("REST request to save AnnotationTrack : " + json);
         return add(annotationTrackService, json);
     }

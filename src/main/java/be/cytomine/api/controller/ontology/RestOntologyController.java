@@ -53,7 +53,7 @@ public class RestOntologyController extends RestCytomineController {
 
 
     @PostMapping("/ontology.json")
-    public ResponseEntity<String> add(@RequestBody JsonObject json) {
+    public ResponseEntity<String> add(@RequestBody String json) {
         log.debug("REST request to save Ontology : " + json);
         return add(ontologyService, json);
     }

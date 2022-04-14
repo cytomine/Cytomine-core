@@ -3,9 +3,13 @@ package be.cytomine.api.controller;
 import be.cytomine.api.controller.utils.RequestParams;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.CytomineSocialDomain;
+import be.cytomine.dto.JsonInput;
+import be.cytomine.dto.JsonMultipleObject;
+import be.cytomine.dto.JsonSingleObject;
 import be.cytomine.exceptions.CytomineException;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.InvalidRequestException;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.utils.CommandResponse;
@@ -14,6 +18,8 @@ import be.cytomine.utils.OffsetBasedPageRequest;
 import be.cytomine.utils.Task;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import be.cytomine.utils.filters.SearchParametersUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -329,8 +335,29 @@ public abstract class RestCytomineController {
     }
 
 
-    public ResponseEntity<String> add(ModelService service, JsonObject json) {
+    public ResponseEntity<String> add(ModelService service, JsonInput json) {
         return add(service, json, null);
+    }
+
+    public ResponseEntity<String> add(ModelService service, String json) {
+        JsonInput data;
+        try {
+            data = new ObjectMapper().readValue(json, JsonMultipleObject.class);
+            // If fails to parse as a single object, parse as a list
+        } catch (Exception ex) {
+            try {
+                data = new ObjectMapper().readValue(json, JsonSingleObject.class);
+            } catch (JsonProcessingException e) {
+                throw new WrongArgumentException("Json not valid");
+            }
+        }
+        return add(service, data);
+    }
+
+
+
+    public JsonObject addMultiple(ModelService service, List<JsonObject> json) {
+        return service.addMultiple(json);
     }
 
     /**
@@ -342,14 +369,16 @@ public abstract class RestCytomineController {
      * @param json JSON data
      * @return response
      */
-    public ResponseEntity<String> add(ModelService service, JsonObject json, Task task) {
+    public ResponseEntity<String> add(ModelService service, JsonInput json, Task task) {
         try {
-//            if (json instanceof JSONArray) {
-//                responseResult(addMultiple(service, json))
-//            } else {
-            CommandResponse result = addOne(service, json, task);
-            if(result!=null) {
-                return responseSuccess(result);
+            if (json instanceof JsonMultipleObject) {
+                return responseSuccess(addMultiple(service, ((JsonMultipleObject)json)));
+            } else {
+                JsonObject jsonObject = json instanceof JsonObject ? (JsonObject) json : ((JsonSingleObject)json);
+                CommandResponse result = addOne(service, jsonObject, task);
+                if (result != null) {
+                    return responseSuccess(result);
+                }
             }
         } catch (CytomineException e) {
             log.error("add error:" + e.msg);

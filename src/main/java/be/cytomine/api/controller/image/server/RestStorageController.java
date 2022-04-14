@@ -47,7 +47,7 @@ public class RestStorageController extends RestCytomineController {
 
 
     @PostMapping("/storage.json")
-    public ResponseEntity<String> add(@RequestBody JsonObject json) {
+    public ResponseEntity<String> add(@RequestBody String json) {
         log.debug("REST request to save Storage : " + json);
         return add(storageService, json);
     }

@@ -5,22 +5,28 @@ import be.cytomine.domain.ValidationError;
 import be.cytomine.domain.command.Command;
 import be.cytomine.domain.command.DeleteCommand;
 import be.cytomine.domain.command.Transaction;
+import be.cytomine.domain.ontology.AlgoAnnotation;
+import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.exceptions.*;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
+import liquibase.pro.packaged.J;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
@@ -151,7 +157,7 @@ public abstract class ModelService<T extends CytomineDomain> {
      * Execute command with JSON data
      */
     public CommandResponse executeCommand(Command c, Task task) {
-        log.info("Command " + c.getClass() + " " + c.getDomain());
+        log.debug("Command " + c.getClass() + " " + getServiceName());
         if(c instanceof DeleteCommand) {
             CytomineDomain domainToDelete = c.getDomain();
             //Create a backup (for 'undo' op)
@@ -418,6 +424,58 @@ public abstract class ModelService<T extends CytomineDomain> {
         } catch (ClassNotFoundException e) {
             throw new ObjectNotFoundException(domainClassName, domainIdent);
         }
+    }
+
+
+    public CommandResponse addOne(JsonObject json){
+        return add(json);
+    }
+
+    public JsonObject addMultiple(List<JsonObject> json) {
+        List<JsonObject> result = new ArrayList();
+        List errors = new ArrayList();
+        JsonObject resp;
+        for(int i=0;i<json.size();i++){
+            try{
+                CommandResponse commandResponse = addOne(json.get(i));
+
+                String objectName;
+                if (currentDomain() == AlgoAnnotation.class || currentDomain() == UserAnnotation.class) {
+                    objectName = "annotation";
+                } else {
+                    String[] split = currentDomain().toString().toLowerCase().split("\\.");
+                    objectName = split[split.length-1];
+                }
+                resp = JsonObject.of("domain", ((Map<String, Object>)commandResponse.getData().get(objectName)).get("id"), "status", commandResponse.getStatus());
+            } catch(CytomineException e){
+                log.info(((CytomineException)e).getMessage());
+                errors.add(JsonObject.of("data", json.get(i), "message", e.msg));
+                resp = JsonObject.of("message", e.msg, "status", e.code);
+            } catch(Exception e) {
+                log.info(e.toString());
+                resp = JsonObject.of("message", e.toString(), "status", 500);
+            }
+
+            result.add(resp);
+        }
+
+        JsonObject response = new JsonObject();
+
+        List<JsonObject> succeeded = result.stream().filter(x -> x.getJSONAttrInteger("status")>=200 && x.getJSONAttrInteger("status")<=300).toList();
+
+        if(succeeded.size() == result.size()) {
+            String[] split = currentDomain().toString().toLowerCase().split("\\.");
+            response.put("data", JsonObject.of("message", split[split.length-1]+"s "+succeeded.stream().map(x -> x.getJSONAttrStr("domain")).collect(Collectors.joining(","))+" added"));
+            response.put("status", 200);
+        } else if(succeeded.size() == 0) {
+            response.put("data", JsonObject.of("success", false, "message", "No entry saved", "errors", errors));
+            response.put("status", 400);
+        } else {
+            String[] split = currentDomain().toString().toLowerCase().split("\\.");
+            response.put("data", JsonObject.of("success", false, "message", "Only part of the entries (" + split[split.length-1]+"s " + succeeded.stream().map(x -> x.getJSONAttrStr("domain")).collect(Collectors.joining(",")), "errors", errors));
+            response.put("status", 206);
+        }
+        return response;
     }
 
 }

@@ -7,6 +7,7 @@ import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.Project;
 import be.cytomine.repository.image.server.StorageRepository;
 import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.utils.JsonObject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -17,6 +18,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+
+import java.util.List;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
@@ -117,6 +120,7 @@ public class TermResourceTests {
                 .andExpect(jsonPath("$.term.name").value(term.getName()))
                 .andExpect(jsonPath("$.term.ontology").value(term.getOntology().getId()));
 
+
 // Current response format with Grails:
 
 //        {
@@ -144,6 +148,20 @@ public class TermResourceTests {
 //        }
 
 
+
+    }
+
+    @Test
+    @Transactional
+    public void add_valid_term_by_group() throws Exception {
+        Term term1 = BasicInstanceBuilder.given_a_not_persisted_term(builder.given_an_ontology());
+        Term term2 = BasicInstanceBuilder.given_a_not_persisted_term(term1.getOntology());
+        restTermControllerMockMvc.perform(post("/api/term.json")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonObject.toJsonString(List.of(term1.toJsonObject(),term2.toJsonObject()))))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200));
 
     }
 

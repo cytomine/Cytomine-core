@@ -7,6 +7,11 @@ import java.util.stream.Collectors;
 
 public class StringUtils {
 
+    public static String getBlankIfNull(String str) {
+        return (str == null ? "" : str);
+    }
+
+
     public static boolean isNotBlank(String str) {
         return str != null && !str.equals("");
     }

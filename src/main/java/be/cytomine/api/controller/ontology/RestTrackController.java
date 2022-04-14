@@ -83,7 +83,7 @@ public class RestTrackController extends RestCytomineController {
      * @return Response map with .code = http response code and .data.track = new created Track
      */
     @PostMapping("/track.json")
-    public ResponseEntity<String> add(@RequestBody JsonObject json) {
+    public ResponseEntity<String> add(@RequestBody String json) {
         log.debug("REST request to save Track : " + json);
         return add(trackService, json);
     }

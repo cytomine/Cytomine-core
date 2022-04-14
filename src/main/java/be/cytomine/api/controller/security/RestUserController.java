@@ -199,7 +199,7 @@ public class RestUserController extends RestCytomineController {
 
     @GetMapping("/signature.json")
     public ResponseEntity<String> signature(
-            @RequestParam String method,
+            @RequestParam(defaultValue = "GET") String method,
             @RequestParam(value = "content-MD5", required = false, defaultValue = "") String contentMD5,
             @RequestParam(value = "content-type", required = false, defaultValue = "") String contenttype,
             @RequestParam(value = "content-Type", required = false, defaultValue = "") String contentType,

@@ -5,6 +5,7 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
@@ -63,32 +64,36 @@ public class RestAnnotationActionController extends RestCytomineController {
     @GetMapping("/imageinstance/{image}/annotation_action.json")
     public ResponseEntity<String> listByImage(
             @PathVariable("image") Long imageId,
-            @RequestParam("user") Long userId,
+            @RequestParam(value = "user", required = false) Long userId,
             @RequestParam(value = "afterThan", required = false) Long afterThan,
             @RequestParam(value = "beforeThan", required = false) Long beforeThan
     ) {
         ImageInstance image = imageInstanceService.find(imageId)
                         .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
 
-        User user = secUserService.findUser(userId)
-                .orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
-
+        User user = null;
+        if (userId!=null) {
+            user = secUserService.findUser(userId)
+                    .orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
+        }
         return responseSuccess(annotationActionService.list(image, user, afterThan, beforeThan));
     }
 
     @GetMapping("/sliceinstance/{slice}/annotation_action.json")
     public ResponseEntity<String> listBySlice(
             @PathVariable("slice") Long sliceId,
-            @RequestParam("user") Long userId,
+            @RequestParam(value = "user", required = false) Long userId,
             @RequestParam(value = "afterThan", required = false) Long afterThan,
             @RequestParam(value = "beforeThan", required = false) Long beforeThan
     ) {
         SliceInstance sliceInstance = sliceInstanceService.find(sliceId)
                 .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", sliceId));
 
-        User user = secUserService.findUser(userId)
-                .orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
-
+        User user = null;
+        if (userId!=null) {
+            user = secUserService.findUser(userId)
+                    .orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
+        }
         return responseSuccess(annotationActionService.list(sliceInstance, user, afterThan, beforeThan));
     }
 

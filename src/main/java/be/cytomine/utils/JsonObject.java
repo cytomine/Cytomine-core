@@ -1,6 +1,7 @@
 package be.cytomine.utils;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.dto.JsonInput;
 import be.cytomine.exceptions.ServerException;
 import be.cytomine.exceptions.WrongArgumentException;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 
 import static be.cytomine.utils.DateUtils.MONGO_DB_FORMAT;
 
-public class JsonObject extends HashMap<String, Object> {
+public class JsonObject extends HashMap<String, Object> implements JsonInput {
 
     public JsonObject() {
 
@@ -326,6 +327,12 @@ public class JsonObject extends HashMap<String, Object> {
                 return (List<Long>)((List)this.get(attr)).stream().map(x -> Long.parseLong(String.valueOf(x))).collect(Collectors.toList());
             } else if(this.get(attr) instanceof Long[]) {
                 return Arrays.asList((Long[]) this.get(attr));
+            } else if(this.get(attr) instanceof Integer[]) {
+                return Arrays.asList((Integer[]) this.get(attr)).stream().map(Integer::longValue).toList();
+            } else if(this.get(attr) instanceof Long) {
+                return List.of(((Long)this.get(attr)));
+            } else if(this.get(attr) instanceof Integer) {
+                return List.of(((Integer)this.get(attr)).longValue());
             } else if(this.get(attr) instanceof String) {
                 return Arrays.stream(this.get(attr).toString().split(",")).map(x -> Long.parseLong(String.valueOf(x))).collect(Collectors.toList());
             }
