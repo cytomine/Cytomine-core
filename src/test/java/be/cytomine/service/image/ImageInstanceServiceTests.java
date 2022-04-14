@@ -677,7 +677,7 @@ public class ImageInstanceServiceTests {
     @Test
     void edit_image_instance_with_unexsting_project_fails() {
         ImageInstance imageInstance = builder.given_an_image_instance();
-        Assertions.assertThrows(ObjectNotFoundException.class, () -> {
+        Assertions.assertThrows(WrongArgumentException.class, () -> {
             imageInstanceService.add(imageInstance.toJsonObject().withChange("project", null));
         });
     }

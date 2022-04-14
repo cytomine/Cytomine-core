@@ -465,6 +465,8 @@ public class ReviewedAnnotationResourceTests {
         UserAnnotation userAnnotation = builder.given_a_user_annotation();
         userAnnotation.getImage().setReviewStart(new Date());
         userAnnotation.getImage().setReviewUser(userAnnotation.getUser());
+        AnnotationTerm annotationTerm = builder.given_an_annotation_term(userAnnotation);
+        em.refresh(userAnnotation);
 
         assertThat(reviewedAnnotationRepository.findByParentIdent(userAnnotation.getId())).isEmpty();
 
