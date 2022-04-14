@@ -985,47 +985,6 @@
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
             <column name="value" type="VARCHAR(255)"/>
         </createTable>
-<!--        <createTable tableName="consensus_score">-->
-<!--            <column name="id" type="BIGINT">-->
-<!--                <constraints nullable="false" primaryKey="true" primaryKeyName="consensus_score_pkey"/>-->
-<!--            </column>-->
-<!--            <column name="version" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="created" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--            <column name="deleted" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--            <column name="image_instance_id" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="score_id" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="score_value_id" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--            <column name="user_id" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--        </createTable>-->
-<!--        <createTable tableName="score_value">-->
-<!--            <column name="id" type="BIGINT">-->
-<!--                <constraints nullable="false" primaryKey="true" primaryKeyName="score_value_pkey"/>-->
-<!--            </column>-->
-<!--            <column name="version" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="created" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--            <column name="deleted" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--            <column name="index" type="INTEGER">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="score_id" type="BIGINT"/>-->
-<!--            <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--            <column name="value" type="VARCHAR(255)">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--        </createTable>-->
         <createTable tableName="image_filter">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="image_filter_pkey"/>
@@ -1357,20 +1316,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-<!--        <createTable tableName="score">-->
-<!--            <column name="id" type="BIGINT">-->
-<!--                <constraints nullable="false" primaryKey="true" primaryKeyName="score_pkey"/>-->
-<!--            </column>-->
-<!--            <column name="version" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="created" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--            <column name="deleted" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--            <column name="name" type="VARCHAR(255)">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--        </createTable>-->
         <createTable tableName="sec_role">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="sec_role_pkey"/>
@@ -1567,29 +1512,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-<!--        <createTable tableName="image_score">-->
-<!--            <column name="id" type="BIGINT">-->
-<!--                <constraints nullable="false" primaryKey="true" primaryKeyName="image_score_pkey"/>-->
-<!--            </column>-->
-<!--            <column name="version" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="created" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--            <column name="deleted" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--            <column name="image_instance_id" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="score_id" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="score_value_id" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--            <column name="user_id" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--        </createTable>-->
         <createTable tableName="companion_file">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="companion_file_pkey"/>
@@ -1660,23 +1582,6 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
-<!--        <createTable tableName="score_project">-->
-<!--            <column name="id" type="BIGINT">-->
-<!--                <constraints nullable="false" primaryKey="true" primaryKeyName="score_project_pkey"/>-->
-<!--            </column>-->
-<!--            <column name="version" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="created" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--            <column name="deleted" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--            <column name="project_id" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="score_id" type="BIGINT">-->
-<!--                <constraints nullable="false"/>-->
-<!--            </column>-->
-<!--            <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>-->
-<!--        </createTable>-->
         <createTable tableName="configuration">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="configuration_pkey"/>
@@ -2142,10 +2047,6 @@
         <addUniqueConstraint columnNames="mime_type" constraintName="uk_8xpof8ejct6l0j7xg71co30wl" tableName="mime"/>
         <addForeignKeyConstraint baseColumnNames="value_id" baseTableName="job_data" constraintName="fk_220nw7q94pw1vn4jcwn4ib57h" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="job_data_binary_value" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="parameter_constraint_id" baseTableName="software_parameter_constraint" constraintName="fk_2kr7g52ehhuavyh6fcvuh5io9" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="parameter_constraint" validate="true"/>
-<!--        <addForeignKeyConstraint baseColumnNames="score_value_id" baseTableName="consensus_score" constraintName="fk_3gwk7r66egbi1vs13u32aasfh" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="score_value" validate="true"/>-->
-<!--        <addForeignKeyConstraint baseColumnNames="score_id" baseTableName="consensus_score" constraintName="fk_bo1t8l51uq2yi7trwrln8sjn4" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="score" validate="true"/>-->
-<!--        <addForeignKeyConstraint baseColumnNames="score_id" baseTableName="score_value" constraintName="fk_jxqmarg7uusbfc3q1vn51sxqf" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="score" validate="true"/>-->
-<!--        <addForeignKeyConstraint baseColumnNames="score_value_id" baseTableName="image_score" constraintName="fk_py4dtmohp9m6yicklt2f9l54b" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="score_value" validate="true"/>-->
         <addForeignKeyConstraint baseColumnNames="image_filter_id" baseTableName="image_filter_project" constraintName="fk_3o01hjbh1h2pi57p3m87yt60m" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_filter" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="imaging_server_id" baseTableName="image_filter" constraintName="fk_8vxvssocyopn3ekmc1n4c5jnn" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="imaging_server" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="software_user_repository_id" baseTableName="software" constraintName="fk_elvfdq78s67rejx0phjfurp69" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="software_user_repository" validate="true"/>
@@ -2158,9 +2059,6 @@
         <addForeignKeyConstraint baseColumnNames="annotation_filter_users_id" baseTableName="annotation_filter_sec_user" constraintName="fk_s612xe9fe2awtoyu3i9cf4mkd" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="annotation_filter" validate="true"/>
         <addUniqueConstraint columnNames="url" constraintName="uk_34fu6c264ka5wtn9m1mc9qv8l" tableName="imaging_server"/>
         <addUniqueConstraint columnNames="name" constraintName="uk_rnn0tdmuxc8yr34ric2yhjbid" tableName="discipline"/>
-<!--        <addForeignKeyConstraint baseColumnNames="score_id" baseTableName="image_score" constraintName="fk_nwh1gjr7vud2i3v97h9d498px" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="score" validate="true"/>-->
-<!--        <addForeignKeyConstraint baseColumnNames="score_id" baseTableName="score_project" constraintName="fk_teed5y0yhs78m4mtpf99gfs1p" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="score" validate="true"/>-->
-<!--        <addUniqueConstraint columnNames="name" constraintName="uk_pafo6p1mjw7h9s6aic7ndb5ew" tableName="score"/>-->
         <addForeignKeyConstraint baseColumnNames="sec_role_id" baseTableName="sec_user_sec_role" constraintName="fk_bshvqhdx8h9mb4rrbo1ahnp7q" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_role" validate="true"/>
         <addUniqueConstraint columnNames="authority" constraintName="uk_oah023x2ltqw09mdue7w0mcxb" tableName="sec_role"/>
         <addUniqueConstraint columnNames="name" constraintName="uk_t3kmot8kxmuws6vj2etsp4ih5" tableName="relation"/>
@@ -2305,29 +2203,6 @@
                 <constraints nullable="false"/>
             </column>
             <column name="wkt_location" type="TEXT">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-        <createTable tableName="scoring_description">
-            <column name="id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="scoring_description_pkey"/>
-            </column>
-            <column name="version" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="created" type="TIMESTAMP WITHOUT TIME ZONE"/>
-            <column name="data" type="TEXT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="deleted" type="TIMESTAMP WITHOUT TIME ZONE"/>
-            <column name="domain_class_name" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="domain_ident" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
-            <column name="user_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
         </createTable>

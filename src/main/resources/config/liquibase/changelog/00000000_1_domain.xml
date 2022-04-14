@@ -21,7 +21,6 @@
             UPDATE description SET domain_class_name = REPLACE (domain_class_name, 'be.cytomine.', 'be.cytomine.domain.') where domain_class_name not LIKE 'be.cytomine.domain%';
             UPDATE property SET domain_class_name = REPLACE (domain_class_name, 'be.cytomine.', 'be.cytomine.domain.') where domain_class_name not LIKE 'be.cytomine.domain%';
             UPDATE property SET domain_class_name = REPLACE (domain_class_name, 'be.cytomine.', 'be.cytomine.domain.') where domain_class_name not LIKE 'be.cytomine.domain%';
-            UPDATE scoring_description SET domain_class_name = REPLACE (domain_class_name, 'be.cytomine.', 'be.cytomine.domain.') where domain_class_name not LIKE 'be.cytomine.domain%';
             UPDATE sec_user SET class = REPLACE (class, 'be.cytomine.', 'be.cytomine.domain.') where class not LIKE 'be.cytomine.domain%';
             UPDATE shared_annotation SET annotation_class_name = REPLACE (annotation_class_name, 'be.cytomine.', 'be.cytomine.domain.') where annotation_class_name not LIKE 'be.cytomine.domain%';
             UPDATE tag_domain_association SET domain_class_name = REPLACE (domain_class_name, 'be.cytomine.', 'be.cytomine.domain.') where domain_class_name not LIKE 'be.cytomine.domain%';
