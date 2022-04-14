@@ -1,9 +1,11 @@
 package be.cytomine.config.security;
 
+import be.cytomine.exceptions.AuthenticationException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.security.jwt.TokenProvider;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
@@ -14,6 +16,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Locale;
 
@@ -46,9 +49,15 @@ public class JWTFilter extends GenericFilterBean {
                 if (isShortTermToken(claimsJws) && !((HttpServletRequest) servletRequest).getMethod().toUpperCase(Locale.ROOT).equals("GET")) {
                     throw new ForbiddenException("Short term token can only be use with GET request");
                 }
+                try {
+                    Authentication authentication = this.tokenProvider.getAuthentication(jwt, claimsJws.getBody());
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } catch (AuthenticationException exception) {
+                    ((HttpServletResponse)servletResponse).sendError(HttpStatus.UNAUTHORIZED.value(), exception.msg);
+                    return;
+                    //throw new AuthenticationException(exception.getMessage());
+                }
 
-                Authentication authentication = this.tokenProvider.getAuthentication(jwt, claimsJws.getBody());
-                SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
         filterChain.doFilter(servletRequest, servletResponse);

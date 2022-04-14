@@ -1,6 +1,8 @@
 package be.cytomine.security.jwt;
 
 import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.exceptions.AuthenticationException;
+import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.utils.JsonObject;
@@ -118,7 +120,7 @@ public class TokenProvider {
 
         User principal = new User(claims.getSubject(), "", authorities);
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(principal, token, authorities);
-        usernamePasswordAuthenticationToken.setDetails(secUserRepository.findByUsernameLikeIgnoreCase(claims.getSubject()).orElseThrow(() -> new ObjectNotFoundException("User", claims.getSubject())));
+        usernamePasswordAuthenticationToken.setDetails(secUserRepository.findByUsernameLikeIgnoreCase(claims.getSubject()).orElseThrow(() -> new AuthenticationException("User " + claims.getSubject() + " not found")));
         return usernamePasswordAuthenticationToken;
     }
 
