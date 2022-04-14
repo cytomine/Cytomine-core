@@ -27,9 +27,9 @@ node {
     lock('cytomine-instance-test') {
         stage ('Run external tools (db, amqp,...)') {
            catchError (buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-                    sh 'docker-compose -f scripts/docker-compose.yml down -v'
+                    sh 'docker-compose -f scripts/docker-compose-test.yml down -v'
                 }
-                sh 'docker-compose -f scripts/docker-compose.yml up -d'
+                sh 'docker-compose -f scripts/docker-compose-test.yml up -d'
         }
 
 
@@ -49,7 +49,7 @@ node {
 
         stage ('Clear cytomine instance') {
             catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-                sh 'docker-compose -f scripts/docker-compose.yml down -v'
+                sh 'docker-compose -f scripts/docker-compose-test.yml down -v'
             }
         }
 
