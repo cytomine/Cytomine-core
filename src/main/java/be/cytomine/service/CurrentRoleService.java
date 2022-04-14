@@ -44,7 +44,8 @@ public class CurrentRoleService {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             List<GrantedAuthority> authorities = new ArrayList<>(auth.getAuthorities());
             authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-            Authentication newAuth = new UsernamePasswordAuthenticationToken(auth.getPrincipal(),auth.getCredentials(),authorities);
+            UsernamePasswordAuthenticationToken newAuth = new UsernamePasswordAuthenticationToken(auth.getPrincipal(),auth.getCredentials(),authorities);
+            newAuth.setDetails(user);
             SecurityContextHolder.getContext().setAuthentication(newAuth);
         } else {
             throw new ForbiddenException("You are not an admin!");
