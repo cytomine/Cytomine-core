@@ -1,6 +1,7 @@
 package be.cytomine.config.security;
 
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.exceptions.AuthenticationException;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.security.DomainUserDetailsService;
 import be.cytomine.utils.SecurityUtils;
@@ -108,8 +109,9 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             Optional<SecUser> user = secUserRepository.findByPublicKeyAndEnabled(accessKey,true);
 
             if (user.isEmpty()) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
-                return false;
+                log.debug("User cannot be extracted with accessKey {}", accessKey);
+                //response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                throw new AuthenticationException("User cannot be extracted with accessKey " + accessKey);
             } else {
                 String signature = SecurityUtils.generateKeys(request.getMethod(),content_md5, content_type,date,queryString,path,user.get());
                 if (authorizationSign.equals(signature)) {
