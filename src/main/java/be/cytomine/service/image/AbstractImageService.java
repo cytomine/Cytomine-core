@@ -21,6 +21,7 @@ import be.cytomine.service.meta.AttachedFileService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.StringUtils;
 import be.cytomine.utils.Task;
 import be.cytomine.utils.filters.SQLSearchParameter;
 import be.cytomine.utils.filters.SearchParameterEntry;
@@ -310,7 +311,7 @@ public class AbstractImageService extends ModelService {
 
     @Override
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
-        return List.of(domain.getId(), ((AbstractImage)domain).getOriginalFilename());
+        return List.of(domain.getId(), StringUtils.getBlankIfNull(((AbstractImage) domain).getOriginalFilename()));
     }
 
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {

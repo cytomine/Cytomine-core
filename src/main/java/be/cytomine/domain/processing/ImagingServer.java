@@ -18,7 +18,7 @@ public class ImagingServer extends CytomineDomain {
 
     @NotNull
     @NotBlank
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String url;
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {

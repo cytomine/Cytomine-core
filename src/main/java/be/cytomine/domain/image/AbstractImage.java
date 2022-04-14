@@ -2,6 +2,7 @@ package be.cytomine.domain.image;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.UrlApi;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
@@ -22,7 +23,6 @@ public class AbstractImage extends CytomineDomain {
     @ManyToOne(fetch = FetchType.EAGER)
     private UploadedFile uploadedFile;
 
-    @NotBlank
     private String originalFilename;
 
     @Min(1)
@@ -73,8 +73,10 @@ public class AbstractImage extends CytomineDomain {
         abstractImage.updated = json.getJSONAttrDate("updated");
 
         abstractImage.originalFilename = json.getJSONAttrStr("originalFilename");
-
-        abstractImage.uploadedFile = (UploadedFile) json.getJSONAttrDomain(entityManager, "uploadedFile", new UploadedFile(), true);
+        if (originalFilename!=null && originalFilename.trim().equals("")) {
+            throw new WrongArgumentException("'originalFilename' property cannot be blank");
+        }
+        abstractImage.uploadedFile = (UploadedFile) json.getJSONAttrDomain(entityManager, "uploadedFile", new UploadedFile(), false);
 
         abstractImage.height = json.getJSONAttrInteger("height", null);
         abstractImage.width = json.getJSONAttrInteger("width", null);

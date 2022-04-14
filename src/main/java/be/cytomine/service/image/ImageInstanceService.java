@@ -737,6 +737,8 @@ public class ImageInstanceService extends ModelService {
          * @return Response structure (created domain data,..)
          */
     public CommandResponse add(JsonObject json) {
+        if(json.isMissing("baseImage")) throw new InvalidRequestException("abstract image not set");
+        if(json.isMissing("project")) throw new InvalidRequestException("project not set");
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(json.getJSONAttrLong("project"), Project.class, READ);
