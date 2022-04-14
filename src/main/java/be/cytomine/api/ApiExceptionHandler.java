@@ -7,6 +7,7 @@ import com.sun.mail.smtp.SMTPSendFailedException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -62,6 +63,15 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 .status(HttpStatus.FORBIDDEN)
                 .body(jsonObject.toJsonString());
     }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<?> handleException(AccessDeniedException exception) {
+        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  "Cannot identify user or user is not authorized to log in"));
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(jsonObject.toJsonString());
+    }
+
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<?> handleException(AuthenticationException exception) {
