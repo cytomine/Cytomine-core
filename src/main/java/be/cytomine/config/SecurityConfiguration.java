@@ -118,6 +118,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/account/resetPassword/finish").permitAll()
             .antMatchers("/api/login/impersonate*").hasAuthority("ROLE_ADMIN")
             .antMatchers("/api/**").authenticated()
+            .antMatchers("/session/admin/**").authenticated()
             .antMatchers(HttpMethod.GET, "/server/**").permitAll()
             .antMatchers(HttpMethod.POST, "/server/**").permitAll()
             .antMatchers("/**").permitAll()
