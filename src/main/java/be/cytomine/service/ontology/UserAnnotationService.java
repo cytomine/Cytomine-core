@@ -393,7 +393,7 @@ public class UserAnnotationService extends ModelService {
         List<Long> termIds = new ArrayList<>();
         termIds.addAll(jsonObject.getJSONAttrListLong("term", new ArrayList<>()));
         termIds.addAll(jsonObject.getJSONAttrListLong("terms", new ArrayList<>()));
-
+        log.debug("add terms if presents");
         List<Term> terms = new ArrayList<>();
         for (Long termId : termIds) {
 
@@ -401,7 +401,7 @@ public class UserAnnotationService extends ModelService {
             terms.add(((AnnotationTerm)(response.getObject())).getTerm());
         }
 
-        ((Map<String, Object>)commandResponse.getData().get("annotation")).put("term", terms);
+        ((Map<String, Object>)commandResponse.getData().get("annotation")).put("term", terms.stream().map(x -> x.toJsonObject()).toList());
 
 
         // Add properties if any
@@ -429,7 +429,7 @@ public class UserAnnotationService extends ModelService {
             ((Map<String, Object>)commandResponse.getData().get("annotation")).put("annotationTrack", annotationTracks);
             ((Map<String, Object>)commandResponse.getData().get("annotation")).put("track", annotationTracks.stream().map(x -> x.getTrack()).collect(Collectors.toList()));
         }
-
+        log.debug("end of add command");
         return commandResponse;
     }
 
