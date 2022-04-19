@@ -239,4 +239,42 @@ class ProjectMemberTests {
     }
 
 
+    void testDowngradeUserFromProject() {
+        def project = BasicInstanceBuilder.getProjectNotExist()
+        BasicInstanceBuilder.saveDomain(project)
+        User u1 = BasicInstanceBuilder.user1
+
+        def result = UserAPI.list(project.id,"project","user",Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        def json = JSON.parse(result.data)
+        assert !UserAPI.containsInJSONList(u1.id,json)
+
+        result = AclAPI.list(project.getOntology().class.name, project.getOntology().id, u1.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert !json.collection.isEmpty()
+        assert json.collection.contains(1) // read
+
+        //Add project right for user 1
+        def resAddUser = ProjectAPI.addAdminProject(project.id, u1.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == resAddUser.code
+        result = UserAPI.list(project.id,"project","user",Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        json = JSON.parse(result.data)
+        assert UserAPI.containsInJSONList(u1.id,json)
+
+        resAddUser = ProjectAPI.deleteAdminProject(project.id, u1.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == resAddUser.code
+        result = UserAPI.list(project.id,"project","user",Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        json = JSON.parse(result.data)
+        assert UserAPI.containsInJSONList(u1.id,json) //still in project
+
+        result = AclAPI.list(project.getOntology().class.name, project.getOntology().id, u1.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
+        assert 200 == result.code
+        json = JSON.parse(result.data)
+        assert json.collection instanceof JSONArray
+        assert !json.collection.isEmpty()
+        assert json.collection.contains(1) // read
+
+    }
+
 }

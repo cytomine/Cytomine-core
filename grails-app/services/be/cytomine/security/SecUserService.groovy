@@ -830,12 +830,19 @@ class SecUserService extends ModelService {
             if(project.ontology) {
                 removeOntologyRightIfNecessary(project, user, admin)
             }
+
             if(admin) {
                 permissionService.deletePermission(project, user.username, ADMINISTRATION)
             }
             else {
                 permissionService.deletePermission(project, user.username, READ)
             }
+
+//            if(!permissionService.hasACLPermission(project, user.getUsername(), READ) && project.ontology) {
+//                removeOntologyRightIfNecessary(project, user, admin)
+//            }
+//
+
             ProjectRepresentativeUser representative = ProjectRepresentativeUser.findByUserAndProject(user, project)
             if(representative) {
                 projectRepresentativeUserService.delete(representative)
