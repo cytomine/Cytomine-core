@@ -852,7 +852,7 @@ class SecUserService extends ModelService {
             if (projectRepresentativeUserService.listByProject(project).size()==0) {
                 if (!securityACLService.getProjectList(cytomineService.currentUser).contains(project)) {
                     // if current user is not in project (= SUPERADMIN), add to the project
-                    addUserToProject(user, project, true)
+                    addUserToProject(cytomineService.currentUser, project, true)
                 }
                 log.info("add current user ${cytomineService.currentUser.id} as representative for project ${project.id}")
                 def json = JSON.parse(new ProjectRepresentativeUser(project:project, user:cytomineService.currentUser).encodeAsJSON());
