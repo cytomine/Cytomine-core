@@ -41,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
+import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import java.io.File;
 import java.lang.management.ManagementFactory;
@@ -59,7 +60,7 @@ import static org.springframework.security.acls.domain.BasePermission.ADMINISTRA
 @RequiredArgsConstructor
 @EnableConfigurationProperties({LiquibaseProperties.class,ApplicationConfiguration.class})
 @Transactional
-class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent> {
+class ApplicationBootstrap {
 
     private final SecUserRepository secUserRepository;
 
@@ -94,16 +95,17 @@ class ApplicationBootstrap implements ApplicationListener<ApplicationReadyEvent>
     @Autowired
     BootstrapTestsDataService bootstrapTestsDataService;
 
-    @Override
-    public void onApplicationEvent(ApplicationReadyEvent event) {
-        log.info("ApplicationListener#onApplicationEvent()");
-        if (!initAlreadyDone) {
-            // onApplicationEvent can be called multiple times (if cyclcic dependencies)
-            init();
-        }
-        this.initAlreadyDone = true;
-    }
+//    @Override
+//    public void onApplicationEvent(ApplicationReadyEvent event) {
+//        log.info("ApplicationListener#onApplicationEvent()");
+//        if (!initAlreadyDone) {
+//            // onApplicationEvent can be called multiple times (if cyclcic dependencies)
+//            init();
+//        }
+//        this.initAlreadyDone = true;
+//    }
 
+    @PostConstruct
     public void init() {
 
         printConfiguration();
