@@ -299,6 +299,8 @@ public class UserAnnotationService extends ModelService {
                     .orElseThrow(() -> new ObjectNotFoundException("ImageInstance with id " + jsonObject.get("image")));
             slice = sliceCoordinatesService.getReferenceSlice(image);
 
+        } else {
+            throw new WrongArgumentException("Cannot retrieve slice or image");
         }
         Project project = slice.getProject();
 
@@ -401,7 +403,7 @@ public class UserAnnotationService extends ModelService {
             terms.add(((AnnotationTerm)(response.getObject())).getTerm());
         }
 
-        ((Map<String, Object>)commandResponse.getData().get("annotation")).put("term", terms.stream().map(x -> x.toJsonObject()).toList());
+        ((Map<String, Object>)commandResponse.getData().get("annotation")).put("term", terms.stream().map(x -> x.toJsonObject().getId()).toList());
 
 
         // Add properties if any
