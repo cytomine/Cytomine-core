@@ -7,6 +7,7 @@ import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.dto.SliceCoordinate;
 import be.cytomine.dto.SliceCoordinates;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.AbstractSliceRepository;
 import be.cytomine.repository.image.SliceInstanceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,9 @@ public class SliceCoordinatesService {
 
     public SliceCoordinate getReferenceSliceCoordinate(AbstractImage image) {
         SliceCoordinates sliceCoordinates = getSliceCoordinates(image);
+        if (sliceCoordinates.getChannels().isEmpty()) {
+            throw new WrongArgumentException("Cannot retrieve reference slices for AbstractImage " + image.getId());
+        }
         SliceCoordinate referenceSliceCoordinates = new SliceCoordinate(
                 sliceCoordinates.getChannels().get((int) Math.floor(sliceCoordinates.getChannels().size()/2)),
                 sliceCoordinates.getZStacks().get((int) Math.floor(sliceCoordinates.getZStacks().size()/2)),
