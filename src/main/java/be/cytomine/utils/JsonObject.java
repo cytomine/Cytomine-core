@@ -291,7 +291,11 @@ public class JsonObject extends HashMap<String, Object> implements JsonInput {
                 String request = "SELECT d FROM " + domain.getClass().getName() + " d WHERE " + column + " = :value";
                 Query query = entityManager.createQuery(request, domain.getClass());
                 query.setParameter("value", convertValue(this.get(attr), columnType));
-                domainRead = (CytomineDomain)query.getResultList().get(0);
+                List resultList = query.getResultList();
+                domainRead = (resultList.size()>=1 ? (CytomineDomain) resultList.get(0) : null);
+                if (domainRead == null) {
+                    throw new WrongArgumentException(domain.getClass().getName() + " cannot be found with " + column + " = '" + convertValue(this.get(attr), columnType) + "'");
+                }
             }
             if (domainRead == null) {
                 throw new WrongArgumentException(attr + " was not found with id: " + this.get(attr));
