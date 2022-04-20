@@ -63,3 +63,19 @@ A Jenkins file is provided.
 8. Shutdown postgresql, mongodb and rabbitmq configurations.
 9. Build and publish a jar
 10. Build and publish a docker image 
+
+## Upgrade from old version Cytomine dataset
+
+The upgrade only works with a dataset from at least core 3.2.0.
+
+> We will provide soon a automated way to upgrade databases
+
+Postgresql database:
+Regarding Postgresql, nothing to be done. 
+Liquibase should apply changes during the first run.
+
+MongoDB database:
+As we are moving from MongoDB v2 to v4, the current migration process needs:
+* extract the current mongodb database .json / .bson files
+* import them using `./scripts/migration/import_mongo.sh` into the new MongoDB 4.x database
+
