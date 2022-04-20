@@ -36,6 +36,7 @@ import be.cytomine.utils.ModelService
 import be.cytomine.utils.Task
 import be.cytomine.utils.Utils
 import grails.converters.JSON
+import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.sql.GroovyResultSet
 import groovy.sql.Sql
 import org.codehaus.groovy.grails.web.json.JSONObject
@@ -70,6 +71,9 @@ class ProjectService extends ModelService {
     def notificationService
     def projectRepresentativeUserService
     def ontologyService
+    def configurationService
+    def abstractImageService
+
 
     def currentDomain() {
         Project
@@ -868,6 +872,12 @@ class ProjectService extends ModelService {
         ImageInstance.findAllByProject(project).each {
             imageInstanceService.delete(it,transaction,null, false)
         }
+    }
+
+    def deleteDependentAbstractImage(Project project, Transaction transaction,Task task=null) {
+        SpringSecurityUtils.doWithAuth("superadmin", {
+            abstractImageService.deleteUnusedAbstractImageAndTheirFiles(ImageInstance.findAllByProject(project))
+        })
     }
 
 //    def deleteDependentReviewedAnnotation(Project project, Transaction transaction,Task task=null) {
