@@ -17,6 +17,7 @@ package be.cytomine
 */
 
 import be.cytomine.security.SecUser
+import be.cytomine.security.User
 import grails.converters.JSON
 import grails.util.Holders
 import groovy.sql.Sql
@@ -188,6 +189,11 @@ abstract class CytomineDomain  implements Comparable,Serializable{
         return masks.max() >= permission.mask
     }
 
+
+    boolean hasACLPermission(User user, Permission permission) {
+        def masks = getPermissionInACL(this,user)
+        return masks.max() >= permission.mask
+    }
 
     List getPermissionInACL(def domain, def user = null) {
         try {
