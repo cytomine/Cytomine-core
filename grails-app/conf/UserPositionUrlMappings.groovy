@@ -34,9 +34,15 @@ class UserPositionUrlMappings {
             action = [POST:"add"]
         }
 
+        "/api/imageinstance/$image/position.$format" (controller : "restUserPosition") {
+            action = [GET:"list"]
+        }
+
+        //Deprecated
         "/api/imageinstance/$image/positions.$format" (controller : "restUserPosition") {
             action = [GET:"list"]
         }
+
         "/api/imageinstance/$id/online.$format"(controller: "restUserPosition"){
             action = [GET:"listOnlineUsersByImage"]
         }
