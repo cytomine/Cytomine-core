@@ -276,6 +276,16 @@ class ReportService {
         List fields = ["username", "fullname", "email", "status", "role", "lastConnection"]
         Map labels = ["username": "User Name", "fullname": "Full Name", "email": "Email", "status": "Status", "role" : "Role", "lastConnection": "Last connection"]
         String title = "Users @ " + (new Date()).toLocaleString()
+
+        String GDPRWarning = "NB: Regnearket inneholder personinformasjon, som ikke må distribueres uten avklaring med brukere. Eventuelt  kan du slette bruker id kolonne med brukerID"
+        if (exporterIdentifier == "pdf") {
+            title = GDPRWarning
+        } else {
+            def data = [:]
+            data.username = GDPRWarning
+            exportResult.add(data)
+        }
+
         exportService.export(exporterIdentifier, response.outputStream, exportResult, fields, labels, null, ["title": title, "csv.encoding": "UTF-8", "separator": ";"])
     }
 }
