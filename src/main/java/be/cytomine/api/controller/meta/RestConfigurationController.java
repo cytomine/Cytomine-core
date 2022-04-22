@@ -61,10 +61,14 @@ public class RestConfigurationController extends RestCytomineController {
     @PutMapping("/configuration/key/{key}.json")
     public ResponseEntity<String> edit(@PathVariable String key, @RequestBody JsonObject json) {
         log.debug("REST request to edit Configuration : " + key);
-        Configuration configuration = configurationService.findByKey(key)
-                .orElseThrow(() -> new ObjectNotFoundException("Configuration", key));
-        json.put("id", configuration.getId());
-        return update(configurationService, json);
+        try {
+            Configuration configuration = configurationService.findByKey(key)
+                    .orElseThrow(() -> new ObjectNotFoundException("Configuration", key));
+            json.put("id", configuration.getId());
+            return update(configurationService, json);
+        } catch (ObjectNotFoundException ex) {
+            return add(configurationService, json);
+        }
     }
 
     @DeleteMapping("/configuration/key/{key}.json")

@@ -41,7 +41,7 @@ public class CommandController extends RestCytomineController {
     private final CommandService commandService;
 
 
-    @GetMapping({"/command/undo.json", "/command/{id}/undo.json"})
+    @GetMapping({"/command/undo.json", "/api/command/undo.json","/command/{id}/undo.json", "/api/command/{id}/undo.json"})
     public ResponseEntity<String> undo(
             @PathVariable(required = false) Long id
     ) {
@@ -83,7 +83,7 @@ public class CommandController extends RestCytomineController {
     }
 
 
-    @GetMapping({"/command/redo.json", "/command/{id}/redo.json"})
+    @GetMapping({"/command/redo.json", "/command/{id}/redo.json", "/api/command/redo.json", "/api/command/{id}/redo.json"})
     public ResponseEntity<String> redo(
             @PathVariable(required = false) Long id
     ) {
