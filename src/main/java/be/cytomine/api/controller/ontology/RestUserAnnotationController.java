@@ -6,6 +6,9 @@ import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
+import be.cytomine.dto.JsonInput;
+import be.cytomine.dto.JsonMultipleObject;
+import be.cytomine.dto.JsonSingleObject;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.UserAnnotationListing;
@@ -19,6 +22,8 @@ import be.cytomine.service.report.ReportService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -172,14 +177,29 @@ public class RestUserAnnotationController extends RestCytomineController {
      */
     @PostMapping("/userannotation.json")
     public ResponseEntity<String> add(
-            @RequestBody JsonObject json,
+            @RequestBody String json,
             @RequestParam(required = false) Long minPoint,
             @RequestParam(required = false) Long maxPoint
     ) {
         log.debug("REST request to save user annotation");
-        json.putIfAbsent("minPoint", minPoint);
-        json.putIfAbsent("maxPoint", maxPoint);
-        return add(userAnnotationService, json);
+        JsonInput data;
+        try {
+            data = new ObjectMapper().readValue(json, JsonMultipleObject.class);
+            for (JsonObject datum : ((JsonMultipleObject) data)) {
+                datum.putIfAbsent("minPoint", minPoint);
+                datum.putIfAbsent("maxPoint", maxPoint);
+            }
+            // If fails to parse as a single object, parse as a list
+        } catch (Exception ex) {
+            try {
+                data = new ObjectMapper().readValue(json, JsonSingleObject.class);
+                ((JsonSingleObject)data).putIfAbsent("minPoint", minPoint);
+                ((JsonSingleObject)data).putIfAbsent("maxPoint", maxPoint);
+            } catch (JsonProcessingException e) {
+                throw new WrongArgumentException("Json not valid");
+            }
+        }
+        return add(userAnnotationService, data);
     }
 
     public CommandResponse addOne(ModelService service, JsonObject json) {

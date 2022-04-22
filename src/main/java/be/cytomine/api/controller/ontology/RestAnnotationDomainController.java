@@ -352,17 +352,19 @@ public class RestAnnotationDomainController extends RestCytomineController {
      * Redirect to the controller depending on the user type
      */
     @RequestMapping(value = "/annotation.json", method = {RequestMethod.POST})
-    public ResponseEntity<String> add(@RequestBody JsonObject jsonObject,
+    public ResponseEntity<String> add(@RequestBody String json,
+                                      @RequestParam(required = false, defaultValue = "false") Boolean roi,
                                       @RequestParam(required = false) Long minPoint,
                                       @RequestParam(required = false) Long maxPoint
     ) throws IOException {
         SecUser secUser = secUserService.getCurrentUser();
-        if(jsonObject.getJSONAttrBoolean("roi", false)) {
+        if(roi) {
             throw new CytomineMethodNotYetImplementedException("ROI annotation not yet implemented");
         } else if (secUser.isAlgo()) {
-            return restAlgoAnnotationController.add(jsonObject, minPoint, maxPoint);
+            return restAlgoAnnotationController.add(json, minPoint, maxPoint);
         } else {
-            return restUserAnnotationController.add(jsonObject, minPoint, maxPoint);
+            ResponseEntity<String> response = restUserAnnotationController.add(json, minPoint, maxPoint);
+            return response;
         }
     }
 

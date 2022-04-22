@@ -5,6 +5,9 @@ import be.cytomine.api.controller.utils.AnnotationListingBuilder;
 import be.cytomine.api.controller.utils.RequestParams;
 import be.cytomine.domain.ontology.AlgoAnnotation;
 import be.cytomine.domain.project.Project;
+import be.cytomine.dto.JsonInput;
+import be.cytomine.dto.JsonMultipleObject;
+import be.cytomine.dto.JsonSingleObject;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.ModelService;
@@ -18,6 +21,8 @@ import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,13 +98,28 @@ public class RestAlgoAnnotationController extends RestCytomineController {
 
     @PostMapping("/algoannotation.json")
     public ResponseEntity<String> add(
-            @RequestBody JsonObject json,
+            @RequestBody String json,
             @RequestParam(required = false) Long minPoint,
             @RequestParam(required = false) Long maxPoint
     ) {
         log.debug("REST request to save algo annotation");
-        json.putIfAbsent("minPoint", minPoint);
-        json.putIfAbsent("maxPoint", maxPoint);
+        JsonInput data;
+        try {
+            data = new ObjectMapper().readValue(json, JsonMultipleObject.class);
+            for (JsonObject datum : ((JsonMultipleObject) data)) {
+                datum.putIfAbsent("minPoint", minPoint);
+                datum.putIfAbsent("maxPoint", maxPoint);
+            }
+            // If fails to parse as a single object, parse as a list
+        } catch (Exception ex) {
+            try {
+                data = new ObjectMapper().readValue(json, JsonSingleObject.class);
+                ((JsonSingleObject)data).putIfAbsent("minPoint", minPoint);
+                ((JsonSingleObject)data).putIfAbsent("maxPoint", maxPoint);
+            } catch (JsonProcessingException e) {
+                throw new WrongArgumentException("Json not valid");
+            }
+        }
         return add(algoAnnotationService, json);
     }
 

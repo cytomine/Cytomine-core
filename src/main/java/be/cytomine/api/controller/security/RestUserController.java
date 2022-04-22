@@ -244,7 +244,7 @@ public class RestUserController extends RestCytomineController {
 
 
     @PostMapping("/user.json")
-    public ResponseEntity<String> createUser(@RequestBody JsonObject json) {
+    public ResponseEntity<String> createUser(@RequestBody String json) {
         log.debug("REST request to save User : " + json);
         return add(secUserService, json);
     }
