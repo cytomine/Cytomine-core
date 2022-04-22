@@ -80,6 +80,10 @@ public class RestAttachedFileController extends RestCytomineController {
 
         if(filename==null) {
             filename = f.getOriginalFilename();
+            if (filename.contains("/")) {
+                String[] parts = filename.split("/");
+                filename = parts[parts.length-1];
+            }
         }
         log.info("Upload {} for domain {} {}", filename, domainClassName, domainIdent);
         log.info("File size = {}", f.getSize());
