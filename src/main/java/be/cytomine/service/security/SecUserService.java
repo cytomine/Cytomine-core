@@ -21,6 +21,7 @@ import be.cytomine.repository.command.UndoStackItemRepository;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.image.NestedImageInstanceRepository;
 import be.cytomine.repository.image.UploadedFileRepository;
+import be.cytomine.repository.image.server.StorageRepository;
 import be.cytomine.repository.ontology.*;
 import be.cytomine.repository.project.ProjectDefaultLayerRepository;
 import be.cytomine.repository.project.ProjectRepository;
@@ -208,6 +209,9 @@ public class SecUserService extends ModelService {
 
     @Autowired
     private AnnotationActionRepository annotationActionRepository;
+
+    @Autowired
+    private StorageRepository storageRepository;
 
     public Optional<SecUser> find(Long id) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
@@ -1313,8 +1317,7 @@ public class SecUserService extends ModelService {
 
 
     public void deleteDependentStorage(SecUser user, Transaction transaction, Task task) {
-
-        for (Storage storage : storageService.list(user, null)) {
+        for (Storage storage : storageRepository.findAllByUser(user)) {
             if (uploadedFileRepository.countByStorage(storage) > 0) {
                 throw new ConstraintException("Storage contains data, cannot delete user. Remove or assign storage to an another user first");
             } else {

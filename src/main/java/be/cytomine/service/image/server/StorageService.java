@@ -73,7 +73,7 @@ public class StorageService extends ModelService {
     }
 
     protected void afterAdd(CytomineDomain domain, CommandResponse response) {
-        log.info("Add permission on $domain to ${domain.user.username}");
+        log.info("Add permission on {} to {}", domain, ((Storage)domain).getUser().getUsername());
         Storage storage = (Storage)domain;
         if(!permissionService.hasACLPermission(storage, READ)) {
             permissionService.addPermission(storage, storage.getUser().getUsername(), READ);

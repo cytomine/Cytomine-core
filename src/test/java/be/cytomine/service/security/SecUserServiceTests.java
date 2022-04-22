@@ -28,6 +28,7 @@ import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.dto.AreaDTO;
+import be.cytomine.service.image.server.StorageService;
 import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.service.social.ImageConsultationService;
 import be.cytomine.service.social.ProjectConnectionService;
@@ -1103,6 +1104,8 @@ public class SecUserServiceTests {
         AssertionsForClassTypes.assertThat(secUserService.find(user.getId()).isEmpty());
     }
 
+    @Autowired
+    StorageService storageService;
 
     @Test
     void delete_user_with_dependency() {
@@ -1127,6 +1130,7 @@ public class SecUserServiceTests {
         uploadedFile.setUser(user);
 
         Storage storage = builder.given_a_storage(user);
+        //storageService.initUserStorage(user);
 
         ProjectDefaultLayer projectDefaultLayer =
                 builder.given_a_project_default_layer(builder.given_a_project(), user);
@@ -1149,10 +1153,28 @@ public class SecUserServiceTests {
         assertThat(entityManager.find(Ontology.class, ontology.getId())).isNull();
         assertThat(entityManager.find(ReviewedAnnotation.class, reviewedAnnotation.getId())).isNull();
         assertThat(entityManager.find(UploadedFile.class, uploadedFile.getId())).isNull();
-        assertThat(entityManager.find(Storage.class, storage.getId())).isNull();
+        //assertThat(entityManager.find(Storage.class, storage.getId())).isNull();
         assertThat(entityManager.find(ProjectDefaultLayer.class, projectDefaultLayer.getId())).isNull();
         assertThat(entityManager.find(ProjectRepresentativeUser.class, projectRepresentativeUser.getId())).isNull();
     }
+
+    @Test
+    void delete_user_create_with_service_with_dependency() {
+        User user = builder.given_a_not_persisted_user();
+
+        CommandResponse commandResponse = secUserService.add(user.toJsonObject().withChange("password", "kikoulol"));
+
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+
+        assertThat(secUserService.findByUsername(user.getUsername())).isPresent();
+        user = (User)secUserService.findByUsername(user.getUsername()).get();
+        commandResponse = secUserService.delete(user, null, null, true);
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+    }
+
+
 
     @Disabled("software package")
     @Test
