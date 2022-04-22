@@ -878,15 +878,19 @@ class SecUserService extends ModelService {
         securityACLService.checkIsDomainNotLocked(project)
         if (project) {
             log.info "deleteUserFromProject project=" + project?.id + " username=" + user?.username + " ADMIN=" + admin
-            if(project.ontology) {
-                removeOntologyRightIfNecessary(project, user, admin)
-            }
+
             if(admin) {
                 permissionService.deletePermission(project, user.username, ADMINISTRATION)
             }
             else {
                 permissionService.deletePermission(project, user.username, READ)
             }
+
+            if(!project.hasACLPermission(user, READ) && !project.hasACLPermission(user, ADMINISTRATION)  && project.ontology) {
+                removeOntologyRightIfNecessary(project, (User)user, admin)
+            }
+
+
             ProjectRepresentativeUser representative = ProjectRepresentativeUser.findByUserAndProject(user, project)
             if(representative) {
                 projectRepresentativeUserService.delete(representative)
@@ -896,7 +900,7 @@ class SecUserService extends ModelService {
             if (projectRepresentativeUserService.listByProject(project).size()==0) {
                 if (!securityACLService.getProjectList(cytomineService.currentUser).contains(project)) {
                     // if current user is not in project (= SUPERADMIN), add to the project
-                    addUserToProject(user, project, true)
+                    addUserToProject(cytomineService.currentUser, project, true)
                 }
                 log.info("add current user ${cytomineService.currentUser.id} as representative for project ${project.id}")
                 def json = JSON.parse(new ProjectRepresentativeUser(project:project, user:cytomineService.currentUser).encodeAsJSON());
