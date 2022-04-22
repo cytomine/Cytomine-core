@@ -322,6 +322,14 @@ public abstract class RestCytomineController {
         return results;
     }
 
+    protected List<JsonObject> convertCommandResponseToJSON(List<? extends CommandResponse> list) {
+        List<JsonObject> results = new ArrayList<>();
+        for (CommandResponse commandResponse : list) {
+            results.add(commandResponse.toJsonObject());
+        }
+        return results;
+    }
+
 //    protected List<JsonObject> convertObjectToJSON(List list) {
 //        List<JsonObject> results = new ArrayList<>();
 //        for (Object o : list) {

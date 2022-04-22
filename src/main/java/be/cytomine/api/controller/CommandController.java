@@ -79,7 +79,7 @@ public class CommandController extends RestCytomineController {
         } else {
             response.setStatus(200);
         }
-        return responseSuccess(results);
+        return responseSuccess(results.stream().map(x -> x.getData()).toList());
     }
 
 
@@ -107,7 +107,7 @@ public class CommandController extends RestCytomineController {
 
         //There is no command, so nothing to undo
         if (lastCommand.isEmpty()) {
-            String message = messageSource.getMessage("be.cytomine.'be.cytomine.RedoCommand'", new Object[0], Locale.ENGLISH);
+            String message = messageSource.getMessage("be.cytomine.RedoCommand", new Object[0], Locale.ENGLISH);
             return responseSuccess(List.of(JsonObject.of("success", true, "message", message, "callback", null, "printMessage", true)));
         }
 
@@ -121,7 +121,7 @@ public class CommandController extends RestCytomineController {
         } else {
             response.setStatus(200);
         }
-        return responseSuccess(results);
+        return responseSuccess(results.stream().map(x -> x.getData()).toList());
     }
 
 }
