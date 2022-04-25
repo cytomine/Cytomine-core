@@ -574,4 +574,27 @@ public class UserAnnotationResourceTests {
                 .andExpect(jsonPath("$.size").value(equalTo(1)));
     }
 
+    @Test
+    @Transactional
+    public void list_comment_for_annotation_with_pagination() throws Exception {
+        UserAnnotation userAnnotation = builder.given_a_user_annotation();
+        builder.given_a_shared_annotation(userAnnotation);
+        builder.given_a_shared_annotation(userAnnotation);
+        builder.given_a_shared_annotation(userAnnotation);
+
+        restUserAnnotationControllerMockMvc.perform(get("/api/userannotation/{annotation}/comment.json", userAnnotation.getId())
+                        .param("max", "3").param("offset", "0"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").value(equalTo(3)))
+                .andExpect(jsonPath("$.collection", hasSize(3)));
+
+        restUserAnnotationControllerMockMvc.perform(get("/api/userannotation/{annotation}/comment.json", userAnnotation.getId())
+                        .param("max", "1").param( "offset", "2"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size").value(equalTo(3)))
+                .andExpect(jsonPath("$.collection", hasSize(1)));
+    }
+
 }

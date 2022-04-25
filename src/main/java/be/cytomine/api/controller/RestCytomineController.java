@@ -236,7 +236,8 @@ public abstract class RestCytomineController {
     }
 
     public ResponseEntity<String> responseSuccess(List list, boolean isFilterRequired) {
-        return responseSuccess(list, 0, 0, isFilterRequired);
+        RequestParams requestParams = retrievePageableParameters();
+        return responseSuccess(list, requestParams.getOffset().intValue(), requestParams.getMax().intValue(), isFilterRequired);
     }
 
     private ResponseEntity<String> responseSuccessDomainList(List<? extends CytomineDomain> list, Integer offsetParameter, Integer maxParameter) {
