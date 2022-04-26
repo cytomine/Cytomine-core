@@ -425,6 +425,9 @@ public class SecurityACLService {
             try {
                 Class className = Class.forName(((GenericCytomineDomainContainer) domain.container()).getContainerClass());
                 CytomineDomain parent = ((CytomineDomain)entityManager.find(className, domain.container().getId()));
+                if (parent==null) {
+                    throw new ForbiddenException("Parent " + className + " " + domain.container().getId() + " cannot be found in database, cannot check authorization");
+                }
                 return parent.container();
             } catch (ClassNotFoundException e) {
                 throw new WrongArgumentException("Cannot load " + domain);
