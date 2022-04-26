@@ -72,6 +72,9 @@ public class SharedAnnotationService extends ModelService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private CurrentRoleService currentRoleService;
+
     private ImageServerService imageServerService;
 
     @Autowired
@@ -107,8 +110,8 @@ public class SharedAnnotationService extends ModelService {
         User user = (User)currentUserService.getCurrentUser();
         List<SharedAnnotation> sharedAnnotations = sharedAnnotationRepository
                 .findAllByAnnotationIdentOrderByCreatedDesc(annotation.getId());
-
-        sharedAnnotations = sharedAnnotations.stream().filter(x -> x.getSender()==user || x.getReceivers().contains(user))
+        boolean isUserAdmin = currentRoleService.isAdminByNow(user);
+        sharedAnnotations = sharedAnnotations.stream().filter(x -> isUserAdmin || x.getSender().equals(user) || x.getReceivers().contains(user))
                 .distinct()
                 .collect(Collectors.toList());
 
