@@ -34,8 +34,17 @@ public abstract class CytomineException extends RuntimeException {
     public CytomineException(String msg, int code) {
         this(msg,code,new HashMap<>());
     }
+
+    public CytomineException(String msg, int code, Throwable cause) {
+        this(msg,code,new HashMap<>(), cause);
+    }
+
+
     public CytomineException(String msg, int code, Map<Object, Object> values) {
-        super(msg);
+        this(msg, code, values, null);
+    }
+    public CytomineException(String msg, int code, Map<Object, Object> values, Throwable cause) {
+        super(msg, cause);
         this.msg=msg;
         this.code = code;
         this.values = values;
