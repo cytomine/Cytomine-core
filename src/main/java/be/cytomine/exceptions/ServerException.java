@@ -36,4 +36,8 @@ public class ServerException extends CytomineException {
         log.error(message);
     }
 
+    public ServerException(String message, Throwable cause) {
+        super(message,500, cause);
+        log.error(message, cause);
+    }
 }
