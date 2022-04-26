@@ -45,9 +45,6 @@ public class CurrentUserService {
         if (currentUser.isFullObjectProvided()) {
             secUser = currentUser.getUser();
         } else if(currentUser.isUsernameProvided()) {
-//            for (SecUser it : secUserRepository.findAll()) {
-//                System.out.println(it.getUsername());
-//            }
             secUser = secUserRepository.findByUsernameLikeIgnoreCase(currentUser.getUser().getUsername()).orElseThrow(() -> new ServerException("Cannot find current user with username " + currentUser.getUser().getUsername()));
         } else {
             throw new ObjectNotFoundException("User", "Cannot read current user. Object " + currentUser + " is not supported");
