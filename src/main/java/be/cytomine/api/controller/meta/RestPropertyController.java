@@ -24,6 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -98,12 +100,14 @@ public class RestPropertyController extends RestCytomineController {
         if (projectId != null) {
             Project project = projectService.find(projectId)
                     .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
-            return responseSuccess(propertyService.listKeysForAnnotation(project, null, withUser));
+            List<Map<String, Object>> maps = propertyService.listKeysForAnnotation(project, null, withUser);
+            return responseSuccess(withUser ? maps : maps.stream().map(x -> x.get("key")).toList());
         }
         if (imageInstanceId != null) {
             ImageInstance imageInstance = imageInstanceService.find(imageInstanceId)
                     .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageInstanceId));
-            return responseSuccess(propertyService.listKeysForAnnotation(null, imageInstance, withUser));
+            List<Map<String, Object>> maps = propertyService.listKeysForAnnotation(null, imageInstance, withUser);
+            return responseSuccess(withUser ? maps : maps.stream().map(x -> x.get("key")).toList());
         }
         throw new WrongArgumentException("You must specify at least 'idProject' or 'idImage'");
     }
