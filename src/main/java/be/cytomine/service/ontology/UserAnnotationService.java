@@ -289,7 +289,9 @@ public class UserAnnotationService extends ModelService {
     public CommandResponse add(JsonObject jsonObject) {
         SliceInstance slice = null;
         ImageInstance image = null;
-
+        // TODO perf: we load twice slice/image/... : here + in userannotation domain "build from json" method
+        // Same for user
+        // We could provide "sliceObject", "imageObject", "userObject" in JSON and first check for them in the userannotation class
         if (!jsonObject.isMissing("slice")) {
             slice = sliceInstanceService.find(jsonObject.getJSONAttrLong("slice"))
                     .orElseThrow(() -> new ObjectNotFoundException("SliceInstance with id " + jsonObject.get("slice")));
@@ -308,9 +310,9 @@ public class UserAnnotationService extends ModelService {
             throw new WrongArgumentException("Annotation must have a valid geometry:" + jsonObject.get("location"));
         }
 
-        jsonObject.put("slice", slice.getId());
-        jsonObject.put("image", image.getId());
-        jsonObject.put("project", project.getId());
+        jsonObject.put("sliceObject", slice);
+        jsonObject.put("imageObject", image);
+        jsonObject.put("projectObject", project);
 
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(project, READ);
@@ -319,6 +321,7 @@ public class UserAnnotationService extends ModelService {
 
         if (jsonObject.isMissing("user")) {
             jsonObject.put("user", currentUser.getId());
+            jsonObject.put("userObject", currentUser);
         } else if (!Objects.equals(jsonObject.getJSONAttrLong("user"), currentUser.getId())) {
             securityACLService.checkFullOrRestrictedForOwner(project, null);
         }

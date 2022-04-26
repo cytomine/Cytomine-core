@@ -156,10 +156,25 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
         UserAnnotation annotation = this;
         annotation.id = json.getJSONAttrLong("id",null);
 
-        annotation.slice = (SliceInstance)json.getJSONAttrDomain(entityManager, "slice", new SliceInstance(), true);
-        annotation.image = (ImageInstance)json.getJSONAttrDomain(entityManager, "image", new ImageInstance(), true);
-        annotation.project = (Project)json.getJSONAttrDomain(entityManager, "project", new Project(), true);
-        annotation.user = (User)json.getJSONAttrDomain(entityManager, "user", new User(), true);
+        if (json.containsKey("sliceObject")) {
+            annotation.slice = (SliceInstance) json.get("sliceObject");
+        } else {
+            annotation.slice = (SliceInstance)json.getJSONAttrDomain(entityManager, "slice", new SliceInstance(), true);
+        }
+
+        if (json.containsKey("imageObject")) {
+            annotation.image = (ImageInstance) json.get("imageObject");
+        } else {
+            annotation.image = (ImageInstance)json.getJSONAttrDomain(entityManager, "image", new ImageInstance(), true);
+        }
+
+        if (json.containsKey("userObject")) {
+            annotation.user = (User) json.get("userObject");
+        } else {
+            annotation.user = (User)json.getJSONAttrDomain(entityManager, "user", new User(), true);
+        }
+
+        annotation.project = image.getProject();
 
         annotation.geometryCompression = json.getJSONAttrDouble("geometryCompression",0D);
 

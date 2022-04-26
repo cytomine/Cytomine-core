@@ -13,7 +13,7 @@ spring:
       auto-commit: false
   jpa:
     database-platform: be.cytomine.config.CustomPostgreSQLDialect
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
