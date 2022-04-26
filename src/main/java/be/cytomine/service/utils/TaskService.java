@@ -133,14 +133,23 @@ public class TaskService {
 
         if(getFromDatabase(task.getId())==null) {
             task.setId(sequenceService.generateID());
-
-            entityManager.createNativeQuery("INSERT INTO task (id,progress,project_id,user_id,print_in_activity) VALUES (?,?,?,?,?)")
-                    .setParameter(1, task.getId())
-                    .setParameter(2, task.getProgress())
-                    .setParameter(3, task.getProjectIdent())
-                    .setParameter(4, task.getUserIdent())
-                    .setParameter(5, task.isPrintInActivity())
-                    .executeUpdate();
+            if (task.getProjectIdent()==null) {
+                entityManager.createNativeQuery("INSERT INTO task (id,progress,user_id,print_in_activity) VALUES (?,?,?,?)")
+                        .setParameter(1, task.getId())
+                        .setParameter(2, task.getProgress())
+                        .setParameter(3, task.getUserIdent())
+                        .setParameter(4, task.isPrintInActivity())
+                        .executeUpdate();
+            } else {
+                // cannot pass "null" to project parameter
+                entityManager.createNativeQuery("INSERT INTO task (id,progress,project_id,user_id,print_in_activity) VALUES (?,?,?,?,?)")
+                        .setParameter(1, task.getId())
+                        .setParameter(2, task.getProgress())
+                        .setParameter(3, task.getProjectIdent())
+                        .setParameter(4, task.getUserIdent())
+                        .setParameter(5, task.isPrintInActivity())
+                        .executeUpdate();
+            }
         } else {
             entityManager.createNativeQuery("UPDATE task set progress=? WHERE id=?")
                     .setParameter(1, task.getProgress())
@@ -168,7 +177,7 @@ public class TaskService {
         Task task = new Task();
         task.setId(((BigInteger)row[0]).longValue());
         task.setProgress(((BigInteger)row[1]).intValue());
-        task.setProjectIdent(((BigInteger)row[2]).longValue());
+        task.setProjectIdent(row[2]!=null ? ((BigInteger)row[2]).longValue() : null);
         task.setUserIdent(((BigInteger)row[3]).longValue());
         return task;
     }
