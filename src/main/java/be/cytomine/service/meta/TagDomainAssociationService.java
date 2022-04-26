@@ -11,6 +11,7 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ForbiddenException;
+import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.meta.TagDomainAssociationRepository;
 import be.cytomine.repository.meta.TagRepository;
@@ -91,7 +92,13 @@ public class TagDomainAssociationService extends ModelService {
                 // check authorization
                 try {
                     if (!association.getDomainClassName().contains("AbstractImage")) {
-                        securityACLService.check(association.container(), READ);
+                        try {
+                            securityACLService.check(association.container(), READ);
+                        } catch (ObjectNotFoundException exception) {
+                            // parent does not exists in database, ignore
+                            domainIdsAlreadyCheck.put(association.getDomainIdent(), false);
+                            continue;
+                        }
                     }
                     results.add(association);
                     domainIdsAlreadyCheck.put(association.getDomainIdent(), true);
