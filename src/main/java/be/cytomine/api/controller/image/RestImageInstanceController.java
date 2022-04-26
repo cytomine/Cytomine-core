@@ -82,8 +82,11 @@ public class RestImageInstanceController extends RestCytomineController {
             @PathVariable Long id
     ) {
         log.debug("REST request to get image instance light by user {}", id);
-        SecUser secUser = secUserService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("SecUser", id));
+        SecUser secUser = currentUserService.getCurrentUser();
+        if (id != 0) {
+            secUser = secUserService.find(id)
+                    .orElseThrow(() -> new ObjectNotFoundException("SecUser", id));
+        }
         return responseSuccess(imageInstanceService.listLight(secUser));
     }
 
