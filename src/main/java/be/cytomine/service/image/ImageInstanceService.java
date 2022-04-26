@@ -534,7 +534,7 @@ public class ImageInstanceService extends ModelService {
 
         if (search.contains(imageInstanceAlias + ".instance_filename") || sortedProperty.contains(imageInstanceAlias + ".instance_filename")) {
             joinAI = true;
-            search = search.replaceAll("imageInstanceAlias" + "\\.instance_filename", "COALESCE(" + imageInstanceAlias + ".instance_filename, " + abstractImageAlias + ".original_filename)");
+            search = search.replaceAll(imageInstanceAlias + "\\.instance_filename", "COALESCE(" + imageInstanceAlias + ".instance_filename, " + abstractImageAlias + ".original_filename)");
         }
 
         if (sortedProperty.contains(imageInstanceAlias + ".instance_filename")) {
@@ -825,12 +825,23 @@ public class ImageInstanceService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
+
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(), READ);
         securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((ImageInstance)domain).getUser());
 
-        Command c = new DeleteCommand(currentUser, transaction);
-        return executeCommand(c,domain, null);
+        Project project = ((ImageInstance) domain).getProject();
+        if (ProjectLock.getInstance().lock(project)) {
+            try {
+                log.debug("Delete image " + domain.getId());
+                Command c = new DeleteCommand(currentUser, transaction);
+                return executeCommand(c,domain, null);
+            } finally {
+                ProjectLock.getInstance().unlock(project);
+            }
+        } else {
+            throw new ServerException("Cannot acquire lock for project " + project.getId()  + " , tryLock return false");
+        }
     }
 
     @Override
