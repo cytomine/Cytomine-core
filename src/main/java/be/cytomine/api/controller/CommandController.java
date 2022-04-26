@@ -1,6 +1,7 @@
 package be.cytomine.api.controller;
 
 import be.cytomine.domain.command.Command;
+import be.cytomine.domain.command.DeleteCommand;
 import be.cytomine.domain.command.RedoStackItem;
 import be.cytomine.domain.command.UndoStackItem;
 import be.cytomine.domain.security.SecUser;
@@ -122,6 +123,14 @@ public class CommandController extends RestCytomineController {
             response.setStatus(200);
         }
         return responseSuccess(results.stream().map(x -> x.getData()).toList());
+    }
+
+
+    @GetMapping({"/api/deletecommand.json", "/api/deletecommand"}) // without json for backward compatibility
+    public ResponseEntity<String> listDelete(
+            @RequestParam(required = false) String domain,
+            @RequestParam(required = false, value = "after") Long afterThan) {
+        return responseSuccess(commandService.list(domain, DeleteCommand.class, afterThan));
     }
 
 }

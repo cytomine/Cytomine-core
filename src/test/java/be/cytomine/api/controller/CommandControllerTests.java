@@ -3,13 +3,13 @@ package be.cytomine.api.controller;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.command.Command;
+import be.cytomine.domain.command.DeleteCommand;
+import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.project.Project;
-import be.cytomine.domain.social.LastConnection;
 import be.cytomine.repository.command.CommandRepository;
 import be.cytomine.repository.ontology.OntologyRepository;
-import be.cytomine.repositorynosql.social.LastConnectionRepository;
-import org.junit.jupiter.api.BeforeEach;
+import be.cytomine.service.ModelService;
+import be.cytomine.service.image.UploadedFileService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -21,10 +21,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -49,6 +50,55 @@ public class CommandControllerTests {
 
     @Autowired
     private CommandRepository commandRepository;
+
+    @Autowired
+    private UploadedFileService uploadedFileService;
+
+
+    @Test
+    @Transactional
+    @WithMockUser(username = "superadmin")
+    public void list_delete_command() throws Exception {
+
+        Long start = System.currentTimeMillis();
+
+        int initialSize = (int) commandRepository.findAll().stream().filter(x -> x instanceof DeleteCommand).count();
+        int initialSizeUploadedFileDeleteCommand = (int) commandRepository.findAll().stream().filter(x -> x instanceof DeleteCommand && x.getServiceName().equals("UploadedFileService")).count();
+
+        restCommandControllerMockMvc.perform(get("/api/deletecommand.json"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(initialSize))));
+
+        restCommandControllerMockMvc.perform(get("/api/deletecommand.json")
+                        .param("domain", "uploadedFile"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(initialSizeUploadedFileDeleteCommand))));
+
+        UploadedFile uploadedFile = builder.given_a_uploaded_file();
+
+        Command c = new DeleteCommand(builder.given_superadmin(), null);
+        uploadedFileService.executeCommand(c, uploadedFile, null);
+
+        restCommandControllerMockMvc.perform(get("/api/deletecommand.json"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(initialSize+1))));
+
+        restCommandControllerMockMvc.perform(get("/api/deletecommand.json")
+                        .param("domain", "uploadedFile"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(initialSizeUploadedFileDeleteCommand+1))));
+
+        restCommandControllerMockMvc.perform(get("/api/deletecommand.json")
+                        .param("domain", "uploadedFile").param("after", String.valueOf(new Date().getTime())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
+
+        restCommandControllerMockMvc.perform(get("/api/deletecommand.json")
+                        .param("domain", "uploadedFile").param("after", String.valueOf(start)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(1))));
+
+    }
 
     @Test
     @Transactional

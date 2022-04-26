@@ -17,11 +17,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface CommandRepository extends JpaRepository<Command, Long> {
+
+    List<Command> findAllByServiceName(String serviceName);
+    List<Command> findAllByServiceNameAndCreatedGreaterThan(String serviceName, Date created);
 
     @Query("SELECT usi FROM UndoStackItem usi WHERE usi.transaction = :transaction AND usi.user = :user ORDER BY usi.created DESC")
     List<UndoStackItem> findAllUndoOrderByCreatedDesc(SecUser user, Transaction transaction);

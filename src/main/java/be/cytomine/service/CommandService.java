@@ -7,6 +7,7 @@ import be.cytomine.exceptions.CytomineException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.command.CommandRepository;
 import be.cytomine.service.project.ProjectService;
+import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +44,9 @@ public class CommandService {
 
     @Autowired
     BeanFactory beanFactory;
+
+    @Autowired
+    SecurityACLService securityACLService;
 
     static final int SUCCESS_ADD_CODE = 200;
     static final int SUCCESS_EDIT_CODE = 200;
@@ -298,5 +303,22 @@ public class CommandService {
             entityManager.remove(lastRedoStack);
         }
         entityManager.flush();
+    }
+
+    public List<Command> list(String domain, Class commandClass, Long afterThan) {
+        securityACLService.checkAdmin(currentUserService.getCurrentUser());
+        List<Command> commands = new ArrayList<>();
+        if(domain!=null) {
+            String serviceName = domain.substring(0, 1).toUpperCase() + domain.substring(1) + "Service";
+
+            if(afterThan!=null){
+                commands = commandRepository.findAllByServiceNameAndCreatedGreaterThan(serviceName, new Date(afterThan));
+            } else {
+                commands = commandRepository.findAllByServiceName(serviceName);
+            }
+        } else {
+            commands =  commandRepository.findAll();
+        }
+        return commands.stream().filter(x -> x.getClass().equals(commandClass)).toList();
     }
 }
