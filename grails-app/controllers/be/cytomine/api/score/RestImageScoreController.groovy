@@ -147,6 +147,15 @@ class RestImageScoreController extends RestController{
 
             String title = "Scores report"
 
+            String GDPRWarning = "NB: Regnearket inneholder personinformasjon, som ikke må distribueres uten avklaring med brukere. Eventuelt  kan du slette bruker id kolonne med brukerID"
+            if (exporterIdentifier == "pdf") {
+                title = GDPRWarning
+            } else {
+                def data = [:]
+                data.imageId = GDPRWarning
+                rows.add(0,data)
+            }
+
             exportService.export(exporterIdentifier, response.outputStream, rows, fields, labels, null, ["title": title, "csv.encoding": "UTF-8", "separator": ";"])
         }
     }
