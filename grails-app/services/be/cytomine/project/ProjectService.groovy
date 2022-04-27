@@ -20,6 +20,7 @@ import be.cytomine.Exception.CytomineException
 import be.cytomine.Exception.ForbiddenException
 import be.cytomine.Exception.ObjectNotFoundException
 import be.cytomine.Exception.WrongArgumentException
+import be.cytomine.annotations.DependencyOrder
 import be.cytomine.command.*
 import be.cytomine.image.ImageInstance
 import be.cytomine.meta.Configuration
@@ -898,6 +899,7 @@ class ProjectService extends ModelService {
 //        }
 //    }
 
+    @DependencyOrder(order = 20)
     def deleteDependentImageInstance(Project project, Transaction transaction,Task task=null) {
         taskService.updateTask(task,task? "Delete ${ImageInstance.countByProject(project)} images":"")
 
@@ -906,6 +908,7 @@ class ProjectService extends ModelService {
         }
     }
 
+    @DependencyOrder(order = 10)
     def deleteDependentAbstractImage(Project project, Transaction transaction,Task task=null) {
         SpringSecurityUtils.doWithAuth("superadmin", {
             abstractImageService.deleteUnusedAbstractImageAndTheirFiles(ImageInstance.findAllByProject(project))
