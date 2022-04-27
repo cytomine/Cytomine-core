@@ -1310,6 +1310,23 @@ public class AnnotationDomainResourceTests {
 
     }
 
+
+    @Test
+    @Transactional
+    public void add_multiple_valid_user_annotation() throws Exception {
+        UserAnnotation userAnnotation1 = builder.given_a_not_persisted_user_annotation();
+        UserAnnotation userAnnotation2 = builder.given_a_not_persisted_user_annotation();
+        UserAnnotation userAnnotation3 = builder.given_a_not_persisted_user_annotation();
+        restAnnotationDomainControllerMockMvc.perform(post("/api/annotation.json")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonObject.toJsonString(List.of(userAnnotation1.toJsonObject(), userAnnotation2.toJsonObject(), userAnnotation3.toJsonObject()))))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
+
+
+
     @Test
     @Transactional
     @WithMockUser("superadminjob")

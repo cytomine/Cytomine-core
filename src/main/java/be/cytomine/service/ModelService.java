@@ -8,6 +8,7 @@ import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.ontology.AlgoAnnotation;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.exceptions.*;
+import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
@@ -59,6 +60,9 @@ public abstract class ModelService<T extends CytomineDomain> {
     @Autowired
     SequenceService sequenceService;
 
+    @Autowired
+    UserAnnotationRepository userAnnotationRepository;
+
 
 //    def responseService
 
@@ -81,22 +85,21 @@ public abstract class ModelService<T extends CytomineDomain> {
      */
     public void saveDomain(CytomineDomain newObject) {
         checkDoNotAlreadyExist(newObject);
-
-        List<ValidationError> validationErrors = newObject.validate();
-        if (!validationErrors.isEmpty()) {
-            for (ValidationError validationError : validationErrors) {
-                log.error(validationError.getProperty() + " " + validationError.getMessage());
-            }
-            throw new WrongArgumentException(validationErrors.toString());
-        }
-
+//        List<ValidationError> validationErrors = newObject.validate();
+//        if (!validationErrors.isEmpty()) {
+//            for (ValidationError validationError : validationErrors) {
+//                log.error(validationError.getProperty() + " " + validationError.getMessage());
+//            }
+//            throw new WrongArgumentException(validationErrors.toString());
+//        }
         try {
             if (newObject.getId()!=null && !entityManager.contains(newObject)) {
+                log.debug("object detached");
                 // entity is detached, merge it in the session
                 newObject = entityManager.merge(newObject);
             }
             entityManager.persist(newObject);
-            //entityManager.flush();
+            entityManager.flush();
         }
         catch (OptimisticLockingFailureException e) {
             log.error("CANNOT SAVE OBJECT");

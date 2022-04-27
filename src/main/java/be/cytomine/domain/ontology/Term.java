@@ -54,9 +54,9 @@ public class Term extends CytomineDomain {
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         Term term = this;
         term.id = json.getJSONAttrLong("id",null);
-        term.name = json.getJSONAttrStr("name");
+        term.name = json.getJSONAttrStr("name", true);
         term.comment = json.getJSONAttrStr("comment");
-        term.color = json.getJSONAttrStr("color");
+        term.color = json.getJSONAttrStr("color", true);
         term.ontology = (Ontology)json.getJSONAttrDomain(entityManager, "ontology", new Ontology(), true);
         term.created = json.getJSONAttrDate("created");
         term.updated = json.getJSONAttrDate("updated");

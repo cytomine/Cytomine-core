@@ -2,6 +2,7 @@ package be.cytomine.service.meta;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.meta.Configuration;
 import be.cytomine.domain.meta.ConfigurationReadingRole;
@@ -10,6 +11,7 @@ import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
@@ -30,6 +32,7 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.springframework.security.acls.domain.BasePermission.*;
@@ -121,6 +124,14 @@ public class ConfigurationService extends ModelService {
     public List<String> getStringParamsI18n(CytomineDomain domain) {
         Configuration configuration = (Configuration)domain;
         return Arrays.asList(configuration.getKey());
+    }
+
+    @Override
+    public void checkDoNotAlreadyExist(CytomineDomain domain) {
+        Optional<Configuration> configurationAlreadyExist = configurationRepository.findByKey(((Configuration)domain).getKey());
+        if (configurationAlreadyExist.isPresent() && (!Objects.equals(configurationAlreadyExist.get().getId(), domain.getId()))) {
+            throw new AlreadyExistException("Configuration " + ((Configuration)domain).getKey()+ " already exists");
+        }
     }
 
 }

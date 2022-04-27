@@ -179,6 +179,9 @@ public class JsonObject extends HashMap<String, Object> implements JsonInput {
 
     public String getJSONAttrStr(String attr, boolean mandatory, String defaultValue) {
         if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
+            if (mandatory && this.get(attr).equals("")) {
+                throw new WrongArgumentException(attr + " must be set! value=" + this.get(attr));
+            }
             return this.get(attr).toString();
         } else {
             if (mandatory) {

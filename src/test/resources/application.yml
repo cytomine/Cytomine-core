@@ -13,11 +13,12 @@ spring:
       auto-commit: false
   jpa:
     database-platform: be.cytomine.config.CustomPostgreSQLDialect
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
-
+        jdbc:
+          batch_size: 500
   mail:
     host: disabled
     port: 587

@@ -119,7 +119,7 @@ public class CommandService {
                 item.setUser(c.getUser());
                 item.setTransaction(c.getTransaction());
                 entityManager.persist(item);
-                entityManager.flush();
+                //entityManager.flush();
             }
             result.getData().put("command", c.getId());
         }

@@ -38,7 +38,7 @@ public class Storage extends CytomineDomain {
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         Storage storage = (Storage)this;
         storage.id = json.getJSONAttrLong("id",null);
-        storage.name = json.getJSONAttrStr("name");
+        storage.name = json.getJSONAttrStr("name", true);
         storage.user = (User)json.getJSONAttrDomain(entityManager, "user", new User(), true);
         storage.created = json.getJSONAttrDate("created");
         storage.updated = json.getJSONAttrDate("updated");

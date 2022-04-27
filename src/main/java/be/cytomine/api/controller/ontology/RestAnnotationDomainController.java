@@ -357,6 +357,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
                                       @RequestParam(required = false) Long minPoint,
                                       @RequestParam(required = false) Long maxPoint
     ) throws IOException {
+        log.debug("REST request to create new annotation(s)");
         SecUser secUser = secUserService.getCurrentUser();
         if(roi) {
             throw new CytomineMethodNotYetImplementedException("ROI annotation not yet implemented");
@@ -364,6 +365,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
             return restAlgoAnnotationController.add(json, minPoint, maxPoint);
         } else {
             ResponseEntity<String> response = restUserAnnotationController.add(json, minPoint, maxPoint);
+            log.debug("REST request to create new annotation(s) finished");
             return response;
         }
     }

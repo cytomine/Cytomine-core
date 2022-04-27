@@ -287,9 +287,7 @@ public class SecurityACLService {
             CytomineDomain container = retrieveContainer(domain);
             log.debug("container " + container);
             boolean readOnly = !retrieveContainer(domain).canUpdateContent();
-            boolean containerAdmin = permissionService.hasACLPermission(retrieveContainer(domain),ADMINISTRATION);
-
-            if(readOnly && !containerAdmin) {
+            if(readOnly && !permissionService.hasACLPermission(retrieveContainer(domain),ADMINISTRATION)) {
                 throw new ForbiddenException("The project for this data is in readonly mode! You must be project manager to add, edit or delete this resource in a readonly project.");
             }
         } else {
