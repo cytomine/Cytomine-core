@@ -283,7 +283,7 @@ class ReportService {
         } else {
             def data = [:]
             data.username = GDPRWarning
-            exportResult.add(data)
+            exportResult.add(0,data)
         }
 
         exportService.export(exporterIdentifier, response.outputStream, exportResult, fields, labels, null, ["title": title, "csv.encoding": "UTF-8", "separator": ";"])
