@@ -115,7 +115,7 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             } else {
                 String signature = SecurityUtils.generateKeys(request.getMethod(),content_md5, content_type,date,queryString,path,user.get());
                 if (authorizationSign.equals(signature)) {
-                    this.reauthenticate(user.get().getUsername(), null);
+                    this.reauthenticate(user.get(), null);
                     return true;
                 } else {
                     // the java client does not set content-type, so we override the header to application/json BEFORE this authentication.
@@ -124,7 +124,7 @@ public class ApiKeyFilter extends OncePerRequestFilter {
                     // => it would be better to improve the java client to set a valid content type.
                     String signatureWithEmptyContentType = SecurityUtils.generateKeys(request.getMethod(),content_md5, "",date,queryString,path,user.get());
                     if (authorizationSign.equals(signatureWithEmptyContentType)) {
-                        this.reauthenticate(user.get().getUsername(), null);
+                        this.reauthenticate(user.get(), null);
                         return true;
                     }
 
@@ -169,12 +169,15 @@ public class ApiKeyFilter extends OncePerRequestFilter {
      * @param username the user's login name
      * @param password optional
      */
-    public void reauthenticate(final String username, final String password) {
+    public void reauthenticate(final SecUser secUser, final String password) {
         UserDetailsService userDetailsService = this.domainUserDetailsService;
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
-                userDetails, password == null ? userDetails.getPassword() : password, userDetails.getAuthorities()));
+        UserDetails userDetails = userDetailsService.loadUserByUsername(secUser.getUsername());
+        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
+                userDetails, password == null ? userDetails.getPassword() : password, userDetails.getAuthorities());
+        usernamePasswordAuthenticationToken.setDetails(secUser);
+
+        SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
         //userCache.removeUserFromCache(username); TODO?
     }
 
