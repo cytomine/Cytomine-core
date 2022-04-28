@@ -115,7 +115,9 @@ public class PermissionService {
 
 
 
-    public Long createAclEntry(Long aoi, Long sid, Integer mask) {
+    public synchronized Long createAclEntry(Long aoi, Long sid, Integer mask) {
+        // method is synchronized since we have to compute the aceOrder+1.
+        // TODO: Not sure the aceOrder is really usefull ? couldn't we use a sequence?
         Long aclEntryId = aclRepository.getAclEntryId(aoi, sid, mask);
         if (aclEntryId == null) {
             Integer max = aclRepository.getMaxAceOrder(aoi);
