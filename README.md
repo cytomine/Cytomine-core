@@ -17,7 +17,7 @@ Automated tests require:
 
 You can simply run the docker-compose configuration from `scripts/docker-compose.yml` in order to have all these dependencies up and running with the right configuration.
 
-`docker-compose -f scripts/docker-compose.yml up -d`
+`docker-compose -f scripts/docker-compose-test.yml up -d`
 
 Tests can be executed with Gradle:
 
@@ -27,7 +27,7 @@ Or via your favorite IDE (right click on `/src/test/java` and choose *Run Tests 
 
 After tests, you can shutdown the configuration:
 
-`docker-compose -f scripts/docker-compose.yml down -v`
+`docker-compose -f scripts/docker-compose-test.yml down -v`
 
 ## Run as dev
 
