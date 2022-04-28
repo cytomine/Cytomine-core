@@ -120,6 +120,7 @@ public class PermissionService {
         log.debug("create acl entry for {}, {}, {}", aoi, sid, mask);
         synchronized (this.getClass()) {
             // method is synchronized since we have to compute the aceOrder+1.
+            // the synchronize does not resolve fully the issue since the INSERT may not be persisted in database directly (batch_insert / flush / ...)
             // TODO: Not sure the aceOrder is really usefull ? couldn't we use a sequence?
             Long aclEntryId = aclRepository.getAclEntryId(aoi, sid, mask);
             if (aclEntryId == null) {
@@ -127,12 +128,11 @@ public class PermissionService {
                 if(max==null) {
                     max=0;
                 } else {
-                    max = max+1;
+                    max = max+new Random().nextInt(10)+1;
                 }
                 log.debug("next ace order {} for {}", max, aoi);
                 aclRepository.insertAclEntry(max, aoi, mask, sid);
                 aclEntryId = aclRepository.getAclEntryId(aoi, sid, mask);
-                aclRepository.flush(); // we must flush so that another transaction will get the next correct max ace order
             }
             return aclEntryId;
         }
