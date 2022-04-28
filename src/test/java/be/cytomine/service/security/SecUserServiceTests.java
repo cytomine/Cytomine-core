@@ -1052,14 +1052,14 @@ public class SecUserServiceTests {
         User user = builder.given_a_not_persisted_user();
         user.setEmail(sameEmail.getEmail().toUpperCase(Locale.ROOT));
 
-        Assertions.assertThrows(WrongArgumentException.class, () -> {
-            secUserService.add(user.toJsonObject());
+        Assertions.assertThrows(AlreadyExistException.class, () -> {
+            secUserService.add(user.toJsonObject().withChange("password", "password"));
         });
 
         user.setEmail(sameEmail.getEmail().toLowerCase(Locale.ROOT));
 
-        Assertions.assertThrows(WrongArgumentException.class, () -> {
-            secUserService.add(user.toJsonObject());
+        Assertions.assertThrows(AlreadyExistException.class, () -> {
+            secUserService.add(user.toJsonObject().withChange("password", "password"));
         });
     }
 

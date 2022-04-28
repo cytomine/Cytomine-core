@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.validation.ConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -100,12 +101,10 @@ public abstract class ModelService<T extends CytomineDomain> {
             }
             entityManager.persist(newObject);
             entityManager.flush();
-        }
-        catch (OptimisticLockingFailureException e) {
+        } catch (OptimisticLockingFailureException e) {
             log.error("CANNOT SAVE OBJECT");
             newObject = entityManager.merge(newObject);
-        }
-        catch(Exception e) {
+        } catch(Exception e) {
             throw new WrongArgumentException("Cannot persists object:" + e);
         }
     }

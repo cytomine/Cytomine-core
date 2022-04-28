@@ -1030,6 +1030,12 @@ public class SecUserService extends ModelService {
         if (userWithSameUsername.isPresent() && !Objects.equals(userWithSameUsername.get().getId(), user.getId())) {
             throw new AlreadyExistException("User " + user.getUsername() + " already exist!");
         }
+        if (domain instanceof User) {
+            Optional<User> userWithSameEmail = userRepository.findByEmailLikeIgnoreCase(((User)user).getEmail());
+            if (userWithSameEmail.isPresent() && !Objects.equals(userWithSameEmail.get().getId(), user.getId())) {
+                throw new AlreadyExistException("User with email " + ((User)user).getEmail() + " already exist!");
+            }
+        }
     }
 
     public void changeUserPassword(User user, String newPassword) {

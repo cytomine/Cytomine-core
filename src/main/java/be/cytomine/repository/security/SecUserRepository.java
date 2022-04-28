@@ -100,4 +100,6 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
         Long aclId = getAclSidFromUsername(username);
         return findAllSecUsersSharingAccesToSameProject(aclId);
     }
+
+
 }
