@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.util.List;
+import java.util.Random;
 
 @Slf4j
 @Service
@@ -131,6 +132,7 @@ public class PermissionService {
                 log.debug("next ace order {} for {}", max, aoi);
                 aclRepository.insertAclEntry(max, aoi, mask, sid);
                 aclEntryId = aclRepository.getAclEntryId(aoi, sid, mask);
+                aclRepository.flush(); // we must flush so that another transaction will get the next correct max ace order
             }
             return aclEntryId;
         }
