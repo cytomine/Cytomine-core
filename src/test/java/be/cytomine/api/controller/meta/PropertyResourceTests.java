@@ -138,7 +138,7 @@ public class PropertyResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.key=='" + property.getKey() + "')]").exists());
+                .andExpect(jsonPath("$.collection[0]").value(property.getKey()));
     }
 
     @Test
@@ -151,7 +151,7 @@ public class PropertyResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.key=='" + property.getKey() + "')]").exists());
+                .andExpect(jsonPath("$.collection[0]").value(property.getKey()));
     }
 
     @Test

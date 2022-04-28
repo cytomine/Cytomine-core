@@ -84,7 +84,7 @@ public class ConfigurationServiceTests {
     void add_configuration_with_already_existing_key() {
         Configuration configuration = builder.given_a_configuration("xxx");
 
-        Assertions.assertThrows(WrongArgumentException.class, () -> {
+        Assertions.assertThrows(AlreadyExistException.class, () -> {
                 configurationService.add(configuration.toJsonObject().withChange("id", null));
         });
     }
