@@ -128,7 +128,7 @@ public class PermissionService {
                 if(max==null) {
                     max=0;
                 } else {
-                    max = max+new Random().nextInt(10)+1;
+                    max = max+new Random().nextInt(100)+1;
                 }
                 log.debug("next ace order {} for {}", max, aoi);
                 aclRepository.insertAclEntry(max, aoi, mask, sid);
