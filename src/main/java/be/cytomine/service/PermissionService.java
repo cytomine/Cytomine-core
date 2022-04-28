@@ -115,21 +115,25 @@ public class PermissionService {
 
 
 
-    public synchronized Long createAclEntry(Long aoi, Long sid, Integer mask) {
-        // method is synchronized since we have to compute the aceOrder+1.
-        // TODO: Not sure the aceOrder is really usefull ? couldn't we use a sequence?
-        Long aclEntryId = aclRepository.getAclEntryId(aoi, sid, mask);
-        if (aclEntryId == null) {
-            Integer max = aclRepository.getMaxAceOrder(aoi);
-            if(max==null) {
-                max=0;
-            } else {
-                max = max+1;
+    public Long createAclEntry(Long aoi, Long sid, Integer mask) {
+        log.debug("create acl entry for {}, {}, {}", aoi, sid, mask);
+        synchronized (this.getClass()) {
+            // method is synchronized since we have to compute the aceOrder+1.
+            // TODO: Not sure the aceOrder is really usefull ? couldn't we use a sequence?
+            Long aclEntryId = aclRepository.getAclEntryId(aoi, sid, mask);
+            if (aclEntryId == null) {
+                Integer max = aclRepository.getMaxAceOrder(aoi);
+                if(max==null) {
+                    max=0;
+                } else {
+                    max = max+1;
+                }
+                log.debug("next ace order {} for {}", max, aoi);
+                aclRepository.insertAclEntry(max, aoi, mask, sid);
+                aclEntryId = aclRepository.getAclEntryId(aoi, sid, mask);
             }
-            aclRepository.insertAclEntry(max, aoi, mask, sid);
-            aclEntryId = aclRepository.getAclEntryId(aoi, sid, mask);
+            return aclEntryId;
         }
-        return aclEntryId;
     }
 
     public Long getAclObjectIdentity(CytomineDomain domain, Long aclClassId, Long aclSidId) {
