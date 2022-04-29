@@ -57,7 +57,8 @@ class DeleteOldProjectsJob {
                     // send email
                     log.info("Send an email because we will delete project")
                     def secUsers = secUserService.listAdmins(project, false)
-                    notificationService.notifyProjectDelete(secUsers.collect{it.email}, project)
+                    def receiversEmail = secUsers.collect{it.email}.unique()
+                    notificationService.notifyProjectDelete(receiversEmail, project)
                 }
             }
         }
