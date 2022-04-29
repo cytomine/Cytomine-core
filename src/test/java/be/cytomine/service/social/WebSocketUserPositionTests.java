@@ -2,11 +2,7 @@ package be.cytomine.service.social;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.notification.Notification;
-import be.cytomine.domain.notification.NotificationUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ServerException;
-import be.cytomine.repository.notification.NotificationUserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,15 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -42,9 +35,6 @@ public class WebSocketUserPositionTests {
 
     @Autowired
     WebSocketUserPositionHandler webSocketUserPositionHandler;
-
-    @Autowired
-    NotificationUserRepository notificationUserRepository;
 
     @AfterEach
     public void resetSessions(){
@@ -119,6 +109,38 @@ public class WebSocketUserPositionTests {
         assertThat(webSocketUserPositionHandler.sessionsTracked.get("89").length).isEqualTo(4);
     }
 
+    @Test
+    public void send_position_to_connected_user() throws IOException {
+        WebSocketSession session = mock(WebSocketSession.class);
+        connectSession(session);
+
+        when(session.isOpen()).thenReturn(true);
+        doNothing().when(session).sendMessage(new TextMessage("position"));
+        assertDoesNotThrow(() -> webSocketUserPositionHandler.userHasMoved("54", "position"));
+    }
+
+    @Test
+    public void send_position_to_not_connected_user(){
+        ServerException exception = assertThrows(ServerException.class, () -> webSocketUserPositionHandler.userHasMoved("54", "position"));
+        assertThat(exception.getMessage()).isEqualTo("User id : 54 has any web socket session active");
+    }
+
+    @Test
+    public void send_position_to_connected_user_session_failed() throws IOException {
+        WebSocketSession session = mock(WebSocketSession.class);
+        connectSession(session);
+
+        when(session.isOpen()).thenReturn(true);
+        when(session.getId()).thenReturn("1234");
+        doThrow(IOException.class).when(session).sendMessage(new TextMessage("position"));
+        ServerException exception = assertThrows(ServerException.class, () -> webSocketUserPositionHandler.userHasMoved("54", "position"));
+        assertThat(exception.getMessage()).isEqualTo("Failed to send message to session : 1234");
+    }
+
+    private void connectSession(WebSocketSession session ){
+        when(session.getAttributes()).thenReturn(Map.of("userID", "54"));
+        webSocketUserPositionHandler.afterConnectionEstablished(session);
+    }
 
     private void connectTwoSessions(ConcurrentWebSocketSessionDecorator sessionDecorator){
         ConcurrentWebSocketSessionDecorator[] sessionsDecorator = {sessionDecorator};

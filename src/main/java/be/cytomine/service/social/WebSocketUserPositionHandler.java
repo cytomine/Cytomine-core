@@ -1,13 +1,23 @@
 package be.cytomine.service.social;
 
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.social.LastUserPosition;
+import be.cytomine.exceptions.ServerException;
 import be.cytomine.service.CytomineWebSocketHandler;
+import be.cytomine.service.image.ImageInstanceService;
+import be.cytomine.service.image.SliceInstanceService;
+import be.cytomine.service.security.SecUserService;
+import be.cytomine.utils.JsonObject;
 import ch.qos.logback.classic.Logger;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
+import javax.swing.text.Position;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,13 +27,25 @@ import java.util.Map;
 public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
 
     public static Map<Object, ConcurrentWebSocketSessionDecorator[]> sessionsTracked = new HashMap<>();
+    public static Map<Object, ConcurrentWebSocketSessionDecorator[]> sessions = new HashMap<>();
+
+    @Autowired
+    UserPositionService userPositionService;
+
+    @Autowired
+    ImageInstanceService imageInstanceService;
+
+    @Autowired
+    SliceInstanceService sliceInstanceService;
+
+    @Autowired
+    SecUserService secUserService;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
-        super.afterConnectionEstablished(session);
+        sessions = super.afterConnectionEstablished(session, sessions);
         log.info("Established user position WebSocket connection {}", session.getId());
     }
-
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         super.afterConnectionClosed(session, status);
@@ -45,6 +67,19 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         }else{
             sessionsTracked.put(trackedUserId, trackSessions);
         }
+    }
+
+    public void userHasMoved(String userID, String position) throws ServerException {
+        try{
+            ConcurrentWebSocketSessionDecorator[] trackSessions = sessionsTracked.get(userID);
+            TextMessage message = new TextMessage(position);
+            for(ConcurrentWebSocketSessionDecorator s : trackSessions){
+                super.sendWebSocketMessage(s, message);
+            }
+        }catch (NullPointerException e){
+            throw new ServerException("User id : "+ userID +" has any web socket session active");
+        }
+
     }
 }
 

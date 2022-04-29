@@ -18,6 +18,7 @@ package be.cytomine.service.social;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
@@ -26,17 +27,24 @@ import be.cytomine.domain.social.LastConnection;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.domain.social.PersistentUserPosition;
+import be.cytomine.repository.notification.NotificationRepository;
+import be.cytomine.repository.notification.NotificationUserRepository;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
 import be.cytomine.repositorynosql.social.LastUserPositionRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.dto.AreaDTO;
+import be.cytomine.service.dto.Point;
+import be.cytomine.service.notification.NotificationService;
+import be.cytomine.service.notification.WebSocketNotificationHandler;
+import be.cytomine.service.security.SecUserService;
 import com.mongodb.client.MongoClient;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -50,6 +58,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
 
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
@@ -75,6 +86,9 @@ public class UserPositionServiceTests {
 
     @Autowired
     MongoClient mongoClient;
+
+    @Mock
+    WebSocketUserPositionHandler webSocketUserPositionHandler;
 
 
     @BeforeEach
@@ -372,4 +386,14 @@ public class UserPositionServiceTests {
         assertThat(summarize.get(0).get("frequency")).isEqualTo(2);
     }
 
+    @Test
+    void adding_a_position_with_new_location() {
+        User user = builder.given_a_user();
+        SliceInstance sliceInstance = builder.given_a_slice_instance();
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        AreaDTO area = new AreaDTO(new Point((double)0, (double)0), new Point((double)0, (double)0), new Point((double)0, (double)0), new Point((double)0, (double)0));
+        Date date = new Date();
+
+        userPositionService.add(date, user, sliceInstance, imageInstance, area, 0, (double)0, true);
+    }
 }

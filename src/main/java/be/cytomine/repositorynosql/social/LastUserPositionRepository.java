@@ -31,4 +31,5 @@ public interface LastUserPositionRepository extends MongoRepository<LastUserPosi
 
     void deleteAllByImage(Long id);
 
+    LastUserPosition findTopByOrderByCreatedDesc();
 }

@@ -23,6 +23,7 @@ import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.domain.social.PersistentUserPosition;
+import be.cytomine.exceptions.ServerException;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repositorynosql.social.*;
@@ -49,6 +50,7 @@ import org.springframework.data.mongodb.core.aggregation.Fields;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
@@ -103,7 +105,7 @@ public class UserPositionService {
     MongoTemplate mongoTemplate;
 
     @Autowired
-    private SessionFactory sessionFactory;
+    WebSocketUserPositionHandler webSocketUserPositionHandler;
 
     @Autowired
     PersistentUserPositionRepository persistentUserPositionRepository;
@@ -132,6 +134,9 @@ public class UserPositionService {
             Integer zoom,
             Double rotation,
             Boolean broadcast) {
+
+        LastUserPosition lastPosition = lastUserPositionRepository.findTopByOrderByCreatedDesc();
+
         //TODO: no ACL???
         LastUserPosition position = new LastUserPosition();
         position.setId(sequenceService.generateID());
@@ -139,7 +144,8 @@ public class UserPositionService {
         position.setImage(imageInstance.getId());
         position.setSlice(sliceInstance.getId());
         position.setProject(imageInstance.getProject().getId());
-        position.setLocation(area.toMongodbLocation().getCoordinates());
+        List<List<Double>> currentLocation = area.toMongodbLocation().getCoordinates();
+        position.setLocation(currentLocation);
         position.setZoom(zoom);
         position.setRotation(rotation);
         position.setBroadcast(broadcast);
@@ -147,6 +153,14 @@ public class UserPositionService {
         position.setUpdated(created);
         position.setImageName(imageInstance.getBlindInstanceFilename());
         lastUserPositionRepository.insert(position);
+
+        if(lastPosition != null && !lastPosition.getLocation().containsAll(currentLocation)){
+            try{
+                webSocketUserPositionHandler.userHasMoved(user.getId().toString(), position.toJsonObject().toJsonString());
+            }catch (ServerException e){
+                log.error(e.getMessage());
+            }
+        }
 
         PersistentUserPosition persistedPosition = new PersistentUserPosition();
         persistedPosition.setId(sequenceService.generateID());

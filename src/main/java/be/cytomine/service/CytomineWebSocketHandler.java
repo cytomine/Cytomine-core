@@ -1,21 +1,21 @@
 package be.cytomine.service;
 
+import be.cytomine.exceptions.ServerException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.util.HashMap;
+import java.io.IOException;
 import java.util.Map;
 
 @Slf4j
 public abstract class CytomineWebSocketHandler extends TextWebSocketHandler {
 
     ConcurrentWebSocketSessionDecorator session;
-    public static Map<Object, ConcurrentWebSocketSessionDecorator[]> sessions = new HashMap<>();
 
-    @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
+    public Map<Object, ConcurrentWebSocketSessionDecorator[]> afterConnectionEstablished(WebSocketSession session, Map<Object, ConcurrentWebSocketSessionDecorator[]> sessions) {
         this.session = new ConcurrentWebSocketSessionDecorator(session, 1000, 8192);
         String userID = this.session.getAttributes().get("userID").toString();
 
@@ -27,6 +27,7 @@ public abstract class CytomineWebSocketHandler extends TextWebSocketHandler {
             ConcurrentWebSocketSessionDecorator[] newSessions = {this.session};
             sessions.put(userID, newSessions);
         }
+        return sessions;
     }
 
     protected ConcurrentWebSocketSessionDecorator[] addSession(ConcurrentWebSocketSessionDecorator[] oldSessions, ConcurrentWebSocketSessionDecorator newSession){
@@ -36,5 +37,16 @@ public abstract class CytomineWebSocketHandler extends TextWebSocketHandler {
         }
         newSessions[newSessions.length - 1] = newSession;
         return newSessions;
+    }
+
+    protected void sendWebSocketMessage(ConcurrentWebSocketSessionDecorator s, TextMessage message) throws ServerException {
+        if(s.isOpen()){
+            try {
+                s.sendMessage(message);
+                log.info("Sending WebSocket message to session : " + s.getId());
+            } catch (IOException e) {
+                throw new ServerException("Failed to send message to session : " + s.getId());
+            }
+        }
     }
 }
