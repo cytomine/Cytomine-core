@@ -62,10 +62,10 @@ class NotificationService {
                 HV_instance_specific = "Laboratorienettverk"
                 break
             case "QA_KOLLEGIAL" :
-                HV_instance_specific = "Test Kollegialrådføring"
+                HV_instance_specific = "Test Kollegial rådføring"
                 break
             case "KOLLEGIAL" :
-                HV_instance_specific = "Kollegialrådføring"
+                HV_instance_specific = "Kollegial rådføring"
                 break
             default:
                 HV_instance_specific = ""
