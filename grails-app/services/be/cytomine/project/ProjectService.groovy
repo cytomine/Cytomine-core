@@ -810,6 +810,23 @@ class ProjectService extends ModelService {
         }
     }
 
+    def afterUpdate(def domain, def response) {
+        Project project = (Project)domain
+        Ontology ontology = project.ontology
+        def newDeletedStatus = response.data.project.deleted
+        log.info("Project $project")
+        log.info("newDeletedStatus $newDeletedStatus")
+        log.info("ontology $ontology " + (ontology? ontology.deleted : ""))
+        if(ontology!=null && newDeletedStatus!=null && ontology.deleted==null) {
+            List<Project> projectsWithSameOntology = Project.findAllByOntologyAndDeletedIsNull(ontology)
+            log.info("Ontology is still mapped with ${projectsWithSameOntology.size()} projects: ${projectsWithSameOntology}")
+            if (projectsWithSameOntology.isEmpty() || (projectsWithSameOntology.size()==1 && projectsWithSameOntology.contains(project))) {
+                log.info("Delete orphean ontology...")
+                ontologyService.delete(ontology, null, null, false)
+            }
+        }
+    }
+
     def getStringParamsI18n(def domain) {
         return [domain.id, domain.name]
     }
@@ -914,6 +931,7 @@ class ProjectService extends ModelService {
             abstractImageService.deleteUnusedAbstractImageAndTheirFiles(ImageInstance.findAllByProject(project))
         })
     }
+
 
 //    def deleteDependentReviewedAnnotation(Project project, Transaction transaction,Task task=null) {
 //
