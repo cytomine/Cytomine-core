@@ -27,7 +27,6 @@ public abstract class CytomineWebSocketHandler extends TextWebSocketHandler {
             ConcurrentWebSocketSessionDecorator[] newSessions = {this.session};
             sessions.put(userID, newSessions);
         }
-        log.info("Established user position WebSocket connection {}", session.getId());
     }
 
     protected ConcurrentWebSocketSessionDecorator[] addSession(ConcurrentWebSocketSessionDecorator[] oldSessions, ConcurrentWebSocketSessionDecorator newSession){

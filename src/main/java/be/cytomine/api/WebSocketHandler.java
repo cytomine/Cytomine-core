@@ -34,6 +34,18 @@ public class WebSocketNotificationHandler extends CytomineWebSocketHandler {
     public static Integer TIME_DIFF_SECONDS = 600;
 
     @Override
+    public void afterConnectionEstablished(WebSocketSession session) {
+        super.afterConnectionEstablished(session);
+
+        String userID = session.getAttributes().get("userID").toString();
+        List<String> messages = getNotSendNotificationsMessage(userID);
+        for(String message : messages){
+            sendNotification(userID, message);
+        }
+        log.info("Established notification WebSocket connection {}", session.getId());
+    }
+
+    @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         super.afterConnectionClosed(session, status);
         remove(session);

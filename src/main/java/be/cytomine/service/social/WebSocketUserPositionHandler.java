@@ -9,6 +9,7 @@ import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -16,6 +17,12 @@ import java.util.Map;
 public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
 
     public static Map<Object, ConcurrentWebSocketSessionDecorator[]> sessionsTracked = new HashMap<>();
+
+    @Override
+    public void afterConnectionEstablished(WebSocketSession session) {
+        super.afterConnectionEstablished(session);
+        log.info("Established user position WebSocket connection {}", session.getId());
+    }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
