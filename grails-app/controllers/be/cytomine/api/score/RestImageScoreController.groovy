@@ -147,7 +147,7 @@ class RestImageScoreController extends RestController{
 
             String title = "Scores report"
 
-            String GDPRWarning = "NB: Regnearket inneholder personinformasjon, som ikke må distribueres uten avklaring med brukere. Eventuelt  kan du slette bruker id kolonne med brukerID"
+            String GDPRWarning = "NB: Regnearket inneholder personinformasjon som ikke må distribueres uten avklaring med brukere. Eventuelt må du slette kolonnene som inneholder brukerinformasjon,  'UserId' og 'Username'."
             if (exporterIdentifier == "pdf") {
                 title = GDPRWarning
             } else {
