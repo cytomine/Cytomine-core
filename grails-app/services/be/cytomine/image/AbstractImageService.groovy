@@ -485,24 +485,6 @@ class AbstractImageService extends ModelService {
         }
     }
 
-    void deleteUnusedAbstractImageAndTheirFiles(List<ImageInstance> images) {
-        images.each { image ->
-            List<ImageInstance> imageInstanceWithSameAbstractImage = ImageInstance.findAllByBaseImageAndDeletedIsNull(image.baseImage);
-            log.info "imageInstanceWithSameAbstractImage = $imageInstanceWithSameAbstractImage"
-            Set<Long> alreadyDeleted = new HashSet<>()
-            if (imageInstanceWithSameAbstractImage.size()==0) {
-                log.info "uploaded file after = " + image.baseImage.uploadedFile
-                if (image.baseImage!=null && image.baseImage.uploadedFile!=null) {
-                    alreadyDeleted.add(image.baseImage.uploadedFile.id)
-                    UploadedFile.findAllByParent(image.baseImage.uploadedFile).each { child ->
-                        uploadedFileService.delete(child, null, null, false)
-                    }
-                    uploadedFileService.delete(image.baseImage.uploadedFile, null, null, false)
-                }
-            }
-        }
-    }
-
     /**
      * Get all image servers for an image id
      */
