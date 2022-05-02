@@ -1,5 +1,6 @@
 package be.cytomine.utils;
 
+import org.hibernate.proxy.HibernateProxy;
 public class ClassUtils {
 
     /**
@@ -9,9 +10,11 @@ public class ClassUtils {
      */
     public static String getClassName(Object o) {
         String name = o.getClass().getName();   //be.cytomine.image.Image
-        int exeed = name.indexOf("_\\$\\$_javassist"); //if  be.cytomine.image.Image_$$_javassistxxxx...remove all after  _$$
+        int exeed = name.indexOf("_\\$\\$_javassist");
         if (exeed!=-1) {
-            name = name.substring(0,exeed);
+            name = name.substring(0,exeed); //if ex be.cytomine.image.Image_$$_javassistxxxx...remove all after  _$$
+        } else if (o instanceof HibernateProxy hibernateProxy) {
+            name = hibernateProxy.getClass().getSuperclass().getName(); // if ex be.cytomine.image.Image$HibernateProxy$GfTtnrQ6, take the super class (Image)
         }
         String[] array = name.split("\\.") ; //[be,cytomine,image,Image]
         //log.info array.length
