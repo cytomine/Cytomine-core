@@ -43,10 +43,8 @@ class HvMetadataService extends ModelService {
 
 
     def listByType(HVMetadata.Type type) {
-        println "listByType 1"
         securityACLService.checkGuest(cytomineService.getCurrentUser())
-        println "listByType 2"
-        return HVMetadata.findAllByType(type)
+        return HVMetadata.findAllByType(type,[sort: 'value'])
     }
 
     def delete(HVMetadata domain, Transaction transaction = null, Task task = null, boolean printMessage = true) {
