@@ -37,8 +37,9 @@ public class WebSocketUserPositionTests {
     WebSocketUserPositionHandler webSocketUserPositionHandler;
 
     @AfterEach
-    public void resetSessions(){
+    public void before(){
         webSocketUserPositionHandler.sessions = new HashMap<>();
+        webSocketUserPositionHandler.sessionsTracked = new HashMap<>();
     }
 
     @Test
@@ -110,30 +111,36 @@ public class WebSocketUserPositionTests {
     }
 
     @Test
-    public void send_position_to_connected_user() throws IOException {
+    public void update_position_of_tracked_user_send_message_works() throws IOException {
         WebSocketSession session = mock(WebSocketSession.class);
         connectSession(session);
 
+        when(session.getAttributes()).thenReturn(Map.of("userID", "54"));
+        webSocketUserPositionHandler.handleMessage(session, new TextMessage("89"));
+
         when(session.isOpen()).thenReturn(true);
         doNothing().when(session).sendMessage(new TextMessage("position"));
+        assertDoesNotThrow(() -> webSocketUserPositionHandler.userHasMoved("89", "position"));
+        verify(session, times(1)).sendMessage(new TextMessage("position"));
+    }
+
+    @Test
+    public void update_position_of_not_tracked_user_do_nothing(){
         assertDoesNotThrow(() -> webSocketUserPositionHandler.userHasMoved("54", "position"));
     }
 
     @Test
-    public void send_position_to_not_connected_user(){
-        ServerException exception = assertThrows(ServerException.class, () -> webSocketUserPositionHandler.userHasMoved("54", "position"));
-        assertThat(exception.getMessage()).isEqualTo("User id : 54 has any web socket session active");
-    }
-
-    @Test
-    public void send_position_to_connected_user_session_failed() throws IOException {
+    public void update_position_of_tracked_user_send_message_fails() throws IOException {
         WebSocketSession session = mock(WebSocketSession.class);
         connectSession(session);
+
+        when(session.getAttributes()).thenReturn(Map.of("userID", "54"));
+        webSocketUserPositionHandler.handleMessage(session, new TextMessage("89"));
 
         when(session.isOpen()).thenReturn(true);
         when(session.getId()).thenReturn("1234");
         doThrow(IOException.class).when(session).sendMessage(new TextMessage("position"));
-        ServerException exception = assertThrows(ServerException.class, () -> webSocketUserPositionHandler.userHasMoved("54", "position"));
+        ServerException exception = assertThrows(ServerException.class, () -> webSocketUserPositionHandler.userHasMoved("89", "position"));
         assertThat(exception.getMessage()).isEqualTo("Failed to send message to session : 1234");
     }
 

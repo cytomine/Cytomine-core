@@ -1,25 +1,17 @@
 package be.cytomine.service.social;
 
-import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.exceptions.ServerException;
 import be.cytomine.service.CytomineWebSocketHandler;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.SliceInstanceService;
 import be.cytomine.service.security.SecUserService;
-import be.cytomine.utils.JsonObject;
-import ch.qos.logback.classic.Logger;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
-import javax.swing.text.Position;
-import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -77,7 +69,7 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
                 super.sendWebSocketMessage(s, message);
             }
         }catch (NullPointerException e){
-            throw new ServerException("User id : "+ userID +" has any web socket session active");
+            log.info("User id : "+ userID +" is not followed");
         }
 
     }

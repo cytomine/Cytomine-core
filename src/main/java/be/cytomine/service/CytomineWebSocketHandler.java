@@ -43,7 +43,7 @@ public abstract class CytomineWebSocketHandler extends TextWebSocketHandler {
         if(s.isOpen()){
             try {
                 s.sendMessage(message);
-                log.info("Sending WebSocket message to session : " + s.getId());
+                log.info("Has send WebSocket message to session : " + s.getId());
             } catch (IOException e) {
                 throw new ServerException("Failed to send message to session : " + s.getId());
             }
