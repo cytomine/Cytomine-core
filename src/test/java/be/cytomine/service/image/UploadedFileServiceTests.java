@@ -144,30 +144,31 @@ public class UploadedFileServiceTests {
         uploadedFileToAdd.setOriginalFilename("parent");
         builder.persistAndReturn(uploadedFileToAdd);
 
-
-        UploadedFile uploadedfileChildToAdd = builder.given_a_uploaded_file();
+        UploadedFile uploadedfileChildToAdd = builder.given_a_not_persisted_uploaded_file();
         uploadedfileChildToAdd.setOriginalFilename("child");
         uploadedfileChildToAdd.setParent(uploadedFileToAdd);
-        builder.persistAndReturn(uploadedfileChildToAdd);
+        CommandResponse response = uploadedFileService.add(uploadedfileChildToAdd.toJsonObject());
+        UploadedFile uploadedfileChild = (UploadedFile) response.getObject();
+        assertThat(uploadedfileChild.getLTree()).isEqualTo(uploadedFileToAdd.getId() + "." + uploadedfileChild.getId());
 
 
         UploadedFile uploadedfileSubChildToAdd = builder.given_a_uploaded_file();
-        uploadedfileSubChildToAdd.setParent(uploadedfileChildToAdd);
+        uploadedfileSubChildToAdd.setParent(uploadedfileChild);
         builder.persistAndReturn(uploadedfileSubChildToAdd);
 
 
         Page<UploadedFile> list = uploadedFileService.list(builder.given_superadmin(), null, true, Pageable.unpaged());
         assertThat(list.getContent()).contains(uploadedFileToAdd);
-        assertThat(list.getContent()).doesNotContain(uploadedfileChildToAdd, uploadedfileSubChildToAdd);
+        assertThat(list.getContent()).doesNotContain(uploadedfileChild, uploadedfileSubChildToAdd);
 
         list = uploadedFileService.list(builder.given_superadmin(), uploadedFileToAdd.getId(), false, Pageable.unpaged());
-        assertThat(list.getContent()).contains(uploadedfileChildToAdd);
+        assertThat(list.getContent()).contains(uploadedfileChild);
         assertThat(list.getContent()).doesNotContain(uploadedFileToAdd, uploadedfileSubChildToAdd);
 
 
         List<Map<String, Object>> maps = uploadedFileService.listHierarchicalTree(builder.given_superadmin(), uploadedFileToAdd.getId());
         assertThat(maps.stream().filter(x -> x.get("id").equals(uploadedFileToAdd.getId()))).hasSize(1);
-        assertThat(maps.stream().filter(x -> x.get("id").equals(uploadedfileChildToAdd.getId()))).hasSize(1);
+        assertThat(maps.stream().filter(x -> x.get("id").equals(uploadedfileChild.getId()))).hasSize(1);
         assertThat(maps.stream().filter(x -> x.get("id").equals(uploadedfileSubChildToAdd.getId()))).hasSize(1);
 
     }
@@ -178,10 +179,11 @@ public class UploadedFileServiceTests {
         uploadedFileToAdd.setOriginalFilename("parent");
         builder.persistAndReturn(uploadedFileToAdd);
 
+        entityManager.detach(uploadedFileToAdd);
 
         UploadedFile uploadedfileChildToAdd = builder.given_a_uploaded_file();
         uploadedfileChildToAdd.setOriginalFilename("child");
-        uploadedfileChildToAdd.setParent(uploadedFileToAdd);
+        uploadedfileChildToAdd.setParent(entityManager.find(UploadedFile.class, uploadedFileToAdd.getId()));
         builder.persistAndReturn(uploadedfileChildToAdd);
 
 

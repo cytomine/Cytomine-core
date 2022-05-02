@@ -318,6 +318,12 @@ public class UploadedFileService extends ModelService {
 
     }
 
+    protected void afterAdd(CytomineDomain domain, CommandResponse response) {
+        UploadedFile file = (UploadedFile)domain;
+        file.updateLtree();
+        uploadedFileRepository.save(file);
+    }
+
     /**
      * Update this domain with new data from json
      * @param domain Domain to update

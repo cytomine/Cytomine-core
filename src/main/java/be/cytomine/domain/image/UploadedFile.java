@@ -116,15 +116,13 @@ public class UploadedFile extends CytomineDomain implements Serializable {
         return Paths.get(imageServer.getBasePath(), String.valueOf(user.getId()), filename).toString();
     }
 
-    @PrePersist
-    public void beforeCreate() {
-        lTree = parent != null ? parent.lTree+"." : "";
-        lTree += id;
-    }
-
     @PreUpdate
     public void beforeUpdate() {
-        lTree = parent != null ? parent.lTree+"." : "";
+        updateLtree();
+    }
+
+    public void updateLtree() {
+        lTree = parent != null ? parent.getLTree()+"." : "";
         lTree += id;
     }
 
