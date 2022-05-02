@@ -1,6 +1,5 @@
 package be.cytomine.config;
 
-import be.cytomine.service.notification.WebSocketNotificationHandler;
 import be.cytomine.service.social.WebSocketUserPositionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -19,14 +18,10 @@ import java.util.Map;
 public class WebSocketBrokerConfiguration implements WebSocketConfigurer {
 
     @Autowired
-    WebSocketHandler webSocketHandler;
-
-    @Autowired
     WebSocketUserPositionHandler webSocketUserPositionHandler;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(webSocketNotificationHandler,"/notification/*").setAllowedOrigins("*").addInterceptors(idInterceptor());
         registry.addHandler(webSocketUserPositionHandler,"/user-position/*").setAllowedOrigins("*").addInterceptors(idInterceptor());
     }
 

@@ -27,8 +27,7 @@ import be.cytomine.domain.social.LastConnection;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.domain.social.PersistentUserPosition;
-import be.cytomine.repository.notification.NotificationRepository;
-import be.cytomine.repository.notification.NotificationUserRepository;
+
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
 import be.cytomine.repositorynosql.social.LastUserPositionRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
@@ -36,8 +35,6 @@ import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.dto.AreaDTO;
 import be.cytomine.service.dto.Point;
-import be.cytomine.service.notification.NotificationService;
-import be.cytomine.service.notification.WebSocketNotificationHandler;
 import be.cytomine.service.security.SecUserService;
 import com.mongodb.client.MongoClient;
 import org.apache.commons.lang3.time.DateUtils;
@@ -58,9 +55,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
 
 
 @SpringBootTest(classes = CytomineCoreApplication.class)

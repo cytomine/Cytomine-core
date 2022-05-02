@@ -37,7 +37,7 @@ public class WebSocketUserPositionTests {
     WebSocketUserPositionHandler webSocketUserPositionHandler;
 
     @AfterEach
-    public void before(){
+    public void cleanSessions(){
         webSocketUserPositionHandler.sessions = new HashMap<>();
         webSocketUserPositionHandler.sessionsTracked = new HashMap<>();
     }
