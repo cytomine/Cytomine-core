@@ -720,21 +720,15 @@ class ImageInstanceService extends ModelService {
     }
 
     def deleteDependentLastUserPosition(ImageInstance image, Transaction transaction, Task task = null) {
-        LastUserPosition.findAllByImage(image).each {
-            it.delete()
-        }
+        LastUserPosition.deleteAllByImage(image)
     }
 
     def deleteDependentPersistentUserPosition(ImageInstance image, Transaction transaction, Task task = null) {
-        PersistentUserPosition.findAllByImage(image).each {
-            it.delete()
-        }
+        PersistentUserPosition.deleteAllByImage(image)
     }
 
     def deleteDependentPersistentImageConsultation(ImageInstance image, Transaction transaction, Task task = null) {
-        PersistentImageConsultation.findAllByImage(image.id).each {
-            it.delete()
-        }
+        PersistentImageConsultation.deleteAllByImage(image.id)
     }
 
     def deleteDependentProperty(ImageInstance image, Transaction transaction, Task task = null) {
