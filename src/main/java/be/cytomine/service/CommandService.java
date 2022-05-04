@@ -104,10 +104,6 @@ public class CommandService {
                 c.setProject(null); // project has been deleted in this command, so we cannot link the command to the deleted project
             }
 
-            List<ValidationError> validationErrors = c.validate();
-            if (!validationErrors.isEmpty()) {
-                log.error(validationErrors.toString());
-            }
             entityManager.persist(c);
 
             CommandHistory ch = new CommandHistory(c);
