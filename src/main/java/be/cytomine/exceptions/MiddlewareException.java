@@ -1,7 +1,5 @@
 package be.cytomine.exceptions;
 
-import lombok.extern.slf4j.Slf4j;
-
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
 *
@@ -17,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
+
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class MiddlewareException extends CytomineException {
