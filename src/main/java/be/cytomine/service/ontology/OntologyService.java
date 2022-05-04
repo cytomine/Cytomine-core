@@ -25,10 +25,7 @@ import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static org.springframework.security.acls.domain.BasePermission.*;
 
@@ -181,7 +178,7 @@ public class OntologyService extends ModelService {
         for (Term term : termService.list(ontology)) {
             termService.delete(term, transaction, task,false);
         }
-
+        ontology.setTerms(new HashSet<>()); //otherwise, when you write the json, term cannot be found (because term link is LAZY + term deleted)
     }
 
 

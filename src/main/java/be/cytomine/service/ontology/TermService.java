@@ -164,7 +164,7 @@ public class TermService extends ModelService {
     @Override
     public List<String> getStringParamsI18n(CytomineDomain domain) {
         Term term = (Term)domain;
-        return Arrays.asList(String.valueOf(term.getId()), term.getName());
+        return Arrays.asList(String.valueOf(term.getId()), term.getName(), term.getOntology().getName());
     }
 
     @Override

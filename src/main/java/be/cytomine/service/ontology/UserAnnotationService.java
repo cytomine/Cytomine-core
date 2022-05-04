@@ -578,6 +578,7 @@ public class UserAnnotationService extends ModelService {
 
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         deleteDependentAlgoAnnotationTerm((UserAnnotation)domain, transaction, task);
+        deleteDependentAnnotationTerm((UserAnnotation)domain, transaction, task);
         deleteDependentSharedAnnotation((UserAnnotation)domain, transaction, task);
         deleteDependentAnnotationTrack((UserAnnotation)domain, transaction, task);
     }
