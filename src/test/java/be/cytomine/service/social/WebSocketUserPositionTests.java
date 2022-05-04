@@ -82,12 +82,11 @@ public class WebSocketUserPositionTests {
     public void add_track_session_to_already_tracked_user() {
         ConcurrentWebSocketSessionDecorator sessionDecorator = mock(ConcurrentWebSocketSessionDecorator.class);
         connectTwoSessions(sessionDecorator);
+        initTrackedSession("89", sessionDecorator);
 
         WebSocketSession session = mock(WebSocketSession.class);
         when(session.getAttributes()).thenReturn(Map.of("userID", "54"));
-        webSocketUserPositionHandler.sessionsTracked.put("89", new ConcurrentWebSocketSessionDecorator[]{sessionDecorator});
 
-        assertThat(webSocketUserPositionHandler.sessionsTracked.get("89").length).isEqualTo(1);
         webSocketUserPositionHandler.handleMessage(session, new TextMessage("89"));
         assertThat(webSocketUserPositionHandler.sessionsTracked.get("89").length).isEqualTo(2);
     }
@@ -96,18 +95,46 @@ public class WebSocketUserPositionTests {
     public void add_some_track_sessions_to_already_tracked_user() {
         ConcurrentWebSocketSessionDecorator sessionDecorator = mock(ConcurrentWebSocketSessionDecorator.class);
         connectTwoSessions(sessionDecorator);
+        initTrackedSession("89", sessionDecorator);
 
         WebSocketSession session = mock(WebSocketSession.class);
-        when(session.getAttributes()).thenReturn(Map.of("userID", "54"));
-        webSocketUserPositionHandler.sessionsTracked.put("89", new ConcurrentWebSocketSessionDecorator[]{sessionDecorator});
-
         // Simulate that user is connected to Cytomine with 3 browsers (3 sessions)
         ConcurrentWebSocketSessionDecorator[] sessionsDecorator = {sessionDecorator, sessionDecorator, sessionDecorator};
         WebSocketUserPositionHandler.sessions.put("54", sessionsDecorator);
+        when(session.getAttributes()).thenReturn(Map.of("userID", "54"));
 
-        assertThat(webSocketUserPositionHandler.sessionsTracked.get("89").length).isEqualTo(1);
         webSocketUserPositionHandler.handleMessage(session, new TextMessage("89"));
         assertThat(webSocketUserPositionHandler.sessionsTracked.get("89").length).isEqualTo(4);
+    }
+
+    @Test
+    public void remove_tracking_sessions_from_tracked_sessions() {
+        ConcurrentWebSocketSessionDecorator sessionDecorator = mock(ConcurrentWebSocketSessionDecorator.class);
+        connectTwoSessions(sessionDecorator);
+        initTrackedSession("89", sessionDecorator);
+
+        WebSocketSession session = mock(WebSocketSession.class);
+        when(session.getAttributes()).thenReturn(Map.of("userID", "54"));
+        when(session.getId()).thenReturn("1234");
+        when(sessionDecorator.getId()).thenReturn("1234");
+
+        webSocketUserPositionHandler.handleMessage(session, new TextMessage("stop-track"));
+        assertThat(webSocketUserPositionHandler.sessionsTracked.get("89").length).isEqualTo(0);
+    }
+
+    @Test
+    public void remove_broadcasting_sessions_from_tracked_sessions() {
+        ConcurrentWebSocketSessionDecorator sessionDecorator = mock(ConcurrentWebSocketSessionDecorator.class);
+        connectTwoSessions(sessionDecorator);
+        initTrackedSession("89", sessionDecorator);
+
+        WebSocketSession session = mock(WebSocketSession.class);
+        when(session.getAttributes()).thenReturn(Map.of("userID", "89"));
+        when(session.getId()).thenReturn("1234");
+        when(sessionDecorator.getId()).thenReturn("1234");
+
+        webSocketUserPositionHandler.handleMessage(session, new TextMessage("stop-broadcast"));
+        assertThat(webSocketUserPositionHandler.sessionsTracked.get("89")).isNull();
     }
 
     @Test
@@ -156,4 +183,11 @@ public class WebSocketUserPositionTests {
         assertThat(WebSocketUserPositionHandler.sessions.get("54").length).isEqualTo(1);
         assertThat(WebSocketUserPositionHandler.sessions.get("89").length).isEqualTo(1);
     }
+
+    private void initTrackedSession(String trackedSessionId, ConcurrentWebSocketSessionDecorator sessionDecorator){
+        webSocketUserPositionHandler.sessionsTracked.put(trackedSessionId, new ConcurrentWebSocketSessionDecorator[]{sessionDecorator});
+        assertThat(webSocketUserPositionHandler.sessionsTracked.get(trackedSessionId).length).isEqualTo(1);
+    }
+
+
 }

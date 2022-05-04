@@ -154,7 +154,7 @@ public class UserPositionService {
         position.setImageName(imageInstance.getBlindInstanceFilename());
         lastUserPositionRepository.insert(position);
 
-        if(lastPosition != null && !lastPosition.getLocation().containsAll(currentLocation)){
+        if(lastPosition != null && !LastUserPosition.isSameLocation(lastPosition.getLocation(), currentLocation)){
             try{
                 webSocketUserPositionHandler.userHasMoved(user.getId().toString(), position.toJsonObject().toJsonString());
             }catch (ServerException e){
