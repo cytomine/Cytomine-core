@@ -156,7 +156,7 @@ public class UserPositionService {
 
         if(lastPosition != null && !LastUserPosition.isSameLocation(lastPosition.getLocation(), currentLocation)){
             try{
-                webSocketUserPositionHandler.userHasMoved(user.getId().toString(), position.toJsonObject().toJsonString());
+                webSocketUserPositionHandler.userHasMoved(user.getId().toString(), imageInstance.getId().toString(), position.toJsonObject().toJsonString());
             }catch (ServerException e){
                 log.error(e.getMessage());
             }
