@@ -31,6 +31,7 @@ import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.dto.AreaDTO;
+import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
 import com.mongodb.client.MongoClient;
@@ -73,6 +74,9 @@ public class UserPositionService {
     public static final String DATABASE_NAME = "cytomine";
     @Autowired
     CurrentUserService currentUserService;
+
+    @Autowired
+    SecUserService secUserService;
 
     @Autowired
     ProjectRepository projectRepository;
@@ -135,7 +139,7 @@ public class UserPositionService {
             Double rotation,
             Boolean broadcast) {
 
-        LastUserPosition lastPosition = lastUserPositionRepository.findTopByOrderByCreatedDesc();
+        LastUserPosition lastPosition = lastUserPositionRepository.findFirstByUser(user.getId());
 
         //TODO: no ACL???
         LastUserPosition position = new LastUserPosition();
@@ -255,6 +259,20 @@ public class UserPositionService {
         List<PersistentUserPosition> lastUserPositions = mongoTemplate.find(query, PersistentUserPosition.class);
         return lastUserPositions;
 
+    }
+
+    public List<User> listFollowers(Long userId, Long imageId){
+        ConcurrentWebSocketSessionDecorator[] sessions = WebSocketUserPositionHandler.sessionsTracked.get(userId.toString()+"/"+imageId.toString());
+        if(sessions != null){
+            List<String> userIds = webSocketUserPositionHandler.getSessionsUserIds(sessions).stream().distinct().collect(Collectors.toList());
+            List<User> users = new ArrayList<>();
+            for(String id : userIds){
+                users.add((User)secUserService.get(Long.parseLong(id)));
+            }
+            return users;
+        }else{
+            return new ArrayList<>();
+        }
     }
 
     public List<Map<String, Object>> summarize(ImageInstance image, SecUser user, SliceInstance slice, Long afterThan, Long beforeThan) {

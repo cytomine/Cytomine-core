@@ -130,7 +130,6 @@ public class BasicInstanceBuilder {
         return aGuest;
     }
 
-
     public User given_a_user() {
         return given_a_user(randomString());
     }

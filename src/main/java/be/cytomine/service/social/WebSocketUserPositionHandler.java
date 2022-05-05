@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -58,7 +59,8 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         }
         else if(payloadAction.equals("stop-broadcast")){
             removeFromBroadcastSession(userAndImageId);
-        }else if(sessionsTracked.keySet().contains(userAndImageId)){
+        }
+        else if(sessionsTracked.keySet().contains(userAndImageId)){
             ConcurrentWebSocketSessionDecorator[] oldSessions = sessionsTracked.get(userAndImageId);
             ConcurrentWebSocketSessionDecorator[] newSessions = oldSessions;;
             for(ConcurrentWebSocketSessionDecorator newSession : trackSessions){
@@ -83,6 +85,30 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         }
     }
 
+    public List<String> getSessionsUserIds(ConcurrentWebSocketSessionDecorator[] sessions){
+        List<String> userIds = new ArrayList<>();
+        for(ConcurrentWebSocketSessionDecorator decorator : sessions){
+            String userId = getSessionUserId(decorator);
+            if(!userId.isEmpty()){
+                userIds.add(userId);
+            }
+        }
+        return userIds;
+    }
+
+    private String getSessionUserId(ConcurrentWebSocketSessionDecorator session){
+        String userId = "";
+            for(Map.Entry<Object, ConcurrentWebSocketSessionDecorator[]> entry : sessions.entrySet()){
+            List<String> entryIds = Arrays.stream(entry.getValue()).map(value -> value.getId()).collect(Collectors.toList());
+            if(entryIds.contains(session.getId())){
+                userId = entry.getKey().toString();
+                break;
+            }
+        }
+        return userId;
+    }
+
+
     private void removeFromTrackerSessions(WebSocketSession session, String userAndImageId){
         ConcurrentWebSocketSessionDecorator[] oldSessions = sessionsTracked.get(userAndImageId);
         ConcurrentWebSocketSessionDecorator[] newSessions = removeSession(oldSessions, session);
@@ -90,8 +116,12 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
     }
 
     private void removeFromBroadcastSession(String userAndImageId){
-        sendNotification(List.of(sessionsTracked.get(userAndImageId)));
-        sessionsTracked.remove(userAndImageId);
+        ConcurrentWebSocketSessionDecorator[] sessionDecorators = sessionsTracked.get(userAndImageId);
+        if(sessionDecorators != null){
+            List<ConcurrentWebSocketSessionDecorator> sessionDecoratorLis = List.of(sessionsTracked.get(userAndImageId));
+            sendNotifications(sessionDecoratorLis);
+            sessionsTracked.remove(userAndImageId);
+        }
     }
 
     private ConcurrentWebSocketSessionDecorator[] removeSession(ConcurrentWebSocketSessionDecorator[] oldSessions, WebSocketSession oldSession){
@@ -104,8 +134,17 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         return newSessions;
     }
 
-    // TODO : Send notification via future notification system (lvl importance of 2 to bypass queue)
-    private void sendNotification(List<ConcurrentWebSocketSessionDecorator> decoratorsSession){
+    private void sendNotifications(List<ConcurrentWebSocketSessionDecorator> sessionDecorators){
+        for(ConcurrentWebSocketSessionDecorator sessionDecorator : sessionDecorators){
+            if(sessionDecorator.isOpen()){
+                try{
+                    sessionDecorator.sendMessage(new TextMessage("stop-track"));
+                }catch (IOException e){
+                    log.error("Session : " + sessionDecorator.getId() + " not found");
+                }
+            }
+        }
+        // TODO : Send notification via future notification system (lvl importance of 2 to bypass queue)
         /*for (Map.Entry<Object, ConcurrentWebSocketSessionDecorator[]> entry : sessions.entrySet()) {
             for(ConcurrentWebSocketSessionDecorator s : entry.getValue()){
                 if(decoratorsSession.contains(s)){

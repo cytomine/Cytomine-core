@@ -29,10 +29,14 @@ import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
 import be.cytomine.service.dto.AreaDTO;
 import be.cytomine.service.social.UserPositionService;
 import be.cytomine.service.social.UserPositionServiceTests;
+import be.cytomine.service.social.WebSocketUserPositionHandler;
 import be.cytomine.utils.JsonObject;
 import org.apache.commons.lang3.time.DateUtils;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,6 +46,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
 import javax.persistence.EntityManager;
 
@@ -54,6 +60,7 @@ import static be.cytomine.service.social.UserPositionServiceTests.ANOTHER_USER_V
 import static be.cytomine.service.social.UserPositionServiceTests.USER_VIEW;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -62,6 +69,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
 @WithMockUser(username = "superadmin")
+@ExtendWith(MockitoExtension.class)
 public class UserPositionResourceTests {
 
     @Autowired
@@ -82,7 +90,8 @@ public class UserPositionResourceTests {
     @Autowired
     UserPositionService userPositionService;
 
-
+    @Autowired
+    WebSocketUserPositionHandler webSocketUserPositionHandler;
 
     @BeforeEach
     public void cleanDB() {
@@ -227,6 +236,26 @@ public class UserPositionResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
+    }
+
+    @Test
+    @Transactional
+    public void list_followers() throws Exception {
+        WebSocketSession session = mock(WebSocketSession.class);
+        when(session.getId()).thenReturn("1234");
+
+        User user = builder.given_a_user();
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        Long imageId = imageInstance.getId();
+
+        WebSocketUserPositionHandler.sessionsTracked.put("89/"+imageId.toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
+        WebSocketUserPositionHandler.sessions.put(user.getId().toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
+
+
+        restUserPositionControllerMockMvc.perform(get("/api/imageinstance/{image}/followers/{user}.json", imageId, 89L))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(1)))).andReturn();
     }
 
     @Test

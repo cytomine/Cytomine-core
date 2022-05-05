@@ -170,4 +170,13 @@ public class RestUserPositionController extends RestCytomineController {
         return responseSuccess(JsonObject.of("users", userPositionService.listOnlineUsersByImage(imageInstance, sliceInstance, broadcast)));
     }
 
+
+    @GetMapping("/imageinstance/{image}/followers/{user}.json")
+    public ResponseEntity<String> listFollowers(
+            @PathVariable("image") Long imageId,
+            @PathVariable("user") Long userId) {
+        ImageInstance imageInstance =
+                imageInstanceService.find(imageId).orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
+        return responseSuccess(userPositionService.listFollowers(userId, imageInstance.getId()));
+    }
 }

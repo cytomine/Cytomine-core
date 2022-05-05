@@ -48,13 +48,25 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
 import javax.transaction.Transactional;
+import java.awt.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
@@ -390,4 +402,46 @@ public class UserPositionServiceTests {
 
         userPositionService.add(date, user, sliceInstance, imageInstance, area, 0, (double)0, true);
     }
+
+    @Test
+    public void list_followers() {
+        WebSocketSession session = mock(WebSocketSession.class);
+        when(session.getId()).thenReturn("1234");
+
+        User user = builder.given_a_user();
+
+        WebSocketUserPositionHandler.sessionsTracked.put("89/514", new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
+        WebSocketUserPositionHandler.sessions.put(user.getId().toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
+
+        List<User> users = userPositionService.listFollowers(89L, 514L);
+
+        assertThat(users.size()).isEqualTo(1);
+        assertThat(users).contains(user);
+    }
+
+    @Test
+    public void list_distinct_followers() {
+        WebSocketSession session = mock(WebSocketSession.class);
+        when(session.getId()).thenReturn("1234");
+
+        User user = builder.given_a_user();
+
+        WebSocketUserPositionHandler.sessionsTracked.put("89/514", new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0), new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
+        WebSocketUserPositionHandler.sessions.put(user.getId().toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
+
+        List<User> users = userPositionService.listFollowers(89L, 514L);
+
+        assertThat(users.size()).isEqualTo(1);
+        assertThat(users).contains(user);
+    }
+
+    @Test
+    public void list_followers_for_not_followed_user() {
+        User user = builder.given_a_user();
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        // WebSocketUserPositionHandler.sessions.put(user.getId().toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(mock(WebSocketSession.class), 0, 0)});
+        List<User> users = userPositionService.listFollowers(user.getId(), imageInstance.getId());
+        assertThat(users.size()).isEqualTo(0);
+    }
+
 }
