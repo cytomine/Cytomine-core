@@ -1,16 +1,25 @@
 package be.cytomine.service.social;
 
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.exceptions.ServerException;
+import be.cytomine.repositorynosql.social.LastUserPositionRepository;
 import be.cytomine.service.CytomineWebSocketHandler;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.SliceInstanceService;
 import be.cytomine.service.security.SecUserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -60,28 +69,52 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         else if(payloadAction.equals("stop-broadcast")){
             removeFromBroadcastSession(userAndImageId);
         }
-        else if(sessionsTracked.keySet().contains(userAndImageId)){
+        else {
+            addToSessionsTracked(userAndImageId, trackSessions);
+            moveFollower(Long.parseLong(payload[1]), Long.parseLong(payload[2]), trackSessions);
+        }
+    }
+
+    private void addToSessionsTracked(String userAndImageId, ConcurrentWebSocketSessionDecorator[] trackSessions){
+        if (sessionsTracked.keySet().contains(userAndImageId)) {
             ConcurrentWebSocketSessionDecorator[] oldSessions = sessionsTracked.get(userAndImageId);
-            ConcurrentWebSocketSessionDecorator[] newSessions = oldSessions;;
-            for(ConcurrentWebSocketSessionDecorator newSession : trackSessions){
+            ConcurrentWebSocketSessionDecorator[] newSessions = oldSessions;
+
+            for (ConcurrentWebSocketSessionDecorator newSession : trackSessions) {
                 newSessions = addSession(newSessions, newSession);
             }
             sessionsTracked.replace(userAndImageId, oldSessions, newSessions);
-        }
-        else{
+        } else {
             sessionsTracked.put(userAndImageId, trackSessions);
         }
     }
 
+    private void moveFollower(Long userId, Long imageId, ConcurrentWebSocketSessionDecorator[] sessions){
+
+        //TODO : Bypass authentification, to change
+        List<GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken("admin", "adminPassword", authorities);
+        SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+
+        ImageInstance imageInstance = imageInstanceService.get(imageId);
+        SecUser secUser = secUserService.get(userId);
+        Optional<LastUserPosition> lastPosition = userPositionService.lastPositionByUser(imageInstance, null, secUser, false);
+        if(lastPosition.isPresent()){
+            sendPosition(sessions, lastPosition.get().toJsonObject().toJsonString());
+        }
+    }
+
     public void userHasMoved(String userId, String imageId, String position) throws ServerException {
-        try{
-            ConcurrentWebSocketSessionDecorator[] trackSessions = sessionsTracked.get(userId+"/"+imageId);
-            TextMessage message = new TextMessage(position);
-            for(ConcurrentWebSocketSessionDecorator s : trackSessions){
-                super.sendWebSocketMessage(s, message);
-            }
-        }catch (NullPointerException e){
-            log.info("User id : "+ userId +" on image id :"+ imageId +" is not followed");
+        ConcurrentWebSocketSessionDecorator[] sessions = sessionsTracked.get(userId+"/"+imageId);
+        if(sessions != null){
+            sendPosition(sessions, position);
+        }
+    }
+
+    private void sendPosition(ConcurrentWebSocketSessionDecorator[] sessions, String position){
+        TextMessage message = new TextMessage(position);
+        for(ConcurrentWebSocketSessionDecorator s : sessions){
+            super.sendWebSocketMessage(s, message);
         }
     }
 
