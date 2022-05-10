@@ -32,6 +32,7 @@ import be.cytomine.image.server.Storage
 import be.cytomine.image.UploadedFile
 import be.cytomine.processing.ImageFilter
 import be.cytomine.project.Project
+import be.cytomine.project.ProjectLastActivity
 import be.cytomine.security.SecRole
 import be.cytomine.security.SecUser
 import be.cytomine.security.SecUserSecRole
@@ -111,6 +112,24 @@ class BootstrapOldVersionService {
         sql.close()
 
         bootstrapDataService.initImageFilters()
+
+        if (ProjectLastActivity.count() == 0) {
+            log.info "Projects: Populate project last activity table"
+            def values = []
+            sql.eachRow("SELECT project_id, MAX(created) AS date FROM command_history WHERE project_id IS NOT NULL GROUP BY project_id") {
+                values << [id: "nextval('hibernate_sequence')", version: 0, project_id: it.project_id, last_activity: "'${it.date}'"]
+            }
+
+            if (values.size() > 0) {
+                def batchSize = 100
+                def fields = ["id", "version", "project_id", "last_activity"]
+                def groups = values.collate(batchSize)
+                groups.eachWithIndex { def vals, int i ->
+                    def formatted = vals.collect { v -> "(" + fields.collect { f -> v[f] }.join(",") + ")"}
+                    sql.execute('INSERT INTO project_last_activity (' + fields.join(",") +') VALUES ' + formatted.join(",") + " ON CONFLICT DO NOTHING;")
+                }
+            }
+        }
     }
 
     def initv3_2_0() {

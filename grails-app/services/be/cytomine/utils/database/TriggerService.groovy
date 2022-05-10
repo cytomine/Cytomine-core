@@ -49,6 +49,8 @@ class TriggerService {
 
             def statement = connection.createStatement()
 
+            statement.execute(getProjectCommandHistoryTriggerAfterInsert())
+
             statement.execute(getUserAnnotationTriggerBeforeInsert())
             statement.execute(getUserAnnotationTriggerAfterInsert())
             statement.execute(getUserAnnotationTriggerAfterUpdate())
@@ -81,6 +83,35 @@ class TriggerService {
         } catch (org.postgresql.util.PSQLException e) {
             log.error e
         }
+    }
+
+    String getProjectCommandHistoryTriggerAfterInsert() {
+        String createFunction = """
+        CREATE OR REPLACE FUNCTION afterInsertCommandHistory() RETURNS TRIGGER AS \$updateLastActivity\$ 
+        DECLARE 
+            alreadyExists INTEGER;
+        BEGIN 
+            IF (NEW.project_id IS NOT NULL) THEN
+                SELECT count(*) INTO alreadyExists FROM project_last_activity WHERE project_id = NEW.project_id;
+                IF (alreadyExists = 0) THEN
+                    INSERT INTO project_last_activity(id, version, project_id, last_activity) VALUES(nextval('hibernate_sequence'), 0, NEW.project_id, NEW.created);
+                END IF;
+                UPDATE project_last_activity SET last_activity = NEW.created, version = version + 1 WHERE project_id = NEW.project_id;
+            END IF;
+            
+            RETURN NEW;
+        END;
+        \$updateLastActivity\$ LANGUAGE plpgsql;
+        """
+
+        String dropTrigger = "DROP TRIGGER IF EXISTS afterInsertCommandHistoryTrigger ON command_history;"
+
+        String createTrigger = "CREATE TRIGGER afterInsertCommandHistoryTrigger AFTER INSERT ON command_history FOR EACH ROW EXECUTE PROCEDURE afterInsertCommandHistory();"
+
+        log.debug createFunction
+        log.debug dropTrigger
+        log.debug createTrigger
+        return createFunction + dropTrigger + createTrigger
     }
 
     String getUserAnnotationTriggerBeforeInsert() {

@@ -245,12 +245,8 @@ class ProjectService extends ModelService {
 
 
         if(extended.withLastActivity) {
-            select += ", activities.max_date "
-            from += "LEFT OUTER JOIN " +
-                    "( SELECT  project_id, MAX(created) max_date " +
-                    "  FROM command_history " +
-                    "  GROUP BY project_id " +
-                    ") activities ON p.id = activities.project_id "
+            select += ", activities.last_activity "
+            from += "LEFT OUTER JOIN project_last_activity activities ON p.id = activities.project_id "
         }
         if(extended.withMembersCount) {
             select += ", members.member_count "
@@ -295,7 +291,7 @@ class ProjectService extends ModelService {
                 if(extended.withMembersCount) sortColumn="members.member_count"
                 break
             case "lastActivity" :
-                if(extended.withLastActivity) sortColumn="activities.max_date"
+                if(extended.withLastActivity) sortColumn="activities.last_activity"
                 break
             case "name":
             case "numberOfImages":
@@ -345,7 +341,7 @@ class ProjectService extends ModelService {
             def line = Project.getDataFromDomain(map)
 
             if(extended.withLastActivity) {
-                line.putAt("lastActivity", map.maxDate)
+                line.putAt("lastActivity", map.lastActivity)
             }
             if(extended.withMembersCount) {
                 if(!map.memberCount) map.memberCount = 0
@@ -767,6 +763,7 @@ class ProjectService extends ModelService {
     }
 
     protected def beforeDelete(Project domain) {
+        ProjectLastActivity.findByProject(domain).delete()
         CommandHistory.findAllByProject(domain).each { it.delete() }
         Command.findAllByProject(domain).each {
             it
