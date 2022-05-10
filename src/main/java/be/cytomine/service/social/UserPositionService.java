@@ -153,7 +153,7 @@ public class UserPositionService {
             Double rotation,
             Boolean broadcast) {
 
-        LastUserPosition lastPosition = lastUserPositionRepository.findFirstByUser(user.getId());
+        Optional<LastUserPosition> lastPosition = lastPositionByUser(imageInstance, sliceInstance, user, broadcast);
 
         //TODO: no ACL???
         LastUserPosition position = new LastUserPosition();
@@ -172,7 +172,7 @@ public class UserPositionService {
         position.setImageName(imageInstance.getBlindInstanceFilename());
         lastUserPositionRepository.insert(position);
 
-        if(lastPosition != null && !LastUserPosition.isSameLocation(lastPosition.getLocation(), currentLocation)){
+        if(lastPosition.isPresent() && !LastUserPosition.isSameLocation(lastPosition.get().getLocation(), currentLocation)){
             try{
                 webSocketUserPositionHandler.userHasMoved(user.getId().toString(), imageInstance.getId().toString(), position.toJsonObject().toJsonString());
             }catch (ServerException e){

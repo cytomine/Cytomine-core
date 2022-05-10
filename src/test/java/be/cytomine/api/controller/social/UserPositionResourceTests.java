@@ -131,22 +131,31 @@ public class UserPositionResourceTests {
         SliceInstance sliceInstance = builder.given_a_slice_instance();
         ImageInstance imageInstance = sliceInstance.getImage();
 
-        given_a_persistent_user_position(new Date(), user, sliceInstance, false);
-
-        restUserPositionControllerMockMvc.perform(get("/api/imageinstance/{image}/online.json", imageInstance.getId())
-                        .param("broadcast", "true"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.users", hasSize(equalTo(0))));
-
         given_a_persistent_user_position(new Date(), user, sliceInstance, true);
 
         restUserPositionControllerMockMvc.perform(get("/api/imageinstance/{image}/online.json", imageInstance.getId())
                         .param("broadcast", "true"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.users", hasSize(equalTo(1))))
-                .andExpect(jsonPath("$.users[0]").value(user.getId()));
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
+                .andExpect(jsonPath("$.collection[0]").value(user.getId()));
+    }
+
+
+    @Test
+    @Transactional
+    public void list_empty_last_broadcast_user_on_image() throws Exception {
+        User user = builder.given_a_user();
+        SliceInstance sliceInstance = builder.given_a_slice_instance();
+        ImageInstance imageInstance = sliceInstance.getImage();
+
+        given_a_persistent_user_position(new Date(), user, sliceInstance, false);
+
+        restUserPositionControllerMockMvc.perform(get("/api/imageinstance/{image}/online.json", imageInstance.getId())
+                        .param("broadcast", "true"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
     }
 
     @Test

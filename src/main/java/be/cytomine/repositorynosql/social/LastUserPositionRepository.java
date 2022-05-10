@@ -16,22 +16,11 @@ package be.cytomine.repositorynosql.social;
 * limitations under the License.
 */
 
-import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
-import be.cytomine.domain.social.PersistentUserPosition;
-import org.springframework.data.mongodb.core.aggregation.AggregationResults;
-import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Date;
-import java.util.List;
-
-
 @Repository
 public interface LastUserPositionRepository extends MongoRepository<LastUserPosition, Long> {
-
     void deleteAllByImage(Long id);
-
-    LastUserPosition findFirstByUser(Long user);
 }
