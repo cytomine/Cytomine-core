@@ -50,12 +50,18 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.Fields;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.security.concurrent.DelegatingSecurityContextScheduledExecutorService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
+import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static be.cytomine.domain.social.PersistentUserPosition.getJtsPolygon;
@@ -63,6 +69,7 @@ import static com.mongodb.client.model.Aggregates.*;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.descending;
+import static java.util.stream.Collectors.*;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 import static org.springframework.security.acls.domain.BasePermission.WRITE;
 
@@ -71,6 +78,7 @@ import static org.springframework.security.acls.domain.BasePermission.WRITE;
 @Transactional
 public class UserPositionService {
 
+    static final int USER_UNFOLLOWING_DELAY = 10;
     public static final String DATABASE_NAME = "cytomine";
     @Autowired
     CurrentUserService currentUserService;
@@ -129,6 +137,12 @@ public class UserPositionService {
 //
 //    }
 
+    // usersTracked key -> "trackedUserId/imageId"
+    public static Map<String, List<User>> usersTracked = new HashMap<>();
+
+    // usersTracking key -> "followerId/imageId"
+    public static Map<String, Boolean> followers = new HashMap<>();
+
     public PersistentUserPosition add(
             Date created,
             SecUser user,
@@ -184,6 +198,27 @@ public class UserPositionService {
         return persistedPosition;
     }
 
+    public void addToUsersTracked(User tracked, User follower, ImageInstance imageInstance){
+        String trackedAndImageId = tracked.getId().toString() + "/" + imageInstance.getId().toString();
+        String followerAndImageId = follower.getId().toString() + "/" + imageInstance.getId().toString();
+
+        if (usersTracked.keySet().contains(trackedAndImageId)) {
+            List <String> userIds = usersTracked.get(trackedAndImageId).stream()
+                    .map(user -> user.getId().toString()).collect(toList());
+
+            if(!userIds.contains(follower.getId().toString())){
+                usersTracked.get(trackedAndImageId).add(follower);
+                followers.put(followerAndImageId, true);
+            }else{
+                boolean oldValue = followers.get(followerAndImageId);
+                followers.replace(followerAndImageId, oldValue, true);
+            }
+        } else {
+            usersTracked.put(trackedAndImageId, new ArrayList<>(Collections.singleton(follower)));
+            followers.put(followerAndImageId, true);
+        }
+    }
+
     public Optional<LastUserPosition> lastPositionByUser(ImageInstance image, SliceInstance slice, SecUser user, boolean broadcast) {
         securityACLService.check(image,READ);
 
@@ -226,7 +261,7 @@ public class UserPositionService {
         List<Document> results = persistentProjectConnection.aggregate(request)
                 .into(new ArrayList<>());
 
-        return results.stream().map(x -> x.getLong("_id")).collect(Collectors.toList());
+        return results.stream().map(x -> x.getLong("_id")).collect(toList());
     }
 
     public List<PersistentUserPosition> list(ImageInstance image, SecUser user, SliceInstance slice, Long afterThan, Long beforeThan, Integer max, Integer offset){
@@ -262,17 +297,26 @@ public class UserPositionService {
     }
 
     public List<User> listFollowers(Long userId, Long imageId){
-        ConcurrentWebSocketSessionDecorator[] sessions = WebSocketUserPositionHandler.sessionsTracked.get(userId.toString()+"/"+imageId.toString());
+        String userAndImageId = userId.toString()+"/"+imageId.toString();
+        List<User> users = new ArrayList<>();
+
+        ConcurrentWebSocketSessionDecorator[] sessions = WebSocketUserPositionHandler.sessionsTracked.get(userAndImageId);
         if(sessions != null){
-            List<String> userIds = webSocketUserPositionHandler.getSessionsUserIds(sessions).stream().distinct().collect(Collectors.toList());
-            List<User> users = new ArrayList<>();
-            for(String id : userIds){
+            List<String> webSocketUserIds = webSocketUserPositionHandler.getSessionsUserIds(sessions).stream().distinct().collect(toList());
+            for(String id : webSocketUserIds){
                 users.add((User)secUserService.get(Long.parseLong(id)));
             }
-            return users;
-        }else{
-            return new ArrayList<>();
         }
+
+        List<User> poolingUsers = usersTracked.get(userAndImageId);
+        if(poolingUsers != null){
+            for(User user : poolingUsers){
+                if(!users.contains(user)){
+                    users.add(user);
+                }
+            }
+        }
+        return users;
     }
 
     public List<Map<String, Object>> summarize(ImageInstance image, SecUser user, SliceInstance slice, Long afterThan, Long beforeThan) {
@@ -310,7 +354,7 @@ public class UserPositionService {
                         "rotation", ((Document) x.get("_id")).get("rotation"),
                         "rotation", ((Document) x.get("_id")).get("rotation"),
                         "frequency", x.get("frequency"),
-                        "image", x.get("image"))).collect(Collectors.toList());
+                        "image", x.get("image"))).collect(toList());
 
     }
 
@@ -340,10 +384,55 @@ public class UserPositionService {
 
         List<JsonObject> usersWithPosition =  results.stream().map(x ->
                 JsonObject.of("id", ((Document) x.get("_id")).get("user"),
-                        "position", x.get("position"))).collect(Collectors.toList());
-
-
+                        "position", x.get("position"))).collect(toList());
 
         return usersWithPosition;
+    }
+
+    public void removeFollower(Map.Entry<String, Boolean> entry){
+        String[] entries = entry.getKey().split("/");
+        Long followerId = Long.parseLong(entries[0]);
+        String imageId = entries[1];
+
+        for(Map.Entry<String, List<User>> trackedEntry : usersTracked.entrySet()){
+            String key = trackedEntry.getKey();
+            String entryImageId = key.split("/")[1];
+
+            if(entryImageId.equals(imageId)){
+                List<String> userIds = trackedEntry.getValue().stream().map(user -> user.getId().toString()).collect(toList());
+                if(userIds.contains(followerId.toString())){
+                    removeFollower(followerId, key);
+                }
+            }
+        }
+    }
+
+    private void removeFollower(Long followerId, String key){
+        List<User> newUsers = new ArrayList<>();
+        for(User user : usersTracked.get(key)){
+            if(!user.getId().equals(followerId)){
+                newUsers.add(user);
+            }
+        }
+        usersTracked.replace(key, newUsers);
+    }
+
+    @PostConstruct
+    public void positionScheduler(){
+        DelegatingSecurityContextScheduledExecutorService delegatedScheduler = new DelegatingSecurityContextScheduledExecutorService(
+                Executors.newScheduledThreadPool(1),
+                SecurityContextHolder.getContext()
+        );
+        delegatedScheduler.scheduleAtFixedRate(
+            () -> {
+                for(Map.Entry<String, Boolean> entry : followers.entrySet()){
+                    if(!entry.getValue()){
+                        followers.remove(entry.getKey());
+                        removeFollower(entry);
+                    }else{
+                        followers.replace(entry.getKey(), true, false);
+                    }
+                }
+            }, USER_UNFOLLOWING_DELAY, USER_UNFOLLOWING_DELAY, TimeUnit.SECONDS);
     }
 }

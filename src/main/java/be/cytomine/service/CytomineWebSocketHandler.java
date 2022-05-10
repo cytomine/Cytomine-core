@@ -13,7 +13,7 @@ import java.util.Map;
 @Slf4j
 public abstract class CytomineWebSocketHandler extends TextWebSocketHandler {
 
-    public Map<Object, ConcurrentWebSocketSessionDecorator[]> afterConnectionEstablished(WebSocketSession session, Map<Object, ConcurrentWebSocketSessionDecorator[]> sessions) {
+    public Map<String, ConcurrentWebSocketSessionDecorator[]> afterConnectionEstablished(WebSocketSession session, Map<String, ConcurrentWebSocketSessionDecorator[]> sessions) {
         ConcurrentWebSocketSessionDecorator sessionDecorator = new ConcurrentWebSocketSessionDecorator(session, 1000, 8192);
         String userID = session.getAttributes().get("userID").toString();
         if(sessions.keySet().contains(userID)){

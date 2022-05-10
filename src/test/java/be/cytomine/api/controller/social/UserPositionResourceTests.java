@@ -20,7 +20,6 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.domain.social.PersistentUserPosition;
@@ -32,7 +31,6 @@ import be.cytomine.service.social.UserPositionServiceTests;
 import be.cytomine.service.social.WebSocketUserPositionHandler;
 import be.cytomine.utils.JsonObject;
 import org.apache.commons.lang3.time.DateUtils;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,12 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
-import javax.persistence.EntityManager;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static be.cytomine.service.social.UserPositionServiceTests.ANOTHER_USER_VIEW;
 import static be.cytomine.service.social.UserPositionServiceTests.USER_VIEW;
@@ -71,9 +64,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WithMockUser(username = "superadmin")
 @ExtendWith(MockitoExtension.class)
 public class UserPositionResourceTests {
-
-    @Autowired
-    private EntityManager em;
 
     @Autowired
     private BasicInstanceBuilder builder;
@@ -244,18 +234,20 @@ public class UserPositionResourceTests {
         WebSocketSession session = mock(WebSocketSession.class);
         when(session.getId()).thenReturn("1234");
 
-        User user = builder.given_a_user();
+        User user1 = builder.given_a_user();
+        User user2 = builder.given_a_user();
+
         ImageInstance imageInstance = builder.given_an_image_instance();
         Long imageId = imageInstance.getId();
 
         WebSocketUserPositionHandler.sessionsTracked.put("89/"+imageId.toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
-        WebSocketUserPositionHandler.sessions.put(user.getId().toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
-
+        WebSocketUserPositionHandler.sessions.put(user1.getId().toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
+        UserPositionService.usersTracked.put("89/"+imageId.toString(), new ArrayList<>(Collections.singleton(user2)));
 
         restUserPositionControllerMockMvc.perform(get("/api/imageinstance/{image}/followers/{user}.json", imageId, 89L))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(equalTo(1)))).andReturn();
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(2)))).andReturn();
     }
 
     @Test
@@ -380,5 +372,55 @@ public class UserPositionResourceTests {
                         .content(jsonObject.toJsonString()))
                 .andDo(print())
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @Transactional
+    public void get_last_user_position_of_not_followed_user() throws Exception {
+        User user = builder.given_superadmin();
+        SliceInstance sliceInstance = builder.given_a_slice_instance();
+        ImageInstance imageInstance = sliceInstance.getImage();
+        String userAndImageId = user.getId().toString() + "/" + imageInstance.getId().toString();
+
+        assertThat(UserPositionService.usersTracked.get(userAndImageId)).isNull();
+        restUserPositionControllerMockMvc.perform(get("/api/imageinstance/{image}/position/{user}.json", imageInstance.getId(), user.getId()))
+                .andDo(print())
+                .andExpect(status().isOk());
+        assertThat(UserPositionService.usersTracked.get(userAndImageId).size()).isEqualTo(1);
+    }
+
+    @Test
+    @Transactional
+    public void get_last_user_position_of_user_already_followed_by_current_user() throws Exception {
+        User admin = builder.given_superadmin();
+        User user = builder.given_a_user();
+        SliceInstance sliceInstance = builder.given_a_slice_instance();
+        ImageInstance imageInstance = sliceInstance.getImage();
+        String userAndImageId = user.getId().toString() + "/" + imageInstance.getId().toString();
+        String followerAndImageId = admin.getId().toString() + "/" + imageInstance.getId().toString();
+
+        UserPositionService.usersTracked.put(userAndImageId, new ArrayList<>(Collections.singleton(admin)));
+        UserPositionService.followers.put(followerAndImageId, false);
+        assertThat(UserPositionService.usersTracked.get(userAndImageId).size()).isEqualTo(1);
+        restUserPositionControllerMockMvc.perform(get("/api/imageinstance/{image}/position/{user}.json", imageInstance.getId(), user.getId()))
+                .andDo(print())
+                .andExpect(status().isOk());
+        assertThat(UserPositionService.usersTracked.get(userAndImageId).size()).isEqualTo(1);
+    }
+
+    @Test
+    @Transactional
+    public void get_last_user_position_of_user_already_followed_but_not_by_current_user() throws Exception {
+        User user = builder.given_a_user();
+        SliceInstance sliceInstance = builder.given_a_slice_instance();
+        ImageInstance imageInstance = sliceInstance.getImage();
+        String userAndImageId = user.getId().toString() + "/" + imageInstance.getId().toString();
+
+        UserPositionService.usersTracked.put(userAndImageId, new ArrayList<>(Collections.singleton(user)));
+        assertThat(UserPositionService.usersTracked.get(userAndImageId).size()).isEqualTo(1);
+        restUserPositionControllerMockMvc.perform(get("/api/imageinstance/{image}/position/{user}.json", imageInstance.getId(), user.getId()))
+                .andDo(print())
+                .andExpect(status().isOk());
+        assertThat(UserPositionService.usersTracked.get(userAndImageId).size()).isEqualTo(2);
     }
 }

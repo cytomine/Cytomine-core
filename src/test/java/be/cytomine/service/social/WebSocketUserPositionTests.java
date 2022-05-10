@@ -39,8 +39,8 @@ public class WebSocketUserPositionTests {
 
     @AfterEach
     public void cleanSessions(){
-        webSocketUserPositionHandler.sessions = new HashMap<>();
-        webSocketUserPositionHandler.sessionsTracked = new HashMap<>();
+        WebSocketUserPositionHandler.sessions = new HashMap<>();
+        WebSocketUserPositionHandler.sessionsTracked = new HashMap<>();
     }
 
     @Test
@@ -48,9 +48,9 @@ public class WebSocketUserPositionTests {
         WebSocketSession session = mock(WebSocketSession.class);
         when(session.getAttributes()).thenReturn(Map.of("userID", "54"));
 
-        assertThat(webSocketUserPositionHandler.sessions.get("54")).isNull();
+        assertThat(WebSocketUserPositionHandler.sessions.get("54")).isNull();
         webSocketUserPositionHandler.afterConnectionEstablished(session);
-        assertThat(webSocketUserPositionHandler.sessions.get("54")).isNotEmpty();
+        assertThat(WebSocketUserPositionHandler.sessions.get("54")).isNotEmpty();
     }
 
     @Test
@@ -63,8 +63,8 @@ public class WebSocketUserPositionTests {
         when(session.getAttributes()).thenReturn(Map.of("userID", "54"));
 
         webSocketUserPositionHandler.afterConnectionEstablished(session);
-        assertThat(webSocketUserPositionHandler.sessions.get("54").length).isEqualTo(2);
-        assertThat(webSocketUserPositionHandler.sessions.get("89").length).isEqualTo(1);
+        assertThat(WebSocketUserPositionHandler.sessions.get("54").length).isEqualTo(2);
+        assertThat(WebSocketUserPositionHandler.sessions.get("89").length).isEqualTo(1);
     }
 
     @Test
@@ -77,9 +77,9 @@ public class WebSocketUserPositionTests {
         WebSocketSession session = mock(WebSocketSession.class);
         when(session.getAttributes()).thenReturn(Map.of("userID", "54"));
 
-        assertThat(webSocketUserPositionHandler.sessionsTracked.get(userAndImageId)).isNull();
+        assertThat(WebSocketUserPositionHandler.sessionsTracked.get(userAndImageId)).isNull();
         webSocketUserPositionHandler.handleMessage(session, new TextMessage("no-action/"+userAndImageId));
-        assertThat(webSocketUserPositionHandler.sessionsTracked.get(userAndImageId).length).isEqualTo(1);
+        assertThat(WebSocketUserPositionHandler.sessionsTracked.get(userAndImageId).length).isEqualTo(1);
     }
 
     @Test
@@ -94,7 +94,7 @@ public class WebSocketUserPositionTests {
         when(session.getAttributes()).thenReturn(Map.of("userID", "54"));
 
         webSocketUserPositionHandler.handleMessage(session, new TextMessage("no-action/"+userAndImageId));
-        assertThat(webSocketUserPositionHandler.sessionsTracked.get(userAndImageId).length).isEqualTo(2);
+        assertThat(WebSocketUserPositionHandler.sessionsTracked.get(userAndImageId).length).isEqualTo(2);
     }
 
     @Test
@@ -112,7 +112,7 @@ public class WebSocketUserPositionTests {
         when(session.getAttributes()).thenReturn(Map.of("userID", userId));
 
         webSocketUserPositionHandler.handleMessage(session, new TextMessage("no-action/"+userAndImageId));
-        assertThat(webSocketUserPositionHandler.sessionsTracked.get(userAndImageId).length).isEqualTo(4);
+        assertThat(WebSocketUserPositionHandler.sessionsTracked.get(userAndImageId).length).isEqualTo(4);
     }
 
     @Test
@@ -129,7 +129,7 @@ public class WebSocketUserPositionTests {
         when(sessionDecorator.getId()).thenReturn("1234");
 
         webSocketUserPositionHandler.handleMessage(session, new TextMessage("stop-track/"+userAndImageId));
-        assertThat(webSocketUserPositionHandler.sessionsTracked.get(userAndImageId).length).isEqualTo(0);
+        assertThat(WebSocketUserPositionHandler.sessionsTracked.get(userAndImageId).length).isEqualTo(0);
     }
 
     @Test
@@ -144,7 +144,7 @@ public class WebSocketUserPositionTests {
         when(session.getAttributes()).thenReturn(Map.of("userID", "89"));
 
         webSocketUserPositionHandler.handleMessage(session, new TextMessage("stop-broadcast/"+userAndImageId));
-        assertThat(webSocketUserPositionHandler.sessionsTracked.get(userAndImageId)).isNull();
+        assertThat(WebSocketUserPositionHandler.sessionsTracked.get(userAndImageId)).isNull();
     }
 
     @Test
@@ -202,13 +202,13 @@ public class WebSocketUserPositionTests {
         connectSession(session, userId);
         initTrackedSession(userId+"/imageId", sessionDecorator);
 
-        assertThat(webSocketUserPositionHandler.sessions.get(userId).length).isEqualTo(1);
-        assertThat(webSocketUserPositionHandler.sessionsTracked.get(userId+"/imageId").length).isEqualTo(1);
+        assertThat(WebSocketUserPositionHandler.sessions.get(userId).length).isEqualTo(1);
+        assertThat(WebSocketUserPositionHandler.sessionsTracked.get(userId+"/imageId").length).isEqualTo(1);
 
         webSocketUserPositionHandler.afterConnectionClosed(session, CloseStatus.NO_STATUS_CODE);
 
-        assertThat(webSocketUserPositionHandler.sessions.get(userId).length).isEqualTo(0);
-        assertThat(webSocketUserPositionHandler.sessionsTracked.get(userId+"/imageId").length).isEqualTo(0);
+        assertThat(WebSocketUserPositionHandler.sessions.get(userId).length).isEqualTo(0);
+        assertThat(WebSocketUserPositionHandler.sessionsTracked.get(userId+"/imageId").length).isEqualTo(0);
     }
 
 
@@ -229,7 +229,7 @@ public class WebSocketUserPositionTests {
     }
 
     private void initTrackedSession(String trackedSessionId, ConcurrentWebSocketSessionDecorator sessionDecorator){
-        webSocketUserPositionHandler.sessionsTracked.put(trackedSessionId, new ConcurrentWebSocketSessionDecorator[]{sessionDecorator});
-        assertThat(webSocketUserPositionHandler.sessionsTracked.get(trackedSessionId).length).isEqualTo(1);
+        WebSocketUserPositionHandler.sessionsTracked.put(trackedSessionId, new ConcurrentWebSocketSessionDecorator[]{sessionDecorator});
+        assertThat(WebSocketUserPositionHandler.sessionsTracked.get(trackedSessionId).length).isEqualTo(1);
     }
 }

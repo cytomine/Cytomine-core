@@ -20,6 +20,7 @@ import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
@@ -121,7 +122,8 @@ public class RestUserPositionController extends RestCytomineController {
             sliceInstance = sliceInstanceService.find(sliceId)
                     .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", sliceId));
         }
-        return  responseSuccess(userPositionService.lastPositionByUser(imageInstance, sliceInstance, user, broadcast).map(LastUserPosition::toJsonObject).orElse(new JsonObject()));
+        userPositionService.addToUsersTracked((User) user, (User) currentUserService.getCurrentUser(), imageInstance);
+        return responseSuccess(userPositionService.lastPositionByUser(imageInstance, sliceInstance, user, broadcast).map(LastUserPosition::toJsonObject).orElse(new JsonObject()));
     }
 
     @GetMapping("/imageinstance/{image}/positions.json")
@@ -175,6 +177,7 @@ public class RestUserPositionController extends RestCytomineController {
     public ResponseEntity<String> listFollowers(
             @PathVariable("image") Long imageId,
             @PathVariable("user") Long userId) {
+        log.debug("REST request get list of followers");
         ImageInstance imageInstance =
                 imageInstanceService.find(imageId).orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
         return responseSuccess(userPositionService.listFollowers(userId, imageInstance.getId()));

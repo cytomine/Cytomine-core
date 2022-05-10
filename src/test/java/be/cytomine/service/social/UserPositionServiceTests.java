@@ -38,7 +38,7 @@ import be.cytomine.service.dto.Point;
 import be.cytomine.service.security.SecUserService;
 import com.mongodb.client.MongoClient;
 import org.apache.commons.lang3.time.DateUtils;
-import org.junit.jupiter.api.Assertions;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -93,14 +93,15 @@ public class UserPositionServiceTests {
     @Autowired
     MongoClient mongoClient;
 
-    @Mock
-    WebSocketUserPositionHandler webSocketUserPositionHandler;
-
-
     @BeforeEach
     public void cleanDB() {
         lastUserPositionRepository.deleteAll();
         persistentUserPositionRepository.deleteAll();
+
+        WebSocketUserPositionHandler.sessionsTracked = new HashMap<>();
+        WebSocketUserPositionHandler.sessions = new HashMap<>();
+        UserPositionService.followers = new HashMap<>();
+        UserPositionService.usersTracked = new HashMap<>();
     }
 
     public static final AreaDTO USER_VIEW = new AreaDTO(
@@ -410,10 +411,10 @@ public class UserPositionServiceTests {
 
         User user = builder.given_a_user();
 
-        WebSocketUserPositionHandler.sessionsTracked.put("89/514", new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
+        WebSocketUserPositionHandler.sessionsTracked.put(user.getId().toString()+"/514", new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
         WebSocketUserPositionHandler.sessions.put(user.getId().toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
 
-        List<User> users = userPositionService.listFollowers(89L, 514L);
+        List<User> users = userPositionService.listFollowers(user.getId(), 514L);
 
         assertThat(users.size()).isEqualTo(1);
         assertThat(users).contains(user);
@@ -428,6 +429,7 @@ public class UserPositionServiceTests {
 
         WebSocketUserPositionHandler.sessionsTracked.put("89/514", new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0), new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
         WebSocketUserPositionHandler.sessions.put(user.getId().toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
+        UserPositionService.usersTracked.put("89/514", List.of(user));
 
         List<User> users = userPositionService.listFollowers(89L, 514L);
 
@@ -442,6 +444,51 @@ public class UserPositionServiceTests {
         // WebSocketUserPositionHandler.sessions.put(user.getId().toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(mock(WebSocketSession.class), 0, 0)});
         List<User> users = userPositionService.listFollowers(user.getId(), imageInstance.getId());
         assertThat(users.size()).isEqualTo(0);
+    }
+
+    @Test
+    public void adding_users_as_followers(){
+        User tracked = builder.given_a_user();
+        User follower = builder.given_a_user();
+        ImageInstance imageInstance = builder.given_an_image_instance();
+        String followerAndImageId = follower.getId().toString() + "/" + imageInstance.getId().toString();
+
+        Assertions.assertThat(UserPositionService.followers.get(followerAndImageId)).isNull();
+        userPositionService.addToUsersTracked(tracked, follower, imageInstance);
+        Assertions.assertThat(UserPositionService.followers.get(followerAndImageId)).isNotNull();
+    }
+
+    @Test
+    public void updating_users_followers(){
+        User tracked = builder.given_a_user();
+        User follower = builder.given_a_user();
+        ImageInstance imageInstance = builder.given_an_image_instance();
+
+        String followerAndImageId = follower.getId().toString() + "/" + imageInstance.getId().toString();
+        UserPositionService.followers.put(followerAndImageId, false);
+
+        Assertions.assertThat(UserPositionService.followers.get(followerAndImageId)).isEqualTo(false);
+        userPositionService.addToUsersTracked(tracked, follower, imageInstance);
+        Assertions.assertThat(UserPositionService.followers.get(followerAndImageId)).isEqualTo(true);
+    }
+
+    @Test
+    public void remove_users_followers_that_did_not_fetch_position(){
+        User tracked = builder.given_a_user();
+        User follower = builder.given_a_user();
+        ImageInstance imageInstance = builder.given_an_image_instance();
+
+        String followerAndImageId = follower.getId().toString() + "/" + imageInstance.getId().toString();
+        String trackerAndImageId = tracked.getId().toString() + "/" + imageInstance.getId().toString();
+        UserPositionService.followers.put(followerAndImageId, false);
+        UserPositionService.usersTracked.put(trackerAndImageId, List.of(follower));
+
+        Assertions.assertThat(UserPositionService.followers.get(followerAndImageId)).isEqualTo(false);
+        Assertions.assertThat(UserPositionService.usersTracked.get(trackerAndImageId).size()).isEqualTo(1);
+
+        userPositionService.removeFollower(UserPositionService.followers.entrySet().iterator().next());
+
+        Assertions.assertThat(UserPositionService.usersTracked.get(trackerAndImageId).size()).isEqualTo(0);
     }
 
 }
