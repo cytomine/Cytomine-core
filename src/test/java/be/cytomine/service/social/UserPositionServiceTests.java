@@ -63,10 +63,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
@@ -414,10 +410,10 @@ public class UserPositionServiceTests {
         WebSocketUserPositionHandler.sessionsTracked.put(user.getId().toString()+"/514", new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
         WebSocketUserPositionHandler.sessions.put(user.getId().toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
 
-        List<User> users = userPositionService.listFollowers(user.getId(), 514L);
+        List<String> users = userPositionService.listFollowers(user.getId(), 514L);
 
         assertThat(users.size()).isEqualTo(1);
-        assertThat(users).contains(user);
+        assertThat(users).contains(user.getId().toString());
     }
 
     @Test
@@ -431,10 +427,10 @@ public class UserPositionServiceTests {
         WebSocketUserPositionHandler.sessions.put(user.getId().toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(session, 0, 0)});
         UserPositionService.usersTracked.put("89/514", List.of(user));
 
-        List<User> users = userPositionService.listFollowers(89L, 514L);
+        List<String> users = userPositionService.listFollowers(89L, 514L);
 
         assertThat(users.size()).isEqualTo(1);
-        assertThat(users).contains(user);
+        assertThat(users).contains(user.getId().toString());
     }
 
     @Test
@@ -442,7 +438,7 @@ public class UserPositionServiceTests {
         User user = builder.given_a_user();
         ImageInstance imageInstance = builder.given_an_image_instance();
         // WebSocketUserPositionHandler.sessions.put(user.getId().toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(mock(WebSocketSession.class), 0, 0)});
-        List<User> users = userPositionService.listFollowers(user.getId(), imageInstance.getId());
+        List<String> users = userPositionService.listFollowers(user.getId(), imageInstance.getId());
         assertThat(users.size()).isEqualTo(0);
     }
 

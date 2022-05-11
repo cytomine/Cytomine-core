@@ -296,27 +296,24 @@ public class UserPositionService {
 
     }
 
-    public List<User> listFollowers(Long userId, Long imageId){
+    public List<String> listFollowers(Long userId, Long imageId){
         String userAndImageId = userId.toString()+"/"+imageId.toString();
-        List<User> users = new ArrayList<>();
+        List<String> usersIds = new ArrayList<>();
 
         ConcurrentWebSocketSessionDecorator[] sessions = WebSocketUserPositionHandler.sessionsTracked.get(userAndImageId);
-        if(sessions != null){
-            List<String> webSocketUserIds = webSocketUserPositionHandler.getSessionsUserIds(sessions).stream().distinct().collect(toList());
-            for(String id : webSocketUserIds){
-                users.add((User)secUserService.get(Long.parseLong(id)));
-            }
+        if(sessions != null) {
+            usersIds = webSocketUserPositionHandler.getSessionsUserIds(sessions).stream().distinct().collect(toList());
         }
 
         List<User> poolingUsers = usersTracked.get(userAndImageId);
         if(poolingUsers != null){
             for(User user : poolingUsers){
-                if(!users.contains(user)){
-                    users.add(user);
+                if(!usersIds.contains(user.getId().toString())){
+                    usersIds.add(user.getId().toString());
                 }
             }
         }
-        return users;
+        return usersIds;
     }
 
     public List<Map<String, Object>> summarize(ImageInstance image, SecUser user, SliceInstance slice, Long afterThan, Long beforeThan) {
@@ -336,7 +333,6 @@ public class UserPositionService {
         if (slice != null) {
             request.add(match(eq("slice", slice.getId())));
         }
-
 
 
         request.add(group(Document.parse("{location: '$location', zoom: '$zoom', rotation: '$rotation'}"),

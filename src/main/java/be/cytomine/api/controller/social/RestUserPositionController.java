@@ -31,10 +31,12 @@ import be.cytomine.service.image.SliceInstanceService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.social.UserPositionService;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -60,7 +62,7 @@ public class RestUserPositionController extends RestCytomineController {
 
     private final SecUserService secUserService;
 
-
+    private final SecurityACLService securityACLService;
     //{"image":6836067,"zoom":1,"rotation":0,"bottomLeftX":-2344,"bottomLeftY":1032,"bottomRightX":6784,"bottomRightY":1032,"topLeftX":-2344,"topLeftY":2336,"topRightX":6784,"topRightY":2336,"broadcast":false}
 
     @PostMapping("/imageinstance/{id}/position.json")
@@ -178,6 +180,8 @@ public class RestUserPositionController extends RestCytomineController {
             @PathVariable("image") Long imageId,
             @PathVariable("user") Long userId) {
         log.debug("REST request get list of followers");
+        securityACLService.checkCurrentUserIsUser();
+
         ImageInstance imageInstance =
                 imageInstanceService.find(imageId).orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
         return responseSuccess(userPositionService.listFollowers(userId, imageInstance.getId()));
