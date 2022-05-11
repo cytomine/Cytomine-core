@@ -50,12 +50,16 @@ import javax.transaction.Transactional;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.acls.domain.BasePermission.*;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
@@ -136,6 +140,63 @@ public class ImageServerServiceTests {
 
     }
 
+
+    @Test
+    void retrieve_formats() throws IOException {
+        ImageServer imageServer = builder.given_an_image_server();
+        imageServer.setUrl("http://localhost:8888");
+        imageServer = builder.persistAndReturn(imageServer);
+
+
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo("/formats"))
+                .willReturn(
+                        aResponse().withBody(
+                                """
+                                {"items":[
+                                    {"id":"BMP","name":"BMP","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims.formats.common"},
+                                    {"id":"DICOM","name":"Dicom","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims.formats.common"},
+                                    {"id":"PYROMETIFF","name":"Pyramidal OME-TIFF","remarks":"","convertible":false,"readable":true,"writable":false,"importable":true,"plugin":"pims.formats.common"},
+                                    {"id":"PLANARTIFF","name":"Planar TIFF","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims.formats.common"},
+                                    {"id":"IMAGEJTIFF","name":"ImageJ TIFF","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims.formats.common"},
+                                    {"id":"JPEG","name":"JPEG","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims.formats.common"},
+                                    {"id":"JPEG2000","name":"JPEG2000","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims.formats.common"},
+                                    {"id":"OMETIFF","name":"OME-TIFF","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims.formats.common"},
+                                    {"id":"PNG","name":"PNG","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims.formats.common"},
+                                    {"id":"PPM","name":"PPM","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims.formats.common"},
+                                    {"id":"SIS","name":"Olympus SIS TIFF","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims.formats.common"},
+                                    {"id":"PYRTIFF","name":"Pyramidal TIFF","remarks":"","convertible":false,"readable":true,"writable":true,"importable":true,"plugin":"pims.formats.common"},
+                                    {"id":"VIRTUALSTACK","name":"Virtual Stack","remarks":"","convertible":true,"readable":true,"writable":false,"importable":false,"plugin":"pims.formats.common"},
+                                    {"id":"WEBP","name":"Web P","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims.formats.common"},
+                                    {"id":"CZI","name":"Zeiss CZI","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims_plugin_format_bioformats"},
+                                    {"id":"LIF","name":"Leica LIF","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims_plugin_format_bioformats"},
+                                    {"id":"ND2","name":"Nikon ND2","remarks":"","convertible":true,"readable":true,"writable":false,"importable":true,"plugin":"pims_plugin_format_bioformats"},
+                                    {"id":"WSIDICOM","name":"WSI Dicom","remarks":"","convertible":false,"readable":true,"writable":false,"importable":true,"plugin":"pims_plugin_format_dicom"},
+                                    {"id":"ISYNTAX","name":"Philips ISyntax","remarks":"","convertible":false,"readable":true,"writable":false,"importable":true,"plugin":"pims_plugin_format_isyntax"},
+                                    {"id":"BIF","name":"Ventana BIF","remarks":"","convertible":false,"readable":true,"writable":false,"importable":true,"plugin":"pims_plugin_format_openslide"},
+                                    {"id":"MRXS","name":"3D Histech MIRAX","remarks":"One .mrxs file and one directory with same name with .dat and .ini files, packed in an archive. ","convertible":false,"readable":true,"writable":false,"importable":true,"plugin":"pims_plugin_format_openslide"},
+                                    {"id":"NDPI","name":"Hamamatsu NDPI","remarks":"","convertible":false,"readable":true,"writable":false,"importable":true,"plugin":"pims_plugin_format_openslide"},
+                                    {"id":"PHILIPS","name":"Philips TIFF","remarks":"","convertible":false,"readable":true,"writable":false,"importable":true,"plugin":"pims_plugin_format_openslide"},
+                                    {"id":"SCN","name":"Leica SCN","remarks":"","convertible":false,"readable":true,"writable":false,"importable":true,"plugin":"pims_plugin_format_openslide"},
+                                    {"id":"SVS","name":"Leica Aperio SVS","remarks":"","convertible":false,"readable":true,"writable":false,"importable":true,"plugin":"pims_plugin_format_openslide"},
+                                    {"id":"VMS","name":"Hamamatsu VMS","remarks":"One .vms file, one .opt optimization file and several .jpg with same name, packed in an archive. ","convertible":false,"readable":true,"writable":false,"importable":true,"plugin":"pims_plugin_format_openslide"}
+                                    ],"size":26}                                        
+                                        """
+                        )
+                )
+        );
+
+        List<Map<String, Object>> formats = imageServerService.formats(imageServer);
+        printLastRequest();
+        System.out.println(formats.stream().map(x -> x.get("id")).collect(Collectors.toList()));
+
+        assertThat(formats).isNotNull();
+        assertThat(formats.size()).isEqualTo(26);
+        assertThat(formats.stream().map(x -> x.get("id"))).contains("PNG", "CZI", "SVS");
+        assertThat(formats.stream().filter(x -> x.get("id").equals("PNG")).findFirst().get()).containsAllEntriesOf(Map.of("id", "PNG", "name", "PNG", "plugin", "pims.formats.common"));
+    }
+
+
     //http://localhost-ims/image/download?fif=%2Fdata%2Fimages%2F58%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs
 
     @Test
@@ -147,11 +208,10 @@ public class ImageServerServiceTests {
         image.getUploadedFile().setContentType("openslide/mrxs");
 
         assertThat(imageServerService.downloadUri(image))
-                .isEqualTo("http://localhost:8888/image/download?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs");
+                .isEqualTo("http://localhost:8888/file/" + image.getPath() + "/export");
 
         assertThat(imageServerService.downloadUri(image.getUploadedFile()))
-                .isEqualTo("http://localhost:8888/image/download?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs");
-
+                .isEqualTo("http://localhost:8888/file/" + image.getPath() + "/export");
     }
 
     @Test
@@ -163,20 +223,64 @@ public class ImageServerServiceTests {
         image.getUploadedFile().setContentType("openslide/mrxs");
 
 
-        configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/properties.json?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs"))
+        configureFor("localhost", 8888); //       /image/upload1644425985928451/LUNG1_pyr.tif/info
+        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/info"))
                 .willReturn(
-                        aResponse().withBody("{\"File.BitsPerSample\":\"8\",\"File.ColorComponents\":\"3\",\"" +
-                                "File.Comment\":\"Intel(R) JPEG Library, version 1,5,4,36\",\"File.EncodingProcess\":\"Baseline DCT, Huffman coding\"," +
-                                "\"File.ImageHeight\":\"1724\",\"File.ImageWidth\":\"854\",\"File.YCbCrSubSampling\":\"YCbCr4:2:2 (2 1)\"," +
-                                "\"JFIF.JFIFVersion\":\"1.01\",\"JFIF.ResolutionUnit\":\"None\",\"JFIF.XResolution\":\"1\",\"JFIF.YResolution\":\"1\"," +
-                                "\"cytomine.mimeType\":\"image/jpeg\",\"cytomine.extension\":\"mrxs\",\"cytomine.format\":\"JPEGFormat\",\"cytomine.width\":854," +
-                                "\"cytomine.height\":1724,\"cytomine.bitPerSample\":8,\"cytomine.samplePerPixel\":3}")
+                        aResponse().withBody(
+                                """
+                                  {"image":
+                                      {
+                                          "original_format":"PYRTIFF",
+                                          "width":30720,
+                                          "height":25600,
+                                          "depth":1,
+                                          "duration":1,
+                                          "physical_size_x":100000.00617,
+                                          "physical_size_y":100000.00617,
+                                          "physical_size_z":null,
+                                          "frame_rate":null,
+                                          "n_channels":3,
+                                          "n_concrete_channels":1,
+                                          "n_samples":3,
+                                          "n_planes":1,
+                                          "are_rgb_planes":true,
+                                          "n_distinct_channels":1,
+                                          "acquired_at":null,
+                                          "description":"",
+                                          "pixel_type":"uint8",
+                                          "significant_bits":8,"bits":8},
+                                          "instrument":
+                                              {"microscope":{"model":null},
+                                               "objective":{"nominal_magnification":null,"calibrated_magnification":null}},
+                                               "associated":[],
+                                               "channels":[
+                                                  {"index":0,"suggested_name":"R","emission_wavelength":null,"excitation_wavelength":null,"color":"#f00"},
+                                                  {"index":1,"suggested_name":"G","emission_wavelength":null,"excitation_wavelength":null,"color":"#0f0"},
+                                                  {"index":2,"suggested_name":"B","emission_wavelength":null,"excitation_wavelength":null,"color":"#00f"}
+                                               ],
+                                               "representations":[
+                                                  {"role":"UPLOAD",
+                                                   "file":
+                                                      {"file_type":"SINGLE",
+                                                      "filepath":"/data/images/upload1644425985928451/LUNG1_pyr.tif",
+                                                      "stem":"LUNG1_pyr",
+                                                      "extension":".tif",
+                                                      "created_at":"2022-05-05T22:16:23.318839",
+                                                      "size":126616954,"is_symbolic":false,"role":"UPLOAD"}
+                                                      },
+                                                      {"role":"ORIGINAL",
+                                                      "file":
+                                                          {"file_type":"SINGLE","filepath":"/data/images/upload1644425985928451/processed/original.PYRTIFF","stem":"original","extension":".PYRTIFF","created_at":"2022-05-05T22:16:23.318839","size":126616954,"is_symbolic":true,"role":"ORIGINAL"}
+                                                          },
+                                                          {"role":"SPATIAL","file":{"file_type":"SINGLE","filepath":"/data/images/upload1644425985928451/processed/visualisation.PYRTIFF","stem":"visualisation","extension":".PYRTIFF","created_at":"2022-05-05T22:16:23.318839","size":126616954,"is_symbolic":true,"role":"SPATIAL"},"pyramid":{"n_tiers":8,"tiers":[{"zoom":7,"level":0,"width":30720,"height":25600,"tile_width":256,"tile_height":256,"downsampling_factor":1.0,"n_tiles":12000,"n_tx":120,"n_ty":100},{"zoom":6,"level":1,"width":15360,"height":12800,"tile_width":256,"tile_height":256,"downsampling_factor":2.0,"n_tiles":3000,"n_tx":60,"n_ty":50},{"zoom":5,"level":2,"width":7680,"height":6400,"tile_width":256,"tile_height":256,"downsampling_factor":4.0,"n_tiles":750,"n_tx":30,"n_ty":25},{"zoom":4,"level":3,"width":3840,"height":3200,"tile_width":256,"tile_height":256,"downsampling_factor":8.0,"n_tiles":195,"n_tx":15,"n_ty":13},{"zoom":3,"level":4,"width":1920,"height":1600,"tile_width":256,"tile_height":256,"downsampling_factor":16.0,"n_tiles":56,"n_tx":8,"n_ty":7},{"zoom":2,"level":5,"width":960,"height":800,"tile_width":256,"tile_height":256,"downsampling_factor":32.0,"n_tiles":16,"n_tx":4,"n_ty":4},{"zoom":1,"level":6,"width":480,"height":400,"tile_width":256,"tile_height":256,"downsampling_factor":64.0,"n_tiles":4,"n_tx":2,"n_ty":2},{"zoom":0,"level":7,"width":240,"height":200,"tile_width":256,"tile_height":256,"downsampling_factor":128.0,"n_tiles":1,"n_tx":1,"n_ty":1}]}}]}
+      
+                                  """
+                        )
                 )
         );
-
-        assertThat(imageServerService.properties(image).size()).isEqualTo(18);
-        assertThat(imageServerService.properties(image).get("File.BitsPerSample")).isEqualTo("8");
+        assertThat(((Map<String, Object>)imageServerService.properties(image).get("image")).size()).isEqualTo(20);
+        printLastRequest();
+        assertThat(((Map<String, Object>)imageServerService.properties(image).get("image")).get("width")).isEqualTo(30720);
 
     }
 
@@ -188,12 +292,14 @@ public class ImageServerServiceTests {
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("openslide/mrxs");
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/associated.json?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs"))
+        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/info/associated"))
                 .willReturn(
-                        aResponse().withBody("[\"macro\",\"thumbnail\",\"label\"]")
+                        aResponse().withBody("{\"items\": [{\"name\":\"macro\"},{\"name\":\"thumbnail\"},{\"name\":\"label\"}], \"size\": 0}")
                 )
         );
-        assertThat(imageServerService.associated(image).size()).isEqualTo(3);
+        int size = imageServerService.associated(image).size();
+        printLastRequest();
+        assertThat(size).isEqualTo(3);
 
     }
 
@@ -207,7 +313,10 @@ public class ImageServerServiceTests {
         configureFor("localhost", 8888);
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        stubFor(get(urlEqualTo("/image/nested.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512&label=macro"))
+        String url = "/image/" + image.getPath() + "/associated/macro?length=512";
+
+        System.out.println(url);
+        stubFor(get(urlEqualTo(url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -216,7 +325,9 @@ public class ImageServerServiceTests {
         labelParameter.setMaxSize(512);
         labelParameter.setLabel("macro");
         labelParameter.setFormat("png");
-        assertThat(imageServerService.label(image, labelParameter)).isEqualTo(mockResponse);
+        byte[] data = imageServerService.label(image, labelParameter, null).getContent();
+        printLastRequest();
+        assertThat(data).isEqualTo(mockResponse);
     }
 
     @Test
@@ -235,7 +346,7 @@ public class ImageServerServiceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
 
-        stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=256"))
+        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/thumb?z_slices=0&timepoints=0&length=256"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -243,12 +354,15 @@ public class ImageServerServiceTests {
         ImageParameter imageParameter = new ImageParameter();
         imageParameter.setMaxSize(256);
         imageParameter.setFormat("png");
-        assertThat(imageServerService.thumb(slice, imageParameter)).isEqualTo(mockResponse);
+
+        byte[] data = imageServerService.thumb(slice, imageParameter, null).getContent();
+        printLastRequest();
+        assertThat(data).isEqualTo(mockResponse);
 
 
         byte[] mockResponse2 = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512"))
+        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/thumb?z_slices=0&timepoints=0&length=512"))
                 .willReturn(
                         aResponse().withBody(mockResponse2)
                 )
@@ -256,7 +370,9 @@ public class ImageServerServiceTests {
 
         imageParameter.setMaxSize(512);
         imageParameter.setFormat("png");
-        assertThat(imageServerService.thumb(slice, imageParameter)).isEqualTo(mockResponse2);
+        data = imageServerService.thumb(slice, imageParameter, null).getContent();
+        printLastRequest();
+        assertThat(data).isEqualTo(mockResponse2);
     }
 
 
@@ -276,8 +392,14 @@ public class ImageServerServiceTests {
         configureFor("localhost", 8888);
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=crop";
-        stubFor(get(urlEqualTo(url))
+        //String url = "/image/" + image.getPath() + "/annotation/drawing?context_factor=1.25&annotations=%7B%22geometry%22%3A%22POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29%22%2C%22stroke_color%22%3Anull%2C%22stroke_width%22%3Anull%7D&level=0&z_slices=0&timepoints=0";
+        String url = "/image/" + image.getPath() + "/annotation/drawing";
+        String body = "{\"context_factor\":1.25,\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\",\"stroke_color\":null,\"stroke_width\":null},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(
+                body
+                        ))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -286,8 +408,18 @@ public class ImageServerServiceTests {
         CropParameter cropParameter = new CropParameter();
         cropParameter.setLocation("POLYGON((1 1,50 10,50 50,10 50,1 1))");
         cropParameter.setFormat("png");
-        byte[] crop = imageServerService.crop(slice, cropParameter);
-        //List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
+        cropParameter.setDraw(true);
+        cropParameter.setIncreaseArea(1.25);
+        cropParameter.setComplete(true);
+        //draw=true&complete=true&increaseArea=1.25
+
+        byte[] crop = null;
+        try {
+            crop = imageServerService.crop(slice, cropParameter, null).getContent();
+        } catch (Exception exception) {
+            exception.printStackTrace();
+        }
+        printLastRequest();
         assertThat(crop).isEqualTo(mockResponse);
 
     }
@@ -308,9 +440,14 @@ public class ImageServerServiceTests {
         slice.setUploadedFile(image.getUploadedFile());
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
+        //http://localhost-ims/image/1650442012355/2021-12-17-114138.jpg/window?region=[left:1, top:2, width:3, height:4]&level=0
+
         configureFor("localhost", 8888);
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
-        stubFor(get(urlEqualTo(url))
+        String url = "/image/" + image.getPath() + "/window";
+        String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(body))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -322,13 +459,13 @@ public class ImageServerServiceTests {
         windowParameter.setW(30);
         windowParameter.setH(40);
         windowParameter.setFormat("png");
-        byte[] crop = imageServerService.window(slice, windowParameter);
-        //List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
+        byte[] crop = imageServerService.window(slice, windowParameter, null).getContent();
+        printLastRequest();
         assertThat(crop).isEqualTo(mockResponse);
-
-        windowParameter.setFormat("jpg");
-        assertThat(imageServerService.windowUrl(slice, windowParameter))
-                .isEqualTo("http://localhost:8888/slice/crop.jpg?fif=%2Fdata%2Fimages%2F"+ builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop");
     }
 
+    private void printLastRequest() {
+        List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
+        all.subList(Math.max(all.size() - 3, 0), all.size()).forEach(x -> System.out.println(x.getMethod() + " " + x.getAbsoluteUrl() + " " + x.getBodyAsString()));
+    }
 }

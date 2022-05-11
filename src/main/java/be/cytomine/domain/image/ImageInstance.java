@@ -129,6 +129,9 @@ public class ImageInstance extends CytomineDomain {
         returnArray.put("depth", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getDepth).orElse(null));  // /!!\ Breaking API : image?.baseImage?.getZoomLevels()?.max
         returnArray.put("duration", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getDuration).orElse(null));
         returnArray.put("channels", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getChannels).orElse(null));
+        returnArray.put("extrinsicChannels", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getExtrinsicChannels).orElse(null));
+
+
 
         returnArray.put("physicalSizeX", imageInstance.getPhysicalSizeX());
         returnArray.put("physicalSizeY", imageInstance.getPhysicalSizeY());
@@ -157,7 +160,7 @@ public class ImageInstance extends CytomineDomain {
 //
         returnArray.put("thumb", UrlApi.getImageInstanceThumbUrlWithMaxSize(imageInstance.id, 512, "png"));
         returnArray.put("preview", UrlApi.getImageInstanceThumbUrlWithMaxSize(imageInstance.id, 1024, "png"));
-        returnArray.put("macroURL", UrlApi.getAssociatedImageInstance(imageInstance.id, "macro", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getUploadedFile).map(UploadedFile::getContentType).orElse(null), 512, "png"));
+        returnArray.put("macroURL", UrlApi.getAssociatedImage(imageInstance, "macro", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getUploadedFile).map(UploadedFile::getContentType).orElse(null), 512, "png"));
 
         return returnArray;
     }

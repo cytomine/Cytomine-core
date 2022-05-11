@@ -30,11 +30,14 @@ import org.hibernate.annotations.Type;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.nio.file.Paths;
+import java.util.Set;
 
 @Entity
 @Getter
 @Setter
 public class UploadedFile extends CytomineDomain implements Serializable {
+
+    public static Set<String> ARCHIVE_FORMATS = Set.of("ZIP", "TAR", "GZTAR", "BZTAR", "XZTAR");
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = true)
@@ -95,7 +98,6 @@ public class UploadedFile extends CytomineDomain implements Serializable {
         uploadedFile.ext = json.getJSONAttrStr("ext");
         uploadedFile.contentType = json.getJSONAttrStr("contentType");
         uploadedFile.size = json.getJSONAttrLong("size", 0L);
-
         uploadedFile.status = json.getJSONAttrInteger("status", 0);
         uploadedFile.projects = json.isMissing("projects") ? null : json.getJSONAttrListLong("projects").toArray(new Long[0]);
 
@@ -115,6 +117,7 @@ public class UploadedFile extends CytomineDomain implements Serializable {
         returnArray.put("contentType",uploadedFile.getContentType());
         returnArray.put("size",uploadedFile.getSize());
         returnArray.put("path",uploadedFile.getPath());
+        returnArray.put("isArchive",uploadedFile.isArchive());
         returnArray.put("status",uploadedFile.getStatus());
         returnArray.put("statusText",uploadedFile.getStatusText());
         returnArray.put("projects", uploadedFile.getProjects());
@@ -129,7 +132,12 @@ public class UploadedFile extends CytomineDomain implements Serializable {
         if (contentType.equals("virtual/stack") || user == null) {
             return null;
         }
-        return Paths.get(imageServer.getBasePath(), String.valueOf(user.getId()), filename).toString();
+        //[PIMS] Image server base path is no more required.
+        return Paths.get(filename).toString();
+    }
+
+    boolean isArchive() {
+        return ARCHIVE_FORMATS.contains(contentType);
     }
 
     @PreUpdate

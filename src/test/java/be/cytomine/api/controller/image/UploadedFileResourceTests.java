@@ -517,7 +517,7 @@ public class UploadedFileResourceTests {
                 .andDo(print()).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
         assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/image/download?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs");
+                .isEqualTo("http://localhost:8888/file/1636379100999/CMU-2/CMU-2.mrxs/export");
 
 
     }

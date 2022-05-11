@@ -234,7 +234,7 @@ public class RestAlgoAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Integer jpegQuality
-    ) throws UnsupportedEncodingException, ParseException {
+    ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
         AlgoAnnotation algoAnnotation = algoAnnotationService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AlgoAnnotation", id));
@@ -244,6 +244,7 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         cropParameter.setLocation(location);
         cropParameter.setComplete(complete);
         cropParameter.setZoom(zoom);
+        cropParameter.setMaxSize(maxSize);
         cropParameter.setIncreaseArea(increaseArea);
         cropParameter.setSafe(safe);
         cropParameter.setSquare(square);
@@ -267,7 +268,8 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
 
-        responseByteArray(imageServerService.crop(algoAnnotation, cropParameter), format);
+        String etag = getRequestETag();
+        responseImage(imageServerService.crop(algoAnnotation, cropParameter, etag));
     }
 
     @RequestMapping(value = "/algoannotation/{id}/mask.{format}", method = {RequestMethod.GET, RequestMethod.POST})
@@ -297,7 +299,7 @@ public class RestAlgoAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Integer jpegQuality
-    ) throws UnsupportedEncodingException, ParseException {
+    ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
         AlgoAnnotation algoAnnotation = algoAnnotationService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AlgoAnnotation", id));
@@ -307,6 +309,7 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         cropParameter.setLocation(location);
         cropParameter.setComplete(complete);
         cropParameter.setZoom(zoom);
+        cropParameter.setMaxSize(maxSize);
         cropParameter.setIncreaseArea(increaseArea);
         cropParameter.setSafe(safe);
         cropParameter.setSquare(square);
@@ -328,8 +331,8 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         cropParameter.setMaxBits(bits!=null && bits.equals("max"));
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
-
-        responseByteArray(imageServerService.crop(algoAnnotation, cropParameter), format);
+        String etag = getRequestETag();
+        responseImage(imageServerService.crop(algoAnnotation, cropParameter, etag));
     }
 
     @RequestMapping(value = "/algoannotation/{id}/alphamask.{format}", method = {RequestMethod.GET, RequestMethod.POST})
@@ -359,7 +362,7 @@ public class RestAlgoAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Integer jpegQuality
-    ) throws UnsupportedEncodingException, ParseException {
+    ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
         AlgoAnnotation algoAnnotation = algoAnnotationService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AlgoAnnotation", id));
@@ -368,6 +371,7 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         cropParameter.setGeometry(geometry);
         cropParameter.setLocation(location);
         cropParameter.setComplete(complete);
+        cropParameter.setMaxSize(maxSize);
         cropParameter.setZoom(zoom);
         cropParameter.setIncreaseArea(increaseArea);
         cropParameter.setSafe(safe);
@@ -389,8 +393,8 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         cropParameter.setMaxBits(bits!=null && bits.equals("max"));
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
-
-        responseByteArray(imageServerService.crop(algoAnnotation, cropParameter), format);
+        String etag = getRequestETag();
+        responseImage(imageServerService.crop(algoAnnotation, cropParameter, etag));
     }
 
 

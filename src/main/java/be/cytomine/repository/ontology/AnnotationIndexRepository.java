@@ -24,6 +24,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,4 +43,8 @@ public interface AnnotationIndexRepository extends JpaRepository<AnnotationIndex
     void deleteAllBySlice(SliceInstance sliceInstance);
 
     void deleteAllByUser(SecUser user);
+
+    Optional<AnnotationIndexLightDTO> findOneBySliceInAndUser(List<SliceInstance> slices, SecUser user);
+
+    List<AnnotationIndexLightDTO> findAllBySliceIn(List<SliceInstance> slices);
 }

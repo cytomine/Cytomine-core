@@ -41,5 +41,4 @@ public class ImageParameter {
     private Boolean maxBits;
 
     private Boolean refresh;
-
 }

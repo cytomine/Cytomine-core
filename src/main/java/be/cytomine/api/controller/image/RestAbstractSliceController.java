@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 @RestController
@@ -148,7 +149,7 @@ public class RestAbstractSliceController extends RestCytomineController {
             @RequestParam(required = false) Double gamma,
             @RequestParam(required = false) String bits
 
-    ) {
+    ) throws IOException {
         log.debug("REST request get abstractslice {} thumb {}", id, format);
         ImageParameter thumbParameter = new ImageParameter();
         thumbParameter.setFormat(format);
@@ -163,7 +164,8 @@ public class RestAbstractSliceController extends RestCytomineController {
 
         AbstractSlice abstractSlice = abstractSliceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", id));
-        responseByteArray(imageServerService.thumb(abstractSlice, thumbParameter), format);
+        String etag = getRequestETag();
+        responseImage(imageServerService.thumb(abstractSlice, thumbParameter, etag));
     }
 
     @RequestMapping(value = "/abstractslice/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
@@ -195,7 +197,7 @@ public class RestAbstractSliceController extends RestCytomineController {
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Integer jpegQuality
-    ) throws UnsupportedEncodingException, ParseException {
+    ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract slice");
         AbstractSlice abstractSlice = abstractSliceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", id));
@@ -227,8 +229,8 @@ public class RestAbstractSliceController extends RestCytomineController {
         cropParameter.setMaxBits(bits!=null && bits.equals("max"));
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
-
-        responseByteArray(imageServerService.crop(abstractSlice, cropParameter), format);
+        String etag = getRequestETag();
+        responseImage(imageServerService.crop(abstractSlice, cropParameter, etag));
     }
 
     @RequestMapping(value = "/abstractslice/{id}/window_url-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
@@ -264,7 +266,7 @@ public class RestAbstractSliceController extends RestCytomineController {
             @PathVariable Integer w,
             @PathVariable Integer h,
             @RequestParam(defaultValue = "false", required = false) Boolean withExterior
-    ) throws UnsupportedEncodingException, ParseException {
+    ) throws IOException, ParseException {
         log.debug("REST request get abstractslice {} window {}", id, format);
         WindowParameter windowParameter = new WindowParameter();
         windowParameter.setX(x);
@@ -275,7 +277,8 @@ public class RestAbstractSliceController extends RestCytomineController {
         windowParameter.setFormat(format);
         AbstractSlice abstractSlice = abstractSliceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", id));
-        responseByteArray(imageServerService.window(abstractSlice, windowParameter), format);
+        String etag = getRequestETag();
+        responseImage(imageServerService.window(abstractSlice, windowParameter, etag));
     }
 
     @RequestMapping(value = "/abstractslice/{id}/camera_url-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
@@ -309,7 +312,7 @@ public class RestAbstractSliceController extends RestCytomineController {
             @PathVariable Integer y,
             @PathVariable Integer w,
             @PathVariable Integer h
-    ) throws UnsupportedEncodingException, ParseException {
+    ) throws IOException, ParseException {
         log.debug("REST request get abstractslice {} camera {}", id, format);
         WindowParameter windowParameter = new WindowParameter();
         windowParameter.setX(x);
@@ -320,7 +323,8 @@ public class RestAbstractSliceController extends RestCytomineController {
         windowParameter.setFormat(format);
         AbstractSlice abstractSlice = abstractSliceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", id));
-        responseByteArray(imageServerService.window(abstractSlice, windowParameter), format);
+        String etag = getRequestETag();
+        responseImage(imageServerService.window(abstractSlice, windowParameter, etag));
     }
 
 }

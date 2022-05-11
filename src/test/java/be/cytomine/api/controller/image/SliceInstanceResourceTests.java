@@ -24,6 +24,7 @@ import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterAll;
@@ -227,7 +228,7 @@ public class SliceInstanceResourceTests {
         SliceInstance image = given_test_slice_instance();
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512"))
+        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/thumb?z_slices=0&timepoints=0&length=512"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -259,11 +260,17 @@ public class SliceInstanceResourceTests {
         configureFor("localhost", 8888);
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=crop";
-        stubFor(get(urlEqualTo(url))
-                .willReturn(
-                        aResponse().withBody(mockResponse)
-                )
+        String url = "/image/" + image.getPath() + "/annotation/crop";
+        String body = "{\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"},\"level\":0,\"background_transparency\":0,\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+
+        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(equalTo(
+                                body
+                        ))
+                        .willReturn(
+                                aResponse().withBody(mockResponse)
+                        )
         );
 
         MvcResult mvcResult = restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/crop.png", image.getId())
@@ -283,12 +290,16 @@ public class SliceInstanceResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         configureFor("localhost", 8888);
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
-        stubFor(get(urlEqualTo(url))
+        String url = "/image/" + image.getPath() + "/window";
+        String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(equalTo(body))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
         );
+
 
         MvcResult mvcResult = restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/window-10-20-30-40.png", image.getId()))
                 .andDo(print())
@@ -300,7 +311,7 @@ public class SliceInstanceResourceTests {
 
         restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/window_url-10-20-30-40.jpg", image.getId()))
                 .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/slice/crop.jpg?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop"))
+                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/1636379100999/CMU-2/CMU-2.mrxs/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
                 .andExpect(status().isOk());
 
     }
@@ -314,8 +325,11 @@ public class SliceInstanceResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         configureFor("localhost", 8888);
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
-        stubFor(get(urlEqualTo(url))
+        String url = "/image/" + image.getPath() + "/window";
+        String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(equalTo(body))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -331,7 +345,7 @@ public class SliceInstanceResourceTests {
 
         restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/camera_url-10-20-30-40.jpg", image.getId()))
                 .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/slice/crop.jpg?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop"))
+                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/1636379100999/CMU-2/CMU-2.mrxs/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
                 .andExpect(status().isOk());
 
     }

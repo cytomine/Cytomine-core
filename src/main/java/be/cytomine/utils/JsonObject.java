@@ -207,6 +207,10 @@ public class JsonObject extends HashMap<String, Object> implements JsonInput {
         }
     }
 
+    public Double getJSONAttrDouble(String attr) {
+        return getJSONAttrDouble(attr, null);
+    }
+
     public Double getJSONAttrDouble(String attr, Double defaultValue) {
         if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
             try {
@@ -386,5 +390,17 @@ public class JsonObject extends HashMap<String, Object> implements JsonInput {
 
     public Long getId() {
         return getJSONAttrLong("id");
+    }
+
+    public List<String> getJSONAttrListString(String attr) {
+        return (List<String>) this.get(attr);
+    }
+
+    public List<Map<String, Object>> getJSONAttrListMap(String attr) {
+        return (List<Map<String, Object>>) this.get(attr);
+    }
+
+    public Map<String, Object> getJSONAttrMap(String attr) {
+        return (Map<String, Object>) this.get(attr);
     }
 }

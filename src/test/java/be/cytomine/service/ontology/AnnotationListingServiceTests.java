@@ -593,7 +593,7 @@ public class AnnotationListingServiceTests {
         assertThat(list).isNotEmpty();
         assertThat(list.get(0)).isInstanceOf(Kmeans.class);
 
-        assertThat(kmeansGeometryService.mustBeReduce(sliceInstance.getId(), user1.getId(), "POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))"))
+        assertThat(kmeansGeometryService.mustBeReduce(List.of(sliceInstance.getId()), user1.getId(), "POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))"))
                 .isEqualTo(KmeansGeometryService.FULL);
 
     }

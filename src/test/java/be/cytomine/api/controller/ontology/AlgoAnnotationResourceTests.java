@@ -31,6 +31,7 @@ import be.cytomine.service.ontology.AlgoAnnotationService;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.vividsolutions.jts.io.ParseException;
 import org.apache.commons.lang3.time.DateUtils;
@@ -329,12 +330,18 @@ public class AlgoAnnotationResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&maxSize=512&type=crop";
-        stubFor(get(urlEqualTo(url))
-                .willReturn(
-                        aResponse().withBody(mockResponse)
-                )
+        String url = "/image/1636379100999/CMU-2/CMU-2.mrxs/annotation/crop";
+        String body = "{\"length\":512,\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"},\"background_transparency\":0,\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(WireMock.equalTo(
+                                body
+                        ))
+                        .willReturn(
+                                aResponse().withBody(mockResponse)
+                        )
         );
+
 
         MvcResult mvcResult = restAlgoAnnotationControllerMockMvc.perform(get("/api/algoannotation/{id}/crop.png?maxSize=512", annotation.getId()))
                 .andDo(print())
@@ -352,13 +359,16 @@ public class AlgoAnnotationResourceTests {
         configureFor("localhost", 8888);
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
-
-
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=mask";
-        stubFor(get(urlEqualTo(url))
-                .willReturn(
-                        aResponse().withBody(mockResponse)
-                )
+        String url = "/image/1636379100999/CMU-2/CMU-2.mrxs/annotation/mask";
+        String body = "{\"length\":256,\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\",\"fill_color\":\"#fff\"},\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(WireMock.equalTo(
+                                body
+                        ))
+                        .willReturn(
+                                aResponse().withBody(mockResponse)
+                        )
         );
 
         MvcResult mvcResult = restAlgoAnnotationControllerMockMvc.perform(get("/api/algoannotation/{id}/mask.png", annotation.getId()))
@@ -379,12 +389,16 @@ public class AlgoAnnotationResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId() +"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=alphaMask";
-        stubFor(get(urlEqualTo(url))
-                .willReturn(
-                        aResponse().withBody(mockResponse)
-                )
+        String url = "/image/" + annotation.getImage().getBaseImage().getPath() + "/annotation/crop";
+        String body = "{\"length\":256,\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"},\"background_transparency\":100,\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(WireMock.equalTo(
+                                body
+                        ))
+                        .willReturn(
+                                aResponse().withBody(mockResponse)
+                        )
         );
 
         MvcResult mvcResult = restAlgoAnnotationControllerMockMvc.perform(get("/api/algoannotation/{id}/alphamask.png", annotation.getId()))

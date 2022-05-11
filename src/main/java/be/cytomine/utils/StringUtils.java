@@ -18,7 +18,9 @@ package be.cytomine.utils;
 
 import java.text.DecimalFormat;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class StringUtils {
@@ -62,5 +64,13 @@ public class StringUtils {
     public static String decimalFormatter(Object value){
         DecimalFormat df = new DecimalFormat("0.00");
         return df.format(value);
+    }
+
+    public static Map<String, Object> keysToCamelCase(Map<String, Object> map) {
+        HashMap<String, Object> result = new HashMap<>();
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            result.put(SQLUtils.toCamelCase(entry.getKey()), entry.getValue());
+        }
+        return result;
     }
 }

@@ -17,6 +17,8 @@ package be.cytomine.api.controller.middleware;
 */
 
 import be.cytomine.api.controller.RestCytomineController;
+import be.cytomine.domain.middleware.ImageServer;
+import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.project.ProjectRepository;
@@ -27,6 +29,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -53,4 +58,31 @@ public class RestImageServerController extends RestCytomineController {
                 .orElseGet(() -> responseNotFound("imageserver", id));
     }
 
+    @GetMapping("/imageserver/{id}/format.json")
+    public ResponseEntity<String> formats(
+            @PathVariable Long id
+    ) throws IOException {
+        log.debug("REST request to list format");
+        ImageServer imageserver = imageServerService.find(id).orElseThrow(() -> new ObjectNotFoundException("imageserver", id));
+        return responseSuccess(imageServerService.formats(imageserver));
+    }
+
+    @GetMapping("/imageserver/format.json")
+    public ResponseEntity<String> allFormats(
+    ) throws IOException {
+        log.debug("REST request to list allFormats");
+        List<ImageServer> imageServers = imageServerService.list();
+        Set<String> alreadyAdd = new HashSet<>();
+        List<Map<String, Object>> formats = new ArrayList<>();
+        for (ImageServer imageServer : imageServers) {
+            List<Map<String, Object>> formatsServer = imageServerService.formats(imageServer);
+            for (Map<String, Object> format : formatsServer) {
+                if(!alreadyAdd.contains(format.getOrDefault("id", ""))) {
+                    formats.add(format);
+                    alreadyAdd.add((String) format.getOrDefault("id", ""));
+                }
+            }
+        }
+        return responseSuccess(formats.stream().distinct().toList());
+    }
 }

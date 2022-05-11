@@ -282,7 +282,7 @@ public class RestUserAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Integer jpegQuality
-    ) throws UnsupportedEncodingException, ParseException {
+    ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
         UserAnnotation userAnnotation = userAnnotationService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("UserAnnotation", id));
@@ -314,8 +314,8 @@ public class RestUserAnnotationController extends RestCytomineController {
         cropParameter.setMaxBits(bits!=null && bits.equals("max"));
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
-
-        responseByteArray(imageServerService.crop(userAnnotation, cropParameter), format);
+        String etag = getRequestETag();
+        responseImage(imageServerService.crop(userAnnotation, cropParameter, etag));
     }
 
     @RequestMapping(value = "/userannotation/{id}/mask.{format}", method = {RequestMethod.GET, RequestMethod.POST})
@@ -345,7 +345,7 @@ public class RestUserAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Integer jpegQuality
-    ) throws UnsupportedEncodingException, ParseException {
+    ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
         UserAnnotation userAnnotation = userAnnotationService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("UserAnnotation", id));
@@ -377,8 +377,8 @@ public class RestUserAnnotationController extends RestCytomineController {
         cropParameter.setMaxBits(bits!=null && bits.equals("max"));
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
-
-        responseByteArray(imageServerService.crop(userAnnotation, cropParameter), format);
+        String etag = getRequestETag();
+        responseImage(imageServerService.crop(userAnnotation, cropParameter, etag));
     }
 
     @RequestMapping(value = "/userannotation/{id}/alphamask.{format}", method = {RequestMethod.GET, RequestMethod.POST})
@@ -408,7 +408,7 @@ public class RestUserAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Integer jpegQuality
-    ) throws UnsupportedEncodingException, ParseException {
+    ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
         UserAnnotation userAnnotation = userAnnotationService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("UserAnnotation", id));
@@ -422,6 +422,7 @@ public class RestUserAnnotationController extends RestCytomineController {
         cropParameter.setSafe(safe);
         cropParameter.setSquare(square);
         cropParameter.setType(type);
+        cropParameter.setMaxSize(maxSize);
         cropParameter.setDraw(draw);
         cropParameter.setAlphaMask(true);
         cropParameter.setDrawScaleBar(drawScaleBar);
@@ -438,7 +439,7 @@ public class RestUserAnnotationController extends RestCytomineController {
         cropParameter.setMaxBits(bits!=null && bits.equals("max"));
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
-
-        responseByteArray(imageServerService.crop(userAnnotation, cropParameter), format);
+        String etag = getRequestETag();
+        responseImage(imageServerService.crop(userAnnotation, cropParameter, etag));
     }
 }

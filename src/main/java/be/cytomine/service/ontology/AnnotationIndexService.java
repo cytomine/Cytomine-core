@@ -57,4 +57,15 @@ public class AnnotationIndexService {
                     .stream().mapToLong(AnnotationIndexLightDTO::getCountReviewedAnnotation).sum();
         }
     }
+
+    public Long count(List<SliceInstance> slices, SecUser user) {
+        if (user!=null) {
+            return annotationIndexRepository.findOneBySliceInAndUser(slices, user)
+                    .map(AnnotationIndexLightDTO::getCountAnnotation).orElse(0L);
+        } else {
+            return annotationIndexRepository.findAllBySliceIn(slices)
+                    .stream().mapToLong(AnnotationIndexLightDTO::getCountReviewedAnnotation).sum();
+        }
+    }
+
 }

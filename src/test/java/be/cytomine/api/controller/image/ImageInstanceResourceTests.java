@@ -30,6 +30,7 @@ import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterAll;
@@ -638,11 +639,12 @@ public class ImageInstanceResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512"))
+        stubFor(get(urlEqualTo("/image/" + image.getBaseImage().getPath() + "/thumb?z_slices=0&timepoints=0&length=512"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
         );
+
         MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/thumb.png?maxSize=512", image.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -668,7 +670,8 @@ public class ImageInstanceResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=1024"))
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo("/image/" + image.getBaseImage().getPath() + "/thumb?z_slices=0&timepoints=0&length=1024"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -688,9 +691,9 @@ public class ImageInstanceResourceTests {
     public void get_image_instance_associeted_label() throws Exception {
         ImageInstance image = given_test_image_instance();
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/associated.json?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs"))
+        stubFor(get(urlEqualTo("/image/1636379100999/CMU-2/CMU-2.mrxs/info/associated"))
                 .willReturn(
-                        aResponse().withBody("[\"macro\",\"thumbnail\",\"label\"]")
+                        aResponse().withBody("{\"items\": [{\"name\":\"macro\"},{\"name\":\"thumbnail\"},{\"name\":\"label\"}], \"size\": 0}")
                 )
         );
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/associated.json", image.getId()))
@@ -709,7 +712,10 @@ public class ImageInstanceResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        stubFor(get(urlEqualTo("/image/nested.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512&label=macro"))
+        String url = "/image/" + image.getBaseImage().getPath() + "/associated/macro?length=512";
+
+        System.out.println(url);
+        stubFor(get(urlEqualTo(url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -734,13 +740,21 @@ public class ImageInstanceResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&maxSize=512&type=crop";
-        stubFor(get(urlEqualTo(url))
-                .willReturn(
-                        aResponse().withBody(mockResponse)
-                )
+        String url = "/image/" + image.getBaseImage().getPath() + "/annotation/crop";
+        String body = "{\"length\":512,\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"},\"background_transparency\":0,\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+        //{"length":512,"annotations":{"geometry":"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))"},"level":0,"background_transparency":0,"z_slices":0,"timepoints":0}
+        //{"length":512,"annotations":{"geometry":"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))"},"background_transparency":0,"z_slices":0,"timepoints":0}
+
+        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(WireMock.equalTo(
+                                body
+                        ))
+                        .willReturn(
+                                aResponse().withBody(mockResponse)
+                        )
         );
-//        http://localhost:8888/slice/crop.png?fif=%2Fdata%2Fimages%2F74%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&maxSize=512&type=crop
+
         MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/crop.png?maxSize=512", image.getId())
                         .param("location", "POLYGON((1 1,50 10,50 50,10 50,1 1))"))
                 .andDo(print())
@@ -759,8 +773,11 @@ public class ImageInstanceResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
-        stubFor(get(urlEqualTo(url))
+        String url = "/image/" + image.getBaseImage().getPath() + "/window";
+        String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(WireMock.equalTo(body))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -776,7 +793,7 @@ public class ImageInstanceResourceTests {
 
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/window_url-10-20-30-40.jpg", image.getId()))
                 .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/slice/crop.jpg?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop"))
+                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/1636379100999/CMU-2/CMU-2.mrxs/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
                 .andExpect(status().isOk());
 
     }
@@ -791,8 +808,11 @@ public class ImageInstanceResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
-        stubFor(get(urlEqualTo(url))
+        String url = "/image/" + image.getBaseImage().getPath() + "/window";
+        String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(WireMock.equalTo(body))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -808,7 +828,7 @@ public class ImageInstanceResourceTests {
 
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/camera_url-10-20-30-40.jpg", image.getId()))
                 .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/slice/crop.jpg?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop"))
+                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/1636379100999/CMU-2/CMU-2.mrxs/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
                 .andExpect(status().isOk());
 
     }
@@ -823,7 +843,7 @@ public class ImageInstanceResourceTests {
                 .andDo(print()).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
         assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/image/download?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs");
+                .isEqualTo("http://localhost:8888/file/1636379100999/CMU-2/CMU-2.mrxs/export");
 
 
     }
@@ -842,7 +862,7 @@ public class ImageInstanceResourceTests {
                 .andDo(print()).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
         assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/image/download?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs");
+                .isEqualTo("http://localhost:8888/file/1636379100999/CMU-2/CMU-2.mrxs/export");
 
         image.getProject().setAreImagesDownloadable(false);
 
@@ -850,7 +870,7 @@ public class ImageInstanceResourceTests {
                 .andDo(print()).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(403);
         assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isNotEqualTo("http://localhost:8888/image/download?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs");
+                .isNotEqualTo("http://localhost:8888/file/1636379100999/CMU-2/CMU-2.mrxs/export");
 
 
     }

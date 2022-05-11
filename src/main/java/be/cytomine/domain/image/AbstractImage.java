@@ -48,13 +48,16 @@ public class AbstractImage extends CytomineDomain {
     private Integer height;
 
     @Min(1)
-    private Integer depth;
+    private Integer depth = 1;
 
     @Min(1)
-    private Integer duration;
+    private Integer duration = 1;
 
     @Min(1)
-    private Integer channels;
+    private Integer channels = 1; // [PIMS] Intrinsic number of channels (RGB image = 1 intrinsic channel)
+
+    private Integer extrinsicChannels;  // [PIMS] True number of (color) channels (RGB image = 3 extrinsic channels)
+    // TODO: in a new API, should be renamed to "channels"
 
     @Column(name = "physical_size_x")
     private Double physicalSizeX;
@@ -73,6 +76,7 @@ public class AbstractImage extends CytomineDomain {
     @Min(1)
     private Integer bitDepth;
 
+    // TODO: Remove, no more filled by [PIMS]
     private String colorspace;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -99,6 +103,7 @@ public class AbstractImage extends CytomineDomain {
         abstractImage.depth = json.getJSONAttrInteger("depth", 1);
         abstractImage.duration = json.getJSONAttrInteger("duration", 1);
         abstractImage.channels = json.getJSONAttrInteger("channels", 1);
+        abstractImage.extrinsicChannels = json.getJSONAttrInteger("extrinsicChannels", 1);
         abstractImage.physicalSizeX = json.getJSONAttrDouble("physicalSizeX", null);
         abstractImage.physicalSizeY = json.getJSONAttrDouble("physicalSizeY", null);
         abstractImage.physicalSizeZ = json.getJSONAttrDouble("physicalSizeZ", null);
@@ -127,6 +132,7 @@ public class AbstractImage extends CytomineDomain {
         returnArray.put("depth", abstractImage.getDepth());
         returnArray.put("duration", abstractImage.getDuration());
         returnArray.put("channels", abstractImage.getChannels());
+        returnArray.put("extrinsicChannels", abstractImage.getExtrinsicChannels());
         returnArray.put("dimensions", abstractImage.getDimensions());
 
         returnArray.put("physicalSizeX", abstractImage.getPhysicalSizeX());
@@ -142,7 +148,7 @@ public class AbstractImage extends CytomineDomain {
         returnArray.put("colorspace", abstractImage.getColorspace());
         returnArray.put("thumb", UrlApi.getAbstractImageThumbUrlWithMaxSize(abstractImage.id, 512, "png"));
         returnArray.put("preview", UrlApi.getAbstractImageThumbUrlWithMaxSize(abstractImage.id, 1024, "png"));
-        returnArray.put("macroURL", UrlApi.getAssociatedImage(abstractImage.id, "macro", Optional.ofNullable(abstractImage.getUploadedFile()).map(UploadedFile::getContentType).orElse(null), 512, "png"));
+        returnArray.put("macroURL", UrlApi.getAssociatedImage(abstractImage, "macro", Optional.ofNullable(abstractImage.getUploadedFile()).map(UploadedFile::getContentType).orElse(null), 512, "png"));
 
         returnArray.put("inProject", abstractImage.getInProject());
         return returnArray;

@@ -39,9 +39,16 @@ public enum UploadedFileStatus {
     DEPLOYING (40),
     ERROR_DEPLOYMENT (41), // 8
 
+    UNPACKING (50),
+    ERROR_UNPACKING (51),
+
+    CHECKING_INTEGRITY (60),
+    ERROR_INTEGRITY (61),
     DEPLOYED (100),
     EXTRACTED (102),
-    CONVERTED (104);
+    CONVERTED (104),
+
+    UNPACKED (106);
 
     private final int code;
 

@@ -20,6 +20,9 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+import java.util.Map;
+
 @Getter
 @Setter
 public class WindowParameter {
@@ -37,4 +40,38 @@ public class WindowParameter {
     private boolean withExterior;
 
     private BoundariesCropParameter boundaries;
+
+    private Boolean safe;
+
+    private Integer maxSize;
+
+    private Double gamma;
+
+    private Integer bits;
+
+    private Boolean maxBits;
+
+    private Integer alpha;
+
+    private Integer thickness;
+
+    private Integer zoom;
+
+    private String colormap;
+
+    private Boolean inverse;
+
+    private List<Map<String, Object>> geometries;
+
+    private String color;
+
+    private Boolean complete;
+
+    private String type;
+
+    private Boolean draw;
+
+    private Boolean mask;
+
+    private Boolean alphaMask;
 }

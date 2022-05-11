@@ -17,9 +17,13 @@ package be.cytomine.service.image;
 */
 
 import be.cytomine.domain.image.AbstractImage;
+import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.meta.Property;
+import be.cytomine.repository.image.AbstractImageRepository;
+import be.cytomine.repository.image.AbstractSliceRepository;
 import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.service.middleware.ImageServerService;
+import be.cytomine.utils.JsonObject;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -32,9 +36,11 @@ import org.springframework.util.ReflectionUtils;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -44,6 +50,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ImagePropertiesService {
 
+    private static Map<String, Integer> PIXEL_TYPE = Map.of("uint8", 8, "int8", 8, "uint16", 16, "int16", 16);
+
+    @Autowired
+    AbstractImageRepository abstractImageRepository;
     @Autowired
     PropertyRepository propertyRepository;
 
@@ -53,47 +63,29 @@ public class ImagePropertiesService {
     @Autowired
     EntityManager entityManager;
 
-    public static List<ImagePropertiesValue> KEYS = keys();
-    
-    
-    static List<ImagePropertiesValue> keys() {
-
-        Function parseInt = x -> Integer.parseInt(x.toString());
-        Function parseDouble = x -> Double.parseDouble(x.toString());
-        Function parseString = x -> x;
-
-
-        return List.of(
-               new ImagePropertiesValue("width", "cytomine.width", parseInt),
-                new ImagePropertiesValue("height", "cytomine.height", parseInt),
-                new ImagePropertiesValue("depth", "cytomine.depth", parseInt),
-                new ImagePropertiesValue("duration", "cytomine.duration", parseInt),
-                new ImagePropertiesValue("channels", "cytomine.channels", parseInt),
-                new ImagePropertiesValue("physicalSizeX", "cytomine.physicalSizeX", parseDouble),
-                new ImagePropertiesValue("physicalSizeY", "cytomine.physicalSizeY", parseDouble),
-                new ImagePropertiesValue("physicalSizeZ", "cytomine.physicalSizeZ", parseDouble),
-                new ImagePropertiesValue("fps", "cytomine.fps", parseDouble),
-                new ImagePropertiesValue("bitDepth", "cytomine.bitdepth", parseInt),
-                new ImagePropertiesValue("colorspace", "cytomine.colorspace", parseString),
-                new ImagePropertiesValue("magnification", "cytomine.magnification", parseInt)
-            );
-    }
+    @Autowired
+    AbstractSliceRepository abstractSliceRepository;
 
     public void clear(AbstractImage image) {
-        List<String> propertyKeys = keys().stream().map(x -> x.getName()).collect(Collectors.toList());
-        propertyRepository.deleteAllByDomainIdentAndKeyIn(image.getId(), propertyKeys);
+        propertyRepository.deleteAllByDomainIdent(image.getId());
     }
-
 
 
     public void populate(AbstractImage image) throws IOException {
-        Map<String, Object> properties = imageServerService.properties(image);
-        for (Map.Entry<String, Object> entry : properties.entrySet()) {
-            String key = entry.getKey().trim();
-            String value = entry.getValue()!=null? entry.getValue().toString().trim() : null;
-            if (value!=null) {
+        List<Map<String, Object>> properties = imageServerService.rawProperties(image);
+
+        for (Map<String, Object> it : properties) {
+            String namespace = it.get("namespace")!=null? (String)it.get("namespace") + ".": "";
+            String key = it.get("key")!=null? namespace + (String)it.get("key").toString().trim() : null;
+            String value = it.get("value")!=null? (String)it.get("value").toString().trim() : null;
+
+            if (key!=null && value!=null) {
+                key = key.replaceAll("\u0000", "");
+                value = value.replaceAll("\u0000", "");
+                log.debug("Read property: {} => {} for abstract image {}", key, value, image);
                 Optional<Property> optionalProperty = propertyRepository.findByDomainIdentAndKey(image.getId(), key);
                 if (optionalProperty.isEmpty()) {
+                    log.debug("New property: {} => {} for abstract image {}", key, value, image);
                     Property property = new Property();
                     property.setKey(key);
                     property.setValue(value);
@@ -106,27 +98,60 @@ public class ImagePropertiesService {
     }
 
     public void extractUseful(AbstractImage image) throws IOException, IllegalAccessException {
-        for (ImagePropertiesValue key : keys()) {
-            Property property = propertyRepository.findByDomainIdentAndKey(image.getId(), key.getName()).orElse(null);
-            if (property!=null) {
-                Field field = ReflectionUtils.findField(AbstractImage.class, key.getKey());
-                field.setAccessible(true);
-                field.set(image, key.getParser().apply(property.getValue()));
-            } else {
-                log.info("No property " + key.getName() + " for abstract image " + image.getId());
-            }
-
-        }
-        entityManager.persist(image);
+        extractUseful(image, false);
     }
 
-    public void regenerate(AbstractImage image) throws IOException, IllegalAccessException {
+    public void extractUseful(AbstractImage image, boolean deep) throws IOException, IllegalAccessException {
+
+        try {
+            Map<String, Object> properties = imageServerService.properties(image);
+            Map<String, Object> imageProperties = (Map<String, Object>)properties.getOrDefault("image", Map.of());
+            JsonObject imagePropertiesObject = new JsonObject(imageProperties);
+
+
+            image.setWidth(imagePropertiesObject.getJSONAttrInteger("width"));
+            image.setHeight(imagePropertiesObject.getJSONAttrInteger("height"));
+            image.setDepth(imagePropertiesObject.getJSONAttrInteger("depth"));
+            image.setDuration(imagePropertiesObject.getJSONAttrInteger("duration"));
+
+            image.setChannels(imagePropertiesObject.getJSONAttrInteger("n_intrinsic_channels"));
+            image.setPhysicalSizeX(imagePropertiesObject.getJSONAttrDouble("physical_size_x"));
+            image.setPhysicalSizeY(imagePropertiesObject.getJSONAttrDouble("physical_size_y"));
+            image.setPhysicalSizeZ(imagePropertiesObject.getJSONAttrDouble("physical_size_z"));
+
+            image.setFps(imagePropertiesObject.getJSONAttrDouble("frame_rate"));
+
+            Map<String, Object> instrument = ((Map<String, Object>)properties.getOrDefault("instrument", Map.of()));
+            Map<String, Object> objective = ((Map<String, Object>)instrument.getOrDefault("objective", Map.of()));
+            Integer nominal_magnification = (Integer)objective.get("nominal_magnification");
+
+            image.setMagnification(nominal_magnification);
+
+            abstractImageRepository.save(image);
+
+            if (deep) {
+                List<Map<String, Object>> channels = (List<Map<String, Object>>)properties.getOrDefault("channels", List.of());
+                for (Map<String, Object> channel : channels) {
+                    List<AbstractSlice> slices = abstractSliceRepository.findAllByImage(image)
+                            .stream().filter(x -> Objects.equals(x.getChannel(), (Integer)channel.get("index"))).toList();
+                    for (AbstractSlice slice : slices) {
+                        slice.setChannelName((String) channel.get("suggested_name"));
+                        slice.setChannelColor((String) channel.get("color"));
+                    }
+                    abstractSliceRepository.saveAll(slices);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error when extracting metadata", e);
+        }
+    }
+
+    public void regenerate(AbstractImage image, boolean deep) throws IOException, IllegalAccessException {
         clear(image);
         populate(image);
-        extractUseful(image);
+        extractUseful(image, deep);
     }
 }
-
 
 @Getter
 @Setter

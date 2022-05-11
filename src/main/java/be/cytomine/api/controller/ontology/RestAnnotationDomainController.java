@@ -169,7 +169,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Integer jpegQuality
-    ) throws UnsupportedEncodingException, ParseException {
+    ) throws IOException, ParseException {
         log.debug("REST request to get crop for annotation domain");
         AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
 
@@ -200,8 +200,8 @@ public class RestAnnotationDomainController extends RestCytomineController {
         cropParameter.setMaxBits(bits!=null && bits.equals("max"));
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
-
-        responseByteArray(imageServerService.crop(annotation, cropParameter), format);
+        String etag = getRequestETag();
+        responseImage(imageServerService.crop(annotation, cropParameter, etag));
     }
 
     @GetMapping(value = {"/annotation/{id}/cropParameters.{format}"})
@@ -241,6 +241,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
         cropParameter.setLocation(location);
         cropParameter.setComplete(complete);
         cropParameter.setZoom(zoom);
+        cropParameter.setMaxSize(maxSize);
         cropParameter.setIncreaseArea(increaseArea);
         cropParameter.setSafe(safe);
         cropParameter.setSquare(square);
@@ -265,7 +266,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
 
 
         LinkedHashMap<String, Object> result = imageServerService.cropParameters(annotation, cropParameter);
-        result.put("location", result.get("location").toString());
         return responseSuccess(JsonObject.toJsonString(result));
     }
 

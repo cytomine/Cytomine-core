@@ -60,11 +60,11 @@ public class AnnotationListingService  {
                 throw new WrongArgumentException("If you want to use kmeans, you must provide image bbox:" + al.getBbox());
             }
 
-            if (al.getSlice()==null) {
+            if (al.getSlice()==null && (al.getSlices()==null || al.getSlices().isEmpty())) {
                 throw new WrongArgumentException("If you want to use kmeans, you must provide slice Id");
             }
-
-            Integer rule = kmeansGeometryService.mustBeReduce(al.getSlice(),al.getUser(),al.getBbox());
+            al.setSlices((al.getSlices()==null || al.getSlices().isEmpty()) ? List.of(al.getSlice()) : al.getSlices());
+            Integer rule = kmeansGeometryService.mustBeReduce(al.getSlices(),al.getUser(),al.getBbox());
             al.setKmeansValue(rule);
         } else if(al.getKmeans()!=null && !al.getKmeans()){
             //no kmeans

@@ -49,6 +49,10 @@ public class AbstractSlice extends CytomineDomain {
 
     private Integer time;
 
+    private String channelName;
+
+    private String channelColor;
+
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         AbstractSlice abstractSlice = this;
         abstractSlice.id = json.getJSONAttrLong("id",null);
@@ -63,7 +67,10 @@ public class AbstractSlice extends CytomineDomain {
         abstractSlice.channel = json.getJSONAttrInteger("channel", 0);
         abstractSlice.zStack = json.getJSONAttrInteger("zStack", 0);
         abstractSlice.time = json.getJSONAttrInteger("time", 0);
-        
+
+        abstractSlice.channelName = json.getJSONAttrStr("channelName", false);
+        abstractSlice.channelColor = json.getJSONAttrStr("channelColor", false);
+
         return abstractSlice;
     }
 
@@ -75,11 +82,17 @@ public class AbstractSlice extends CytomineDomain {
         returnArray.put("image", abstractSlice.getImageId());
         returnArray.put("mime", abstractSlice.getMimeType());
 
+        returnArray.put("imageServerUrl", abstractSlice.getImageServerUrl());
+
         returnArray.put("channel", abstractSlice.getChannel());
         returnArray.put("zStack", abstractSlice.getZStack());
         returnArray.put("time", abstractSlice.getTime());
         returnArray.put("rank", abstractSlice.getRank());
-         return returnArray;
+
+        returnArray.put("channelName", abstractSlice.getChannelName());
+        returnArray.put("channelColor", abstractSlice.getChannelColor());
+
+        return returnArray;
     }
 
     public Long getUploadedFileId() {

@@ -184,8 +184,8 @@ public class UploadedFileService extends ModelService {
                 "LEFT JOIN acl_entry AS ae ON asi.id = ae.sid " +
                 "LEFT JOIN acl_object_identity AS aoi ON ae.acl_object_identity = aoi.id " +
                 "WHERE aoi.object_id_identity = uf.storage_id AND asi.sid = :username) " +
-                "AND (uf.parent_id IS NULL OR parent.content_type similar to '%zip%') " +
-                "AND uf.content_type NOT similar to '%zip%' " +
+                "AND (uf.parent_id IS NULL OR parent.content_type IN ('" + String.join("','", UploadedFile.ARCHIVE_FORMATS) + "')) " +
+                "AND uf.content_type NOT IN ('" + String.join("','", UploadedFile.ARCHIVE_FORMATS) + "') " +
                 "AND uf.deleted IS NULL " +
                 "AND " +
                 (search.trim().isEmpty() ? "true" : search) +
@@ -212,6 +212,7 @@ public class UploadedFileService extends ModelService {
                 result.put(alias, value);
             }
             result.put("thumbURL",(result.get("image")!=null) ? UrlApi.getAbstractImageThumbUrl((Long)result.get("image"), "png") : null);
+            result.put("isArchive", UploadedFile.ARCHIVE_FORMATS.contains(result.get("contentType")));
             results.add(result);
         }
         return results;
@@ -289,10 +290,12 @@ public class UploadedFileService extends ModelService {
             Long slice = returnElementOrTakeFirstElementIfArray(result.get("slices"));
             if(image!=null) {
                 result.put("thumbURL", UrlApi.getAbstractImageThumbUrl(image, "png"));
-                result.put("macroURL", UrlApi.getAssociatedImage(image, "macro", (String)result.get("contentType"), 256, "png"));
+                result.put("macroURL", UrlApi.getAssociatedImage(image, "abstractimage", "macro", (String)result.get("contentType"), 256, "png"));
             } else if (slice!=null) {
                 result.put("thumbURL", UrlApi.getAbstractSliceThumbUrl(slice, "png"));
             }
+
+            result.put("isArchive", UploadedFile.ARCHIVE_FORMATS.contains(result.get("contentType")));
             results.add(result);
         }
         return results;

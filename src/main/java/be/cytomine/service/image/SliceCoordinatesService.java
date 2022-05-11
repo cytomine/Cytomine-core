@@ -65,6 +65,16 @@ public class SliceCoordinatesService {
         return referenceSliceCoordinates;
     }
 
+    //TODO: ULiège/PIMS implementation:
+//    public SliceCoordinate getReferenceSliceCoordinate(AbstractImage image) {
+//        SliceCoordinate referenceSliceCoordinates = new SliceCoordinate(
+//                (int) Math.floor(image.getChannels() / 2),
+//                (int) Math.floor(image.getDepth() / 2),
+//                (int) Math.floor(image.getDuration() / 2)
+//        );
+//        return referenceSliceCoordinates;
+//    }
+
     public AbstractSlice getReferenceSlice(AbstractImage abstractImage) {
         SliceCoordinate sliceCoordinate = getReferenceSliceCoordinate(abstractImage);
         return abstractSliceRepository.findByImageAndChannelAndZStackAndTime(abstractImage, sliceCoordinate.getChannel(), sliceCoordinate.getZStack(), sliceCoordinate.getTime())

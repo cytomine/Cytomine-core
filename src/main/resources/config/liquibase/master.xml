@@ -11,4 +11,6 @@
     <include file="config/liquibase/changelog/00000000_2_grant.xml" relativeToChangelogFile="false"/>
 
     <include file="config/liquibase/changelog/00000000_3_trigger.sql" relativeToChangelogFile="false"/>
+
+    <include file="config/liquibase/changelog/00000000_4_pims.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

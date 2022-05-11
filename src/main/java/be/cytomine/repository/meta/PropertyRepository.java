@@ -35,4 +35,6 @@ public interface PropertyRepository extends JpaRepository<Property, Long>, JpaSp
     void deleteAllByDomainIdentAndKeyIn(Long domainIdent, Collection<String> keys);
 
     List<Property> findAllByDomainIdent(Long id);
+
+    void deleteAllByDomainIdent(Long id);
 }

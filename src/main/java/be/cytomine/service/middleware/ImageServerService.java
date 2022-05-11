@@ -21,13 +21,11 @@ import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
-import be.cytomine.exceptions.InvalidRequestException;
-import be.cytomine.exceptions.WrongArgumentException;
+import be.cytomine.dto.PimsResponse;
+import be.cytomine.exceptions.*;
 import be.cytomine.repository.middleware.ImageServerRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
-import be.cytomine.service.UrlApi;
 import be.cytomine.service.dto.*;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.security.SecurityACLService;
@@ -36,7 +34,6 @@ import be.cytomine.utils.*;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -47,8 +44,10 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static be.cytomine.utils.HttpUtils.getContentFromUrl;
@@ -99,15 +98,20 @@ public class ImageServerService extends ModelService {
         return JsonObject.toObject(getContentFromUrl(imageServer.getInternalUrl() + "/storage/size.json"), StorageStats.class);
     }
 
+    public List<Map<String, Object>> formats(ImageServer imageServer) throws IOException {
+        String response = getContentFromUrl(imageServer.getInternalUrl() + "/formats");
+        JsonObject jsonObject = JsonObject.toJsonObject(response);
+        return ((List<Map<String,Object>>)jsonObject.get("items")).stream().map(x -> StringUtils.keysToCamelCase(x)).toList();
+    }
+
+
     public String downloadUri(UploadedFile uploadedFile) throws IOException {
         if (uploadedFile.getPath()==null || uploadedFile.getPath().trim().equals("")) {
             throw new InvalidRequestException("Uploaded file has no valid path.");
         }
-        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-        parameters.put("fif", uploadedFile.getPath());
-        parameters.put("mimeType", uploadedFile.getContentType());
-        return uploadedFile.getImageServer().getUrl() +"/image/download?"
-                + makeParameterUrl(parameters);
+        // It gets the file specified in the uri.
+        String uri = "/file/"+uploadedFile.getPath()+"/export";
+        return uploadedFile.getImageServer().getUrl()+uri;
 
     }
 
@@ -120,40 +124,24 @@ public class ImageServerService extends ModelService {
     }
 
     public Map<String, Object> properties(AbstractImage image) throws IOException {
-        String server = retrieveImageServerInternalUrl(image);
-        LinkedHashMap<String, Object> parameters = retrieveImageServerParameters(image);
-        String content = getContentFromUrl(server + "/image/properties.json?" + makeParameterUrl(parameters));
+        String server = image.getImageServerInternalUrl();
+        String path = image.getPath();
+        String content = getContentFromUrl(server + "/image/"+path+"/info");
         return JsonObject.toMap(content);
     }
 
-    public Map<String, Object> profile(AbstractImage image) throws IOException {
-        String server = retrieveImageServerInternalUrl(image);
-        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-        parameters.put("mimeType", image.getUploadedFile().getContentType());
-        parameters.put("abstractImage", image.getId());
-        parameters.put("uploadedFileParent", image.getUploadedFile().getId());
-        parameters.put("user", currentUserService.getCurrentUser().getId());
-        parameters.put("core", UrlApi.getServerUrl());
-
-        String string = new String(makeRequest("POST", server, "/image/properties.json", parameters));
-        return JsonObject.toMap(string);
+    public List<Map<String, Object>> rawProperties(AbstractImage image) throws IOException {
+        String server = image.getImageServerInternalUrl();
+        String path = image.getPath();
+        String content = getContentFromUrl(server + "/image/"+path+"/metadata");
+        return JsonObject.toJsonObject(content).getJSONAttrListMap("items");
     }
 
-//TODO!!!!!!!
-//    def profile(CompanionFile profile, AnnotationDomain annotation, def params) {
-//        def (server, parameters) = imsParametersFromCompanionFile(profile)
-//        parameters.location = annotation.location
-//        parameters.minSlice = params.minSlice
-//        parameters.maxSlice = params.maxSlice
-//        return JSON.parse(new URL(makeGetUrl("/profile.json", server, parameters)).text)
-//    }
-
-
     public List<String> associated(AbstractImage image) throws IOException {
-        String server = retrieveImageServerInternalUrl(image);
-        LinkedHashMap<String, Object> parameters = retrieveImageServerParameters(image);
-        String content = getContentFromUrl(server + ("/image/associated.json?"+ makeParameterUrl(parameters)));
-        return JsonObject.toStringList(content);
+        String server = image.getImageServerInternalUrl();
+        String path = image.getPath();
+        String content = getContentFromUrl(server + ("/image/"+path+"/info/associated"));
+        return JsonObject.toJsonObject(content).getJSONAttrListMap("items").stream().map(x -> (String)x.get("name")).toList();
     }
 
     public List<String> associated(ImageInstance image) throws IOException {
@@ -161,83 +149,197 @@ public class ImageServerService extends ModelService {
     }
 
 
-    public byte[]  label(ImageInstance image, LabelParameter params) {
-        return label(image.getBaseImage(), params);
+
+    public PimsResponse  label(ImageInstance image, LabelParameter params, String etag) {
+        return label(image.getBaseImage(), params, etag);
     }
 
-    public byte[]  label(AbstractImage image, LabelParameter params) {
-        String server = retrieveImageServerInternalUrl(image);
-        LinkedHashMap<String, Object> parameters = retrieveImageServerParameters(image);
-        String format = checkFormat(params.getFormat(), List.of("jpg", "png"));
-        parameters.put("maxSize", params.getMaxSize());
-        parameters.put("label", params.getLabel());
-        return makeRequest(server, "/image/nested." + format, parameters);
+    public PimsResponse label(AbstractImage image, LabelParameter params, String etag) {
+        String server = image.getImageServerInternalUrl();
+        String path = image.getPath();
+        String format = checkFormat(params.getFormat(), List.of("jpg", "png", "webp"));
+
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+        parameters.put("length", params.getMaxSize());
+
+        String uri = "/image/"+path+"/associated/" + params.getLabel().toLowerCase();
+
+        Map<String, Object> headers = new LinkedHashMap<>();
+        if (etag!=null) {
+            headers.put("If-None-Match", etag);
+        }
+        return makeRequest("GET", server, uri, parameters, format, headers);
     }
 
-    public byte[] thumb(ImageInstance image, ImageParameter params)  {
-        return thumb(imageInstanceService.getReferenceSlice(image), params);
+    public PimsResponse thumb(ImageInstance image, ImageParameter params, String etag)  {
+        return thumb(imageInstanceService.getReferenceSlice(image), params, etag);
     }
 
-    public byte[] thumb(SliceInstance slice, ImageParameter params)  {
-        return thumb(slice.getBaseSlice(), params);
+    public PimsResponse thumb(SliceInstance slice, ImageParameter params, String etag)  {
+        return thumb(slice.getBaseSlice(), params, etag);
     }
 
-    public byte[] thumb(AbstractSlice slice, ImageParameter params) {
-        String imageServerInternalUrl = retrieveImageServerInternalUrl(slice);
-        LinkedHashMap<String, Object> parameters = retrieveImageServerParameters(slice);
+    public PimsResponse thumb(AbstractSlice slice, ImageParameter params, String etag) {
 
-        String format = checkFormat(params.getFormat(), List.of("jpg", "png"));
-        parameters.put("maxSize", params.getMaxSize());
-        parameters.put("colormap", params.getColormap());
-        parameters.put("inverse", params.getInverse());
-        parameters.put("contrast", params.getContrast());
-        parameters.put("gamma", params.getGamma());
-        parameters.put("bits", params.getMaxBits()!=null && params.getMaxBits()? Optional.ofNullable(slice.getImage()).map(AbstractImage::getBitDepth).orElse(8) : params.getBits());
+        String server = slice.getImageServerInternalUrl();
+        String path = slice.getPath();
 
-        return makeRequest(imageServerInternalUrl,"/slice/thumb." + format, parameters);
+        String format = checkFormat(params.getFormat(), List.of("jpg", "png", "webp"));
+        String uri = "/image/"+path+"/thumb";
+
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+
+        if (slice.getImage().getChannels()!=null && slice.getImage().getChannels() > 1) {
+            parameters.put("channels", slice.getChannel());
+            // Ensure that if the slice is RGB, the 3 intrinsic channels are used
+        }
+        parameters.put("z_slices", slice.getZStack());
+        parameters.put("timepoints", slice.getTime());
+
+        parameters.put("length", params.getMaxSize());
+        parameters.put("gammas", params.getGamma());
+        if (params.getColormap()!=null) {
+            parameters.put("colormaps", Arrays.stream(params.getColormap().split(",")).toList());
+        }
+
+        if (params.getBits()!=null) {
+            parameters.put("bits", params.getMaxBits() ? "AUTO" : params.getBits());
+            uri = "/image/"+path+"/resized";
+        }
+
+        if (params.getInverse()!=null && params.getInverse()) {
+            if (parameters.containsKey("colormaps")) {
+                parameters.put("colormaps", ((List<String>)parameters.get("colormaps")).stream().map(x -> invertColormap(x)).toList());
+            }
+            else {
+                parameters.put("colormaps", "!DEFAULT");
+            }
+        }
+
+        Map<String, Object> headers = new LinkedHashMap<>();
+        if (etag!=null) {
+            headers.put("If-None-Match", etag);
+        }
+        return makeRequest("GET", server, uri, parameters, format, headers);
     }
 
+//    public PimsResponse thumb(String server, String path, ImageParameter params, String etag) {
+//
+//    }
 
-    public byte[] crop(AnnotationDomain annotation, CropParameter params) throws UnsupportedEncodingException, ParseException {
+
+
+    public PimsResponse crop(AnnotationDomain annotation, CropParameter params, String etag) throws UnsupportedEncodingException, ParseException {
         params.setLocation(annotation.getWktLocation());
-        return crop(annotation.getSlice().getBaseSlice(), params);
+        return crop(annotation.getSlice().getBaseSlice(), params, etag);
+    }
+//
+//    public PimsResponse crop(ImageInstance image, CropParameter params, String etag) throws UnsupportedEncodingException, ParseException {
+//        return crop(image.getBaseImage(), params, etag);
+//    }
+//
+//    public PimsResponse crop(AbstractImage image, CropParameter cropParameter, String etag) throws UnsupportedEncodingException, ParseException {
+//        String server = image.getImageServerInternalUrl();
+//        String path = image.getPath();
+//
+//        String cropUrl = cropUrl(path, cropParameter);
+//        LinkedHashMap<String,Object> parameters = cropParameters(cropParameter);
+//
+//        String format = retrieveCropFormat(cropParameter);
+//
+//        LinkedHashMap<String, Object> headers = retrieveHeaders(cropParameter, etag);
+//
+//        if (cropParameter.getInverse()) {
+//            if (parameters.containsKey("colormaps")) {
+//                parameters.put("colormaps", ((List<String>)parameters.get("colormaps")).stream().map(x -> invertColormap(x)).toList());
+//            }
+//            else {
+//                parameters.put("colormaps", "!DEFAULT");
+//            }
+//        }
+//        return makeRequest("POST", server, cropUrl, parameters, format, headers);
+//    }
+    public PimsResponse crop(SliceInstance slice, CropParameter params, String etag) throws UnsupportedEncodingException, ParseException {
+        return crop(slice.getBaseSlice(), params, etag);
+    }
+
+    public PimsResponse crop(AbstractSlice slice, CropParameter cropParameter, String etag) throws UnsupportedEncodingException, ParseException {
+
+        String server = slice.getImageServerInternalUrl();
+        String path = slice.getPath();
+        String cropUrl = cropUrl(path, cropParameter);
+        LinkedHashMap<String,Object> parameters = cropParameters(cropParameter);
+
+        if (slice.getImage().getChannels()!=null && slice.getImage().getChannels() > 1) {
+            parameters.put("channels", slice.getChannel());
+            // Ensure that if the slice is RGB, the 3 intrinsic channels are used
+        }
+        parameters.put("z_slices", slice.getZStack());
+        parameters.put("timepoints", slice.getTime());
+
+        String format = retrieveCropFormat(cropParameter);
+
+        LinkedHashMap<String, Object> headers = retrieveHeaders(cropParameter, etag);
+
+        if (cropParameter.getInverse()!=null && cropParameter.getInverse()) {
+            if (parameters.containsKey("colormaps")) {
+                parameters.put("colormaps", ((List<String>)parameters.get("colormaps")).stream().map(x -> invertColormap(x)).toList());
+            }
+            else {
+                parameters.put("colormaps", "!DEFAULT");
+            }
+        }
+
+        return makeRequest("POST", server, cropUrl, parameters, format, headers);
     }
 
 
-
-
-    public byte[] crop(AbstractSlice slice, CropParameter cropParameter) throws UnsupportedEncodingException, ParseException {
-        String server = retrieveImageServerInternalUrl(slice);
-        LinkedHashMap<String, Object> parameters = cropParameters(slice, cropParameter);
+    private String retrieveCropFormat(CropParameter cropParameter) {
         String format;
-        if (parameters.get("type").equals("alphaMask")) {
-            format = checkFormat(cropParameter.getFormat(), List.of("png"));
+        if (cropParameter.getDraw()!=null && cropParameter.getDraw()) {
+            format = checkFormat(cropParameter.getFormat(), List.of("jpg", "png", "webp"));
+        } else if (cropParameter.getMask()!=null && cropParameter.getMask()) {
+            format = checkFormat(cropParameter.getFormat(), List.of("jpg", "png", "webp"));
+        } else if (cropParameter.getAlphaMask()!=null && cropParameter.getAlphaMask()) {
+            format = checkFormat(cropParameter.getFormat(), List.of("png", "webp"));
         } else {
-            format = checkFormat(cropParameter.getFormat(), List.of("jpg", "png", "tiff"));
+            format = checkFormat(cropParameter.getFormat(), List.of("jpg", "png", "webp"));
         }
-        return makeRequest(server, "/slice/crop." + format, parameters);
+        return format;
     }
 
-    public String cropUrl(AbstractSlice slice, CropParameter cropParameter) throws UnsupportedEncodingException, ParseException {
-        String server = retrieveImageServerInternalUrl(slice);
-        LinkedHashMap<String, Object> parameters = cropParameters(slice, cropParameter);
-        String format;
-        if (parameters.get("type").equals("alphaMask")) {
-            format = checkFormat(cropParameter.getFormat(), List.of("png"));
-        } else {
-            format = checkFormat(cropParameter.getFormat(), List.of("jpg", "png", "tiff"));
+    private LinkedHashMap<String, Object> retrieveHeaders(CropParameter cropParameter, String etag) {
+        LinkedHashMap<String, Object> headers = new LinkedHashMap<>(Map.of("X-Annotation-Origin", "LEFT_BOTTOM"));
+        if (cropParameter.getSafe()!=null && cropParameter.getSafe()) {
+            headers.put("X-Image-Size-Safety", "SAFE_RESIZE");
         }
-        return server + "/slice/crop." + format + "?" + makeParameterUrl(parameters);
+        if (etag!=null) {
+            headers.put("If-None-Match", etag);
+        }
+        return headers;
+    }
 
+    public String cropUrl(String filePath, CropParameter cropParameter) throws UnsupportedEncodingException, ParseException {
+//        LinkedHashMap<String, Object> parameters = cropParameters(cropParameter);
+        String uri;
+        if (cropParameter.getDraw()!=null && cropParameter.getDraw()) {
+            uri = "/image/"+filePath+"/annotation/drawing";
+        } else if (cropParameter.getMask()!=null && cropParameter.getMask()) {
+            uri = "/image/"+filePath+"/annotation/mask";
+        } else if (cropParameter.getAlphaMask()!=null && cropParameter.getAlphaMask()) {
+            uri = "/image/"+filePath+"/annotation/crop";
+        } else {
+            uri = "/image/"+filePath+"/annotation/crop";
+        }
+        return  uri;
     }
 
     public LinkedHashMap<String,Object> cropParameters(AnnotationDomain annotationDomain, CropParameter cropParameter) throws ParseException {
         cropParameter.setLocation(annotationDomain.getWktLocation());
-        return cropParameters(annotationDomain.getSlice().getBaseSlice(), cropParameter);
+        return cropParameters(cropParameter);
     }
 
-    public LinkedHashMap<String,Object> cropParameters(AbstractSlice slice, CropParameter cropParameter) throws ParseException {
-        LinkedHashMap<String, Object> parameters = retrieveImageServerParameters(slice);
+    public LinkedHashMap<String,Object> cropParameters(CropParameter cropParameter) throws ParseException {
 
         Object geometry = cropParameter.getGeometry();
         if (geometry!=null && geometry instanceof String) {
@@ -247,97 +349,265 @@ public class ImageServerService extends ModelService {
         if (StringUtils.isBlank(cropParameter.getGeometry()) && StringUtils.isNotBlank(cropParameter.getLocation())) {
             geometry = new WKTReader().read(cropParameter.getLocation());
         }
-
-        // In the window service, boundaries are already set and do not correspond to geometry/location boundaries
-        BoundariesCropParameter boundaries = cropParameter.getBoundaries();
-        if (boundaries==null && geometry!=null) {
-            boundaries = GeometryUtils.getGeometryBoundaries((Geometry)geometry);
-        }
-        parameters.put("topLeftX", boundaries.getTopLeftX());
-        parameters.put("topLeftY", boundaries.getTopLeftY());
-        parameters.put("width", boundaries.getWidth());
-        parameters.put("height", boundaries.getHeight());
-
+        String wkt = null;
         if (cropParameter.getComplete()!=null && cropParameter.getComplete() && geometry!=null) {
-            parameters.put("location", simplifyGeometryService.reduceGeometryPrecision((Geometry)geometry).toText());
+            wkt = simplifyGeometryService.reduceGeometryPrecision((Geometry)geometry).toText();
         } else if (geometry!=null) {
-            parameters.put("location", simplifyGeometryService.simplifyPolygonForCrop((Geometry)geometry).toText());
+            wkt = simplifyGeometryService.simplifyPolygonForCrop((Geometry)geometry).toText();
         }
 
-        parameters.put("imageWidth", slice.getImage().getWidth());
-        parameters.put("imageHeight", slice.getImage().getHeight());
-        parameters.put("maxSize", cropParameter.getMaxSize());
-        parameters.put("zoom", (cropParameter.getMaxSize()!=null ? cropParameter.getZoom() : null));
-        parameters.put("increaseArea", cropParameter.getIncreaseArea());
-        parameters.put("safe", cropParameter.getSafe());
-        parameters.put("square", cropParameter.getSquare());
+        LinkedHashMap<String, Object> pimsParameter = new LinkedHashMap<>();
+        pimsParameter.put("length", cropParameter.getMaxSize());
+        pimsParameter.put("context_factor", cropParameter.getIncreaseArea());
+        pimsParameter.put("gammas", cropParameter.getGamma());
+        pimsParameter.put("annotations", (wkt!=null? new LinkedHashMap<>(Map.of("geometry", wkt)) :Map.of()));
 
-        parameters.put("type", checkType(cropParameter, List.of("crop", "draw", "mask", "alphaMask")));
+        if (cropParameter.getColormap()!=null) {
+            pimsParameter.put("colormaps", Arrays.stream(cropParameter.getColormap().split(",")).toList());
+        }
+
+        if (cropParameter.getMaxSize()==null) {
+            pimsParameter.put("level", cropParameter.getZoom()!=null ? cropParameter.getZoom() : 0);
+        }
+
+        if (cropParameter.getBits()!=null) {
+            pimsParameter.put("bits", cropParameter.getMaxBits() ? "AUTO" : cropParameter.getBits());
+        }
 
 
+        if (cropParameter.getDraw()!=null && cropParameter.getDraw()) {
+            pimsParameter.put("try_square", cropParameter.getSquare());
+            ((Map<String, Object>)pimsParameter.get("annotations")).put("stroke_color", cropParameter.getColor()!=null? cropParameter.getColor().replace("0x", "#") : null);
+            ((Map<String, Object>)pimsParameter.get("annotations")).put("stroke_width", cropParameter.getThickness());
+        } else if (cropParameter.getMask()!=null && cropParameter.getMask()) {
+            ((Map<String, Object>)pimsParameter.get("annotations")).put("fill_color", "#fff");
+        } else if (cropParameter.getAlphaMask()!=null && cropParameter.getAlphaMask()) {
+            pimsParameter.put("background_transparency", cropParameter.getAlpha() != null ? cropParameter.getAlpha() : 100);
+        } else {
+            pimsParameter.put("background_transparency", 0);
+        }
 
-        parameters.put("drawScaleBar", cropParameter.getDrawScaleBar());
-        parameters.put("resolution",(cropParameter.getDrawScaleBar()!=null && cropParameter.getDrawScaleBar()) ? cropParameter.getResolution() : null);
-        parameters.put("magnification",(cropParameter.getDrawScaleBar() !=null && cropParameter.getDrawScaleBar()) ? cropParameter.getMagnification() : null);
+        pimsParameter.put("contrast", cropParameter.getContrast());
+        pimsParameter.put("jpegQuality", cropParameter.getJpegQuality());
 
-        parameters.put("colormap", cropParameter.getColormap());
-        parameters.put("inverse", cropParameter.getInverse());
-        parameters.put("contrast", cropParameter.getContrast());
-        parameters.put("gamma", cropParameter.getGamma());
-        parameters.put("bits", cropParameter.getBits());
-        parameters.put("alpha", cropParameter.getAlpha());
-        parameters.put("thickness", cropParameter.getThickness());
-        parameters.put("color", cropParameter.getColor());
-        parameters.put("jpegQuality", cropParameter.getJpegQuality());
+        //pimsParameter.put("annotations", JsonObject.toJsonString(pimsParameter.get("annotations")));
 
-        return parameters;
+        return pimsParameter;
     }
 
+//    public PimsResponse window(ImageInstance image, WindowParameter params, String etag) throws UnsupportedEncodingException, ParseException {
+//        return window(image.getBaseImage(), params, etag);
+//    }
+//
+//    public PimsResponse window(AbstractImage image, WindowParameter windowParameter, String etag) throws UnsupportedEncodingException, ParseException {
+//        String server = image.getImageServerInternalUrl();
+//        String path = image.getPath();
+//        LinkedHashMap<String, Object> parameters = windowParameters(windowParameter);
+//        String format;
+//
+//        if (checkType(windowParameter).equals("alphamask")) {
+//            format = checkFormat(windowParameter.getFormat(), List.of("png", "webp"));
+//        } else {
+//            format = checkFormat(windowParameter.getFormat(), List.of("png", "jpg", "webp"));
+//        }
+//
+//        LinkedHashMap<String, Object> headers = new LinkedHashMap<>(Map.of("X-Annotation-Origin", "LEFT_BOTTOM"));
+//        if (windowParameter.getSafe()) {
+//            headers.put("X-Image-Size-Safety", "SAFE_RESIZE");
+//        }
+//        if (etag!=null) {
+//            headers.put("If-None-Match", etag);
+//        }
+//
+//        return makeRequest("POST", server, path, parameters, format, headers);
+//    }
+//
+//    public PimsResponse window(SliceInstance slice, WindowParameter params, String etag) throws UnsupportedEncodingException, ParseException {
+//        return window(slice.getBaseSlice(), params, etag);
+//    }
 
-    public String windowUrl(AbstractSlice slice, WindowParameter params) throws UnsupportedEncodingException, ParseException {
-        return cropUrl(slice, extractCropParameter(slice, params));
+    public PimsResponse window(AbstractSlice slice, WindowParameter windowParameter, String etag) throws UnsupportedEncodingException, ParseException {
+        String server = slice.getImageServerInternalUrl();
+        String path = slice.getPath();
+
+        LinkedHashMap<String, Object> parameters = windowParameters(windowParameter);
+
+        String uri = "/image/"+path+"/window";
+
+        if (slice.getImage().getChannels()!=null && slice.getImage().getChannels() > 1) {
+            parameters.put("channels", slice.getChannel());
+            // Ensure that if the slice is RGB, the 3 intrinsic channels are used
+        }
+        parameters.put("z_slices", slice.getZStack());
+        parameters.put("timepoints", slice.getTime());
+
+        String format;
+
+        if (checkType(windowParameter).equals("alphamask")) {
+            format = checkFormat(windowParameter.getFormat(), List.of("png", "webp"));
+        } else {
+            format = checkFormat(windowParameter.getFormat(), List.of("png", "jpg", "webp"));
+        }
+
+        LinkedHashMap<String, Object> headers = new LinkedHashMap<>(Map.of("X-Annotation-Origin", "LEFT_BOTTOM"));
+        if (windowParameter.getSafe()!=null && windowParameter.getSafe()) {
+            headers.put("X-Image-Size-Safety", "SAFE_RESIZE");
+        }
+        if (etag!=null) {
+            headers.put("If-None-Match", etag);
+        }
+
+        return makeRequest("POST", server, uri, parameters, format, headers);
     }
 
-    public byte[] window(AbstractSlice slice, WindowParameter params) throws UnsupportedEncodingException, ParseException {
-        return crop(slice, extractCropParameter(slice, params));
+    public String windowUrl(AbstractSlice slice, WindowParameter windowParameter) throws UnsupportedEncodingException, ParseException {
+        String server = slice.getImageServerInternalUrl();
+        String path = slice.getPath();
+
+        LinkedHashMap<String, Object> parameters = windowParameters(windowParameter);
+
+        String uri = "/image/"+path+"/window";
+        return server + uri + "?" + makeParameterUrl(parameters);
     }
 
+    public LinkedHashMap<String,Object> windowParameters(WindowParameter windowParameter) throws ParseException {
 
-    private CropParameter extractCropParameter(AbstractSlice slice, WindowParameter params) {
-        BoundariesCropParameter boundariesCropParameter = new BoundariesCropParameter();
-        boundariesCropParameter.setTopLeftX(Math.max(params.getX(), 0));
-        boundariesCropParameter.setTopLeftY(Math.max(params.getY(), 0));
-        boundariesCropParameter.setWidth(params.getW());
-        boundariesCropParameter.setHeight(params.getH());
 
-        boolean withExterior = params.isWithExterior();
-        if (!withExterior) {
-            // Do not take part outside of the real image
-            if(slice.getImage().getWidth()!=null && ((boundariesCropParameter.getWidth() + boundariesCropParameter.getTopLeftX()) > slice.getImage().getWidth())) {
-                boundariesCropParameter.setWidth(slice.getImage().getWidth() - boundariesCropParameter.getTopLeftX());
+        LinkedHashMap<String, Object> pimsParameter = new LinkedHashMap<>();
+
+        LinkedHashMap<String, Object> region = new LinkedHashMap<>();
+        region.put("left", windowParameter.getX());
+        region.put("top", windowParameter.getY());
+        region.put("width", windowParameter.getW());
+        region.put("height", windowParameter.getH());
+
+        pimsParameter.put("region", region);
+        pimsParameter.put("length", windowParameter.getMaxSize());
+        pimsParameter.put("gammas", windowParameter.getGamma());
+
+        if (windowParameter.getColormap()!=null) {
+            pimsParameter.put("colormaps", Arrays.stream(windowParameter.getColormap().split(",")).toList());
+        }
+
+        if (windowParameter.getMaxSize()==null) {
+            pimsParameter.put("level", windowParameter.getZoom()!=null ? windowParameter.getZoom() : 0);
+        }
+
+        if (windowParameter.getBits()!=null) {
+            pimsParameter.put("bits", windowParameter.getMaxBits() ? "AUTO" : windowParameter.getBits());
+        }
+
+
+        if (windowParameter.getInverse()!=null && windowParameter.getInverse()) {
+            if (pimsParameter.containsKey("colormaps")) {
+                pimsParameter.put("colormaps", ((List<String>)pimsParameter.get("colormaps")).stream().map(x -> invertColormap(x)).toList());
             }
-            if(slice.getImage().getHeight()!=null && (boundariesCropParameter.getHeight() + boundariesCropParameter.getTopLeftY()) > slice.getImage().getHeight()) {
-                boundariesCropParameter.setHeight(slice.getImage().getHeight() - boundariesCropParameter.getTopLeftY());
+            else {
+                pimsParameter.put("colormaps", "!DEFAULT");
             }
         }
-        boundariesCropParameter.setTopLeftY(Math.max((int) (slice.getImage().getHeight() - boundariesCropParameter.getTopLeftY()), 0));
 
-        CropParameter cropParameter = new CropParameter();
-        cropParameter.setBoundaries(boundariesCropParameter);
-        cropParameter.setFormat(params.getFormat());
-        return cropParameter;
+        if (windowParameter.getGeometries()!=null) {
+            String strokeColor = windowParameter.getColor()!=null? windowParameter.getColor().replace("0x", "#") : "black";
+            Integer strokeWidth = windowParameter.getThickness()!=null? windowParameter.getThickness() : 1; // TODO: check scale
+            String annotationType = checkType(windowParameter);
+
+
+            List<Map<String, Object>> annotations = (List<Map<String, Object>>) pimsParameter.get("annotations");
+            List<Map<String, Object>> annotationsResults = new ArrayList<>();
+            for (Map<String, Object> geometry : annotations) {
+                String wkt = null;
+                if (windowParameter.getComplete()!=null && windowParameter.getComplete() && geometry!=null) {
+                    wkt = simplifyGeometryService.reduceGeometryPrecision((Geometry)geometry).toText();
+                } else if (geometry!=null) {
+                    wkt = simplifyGeometryService.simplifyPolygonForCrop((Geometry)geometry).toText();
+                }
+                Map<String, Object> annot = new LinkedHashMap<>(wkt!=null? Map.of("geometry", wkt) : Map.of());
+
+                if (annotationType.equals("draw")) {
+                    annot.put("stroke_color", strokeColor);
+                    annot.put("stroke_width", strokeWidth);
+                } else if (annotationType.equals("mask")) {
+                    annot.put("fill_color", "#fff");
+                }
+                annotationsResults.add(annot);
+            }
+
+            Map<String, Object> annotationStyle = new HashMap<>();
+            switch (annotationType) {
+                case "draw":
+                    annotationStyle.put("mode","DRAWING");
+                    break;
+                case "mask":
+                    annotationStyle.put("mode","MASK");
+                    break;
+                case "alphaMask":
+                case "alphamask":
+                    annotationStyle.put("mode","CROP");
+                    annotationStyle.put("background_transparency", windowParameter.getAlpha() != null ? windowParameter.getAlpha() : 100);
+                    break;
+                default:
+                    annotationStyle.put("mode","CROP");
+                    annotationStyle.put("background_transparency", 0);
+            }
+            pimsParameter.put("annotation_style", annotationStyle);
+
+        }
+        return pimsParameter;
+    }
+
+//    private CropParameter extractCropParameter(AbstractSlice slice, WindowParameter params) {
+//        BoundariesCropParameter boundariesCropParameter = new BoundariesCropParameter();
+//        boundariesCropParameter.setTopLeftX(Math.max(params.getX(), 0));
+//        boundariesCropParameter.setTopLeftY(Math.max(params.getY(), 0));
+//        boundariesCropParameter.setWidth(params.getW());
+//        boundariesCropParameter.setHeight(params.getH());
+//
+//        boolean withExterior = params.isWithExterior();
+//        if (!withExterior) {
+//            // Do not take part outside of the real image
+//            if(slice.getImage().getWidth()!=null && ((boundariesCropParameter.getWidth() + boundariesCropParameter.getTopLeftX()) > slice.getImage().getWidth())) {
+//                boundariesCropParameter.setWidth(slice.getImage().getWidth() - boundariesCropParameter.getTopLeftX());
+//            }
+//            if(slice.getImage().getHeight()!=null && (boundariesCropParameter.getHeight() + boundariesCropParameter.getTopLeftY()) > slice.getImage().getHeight()) {
+//                boundariesCropParameter.setHeight(slice.getImage().getHeight() - boundariesCropParameter.getTopLeftY());
+//            }
+//        }
+//        boundariesCropParameter.setTopLeftY(Math.max((int) (slice.getImage().getHeight() - boundariesCropParameter.getTopLeftY()), 0));
+//
+//        CropParameter cropParameter = new CropParameter();
+//        cropParameter.setBoundaries(boundariesCropParameter);
+//        cropParameter.setFormat(params.getFormat());
+//        return cropParameter;
+//    }
+
+
+    private static Map<String, String> extractPIMSHeaders(HttpHeaders headers) {
+        List<String> names = List.of("Cache-Control", "ETag", "X-Annotation-Origin", "X-Image-Size-Limit");
+        Map<String, String> extractedHeaders = new LinkedHashMap<>();
+        for (String name : names) {
+            String value = headers.firstValue(name).isEmpty() ? headers.firstValue(name.toLowerCase()).orElse(null) : null;
+            if (value!=null) {
+                extractedHeaders.put(name, value); //h.getValue()?)
+            }
+        }
+        return extractedHeaders;
     }
 
 
-    private byte[] makeRequest(String imageServerInternalUrl, String path, LinkedHashMap<String, Object> parameters) {
-        return makeRequest("GET", imageServerInternalUrl, path,parameters);
-    }
-
-    private byte[] makeRequest(String httpMethod, String imageServerInternalUrl, String path, LinkedHashMap<String, Object> parameters)  {
+    private PimsResponse makeRequest(String httpMethod, String imageServerInternalUrl, String path, LinkedHashMap<String, Object> parameters, String format, Map<String, Object> headers)  {
 
         parameters = filterParameters(parameters);
         String parameterUrl = "";
         String fullUrl = "";
+
+        //TODO:
+//        if (responseContentType == "image/webp") {
+//            // Avoid parser registry to throw a warning for unknown content type
+//            def parserRegistry = http.getParser()
+//            parserRegistry.putAt("image/webp", parserRegistry.getDefaultParser())
+//        }
+        String responseContentType = formatToContentType(format);
 
         try {
             parameterUrl = makeParameterUrl(parameters);
@@ -348,29 +618,55 @@ public class ImageServerService extends ModelService {
                     .build();
         if ((fullUrl).length() < GET_URL_MAX_LENGTH && (httpMethod==null || httpMethod.equals("GET"))) {
             log.debug(fullUrl);
-            HttpRequest request = HttpRequest.newBuilder()
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                     .GET()
                     .uri(URI.create(fullUrl))
-                    .setHeader("Content-Type", "application/x-www-form-urlencoded")
-                    .build();
+                    .setHeader("Content-Type", "application/x-www-form-urlencoded");
+            for (Map.Entry<String, Object> entry : headers.entrySet()) {
+                requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
+            }
+
+            HttpRequest request = requestBuilder.build();
 
             HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
-            return response.body();
+            return processResponse(fullUrl, responseContentType, response);
         } else {
             log.debug(imageServerInternalUrl + path);
-            HttpRequest request = HttpRequest.newBuilder()
-                    .POST(HttpRequest.BodyPublishers.ofString(parameterUrl))
+            log.debug(JsonObject.toJsonString(parameters));
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                    .POST(HttpRequest.BodyPublishers.ofString(JsonObject.toJsonString(parameters)))
                     .uri(URI.create(imageServerInternalUrl + path))
-                    .setHeader("Content-Type", "application/x-www-form-urlencoded")
-                    .build();
+                    .setHeader("Content-Type", "application/json");
+
+            for (Map.Entry<String, Object> entry : headers.entrySet()) {
+                requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
+            }
+            HttpRequest request = requestBuilder.build();
 
             HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
-            return response.body();
+            return processResponse(fullUrl, responseContentType, response);
         }
         } catch(Exception e){
             log.error("Error for url : " + fullUrl + " with parameters " + parameterUrl, e);
             throw new InvalidRequestException("Cannot generate thumb for " + fullUrl + " with " + parameterUrl);
         }
+    }
+
+    private PimsResponse processResponse(String fullUrl, String responseContentType, HttpResponse<byte[]> response) {
+        if (response.statusCode()==200) {
+            return new PimsResponse(response.body(), extractPIMSHeaders(response.headers()));
+        } else  if (response.statusCode()==304) {
+            throw new NotModifiedException(extractPIMSHeaders(response.headers()));
+        } else  if (response.statusCode()==400) {
+            throw new InvalidRequestException(fullUrl + " returned a 400 bad request");
+        } else  if (response.statusCode()==404) {
+            throw new ObjectNotFoundException(fullUrl + " returned a 404 not found");
+        } else  if (response.statusCode()==422) {
+            throw new InvalidRequestException(fullUrl + " returned a 422");
+        } else  if (response.statusCode()==422) {
+            throw new ServerException(fullUrl + " returned a 500");
+        }
+        throw new ServerException(fullUrl + " returned a " + response.statusCode() + ". Cannot catch this.");
     }
 
 
@@ -384,7 +680,9 @@ public class ImageServerService extends ModelService {
 //                value = it.getValue().toText();
 //            }
             if (entry.getValue() instanceof String) {
-                value = URLEncoder.encode((String)entry.getValue(), "UTF-8");
+                value = URLEncoder.encode((String)entry.getValue(), StandardCharsets.UTF_8);
+            } else if (entry.getValue() instanceof Map<?,?>) {
+                value = URLEncoder.encode(JsonObject.toJsonString(entry.getValue()), StandardCharsets.UTF_8);
             }
             joiner.add(entry.getKey()+"="+value);
         }
@@ -402,6 +700,15 @@ public class ImageServerService extends ModelService {
         return processed;
     }
 
+    private static String formatToContentType(String format) {
+        return switch (format) {
+            case "png"->"image/png";
+            case "webp"->"image/webp";
+            case "jpg"->"image/jpeg";
+            default -> "application/json";
+        };
+    }
+
 
     private static String checkFormat(String format, List<String> accepted) {
         if (accepted==null) {
@@ -413,60 +720,52 @@ public class ImageServerService extends ModelService {
         return (!accepted.contains(format)) ? accepted.get(0) : format;
     }
 
-    private static String checkType(CropParameter params, List<String> accepted) {
-        if (params.getType()!=null && accepted.contains(params.getType())) {
-            return params.getType();
-        } else if (params.getDraw()!=null && params.getDraw()) {
+//    private static String checkType(CropParameter params, List<String> accepted) {
+//        if (params.getType()!=null && accepted.contains(params.getType())) {
+//            return params.getType();
+//        } else if (params.getDraw()!=null && params.getDraw()) {
+//            return "draw";
+//        } else if (params.getMask()!=null && params.getMask()) {
+//            return "mask";
+//        } else if (params.getAlphaMask()!=null && params.getAlphaMask()) {
+//            return "alphaMask";
+//        } else {
+//            return "crop";
+//        }
+//    }
+//
+//
+//    String checkType(CropParameter params) {
+//        if (params.getDraw() || params.getType().equals("draw"))
+//            return "draw";
+//        else if (params.getMask() || params.getType().equals("mask"))
+//            return "mask";
+//        else if (params.getAlphaMask() || params.getType().equals("alphaMask")
+//             || params.getType().equals("alphamask")) {
+//            return "alphaMask";
+//        } else {
+//            return "crop";
+//        }
+//    }
+
+    String checkType(WindowParameter params) {
+        if ((params.getDraw()!=null && params.getDraw()) || (params.getType()!=null && params.getType().equals("draw")))
             return "draw";
-        } else if (params.getMask()!=null && params.getMask()) {
+        else if ((params.getMask()!=null && params.getMask()) || (params.getType()!=null && params.getType().equals("mask")))
             return "mask";
-        } else if (params.getAlphaMask()!=null && params.getAlphaMask()) {
+        else if ((params.getAlphaMask()!=null && params.getAlphaMask()) || (params.getType()!=null && (params.getType().equals("alphaMask") || params.getType().equals("alphamask")))) {
             return "alphaMask";
         } else {
             return "crop";
         }
     }
 
-
-
-    private static String retrieveImageServerInternalUrl(AbstractImage image) {
-        if (image.getPath()==null) {
-            throw new InvalidRequestException("Abstract image has no valid path.");
+    private static String invertColormap(String colormap) {
+        if (colormap.charAt(0) == '!') {
+            return colormap.substring(1);
         }
-
-        return image.getImageServerInternalUrl();
+        return '!' + colormap;
     }
-
-    private static LinkedHashMap<String, Object> retrieveImageServerParameters(AbstractImage image) {
-        if (image.getPath()==null) {
-            throw new InvalidRequestException("Abstract image has no valid path.");
-        }
-        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-        parameters.put("fif", image.getPath());
-        parameters.put("mimeType", image.getUploadedFile().getContentType());
-        return parameters;
-    }
-
-
-
-    private static String retrieveImageServerInternalUrl(AbstractSlice slice) {
-        if (slice.getPath()==null) {
-            throw new InvalidRequestException("Abstract slice has no valid path.");
-        }
-
-        return slice.getImageServerInternalUrl();
-    }
-
-    private static LinkedHashMap<String, Object> retrieveImageServerParameters(AbstractSlice slice) {
-        if (slice.getPath()==null) {
-            throw new InvalidRequestException("Abstract slice has no valid path.");
-        }
-        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-        parameters.put("fif", slice.getPath());
-        parameters.put("mimeType", slice.getMimeType());
-        return parameters;
-    }
-
 
     @Override
     public CommandResponse add(JsonObject jsonObject) {

@@ -17,6 +17,7 @@ package be.cytomine.exceptions;
 */
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -26,6 +27,8 @@ import java.util.Map;
  * It store a message and a code, corresponding to an HTTP code
  */
 public abstract class CytomineException extends RuntimeException {
+
+
 
     /**
      * Http code for an exception
@@ -42,28 +45,36 @@ public abstract class CytomineException extends RuntimeException {
      */
     public Map<Object, Object> values;
 
+
+    /**
+     * Headers to be sent in the response (can contain information on the exception
+     * or how the client has to treat the exception).
+     */
+    public Map<String, String> headers;
+
     /**
      * Message map with this exception
      * @param msg Message
      * @param code Http code
      */
     public CytomineException(String msg, int code) {
-        this(msg,code,new HashMap<>());
+        this(msg,code,new HashMap<>(), new LinkedHashMap<String, String>(), null);
     }
 
     public CytomineException(String msg, int code, Throwable cause) {
-        this(msg,code,new HashMap<>(), cause);
+        this(msg,code,new HashMap<>(), new LinkedHashMap<String, String>(), cause);
     }
 
 
     public CytomineException(String msg, int code, Map<Object, Object> values) {
-        this(msg, code, values, null);
+        this(msg, code, values, new LinkedHashMap<String, String>(), null);
     }
-    public CytomineException(String msg, int code, Map<Object, Object> values, Throwable cause) {
+    public CytomineException(String msg, int code, Map<Object, Object> values, Map<String, String> headers, Throwable cause) {
         super(msg, cause);
         this.msg=msg;
         this.code = code;
         this.values = values;
+        this.headers = headers;
     }
 
     public String toString() {

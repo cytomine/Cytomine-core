@@ -16,7 +16,13 @@ package be.cytomine.service;
 * limitations under the License.
 */
 
+import be.cytomine.domain.image.AbstractImage;
+import be.cytomine.domain.image.ImageInstance;
+
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 public class UrlApi {
@@ -25,7 +31,11 @@ public class UrlApi {
 
     private static boolean httpInternally = false;
 
-    private static final List<String> formatsWithMacro = List.of("openslide/ndpi", "openslide/vms", "openslide/mrxs", "openslide/svs", "openslide/scn", "ventana/bif", "ventana/tif", "philips/tif");
+    private static final Map<String, Set<String>> ASSOCIATED_PER_FORMAT_HINTS = Map.of(
+            "macro", Set.of("SVS", "NDPI", "VMS", "SCN", "MRXS", "BIF", "VENTANA", "PHILIPS"),
+            "label", Set.of("SVS", "MRXS", "PHILIPS"),
+            "thumb", Set.of("SVS", "MRXS", "BIF", "VENTANA")
+    );
 
     public static void setServerURL(String url, Boolean useHTTPInternally) {
         serverUrl = useHTTPInternally ? url.replace("https", "http") : url;
@@ -61,27 +71,20 @@ public class UrlApi {
         return serverUrl+"/api/abstractimage/"+idAbstractImage+"/thumb."+format+"?maxSize=" + maxSize;
     }
 
-
-
-    public static String getAssociatedImageInstance(Long id, String label, String contentType, Integer maxSize, String format) {
-
-        if("macro".equals(label) && contentType!=null && !formatsWithMacro.contains(contentType)) {
+    public static String getAssociatedImage(Long id, String imageType, String label, String contentType, Integer maxSize, String format) {
+        if(contentType!=null && !ASSOCIATED_PER_FORMAT_HINTS.getOrDefault(label, Set.of()).contains(contentType)) {
             return null;
         }
         String size = maxSize!=null && maxSize!=0 ? "?maxWidth=" + maxSize : "";
-        return serverUrl + "/api/imageinstance/" + id + "/associated/" + label +"." + format + size;
+        return serverUrl + "/api/"+imageType+"/" + id + "/associated/" + label +"." + format + size;
     }
 
-
-    public static String getAssociatedImage(Long idAbstractImage, String label, String contentType, Integer maxSize, String format) {
-
-        if("macro".equals(label) && contentType!=null && !formatsWithMacro.contains(contentType)) {
-            return null;
-        }
-        String size = maxSize!=null && maxSize!=0 ? "?maxWidth=" + maxSize : "";
-        return serverUrl + "/api/abstractimage/" + idAbstractImage + "/associated/" + label +"." + format + size;
+    public static String getAssociatedImage(AbstractImage image, String label, String contentType, Integer maxSize, String format) {
+        return getAssociatedImage(image.getId(), "abstractimage", label, contentType, maxSize, format);
     }
-
+    public static String getAssociatedImage(ImageInstance image, String label, String contentType, Integer maxSize, String format) {
+        return getAssociatedImage(image.getId(), "imageinstance", label, contentType, maxSize, format);
+    }
 
     public static String getAnnotationURL(Long idProject, Long idImage, Long idAnnotation) {
         return  serverUrl + "/#/project/"+idProject+"/image/"+idImage+"/annotation/" + idAnnotation;

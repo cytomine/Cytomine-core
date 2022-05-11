@@ -413,11 +413,11 @@ public class AbstractImageResourceTests {
                 .andExpect(jsonPath("$.id").value(image.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.image.AbstractImage"))
                 .andExpect(jsonPath("$.created").exists())
+                .andExpect(jsonPath("$.contentType").value("openslide/mrxs"))
                 .andExpect(jsonPath("$.preview").value("http://localhost:8080/api/abstractimage/"+image.getId()+"/thumb.png?maxSize=1024"))
                 .andExpect(jsonPath("$.thumb").value("http://localhost:8080/api/abstractimage/"+image.getId()+"/thumb.png?maxSize=512"))
                 .andExpect(jsonPath("$.macroURL").value("http://localhost:8080/api/abstractimage/"+image.getId()+"/associated/macro.png?maxWidth=512"))
                 .andExpect(jsonPath("$.path").value("/data/images/"+builder.given_superadmin().getId()+"/1636379100999/CMU-2/CMU-2.mrxs"))
-                .andExpect(jsonPath("$.contentType").value("openslide/mrxs"))
                 .andExpect(jsonPath("$.height").value(220696))
                 .andExpect(jsonPath("$.width").value(109240))
                 .andExpect(jsonPath("$.physicalSizeY").hasJsonPath())
@@ -560,7 +560,7 @@ public class AbstractImageResourceTests {
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0,0,0);
         slice.setUploadedFile(image.getUploadedFile());
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512"))
+        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/thumb?z_slices=0&timepoints=0&length=512"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -597,7 +597,7 @@ public class AbstractImageResourceTests {
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0,0,0);
         slice.setUploadedFile(image.getUploadedFile());
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/slice/thumb.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=1024"))
+        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/thumb?z_slices=0&timepoints=0&length=1024"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -617,9 +617,9 @@ public class AbstractImageResourceTests {
     public void get_abstract_image_associeted_label() throws Exception {
         AbstractImage image = given_test_abstract_image();
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/associated.json?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs"))
+        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/info/associated"))
                 .willReturn(
-                        aResponse().withBody("[\"macro\",\"thumbnail\",\"label\"]")
+                        aResponse().withBody("{\"items\": [{\"name\":\"macro\"},{\"name\":\"thumbnail\"},{\"name\":\"label\"}], \"size\": 0}")
                 )
         );
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/associated.json", image.getId()))
@@ -642,7 +642,10 @@ public class AbstractImageResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        stubFor(get(urlEqualTo("/image/nested.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId()+ "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&maxSize=512&label=macro"))
+        String url = "/image/" + image.getPath() + "/associated/macro?length=512";
+
+        System.out.println(url);
+        stubFor(get(urlEqualTo(url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -671,11 +674,17 @@ public class AbstractImageResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=1&topLeftY=50&width=49&height=49&location=POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29&imageWidth=109240&imageHeight=220696&type=crop";
-        stubFor(get(urlEqualTo(url))
-                .willReturn(
-                        aResponse().withBody(mockResponse)
-                )
+        String url = "/image/" + image.getPath() + "/annotation/crop";
+        String body = "{\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"},\"level\":0,\"background_transparency\":0,\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+
+        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(
+                                body
+                        ))
+                        .willReturn(
+                                aResponse().withBody(mockResponse)
+                        )
         );
 
         MvcResult mvcResult = restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/crop.png", image.getId())
@@ -698,8 +707,13 @@ public class AbstractImageResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         configureFor("localhost", 8888);
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
-        stubFor(get(urlEqualTo(url))
+        //String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
+
+        String url = "/image/" + image.getPath() + "/window";
+        String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(body))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -715,7 +729,7 @@ public class AbstractImageResourceTests {
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/window_url-10-20-30-40.jpg", image.getId()))
                 .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/slice/crop.jpg?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop"))
+                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/1636379100999/CMU-2/CMU-2.mrxs/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
                 .andExpect(status().isOk());
 
     }
@@ -732,8 +746,11 @@ public class AbstractImageResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         configureFor("localhost", 8888);
-        String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
-        stubFor(get(urlEqualTo(url))
+        String url = "/image/" + image.getPath() + "/window";
+        String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
+        System.out.println(url);
+        System.out.println(body);
+        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(body))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -749,7 +766,7 @@ public class AbstractImageResourceTests {
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/camera_url-10-20-30-40.jpg", image.getId()))
                 .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/slice/crop.jpg?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop"))
+                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/1636379100999/CMU-2/CMU-2.mrxs/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
                 .andExpect(status().isOk());
 
     }
@@ -773,7 +790,7 @@ public class AbstractImageResourceTests {
                 .andDo(print()).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
         assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/image/download?fif=%2Fdata%2Fimages%2F"+builder.given_superadmin().getId()+"%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs");
+                .isEqualTo("http://localhost:8888/file/"+image.getPath()+"/export");
 
 
     }
@@ -806,14 +823,28 @@ public class AbstractImageResourceTests {
         image.setColorspace("empty");
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/properties.json?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs"))
+        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/metadata"))
                 .willReturn(
-                        aResponse().withBody("{\"File.BitsPerSample\":\"8\",\"File.ColorComponents\":\"3\",\"" +
-                                "File.Comment\":\"Intel(R) JPEG Library, version 1,5,4,36\",\"File.EncodingProcess\":\"Baseline DCT, Huffman coding\"," +
-                                "\"File.ImageHeight\":\"1724\",\"File.ImageWidth\":\"854\",\"File.YCbCrSubSampling\":\"YCbCr4:2:2 (2 1)\"," +
-                                "\"JFIF.JFIFVersion\":\"1.01\",\"JFIF.ResolutionUnit\":\"None\",\"JFIF.XResolution\":\"1\",\"JFIF.YResolution\":\"1\"," +
-                                "\"cytomine.mimeType\":\"image/jpeg\",\"cytomine.extension\":\"mrxs\",\"cytomine.format\":\"JPEGFormat\",\"cytomine.width\":854," +
-                                "\"cytomine.height\":1724,\"cytomine.bitPerSample\":8,\"cytomine.samplePerPixel\":3}")
+                        aResponse().withBody(
+                                """
+                                {"size":14,"items":
+                                [{"key":"ImageWidth","value":30720,"type":"INTEGER","namespace":"TIFF"},
+                                {"key":"ImageLength","value":25600,"type":"INTEGER","namespace":"TIFF"},
+                                {"key":"BitsPerSample","value":"(8, 8, 8)","type":"UNKNOWN","namespace":"TIFF"},
+                                {"key":"Compression","value":"JPEG","type":"STRING","namespace":"TIFF"},
+                                {"key":"PhotometricInterpretation","value":"YCBCR","type":"STRING","namespace":"TIFF"},
+                                {"key":"Orientation","value":"TOPLEFT","type":"STRING","namespace":"TIFF"},
+                                {"key":"SamplesPerPixel","value":3,"type":"INTEGER","namespace":"TIFF"},
+                                {"key":"XResolution","value":"(429496703, 4294967295)","type":"UNKNOWN","namespace":"TIFF"},
+                                {"key":"YResolution","value":"(429496703, 4294967295)","type":"UNKNOWN","namespace":"TIFF"},
+                                {"key":"PlanarConfiguration","value":"CONTIG","type":"STRING","namespace":"TIFF"},
+                                {"key":"ResolutionUnit","value":"CENTIMETER","type":"STRING","namespace":"TIFF"},
+                                {"key":"TileWidth","value":256,"type":"INTEGER","namespace":"TIFF"},
+                                {"key":"TileLength","value":256,"type":"INTEGER","namespace":"TIFF"},
+                                {"key":"ReferenceBlackWhite","value":"(0, 1, 255, 1, 128, 1, 255, 1, 128, 1, 255, 1)","type":"UNKNOWN","namespace":"TIFF"}]
+                                }
+                                """
+                        )
                 )
         );
 
@@ -821,15 +852,71 @@ public class AbstractImageResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk());
 
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "cytomine.width")).isPresent();
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "cytomine.width").get().getValue()).isEqualTo("854");
+        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "TIFF.ImageWidth")).isPresent();
+        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "TIFF.ImageWidth").get().getValue()).isEqualTo("30720");
+
+
+        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/info"))
+                .willReturn(
+                        aResponse().withBody(
+                                """
+                                  {"image":
+                                      {
+                                          "original_format":"PYRTIFF",
+                                          "width":30720,
+                                          "height":25600,
+                                          "depth":1,
+                                          "duration":1,
+                                          "physical_size_x":100000.00617,
+                                          "physical_size_y":100000.00617,
+                                          "physical_size_z":null,
+                                          "frame_rate":null,
+                                          "n_channels":3,
+                                          "n_concrete_channels":1,
+                                          "n_samples":3,
+                                          "n_planes":1,
+                                          "are_rgb_planes":true,
+                                          "n_distinct_channels":1,
+                                          "acquired_at":null,
+                                          "description":"",
+                                          "pixel_type":"uint8",
+                                          "significant_bits":8,"bits":8},
+                                          "instrument":
+                                              {"microscope":{"model":null},
+                                               "objective":{"nominal_magnification":null,"calibrated_magnification":null}},
+                                               "associated":[],
+                                               "channels":[
+                                                  {"index":0,"suggested_name":"R","emission_wavelength":null,"excitation_wavelength":null,"color":"#f00"},
+                                                  {"index":1,"suggested_name":"G","emission_wavelength":null,"excitation_wavelength":null,"color":"#0f0"},
+                                                  {"index":2,"suggested_name":"B","emission_wavelength":null,"excitation_wavelength":null,"color":"#00f"}
+                                               ],
+                                               "representations":[
+                                                  {"role":"UPLOAD",
+                                                   "file":
+                                                      {"file_type":"SINGLE",
+                                                      "filepath":"/data/images/upload1644425985928451/LUNG1_pyr.tif",
+                                                      "stem":"LUNG1_pyr",
+                                                      "extension":".tif",
+                                                      "created_at":"2022-05-05T22:16:23.318839",
+                                                      "size":126616954,"is_symbolic":false,"role":"UPLOAD"}
+                                                      },
+                                                      {"role":"ORIGINAL",
+                                                      "file":
+                                                          {"file_type":"SINGLE","filepath":"/data/images/upload1644425985928451/processed/original.PYRTIFF","stem":"original","extension":".PYRTIFF","created_at":"2022-05-05T22:16:23.318839","size":126616954,"is_symbolic":true,"role":"ORIGINAL"}
+                                                          },
+                                                          {"role":"SPATIAL","file":{"file_type":"SINGLE","filepath":"/data/images/upload1644425985928451/processed/visualisation.PYRTIFF","stem":"visualisation","extension":".PYRTIFF","created_at":"2022-05-05T22:16:23.318839","size":126616954,"is_symbolic":true,"role":"SPATIAL"},"pyramid":{"n_tiers":8,"tiers":[{"zoom":7,"level":0,"width":30720,"height":25600,"tile_width":256,"tile_height":256,"downsampling_factor":1.0,"n_tiles":12000,"n_tx":120,"n_ty":100},{"zoom":6,"level":1,"width":15360,"height":12800,"tile_width":256,"tile_height":256,"downsampling_factor":2.0,"n_tiles":3000,"n_tx":60,"n_ty":50},{"zoom":5,"level":2,"width":7680,"height":6400,"tile_width":256,"tile_height":256,"downsampling_factor":4.0,"n_tiles":750,"n_tx":30,"n_ty":25},{"zoom":4,"level":3,"width":3840,"height":3200,"tile_width":256,"tile_height":256,"downsampling_factor":8.0,"n_tiles":195,"n_tx":15,"n_ty":13},{"zoom":3,"level":4,"width":1920,"height":1600,"tile_width":256,"tile_height":256,"downsampling_factor":16.0,"n_tiles":56,"n_tx":8,"n_ty":7},{"zoom":2,"level":5,"width":960,"height":800,"tile_width":256,"tile_height":256,"downsampling_factor":32.0,"n_tiles":16,"n_tx":4,"n_ty":4},{"zoom":1,"level":6,"width":480,"height":400,"tile_width":256,"tile_height":256,"downsampling_factor":64.0,"n_tiles":4,"n_tx":2,"n_ty":2},{"zoom":0,"level":7,"width":240,"height":200,"tile_width":256,"tile_height":256,"downsampling_factor":128.0,"n_tiles":1,"n_tx":1,"n_ty":1}]}}]}
+      
+                                  """
+                        )
+                )
+        );
 
         restAbstractImageControllerMockMvc.perform(post("/api/abstractimage/{id}/properties/extract.json", image.getId()))
                 .andDo(print())
                 .andExpect(status().isOk());
 
-        assertThat(image.getWidth()).isEqualTo(854);
-        assertThat(image.getHeight()).isEqualTo(1724);
+        assertThat(image.getWidth()).isEqualTo(30720);
+        assertThat(image.getHeight()).isEqualTo(25600);
         assertThat(image.getColorspace()).isEqualTo("empty");
     }
 

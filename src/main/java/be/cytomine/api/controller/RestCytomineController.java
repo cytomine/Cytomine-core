@@ -19,6 +19,7 @@ package be.cytomine.api.controller;
 import be.cytomine.api.controller.utils.RequestParams;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.CytomineSocialDomain;
+import be.cytomine.dto.PimsResponse;
 import be.cytomine.dto.JsonInput;
 import be.cytomine.dto.JsonMultipleObject;
 import be.cytomine.dto.JsonSingleObject;
@@ -41,9 +42,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -53,7 +52,6 @@ import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -86,6 +84,10 @@ public abstract class RestCytomineController {
 //            response(data);
 //        }
 //    }
+
+    protected String getRequestETag() {
+        return request.getHeader("If-None-Match")!=null ? request.getHeader("If-None-Match") : request.getHeader("if-none-match");
+    }
 
     protected RequestParams retrievePageableParameters() {
         RequestParams requestParams = retrieveRequestParam();
@@ -581,6 +583,26 @@ public abstract class RestCytomineController {
         response.getWriter().flush();
     }
 
+    protected void responseImage(PimsResponse image) throws IOException {
+        // TODO: insread of loading the image in byte[] then in response, we should try to connect
+        // PIMS answer directly to the response.outpustream
+        String contentType = image.getHeaders().get("Content-Type");
+        if (request.getMethod().equals("HEAD")) {
+            responseString(contentType, "");
+        }
+        else {
+            for (Map.Entry<String, String> entry : image.getHeaders().entrySet()) {
+                response.setHeader(entry.getKey(), entry.getValue());
+            }
+            response.setContentLength(image.getContent().length);
+            try(OutputStream os = response.getOutputStream()) {
+                os.write(image.getContent() , 0, image.getContent().length);
+                os.flush();
+            }
+        }
+    }
+
+
     /**
      * Response an image as a HTTP response
      * @param bytes Image
@@ -605,7 +627,14 @@ public abstract class RestCytomineController {
                 } else {
                     responseImageByteArray("image/tiff", bytes);
                 }
-            } else if (format.equals("png")) {
+            } else if (format.equals("webp")) {
+                if (request.getMethod().equals("HEAD")) {
+                    responseString("image/webp", "");
+                } else {
+                    responseImageByteArray("image/webp", bytes);
+                }
+            }
+            else if (format.equals("png")) {
                 if (request.getMethod().equals("HEAD")) {
                     responseString("image/png", "");
                 } else {

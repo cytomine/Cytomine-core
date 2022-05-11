@@ -16,9 +16,11 @@ package be.cytomine.service.utils;
 * limitations under the License.
 */
 
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.WrongArgumentException;
+import be.cytomine.repository.image.SliceInstanceRepository;
 import be.cytomine.service.dto.Kmeans;
 import be.cytomine.service.ontology.AnnotationIndexService;
 import com.vividsolutions.jts.geom.Geometry;
@@ -42,6 +44,8 @@ public class KmeansGeometryService {
     private final AnnotationIndexService annotationIndexService;
 
     private final EntityManager entityManager;
+
+    private final SliceInstanceRepository sliceInstanceRepository;
 
     public static final int FULL = 3;
     public static final int KMEANSFULL = 2;
@@ -105,27 +109,34 @@ public class KmeansGeometryService {
         return data;
     }
 
-    public int mustBeReduce(Long slice, Long user, String bbox) {
-        SliceInstance sliceInstance = entityManager.find(SliceInstance.class, slice);
+    public int mustBeReduce(List<Long> slices, Long user, String bbox) {
+        List<SliceInstance> sliceInstances = sliceInstanceRepository.findAllById(slices);
 
         SecUser secUser = null;
         if (user!=null) {
             secUser = entityManager.find(SecUser.class, user);
         }
         try {
-            return mustBeReduce(sliceInstance, secUser,new WKTReader().read(bbox));
+            return mustBeReduce(sliceInstances, secUser,new WKTReader().read(bbox));
         } catch (ParseException e) {
             throw new WrongArgumentException("Annotation location cannot be converted to geometry: " + bbox);
         }
     }
 
 
-    public int mustBeReduce(SliceInstance slice, SecUser user, Geometry bbox) {
-        if (slice.getImage().getBaseImage().getWidth()==null) {
+    public int mustBeReduce(List<SliceInstance> slices, SecUser user, Geometry bbox) {
+        List<ImageInstance> images = slices.stream().map(x -> x.getImage()).distinct().toList();
+
+        if (images.size() != 1) {
+            throw new WrongArgumentException("To use kmeans, all slices must belong to the same image.");
+        }
+        ImageInstance image = images.get(0);
+
+        if (image.getBaseImage().getWidth()==null) {
             return  FULL;
         }
 
-        double imageWidth = slice.getImage().getBaseImage().getWidth();
+        double imageWidth = image.getBaseImage().getWidth();
         double bboxWidth = bbox.getEnvelopeInternal().getWidth();
 
         double ratio = bboxWidth/imageWidth;
@@ -134,7 +145,7 @@ public class KmeansGeometryService {
 
         Map<Integer, Integer> ruleLine = rules.get(Math.min(ratio25,100));
 
-        long numberOfAnnotation = Math.max(0, annotationIndexService.count(slice,user));
+        long numberOfAnnotation = Math.max(0, annotationIndexService.count(slices,user));
 
         Integer rule = getRuleForNumberOfAnnotations(numberOfAnnotation, ruleLine);
         return rule;
