@@ -311,6 +311,7 @@ public class SecurityACLService {
         }
     }
 
+
     public void checkIsSameUserOrAdminContainer(CytomineDomain domain,SecUser user,SecUser currentUser) {
         boolean isNotSameUser = (!currentRoleService.isAdminByNow(currentUser) && (!Objects.equals(user.getId(), currentUser.getId())));
         if (isNotSameUser) {

@@ -15,12 +15,14 @@ public abstract class CytomineWebSocketHandler extends TextWebSocketHandler {
 
     public Map<String, ConcurrentWebSocketSessionDecorator[]> afterConnectionEstablished(WebSocketSession session, Map<String, ConcurrentWebSocketSessionDecorator[]> sessions) {
         ConcurrentWebSocketSessionDecorator sessionDecorator = new ConcurrentWebSocketSessionDecorator(session, 1000, 8192);
-        String userID = session.getAttributes().get("userID").toString();
+        String userID = session.getAttributes().get("userId").toString();
+
         if(sessions.keySet().contains(userID)){
             ConcurrentWebSocketSessionDecorator[] oldSessions = sessions.get(userID);
             ConcurrentWebSocketSessionDecorator[] newSessions = addSession(oldSessions, sessionDecorator);
             sessions.replace(userID, oldSessions, newSessions);
-        }else{
+        }
+        else{
             ConcurrentWebSocketSessionDecorator[] newSessions = {sessionDecorator};
             sessions.put(userID, newSessions);
         }
@@ -36,7 +38,7 @@ public abstract class CytomineWebSocketHandler extends TextWebSocketHandler {
         return newSessions;
     }
 
-    protected void sendWebSocketMessage(ConcurrentWebSocketSessionDecorator s, TextMessage message) throws ServerException {
+    protected void sendWebSocketMessage(WebSocketSession s, TextMessage message) throws ServerException {
         if(s.isOpen()){
             try {
                 s.sendMessage(message);

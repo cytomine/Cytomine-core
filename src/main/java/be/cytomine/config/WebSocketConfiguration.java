@@ -22,7 +22,7 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(webSocketUserPositionHandler,"/user-position/*").setAllowedOrigins("*").addInterceptors(idInterceptor());
+        registry.addHandler(webSocketUserPositionHandler,"/user-position/*/*/*").setAllowedOrigins("*").addInterceptors(idInterceptor());
     }
 
     @Bean
@@ -30,12 +30,15 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
         return new HandshakeInterceptor() {
             @Override
             public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, org.springframework.web.socket.WebSocketHandler wsHandler, Map<String, Object> attributes) {
-
                 String path = request.getURI().getPath();
                 String[] splitPath = path.split("/");
-                String userID = splitPath[splitPath.length - 1];
 
-                attributes.put("userID", userID);
+                String userId = splitPath[splitPath.length - 3];
+                String imageId = splitPath[splitPath.length - 2];
+                String broadcast = splitPath[splitPath.length - 1];
+                attributes.put("userId", userId);
+                attributes.put("imageId", imageId);
+                attributes.put("broadcast", broadcast);
                 return true;
             }
             @Override

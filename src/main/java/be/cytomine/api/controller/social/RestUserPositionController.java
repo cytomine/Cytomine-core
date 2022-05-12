@@ -124,7 +124,7 @@ public class RestUserPositionController extends RestCytomineController {
             sliceInstance = sliceInstanceService.find(sliceId)
                     .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", sliceId));
         }
-        userPositionService.addToUsersTracked((User) user, (User) currentUserService.getCurrentUser(), imageInstance);
+        userPositionService.addAsFollower((User) user, (User) currentUserService.getCurrentUser(), imageInstance);
         return responseSuccess(userPositionService.lastPositionByUser(imageInstance, sliceInstance, user, broadcast).map(LastUserPosition::toJsonObject).orElse(new JsonObject()));
     }
 
@@ -180,7 +180,9 @@ public class RestUserPositionController extends RestCytomineController {
             @PathVariable("image") Long imageId,
             @PathVariable("user") Long userId) {
         log.debug("REST request get list of followers");
-        securityACLService.checkCurrentUserIsUser();
+        SecUser user = secUserService.find(userId)
+                .orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
+        securityACLService.checkIsSameUser(currentUserService.getCurrentUser(), user);
 
         ImageInstance imageInstance =
                 imageInstanceService.find(imageId).orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));

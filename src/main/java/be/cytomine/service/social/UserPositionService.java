@@ -138,7 +138,7 @@ public class UserPositionService {
 //    }
 
     // usersTracked key -> "trackedUserId/imageId"
-    public static Map<String, List<User>> usersTracked = new HashMap<>();
+    public static Map<String, List<User>> broadcasters = new HashMap<>();
 
     // usersTracking key -> "followerId/imageId"
     public static Map<String, Boolean> followers = new HashMap<>();
@@ -174,7 +174,7 @@ public class UserPositionService {
 
         if(lastPosition.isPresent() && !LastUserPosition.isSameLocation(lastPosition.get().getLocation(), currentLocation)){
             try{
-                webSocketUserPositionHandler.userHasMoved(user.getId().toString(), imageInstance.getId().toString(), position.toJsonObject().toJsonString());
+                webSocketUserPositionHandler.sendPositionToFollowers(user.getId().toString(), imageInstance.getId().toString(), position.toJsonObject().toJsonString());
             }catch (ServerException e){
                 log.error(e.getMessage());
             }
@@ -198,23 +198,23 @@ public class UserPositionService {
         return persistedPosition;
     }
 
-    public void addToUsersTracked(User tracked, User follower, ImageInstance imageInstance){
-        String trackedAndImageId = tracked.getId().toString() + "/" + imageInstance.getId().toString();
+    public void addAsFollower(User broadcaster, User follower, ImageInstance imageInstance){
+        String broadcasterAndImageId = broadcaster.getId().toString() + "/" + imageInstance.getId().toString();
         String followerAndImageId = follower.getId().toString() + "/" + imageInstance.getId().toString();
 
-        if (usersTracked.keySet().contains(trackedAndImageId)) {
-            List <String> userIds = usersTracked.get(trackedAndImageId).stream()
-                    .map(user -> user.getId().toString()).collect(toList());
+        if (broadcasters.keySet().contains(broadcasterAndImageId)) {
+            List <String> userIds = broadcasters.get(broadcasterAndImageId).stream()
+                    .map(user -> user.getId().toString()).toList();
 
             if(!userIds.contains(follower.getId().toString())){
-                usersTracked.get(trackedAndImageId).add(follower);
+                broadcasters.get(broadcasterAndImageId).add(follower);
                 followers.put(followerAndImageId, true);
             }else{
-                boolean oldValue = followers.get(followerAndImageId);
-                followers.replace(followerAndImageId, oldValue, true);
+                // Mark as fetching
+                followers.replace(followerAndImageId, followers.get(followerAndImageId), true);
             }
         } else {
-            usersTracked.put(trackedAndImageId, new ArrayList<>(Collections.singleton(follower)));
+            broadcasters.put(broadcasterAndImageId, new ArrayList<>(Collections.singleton(follower)));
             followers.put(followerAndImageId, true);
         }
     }
@@ -298,22 +298,23 @@ public class UserPositionService {
 
     public List<String> listFollowers(Long userId, Long imageId){
         String userAndImageId = userId.toString()+"/"+imageId.toString();
-        List<String> usersIds = new ArrayList<>();
+        List<String> followersIds = new ArrayList<>();
 
-        ConcurrentWebSocketSessionDecorator[] sessions = WebSocketUserPositionHandler.sessionsTracked.get(userAndImageId);
-        if(sessions != null) {
-            usersIds = webSocketUserPositionHandler.getSessionsUserIds(sessions).stream().distinct().collect(toList());
+        ConcurrentWebSocketSessionDecorator broadcastSession = WebSocketUserPositionHandler.sessionsBroadcast.get(userAndImageId);
+        ConcurrentWebSocketSessionDecorator[] followers = WebSocketUserPositionHandler.sessionsTracked.get(broadcastSession);
+        if(followers != null) {
+            followersIds = webSocketUserPositionHandler.getSessionsUserIds(followers).stream().distinct().toList();
         }
 
-        List<User> poolingUsers = usersTracked.get(userAndImageId);
+        List<User> poolingUsers = broadcasters.get(userAndImageId);
         if(poolingUsers != null){
             for(User user : poolingUsers){
-                if(!usersIds.contains(user.getId().toString())){
-                    usersIds.add(user.getId().toString());
+                if(!followersIds.contains(user.getId().toString())){
+                    followersIds.add(user.getId().toString());
                 }
             }
         }
-        return usersIds;
+        return followersIds;
     }
 
     public List<Map<String, Object>> summarize(ImageInstance image, SecUser user, SliceInstance slice, Long afterThan, Long beforeThan) {
@@ -386,31 +387,34 @@ public class UserPositionService {
     }
 
     public void removeFollower(Map.Entry<String, Boolean> entry){
-        String[] entries = entry.getKey().split("/");
-        Long followerId = Long.parseLong(entries[0]);
-        String imageId = entries[1];
+        String[] splitEntry = entry.getKey().split("/");
+        String followerId = splitEntry[0];
+        String imageId = splitEntry[1];
 
-        for(Map.Entry<String, List<User>> trackedEntry : usersTracked.entrySet()){
-            String key = trackedEntry.getKey();
-            String entryImageId = key.split("/")[1];
+        // For each broadcaster
+        for(Map.Entry<String, List<User>> trackedEntry : broadcasters.entrySet()){
+            String broadcaster = trackedEntry.getKey();
+            String entryImageId = broadcaster.split("/")[1];
 
+            // If he is same image
             if(entryImageId.equals(imageId)){
-                List<String> userIds = trackedEntry.getValue().stream().map(user -> user.getId().toString()).collect(toList());
-                if(userIds.contains(followerId.toString())){
-                    removeFollower(followerId, key);
+                List<String> userIds = trackedEntry.getValue().stream().map(user -> user.getId().toString()).toList();
+                // and one of his follower id is followerId
+                if(userIds.contains(followerId)){
+                    removeFollower(Long.parseLong(followerId), broadcaster);
                 }
             }
         }
     }
 
-    private void removeFollower(Long followerId, String key){
-        List<User> newUsers = new ArrayList<>();
-        for(User user : usersTracked.get(key)){
+    private void removeFollower(Long followerId, String broadcaster){
+        List<User> newFollowers = new ArrayList<>();
+        for(User user : broadcasters.get(broadcaster)){
             if(!user.getId().equals(followerId)){
-                newUsers.add(user);
+                newFollowers.add(user);
             }
         }
-        usersTracked.replace(key, newUsers);
+        broadcasters.replace(broadcaster, newFollowers);
     }
 
     @PostConstruct
