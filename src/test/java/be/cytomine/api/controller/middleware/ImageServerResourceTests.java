@@ -147,7 +147,8 @@ public class ImageServerResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.id=='MRXS')]").exists());
+                .andExpect(jsonPath("$.collection[?(@.id=='MRXS')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.id=='VMS')].remarks").value("One .vms file, one .opt optimization file and several .jpg with same name, packed in an archive. "));
     }
 
 }

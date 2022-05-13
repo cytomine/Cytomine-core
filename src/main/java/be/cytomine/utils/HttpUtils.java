@@ -17,18 +17,24 @@ package be.cytomine.utils;
 */
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Scanner;
 
 public class HttpUtils {
 
-    public static String getContentFromUrl(String url) throws IOException {
-        Scanner s = new Scanner(new URL(url).openStream());
-        StringBuffer data = new StringBuffer();
-        while(s.hasNext()) {
-            data.append(s.next());
-        }
-        return data.toString();
+    public static String getContentFromUrl(String weburl) throws IOException {
+//        Scanner s = new Scanner(new URL(url).openStream(), "UTF-8");
+//        StringBuffer data = new StringBuffer();
+//        while(s.hasNext()) {
+//            data.append(s.next());
+//        }
+//        return data.toString();
+        URL url = new URL(weburl);
+        URLConnection con = url.openConnection();
+        InputStream in = con.getInputStream();
+        return new String(in.readAllBytes());
     }
 
 

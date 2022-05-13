@@ -583,10 +583,10 @@ public class ImageServerService extends ModelService {
 
 
     private static Map<String, String> extractPIMSHeaders(HttpHeaders headers) {
-        List<String> names = List.of("Cache-Control", "ETag", "X-Annotation-Origin", "X-Image-Size-Limit");
+        List<String> names = List.of("Cache-Control", "ETag", "X-Annotation-Origin", "X-Image-Size-Limit", "Content-Type");
         Map<String, String> extractedHeaders = new LinkedHashMap<>();
         for (String name : names) {
-            String value = headers.firstValue(name).isEmpty() ? headers.firstValue(name.toLowerCase()).orElse(null) : null;
+            String value = headers.firstValue(name).isEmpty() ? headers.firstValue(name.toLowerCase()).orElse(null) : headers.firstValue(name).get();
             if (value!=null) {
                 extractedHeaders.put(name, value); //h.getValue()?)
             }
@@ -617,11 +617,12 @@ public class ImageServerService extends ModelService {
                     .version(HttpClient.Version.HTTP_1_1)
                     .build();
         if ((fullUrl).length() < GET_URL_MAX_LENGTH && (httpMethod==null || httpMethod.equals("GET"))) {
-            log.debug(fullUrl);
+            log.debug("GET " + fullUrl);
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                     .GET()
                     .uri(URI.create(fullUrl))
-                    .setHeader("Content-Type", "application/x-www-form-urlencoded");
+                    .setHeader("content-type", "application/x-www-form-urlencoded")
+                    .setHeader("Accept", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
             for (Map.Entry<String, Object> entry : headers.entrySet()) {
                 requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
             }
@@ -631,18 +632,18 @@ public class ImageServerService extends ModelService {
             HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
             return processResponse(fullUrl, responseContentType, response);
         } else {
-            log.debug(imageServerInternalUrl + path);
+            log.debug("POST " + imageServerInternalUrl + path);
             log.debug(JsonObject.toJsonString(parameters));
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                     .POST(HttpRequest.BodyPublishers.ofString(JsonObject.toJsonString(parameters)))
                     .uri(URI.create(imageServerInternalUrl + path))
-                    .setHeader("Content-Type", "application/json");
+                    .setHeader("Accept", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+                    .setHeader("content-type", "application/json");
 
             for (Map.Entry<String, Object> entry : headers.entrySet()) {
                 requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
             }
             HttpRequest request = requestBuilder.build();
-
             HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
             return processResponse(fullUrl, responseContentType, response);
         }

@@ -60,7 +60,7 @@ public class ServerController extends RestCytomineController {
     private final TokenProvider tokenProvider;
 
     //@Secured("IS_AUTHENTICATED_REMEMBERED") //TODO????
-    @RequestMapping(value = "/server/ping.json", method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value = {"/server/ping.json", "/server/ping"}, method = {RequestMethod.GET, RequestMethod.POST}) // without.json is deprecated
     public ResponseEntity<String> ping(HttpSession session) throws IOException {
         log.debug("REST request to ping");
         JsonObject json = super.mergeQueryParamsAndBodyParams();
