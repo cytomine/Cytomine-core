@@ -104,7 +104,7 @@ public class ImageInstanceResourceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
+        image.getUploadedFile().setContentType("MRXS");
         ImageInstance imageInstance = builder.given_an_image_instance(image, builder.given_a_project());
         imageInstance.setInstanceFilename("CMU-2");
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
@@ -131,7 +131,7 @@ public class ImageInstanceResourceTests {
                 .andExpect(jsonPath("$.baseImage").value(image.getBaseImage().getId()))
                 .andExpect(jsonPath("$.project").value(image.getProject().getId()))
 
-                .andExpect(jsonPath("$.path").value("/data/images/"+builder.given_superadmin().getId()+"/1636379100999/CMU-2/CMU-2.mrxs"))
+                .andExpect(jsonPath("$.path").value("1636379100999/CMU-2/CMU-2.mrxs"))
                 .andExpect(jsonPath("$.blindedName").hasJsonPath())
                 .andExpect(jsonPath("$.instanceFilename").value("CMU-2"))
                 .andExpect(jsonPath("$.originalFilename").exists())

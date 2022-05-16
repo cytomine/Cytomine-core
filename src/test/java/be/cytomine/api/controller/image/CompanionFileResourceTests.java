@@ -231,7 +231,7 @@ public class CompanionFileResourceTests {
         companionFile.getUploadedFile().getImageServer().setBasePath("/data/images");
         companionFile.setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         companionFile.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        companionFile.getUploadedFile().setContentType("openslide/mrxs");
+        companionFile.getUploadedFile().setContentType("MRXS");
 
         MvcResult mvcResult = restCompanionFileControllerMockMvc.perform(get("/api/companionfile/{id}/download", companionFile.getId()))
                 .andDo(print()).andReturn();

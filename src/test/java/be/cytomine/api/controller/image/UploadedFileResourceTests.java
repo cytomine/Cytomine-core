@@ -512,7 +512,7 @@ public class UploadedFileResourceTests {
         uploadedFile.getImageServer().setBasePath("/data/images");
         uploadedFile.getImageServer().setUrl("http://localhost:8888");
         uploadedFile.setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        uploadedFile.setContentType("openslide/mrxs");
+        uploadedFile.setContentType("MRXS");
         MvcResult mvcResult = restUploadedFileControllerMockMvc.perform(get("/api/uploadedfile/{id}/download", uploadedFile.getId()))
                 .andDo(print()).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);

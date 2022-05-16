@@ -448,7 +448,7 @@ public class BasicInstanceBuilder {
 
     public AbstractSlice given_an_abstract_slice(AbstractImage abstractImage, int c, int z, int t) {
         AbstractSlice slice = given_a_not_persisted_abstract_slice(abstractImage, given_a_uploaded_file());
-        slice.setMime(given_a_mime(abstractImage.getContentType()));
+        slice.setMime(given_a_mime("openslide/mrxs"));
         slice.setChannel(c);
         slice.setZStack(z);
         slice.setTime(t);
@@ -519,7 +519,7 @@ public class BasicInstanceBuilder {
     }
 
     public Mime given_a_mime(String mimeType) {
-        return mimeRepository.findByMimeType(mimeType).orElseThrow(() -> new ObjectNotFoundException("MimeTYpe", mimeType));
+        return mimeRepository.findByMimeType(mimeType).orElseThrow(() -> new ObjectNotFoundException("MimeType", mimeType));
     }
 
     public NestedImageInstance given_a_nested_image_instance() {

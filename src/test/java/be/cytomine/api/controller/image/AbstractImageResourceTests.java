@@ -413,11 +413,11 @@ public class AbstractImageResourceTests {
                 .andExpect(jsonPath("$.id").value(image.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.image.AbstractImage"))
                 .andExpect(jsonPath("$.created").exists())
-                .andExpect(jsonPath("$.contentType").value("openslide/mrxs"))
+                .andExpect(jsonPath("$.contentType").value("MRXS"))
                 .andExpect(jsonPath("$.preview").value("http://localhost:8080/api/abstractimage/"+image.getId()+"/thumb.png?maxSize=1024"))
                 .andExpect(jsonPath("$.thumb").value("http://localhost:8080/api/abstractimage/"+image.getId()+"/thumb.png?maxSize=512"))
                 .andExpect(jsonPath("$.macroURL").value("http://localhost:8080/api/abstractimage/"+image.getId()+"/associated/macro.png?maxWidth=512"))
-                .andExpect(jsonPath("$.path").value("/data/images/"+builder.given_superadmin().getId()+"/1636379100999/CMU-2/CMU-2.mrxs"))
+                .andExpect(jsonPath("$.path").value("1636379100999/CMU-2/CMU-2.mrxs"))
                 .andExpect(jsonPath("$.height").value(220696))
                 .andExpect(jsonPath("$.width").value(109240))
                 .andExpect(jsonPath("$.physicalSizeY").hasJsonPath())
@@ -553,7 +553,7 @@ public class AbstractImageResourceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
+        image.getUploadedFile().setContentType("MRXS");
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
@@ -590,7 +590,7 @@ public class AbstractImageResourceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
+        image.getUploadedFile().setContentType("MRXS");
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
@@ -637,7 +637,7 @@ public class AbstractImageResourceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
+        image.getUploadedFile().setContentType("MRXS");
         configureFor("localhost", 8888);
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
@@ -778,7 +778,7 @@ public class AbstractImageResourceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
+        image.getUploadedFile().setContentType("MRXS");
         return image;
     }
 
@@ -815,7 +815,7 @@ public class AbstractImageResourceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
+        image.getUploadedFile().setContentType("MRXS");
 
 
         image.setWidth(1);

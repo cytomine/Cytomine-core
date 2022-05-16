@@ -205,7 +205,7 @@ public class ImageServerServiceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
+        image.getUploadedFile().setContentType("MRXS");
 
         assertThat(imageServerService.downloadUri(image))
                 .isEqualTo("http://localhost:8888/file/" + image.getPath() + "/export");
@@ -220,7 +220,7 @@ public class ImageServerServiceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
+        image.getUploadedFile().setContentType("MRXS");
 
 
         configureFor("localhost", 8888); //       /image/upload1644425985928451/LUNG1_pyr.tif/info
@@ -290,7 +290,7 @@ public class ImageServerServiceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
+        image.getUploadedFile().setContentType("MRXS");
         configureFor("localhost", 8888);
         stubFor(get(urlEqualTo("/image/" + image.getPath() + "/info/associated"))
                 .willReturn(
@@ -309,7 +309,7 @@ public class ImageServerServiceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
+        image.getUploadedFile().setContentType("MRXS");
         configureFor("localhost", 8888);
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
@@ -336,7 +336,7 @@ public class ImageServerServiceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
+        image.getUploadedFile().setContentType("MRXS");
 
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
         slice.setUploadedFile(image.getUploadedFile());
@@ -384,7 +384,7 @@ public class ImageServerServiceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
+        image.getUploadedFile().setContentType("MRXS");
 
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
         slice.setUploadedFile(image.getUploadedFile());
@@ -434,7 +434,7 @@ public class ImageServerServiceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("openslide/mrxs");
+        image.getUploadedFile().setContentType("MRXS");
 
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
         slice.setUploadedFile(image.getUploadedFile());
