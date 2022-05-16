@@ -278,9 +278,11 @@ public class ImageConsultationService {
                 jsonObject.put("image", imageInstanceId);
                 jsonObject.put("user", result.get("user"));
                 jsonObject.put("time", result.get("time"));
-                jsonObject.put("imageThumb", UrlApi.getImageInstanceThumbUrl(image.getId()));
+                if(image!=null) {
+                    jsonObject.put("imageThumb", UrlApi.getImageInstanceThumbUrl(image.getId()));
+                    jsonObject.put("project", image.getProject().getId());
+                }
                 jsonObject.put("imageName", filename);
-                jsonObject.put("project", image.getProject().getId());
                 jsonObject.put("countCreatedAnnotations", result.get("countCreatedAnnotations"));
                 data.add(jsonObject);
             } catch (CytomineException e) {
