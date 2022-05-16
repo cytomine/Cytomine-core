@@ -108,9 +108,9 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
 
         // TODO : Uncomment to bypass authentication (websocket are not longer authenticated)
         // Comment for tests
-        List<GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken("admin", "adminPassword", authorities);
-        SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+         List<GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_ADMIN"));
+         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken("admin", "adminPassword", authorities);
+         SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
 
         ImageInstance imageInstance = imageInstanceService.get(imageId);
         SecUser secUser = secUserService.get(userId);

@@ -310,7 +310,9 @@ public class UserPositionService {
         if(poolingUsers != null){
             for(User user : poolingUsers){
                 if(!followersIds.contains(user.getId().toString())){
-                    followersIds.add(user.getId().toString());
+                    List<String> followersIdsList = new ArrayList<>(followersIds);
+                    followersIdsList.add(user.getId().toString());
+                    followersIds = followersIdsList;
                 }
             }
         }

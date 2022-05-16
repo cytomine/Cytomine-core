@@ -141,8 +141,8 @@ public class UserPositionResourceTests {
                         .param("broadcast", "true"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
-                .andExpect(jsonPath("$.collection[0]").value(user.getId()));
+                .andExpect(jsonPath("$.users", hasSize(equalTo(1))))
+                .andExpect(jsonPath("$.users[0]").value(user.getId()));
     }
 
 
@@ -159,7 +159,7 @@ public class UserPositionResourceTests {
                         .param("broadcast", "true"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
+                .andExpect(jsonPath("$.users", hasSize(equalTo(0))));
     }
 
     @Test
