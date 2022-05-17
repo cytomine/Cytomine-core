@@ -261,7 +261,7 @@ public class UserPositionService {
         List<Document> results = persistentProjectConnection.aggregate(request)
                 .into(new ArrayList<>());
 
-        return results.stream().map(x -> x.getLong("_id")).collect(toList());
+        return results.stream().map(x -> x.getLong("_id")).toList();
     }
 
     public List<PersistentUserPosition> list(ImageInstance image, SecUser user, SliceInstance slice, Long afterThan, Long beforeThan, Integer max, Integer offset){

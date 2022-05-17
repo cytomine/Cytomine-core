@@ -49,7 +49,6 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         sessions = super.afterConnectionEstablished(session, sessions);
-
         String userId = session.getAttributes().get("userId").toString();
         String imageId = session.getAttributes().get("imageId").toString();
         Boolean broadcast = Boolean.parseBoolean(session.getAttributes().get("broadcast").toString());
@@ -74,7 +73,6 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         else{
             removeSessionFromTrackerSessions(session);
         }
-
         removeFromSessions(session);
         log.debug("Closing user position WebSocket connection from {}", session.getRemoteAddress());
     }
@@ -87,30 +85,35 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
 
         ConcurrentWebSocketSessionDecorator broadcastSession = sessionsBroadcast.get(broadcasterId+"/"+imageId);
         addToTrackedSessions(broadcastSession, sessions.get(followerId));
-        moveFollower(Long.parseLong(broadcasterId), Long.parseLong(imageId), session);
+        moveFollowerAfterInitialConnection(Long.parseLong(broadcasterId), Long.parseLong(imageId), session);
     }
 
     private void addToTrackedSessions(ConcurrentWebSocketSessionDecorator broadcastSession, ConcurrentWebSocketSessionDecorator[] trackingSessions){
         if (this.sessionsTracked.containsKey(broadcastSession)) {
-            ConcurrentWebSocketSessionDecorator[] newSessions = this.sessionsTracked.get(broadcastSession);
+            ConcurrentWebSocketSessionDecorator[] trackedSessions = this.sessionsTracked.get(broadcastSession);
 
             for (ConcurrentWebSocketSessionDecorator newSession : trackingSessions) {
-                newSessions = addSession(newSessions, newSession);
+                List<String> trackSessionsIds = Arrays.stream(trackedSessions).map(session -> session.getId()).toList();
+                if(!trackSessionsIds.contains(newSession.getId())){
+                    trackedSessions = addSession(trackedSessions, newSession);
+                }
             }
 
-            this.sessionsTracked.replace(broadcastSession, this.sessionsTracked.get(broadcastSession), newSessions);
+            this.sessionsTracked.replace(broadcastSession, this.sessionsTracked.get(broadcastSession), trackedSessions);
         } else {
             this.sessionsTracked.put(broadcastSession, trackingSessions);
         }
     }
 
-    private void moveFollower(Long userId, Long imageId, WebSocketSession session){
+    private void moveFollowerAfterInitialConnection(Long userId, Long imageId, WebSocketSession session){
 
         // TODO : Uncomment to bypass authentication (websocket are not longer authenticated)
         // Comment for tests
+        // ------------------------------------------------ //
          List<GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_ADMIN"));
          UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken("admin", "adminPassword", authorities);
          SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+        // ------------------------------------------------ //
 
         ImageInstance imageInstance = imageInstanceService.get(imageId);
         SecUser secUser = secUserService.get(userId);
@@ -185,9 +188,10 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
             List<String> sessionsIds = Arrays.stream(entry.getValue()).map(value -> value.getId()).toList();
 
             if (sessionsIds.contains(session.getId())) {
-                ConcurrentWebSocketSessionDecorator[] oldSessions = this.sessions.get(entry.getKey());
+                String userId = entry.getKey();
+                ConcurrentWebSocketSessionDecorator[] oldSessions = this.sessions.get(userId);
                 ConcurrentWebSocketSessionDecorator[] newSessions = removeSession(oldSessions, session);
-                this.sessions.replace(entry.getKey(), oldSessions, newSessions);
+                this.sessions.replace(userId, oldSessions, newSessions);
             }
         }
     }
