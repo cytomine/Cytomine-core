@@ -84,23 +84,25 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         String imageId = session.getAttributes().get("imageId").toString();
 
         ConcurrentWebSocketSessionDecorator broadcastSession = sessionsBroadcast.get(broadcasterId+"/"+imageId);
-        addToTrackedSessions(broadcastSession, sessions.get(followerId));
+        addToTrackedSessions(broadcastSession, getSession(followerId, session.getId()));
         moveFollowerAfterInitialConnection(Long.parseLong(broadcasterId), Long.parseLong(imageId), session);
     }
 
-    private void addToTrackedSessions(ConcurrentWebSocketSessionDecorator broadcastSession, ConcurrentWebSocketSessionDecorator[] trackingSessions){
+    private ConcurrentWebSocketSessionDecorator getSession(String followerId, String sessionId){
+        return Arrays.stream(this.sessions.get(followerId)).filter(session -> session.getId().equals(sessionId)).toList().get(0);
+    }
+
+    private void addToTrackedSessions(ConcurrentWebSocketSessionDecorator broadcastSession, ConcurrentWebSocketSessionDecorator trackingSession){
         if (this.sessionsTracked.containsKey(broadcastSession)) {
             ConcurrentWebSocketSessionDecorator[] trackedSessions = this.sessionsTracked.get(broadcastSession);
 
-            for (ConcurrentWebSocketSessionDecorator newSession : trackingSessions) {
-                List<String> trackSessionsIds = Arrays.stream(trackedSessions).map(session -> session.getId()).toList();
-                if(!trackSessionsIds.contains(newSession.getId())){
-                    trackedSessions = addSession(trackedSessions, newSession);
-                }
+            List<String> trackSessionsIds = Arrays.stream(trackedSessions).map(session -> session.getId()).toList();
+            if(!trackSessionsIds.contains(trackingSession.getId())){
+                trackedSessions = addSession(trackedSessions, trackingSession);
             }
-
             this.sessionsTracked.replace(broadcastSession, this.sessionsTracked.get(broadcastSession), trackedSessions);
         } else {
+            ConcurrentWebSocketSessionDecorator[] trackingSessions = new ConcurrentWebSocketSessionDecorator[]{trackingSession};
             this.sessionsTracked.put(broadcastSession, trackingSessions);
         }
     }
@@ -110,9 +112,9 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         // TODO : Uncomment to bypass authentication (websocket are not longer authenticated)
         // Comment for tests
         // ------------------------------------------------ //
-         List<GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_ADMIN"));
-         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken("admin", "adminPassword", authorities);
-         SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+        List<GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken("admin", "adminPassword", authorities);
+        SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
         // ------------------------------------------------ //
 
         ImageInstance imageInstance = imageInstanceService.get(imageId);
