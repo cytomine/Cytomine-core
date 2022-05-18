@@ -18,6 +18,7 @@ import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorato
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -138,6 +139,34 @@ public class WebSocketUserPositionTests {
     }
 
     @Test
+    public void add_track_session_who_is_already_tracking() {
+        ConcurrentWebSocketSessionDecorator followerSession = mock(ConcurrentWebSocketSessionDecorator.class);
+        ConcurrentWebSocketSessionDecorator broadcastSession = mock(ConcurrentWebSocketSessionDecorator.class);
+        when(followerSession.getId()).thenReturn("5678");
+
+        String userId = builder.given_a_user().getId().toString();
+        String imageInstanceId = builder.given_an_image_instance().getId().toString();
+        String userAndImageId = userId+"/"+imageInstanceId;
+
+        connectSession(followerSession, userId, imageInstanceId,"true");
+        initFollowingSession(userAndImageId, broadcastSession, followerSession);
+
+        WebSocketSession session = mock(WebSocketSession.class);
+        when(session.getId()).thenReturn("1234");
+        connectSession(session, userId, imageInstanceId,"false");
+
+        // Ask a new follow on the broadcast session
+        webSocketUserPositionHandler.handleMessage(session, new TextMessage(userId));
+
+        ConcurrentWebSocketSessionDecorator createdSession = WebSocketUserPositionHandler.sessionsBroadcast.get(userAndImageId);
+        assertThat(WebSocketUserPositionHandler.sessionsTracked.get(createdSession).length).isEqualTo(2);
+
+        // Ask a follow on the broadcast session with already tracking session
+        webSocketUserPositionHandler.handleMessage(session, new TextMessage(userId));
+        assertThat(WebSocketUserPositionHandler.sessionsTracked.get(createdSession).length).isEqualTo(2);
+    }
+
+    @Test
     public void add_some_track_sessions_to_already_tracked_user() {
         ConcurrentWebSocketSessionDecorator followerSession1 = mock(ConcurrentWebSocketSessionDecorator.class);
         ConcurrentWebSocketSessionDecorator followerSession2 = mock(ConcurrentWebSocketSessionDecorator.class);
@@ -157,19 +186,20 @@ public class WebSocketUserPositionTests {
         // Simulate that user is connected to Cytomine with 2 sessions
         connectSession(followerSession2, userId2, imageInstanceId,"false");
         connectSession(followerSession3, userId2, imageInstanceId,"false");
-        when(followerSession2.getId()).thenReturn("1234");
-        when(followerSession3.getId()).thenReturn("5678");
+        when(followerSession1.getId()).thenReturn("1");
+        when(followerSession2.getId()).thenReturn("2");
+        when(followerSession3.getId()).thenReturn("3");
 
         // Ask for session 2 only to follow the broadcast session
         WebSocketSession session = mock(WebSocketSession.class);
         when(session.getAttributes()).thenReturn(sessionAttributes(userId2, imageInstanceId, "false"));
-        when(session.getId()).thenReturn("1234");
+        when(session.getId()).thenReturn("2");
 
         webSocketUserPositionHandler.handleMessage(session, new TextMessage(userId1));
         assertThat(WebSocketUserPositionHandler.sessionsTracked.get(createdSession).length).isEqualTo(2);
 
         // Ask for session 3 only to follow the broadcast session
-        when(session.getId()).thenReturn("5678");
+        when(session.getId()).thenReturn("3");
         webSocketUserPositionHandler.handleMessage(session, new TextMessage(userId1));
         assertThat(WebSocketUserPositionHandler.sessionsTracked.get(createdSession).length).isEqualTo(3);
     }
@@ -219,6 +249,7 @@ public class WebSocketUserPositionTests {
         WebSocketSession session = mock(WebSocketSession.class);
         when(session.getAttributes()).thenReturn(sessionAttributes(userId, imageInstanceId, "true"));
         when(session.getId()).thenReturn("1234");
+        when(followerSession.getId()).thenReturn("5678");
         when(broadcastSession.getId()).thenReturn("1234");
 
         // Close the broadcastSession (by calling afterConnectionClosed with mock session with same session id)

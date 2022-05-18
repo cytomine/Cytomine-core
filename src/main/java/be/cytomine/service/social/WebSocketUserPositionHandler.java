@@ -86,22 +86,43 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         String imageId = session.getAttributes().get("imageId").toString();
 
         ConcurrentWebSocketSessionDecorator broadcastSession = sessionsBroadcast.get(broadcasterId+"/"+imageId);
-        addToTrackedSessions(broadcastSession, getSession(followerId, session.getId()));
+        ConcurrentWebSocketSessionDecorator followerSession = getSession(followerId, session.getId());
+
+        if(followerSession != null){
+            addToTrackedSessions(broadcastSession, followerSession);
+        }
+
         moveFollowerAfterInitialConnection(Long.parseLong(broadcasterId), Long.parseLong(imageId), session);
     }
 
     private ConcurrentWebSocketSessionDecorator getSession(String followerId, String sessionId){
-        return Arrays.stream(WebSocketUserPositionHandler.sessions.get(followerId)).filter(session -> session.getId().equals(sessionId)).toList().get(0);
+        ConcurrentWebSocketSessionDecorator followerSession = null;
+        ConcurrentWebSocketSessionDecorator[] followerSessions = WebSocketUserPositionHandler.sessions.get(followerId);
+
+        try {
+            followerSession = Arrays.stream(followerSessions).filter(session -> session.getId().equals(sessionId)).toList().get(0);
+        }catch (NullPointerException e){
+            log.error("Follower : " + followerId + " has no session with id : " + sessionId);
+        }
+        return followerSession;
     }
 
     private void addToTrackedSessions(ConcurrentWebSocketSessionDecorator broadcastSession, ConcurrentWebSocketSessionDecorator trackingSession){
         if (WebSocketUserPositionHandler.sessionsTracked.containsKey(broadcastSession)) {
             ConcurrentWebSocketSessionDecorator[] trackedSessions = WebSocketUserPositionHandler.sessionsTracked.get(broadcastSession);
 
-            List<String> trackSessionsIds = Arrays.stream(trackedSessions).map(WebSocketSessionDecorator::getId).toList();
-            if(!trackSessionsIds.contains(trackingSession.getId())){
+            boolean alreadyContainsSession = false;
+            for (ConcurrentWebSocketSessionDecorator trackedSession : trackedSessions) {
+                if (trackedSession.getId().equals(trackingSession.getId())) {
+                    alreadyContainsSession = true;
+                    break;
+                }
+            }
+
+            if(!alreadyContainsSession){
                 trackedSessions = addSession(trackedSessions, trackingSession);
             }
+
             WebSocketUserPositionHandler.sessionsTracked.replace(broadcastSession, WebSocketUserPositionHandler.sessionsTracked.get(broadcastSession), trackedSessions);
         } else {
             ConcurrentWebSocketSessionDecorator[] trackingSessions = new ConcurrentWebSocketSessionDecorator[]{trackingSession};
@@ -163,11 +184,16 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
 
     private String getSessionUserId(ConcurrentWebSocketSessionDecorator session){
         String userId = "";
-            for(Map.Entry<String, ConcurrentWebSocketSessionDecorator[]> entry : WebSocketUserPositionHandler.sessions.entrySet()){
-            List<String> entryIds = Arrays.stream(entry.getValue()).map(WebSocketSessionDecorator::getId).toList();
-            if(entryIds.contains(session.getId())){
-                userId = entry.getKey();
-                break;
+        loop:
+        for(Map.Entry<String, ConcurrentWebSocketSessionDecorator[]> entry : WebSocketUserPositionHandler.sessions.entrySet()){
+            for(ConcurrentWebSocketSessionDecorator sessionDecorator : entry.getValue()){
+
+                if(sessionDecorator.getId().equals(session.getId())){
+                    System.out.println("Find user !");
+                    userId = entry.getKey();
+                    break loop;
+                }
+
             }
         }
         return userId;
@@ -177,9 +203,10 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         log.debug("Remove this tracking session from tracked sessions");
         for (Map.Entry<ConcurrentWebSocketSessionDecorator, ConcurrentWebSocketSessionDecorator[]> entry : WebSocketUserPositionHandler.sessionsTracked.entrySet()) {
 
-            List<String> trackingSessionsIds = Arrays.stream(entry.getValue()).map(WebSocketSessionDecorator::getId).toList();
-            if (trackingSessionsIds.contains(session.getId())) {
-                removeSessionFromTrackerSessions(session, entry.getKey());
+            for(ConcurrentWebSocketSessionDecorator trackedSession : entry.getValue()){
+                if(trackedSession.getId().equals(session.getId())){
+                    removeSessionFromTrackerSessions(session, entry.getKey());
+                }
             }
         }
     }
@@ -192,13 +219,14 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
 
     private void removeFromSessions(WebSocketSession session) {
         for (Map.Entry<String, ConcurrentWebSocketSessionDecorator[]> entry : WebSocketUserPositionHandler.sessions.entrySet()) {
-            List<String> sessionsIds = Arrays.stream(entry.getValue()).map(WebSocketSessionDecorator::getId).toList();
 
-            if (sessionsIds.contains(session.getId())) {
-                String userId = entry.getKey();
-                ConcurrentWebSocketSessionDecorator[] oldSessions = WebSocketUserPositionHandler.sessions.get(userId);
-                ConcurrentWebSocketSessionDecorator[] newSessions = removeSession(oldSessions, session);
-                WebSocketUserPositionHandler.sessions.replace(userId, oldSessions, newSessions);
+            for(ConcurrentWebSocketSessionDecorator trackedSession : entry.getValue()){
+                if(trackedSession.getId().equals(session.getId())){
+                    String userId = entry.getKey();
+                    ConcurrentWebSocketSessionDecorator[] oldSessions = WebSocketUserPositionHandler.sessions.get(userId);
+                    ConcurrentWebSocketSessionDecorator[] newSessions = removeSession(oldSessions, session);
+                    WebSocketUserPositionHandler.sessions.replace(userId, oldSessions, newSessions);
+                }
             }
         }
     }

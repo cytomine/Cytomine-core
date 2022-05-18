@@ -17,7 +17,7 @@ public abstract class CytomineWebSocketHandler extends TextWebSocketHandler {
         ConcurrentWebSocketSessionDecorator sessionDecorator = new ConcurrentWebSocketSessionDecorator(session, 1000, 8192);
         String userID = session.getAttributes().get("userId").toString();
 
-        if(sessions.keySet().contains(userID)){
+        if(sessions.containsKey(userID)){
             ConcurrentWebSocketSessionDecorator[] oldSessions = sessions.get(userID);
             ConcurrentWebSocketSessionDecorator[] newSessions = addSession(oldSessions, sessionDecorator);
             sessions.replace(userID, oldSessions, newSessions);

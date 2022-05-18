@@ -16,6 +16,7 @@ package be.cytomine.service.social;
 * limitations under the License.
 */
 
+import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
@@ -37,17 +38,14 @@ import be.cytomine.utils.JsonObject;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Accumulators;
-import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Projections;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Fields;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.concurrent.DelegatingSecurityContextScheduledExecutorService;
@@ -61,15 +59,10 @@ import javax.transaction.Transactional;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
-import static be.cytomine.domain.social.PersistentUserPosition.getJtsPolygon;
 import static com.mongodb.client.model.Aggregates.*;
 import static com.mongodb.client.model.Filters.*;
-import static com.mongodb.client.model.Sorts.ascending;
-import static com.mongodb.client.model.Sorts.descending;
 import static java.util.stream.Collectors.*;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 import static org.springframework.security.acls.domain.BasePermission.WRITE;
@@ -203,11 +196,11 @@ public class UserPositionService {
         String broadcasterAndImageId = broadcaster.getId().toString() + "/" + imageInstance.getId().toString();
         String followerAndImageId = follower.getId().toString() + "/" + imageInstance.getId().toString();
 
-        if (broadcasters.keySet().contains(broadcasterAndImageId)) {
-            List <String> userIds = broadcasters.get(broadcasterAndImageId).stream()
-                    .map(user -> user.getId().toString()).toList();
+        if (broadcasters.containsKey(broadcasterAndImageId)) {
+            Set<Long> userIds = broadcasters.get(broadcasterAndImageId).stream()
+                    .map(CytomineDomain::getId).collect(toSet());
 
-            if(!userIds.contains(follower.getId().toString())){
+            if(!userIds.contains(follower.getId())){
                 broadcasters.get(broadcasterAndImageId).add(follower);
                 followers.put(followerAndImageId, true);
             }else{
@@ -302,9 +295,11 @@ public class UserPositionService {
         List<String> followersIds = new ArrayList<>();
 
         ConcurrentWebSocketSessionDecorator broadcastSession = WebSocketUserPositionHandler.sessionsBroadcast.get(userAndImageId);
-        ConcurrentWebSocketSessionDecorator[] followers = WebSocketUserPositionHandler.sessionsTracked.get(broadcastSession);
-        if(followers != null) {
-            followersIds = webSocketUserPositionHandler.getSessionsUserIds(followers).stream().distinct().toList();
+        if(broadcastSession!=null){
+            ConcurrentWebSocketSessionDecorator[] followers = WebSocketUserPositionHandler.sessionsTracked.get(broadcastSession);
+            if(followers != null) {
+                followersIds = webSocketUserPositionHandler.getSessionsUserIds(followers).stream().distinct().toList();
+            }
         }
 
         List<User> poolingUsers = broadcasters.get(userAndImageId);
@@ -401,7 +396,8 @@ public class UserPositionService {
 
             // If he is same image
             if(entryImageId.equals(imageId)){
-                List<String> userIds = trackedEntry.getValue().stream().map(user -> user.getId().toString()).toList();
+                Set<String> userIds = trackedEntry.getValue().stream()
+                        .map(user -> user.getId().toString()).collect(toSet());
                 // and one of his follower id is followerId
                 if(userIds.contains(followerId)){
                     removeFollower(Long.parseLong(followerId), broadcaster);
