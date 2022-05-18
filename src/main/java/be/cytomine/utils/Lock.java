@@ -19,6 +19,7 @@ package be.cytomine.utils;
 import be.cytomine.domain.project.Project;
 import be.cytomine.exceptions.ServerException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.socket.WebSocketSession;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,25 +27,24 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-public class ProjectLock {
+public class Lock {
 
     private Map<Long, ReentrantLock> projectLocks = new ConcurrentHashMap<>();
-    private static ProjectLock projectLock = null;
+    private Map<String, ReentrantLock> wsSessionsLock = new ConcurrentHashMap<>();
+    private static Lock lock = null;
 
-    private ProjectLock() {
+    private Lock() {}
 
-    }
-
-    public static ProjectLock getInstance() {
-        synchronized (ProjectLock.class) {
-            if (projectLock==null) {
-                projectLock = new ProjectLock();
+    public static Lock getInstance() {
+        synchronized (Lock.class) {
+            if (lock==null) {
+                lock = new Lock();
             }
-            return projectLock;
+            return lock;
         }
     }
 
-    public boolean lock(Project project) {
+    public boolean lockProject(Project project) {
         try {
             log.debug("Try to lock project " + project.getId());
             projectLocks.putIfAbsent(project.getId(), new ReentrantLock());
@@ -57,8 +57,26 @@ public class ProjectLock {
         }
     }
 
-    public void unlock(Project project) {
+    public void unlockProject(Project project) {
         log.debug("Unlock project " + project.getId());
         projectLocks.get(project.getId()).unlock();
+    }
+
+    public boolean lockUsedWsSession(String userId) {
+        try {
+            log.debug("Try to lock web socket session " + userId);
+            wsSessionsLock.putIfAbsent(userId, new ReentrantLock());
+            log.debug("WebSocket session of user {} current lock {}", userId, wsSessionsLock.get(userId).isLocked());
+            boolean result = wsSessionsLock.get(userId).tryLock(60, TimeUnit.SECONDS);
+            log.debug("WebSocket session for user {} lock result {}", userId, result);
+            return result;
+        } catch (InterruptedException e) {
+            throw new ServerException("Cannot acquire lock on user " + userId, e);
+        }
+    }
+
+    public void unlockUserWsSession(String userId) {
+        log.debug("Unlock WebSocket session for user " + userId);
+        wsSessionsLock.get(userId).unlock();
     }
 }

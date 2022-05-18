@@ -1,6 +1,7 @@
 package be.cytomine.service;
 
 import be.cytomine.exceptions.ServerException;
+import be.cytomine.utils.Lock;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -15,17 +16,18 @@ public abstract class CytomineWebSocketHandler extends TextWebSocketHandler {
 
     public Map<String, ConcurrentWebSocketSessionDecorator[]> afterConnectionEstablished(WebSocketSession session, Map<String, ConcurrentWebSocketSessionDecorator[]> sessions) {
         ConcurrentWebSocketSessionDecorator sessionDecorator = new ConcurrentWebSocketSessionDecorator(session, 1000, 8192);
-        String userID = session.getAttributes().get("userId").toString();
+        String userId = session.getAttributes().get("userId").toString();
 
-        if(sessions.containsKey(userID)){
-            ConcurrentWebSocketSessionDecorator[] oldSessions = sessions.get(userID);
-            ConcurrentWebSocketSessionDecorator[] newSessions = addSession(oldSessions, sessionDecorator);
-            sessions.replace(userID, oldSessions, newSessions);
+        if(Lock.getInstance().lockUsedWsSession(userId)){
+            try{
+                addSessionToSessionsList(userId, sessionDecorator, sessions);
+            } finally {
+                Lock.getInstance().unlockUserWsSession(userId);
+            }
+        } else {
+            throw new ServerException("Cannot acquire lock for websocket sessions of user " + userId  + " , tryLock return false");
         }
-        else{
-            ConcurrentWebSocketSessionDecorator[] newSessions = {sessionDecorator};
-            sessions.put(userID, newSessions);
-        }
+
         return sessions;
     }
 
@@ -48,4 +50,17 @@ public abstract class CytomineWebSocketHandler extends TextWebSocketHandler {
             }
         }
     }
+
+    private void addSessionToSessionsList(String userId, ConcurrentWebSocketSessionDecorator sessionDecorator, Map<String, ConcurrentWebSocketSessionDecorator[]> sessions){
+        if(sessions.containsKey(userId)){
+            ConcurrentWebSocketSessionDecorator[] oldSessions = sessions.get(userId);
+            ConcurrentWebSocketSessionDecorator[] newSessions = addSession(oldSessions, sessionDecorator);
+            sessions.replace(userId, oldSessions, newSessions);
+        }
+        else{
+            ConcurrentWebSocketSessionDecorator[] newSessions = {sessionDecorator};
+            sessions.put(userId, newSessions);
+        }
+    }
+
 }
