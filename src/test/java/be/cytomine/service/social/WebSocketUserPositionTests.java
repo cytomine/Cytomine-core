@@ -19,6 +19,7 @@ import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorato
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -39,9 +40,9 @@ public class WebSocketUserPositionTests {
 
     @AfterEach
     public void cleanSessions(){
-        WebSocketUserPositionHandler.sessions = new HashMap<>();
-        WebSocketUserPositionHandler.sessionsTracked = new HashMap<>();
-        WebSocketUserPositionHandler.sessionsBroadcast = new HashMap<>();
+        WebSocketUserPositionHandler.sessions = new ConcurrentHashMap<>();
+        WebSocketUserPositionHandler.sessionsTracked = new ConcurrentHashMap<>();
+        WebSocketUserPositionHandler.sessionsBroadcast = new ConcurrentHashMap<>();
     }
 
     @Test
@@ -233,7 +234,7 @@ public class WebSocketUserPositionTests {
         String imageInstanceId = builder.given_an_image_instance().getId().toString();
 
         WebSocketSession session = mock(WebSocketSession.class);
-        connectSession(session, userId, imageInstanceId, "false");
+        connectSession(session, userId, imageInstanceId, "true");
 
         when(session.getAttributes()).thenReturn(sessionAttributes(userId, imageInstanceId, "false"));
         when(session.getId()).thenReturn("1234");
@@ -258,7 +259,7 @@ public class WebSocketUserPositionTests {
         String imageInstanceId = builder.given_an_image_instance().getId().toString();
 
         WebSocketSession session = mock(WebSocketSession.class);
-        connectSession(session, userId, imageInstanceId, "false");
+        connectSession(session, userId, imageInstanceId, "true");
 
         when(session.getAttributes()).thenReturn(sessionAttributes(userId, imageInstanceId, "false"));
         when(session.getId()).thenReturn("1234");

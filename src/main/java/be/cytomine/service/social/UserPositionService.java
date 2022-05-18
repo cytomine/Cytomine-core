@@ -59,6 +59,7 @@ import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -138,10 +139,10 @@ public class UserPositionService {
 //    }
 
     // usersTracked key -> "trackedUserId/imageId"
-    public static Map<String, List<User>> broadcasters = new HashMap<>();
+    public static Map<String, List<User>> broadcasters = new ConcurrentHashMap<>();
 
     // usersTracking key -> "followerId/imageId"
-    public static Map<String, Boolean> followers = new HashMap<>();
+    public static Map<String, Boolean> followers = new ConcurrentHashMap<>();
 
     public PersistentUserPosition add(
             Date created,

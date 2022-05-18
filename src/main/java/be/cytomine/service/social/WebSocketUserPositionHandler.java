@@ -17,22 +17,24 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
+import org.springframework.web.socket.handler.WebSocketSessionDecorator;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
 
-    public static Map<ConcurrentWebSocketSessionDecorator, ConcurrentWebSocketSessionDecorator[]> sessionsTracked = new HashMap<>();
+    public static Map<ConcurrentWebSocketSessionDecorator, ConcurrentWebSocketSessionDecorator[]> sessionsTracked = new ConcurrentHashMap<>();
 
     // sessionsTracked key -> "broadcastSessionId/imageId"
-    public static Map<String, ConcurrentWebSocketSessionDecorator> sessionsBroadcast = new HashMap<>();
+    public static Map<String, ConcurrentWebSocketSessionDecorator> sessionsBroadcast = new ConcurrentHashMap<>();
 
     // sessions key -> "userId"
-    public static Map<String, ConcurrentWebSocketSessionDecorator[]> sessions = new HashMap<>();
+    public static Map<String, ConcurrentWebSocketSessionDecorator[]> sessions = new ConcurrentHashMap<>();
 
     @Autowired
     UserPositionService userPositionService;
@@ -51,7 +53,7 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         sessions = super.afterConnectionEstablished(session, sessions);
         String userId = session.getAttributes().get("userId").toString();
         String imageId = session.getAttributes().get("imageId").toString();
-        Boolean broadcast = Boolean.parseBoolean(session.getAttributes().get("broadcast").toString());
+        boolean broadcast = Boolean.parseBoolean(session.getAttributes().get("broadcast").toString());
 
         if(broadcast){
             ConcurrentWebSocketSessionDecorator sessionDecorator = new ConcurrentWebSocketSessionDecorator(session, 1000, 8192);
@@ -89,21 +91,21 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
     }
 
     private ConcurrentWebSocketSessionDecorator getSession(String followerId, String sessionId){
-        return Arrays.stream(this.sessions.get(followerId)).filter(session -> session.getId().equals(sessionId)).toList().get(0);
+        return Arrays.stream(WebSocketUserPositionHandler.sessions.get(followerId)).filter(session -> session.getId().equals(sessionId)).toList().get(0);
     }
 
     private void addToTrackedSessions(ConcurrentWebSocketSessionDecorator broadcastSession, ConcurrentWebSocketSessionDecorator trackingSession){
-        if (this.sessionsTracked.containsKey(broadcastSession)) {
-            ConcurrentWebSocketSessionDecorator[] trackedSessions = this.sessionsTracked.get(broadcastSession);
+        if (WebSocketUserPositionHandler.sessionsTracked.containsKey(broadcastSession)) {
+            ConcurrentWebSocketSessionDecorator[] trackedSessions = WebSocketUserPositionHandler.sessionsTracked.get(broadcastSession);
 
-            List<String> trackSessionsIds = Arrays.stream(trackedSessions).map(session -> session.getId()).toList();
+            List<String> trackSessionsIds = Arrays.stream(trackedSessions).map(WebSocketSessionDecorator::getId).toList();
             if(!trackSessionsIds.contains(trackingSession.getId())){
                 trackedSessions = addSession(trackedSessions, trackingSession);
             }
-            this.sessionsTracked.replace(broadcastSession, this.sessionsTracked.get(broadcastSession), trackedSessions);
+            WebSocketUserPositionHandler.sessionsTracked.replace(broadcastSession, WebSocketUserPositionHandler.sessionsTracked.get(broadcastSession), trackedSessions);
         } else {
             ConcurrentWebSocketSessionDecorator[] trackingSessions = new ConcurrentWebSocketSessionDecorator[]{trackingSession};
-            this.sessionsTracked.put(broadcastSession, trackingSessions);
+            WebSocketUserPositionHandler.sessionsTracked.put(broadcastSession, trackingSessions);
         }
     }
 
@@ -112,9 +114,9 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         // TODO : Uncomment to bypass authentication (websocket are not longer authenticated)
         // Comment for tests
         // ------------------------------------------------ //
-        List<GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken("admin", "adminPassword", authorities);
-        SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+        //List<GrantedAuthority> authorities = Arrays.asList(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        //UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken("admin", "adminPassword", authorities);
+        //SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
         // ------------------------------------------------ //
 
         ImageInstance imageInstance = imageInstanceService.get(imageId);
@@ -127,10 +129,13 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
     }
 
     public void sendPositionToFollowers(String userId, String imageId, String position) throws ServerException {
-        ConcurrentWebSocketSessionDecorator broadcastSession = this.sessionsBroadcast.get(userId+"/"+imageId);
-        ConcurrentWebSocketSessionDecorator[] sessions = this.sessionsTracked.get(broadcastSession);
-        if(sessions != null){
-            sendPosition(sessions, position);
+        String userAndImageId = userId+"/"+imageId;
+        if(WebSocketUserPositionHandler.sessionsBroadcast.containsKey(userAndImageId)){
+            ConcurrentWebSocketSessionDecorator broadcastSession = WebSocketUserPositionHandler.sessionsBroadcast.get(userAndImageId);
+            ConcurrentWebSocketSessionDecorator[] sessions = WebSocketUserPositionHandler.sessionsTracked.get(broadcastSession);
+            if(sessions != null){
+                sendPosition(sessions, position);
+            }
         }
     }
 
@@ -158,8 +163,8 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
 
     private String getSessionUserId(ConcurrentWebSocketSessionDecorator session){
         String userId = "";
-            for(Map.Entry<String, ConcurrentWebSocketSessionDecorator[]> entry : this.sessions.entrySet()){
-            List<String> entryIds = Arrays.stream(entry.getValue()).map(value -> value.getId()).toList();
+            for(Map.Entry<String, ConcurrentWebSocketSessionDecorator[]> entry : WebSocketUserPositionHandler.sessions.entrySet()){
+            List<String> entryIds = Arrays.stream(entry.getValue()).map(WebSocketSessionDecorator::getId).toList();
             if(entryIds.contains(session.getId())){
                 userId = entry.getKey();
                 break;
@@ -170,9 +175,9 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
 
     private void removeSessionFromTrackerSessions(WebSocketSession session) {
         log.debug("Remove this tracking session from tracked sessions");
-        for (Map.Entry<ConcurrentWebSocketSessionDecorator, ConcurrentWebSocketSessionDecorator[]> entry : this.sessionsTracked.entrySet()) {
+        for (Map.Entry<ConcurrentWebSocketSessionDecorator, ConcurrentWebSocketSessionDecorator[]> entry : WebSocketUserPositionHandler.sessionsTracked.entrySet()) {
 
-            List<String> trackingSessionsIds = Arrays.stream(entry.getValue()).map(value -> value.getId()).toList();
+            List<String> trackingSessionsIds = Arrays.stream(entry.getValue()).map(WebSocketSessionDecorator::getId).toList();
             if (trackingSessionsIds.contains(session.getId())) {
                 removeSessionFromTrackerSessions(session, entry.getKey());
             }
@@ -180,38 +185,38 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
     }
 
     private void removeSessionFromTrackerSessions(WebSocketSession session, ConcurrentWebSocketSessionDecorator trackedSession){
-        ConcurrentWebSocketSessionDecorator[] oldSessions = this.sessionsTracked.get(trackedSession);
+        ConcurrentWebSocketSessionDecorator[] oldSessions = WebSocketUserPositionHandler.sessionsTracked.get(trackedSession);
         ConcurrentWebSocketSessionDecorator[] newSessions = removeSession(oldSessions, session);
-        this.sessionsTracked.replace(trackedSession, oldSessions, newSessions);
+        WebSocketUserPositionHandler.sessionsTracked.replace(trackedSession, oldSessions, newSessions);
     }
 
     private void removeFromSessions(WebSocketSession session) {
-        for (Map.Entry<String, ConcurrentWebSocketSessionDecorator[]> entry : this.sessions.entrySet()) {
-            List<String> sessionsIds = Arrays.stream(entry.getValue()).map(value -> value.getId()).toList();
+        for (Map.Entry<String, ConcurrentWebSocketSessionDecorator[]> entry : WebSocketUserPositionHandler.sessions.entrySet()) {
+            List<String> sessionsIds = Arrays.stream(entry.getValue()).map(WebSocketSessionDecorator::getId).toList();
 
             if (sessionsIds.contains(session.getId())) {
                 String userId = entry.getKey();
-                ConcurrentWebSocketSessionDecorator[] oldSessions = this.sessions.get(userId);
+                ConcurrentWebSocketSessionDecorator[] oldSessions = WebSocketUserPositionHandler.sessions.get(userId);
                 ConcurrentWebSocketSessionDecorator[] newSessions = removeSession(oldSessions, session);
-                this.sessions.replace(userId, oldSessions, newSessions);
+                WebSocketUserPositionHandler.sessions.replace(userId, oldSessions, newSessions);
             }
         }
     }
 
     private void removeFromTrackerSessions(ConcurrentWebSocketSessionDecorator broadcastSession){
         log.debug("Remove this broadcast session from tracked sessions");
-        ConcurrentWebSocketSessionDecorator[] sessionDecorators = this.sessionsTracked.get(broadcastSession);
+        ConcurrentWebSocketSessionDecorator[] sessionDecorators = WebSocketUserPositionHandler.sessionsTracked.get(broadcastSession);
         if(sessionDecorators != null){
-            sendNotifications(List.of(sessionDecorators));
+            sendNotificationsAndCloseSessions(List.of(sessionDecorators));
         }
-        this.sessionsTracked.remove(broadcastSession);
+        WebSocketUserPositionHandler.sessionsTracked.remove(broadcastSession);
     }
 
     private void removeFromBroadcastSession(ConcurrentWebSocketSessionDecorator broadcastSession){
         log.debug("Remove this broadcast session from broadcast sessions");
-        for(Map.Entry<String, ConcurrentWebSocketSessionDecorator> entry : this.sessionsBroadcast.entrySet()){
+        for(Map.Entry<String, ConcurrentWebSocketSessionDecorator> entry : WebSocketUserPositionHandler.sessionsBroadcast.entrySet()){
             if(entry.getValue().getId().equals(broadcastSession.getId())){
-                this.sessionsBroadcast.remove(entry.getKey());
+                WebSocketUserPositionHandler.sessionsBroadcast.remove(entry.getKey());
             }
         }
     }
@@ -226,12 +231,16 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         return newSessions;
     }
 
-    private void sendNotifications(List<ConcurrentWebSocketSessionDecorator> sessionDecorators){
+    private void sendNotificationsAndCloseSessions(List<ConcurrentWebSocketSessionDecorator> sessionDecorators){
         for(ConcurrentWebSocketSessionDecorator sessionDecorator : sessionDecorators){
             if(sessionDecorator.isOpen()){
                 try{
                     sessionDecorator.sendMessage(new TextMessage("stop-track"));
+                    afterConnectionClosed(sessionDecorator, CloseStatus.NORMAL);
                 }catch (IOException e){
+                    log.error("Failed to send 'stop-track' message to session : " + sessionDecorator.getId() + " " + e.getMessage());
+                } catch (Exception e) {
+                    log.error("Failed to close session : " + sessionDecorator.getId() + " " + e.getMessage());
                 }
             }
         }

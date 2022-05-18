@@ -57,6 +57,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -94,10 +95,10 @@ public class UserPositionServiceTests {
         lastUserPositionRepository.deleteAll();
         persistentUserPositionRepository.deleteAll();
 
-        WebSocketUserPositionHandler.sessionsTracked = new HashMap<>();
-        WebSocketUserPositionHandler.sessions = new HashMap<>();
-        UserPositionService.followers = new HashMap<>();
-        UserPositionService.broadcasters = new HashMap<>();
+        WebSocketUserPositionHandler.sessionsTracked = new ConcurrentHashMap<>();
+        WebSocketUserPositionHandler.sessions = new ConcurrentHashMap<>();
+        UserPositionService.followers = new ConcurrentHashMap<>();
+        UserPositionService.broadcasters = new ConcurrentHashMap<>();
     }
 
     public static final AreaDTO USER_VIEW = new AreaDTO(
