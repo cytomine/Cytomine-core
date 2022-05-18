@@ -22,7 +22,6 @@ import org.springframework.web.socket.handler.WebSocketSessionDecorator;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -163,7 +162,9 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
     private void sendPosition(ConcurrentWebSocketSessionDecorator[] sessions, String position){
         TextMessage message = new TextMessage(position);
         for(ConcurrentWebSocketSessionDecorator s : sessions){
-            sendPosition(s, message);
+            new Thread(() -> {
+                sendPosition(s, message);
+            }).start();
         }
     }
 

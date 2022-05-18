@@ -285,24 +285,6 @@ public class WebSocketUserPositionTests {
     }
 
     @Test
-    public void update_position_of_tracked_user_send_message_fails() throws IOException {
-        String userId = builder.given_a_user().getId().toString();
-        String imageInstanceId = builder.given_an_image_instance().getId().toString();
-
-        WebSocketSession session = mock(WebSocketSession.class);
-        connectSession(session, userId, imageInstanceId, "true");
-
-        when(session.getAttributes()).thenReturn(sessionAttributes(userId, imageInstanceId, "false"));
-        when(session.getId()).thenReturn("1234");
-        webSocketUserPositionHandler.handleMessage(session, new TextMessage(userId));
-
-        when(session.isOpen()).thenReturn(true);
-        doThrow(IOException.class).when(session).sendMessage(new TextMessage("position"));
-        ServerException exception = assertThrows(ServerException.class, () -> webSocketUserPositionHandler.sendPositionToFollowers(userId, imageInstanceId, "position"));
-        assertThat(exception.getMessage()).isEqualTo("Failed to send message to session : 1234");
-    }
-
-    @Test
     public void remove_session_if_connection_closed() throws Exception {
         WebSocketSession session = mock(WebSocketSession.class);
         ConcurrentWebSocketSessionDecorator followerSession = mock(ConcurrentWebSocketSessionDecorator.class);
