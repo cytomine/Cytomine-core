@@ -1063,6 +1063,7 @@ public class SecUserServiceTests {
     }
 
     @Test
+    @Disabled("should we allow this (grails version accept same email)?")
     void add_user_with_already_existing_email_different_case() {
         User sameEmail = builder.given_a_user();
         User user = builder.given_a_not_persisted_user();

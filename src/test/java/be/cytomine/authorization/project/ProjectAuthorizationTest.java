@@ -682,7 +682,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
 
         //add,update, delete tagDomainAssociation (simple user data)
         expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationUser).toJsonObject()); });
-        expectForbidden(() -> { tagDomainAssociationService.delete(tdaUser, null, null, false); });
+        expectOK(() -> { tagDomainAssociationService.delete(tdaUser, null, null, false); });
 
         //add,update, delete tagDomainAssociation (admin data)
         expectForbidden(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationAdmin).toJsonObject()); });
