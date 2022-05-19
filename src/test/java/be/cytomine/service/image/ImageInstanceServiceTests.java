@@ -22,6 +22,8 @@ import be.cytomine.TestApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.NestedImageInstance;
 import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.meta.AttachedFile;
+import be.cytomine.domain.meta.Description;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.meta.TagDomainAssociation;
 import be.cytomine.domain.ontology.AlgoAnnotation;
@@ -737,6 +739,9 @@ public class ImageInstanceServiceTests {
         userAnnotation.setImage(imageInstance);
 
         Property property = builder.given_a_property(imageInstance, "mustbedeleted", "value");
+        Description description = builder.given_a_description(imageInstance);
+        TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), imageInstance);
+        AttachedFile attachedFile = builder.given_a_attached_file(imageInstance);
 
         annotationActionService.add(userAnnotation, builder.given_superadmin(), "view", new Date());
         userPositionService.add(new Date(), builder.given_superadmin(), sliceInstance, imageInstance, USER_VIEW, 0, 0d, false);
@@ -745,9 +750,12 @@ public class ImageInstanceServiceTests {
         AssertionsForClassTypes.assertThat(entityManager.find(AlgoAnnotation.class, algoAnnotation.getId())).isNotNull();
         AssertionsForClassTypes.assertThat(entityManager.find(ReviewedAnnotation.class, reviewedAnnotation.getId())).isNotNull();
         AssertionsForClassTypes.assertThat(entityManager.find(UserAnnotation.class, userAnnotation.getId())).isNotNull();
-        AssertionsForClassTypes.assertThat(entityManager.find(Property.class, property.getId())).isNotNull();
         AssertionsForClassTypes.assertThat(entityManager.find(AlgoAnnotation.class, algoAnnotation.getId())).isNotNull();
         AssertionsForClassTypes.assertThat(entityManager.find(SliceInstance.class, sliceInstance.getId())).isNotNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(Property.class, property.getId())).isNotNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(Description.class, description.getId())).isNotNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(TagDomainAssociation.class, tagDomainAssociation.getId())).isNotNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(AttachedFile.class, attachedFile.getId())).isNotNull();
 
         assertThat(annotationActionRepository.count()).isEqualTo(1);
         assertThat(persistentImageConsultationRepository.count()).isEqualTo(1);
@@ -762,9 +770,12 @@ public class ImageInstanceServiceTests {
         AssertionsForClassTypes.assertThat(entityManager.find(AlgoAnnotation.class, algoAnnotation.getId())).isNull();
         AssertionsForClassTypes.assertThat(entityManager.find(ReviewedAnnotation.class, reviewedAnnotation.getId())).isNull();
         AssertionsForClassTypes.assertThat(entityManager.find(UserAnnotation.class, userAnnotation.getId())).isNull();
-        AssertionsForClassTypes.assertThat(entityManager.find(Property.class, property.getId())).isNull();
         AssertionsForClassTypes.assertThat(entityManager.find(AlgoAnnotation.class, algoAnnotation.getId())).isNull();
         AssertionsForClassTypes.assertThat(entityManager.find(SliceInstance.class, sliceInstance.getId())).isNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(Property.class, property.getId())).isNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(Description.class, description.getId())).isNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(TagDomainAssociation.class, tagDomainAssociation.getId())).isNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(AttachedFile.class, attachedFile.getId())).isNull();
 
         assertThat(annotationActionRepository.count()).isEqualTo(0);
         assertThat(persistentImageConsultationRepository.count()).isEqualTo(0);

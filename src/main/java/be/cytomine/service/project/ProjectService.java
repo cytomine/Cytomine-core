@@ -973,6 +973,7 @@ public class ProjectService extends ModelService {
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         deleteDependentImageInstance((Project) domain, transaction, task);
         deleteDependentRepresentativeUser((Project) domain, transaction, task);
+        deleteDependentMetadata(domain, transaction, task);
         //TODO: only that? software project? ...
     }
 

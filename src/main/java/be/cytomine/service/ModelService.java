@@ -21,11 +21,20 @@ import be.cytomine.domain.ValidationError;
 import be.cytomine.domain.command.Command;
 import be.cytomine.domain.command.DeleteCommand;
 import be.cytomine.domain.command.Transaction;
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.meta.AttachedFile;
+import be.cytomine.domain.meta.Description;
+import be.cytomine.domain.meta.Property;
+import be.cytomine.domain.meta.TagDomainAssociation;
 import be.cytomine.domain.ontology.AlgoAnnotation;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.exceptions.*;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.database.SequenceService;
+import be.cytomine.service.meta.AttachedFileService;
+import be.cytomine.service.meta.DescriptionService;
+import be.cytomine.service.meta.PropertyService;
+import be.cytomine.service.meta.TagDomainAssociationService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -80,6 +89,17 @@ public abstract class ModelService<T extends CytomineDomain> {
     @Autowired
     UserAnnotationRepository userAnnotationRepository;
 
+    @Autowired
+    PropertyService propertyService;
+
+    @Autowired
+    DescriptionService descriptionService;
+
+    @Autowired
+    AttachedFileService attachedFileService;
+
+    @Autowired
+    TagDomainAssociationService tagDomainAssociationService;
 
 //    def responseService
 
@@ -417,6 +437,36 @@ public abstract class ModelService<T extends CytomineDomain> {
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         throw new CytomineMethodNotYetImplementedException("No delete method implemented");
     }
+
+    protected void deleteDependentMetadata(CytomineDomain domain, Transaction transaction, Task task) {
+        deleteDependentProperty(domain, transaction, task);
+        deleteDependentDescription(domain, transaction, task);
+        deleteDependentAttachedFile(domain, transaction, task);
+        deleteDependentTagDomainAssociation(domain, transaction, task);
+    }
+    protected void deleteDependentProperty(CytomineDomain domain, Transaction transaction, Task task) {
+        for (Property property : propertyService.list(domain)) {
+            propertyService.delete(property, transaction, task, false);
+        }
+    }
+    protected void deleteDependentDescription(CytomineDomain domain, Transaction transaction, Task task) {
+        descriptionService.findByDomain(domain).ifPresent(description -> {
+            descriptionService.delete(description, transaction, task, false);
+        });
+    }
+
+    protected void deleteDependentAttachedFile(CytomineDomain domain, Transaction transaction, Task task) {
+        for (AttachedFile attachedFile : attachedFileService.findAllByDomain(domain)) {
+            attachedFileService.delete(attachedFile, transaction, task, false);
+        }
+    }
+
+    protected void deleteDependentTagDomainAssociation(CytomineDomain domain, Transaction transaction, Task task) {
+        for (TagDomainAssociation tagDomainAssociation : tagDomainAssociationService.listAllByDomain(domain)) {
+            tagDomainAssociationService.delete(tagDomainAssociation, transaction, task, false);
+        }
+    }
+
 
     public void checkDoNotAlreadyExist(CytomineDomain domain) {
         // do nothing by default

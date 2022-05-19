@@ -870,7 +870,10 @@ public class ImageInstanceService extends ModelService {
         deleteDependentLastUserPosition(imageInstance, transaction, task);
         deleteDependentPersistentUserPosition(imageInstance, transaction, task);
         deleteDependentPersistentImageConsultation(imageInstance, transaction, task);
-        deleteDependentProperty(imageInstance, transaction, task);
+        deleteDependentMetadata(imageInstance, transaction, task);
+        deleteDependentDescription(imageInstance, transaction, task);
+        deleteDependentAttachedFile(imageInstance, transaction, task);
+        deleteDependentTagDomainAssociation(imageInstance, transaction, task);
         deleteDependentNestedImageInstance(imageInstance, transaction, task);
         deleteDependentSliceInstance(imageInstance, transaction, task);
         deleteDependentTrack(imageInstance, transaction, task);
@@ -911,12 +914,6 @@ public class ImageInstanceService extends ModelService {
 
     private void deleteDependentPersistentImageConsultation(ImageInstance image, Transaction transaction, Task task) {
         persistentImageConsultationRepository.deleteAllByImage(image.getId());
-    }
-
-    private void deleteDependentProperty(ImageInstance image, Transaction transaction, Task task) {
-        for (Property property : propertyService.list(image)) {
-            propertyService.delete(property, transaction, task, false);
-        }
     }
 
 

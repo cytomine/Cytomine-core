@@ -159,8 +159,8 @@ public class RestUserController extends RestCytomineController {
             @RequestParam(value = "withRoles", defaultValue = "false", required = false) Boolean withRoles,
             @RequestParam(value = "withLastConsultation", defaultValue = "false", required = false) Boolean withLastConsultation,
             @RequestParam(value = "withNumberConsultations", defaultValue = "false", required = false) Boolean withNumberConsultations,
-            @RequestParam(value = "sort", defaultValue = "created", required = false) String sortColumn,
-            @RequestParam(value = "order", defaultValue = "desc", required = false) String sortDirection,
+            @RequestParam(value = "sort", defaultValue = "username", required = false) String sortColumn,
+            @RequestParam(value = "order", defaultValue = "asc", required = false) String sortDirection,
             @RequestParam(value = "offset", defaultValue = "0", required = false) Long offset,
             @RequestParam(value = "max", defaultValue = "0", required = false) Long max
     ) {

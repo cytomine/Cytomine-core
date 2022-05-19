@@ -597,6 +597,7 @@ public class UserAnnotationService extends ModelService {
         deleteDependentAnnotationTerm((UserAnnotation)domain, transaction, task);
         deleteDependentSharedAnnotation((UserAnnotation)domain, transaction, task);
         deleteDependentAnnotationTrack((UserAnnotation)domain, transaction, task);
+        deleteDependentMetadata(domain, transaction, task);
     }
 
 

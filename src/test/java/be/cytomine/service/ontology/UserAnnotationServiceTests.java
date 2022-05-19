@@ -20,6 +20,10 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.TestUtils;
 import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.meta.AttachedFile;
+import be.cytomine.domain.meta.Description;
+import be.cytomine.domain.meta.Property;
+import be.cytomine.domain.meta.TagDomainAssociation;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
@@ -538,9 +542,19 @@ public class UserAnnotationServiceTests {
         AnnotationTrack annotationTrack = builder.given_a_annotation_track();
         annotationTrack.setAnnotation(userAnnotation);
 
+        Property property = builder.given_a_property(userAnnotation, "mustbedeleted", "value");
+        Description description = builder.given_a_description(userAnnotation);
+        TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), userAnnotation);
+        AttachedFile attachedFile = builder.given_a_attached_file(userAnnotation);
+
+
         assertThat(entityManager.find(UserAnnotation.class, userAnnotation.getId())).isNotNull();
         assertThat(entityManager.find(SharedAnnotation.class, sharedAnnotation.getId())).isNotNull();
         assertThat(entityManager.find(AnnotationTrack.class, annotationTrack.getId())).isNotNull();
+        assertThat(entityManager.find(Property.class, property.getId())).isNotNull();
+        assertThat(entityManager.find(Description.class, description.getId())).isNotNull();
+        assertThat(entityManager.find(TagDomainAssociation.class, tagDomainAssociation.getId())).isNotNull();
+        assertThat(entityManager.find(AttachedFile.class, attachedFile.getId())).isNotNull();
 
         CommandResponse commandResponse = userAnnotationService.delete(userAnnotation, null, null, true);
 
@@ -550,6 +564,10 @@ public class UserAnnotationServiceTests {
         assertThat(entityManager.find(UserAnnotation.class, userAnnotation.getId())).isNull();
         assertThat(entityManager.find(SharedAnnotation.class, sharedAnnotation.getId())).isNull();
         assertThat(entityManager.find(AnnotationTrack.class, annotationTrack.getId())).isNull();
+        assertThat(entityManager.find(Property.class, property.getId())).isNull();
+        assertThat(entityManager.find(Description.class, description.getId())).isNull();
+        assertThat(entityManager.find(TagDomainAssociation.class, tagDomainAssociation.getId())).isNull();
+        assertThat(entityManager.find(AttachedFile.class, attachedFile.getId())).isNull();
     }
 
 

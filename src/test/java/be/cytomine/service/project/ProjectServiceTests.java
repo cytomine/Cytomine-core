@@ -19,6 +19,10 @@ package be.cytomine.service.project;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.meta.AttachedFile;
+import be.cytomine.domain.meta.Description;
+import be.cytomine.domain.meta.Property;
+import be.cytomine.domain.meta.TagDomainAssociation;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.EditingMode;
@@ -902,11 +906,28 @@ public class ProjectServiceTests {
         UserAnnotation annotation = builder.given_a_not_persisted_user_annotation(project);
         builder.persistAndReturn(annotation);
 
+        Property property = builder.given_a_property(project, "mustbedeleted", "value");
+        Description description = builder.given_a_description(project);
+        TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), project);
+        AttachedFile attachedFile = builder.given_a_attached_file(project);
+
+
+        AssertionsForClassTypes.assertThat(entityManager.find(Property.class, property.getId())).isNotNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(Description.class, description.getId())).isNotNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(TagDomainAssociation.class, tagDomainAssociation.getId())).isNotNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(AttachedFile.class, attachedFile.getId())).isNotNull();
+
         CommandResponse commandResponse = projectService.delete(project, null, null, true);
 
         AssertionsForClassTypes.assertThat(commandResponse).isNotNull();
         AssertionsForClassTypes.assertThat(commandResponse.getStatus()).isEqualTo(200);
         AssertionsForClassTypes.assertThat(projectService.find(project.getId()).isEmpty());
+
+        AssertionsForClassTypes.assertThat(entityManager.find(Property.class, property.getId())).isNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(Description.class, description.getId())).isNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(TagDomainAssociation.class, tagDomainAssociation.getId())).isNull();
+        AssertionsForClassTypes.assertThat(entityManager.find(AttachedFile.class, attachedFile.getId())).isNull();
+
     }
 
 

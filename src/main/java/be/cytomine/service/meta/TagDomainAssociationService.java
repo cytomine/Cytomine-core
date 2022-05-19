@@ -179,9 +179,9 @@ public class TagDomainAssociationService extends ModelService {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkCurrentUserIsUser();
         if(!domain.getClass().getName().contains("AbstractImage")) {
-            securityACLService.check(domain.container(),READ);
+            securityACLService.check(domain.container(), READ);
             CytomineDomain cytomineDomain = getCytomineDomain(((TagDomainAssociation) domain).getDomainClassName(), ((TagDomainAssociation) domain).getDomainIdent());
-            securityACLService.checkFullOrRestrictedForOwner(cytomineDomain, null);
+            securityACLService.checkFullOrRestrictedForOwner(cytomineDomain, cytomineDomain.userDomainCreator());
         }
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
