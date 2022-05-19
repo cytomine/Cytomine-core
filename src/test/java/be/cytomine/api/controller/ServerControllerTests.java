@@ -39,6 +39,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -103,6 +104,7 @@ public class ServerControllerTests {
                         .content("{\"project\": null}"))
                 .andDo(print())
                 .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.header().string("Content-type", "application/json"))
                 .andExpect(jsonPath("$.alive").value(true))
                 .andExpect(jsonPath("$.authenticated").value(true))
                 .andExpect(jsonPath("$.shortTermToken").exists())

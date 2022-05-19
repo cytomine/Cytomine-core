@@ -16,6 +16,7 @@ package be.cytomine.api.controller.security;
 * limitations under the License.
 */
 
+import be.cytomine.api.JsonResponseEntity;
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.server.Storage;
@@ -45,6 +46,7 @@ import be.cytomine.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -383,11 +385,11 @@ public class RestUserController extends RestCytomineController {
 
         if (!errors.isEmpty()  || !wrongIds.isEmpty()) {
             response.put("data", JsonObject.of("message", errorMessage));
-            return ResponseEntity.status(206).body(response.toJsonString());
+            return JsonResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(response.toJsonString());
         } else {
             response.put("data", JsonObject.of("message", "OK"));
             response.put("status", 200);
-            return ResponseEntity.status(200).body(response.toJsonString());
+            return JsonResponseEntity.status(HttpStatus.OK).body(response.toJsonString());
         }
     }
 
@@ -447,11 +449,11 @@ public class RestUserController extends RestCytomineController {
 
         if (!errors.isEmpty()  || !wrongIds.isEmpty()) {
             response.put("data", JsonObject.of("message", errorMessage));
-            return ResponseEntity.status(206).body(response.toJsonString());
+            return JsonResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(response.toJsonString());
         } else {
             response.put("data", JsonObject.of("message", "OK"));
             response.put("status", 200);
-            return ResponseEntity.status(200).body(response.toJsonString());
+            return JsonResponseEntity.status(HttpStatus.OK).body(response.toJsonString());
         }
     }
 

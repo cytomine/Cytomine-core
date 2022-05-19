@@ -25,6 +25,7 @@ import be.cytomine.service.security.AclAuthService;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -60,7 +61,7 @@ public class RestACLController extends RestCytomineController {
                 throw new ObjectNotFoundException("Request not valid: domainClassName="+ domainClassName + ", domainIdent= " + domainIdent + ", user=" + user);
             }
         } catch(CytomineException e) {
-            return ResponseEntity.status(e.code).body(JsonObject.of("success", false, "errors", e.msg).toJsonString());
+            return ResponseEntity.status(e.code).contentType(MediaType.APPLICATION_JSON).body(JsonObject.of("success", false, "errors", e.msg).toJsonString());
         }
     }
 

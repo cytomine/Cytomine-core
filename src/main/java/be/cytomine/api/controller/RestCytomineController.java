@@ -16,6 +16,7 @@ package be.cytomine.api.controller;
 * limitations under the License.
 */
 
+import be.cytomine.api.JsonResponseEntity;
 import be.cytomine.api.controller.utils.RequestParams;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.CytomineSocialDomain;
@@ -199,16 +200,16 @@ public abstract class RestCytomineController {
                 throw new CytomineMethodNotYetImplementedException("Filter is not working with this class type " + page.getContent().get(0).getClass());
             }
         }
-        return ResponseEntity.status(200).body(buildJsonList(page, requestParams).toJsonString());
+        return JsonResponseEntity.status(HttpStatus.OK).body(buildJsonList(page, requestParams).toJsonString());
     }
 
 
     protected ResponseEntity<String> responseSuccess(Page page, Integer offsetParameter, Integer maxParameter) {
-        return ResponseEntity.status(200).body(buildJsonList(page, offsetParameter, maxParameter).toJsonString());
+        return JsonResponseEntity.status(HttpStatus.OK).body(buildJsonList(page, offsetParameter, maxParameter).toJsonString());
     }
 
     protected ResponseEntity<String> responseSuccess(Page page, Map<String,String> params) {
-        return ResponseEntity.status(200).body(buildJsonList(page, params).toJsonString());
+        return JsonResponseEntity.status(HttpStatus.OK).body(buildJsonList(page, params).toJsonString());
     }
 
     public ResponseEntity<String> responseSuccess(List list, Long offsetParameter, Long maxParameter) {
@@ -259,15 +260,15 @@ public abstract class RestCytomineController {
     }
 
     private ResponseEntity<String> responseSuccessDomainList(List<? extends CytomineDomain> list, Integer offsetParameter, Integer maxParameter) {
-        return ResponseEntity.status(200).body(buildJsonList(convertCytomineDomainListToJSON(list), offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
+        return JsonResponseEntity.status(HttpStatus.OK).body(buildJsonList(convertCytomineDomainListToJSON(list), offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
     }
 
     private ResponseEntity<String> responseSuccessSocialDomainList(List<? extends CytomineSocialDomain> list, Integer offsetParameter, Integer maxParameter) {
-        return ResponseEntity.status(200).body(buildJsonList(convertCytomineSocialDomainListToJSON(list), offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
+        return JsonResponseEntity.status(HttpStatus.OK).body(buildJsonList(convertCytomineSocialDomainListToJSON(list), offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
     }
 
     private ResponseEntity<String> responseSuccessGenericList(List list, Integer offsetParameter, Integer maxParameter) {
-        return ResponseEntity.status(200).body(buildJsonList(list, offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
+        return JsonResponseEntity.status(HttpStatus.OK).body(buildJsonList(list, offsetParameter, maxParameter).toJsonString()); //TODO: perf convert after buildJsonList will avoid converting unused items (out of page)
     }
 
     protected ResponseEntity<String> responseSuccess(CytomineDomain response, boolean isFilterRequired) {
@@ -275,21 +276,21 @@ public abstract class RestCytomineController {
         if (isFilterRequired) {
             filterOneElement(json);
         }
-        return ResponseEntity.status(200).body(json.toJsonString());
+        return JsonResponseEntity.status(HttpStatus.OK).body(json.toJsonString());
     }
 
 
 
     protected ResponseEntity<String> responseSuccess(CytomineDomain response) {
-        return ResponseEntity.status(200).body(response.toJSON());
+        return JsonResponseEntity.status(HttpStatus.OK).body(response.toJSON());
     }
 
     protected ResponseEntity<String> responseSuccess(CytomineSocialDomain response) {
-        return ResponseEntity.status(200).body(response.toJsonObject().toJsonString());
+        return JsonResponseEntity.status(HttpStatus.OK).body(response.toJsonObject().toJsonString());
     }
 
     protected ResponseEntity<String> responseSuccess(String response) {
-        return ResponseEntity.status(200).body(response);
+        return JsonResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     protected ResponseEntity<String> responseSuccess(JsonObject response) {
@@ -300,7 +301,7 @@ public abstract class RestCytomineController {
         if (isFilterRequired) {
             filterOneElement(response);
         }
-        return ResponseEntity.status(200).body(response.toJsonString());
+        return JsonResponseEntity.status(HttpStatus.OK).body(response.toJsonString());
     }
 
 

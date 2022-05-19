@@ -16,6 +16,7 @@ package be.cytomine.api.controller;
 * limitations under the License.
 */
 
+import be.cytomine.api.JsonResponseEntity;
 import be.cytomine.config.ApplicationConfiguration;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.social.LastConnection;
@@ -31,6 +32,7 @@ import be.cytomine.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.NonTransientDataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -86,7 +88,7 @@ public class ServerController extends RestCytomineController {
             }
             addLastConnection(user, idProject);
         }
-        return ResponseEntity.ok(response.toJsonString());
+        return JsonResponseEntity.status(HttpStatus.OK).body(response.toJsonString());
 
         //{"alive":true,"authenticated":true,"version":"0.0.0","serverURL":"https://demo.cytomine.com","serverID":"938a336f-d600-48ac-9c3a-aaedc03a9f84","user":6399285}
     }
