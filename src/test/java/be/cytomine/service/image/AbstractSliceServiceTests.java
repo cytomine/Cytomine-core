@@ -24,6 +24,7 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ConstraintException;
+import be.cytomine.exceptions.CytomineException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.UploadedFileRepository;
 import be.cytomine.service.CommandService;
@@ -223,7 +224,7 @@ public class AbstractSliceServiceTests {
     @Test
     void delete_abstract_slice_with_dependencies_with_success() {
         SliceInstance sliceInstance = builder.given_a_slice_instance();
-        Assertions.assertThrows(ConstraintException.class, () -> {
+        Assertions.assertThrows(CytomineException.class, () -> {
             abstractSliceService.delete(sliceInstance.getBaseSlice(), null,  null, false);
         });
     }
