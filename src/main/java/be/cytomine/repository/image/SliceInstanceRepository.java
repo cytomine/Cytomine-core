@@ -71,4 +71,6 @@ public interface SliceInstanceRepository extends JpaRepository<SliceInstance, Lo
             "   bs.zStack ASC, " +
             "   bs.channel ASC ")
     List<SliceInstance> listByImageInstanceOrderedByTZC(ImageInstance imageInstance, Integer baseSliceTime, Integer baseSliceZStack, Integer baseSliceChannel, Long userAnnotationSliceId);
+
+    boolean existsByBaseSlice(AbstractSlice abstractSlice);
 }

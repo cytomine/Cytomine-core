@@ -39,7 +39,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleMissingServletRequestParameter(
             MissingServletRequestParameterException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  ex.getMessage()));
-        return ResponseEntity
+        return JsonResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(jsonObject.toJsonString());
     }
@@ -48,7 +48,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     protected ResponseEntity<Object> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  ex.getMessage()));
-        return ResponseEntity
+        return JsonResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(jsonObject.toJsonString());
     }
@@ -56,16 +56,16 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(MiddlewareException.class)
     public ResponseEntity<?> handleException(MiddlewareException exception) {
-        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  "Internal error"));
-        return ResponseEntity
+        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  "Internal error"), "errorValues", exception.getValues());
+        return JsonResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(jsonObject.toJsonString());
     }
 
     @ExceptionHandler(ObjectNotFoundException.class)
     public ResponseEntity<?> handleException(ObjectNotFoundException exception) {
-        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()));
-        return ResponseEntity
+        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()), "errorValues", exception.getValues());
+        return JsonResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(jsonObject.toJsonString());
     }
@@ -73,8 +73,8 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<?> handleException(ForbiddenException exception) {
-        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()));
-        return ResponseEntity
+        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()), "errorValues", exception.getValues());
+        return JsonResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(jsonObject.toJsonString());
     }
@@ -82,7 +82,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<?> handleException(AccessDeniedException exception) {
         JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  "Cannot identify user or user is not authorized to log in"));
-        return ResponseEntity
+        return JsonResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(jsonObject.toJsonString());
     }
@@ -91,7 +91,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<?> handleException(AuthenticationException exception) {
         JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()));
-        return ResponseEntity
+        return JsonResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(jsonObject.toJsonString());
     }
@@ -102,7 +102,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<?> handleException(CytomineMethodNotYetImplementedException exception) {
         exception.printStackTrace();
         JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  "Method is not yet implemented"));
-        return ResponseEntity
+        return JsonResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(jsonObject.toJsonString());
     }
@@ -110,16 +110,16 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(WrongArgumentException.class)
     public ResponseEntity<?> handleException(WrongArgumentException exception) {
-        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()));
-        return ResponseEntity
+        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()), "errorValues", exception.getValues());
+        return JsonResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(jsonObject.toJsonString());
     }
 
     @ExceptionHandler(AlreadyExistException.class)
     public ResponseEntity<?> handleException(AlreadyExistException exception) {
-        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()));
-        return ResponseEntity
+        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()), "errorValues", exception.getValues());
+        return JsonResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(jsonObject.toJsonString());
     }
@@ -127,8 +127,8 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ConstraintException.class)
     public ResponseEntity<?> handleException(ConstraintException exception) {
-        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()));
-        return ResponseEntity
+        JsonObject jsonObject = JsonObject.of("errors", Map.of("message",  exception.getMessage()), "errorValues", exception.getValues());
+        return JsonResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(jsonObject.toJsonString());
     }

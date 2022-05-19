@@ -18,13 +18,11 @@ package be.cytomine.service.image;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
-import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.AbstractSlice;
-import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.image.UploadedFile;
+import be.cytomine.domain.image.*;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ConstraintException;
+import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.AbstractSliceRepository;
 import be.cytomine.repository.image.SliceInstanceRepository;
@@ -41,6 +39,7 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -143,10 +142,26 @@ public class AbstractSliceService extends ModelService {
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(),WRITE);
 
-        Command c = new DeleteCommand(currentUser, transaction);
-        return executeCommand(c,domain, null);
+        if (!isAbstractSliceUsed(domain.getId())) {
+            Command c = new DeleteCommand(currentUser, transaction);
+            return executeCommand(c,domain, null);
+        } else {
+            List<SliceInstance> instances = sliceInstanceRepository.findAllByBaseSlice((AbstractSlice) domain);
+            throw new ForbiddenException("Abstract Slice has instances in active projects: " +
+                    instances.stream().map(x -> x.getProject().getName()).collect(Collectors.joining(",")) +
+                    " with the following names : " +
+                    instances.stream().map(x -> x.getBaseSlice().getImage().getOriginalFilename()).distinct().collect(Collectors.joining(",")),
+                    Map.of("projectNames", instances.stream().map(x -> x.getProject().getName()).collect(Collectors.toList()), "imageNames", instances.stream().map(x -> x.getBaseSlice().getImage().getOriginalFilename()).distinct().collect(Collectors.toList())));
+        }
     }
 
+    public boolean isAbstractSliceUsed(Long abstractImageId) {
+        AbstractSlice domain = find(abstractImageId).orElseThrow(() -> new ObjectNotFoundException("AbstractImage", abstractImageId));
+        return isAbstractSliceUsed(domain);
+    }
+    private boolean isAbstractSliceUsed(AbstractSlice abstractSlice) {
+        return sliceInstanceRepository.existsByBaseSlice(abstractSlice);
+    }
 
     @Override
     public List<Object> getStringParamsI18n(CytomineDomain domain) {

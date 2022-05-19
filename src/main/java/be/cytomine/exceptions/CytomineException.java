@@ -80,4 +80,8 @@ public abstract class CytomineException extends RuntimeException {
     public String toString() {
         return this.msg;
     }
+
+    public Map<Object, Object> getValues() {
+        return values;
+    }
 }
