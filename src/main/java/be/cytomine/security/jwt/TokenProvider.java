@@ -23,6 +23,7 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.SecurityUtils;
+import be.cytomine.utils.StringUtils;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -158,7 +159,7 @@ public class TokenProvider {
         } catch (IllegalArgumentException e) {
             log.error("Token validation error {}", e.getMessage());
         }
-        log.debug("token refused");
+        log.debug("token refused: "+ StringUtils.obscurify(authToken, 3));
         return null;
     }
 

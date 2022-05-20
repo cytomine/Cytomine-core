@@ -42,6 +42,9 @@ public class StringUtils {
         if (property==null) {
             return "<NULL>";
         }
+        if (property.trim().isEmpty()) {
+            return "<EMPTY>";
+        }
         if (numberOfCharsToKeepOnEachSide*2<property.length()) {
             StringBuffer buffer = new StringBuffer();
             for (int i = 0; i< property.length()-(numberOfCharsToKeepOnEachSide*2);i++) {
