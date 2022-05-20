@@ -36,8 +36,8 @@ public class StringUtilsTests {
         assertThat(StringUtils.obscurify("password", 5)).isEqualTo("password");
         assertThat(StringUtils.obscurify("password", 10)).isEqualTo("password");
 
-        assertThat(StringUtils.obscurify("", 0)).isEqualTo("");
-        assertThat(StringUtils.obscurify("", 10)).isEqualTo("");
+        assertThat(StringUtils.obscurify("", 0)).isEqualTo("<EMPTY>");
+        assertThat(StringUtils.obscurify("", 10)).isEqualTo("<EMPTY>");
     }
 
     @Test
