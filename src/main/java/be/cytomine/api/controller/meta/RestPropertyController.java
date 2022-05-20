@@ -22,6 +22,9 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.dto.JsonInput;
+import be.cytomine.dto.JsonMultipleObject;
+import be.cytomine.dto.JsonSingleObject;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
@@ -33,6 +36,8 @@ import be.cytomine.service.security.SecUserService;
 import be.cytomine.utils.GeometryUtils;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
@@ -295,14 +300,29 @@ public class RestPropertyController extends RestCytomineController {
     public ResponseEntity<String> addProperty(
             @PathVariable String domainClassName,
             @PathVariable Long domainIdent,
-            @RequestBody JsonObject jsonObject
+            @RequestBody String json
     ) {
         log.debug("REST request to add property for domain {} {}", domainClassName, domainIdent);
         CytomineDomain domain = Optional.ofNullable(projectService.getCytomineDomain(domainClassName, domainIdent))
                 .orElseThrow(() -> new ObjectNotFoundException("Domain", domainClassName + "/" + domainIdent));
-        jsonObject.putIfAbsent("domainClassName", domainClassName);
-        jsonObject.putIfAbsent("domainIdent", domainIdent);
-        return responseSuccess(propertyService.add(jsonObject));
+        JsonInput data;
+        try {
+            data = new ObjectMapper().readValue(json, JsonMultipleObject.class);
+            for (JsonObject datum : ((JsonMultipleObject) data)) {
+                datum.putIfAbsent("domainClassName", domainClassName);
+                datum.putIfAbsent("domainIdent", domainIdent);
+            }
+            // If fails to parse as a single object, parse as a list
+        } catch (Exception ex) {
+            try {
+                data = new ObjectMapper().readValue(json, JsonSingleObject.class);
+                ((JsonSingleObject)data).putIfAbsent("domainClassName", domainClassName);
+                ((JsonSingleObject)data).putIfAbsent("domainIdent", domainIdent);
+            } catch (JsonProcessingException e) {
+                throw new WrongArgumentException("Json not valid");
+            }
+        }
+        return add(propertyService, data);
     }
 
     @PostMapping("/property.json")

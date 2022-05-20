@@ -21,7 +21,9 @@ import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.ontology.UserAnnotation;
+import be.cytomine.domain.project.Project;
 import be.cytomine.repository.meta.PropertyRepository;
+import be.cytomine.utils.JsonObject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -33,6 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import javax.persistence.EntityManager;
+
+import java.util.List;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
@@ -354,6 +358,20 @@ public class PropertyResourceTests {
                 .andExpect(jsonPath("$.command").exists())
                 .andExpect(jsonPath("$.property.id").exists());
     }
+
+    @Test
+    @Transactional
+    public void add_valid_properties_by_batch() throws Exception {
+        Project project = builder.given_a_project();
+        Property property1 = builder.given_a_not_persisted_property(project, "key", "value");
+        Property property2 = builder.given_a_not_persisted_property(project, "key", "value");
+        restPropertyControllerMockMvc.perform(post("/api/domain/{domainClassName}/{domainIdent}/property.json", property1.getDomainClassName(), property1.getDomainIdent())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonObject.toJsonString(List.of(property1.toJsonObject(), property2.toJsonObject()))))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
+
 
 
     @Test
