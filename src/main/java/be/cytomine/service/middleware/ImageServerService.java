@@ -111,7 +111,7 @@ public class ImageServerService extends ModelService {
             throw new InvalidRequestException("Uploaded file has no valid path.");
         }
         // It gets the file specified in the uri.
-        String uri = "/file/"+uploadedFile.getPath()+"/export";
+        String uri = "/file/"+URLEncoder.encode(uploadedFile.getPath() ,StandardCharsets.UTF_8) +"/export";
         return uploadedFile.getImageServer().getUrl()+uri;
 
     }
@@ -324,13 +324,13 @@ public class ImageServerService extends ModelService {
 //        LinkedHashMap<String, Object> parameters = cropParameters(cropParameter);
         String uri;
         if (cropParameter.getDraw()!=null && cropParameter.getDraw()) {
-            uri = "/image/"+filePath+"/annotation/drawing";
+            uri = "/image/"+URLEncoder.encode(filePath, StandardCharsets.UTF_8)+"/annotation/drawing";
         } else if (cropParameter.getMask()!=null && cropParameter.getMask()) {
-            uri = "/image/"+filePath+"/annotation/mask";
+            uri = "/image/"+URLEncoder.encode(filePath, StandardCharsets.UTF_8)+"/annotation/mask";
         } else if (cropParameter.getAlphaMask()!=null && cropParameter.getAlphaMask()) {
-            uri = "/image/"+filePath+"/annotation/crop";
+            uri = "/image/"+URLEncoder.encode(filePath, StandardCharsets.UTF_8)+"/annotation/crop";
         } else {
-            uri = "/image/"+filePath+"/annotation/crop";
+            uri = "/image/"+URLEncoder.encode(filePath, StandardCharsets.UTF_8)+"/annotation/crop";
         }
         return  uri;
     }

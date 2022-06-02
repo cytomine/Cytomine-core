@@ -208,10 +208,10 @@ public class ImageServerServiceTests {
         image.getUploadedFile().setContentType("MRXS");
 
         assertThat(imageServerService.downloadUri(image))
-                .isEqualTo("http://localhost:8888/file/" + image.getPath() + "/export");
+                .isEqualTo("http://localhost:8888/file/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/export");
 
         assertThat(imageServerService.downloadUri(image.getUploadedFile()))
-                .isEqualTo("http://localhost:8888/file/" + image.getPath() + "/export");
+                .isEqualTo("http://localhost:8888/file/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/export");
     }
 
     @Test
@@ -224,7 +224,7 @@ public class ImageServerServiceTests {
 
 
         configureFor("localhost", 8888); //       /image/upload1644425985928451/LUNG1_pyr.tif/info
-        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/info"))
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/info"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -292,7 +292,7 @@ public class ImageServerServiceTests {
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/info/associated"))
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/info/associated"))
                 .willReturn(
                         aResponse().withBody("{\"items\": [{\"name\":\"macro\"},{\"name\":\"thumbnail\"},{\"name\":\"label\"}], \"size\": 0}")
                 )
@@ -313,7 +313,7 @@ public class ImageServerServiceTests {
         configureFor("localhost", 8888);
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        String url = "/image/" + image.getPath() + "/associated/macro?length=512";
+        String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/associated/macro?length=512";
 
         System.out.println(url);
         stubFor(get(urlEqualTo(url))
@@ -346,7 +346,7 @@ public class ImageServerServiceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
 
-        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/thumb?z_slices=0&timepoints=0&length=256"))
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/thumb?z_slices=0&timepoints=0&length=256"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -362,7 +362,7 @@ public class ImageServerServiceTests {
 
         byte[] mockResponse2 = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/thumb?z_slices=0&timepoints=0&length=512"))
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/thumb?z_slices=0&timepoints=0&length=512"))
                 .willReturn(
                         aResponse().withBody(mockResponse2)
                 )
@@ -392,8 +392,8 @@ public class ImageServerServiceTests {
         configureFor("localhost", 8888);
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        //String url = "/image/" + image.getPath() + "/annotation/drawing?context_factor=1.25&annotations=%7B%22geometry%22%3A%22POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29%22%2C%22stroke_color%22%3Anull%2C%22stroke_width%22%3Anull%7D&level=0&z_slices=0&timepoints=0";
-        String url = "/image/" + image.getPath() + "/annotation/drawing";
+        //String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/annotation/drawing?context_factor=1.25&annotations=%7B%22geometry%22%3A%22POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29%22%2C%22stroke_color%22%3Anull%2C%22stroke_width%22%3Anull%7D&level=0&z_slices=0&timepoints=0";
+        String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/annotation/drawing";
         String body = "{\"context_factor\":1.25,\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\",\"stroke_color\":null,\"stroke_width\":null},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
         System.out.println(url);
         System.out.println(body);
@@ -443,7 +443,7 @@ public class ImageServerServiceTests {
         //http://localhost-ims/image/1650442012355/2021-12-17-114138.jpg/window?region=[left:1, top:2, width:3, height:4]&level=0
 
         configureFor("localhost", 8888);
-        String url = "/image/" + image.getPath() + "/window";
+        String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/window";
         String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
         System.out.println(url);
         System.out.println(body);

@@ -36,6 +36,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -107,7 +109,7 @@ public class ImagePropertiesServiceTests {
         image.setColorspace("empty");
 
         configureFor("localhost", 8888); //       /image/upload1644425985928451/LUNG1_pyr.tif/info
-        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/info"))
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/info"))
                 .willReturn(
                         aResponse().withBody(
                             """
@@ -163,7 +165,7 @@ public class ImagePropertiesServiceTests {
         );
 
 
-        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/metadata"))
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/metadata"))
                 .willReturn(
                         aResponse().withBody(
                                 """

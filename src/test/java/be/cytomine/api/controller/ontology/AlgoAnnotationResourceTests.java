@@ -47,6 +47,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -330,7 +332,7 @@ public class AlgoAnnotationResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        String url = "/image/1636379100999/CMU-2/CMU-2.mrxs/annotation/crop";
+        String url = "/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8) + "/annotation/crop";
         String body = "{\"length\":512,\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"},\"background_transparency\":0,\"z_slices\":0,\"timepoints\":0}";
         System.out.println(url);
         System.out.println(body);
@@ -359,7 +361,7 @@ public class AlgoAnnotationResourceTests {
         configureFor("localhost", 8888);
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
-        String url = "/image/1636379100999/CMU-2/CMU-2.mrxs/annotation/mask";
+        String url = "/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8) + "/annotation/mask";
         String body = "{\"length\":256,\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\",\"fill_color\":\"#fff\"},\"z_slices\":0,\"timepoints\":0}";
         System.out.println(url);
         System.out.println(body);
@@ -389,7 +391,7 @@ public class AlgoAnnotationResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        String url = "/image/" + annotation.getImage().getBaseImage().getPath() + "/annotation/crop";
+        String url = "/image/"+ URLEncoder.encode(annotation.getImage().getBaseImage().getPath() , StandardCharsets.UTF_8) + "/annotation/crop";
         String body = "{\"length\":256,\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"},\"background_transparency\":100,\"z_slices\":0,\"timepoints\":0}";
         System.out.println(url);
         System.out.println(body);

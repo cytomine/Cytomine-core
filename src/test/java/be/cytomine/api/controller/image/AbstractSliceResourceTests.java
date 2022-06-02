@@ -39,6 +39,8 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -237,7 +239,7 @@ public class AbstractSliceResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + image.getPath() + "/thumb?z_slices=0&timepoints=0&length=512"))
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/thumb?z_slices=0&timepoints=0&length=512"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -270,7 +272,7 @@ public class AbstractSliceResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        String url = "/image/" + image.getPath() + "/annotation/crop";
+        String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/annotation/crop";
         String body = "{\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"},\"level\":0,\"background_transparency\":0,\"z_slices\":0,\"timepoints\":0}";
         System.out.println(url);
         System.out.println(body);
@@ -300,7 +302,7 @@ public class AbstractSliceResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         configureFor("localhost", 8888);
-        String url = "/image/" + image.getPath() + "/window";
+        String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/window";
         String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
         System.out.println(url);
         System.out.println(body);
@@ -320,7 +322,7 @@ public class AbstractSliceResourceTests {
 
         restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/window_url-10-20-30-40.jpg", image.getId()))
                 .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/1636379100999/CMU-2/CMU-2.mrxs/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
+                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/" + URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8)+ "/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
                 .andExpect(status().isOk());
 
     }
@@ -334,7 +336,7 @@ public class AbstractSliceResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         configureFor("localhost", 8888);
-        String url = "/image/" + image.getPath() + "/window";
+        String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/window";
         String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
         System.out.println(url);
         System.out.println(body);
@@ -354,7 +356,7 @@ public class AbstractSliceResourceTests {
 
         restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/camera_url-10-20-30-40.jpg", image.getId()))
                 .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/1636379100999/CMU-2/CMU-2.mrxs/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
+                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/" + URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8)+ "/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
                 .andExpect(status().isOk());
 
     }

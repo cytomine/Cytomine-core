@@ -40,6 +40,8 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -237,7 +239,7 @@ public class CompanionFileResourceTests {
                 .andDo(print()).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
         assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/file/1636379100999/CMU-2/CMU-2.mrxs/export");
+                .isEqualTo("http://localhost:8888/file/" + URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8) + "/export");
 
 
     }
