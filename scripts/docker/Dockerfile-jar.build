@@ -1,4 +1,4 @@
-FROM gradle:7-jdk17 AS imageWithDependencies
+FROM gradle:7.4.2-jdk17-alpine AS imageWithDependencies
 
 # We first copy the pom.xml file and the binaries stored in the source repository.
 # This way, we retrieve all maven dependencies at the beginning. All these steps will be cached by Docker unless pom.xml or libs/ has been updated.
