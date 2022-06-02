@@ -99,6 +99,7 @@ public class ImageServerService extends ModelService {
     }
 
     public List<Map<String, Object>> formats(ImageServer imageServer) throws IOException {
+        log.debug(imageServer.getInternalUrl() + "/formats");
         String response = getContentFromUrl(imageServer.getInternalUrl() + "/formats");
         JsonObject jsonObject = JsonObject.toJsonObject(response);
         return ((List<Map<String,Object>>)jsonObject.get("items")).stream().map(x -> StringUtils.keysToCamelCase(x)).toList();
@@ -126,21 +127,21 @@ public class ImageServerService extends ModelService {
     public Map<String, Object> properties(AbstractImage image) throws IOException {
         String server = image.getImageServerInternalUrl();
         String path = image.getPath();
-        String content = getContentFromUrl(server + "/image/"+path+"/info");
+        String content = getContentFromUrl(server + "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/info");
         return JsonObject.toMap(content);
     }
 
     public List<Map<String, Object>> rawProperties(AbstractImage image) throws IOException {
         String server = image.getImageServerInternalUrl();
         String path = image.getPath();
-        String content = getContentFromUrl(server + "/image/"+path+"/metadata");
+        String content = getContentFromUrl(server + "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/metadata");
         return JsonObject.toJsonObject(content).getJSONAttrListMap("items");
     }
 
     public List<String> associated(AbstractImage image) throws IOException {
         String server = image.getImageServerInternalUrl();
         String path = image.getPath();
-        String content = getContentFromUrl(server + ("/image/"+path+"/info/associated"));
+        String content = getContentFromUrl(server + ("/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/info/associated"));
         return JsonObject.toJsonObject(content).getJSONAttrListMap("items").stream().map(x -> (String)x.get("name")).toList();
     }
 
@@ -162,7 +163,7 @@ public class ImageServerService extends ModelService {
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
         parameters.put("length", params.getMaxSize());
 
-        String uri = "/image/"+path+"/associated/" + params.getLabel().toLowerCase();
+        String uri = "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/associated/" + params.getLabel().toLowerCase();
 
         Map<String, Object> headers = new LinkedHashMap<>();
         if (etag!=null) {
@@ -185,7 +186,7 @@ public class ImageServerService extends ModelService {
         String path = slice.getPath();
 
         String format = checkFormat(params.getFormat(), List.of("jpg", "png", "webp"));
-        String uri = "/image/"+path+"/thumb";
+        String uri = "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/thumb";
 
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
 
@@ -204,7 +205,7 @@ public class ImageServerService extends ModelService {
 
         if (params.getBits()!=null) {
             parameters.put("bits", params.getMaxBits() ? "AUTO" : params.getBits());
-            uri = "/image/"+path+"/resized";
+            uri = "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/resized";
         }
 
         if (params.getInverse()!=null && params.getInverse()) {
@@ -432,7 +433,7 @@ public class ImageServerService extends ModelService {
 
         LinkedHashMap<String, Object> parameters = windowParameters(windowParameter);
 
-        String uri = "/image/"+path+"/window";
+        String uri = "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/window";
 
         if (slice.getImage().getChannels()!=null && slice.getImage().getChannels() > 1) {
             parameters.put("channels", slice.getChannel());
@@ -466,7 +467,7 @@ public class ImageServerService extends ModelService {
 
         LinkedHashMap<String, Object> parameters = windowParameters(windowParameter);
 
-        String uri = "/image/"+path+"/window";
+        String uri = "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/window";
         return server + uri + "?" + makeParameterUrl(parameters);
     }
 
