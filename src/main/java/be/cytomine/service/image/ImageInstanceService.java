@@ -206,7 +206,7 @@ public class ImageInstanceService extends ModelService {
     public ImageInstanceBounds computeBounds(Project project) {
         securityACLService.check(project, READ);
         ImageInstanceBounds imageInstanceBounds = new ImageInstanceBounds();
-        imageInstanceRepository.findAllByProject(project).forEach(imageInstanceBounds::submit);
+        imageInstanceRepository.findAllWithBaseImageUploadedFileByProject(project).forEach(imageInstanceBounds::submit);
         return imageInstanceBounds;
     }
 
