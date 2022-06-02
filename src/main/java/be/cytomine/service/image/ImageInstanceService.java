@@ -847,13 +847,13 @@ public class ImageInstanceService extends ModelService {
         securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((ImageInstance)domain).getUser());
 
         Project project = ((ImageInstance) domain).getProject();
-        if (ProjectLock.getInstance().lock(project)) {
+        if (Lock.getInstance().lockProject(project)) {
             try {
                 log.debug("Delete image " + domain.getId());
                 Command c = new DeleteCommand(currentUser, transaction);
                 return executeCommand(c,domain, null);
             } finally {
-                ProjectLock.getInstance().unlock(project);
+                Lock.getInstance().unlockProject(project);
             }
         } else {
             throw new ServerException("Cannot acquire lock for project " + project.getId()  + " , tryLock return false");

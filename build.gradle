@@ -49,6 +49,7 @@ dependencies {
 //	implementation "org.springframework.boot:spring-boot-starter-undertow"
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	implementation 'org.springframework.security:spring-security-acl'

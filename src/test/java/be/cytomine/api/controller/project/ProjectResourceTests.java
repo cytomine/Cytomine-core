@@ -874,7 +874,7 @@ public class ProjectResourceTests {
         restProjectControllerMockMvc.perform(get("/api/user/{id}/project/light.json", builder.given_superadmin().getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[0].id").value(project.getId()));
+                .andExpect(jsonPath("$.collection[?(@.id=='"+project.getId()+"')]").exists());
 
     }
 

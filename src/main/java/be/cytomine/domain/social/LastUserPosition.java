@@ -37,11 +37,8 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static be.cytomine.domain.social.PersistentUserPosition.getJtsPolygon;
 
@@ -110,6 +107,18 @@ public class LastUserPosition extends CytomineSocialDomain  {
         returnArray.put("x", polygon.getCentroid().getX());
         returnArray.put("y", polygon.getCentroid().getY());
         return returnArray;
+    }
+
+    public static boolean isSameLocation(List<List<Double>> location1, List<List<Double>> location2){
+        return (getX(location1) == getX(location2) && getY(location1) == getY(location2));
+    }
+
+    public static double getX(List<List<Double>> location){
+        return getJtsPolygon(location).getCentroid().getX();
+    }
+
+    public static double getY(List<List<Double>> location){
+        return getJtsPolygon(location).getCentroid().getY();
     }
 
     @Override

@@ -20,6 +20,7 @@ import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
@@ -30,14 +31,17 @@ import be.cytomine.service.image.SliceInstanceService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.social.UserPositionService;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * Controller for user position
@@ -59,7 +63,7 @@ public class RestUserPositionController extends RestCytomineController {
 
     private final SecUserService secUserService;
 
-
+    private final SecurityACLService securityACLService;
     //{"image":6836067,"zoom":1,"rotation":0,"bottomLeftX":-2344,"bottomLeftY":1032,"bottomRightX":6784,"bottomRightY":1032,"topLeftX":-2344,"topLeftY":2336,"topRightX":6784,"topRightY":2336,"broadcast":false}
 
     @PostMapping("/imageinstance/{id}/position.json")
@@ -121,7 +125,8 @@ public class RestUserPositionController extends RestCytomineController {
             sliceInstance = sliceInstanceService.find(sliceId)
                     .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", sliceId));
         }
-        return  responseSuccess(userPositionService.lastPositionByUser(imageInstance, sliceInstance, user, broadcast).map(LastUserPosition::toJsonObject).orElse(new JsonObject()));
+        userPositionService.addAsFollower((User) user, (User) currentUserService.getCurrentUser(), imageInstance);
+        return responseSuccess(userPositionService.lastPositionByUser(imageInstance, sliceInstance, user, broadcast).map(LastUserPosition::toJsonObject).orElse(new JsonObject()));
     }
 
     @GetMapping("/imageinstance/{image}/positions.json")
@@ -170,4 +175,18 @@ public class RestUserPositionController extends RestCytomineController {
         return responseSuccess(JsonObject.of("users", userPositionService.listOnlineUsersByImage(imageInstance, sliceInstance, broadcast)));
     }
 
+
+    @GetMapping("/imageinstance/{image}/followers/{user}.json")
+    public ResponseEntity<String> listFollowers(
+            @PathVariable("image") Long imageId,
+            @PathVariable("user") Long userId) {
+        log.debug("REST request get list of followers");
+        SecUser user = secUserService.find(userId)
+                .orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
+        securityACLService.checkIsSameUser(currentUserService.getCurrentUser(), user);
+
+        ImageInstance imageInstance =
+                imageInstanceService.find(imageId).orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
+        return responseSuccess(userPositionService.listFollowers(userId, imageInstance.getId()));
+    }
 }

@@ -16,6 +16,7 @@ package be.cytomine.service.social;
 * limitations under the License.
 */
 
+import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
@@ -23,6 +24,7 @@ import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.domain.social.PersistentUserPosition;
+import be.cytomine.exceptions.ServerException;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repositorynosql.social.*;
@@ -30,36 +32,38 @@ import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.dto.AreaDTO;
+import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Accumulators;
-import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Projections;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
-import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.aggregation.Fields;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.security.concurrent.DelegatingSecurityContextScheduledExecutorService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
 
+import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-import static be.cytomine.domain.social.PersistentUserPosition.getJtsPolygon;
 import static com.mongodb.client.model.Aggregates.*;
 import static com.mongodb.client.model.Filters.*;
-import static com.mongodb.client.model.Sorts.ascending;
-import static com.mongodb.client.model.Sorts.descending;
+import static java.util.stream.Collectors.*;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 import static org.springframework.security.acls.domain.BasePermission.WRITE;
 
@@ -68,9 +72,13 @@ import static org.springframework.security.acls.domain.BasePermission.WRITE;
 @Transactional
 public class UserPositionService {
 
+    static final int USER_UNFOLLOWING_DELAY = 10;
     public static final String DATABASE_NAME = "cytomine";
     @Autowired
     CurrentUserService currentUserService;
+
+    @Autowired
+    SecUserService secUserService;
 
     @Autowired
     ProjectRepository projectRepository;
@@ -103,7 +111,7 @@ public class UserPositionService {
     MongoTemplate mongoTemplate;
 
     @Autowired
-    private SessionFactory sessionFactory;
+    WebSocketUserPositionHandler webSocketUserPositionHandler;
 
     @Autowired
     PersistentUserPositionRepository persistentUserPositionRepository;
@@ -123,6 +131,12 @@ public class UserPositionService {
 //
 //    }
 
+    // usersTracked key -> "trackedUserId/imageId"
+    public static Map<String, List<User>> broadcasters = new ConcurrentHashMap<>();
+
+    // usersTracking key -> "followerId/imageId"
+    public static Map<String, Boolean> followers = new ConcurrentHashMap<>();
+
     public PersistentUserPosition add(
             Date created,
             SecUser user,
@@ -132,6 +146,9 @@ public class UserPositionService {
             Integer zoom,
             Double rotation,
             Boolean broadcast) {
+
+        Optional<LastUserPosition> lastPosition = lastPositionByUser(imageInstance, sliceInstance, user, broadcast);
+
         //TODO: no ACL???
         LastUserPosition position = new LastUserPosition();
         position.setId(sequenceService.generateID());
@@ -139,7 +156,8 @@ public class UserPositionService {
         position.setImage(imageInstance.getId());
         position.setSlice(sliceInstance.getId());
         position.setProject(imageInstance.getProject().getId());
-        position.setLocation(area.toMongodbLocation().getCoordinates());
+        List<List<Double>> currentLocation = area.toMongodbLocation().getCoordinates();
+        position.setLocation(currentLocation);
         position.setZoom(zoom);
         position.setRotation(rotation);
         position.setBroadcast(broadcast);
@@ -147,6 +165,14 @@ public class UserPositionService {
         position.setUpdated(created);
         position.setImageName(imageInstance.getBlindInstanceFilename());
         lastUserPositionRepository.insert(position);
+
+        if(lastPosition.isPresent() && !LastUserPosition.isSameLocation(lastPosition.get().getLocation(), currentLocation)){
+            try{
+                webSocketUserPositionHandler.sendPositionToFollowers(user.getId().toString(), imageInstance.getId().toString(), position.toJsonObject().toJsonString());
+            }catch (ServerException e){
+                log.error(e.getMessage());
+            }
+        }
 
         PersistentUserPosition persistedPosition = new PersistentUserPosition();
         persistedPosition.setId(sequenceService.generateID());
@@ -164,6 +190,27 @@ public class UserPositionService {
         persistentUserPositionRepository.insert(persistedPosition);
 
         return persistedPosition;
+    }
+
+    public void addAsFollower(User broadcaster, User follower, ImageInstance imageInstance){
+        String broadcasterAndImageId = broadcaster.getId().toString() + "/" + imageInstance.getId().toString();
+        String followerAndImageId = follower.getId().toString() + "/" + imageInstance.getId().toString();
+
+        if (broadcasters.containsKey(broadcasterAndImageId)) {
+            Set<Long> userIds = broadcasters.get(broadcasterAndImageId).stream()
+                    .map(CytomineDomain::getId).collect(toSet());
+
+            if(!userIds.contains(follower.getId())){
+                broadcasters.get(broadcasterAndImageId).add(follower);
+                followers.put(followerAndImageId, true);
+            }else{
+                // Mark as fetching
+                followers.replace(followerAndImageId, followers.get(followerAndImageId), true);
+            }
+        } else {
+            broadcasters.put(broadcasterAndImageId, new ArrayList<>(Collections.singleton(follower)));
+            followers.put(followerAndImageId, true);
+        }
     }
 
     public Optional<LastUserPosition> lastPositionByUser(ImageInstance image, SliceInstance slice, SecUser user, boolean broadcast) {
@@ -208,7 +255,7 @@ public class UserPositionService {
         List<Document> results = persistentProjectConnection.aggregate(request)
                 .into(new ArrayList<>());
 
-        return results.stream().map(x -> x.getLong("_id")).collect(Collectors.toList());
+        return results.stream().map(x -> x.getLong("_id")).toList();
     }
 
     public List<PersistentUserPosition> list(ImageInstance image, SecUser user, SliceInstance slice, Long afterThan, Long beforeThan, Integer max, Integer offset){
@@ -243,6 +290,31 @@ public class UserPositionService {
 
     }
 
+    public List<String> listFollowers(Long userId, Long imageId){
+        String userAndImageId = userId.toString()+"/"+imageId.toString();
+        List<String> followersIds = new ArrayList<>();
+
+        ConcurrentWebSocketSessionDecorator broadcastSession = WebSocketUserPositionHandler.sessionsBroadcast.get(userAndImageId);
+        if(broadcastSession!=null){
+            ConcurrentWebSocketSessionDecorator[] followers = WebSocketUserPositionHandler.sessionsTracked.get(broadcastSession);
+            if(followers != null) {
+                followersIds = webSocketUserPositionHandler.getSessionsUserIds(followers).stream().distinct().toList();
+            }
+        }
+
+        List<User> poolingUsers = broadcasters.get(userAndImageId);
+        if(poolingUsers != null){
+            for(User user : poolingUsers){
+                if(!followersIds.contains(user.getId().toString())){
+                    List<String> followersIdsList = new ArrayList<>(followersIds);
+                    followersIdsList.add(user.getId().toString());
+                    followersIds = followersIdsList;
+                }
+            }
+        }
+        return followersIds;
+    }
+
     public List<Map<String, Object>> summarize(ImageInstance image, SecUser user, SliceInstance slice, Long afterThan, Long beforeThan) {
         securityACLService.check(image, WRITE);
 
@@ -262,7 +334,6 @@ public class UserPositionService {
         }
 
 
-
         request.add(group(Document.parse("{location: '$location', zoom: '$zoom', rotation: '$rotation'}"),
                 Accumulators.sum("frequency", 1), Accumulators.first("image", "$image")));
 
@@ -278,7 +349,7 @@ public class UserPositionService {
                         "rotation", ((Document) x.get("_id")).get("rotation"),
                         "rotation", ((Document) x.get("_id")).get("rotation"),
                         "frequency", x.get("frequency"),
-                        "image", x.get("image"))).collect(Collectors.toList());
+                        "image", x.get("image"))).collect(toList());
 
     }
 
@@ -308,10 +379,59 @@ public class UserPositionService {
 
         List<JsonObject> usersWithPosition =  results.stream().map(x ->
                 JsonObject.of("id", ((Document) x.get("_id")).get("user"),
-                        "position", x.get("position"))).collect(Collectors.toList());
-
-
+                        "position", x.get("position"))).collect(toList());
 
         return usersWithPosition;
+    }
+
+    public void removeFollower(Map.Entry<String, Boolean> entry){
+        String[] splitEntry = entry.getKey().split("/");
+        String followerId = splitEntry[0];
+        String imageId = splitEntry[1];
+
+        // For each broadcaster
+        for(Map.Entry<String, List<User>> trackedEntry : broadcasters.entrySet()){
+            String broadcaster = trackedEntry.getKey();
+            String entryImageId = broadcaster.split("/")[1];
+
+            // If he is same image
+            if(entryImageId.equals(imageId)){
+                Set<String> userIds = trackedEntry.getValue().stream()
+                        .map(user -> user.getId().toString()).collect(toSet());
+                // and one of his follower id is followerId
+                if(userIds.contains(followerId)){
+                    removeFollower(Long.parseLong(followerId), broadcaster);
+                }
+            }
+        }
+    }
+
+    private void removeFollower(Long followerId, String broadcaster){
+        List<User> newFollowers = new ArrayList<>();
+        for(User user : broadcasters.get(broadcaster)){
+            if(!user.getId().equals(followerId)){
+                newFollowers.add(user);
+            }
+        }
+        broadcasters.replace(broadcaster, newFollowers);
+    }
+
+    @PostConstruct
+    public void positionScheduler(){
+        DelegatingSecurityContextScheduledExecutorService delegatedScheduler = new DelegatingSecurityContextScheduledExecutorService(
+                Executors.newScheduledThreadPool(1),
+                SecurityContextHolder.getContext()
+        );
+        delegatedScheduler.scheduleAtFixedRate(
+            () -> {
+                for(Map.Entry<String, Boolean> entry : followers.entrySet()){
+                    if(!entry.getValue()){
+                        followers.remove(entry.getKey());
+                        removeFollower(entry);
+                    }else{
+                        followers.replace(entry.getKey(), true, false);
+                    }
+                }
+            }, USER_UNFOLLOWING_DELAY, USER_UNFOLLOWING_DELAY, TimeUnit.SECONDS);
     }
 }
