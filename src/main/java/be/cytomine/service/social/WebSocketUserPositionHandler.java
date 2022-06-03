@@ -2,6 +2,7 @@ package be.cytomine.service.social;
 
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.exceptions.ServerException;
 import be.cytomine.service.CytomineWebSocketHandler;
@@ -87,7 +88,7 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         ConcurrentWebSocketSessionDecorator broadcastSession = sessionsBroadcast.get(broadcasterId+"/"+imageId);
         ConcurrentWebSocketSessionDecorator followerSession = getSession(followerId, session.getId());
 
-        if(followerSession != null){
+        if(broadcastSession!=null && followerSession != null){
             addToTrackedSessions(broadcastSession, followerSession);
         }
 

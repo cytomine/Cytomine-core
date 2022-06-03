@@ -236,9 +236,17 @@ public class SecurityACLService {
     }
 
     public void checkIsSameUser(SecUser user,SecUser currentUser) {
-        boolean sameUser = (Objects.equals(user.getId(), currentUser.getId()));
+        checkIsSameUser(user.getId(), currentUser);
+    }
+
+    public void checkIsCurrentUserSameUser(Long userId) {
+        checkIsSameUser(userId, currentUserService.getCurrentUser());
+    }
+
+    public void checkIsSameUser(Long userId,SecUser currentUser) {
+        boolean sameUser = (Objects.equals(userId, currentUser.getId()));
         sameUser |= currentRoleService.isAdminByNow(currentUser);
-        sameUser |= (currentUser instanceof UserJob && Objects.equals(user.getId(), ((UserJob) currentUser).getUser().getId()));
+        sameUser |= (currentUser instanceof UserJob && Objects.equals(userId, ((UserJob) currentUser).getUser().getId()));
         if (!sameUser) {
             throw new ForbiddenException("You don't have the right to read this resource! You must be the same user!");
         }

@@ -16,6 +16,7 @@ package be.cytomine.repository.project;
 * limitations under the License.
 */
 
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
@@ -100,4 +101,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long>  {
     List<Project> findAllByIdIn(List<Long> project);
 
     Optional<Project> findByName(String name);
+
+    @Query(value = "SELECT a.project_id FROM image_instance a WHERE id=:imageInstanceId", nativeQuery = true)
+    Long findByProjectIdByImageInstanceId(Long imageInstanceId);
+
 }

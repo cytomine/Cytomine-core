@@ -91,6 +91,13 @@ public class JWTFilter extends GenericFilterBean {
         return null;
     }
 
+    public static String resolveToken(String bearerToken) {
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+
     private boolean isShortTermToken(Jws<Claims> claimsJws) {
         return claimsJws.getBody().containsKey(TYPE_KEY) && claimsJws.getBody().get(TYPE_KEY).equals(SHORT_TERM.toString());
     }
