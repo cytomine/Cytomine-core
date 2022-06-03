@@ -6,6 +6,7 @@ import be.cytomine.exceptions.ServerException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -274,7 +275,7 @@ public class WebSocketUserPositionTests {
         when(session.isOpen()).thenReturn(true);
         doNothing().when(session).sendMessage(new TextMessage("position"));
         assertDoesNotThrow(() -> webSocketUserPositionHandler.sendPositionToFollowers(userId, imageInstanceId, "position"));
-        verify(session, times(1)).sendMessage(new TextMessage("position"));
+        verify(session, Mockito.timeout(2000).times(1)).sendMessage(new TextMessage("position"));
     }
 
     @Test
