@@ -1,13 +1,9 @@
 package be.cytomine.config;
 
-import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.Project;
-import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.project.ProjectRepository;
-import be.cytomine.repository.security.AclRepository;
 import be.cytomine.security.jwt.TokenProvider;
-import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.social.WebSocketUserPositionHandler;
 import be.cytomine.utils.StringUtils;
@@ -16,10 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -29,8 +22,6 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 import static be.cytomine.config.security.JWTFilter.resolveToken;
@@ -58,7 +49,7 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(webSocketUserPositionHandler,"/user-position/*/*/*").setAllowedOrigins("*").addInterceptors(idInterceptor());
+        registry.addHandler(webSocketUserPositionHandler,"/ws/user-position/*/*/*").setAllowedOrigins("*").addInterceptors(idInterceptor());
     }
 
     @Bean
