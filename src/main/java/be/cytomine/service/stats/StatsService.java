@@ -56,6 +56,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static be.cytomine.utils.SQLUtils.castToLong;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Service
@@ -279,6 +280,36 @@ public class StatsService {
         }
         return new ArrayList<>(result.values());
     }
+
+    public List<JsonObject> statPerTermAndImage(Project project, Date startDate, Date endDate) {
+        securityACLService.check(project,READ);
+        List<JsonObject> result = new ArrayList<>();
+
+
+        //Get the number of annotation for each term
+        String request = "" +
+                "SELECT ua.image_id, at.term_id, COUNT(ua.id) as count  " +
+                "FROM user_annotation ua " +
+                "LEFT JOIN annotation_term at ON at.user_annotation_id = ua.id " +
+                "WHERE ua.deleted is NULL and at.deleted is NULL and ua.project_id = "  +project.getId() + " "+
+                (startDate!=null ? "AND at.created > '"+startDate+"'" : "") +
+                (endDate!=null ? "AND at.created < '"+endDate+"'" : "") +
+                "GROUP BY ua.image_id, at.term_id " +
+                "ORDER BY ua.image_id, at.term_id ";
+
+        List<Tuple> rows = entityManager.createNativeQuery(request, Tuple.class).getResultList();
+
+        for (Tuple row : rows) {
+            JsonObject value = JsonObject.of(
+                    "image", castToLong(row.get(0)),
+                    "term", castToLong(row.get(1)),
+                    "countAnnotations", castToLong(row.get(2))
+            );
+            result.add(value);
+        }
+        return result;
+    }
+
 
     public List<JsonObject> statTerm(Project project, Date startDate, Date endDate, boolean leafsOnly) {
         securityACLService.check(project,READ);

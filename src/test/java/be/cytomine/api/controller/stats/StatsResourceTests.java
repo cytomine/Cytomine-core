@@ -262,6 +262,30 @@ public class StatsResourceTests {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    void stat_Per_term_and_image() throws Exception {
+        Project project = builder.given_a_project();
+
+        restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/termimage.json", project.getId()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
+
+        AnnotationTerm annotationTerm = builder.given_an_annotation_term(builder.given_a_user_annotation(project));
+        entityManager.refresh(project.getOntology());
+
+        restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/termimage.json", project.getId()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
+                .andExpect(jsonPath("$.collection[0].countAnnotations").value(1));
+
+        restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/termimage.json", project.getId())
+                        .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -20).getTime()))
+                        .param("endDate", String.valueOf(DateUtils.addDays(new Date(), -10).getTime())))
+                .andDo(print())
+                .andExpect(status().isOk());
+    }
 
 
 

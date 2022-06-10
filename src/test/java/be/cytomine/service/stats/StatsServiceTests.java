@@ -401,6 +401,55 @@ public class StatsServiceTests {
         assertThat(results.get(0).get("value")).isEqualTo(0);
     }
 
+    @Test
+    void stat_per_term_and_image() {
+        Project project = builder.given_a_project();
+
+        List<JsonObject> results = statsService.statPerTermAndImage(project, null, null);
+
+        assertThat(results).hasSize(0); //no annotations
+
+        AnnotationTerm annotationTerm = builder.given_an_annotation_term(builder.given_a_user_annotation(project));
+        entityManager.refresh(project.getOntology());
+
+        results = statsService.statPerTermAndImage(project, null, null);
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).get("term")).isEqualTo(annotationTerm.getTerm().getId());
+        assertThat(results.get(0).get("image")).isEqualTo(annotationTerm.getUserAnnotation().getImage().getId());
+        assertThat(results.get(0).get("countAnnotations")).isEqualTo(1L);
+
+        AnnotationTerm annotationTermWithSameImageAndSameTerm = builder.given_an_annotation_term(builder.given_a_user_annotation(project));
+        annotationTermWithSameImageAndSameTerm.getUserAnnotation().setImage(annotationTerm.getUserAnnotation().getImage());
+        annotationTermWithSameImageAndSameTerm.setTerm(annotationTerm.getTerm());
+
+        results = statsService.statPerTermAndImage(project, null, null);
+        assertThat(results).hasSize(1);
+        assertThat(results.get(0).get("term")).isEqualTo(annotationTerm.getTerm().getId());
+        assertThat(results.get(0).get("image")).isEqualTo(annotationTerm.getUserAnnotation().getImage().getId());
+        assertThat(results.get(0).get("countAnnotations")).isEqualTo(2L);
+
+        AnnotationTerm annotationTermWithSameImage = builder.given_an_annotation_term(builder.given_a_user_annotation(project));
+        annotationTermWithSameImage.getUserAnnotation().setImage(annotationTerm.getUserAnnotation().getImage());
+
+        results = statsService.statPerTermAndImage(project, null, null);
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).get("term")).isEqualTo(annotationTerm.getTerm().getId());
+        assertThat(results.get(0).get("image")).isEqualTo(annotationTerm.getUserAnnotation().getImage().getId());
+        assertThat(results.get(0).get("countAnnotations")).isEqualTo(2L);
+        assertThat(results.get(1).get("term")).isEqualTo(annotationTermWithSameImage.getTerm().getId());
+        assertThat(results.get(1).get("image")).isEqualTo(annotationTerm.getUserAnnotation().getImage().getId());
+        assertThat(results.get(1).get("countAnnotations")).isEqualTo(1L);
+
+
+        results = statsService.statPerTermAndImage(project, DateUtils.addDays(new Date(), -40), DateUtils.addDays(new Date(), -20));
+        assertThat(results).hasSize(0);
+    }
+
+
+
+
+
+
 
     @Test
     void stats_user_annotation() {
