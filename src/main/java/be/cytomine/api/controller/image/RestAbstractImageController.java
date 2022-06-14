@@ -403,6 +403,21 @@ public class RestAbstractImageController extends RestCytomineController {
         return responseSuccess(new JsonObject());
     }
 
+    @PostMapping("/abstractimage/{id}/properties/regenerate.json")
+    public ResponseEntity<String> regenerateProperties(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "false") Boolean deep
+    ) throws IOException, IllegalAccessException {
+        log.debug("REST request to get available associated images");
+        AbstractImage abstractImage = abstractImageService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
+        imagePropertiesService.regenerate(abstractImage, deep);
+        return responseSuccess(new JsonObject());
+    }
+
+
+
+
     @GetMapping("/abstractimage/{id}/download")
     public RedirectView download(@PathVariable Long id) throws IOException {
         log.debug("REST request to download image instance");
