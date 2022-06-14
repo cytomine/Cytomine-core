@@ -18,6 +18,7 @@ package be.cytomine.api.controller.utils;
 
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.*;
@@ -235,10 +236,14 @@ public class AnnotationListingBuilder {
         }
 
         Long idUser = params.getJSONAttrLong("user");
+        Long idJob = params.getJSONAttrLong("job");
         if(idUser!=null) {
             return secUserService.find(idUser)
                     .orElseThrow(() -> new ObjectNotFoundException("User", idUser))
                     .isAlgo();
+        } else if(idJob!=null) {
+            // TODO: check if Job exists => return job != null
+            throw new CytomineMethodNotYetImplementedException("Software package must be implemented");
         } else {
             String idUsers = params.getJSONAttrStr("users");
             if(idUsers!=null && !idUsers.isEmpty()) {
