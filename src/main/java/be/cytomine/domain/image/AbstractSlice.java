@@ -40,8 +40,8 @@ public class AbstractSlice extends CytomineDomain {
     @ManyToOne(fetch = FetchType.LAZY)
     private UploadedFile uploadedFile;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    private Mime mime;
+    @ManyToOne(fetch = FetchType.EAGER, optional = true)
+    private Mime mime; // [PIMS] Deprecated.
 
     private Integer channel;
 
@@ -61,7 +61,7 @@ public class AbstractSlice extends CytomineDomain {
 
         abstractSlice.uploadedFile = (UploadedFile) json.getJSONAttrDomain(entityManager, "uploadedFile", new UploadedFile(), false);
         abstractSlice.image = (AbstractImage) json.getJSONAttrDomain(entityManager, "image", new AbstractImage(), true);
-        abstractSlice.mime = (Mime) json.getJSONAttrDomain(entityManager, "mime", new Mime(), "mimeType", "String", true);
+        abstractSlice.mime = (Mime) json.getJSONAttrDomain(entityManager, "mime", new Mime(), "mimeType", "String", false);
 
         
         abstractSlice.channel = json.getJSONAttrInteger("channel", 0);
@@ -108,20 +108,30 @@ public class AbstractSlice extends CytomineDomain {
     }
 
     public String getPath() {
-        return this.getUploadedFile()!=null ? this.getUploadedFile().getPath() : null;
+        UploadedFile referenceUploadedFile = this.getReferenceUploadedFile();
+        return referenceUploadedFile!=null ? referenceUploadedFile.getPath() : null;
     }
     public String getImageServerUrl() {
-        return this.getUploadedFile()!=null ? this.getUploadedFile().getImageServerUrl() : null;
+        UploadedFile referenceUploadedFile = this.getReferenceUploadedFile();
+        return referenceUploadedFile!=null ? referenceUploadedFile.getImageServerUrl() : null;
     }
 
     public String getImageServerInternalUrl() {
-        return this.getUploadedFile()!=null ? this.getUploadedFile().getImageServerInternalUrl() : null;
+        UploadedFile referenceUploadedFile = this.getReferenceUploadedFile();
+        return referenceUploadedFile!=null ? referenceUploadedFile.getImageServerInternalUrl() : null;
     }
 
     public Integer getRank() {
         return this.channel +
                 Optional.ofNullable(this.image.getChannels()).orElse(0) *
                         (this.zStack + Optional.ofNullable(this.image.getDepth()).orElse(0) * this.time);
+    }
+
+    public UploadedFile getReferenceUploadedFile() {
+        if (image!=null && image.isVirtual()) {
+            return image.getUploadedFile();
+        }
+        return uploadedFile;
     }
 
     @Override

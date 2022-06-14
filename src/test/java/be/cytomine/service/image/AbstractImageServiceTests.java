@@ -265,15 +265,6 @@ public class AbstractImageServiceTests {
     }
 
     @Test
-    void add_valid_abstract_image_with_bad_num_field_bitDepth() {
-        AbstractImage abstractImage = builder.given_a_not_persisted_abstract_image();
-        abstractImage.setBitDepth(0);
-        Assertions.assertThrows(WrongArgumentException.class, () -> {
-            abstractImageService.add(abstractImage.toJsonObject());
-        });
-    }
-
-    @Test
     void edit_abstract_image_with_success() {
         AbstractImage abstractImage = builder.given_a_not_persisted_abstract_image();
         abstractImage.setHeight(10000);
