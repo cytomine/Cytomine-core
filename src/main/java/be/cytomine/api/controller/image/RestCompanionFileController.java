@@ -124,29 +124,14 @@ public class RestCompanionFileController extends RestCytomineController {
 
     }
 
-
-    /// TODO:
-
-//
-//    @RestApiMethod(description="Ask to compute HDF5 profile for the given image")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="image", type="long", paramType = RestApiParamType.PATH, description = "The abstract image id")
-//            ])
-//    def computeProfile() {
-//        def id = params.long("image") ?: request.JSON?.image
-//
-//        AbstractImage abstractImage = abstractImageService.read(id)
-//        if (abstractImage) {
-//            if (abstractImage.dimensions.length() == 3 && !abstractImage.hasProfile()) {
-//                //TODO: check image is greyscale
-//                responseSuccess(imageServerService.profile(abstractImage).companionFile)
-//            }
-//            else {
-//                responseError(new InvalidRequestException("Abstract image ${abstractImage.id} already has a profile or cannot have one."))
-//            }
-//        }
-//        else {
-//            responseNotFound("Image", id)
-//        }
+//    @PostMapping("/profile.json")
+//    public ResponseEntity<String> computeProfile(
+//            @RequestParam(required = false, name = "image") Long imageIdFromParam,
+//            @RequestBody JsonObject json) {
+//        log.debug("REST request to add profile: " + imageIdFromParam);
+//        Long imageId = imageIdFromParam != null ? imageIdFromParam : json.getJSONAttrLong("image");
+//        AbstractImage abstractImage = abstractImageService.find(imageId)
+//                .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", imageId));
+//        return responseSuccess(companionFileService.addProfile(abstractImage));
 //    }
 }
