@@ -128,8 +128,9 @@ public class TermService extends ModelService {
         if (jsonObject.isMissing("ontology")) {
             throw new WrongArgumentException("Ontology is mandatory for term creation");
         }
-        securityACLService.check(jsonObject.getJSONAttrLong("ontology"), Ontology.class ,WRITE);
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
+        securityACLService.check(jsonObject.getJSONAttrLong("ontology"), Ontology.class ,WRITE);
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
     }
 
@@ -141,8 +142,9 @@ public class TermService extends ModelService {
      */
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        securityACLService.check(domain.container(),WRITE);
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
+        securityACLService.check(domain.container(),WRITE);
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
     }
 
@@ -157,6 +159,7 @@ public class TermService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(),DELETE);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
