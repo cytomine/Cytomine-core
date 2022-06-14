@@ -117,7 +117,7 @@ public class UploadedFileServiceTests {
         List<SearchParameterEntry> searchParameter = new ArrayList<>();
         searchParameter.add(new SearchParameterEntry("user", SearchOperation.in, List.of(builder.given_superadmin().getId())));
 
-        List<Map<String, Object>> list = uploadedFileService.list(searchParameter, "created", "desc");
+        List<Map<String, Object>> list = uploadedFileService.list(searchParameter, "created", "desc", false);
 
         assertThat(list.size()).isGreaterThanOrEqualTo(2);
         assertThat(list.stream().map(x -> x.get("id"))).contains(uploadedFile1.getId());
@@ -145,7 +145,7 @@ public class UploadedFileServiceTests {
         List<SearchParameterEntry> searchParameter = new ArrayList<>();
         searchParameter.add(new SearchParameterEntry("originalFilename", SearchOperation.ilike, "dead"));
 
-        List<Map<String, Object>> list = uploadedFileService.list(searchParameter, "created", "desc");
+        List<Map<String, Object>> list = uploadedFileService.list(searchParameter, "created", "desc", false);
 
         assertThat(list.size()).isGreaterThanOrEqualTo(2);
         assertThat(list.stream().map(x -> x.get("id"))).contains(uploadedFile1.getId());
@@ -188,6 +188,33 @@ public class UploadedFileServiceTests {
         assertThat(maps.stream().filter(x -> x.get("id").equals(uploadedfileSubChildToAdd.getId()))).hasSize(1);
 
     }
+
+    @Test
+    void search_uploadedFile_with_tree_details() {
+        UploadedFile uploadedFile1 = builder.given_a_uploaded_file();
+        uploadedFile1.setOriginalFilename("redIsDead");
+        builder.persistAndReturn(uploadedFile1);
+        UploadedFile uploadedFile2 = builder.given_a_uploaded_file();
+        uploadedFile2.setOriginalFilename("deadline");
+        builder.persistAndReturn(uploadedFile2);
+        UploadedFile uploadedFileNoMatch = builder.given_a_uploaded_file();
+        uploadedFileNoMatch.setOriginalFilename("veracruz");
+        builder.persistAndReturn(uploadedFileNoMatch);
+
+        List<SearchParameterEntry> searchParameter = new ArrayList<>();
+        searchParameter.add(new SearchParameterEntry("originalFilename", SearchOperation.ilike, "dead"));
+
+        List<Map<String, Object>> list = uploadedFileService.list(searchParameter, "created", "desc", true);
+
+        assertThat(list.size()).isGreaterThanOrEqualTo(2);
+        assertThat(list.stream().map(x -> x.get("id"))).contains(uploadedFile1.getId());
+        assertThat(list.stream().map(x -> x.get("id"))).contains(uploadedFile2.getId());
+        assertThat(list.stream().map(x -> x.get("id"))).doesNotContain(uploadedFileNoMatch.getId());
+
+        assertThat(list.get(0).get("nbChildren")).isNotNull();
+        assertThat(list.get(0).get("globalSize")).isNotNull();
+    }
+
 
     @Test
     void test_ltree() {
