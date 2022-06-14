@@ -123,7 +123,7 @@ public class UrlApi {
     }
 
     public static String getReviewedAnnotationCropWithAnnotationIdWithMaxSize(Long idAnnotation, int maxSize, String format) {
-        return "serverUrl + \"/api/reviewedannotation/"+idAnnotation+"/crop."+format+"?maxSize=" + maxSize;
+        return serverUrl + "api/reviewedannotation/"+idAnnotation+"/crop."+format+"?maxSize=" + maxSize;
     }
 
     public static String getAnnotationCropWithAnnotationId(Long idAnnotation, int maxSize, String format) {
