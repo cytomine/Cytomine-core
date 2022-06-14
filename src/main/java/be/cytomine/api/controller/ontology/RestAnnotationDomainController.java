@@ -19,6 +19,7 @@ package be.cytomine.api.controller.ontology;
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.api.controller.utils.AnnotationListingBuilder;
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.image.CompanionFile;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.security.SecUser;
@@ -29,6 +30,7 @@ import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.*;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.dto.CropParameter;
+import be.cytomine.service.image.CompanionFileService;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.AlgoAnnotationService;
@@ -44,6 +46,7 @@ import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -287,6 +290,25 @@ public class RestAnnotationDomainController extends RestCytomineController {
                 paramsService.getPropertyGroupToShow(jsonObject)
         ));
     }
+
+//    @Autowired
+//    CompanionFileService companionFileService;
+//
+//    @GetMapping("/annotation/{id}/profile.json")
+//    public ResponseEntity<String> profile(
+//            @PathVariable(name="id") Long annotationId
+//    ) throws IOException {
+//            AnnotationDomain annotation = AnnotationDomain.findAnnotationDomain(entityManager, annotationId)
+//                    .orElseThrow(() -> new ObjectNotFoundException("Annotation "+annotationId+" not found!"));
+//
+//            if (!companionFileService.hasProfile(annotation.getImage().getBaseImage())) {
+//                throw new ObjectNotFoundException("No profile for abstract image " + annotation.getImage().getBaseImage());
+//            }
+//
+//            CompanionFile cf = companionFileService.list(annotation.getImage().getBaseImage()).stream().filter(x -> x.getType()!=null && x.getType().equals("HDF5")).findFirst().get();
+//
+//            return responseSuccess(imageServerService.profile(cf, annotation, retrieveRequestParam()));
+//    }
 
     //TODO
 //    @RestApiMethod(description="Get all annotation that intersect a geometry or another annotation. Unlike the simple list, extra parameter (show/hide) are not available. ")
