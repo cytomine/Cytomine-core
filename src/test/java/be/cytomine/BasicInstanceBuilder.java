@@ -446,7 +446,7 @@ public class BasicInstanceBuilder {
     }
 
     public AbstractSlice given_an_abstract_slice(AbstractImage abstractImage, int c, int z, int t) {
-        AbstractSlice slice = given_a_not_persisted_abstract_slice(abstractImage, given_a_uploaded_file());
+        AbstractSlice slice = given_a_not_persisted_abstract_slice(abstractImage, abstractImage.getUploadedFile());
         slice.setMime(given_a_mime("openslide/mrxs"));
         slice.setChannel(c);
         slice.setZStack(z);

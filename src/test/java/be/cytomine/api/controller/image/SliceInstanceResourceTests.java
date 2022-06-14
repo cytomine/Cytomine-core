@@ -18,14 +18,17 @@ package be.cytomine.api.controller.image;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -40,14 +43,17 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -350,6 +356,150 @@ public class SliceInstanceResourceTests {
                 .andExpect(jsonPath("$.url").value("http://localhost:8888/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8) + "/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
                 .andExpect(status().isOk());
 
+    }
+
+
+
+    @Test
+    @Transactional
+    public void histograms() throws Exception {
+        SliceInstance image = given_test_slice_instance();
+
+        configureFor("localhost", 8888);
+        System.out.println("/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) +"/histogram/per-plane/z/0/t/0?n_bins=256&channels=0");
+        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) +"/histogram/per-plane/z/0/t/0?n_bins=256&channels=0"))
+                .willReturn(
+                        aResponse().withBody(
+                                """
+                                {"items":[
+                                    {"type":"FAST","minimum":6,"maximum":255,"first_bin":6,"last_bin":255,"n_bins":256,
+                                    "histogram":[900,2701,2701,2701,3601,5402,4502,9904,9004,11705,15306,18007,32413,19808,27011,22509,
+                                                34213,29712,35114,45918,43217,46818,42317,48619,42317,49519,54021,54921,59423,59423,62124,
+                                                68427,68427,66626,69327,59423,67526,98138,68427,86434,76530,81032,74729,85533,92736,90936,
+                                                104441,95437,95437,108943,120647,108042,129651,125149,148558,141355,135053,122448,154860,
+                                                125149,166565,170166,145857,165665,187273,163864,181871,187273,189974,182771,212483,210682,
+                                                204380,212483,241294,220586,241294,269205,253899,278209,287212,323226,323226,379048,398856,
+                                                458279,489791,537510,602335,664460,725683,831925,891348,992188,1086725,1264994,1364933,1543203,
+                                                1594523,1736778,1868230,2021290,2175250,2295897,2446256,2485871,2745172,2750574,2873022,2985566,
+                                                3035986,3253871,3206152,3202551,3225960,3281782,3261074,3346607,3134124,3232263,3139526,3180943,
+                                                3134124,3022481,2955855,2957655,2924342,2810898,2754176,2747873,2620924,2651536,2593013,2671343,
+                                                2496675,2468764,2448056,2445355,2320206,2340914,2385932,2355320,2318406,2360722,2278790,2359822,
+                                                2225669,2330110,2229271,2228370,2200460,2256281,2192356,2174349,2235573,2154542,2118528,2075311,
+                                                2110424,2110424,2122129,2102321,2005984,2117627,1942959,1974471,1951062,1987076,1846621,1918649,
+                                                1804305,1813308,1825013,1774593,1792600,1763789,1747583,1663850,1664750,1638640,1636839,1597224,
+                                                1593623,1515292,1481979,1507189,1425257,1449566,1382040,1417154,1329819,1341524,1290204,1356830,
+                                                1264094,1265894,1326218,1237083,1207372,1180361,1222678,1224478,1167756,1176760,1179461,1244286,
+                                                1286603,1305510,1385641,1508089,1732277,1969069,2427348,3583400,4999653,7937501,14420933,20375859,
+                                                42760403,101379601,116701787,117473388,74001707,10310828,1870030,1317215,957974,786907,598734,506898,
+                                                408760,319625,263803,210682,151259,114345,91836,59423,45018,42317,27011,20708,10804,8103,6302,6302,4502,900,900,3601],
+                                                "channel":0,"concrete_channel":0,"sample":0,"color":"#f00","z_slice":0,"timepoint":0}
+                                    ],"size":1}                                   
+                                """
+                        )
+                )
+        );
+
+        restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/histogram.json", image.getId()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
+                .andExpect(jsonPath("$.collection[0].lastBin").value("255"))
+                .andExpect(jsonPath("$.collection[0].color").value("#f00"))
+                .andExpect(jsonPath("$.collection[0].histogram[0]").value(900));
+    }
+
+
+    @Test
+    @Transactional
+    public void histograms_bounds() throws Exception {
+        SliceInstance image = given_test_slice_instance();
+
+
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) +"/histogram/per-plane/z/0/t/0/bounds?channels=0"))
+                .willReturn(
+                        aResponse().withBody(
+                                """
+                                    {"items":[{"type":"FAST","minimum":6,"maximum":255,"channel":0,"concrete_channel":0,"sample":0,"color":"#f00","z_slice":0,"timepoint":0}],"size":1}                                                                                             
+                                """
+                        )
+                )
+        );
+
+        restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/histogram/bounds.json", image.getId()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
+                .andExpect(jsonPath("$.collection[0].color").value("#f00"));
+    }
+
+
+    @Test
+    @Transactional
+    public void channel_histograms() throws Exception {
+        SliceInstance image = given_test_slice_instance();
+
+        configureFor("localhost", 8888);
+        System.out.println("/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) +"/histogram/per-plane/z/0/t/0?n_bins=256");
+        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) +"/histogram/per-plane/z/0/t/0?n_bins=256"))
+                .willReturn(
+                        aResponse().withBody(
+                                """
+                                {"items":[{"type":"FAST","minimum":6,"maximum":255,"first_bin":6,"last_bin":255,"n_bins":256,"histogram":
+                                [900,2701,2701,2701,3601,5402,4502,9904,9004,11705,15306,18007,32413,19808,27011,22509,34213,29712,35114,
+                                45918,43217,46818,42317,48619,42317,49519,54021,54921,59423,59423,62124,68427,68427,66626,69327,59423,67526,
+                                98138,68427,86434,76530,81032,74729,85533,92736,90936,104441,95437,95437,108943,120647,108042,129651,125149,
+                                148558,141355,135053,122448,154860,125149,166565,170166,145857,165665,187273,163864,181871,187273,189974,182771,
+                                212483,210682,204380,212483,241294,220586,241294,269205,253899,278209,287212,323226,323226,379048,398856,458279,
+                                489791,537510,602335,664460,725683,831925,891348,992188,1086725,1264994,1364933,1543203,1594523,1736778,1868230,
+                                2021290,2175250,2295897,2446256,2485871,2745172,2750574,2873022,2985566,3035986,3253871,3206152,3202551,3225960,
+                                3281782,3261074,3346607,3134124,3232263,3139526,3180943,3134124,3022481,2955855,2957655,2924342,2810898,2754176,
+                                2747873,2620924,2651536,2593013,2671343,2496675,2468764,2448056,2445355,2320206,2340914,2385932,2355320,2318406,
+                                2360722,2278790,2359822,2225669,2330110,2229271,2228370,2200460,2256281,2192356,2174349,2235573,2154542,2118528,
+                                2075311,2110424,2110424,2122129,2102321,2005984,2117627,1942959,1974471,1951062,1987076,1846621,1918649,1804305,
+                                1813308,1825013,1774593,1792600,1763789,1747583,1663850,1664750,1638640,1636839,1597224,1593623,1515292,1481979,
+                                1507189,1425257,1449566,1382040,1417154,1329819,1341524,1290204,1356830,1264094,1265894,1326218,1237083,1207372,
+                                1180361,1222678,1224478,1167756,1176760,1179461,1244286,1286603,1305510,1385641,1508089,1732277,1969069,2427348,
+                                3583400,4999653,7937501,14420933,20375859,42760403,101379601,116701787,117473388,74001707,10310828,1870030,1317215,
+                                957974,786907,598734,506898,408760,319625,263803,210682,151259,114345,91836,59423,45018,42317,27011,20708,10804,8103,
+                                6302,6302,4502,900,900,3601],"channel":0,"concrete_channel":0,"sample":0,"color":"#f00","z_slice":0,"timepoint":0}],"size":1}                          
+                                """
+                        )
+                )
+        );
+
+        restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/channelhistogram.json", image.getId()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
+                .andExpect(jsonPath("$.collection[0].type").value("FAST"));
+    }
+
+
+    @Test
+    @Transactional
+    public void channel_histograms_bounds() throws Exception {
+        SliceInstance image = given_test_slice_instance();
+
+
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) +"/histogram/per-plane/z/0/t/0/bounds"))
+                .willReturn(
+                        aResponse().withBody(
+                                """
+                                {"items":[{"type":"FAST","minimum":6,"maximum":255,"channel":0,"concrete_channel":0,"sample":0,"color":"#f00","z_slice":0,"timepoint":0},
+                                {"type":"FAST","minimum":0,"maximum":244,"channel":1,"concrete_channel":0,"sample":1,"color":"#0f0","z_slice":0,"timepoint":0},
+                                {"type":"FAST","minimum":23,"maximum":255,"channel":2,"concrete_channel":0,"sample":2,"color":"#00f","z_slice":0,"timepoint":0}],"size":3}                                                                                                                                                                                                                                                                                                   
+                                """
+                        )
+                )
+        );
+
+        restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/channelhistogram/bounds.json", image.getId()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(3))))
+                .andExpect(jsonPath("$.collection[0].color").value("#f00"));
     }
 
     private SliceInstance given_test_slice_instance() {
