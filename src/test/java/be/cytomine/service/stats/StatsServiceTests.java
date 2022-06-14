@@ -545,6 +545,10 @@ public class StatsServiceTests {
         assertThat(jsonObjects.get(1).getJSONAttrLong("size")).isEqualTo(3);
         assertThat(jsonObjects.get(2).getJSONAttrLong("size")).isEqualTo(3);
 
+
+        jsonObjects = statsService.statConnectionsEvolution(project, 7, DateUtils.addDays(new Date(), -18), DateUtils.addDays(new Date(), -6), true);
+        assertThat(jsonObjects).hasSize(2);
+
     }
 
     @Test

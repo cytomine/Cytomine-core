@@ -497,10 +497,11 @@ public class StatsService {
         securityACLService.check(project,READ);
         Query query = new Query();
         query.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("project").is(project.getId()));
-        if (startDate!=null) {
+        if (startDate!=null && endDate!=null) {
+            query.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("created").gte(startDate).lte(endDate));
+        } else if (startDate!=null) {
             query.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("created").gte(startDate));
-        }
-        if (endDate!=null) {
+        } else if (endDate!=null) {
             query.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("created").lte(endDate));
         }
         query.with(Sort.by(Sort.Direction.ASC, "created"));
@@ -515,10 +516,11 @@ public class StatsService {
         securityACLService.check(project,READ);
         Query query = new Query();
         query.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("project").is(project.getId()));
-        if (startDate!=null) {
+        if (startDate!=null && endDate!=null) {
+            query.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("created").gte(startDate).lte(endDate));
+        } else if (startDate!=null) {
             query.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("created").gte(startDate));
-        }
-        if (endDate!=null) {
+        } else if (endDate!=null) {
             query.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("created").lte(endDate));
         }
         query.with(Sort.by(Sort.Direction.ASC, "created"));
@@ -532,10 +534,11 @@ public class StatsService {
         securityACLService.check(project,READ);
         Query query = new Query();
         query.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("project").is(project.getId()));
-        if (startDate!=null) {
+        if (startDate!=null && endDate!=null) {
+            query.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("created").gte(startDate).lte(endDate));
+        } else if (startDate!=null) {
             query.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("created").gte(startDate));
-        }
-        if (endDate!=null) {
+        } else if (endDate!=null) {
             query.addCriteria(org.springframework.data.mongodb.core.query.Criteria.where("created").lte(endDate));
         }
         if(type!=null) {
