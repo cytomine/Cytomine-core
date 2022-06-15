@@ -319,7 +319,7 @@ public class RestSliceInstanceController extends RestCytomineController {
     public ResponseEntity<String> histogram(
             @PathVariable Long id,
             @RequestParam(required = false, defaultValue = "256") Integer nBins) throws IOException {
-        log.debug("REST request to get histogram images");
+        log.debug("REST request to get histogram slice");
         SliceInstance sliceInstance = sliceInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("sliceInstance", id));
         return responseSuccess(imageServerService.planeHistograms(sliceInstance.getBaseSlice(), nBins, false));
@@ -327,7 +327,7 @@ public class RestSliceInstanceController extends RestCytomineController {
 
     @GetMapping("/sliceinstance/{id}/histogram/bounds.json")
     public ResponseEntity<String> histogramBounds(@PathVariable Long id) throws IOException {
-        log.debug("REST request to get bounds images");
+        log.debug("REST request to get historigramBounds slice");
         SliceInstance sliceInstance = sliceInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("sliceInstance", id));
         return responseSuccess(imageServerService.planeHistogramBounds(sliceInstance.getBaseSlice(), false));
@@ -337,7 +337,7 @@ public class RestSliceInstanceController extends RestCytomineController {
     public ResponseEntity<String> channelHistograms(
             @PathVariable Long id,
             @RequestParam(required = false, defaultValue = "256") Integer nBins) throws IOException {
-        log.debug("REST request to get channelhistogram images");
+        log.debug("REST request to get channelhistogram slice");
         SliceInstance sliceInstance = sliceInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("sliceInstance", id));
         return responseSuccess(imageServerService.planeHistograms(sliceInstance.getBaseSlice(), nBins, true));
@@ -346,7 +346,7 @@ public class RestSliceInstanceController extends RestCytomineController {
 
     @GetMapping("/sliceinstance/{id}/channelhistogram/bounds.json")
     public ResponseEntity<String> channelHistogramBounds(@PathVariable Long id) throws IOException {
-        log.debug("REST request to get channelHistogramBounds images");
+        log.debug("REST request to get channelHistogramBounds slice");
         SliceInstance sliceInstance = sliceInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("sliceInstance", id));
         return responseSuccess(imageServerService.planeHistogramBounds(sliceInstance.getBaseSlice(), true));
