@@ -107,7 +107,7 @@ public class DescriptionService extends ModelService {
             jsonObject.put("domainClassName", annotation.getClass().getName());
             securityACLService.check(jsonObject.getJSONAttrLong("domainIdent"),annotation.getClass().getName(),READ);
             securityACLService.checkFullOrRestrictedForOwner(jsonObject.getJSONAttrLong("domainIdent"),annotation.getClass().getName(), "user");
-        } else if (!jsonObject.getJSONAttrStr("domainClassName").contains("AbstractImage")){
+        } else {
             securityACLService.check(jsonObject.getJSONAttrLong("domainIdent"),jsonObject.getJSONAttrStr("domainClassName"),READ);
             securityACLService.checkFullOrRestrictedForOwner(jsonObject.getJSONAttrLong("domainIdent"),jsonObject.getJSONAttrStr("domainClassName"), "user");
         }

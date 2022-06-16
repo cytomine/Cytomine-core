@@ -594,14 +594,17 @@ public class ProjectService extends ModelService {
     }
 
     public List<NamedCytomineDomain> listByCreator(User user) {
+        securityACLService.checkIsSameUser(user,currentUserService.getCurrentUser());
         return projectRepository.listByCreator(user);
     }
 
     public List<NamedCytomineDomain> listByAdmin(User user) {
+        securityACLService.checkIsSameUser(user,currentUserService.getCurrentUser());
         return projectRepository.listByAdmin(user);
     }
 
     public List<NamedCytomineDomain> listByUser(User user) {
+        securityACLService.checkIsSameUser(user,currentUserService.getCurrentUser());
         return projectRepository.listByUser(user);
     }
 

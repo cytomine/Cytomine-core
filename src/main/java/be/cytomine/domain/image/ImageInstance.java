@@ -129,7 +129,7 @@ public class ImageInstance extends CytomineDomain {
         returnArray.put("depth", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getDepth).orElse(null));  // /!!\ Breaking API : image?.baseImage?.getZoomLevels()?.max
         returnArray.put("duration", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getDuration).orElse(null));
         returnArray.put("channels", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getChannels).orElse(null));
-        returnArray.put("extrinsicChannels", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getExtrinsicChannels).orElse(null));
+        returnArray.put("extrinsicChannels", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getApparentChannels).orElse(null));
 
 
 
@@ -140,9 +140,13 @@ public class ImageInstance extends CytomineDomain {
         returnArray.put("fps", imageInstance.getFps());
         returnArray.put("zoom", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getZoomLevels).orElse(null));
 
-        returnArray.put("magnification", imageInstance.getMagnification());
+        returnArray.put("tileSize", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getTileSize).orElse(null));
+        returnArray.put("isVirtual", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::isVirtual).orElse(null));
 
-        returnArray.put("bitDepth", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getBitDepth).orElse(null));
+        returnArray.put("magnification", imageInstance.getMagnification());
+        returnArray.put("bitPerSample", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getBitPerSample).orElse(null));
+        returnArray.put("samplePerPixel", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getSamplePerPixel).orElse(null));
+
         returnArray.put("colorspace", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getColorspace).orElse(null));
 
 

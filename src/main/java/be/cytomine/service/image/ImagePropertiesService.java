@@ -38,10 +38,7 @@ import javax.transaction.Transactional;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Field;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -114,7 +111,9 @@ public class ImagePropertiesService {
             image.setDepth(imagePropertiesObject.getJSONAttrInteger("depth"));
             image.setDuration(imagePropertiesObject.getJSONAttrInteger("duration"));
 
-            image.setChannels(imagePropertiesObject.getJSONAttrInteger("n_intrinsic_channels"));
+            image.setChannels(imagePropertiesObject.getJSONAttrInteger("n_concrete_channels"));
+            image.setSamplePerPixel(imagePropertiesObject.getJSONAttrInteger("n_samples"));
+
             image.setPhysicalSizeX(imagePropertiesObject.getJSONAttrDouble("physical_size_x"));
             image.setPhysicalSizeY(imagePropertiesObject.getJSONAttrDouble("physical_size_y"));
             image.setPhysicalSizeZ(imagePropertiesObject.getJSONAttrDouble("physical_size_z"));
@@ -126,17 +125,32 @@ public class ImagePropertiesService {
             Integer nominal_magnification = (Integer)objective.get("nominal_magnification");
 
             image.setMagnification(nominal_magnification);
+            image.setBitPerSample(imagePropertiesObject.getJSONAttrInteger("bits", 8));
+            image.setTileSize(256);  // [PIMS] At this stage, we only support normalized-tiles.
 
             abstractImageRepository.save(image);
 
             if (deep) {
                 List<Map<String, Object>> channels = (List<Map<String, Object>>)properties.getOrDefault("channels", List.of());
-                for (Map<String, Object> channel : channels) {
-                    List<AbstractSlice> slices = abstractSliceRepository.findAllByImage(image)
+                for (int i = 0; i < image.getApparentChannels(); i += image.getSamplePerPixel()) {
+                    Map<String, Object> channel = (Map<String, Object>) channels.get(i);
+                    int index = Math.floorDiv((Integer)channel.get("index"), image.getSamplePerPixel());
+                    String name = (String) channel.get("suggested_name");
+                    String color = (String) channel.get("color");
+                    if (image.getSamplePerPixel() != 1) {
+                        color = null;
+
+                        List<String> parts = new ArrayList<>();
+                        for (int j = 0; j<image.getSamplePerPixel() ; j++) {
+                            parts.add((String) channels.get(i+j).get("suggested_name"));
+                        }
+                        name = parts.stream().distinct().collect(Collectors.joining("|"));
+                    }
+                    List<AbstractSlice> slices = abstractSliceRepository.findAllByImageAndChannel(image, index)
                             .stream().filter(x -> Objects.equals(x.getChannel(), (Integer)channel.get("index"))).toList();
                     for (AbstractSlice slice : slices) {
-                        slice.setChannelName((String) channel.get("suggested_name"));
-                        slice.setChannelColor((String) channel.get("color"));
+                        slice.setChannelName(name);
+                        slice.setChannelColor(color);
                     }
                     abstractSliceRepository.saveAll(slices);
                 }

@@ -16,6 +16,7 @@ package be.cytomine.service.middleware;
 * limitations under the License.
 */
 
+import be.cytomine.config.ApplicationConfiguration;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.image.*;
@@ -26,6 +27,7 @@ import be.cytomine.exceptions.*;
 import be.cytomine.repository.middleware.ImageServerRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
+import be.cytomine.service.UrlApi;
 import be.cytomine.service.dto.*;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.security.SecurityACLService;
@@ -73,6 +75,9 @@ public class ImageServerService extends ModelService {
 
     @Autowired
     private SimplifyGeometryService simplifyGeometryService;
+
+    @Autowired
+    private ApplicationConfiguration applicationConfiguration;
 
     @Autowired
     public void setImageInstanceService(ImageInstanceService imageInstanceService) {
@@ -137,6 +142,163 @@ public class ImageServerService extends ModelService {
         String content = getContentFromUrl(server + "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/metadata");
         return JsonObject.toJsonObject(content).getJSONAttrListMap("items");
     }
+    public Map<String, Object> imageHistogram(AbstractImage image, int nBins) {
+        String server = image.getImageServerInternalUrl();
+        String path = image.getPath();
+        String uri = "/image/"+URLEncoder.encode(path ,StandardCharsets.UTF_8)+"/histogram/per-image";
+        LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
+        PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
+        Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
+        return StringUtils.keysToCamelCase(json);
+    }
+
+    public Map<String, Object> imageHistogramBounds(AbstractImage image) {
+        return imageHistogramBounds(image, 256);
+    }
+
+    public Map<String, Object> imageHistogramBounds(AbstractImage image, int nBins) {
+        String server = image.getImageServerInternalUrl();
+        String path = image.getPath();
+        String uri = "/image/"+URLEncoder.encode(path ,StandardCharsets.UTF_8)+"/histogram/per-image/bounds";
+        LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
+        PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
+        Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
+        return StringUtils.keysToCamelCase(json);
+    }
+
+    public List<Map<String, Object>> channelHistograms(AbstractImage image, int nBins) {
+        String server = image.getImageServerInternalUrl();
+        String path = image.getPath();
+        String uri = "/image/"+URLEncoder.encode(path ,StandardCharsets.UTF_8)+"/histogram/per-channels";
+        LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
+        PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
+        Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
+        List<Map<String, Object>> items = (List<Map<String, Object>>) json.get("items");
+        return items.stream().map(x -> renameChannelHistogramKeys(StringUtils.keysToCamelCase(x))).toList();
+    }
+
+
+    public List<Map<String, Object>> channelHistogramBounds(AbstractImage image) {
+        String server = image.getImageServerInternalUrl();
+        String path = image.getPath();
+        String uri = "/image/"+URLEncoder.encode(path ,StandardCharsets.UTF_8)+"/histogram/per-channels/bounds";
+        PimsResponse pimsResponse = makeRequest("GET", server, uri, new LinkedHashMap<>(), "json", Map.of());
+        Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
+        List<Map<String, Object>> items = (List<Map<String, Object>>) json.get("items");
+        return items.stream().map(x -> renameChannelHistogramKeys(StringUtils.keysToCamelCase(x))).toList();
+
+    }
+
+
+    public List<Map<String, Object>> planeHistograms(AbstractSlice slice, int nBins, boolean allChannels) {
+        String server = slice.getImageServerInternalUrl();
+        String path = slice.getPath();
+        String uri = "/image/"+URLEncoder.encode(path ,StandardCharsets.UTF_8)+"/histogram/per-plane/z/" + slice.getZStack() + "/t/" + slice.getTime();
+        LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
+        if (!allChannels) {
+            params.put("channels", slice.getChannel());
+        }
+        PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
+        Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
+        List<Map<String, Object>> items = (List<Map<String, Object>>) json.get("items");
+        return items.stream().map(x -> renameChannelHistogramKeys(StringUtils.keysToCamelCase(x))).toList();
+    }
+
+
+    public List<Map<String, Object>> planeHistogramBounds(AbstractSlice slice, boolean allChannels) {
+        String server = slice.getImageServerInternalUrl();
+        String path = slice.getPath();
+        String uri = "/image/"+URLEncoder.encode(path ,StandardCharsets.UTF_8)+"/histogram/per-plane/z/" + slice.getZStack() + "/t/" + slice.getTime() + "/bounds";
+        LinkedHashMap<String, Object> params = new LinkedHashMap<>();
+        if (!allChannels) {
+            params.put("channels", slice.getChannel());
+        }
+        PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
+        Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
+        List<Map<String, Object>> items = (List<Map<String, Object>>) json.get("items");
+        return items.stream().map(x -> renameChannelHistogramKeys(StringUtils.keysToCamelCase(x))).toList();
+    }
+
+    private String hmsInternalUrl() {
+        String url = applicationConfiguration.getHyperspectralServerURL();
+        return (applicationConfiguration.getUseHTTPInternally()) ? url.replace("https", "http") : url;
+    }
+
+    //TODO
+    private LinkedHashMap<String, Object> hmsParametersFromCompanionFile(CompanionFile cf) {
+        if (cf.getPath()==null) {
+            throw new InvalidRequestException("Companion file has no valid path.");
+        }
+        LinkedHashMap parameters = new LinkedHashMap();
+        parameters.put("fif", applicationConfiguration.getStoragePath() + "/" + cf.getPath());
+        return parameters;
+    }
+
+
+    public void makeHDF5(Long imageId, Long companionFileId, Long uploadedFileId) {
+        String server = hmsInternalUrl();
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+        parameters.put("image", imageId);
+        parameters.put("uploadedFile", uploadedFileId);
+        parameters.put("companionFile", companionFileId);
+        parameters.put("core", UrlApi.getServerUrl());
+        makeRequest("POST", server, "/hdf5.json", parameters, "json", Map.of(), true);
+    }
+
+    //TODO
+    public Map<String, Object> profile(CompanionFile profileCf, AnnotationDomain annotation, Map<String, String> params) {
+        return profile(profileCf, annotation.getLocation(), params);
+    }
+
+    //TODO
+    public Map<String, Object> profile(CompanionFile profile, Geometry geometry, Map<String, String> params) {
+        String server = hmsInternalUrl();
+        LinkedHashMap<String, Object> parameters = hmsParametersFromCompanionFile(profile);
+        parameters.put("location", geometry.toString());
+        parameters.put("minSlice", params.get("minSlice"));
+        parameters.put("maxSlice", params.get("maxSlice"));
+        PimsResponse response = makeRequest(null, server, "/profile.json", parameters, "json", Map.of(), true);
+        return JsonObject.toMap(new String(response.getContent()));
+    }
+
+    //TODO
+    public Map<String, Object> profileProjections(CompanionFile profile, AnnotationDomain annotation, LinkedHashMap<String, String> params) {
+        return profileProjections(profile, annotation.getLocation(), params);
+    }
+
+    //TODO
+    public Map<String, Object> profileProjections(CompanionFile profile, Geometry geometry, LinkedHashMap<String, String> params) {
+        String server = hmsInternalUrl();
+        LinkedHashMap<String, Object> parameters = hmsParametersFromCompanionFile(profile);
+        parameters.put("location", geometry.toString());
+        parameters.put("minSlice", params.get("minSlice"));
+        parameters.put("maxSlice", params.get("maxSlice"));
+        parameters.put("axis", params.get("axis"));
+        parameters.put("dimension", params.get("dimension"));
+        PimsResponse response = makeRequest(null, server, "/profile/projections.json", parameters, "json", Map.of(), true);
+        return JsonObject.toMap(new String(response.getContent()));
+    }
+
+    //TODO
+    public Map<String, Object> profileImageProjection(CompanionFile profile, AnnotationDomain annotation, LinkedHashMap<String, String> params) {
+        return profileImageProjection(profile, annotation.getLocation(), params);
+    }
+
+    //TODO
+    public Map<String, Object> profileImageProjection(CompanionFile profile, Geometry geometry, LinkedHashMap<String, String> params) {
+        String server = hmsInternalUrl();
+        String format = checkFormat((String) params.get("format"), List.of("jpg", "png"));
+
+        LinkedHashMap<String, Object> parameters = hmsParametersFromCompanionFile(profile);
+        parameters.put("location", geometry.toString());
+        parameters.put("minSlice", params.get("minSlice"));
+        parameters.put("maxSlice", params.get("maxSlice"));
+
+        PimsResponse response = makeRequest(null, server, "/profile/" + params.get("projection") + "-projection." +format, parameters, format, Map.of(), true);
+        return JsonObject.toMap(new String(response.getContent()));
+    }
+
+
 
     public List<String> associated(AbstractImage image) throws IOException {
         String server = image.getImageServerInternalUrl();
@@ -595,8 +757,11 @@ public class ImageServerService extends ModelService {
         return extractedHeaders;
     }
 
+    private PimsResponse makeRequest(String httpMethod, String imageServerInternalUrl, String path, LinkedHashMap<String, Object> parameters, String format, Map<String, Object> headers) {
+        return makeRequest(httpMethod, imageServerInternalUrl, path, parameters, format, headers, false);
+    }
 
-    private PimsResponse makeRequest(String httpMethod, String imageServerInternalUrl, String path, LinkedHashMap<String, Object> parameters, String format, Map<String, Object> headers)  {
+    private PimsResponse makeRequest(String httpMethod, String imageServerInternalUrl, String path, LinkedHashMap<String, Object> parameters, String format, Map<String, Object> headers, boolean hms)  {
 
         parameters = filterParameters(parameters);
         String parameterUrl = "";
@@ -635,8 +800,20 @@ public class ImageServerService extends ModelService {
         } else {
             log.debug("POST " + imageServerInternalUrl + path);
             log.debug(JsonObject.toJsonString(parameters));
+            String requestContentType = "application/json";
+            if (hms) {
+                requestContentType = "application/x-www-form-urlencoded";
+            }
+
+            HttpRequest.BodyPublisher bodyPublisher;
+            if(hms) {
+                bodyPublisher = HttpRequest.BodyPublishers.ofString(StringUtils.urlEncodeUTF8(parameters));
+            } else {
+                bodyPublisher = HttpRequest.BodyPublishers.ofString(JsonObject.toJsonString(parameters));
+            }
+
             HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                    .POST(HttpRequest.BodyPublishers.ofString(JsonObject.toJsonString(parameters)))
+                    .POST(bodyPublisher)
                     .uri(URI.create(imageServerInternalUrl + path))
                     .setHeader("Accept", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
                     .setHeader("content-type", "application/json");
@@ -762,6 +939,15 @@ public class ImageServerService extends ModelService {
         }
     }
 
+    private static Map<String, Object> renameChannelHistogramKeys(Map<String, Object> hist) {
+        Object channel = hist.get("concreteChannel");
+        Object apparentChannel = hist.get("channel");
+        hist.put("channel",channel);
+        hist.put("apparentChannel", apparentChannel);
+        hist.remove("concreteChannel");
+        return hist;
+    }
+
     private static String invertColormap(String colormap) {
         if (colormap.charAt(0) == '!') {
             return colormap.substring(1);
@@ -793,6 +979,7 @@ public class ImageServerService extends ModelService {
     public Class currentDomain() {
         return ImageServer.class;
     }
+
 
 
 }

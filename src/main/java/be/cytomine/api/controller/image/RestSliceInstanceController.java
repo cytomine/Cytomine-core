@@ -314,6 +314,47 @@ public class RestSliceInstanceController extends RestCytomineController {
         responseImage(imageServerService.window(sliceInstance.getBaseSlice(), windowParameter, etag));
     }
 
+
+    @GetMapping("/sliceinstance/{id}/histogram.json")
+    public ResponseEntity<String> histogram(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "256") Integer nBins) throws IOException {
+        log.debug("REST request to get histogram slice");
+        SliceInstance sliceInstance = sliceInstanceService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("sliceInstance", id));
+        return responseSuccess(imageServerService.planeHistograms(sliceInstance.getBaseSlice(), nBins, false));
+    }
+
+    @GetMapping("/sliceinstance/{id}/histogram/bounds.json")
+    public ResponseEntity<String> histogramBounds(@PathVariable Long id) throws IOException {
+        log.debug("REST request to get historigramBounds slice");
+        SliceInstance sliceInstance = sliceInstanceService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("sliceInstance", id));
+        return responseSuccess(imageServerService.planeHistogramBounds(sliceInstance.getBaseSlice(), false));
+    }
+
+    @GetMapping("/sliceinstance/{id}/channelhistogram.json")
+    public ResponseEntity<String> channelHistograms(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "256") Integer nBins) throws IOException {
+        log.debug("REST request to get channelhistogram slice");
+        SliceInstance sliceInstance = sliceInstanceService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("sliceInstance", id));
+        return responseSuccess(imageServerService.planeHistograms(sliceInstance.getBaseSlice(), nBins, true));
+    }
+
+
+    @GetMapping("/sliceinstance/{id}/channelhistogram/bounds.json")
+    public ResponseEntity<String> channelHistogramBounds(@PathVariable Long id) throws IOException {
+        log.debug("REST request to get channelHistogramBounds slice");
+        SliceInstance sliceInstance = sliceInstanceService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("sliceInstance", id));
+        return responseSuccess(imageServerService.planeHistogramBounds(sliceInstance.getBaseSlice(), true));
+    }
+
+
+
+
     //TODO
 
 //    //todo : move into a service

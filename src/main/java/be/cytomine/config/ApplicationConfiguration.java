@@ -37,6 +37,8 @@ public class ApplicationConfiguration {
 
     private String serverURL;
 
+    private String hyperspectralServerURL;
+
     private NotificationConfiguration notification;
 
     private String storagePath;

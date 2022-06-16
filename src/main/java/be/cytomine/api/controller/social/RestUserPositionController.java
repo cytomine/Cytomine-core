@@ -129,7 +129,7 @@ public class RestUserPositionController extends RestCytomineController {
         return responseSuccess(userPositionService.lastPositionByUser(imageInstance, sliceInstance, user, broadcast).map(LastUserPosition::toJsonObject).orElse(new JsonObject()));
     }
 
-    @GetMapping("/imageinstance/{image}/positions.json")
+    @GetMapping(value = {"/imageinstance/{image}/positions.json", "/imageinstance/{image}/position.json"})
     public ResponseEntity<String> list(
             @PathVariable("image") Long imageId,
             @RequestParam(value = "user", required = false) Long userId,

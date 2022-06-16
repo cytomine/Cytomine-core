@@ -464,6 +464,306 @@ public class ImageServerServiceTests {
         assertThat(crop).isEqualTo(mockResponse);
     }
 
+
+    @Test
+    void image_histograms() throws IOException {
+        ImageServer imageServer = builder.given_an_image_server();
+        imageServer.setUrl("http://localhost:8888");
+        imageServer = builder.persistAndReturn(imageServer);
+
+        AbstractImage image = builder.given_an_abstract_image();
+        image.setWidth(109240);
+        image.setHeight(220696);
+        image.getUploadedFile().getImageServer().setBasePath("/data/images");
+        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
+        image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        image.getUploadedFile().setContentType("MRXS");
+        AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
+
+
+        configureFor("localhost", 8888);
+        System.out.println("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8) +"/histogram/per-image?n_bins=256");
+        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8) +"/histogram/per-image?n_bins=256"))
+                .willReturn(
+                        aResponse().withBody(
+                                """
+                                {"type":"FAST","minimum":0,"maximum":255,"first_bin":0,"last_bin":255,"n_bins":256,
+                                "histogram":[168366,69327,58523,61224,76530,72928,63925,68427,57622,76530,73828,63925,79231,77430,87335,
+                                78331,98138,82832,103541,81932,114345,108042,131451,118846,134153,149458,162063,157561,159363,153060,136854,
+                                174668,186373,194475,194475,191775,189073,214284,205280,210682,239493,234091,239493,280910,251198,276408,250298,
+                                272807,288112,325027,326827,317825,352938,377247,370045,401557,407859,416862,482589,515002,562720,583428,606837,
+                                653655,743690,809417,857135,903953,1051611,1161454,1255991,1301008,1436961,1591822,1626034,1749383,1874532,
+                                2049201,2048301,2236474,2436352,2521885,2628126,2825303,2838809,2952254,3117017,3194448,3220558,3293487,3390725,
+                                3453749,3511371,3547386,3614011,3693243,3734658,3796783,3807587,3783278,3936338,4054284,4249660,4360404,4290176,
+                                4319887,4519765,4608900,4628708,4863700,4898814,4900614,5165317,5123901,5177922,5303072,5349890,5541664,5496647,
+                                5527259,5572277,5576779,5545266,5611892,5429120,5656910,5639803,5570476,5649707,5606490,5649707,5710930,5714532,
+                                5777557,5759550,5917111,5887400,6045862,6058466,6340277,6395198,6429412,6716623,6912000,6839071,6996633,7318059,
+                                7445008,7529641,7692605,7953707,8008629,8177894,8252624,8301243,8371469,8357065,8532632,8431794,8441697,8357965,
+                                8196802,8186898,8226513,7961810,7829458,7767334,7697106,7538645,7600769,7229824,7247831,7054255,6926405,6539254,
+                                6692314,6252043,6120591,6118790,6124192,5962129,5809069,5683020,5474139,5390406,5301270,5259854,5039269,5088788,
+                                4901515,4900614,4708839,4611602,4630509,4489154,4471147,4303680,4211846,4097501,4264965,3990359,3939938,3951644,
+                                3861608,3876915,3783278,3733759,3765270,3683339,3677937,3724755,3808488,3925534,4095700,4282072,4672825,5382302,
+                                6388896,7618776,10436878,15088093,25878810,65904844,153326293,264905079,212651367,181677468,228504759,204774190,
+                                143072188,36629008,4463044,3138626,2549795,2030294,1769191,1577416,1322617,1176760,1016497,841829,664460,596934,
+                                509598,389852,358340,282711,216084,188173,195376,135052,99939,86434,70227,37814,180970]}                           
+                                """
+                        )
+                )
+        );
+
+        Map<String, Object> reponse = imageServerService.imageHistogram(image, 256);
+        printLastRequest();
+
+        assertThat(reponse).isNotNull();
+        assertThat(reponse.get("lastBin")).isEqualTo(255);
+        assertThat(reponse.get("type")).isEqualTo("FAST");
+        assertThat(((List)reponse.get("histogram")).get(0)).isEqualTo(168366);
+        assertThat(((List)reponse.get("histogram")).get(1)).isEqualTo(69327);
+    }
+
+    @Test
+    void image_histograms_bounds() throws IOException {
+        ImageServer imageServer = builder.given_an_image_server();
+        imageServer.setUrl("http://localhost:8888");
+        imageServer = builder.persistAndReturn(imageServer);
+
+        AbstractImage image = builder.given_an_abstract_image();
+        image.setWidth(109240);
+        image.setHeight(220696);
+        image.getUploadedFile().getImageServer().setBasePath("/data/images");
+        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
+        image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        image.getUploadedFile().setContentType("MRXS");
+        AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
+
+
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8) +"/histogram/per-image/bounds?n_bins=256"))
+                .willReturn(
+                        aResponse().withBody(
+                                """
+                                 {"type":"FAST","minimum":0,"maximum":255}                                                                                   
+                                """
+                        )
+                )
+        );
+
+        Map<String, Object> response = imageServerService.imageHistogramBounds(image);
+        printLastRequest();
+
+        assertThat(response).isNotNull();
+        assertThat(response.get("minimum")).isEqualTo(0);
+        assertThat(response.get("maximum")).isEqualTo(255);
+    }
+
+
+    @Test
+    void plane_histograms() throws IOException {
+        ImageServer imageServer = builder.given_an_image_server();
+        imageServer.setUrl("http://localhost:8888");
+        imageServer = builder.persistAndReturn(imageServer);
+
+        AbstractImage image = builder.given_an_abstract_image();
+        image.setWidth(109240);
+        image.setHeight(220696);
+        image.getUploadedFile().getImageServer().setBasePath("/data/images");
+        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
+        image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        image.getUploadedFile().setContentType("MRXS");
+        AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
+
+
+        configureFor("localhost", 8888);
+        System.out.println("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8) +"/histogram/per-plane/z/0/t/0?n_bins=256&channels=0");
+        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8) +"/histogram/per-plane/z/0/t/0?n_bins=256&channels=0"))
+                .willReturn(
+                        aResponse().withBody(
+                                """
+                                {"items":[
+                                    {"type":"FAST","minimum":6,"maximum":255,"first_bin":6,"last_bin":255,"n_bins":256,
+                                    "histogram":[900,2701,2701,2701,3601,5402,4502,9904,9004,11705,15306,18007,32413,19808,27011,22509,
+                                                34213,29712,35114,45918,43217,46818,42317,48619,42317,49519,54021,54921,59423,59423,62124,
+                                                68427,68427,66626,69327,59423,67526,98138,68427,86434,76530,81032,74729,85533,92736,90936,
+                                                104441,95437,95437,108943,120647,108042,129651,125149,148558,141355,135053,122448,154860,
+                                                125149,166565,170166,145857,165665,187273,163864,181871,187273,189974,182771,212483,210682,
+                                                204380,212483,241294,220586,241294,269205,253899,278209,287212,323226,323226,379048,398856,
+                                                458279,489791,537510,602335,664460,725683,831925,891348,992188,1086725,1264994,1364933,1543203,
+                                                1594523,1736778,1868230,2021290,2175250,2295897,2446256,2485871,2745172,2750574,2873022,2985566,
+                                                3035986,3253871,3206152,3202551,3225960,3281782,3261074,3346607,3134124,3232263,3139526,3180943,
+                                                3134124,3022481,2955855,2957655,2924342,2810898,2754176,2747873,2620924,2651536,2593013,2671343,
+                                                2496675,2468764,2448056,2445355,2320206,2340914,2385932,2355320,2318406,2360722,2278790,2359822,
+                                                2225669,2330110,2229271,2228370,2200460,2256281,2192356,2174349,2235573,2154542,2118528,2075311,
+                                                2110424,2110424,2122129,2102321,2005984,2117627,1942959,1974471,1951062,1987076,1846621,1918649,
+                                                1804305,1813308,1825013,1774593,1792600,1763789,1747583,1663850,1664750,1638640,1636839,1597224,
+                                                1593623,1515292,1481979,1507189,1425257,1449566,1382040,1417154,1329819,1341524,1290204,1356830,
+                                                1264094,1265894,1326218,1237083,1207372,1180361,1222678,1224478,1167756,1176760,1179461,1244286,
+                                                1286603,1305510,1385641,1508089,1732277,1969069,2427348,3583400,4999653,7937501,14420933,20375859,
+                                                42760403,101379601,116701787,117473388,74001707,10310828,1870030,1317215,957974,786907,598734,506898,
+                                                408760,319625,263803,210682,151259,114345,91836,59423,45018,42317,27011,20708,10804,8103,6302,6302,4502,900,900,3601],
+                                                "channel":0,"concrete_channel":0,"sample":0,"color":"#f00","z_slice":0,"timepoint":0}
+                                    ],"size":1}                                   
+                                """
+                        )
+                )
+        );
+
+        List<Map<String, Object>> reponse = imageServerService.planeHistograms(slice, 256, false);
+        printLastRequest();
+
+        assertThat(reponse).isNotNull();
+        assertThat(reponse.size()).isEqualTo(1);
+        assertThat(reponse.get(0).get("lastBin")).isEqualTo(255);
+        assertThat(reponse.get(0).get("color")).isEqualTo("#f00");
+        assertThat(((List)reponse.get(0).get("histogram")).get(0)).isEqualTo(900);
+        assertThat(((List)reponse.get(0).get("histogram")).get(1)).isEqualTo(2701);
+    }
+
+    @Test
+    void plane_histograms_bounds() throws IOException {
+        ImageServer imageServer = builder.given_an_image_server();
+        imageServer.setUrl("http://localhost:8888");
+        imageServer = builder.persistAndReturn(imageServer);
+
+        AbstractImage image = builder.given_an_abstract_image();
+        image.setWidth(109240);
+        image.setHeight(220696);
+        image.getUploadedFile().getImageServer().setBasePath("/data/images");
+        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
+        image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        image.getUploadedFile().setContentType("MRXS");
+        AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
+
+
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8) +"/histogram/per-plane/z/0/t/0/bounds?channels=0"))
+                .willReturn(
+                        aResponse().withBody(
+                                """
+                                    {"items":[{"type":"FAST","minimum":6,"maximum":255,"channel":0,"concrete_channel":0,"sample":0,"color":"#f00","z_slice":0,"timepoint":0}],"size":1}                                                                                             
+                                """
+                        )
+                )
+        );
+
+        List<Map<String, Object>> reponse = imageServerService.planeHistogramBounds(slice, false);
+        printLastRequest();
+
+        assertThat(reponse).isNotNull();
+        assertThat(reponse.size()).isEqualTo(1);
+        assertThat(reponse.get(0).get("channel")).isEqualTo(0);
+        assertThat(reponse.get(0).get("color")).isEqualTo("#f00");
+    }
+
+
+    @Test
+    void channel_histograms() throws IOException {
+        ImageServer imageServer = builder.given_an_image_server();
+        imageServer.setUrl("http://localhost:8888");
+        imageServer = builder.persistAndReturn(imageServer);
+
+        AbstractImage image = builder.given_an_abstract_image();
+        image.setWidth(109240);
+        image.setHeight(220696);
+        image.getUploadedFile().getImageServer().setBasePath("/data/images");
+        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
+        image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        image.getUploadedFile().setContentType("MRXS");
+        AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
+
+
+
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8) +"/histogram/per-plane/z/0/t/0?n_bins=256"))
+                .willReturn(
+                        aResponse().withBody(
+                                """
+                                {"items":[{"type":"FAST","minimum":6,"maximum":255,"first_bin":6,"last_bin":255,"n_bins":256,"histogram":
+                                [900,2701,2701,2701,3601,5402,4502,9904,9004,11705,15306,18007,32413,19808,27011,22509,34213,29712,35114,
+                                45918,43217,46818,42317,48619,42317,49519,54021,54921,59423,59423,62124,68427,68427,66626,69327,59423,67526,
+                                98138,68427,86434,76530,81032,74729,85533,92736,90936,104441,95437,95437,108943,120647,108042,129651,125149,
+                                148558,141355,135053,122448,154860,125149,166565,170166,145857,165665,187273,163864,181871,187273,189974,182771,
+                                212483,210682,204380,212483,241294,220586,241294,269205,253899,278209,287212,323226,323226,379048,398856,458279,
+                                489791,537510,602335,664460,725683,831925,891348,992188,1086725,1264994,1364933,1543203,1594523,1736778,1868230,
+                                2021290,2175250,2295897,2446256,2485871,2745172,2750574,2873022,2985566,3035986,3253871,3206152,3202551,3225960,
+                                3281782,3261074,3346607,3134124,3232263,3139526,3180943,3134124,3022481,2955855,2957655,2924342,2810898,2754176,
+                                2747873,2620924,2651536,2593013,2671343,2496675,2468764,2448056,2445355,2320206,2340914,2385932,2355320,2318406,
+                                2360722,2278790,2359822,2225669,2330110,2229271,2228370,2200460,2256281,2192356,2174349,2235573,2154542,2118528,
+                                2075311,2110424,2110424,2122129,2102321,2005984,2117627,1942959,1974471,1951062,1987076,1846621,1918649,1804305,
+                                1813308,1825013,1774593,1792600,1763789,1747583,1663850,1664750,1638640,1636839,1597224,1593623,1515292,1481979,
+                                1507189,1425257,1449566,1382040,1417154,1329819,1341524,1290204,1356830,1264094,1265894,1326218,1237083,1207372,
+                                1180361,1222678,1224478,1167756,1176760,1179461,1244286,1286603,1305510,1385641,1508089,1732277,1969069,2427348,
+                                3583400,4999653,7937501,14420933,20375859,42760403,101379601,116701787,117473388,74001707,10310828,1870030,1317215,
+                                957974,786907,598734,506898,408760,319625,263803,210682,151259,114345,91836,59423,45018,42317,27011,20708,10804,8103,
+                                6302,6302,4502,900,900,3601],"channel":0,"concrete_channel":0,"sample":0,"color":"#f00","z_slice":0,"timepoint":0}],"size":1}                          
+                                """
+                        )
+                )
+        );
+
+        List<Map<String, Object>> reponse = imageServerService.planeHistograms(slice, 256, true);
+        printLastRequest();
+
+        assertThat(reponse).isNotNull();
+        assertThat(reponse.size()).isEqualTo(1);
+        assertThat(reponse.get(0).get("channel")).isEqualTo(0);
+        assertThat(reponse.get(0).get("color")).isEqualTo("#f00");
+        assertThat(((List)reponse.get(0).get("histogram")).get(0)).isEqualTo(900);
+        assertThat(((List)reponse.get(0).get("histogram")).get(1)).isEqualTo(2701);
+    }
+
+    @Test
+    void chanel_histograms_bounds() throws IOException {
+        ImageServer imageServer = builder.given_an_image_server();
+        imageServer.setUrl("http://localhost:8888");
+        imageServer = builder.persistAndReturn(imageServer);
+
+        AbstractImage image = builder.given_an_abstract_image();
+        image.setWidth(109240);
+        image.setHeight(220696);
+        image.getUploadedFile().getImageServer().setBasePath("/data/images");
+        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
+        image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        image.getUploadedFile().setContentType("MRXS");
+        AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
+
+
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8) +"/histogram/per-plane/z/0/t/0/bounds"))
+                .willReturn(
+                        aResponse().withBody(
+                                """
+                                {"items":[
+                                {"type":"FAST","minimum":6,"maximum":255,"channel":0,"concrete_channel":0,"sample":0,"color":"#f00","z_slice":0,"timepoint":0},
+                                {"type":"FAST","minimum":0,"maximum":244,"channel":1,"concrete_channel":0,"sample":1,"color":"#0f0","z_slice":0,"timepoint":0},
+                                {"type":"FAST","minimum":23,"maximum":255,"channel":2,"concrete_channel":0,"sample":2,"color":"#00f","z_slice":0,"timepoint":0}],
+                                "size":3}                                                                                    
+                                """
+                        )
+                )
+        );
+
+        List<Map<String, Object>> reponse = imageServerService.planeHistogramBounds(slice, true);
+        printLastRequest();
+
+        assertThat(reponse).isNotNull();
+        assertThat(reponse.size()).isEqualTo(3);
+        assertThat(reponse.get(0).get("channel")).isEqualTo(0); //concreteChannel
+        assertThat(reponse.get(1).get("channel")).isEqualTo(0); //concreteChannel
+        assertThat(reponse.get(2).get("channel")).isEqualTo(0); //concreteChannel
+        assertThat(reponse.get(0).get("apparentChannel")).isEqualTo(0); //channel
+        assertThat(reponse.get(1).get("apparentChannel")).isEqualTo(1); //channel
+        assertThat(reponse.get(2).get("apparentChannel")).isEqualTo(2); //channel
+        assertThat(reponse.get(0).get("minimum")).isEqualTo(6);
+        assertThat(reponse.get(0).get("maximum")).isEqualTo(255);
+    }
+
+
+
+
+
+
+
+
     private void printLastRequest() {
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
         all.subList(Math.max(all.size() - 3, 0), all.size()).forEach(x -> System.out.println(x.getMethod() + " " + x.getAbsoluteUrl() + " " + x.getBodyAsString()));

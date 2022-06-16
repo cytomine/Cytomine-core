@@ -113,8 +113,9 @@ public class OntologyService extends ModelService {
 
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        securityACLService.check(domain,WRITE);
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.check(domain,WRITE);
+        securityACLService.checkUser(currentUser);
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
     }
 
@@ -122,6 +123,7 @@ public class OntologyService extends ModelService {
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain,DELETE);
+        securityACLService.checkUser(currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }

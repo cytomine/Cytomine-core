@@ -246,6 +246,50 @@ public class RestImageInstanceController extends RestCytomineController {
         return responseSuccess(imageServerService.associated(imageInstance));
     }
 
+
+
+    @GetMapping("/imageinstance/{id}/histogram.json")
+    public ResponseEntity<String> histogram(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "256") Integer nBins) throws IOException {
+        log.debug("REST request to get histogram images");
+        ImageInstance imageInstance = imageInstanceService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
+        return responseSuccess(imageServerService.imageHistogram(imageInstance.getBaseImage(), nBins));
+    }
+
+    @GetMapping("/imageinstance/{id}/histogram/bounds.json")
+    public ResponseEntity<String> histogramBounds(@PathVariable Long id) throws IOException {
+        log.debug("REST request to get bounds images");
+        ImageInstance imageInstance = imageInstanceService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
+        return responseSuccess(imageServerService.imageHistogramBounds(imageInstance.getBaseImage()));
+    }
+
+    @GetMapping("/imageinstance/{id}/channelhistogram.json")
+    public ResponseEntity<String> channelHistograms(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "256") Integer nBins) throws IOException {
+        log.debug("REST request to get channelhistogram images");
+        ImageInstance imageInstance = imageInstanceService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
+        return responseSuccess(imageServerService.channelHistograms(imageInstance.getBaseImage(), nBins));
+    }
+
+
+    @GetMapping("/imageinstance/{id}/channelhistogram/bounds.json")
+    public ResponseEntity<String> channelHistogramBounds(@PathVariable Long id) throws IOException {
+        log.debug("REST request to get channelHistogramBounds images");
+        ImageInstance imageInstance = imageInstanceService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
+        return responseSuccess(imageServerService.channelHistogramBounds(imageInstance.getBaseImage()));
+    }
+
+
+
+
+
+
     @RequestMapping(value = "/imageinstance/{id}/associated/{label}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public void label(
             @PathVariable Long id,

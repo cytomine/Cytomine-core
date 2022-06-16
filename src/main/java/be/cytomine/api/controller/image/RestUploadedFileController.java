@@ -54,6 +54,7 @@ public class RestUploadedFileController extends RestCytomineController {
     @GetMapping("/uploadedfile.json")
     public ResponseEntity<String> list(
             @RequestParam(defaultValue = "false") Boolean onlyRootsWithDetails,
+            @RequestParam(defaultValue = "true") Boolean withTreeDetails,
             @RequestParam(defaultValue = "false") Boolean onlyRoots,
             @RequestParam(required = false) Long parent,
             @RequestParam(required = false)  Long root,
@@ -65,7 +66,7 @@ public class RestUploadedFileController extends RestCytomineController {
         if (root!=null) {
             return responseSuccess(uploadedFileService.listHierarchicalTree((User) currentUserService.getCurrentUser(), root));
         } else if (onlyRootsWithDetails) {
-            return responseSuccess(uploadedFileService.list(retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder()));
+            return responseSuccess(uploadedFileService.list(retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), withTreeDetails));
         } else if (all) {
             return responseSuccess(uploadedFileService.list(retrievePageable()));
         } else {

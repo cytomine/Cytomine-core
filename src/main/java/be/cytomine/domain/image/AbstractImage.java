@@ -26,7 +26,6 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -59,6 +58,10 @@ public class AbstractImage extends CytomineDomain {
     private Integer extrinsicChannels;  // [PIMS] True number of (color) channels (RGB image = 3 extrinsic channels)
     // TODO: in a new API, should be renamed to "channels"
 
+    private Integer samplePerPixel = 8;
+
+    private Integer bitPerSample;
+
     @Column(name = "physical_size_x")
     private Double physicalSizeX;
 
@@ -72,10 +75,6 @@ public class AbstractImage extends CytomineDomain {
 
     private Integer magnification;
 
-    // TODO: should be named bit per color (bpc) <> bit per pixel (bpp) = bit depth
-    @Min(1)
-    private Integer bitDepth;
-
     // TODO: Remove, no more filled by [PIMS]
     private String colorspace;
 
@@ -84,6 +83,8 @@ public class AbstractImage extends CytomineDomain {
 
     @Transient
     private Boolean inProject = false;
+
+    private Integer tileSize = 256;
 
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
@@ -103,7 +104,10 @@ public class AbstractImage extends CytomineDomain {
         abstractImage.depth = json.getJSONAttrInteger("depth", 1);
         abstractImage.duration = json.getJSONAttrInteger("duration", 1);
         abstractImage.channels = json.getJSONAttrInteger("channels", 1);
-        abstractImage.extrinsicChannels = json.getJSONAttrInteger("extrinsicChannels", 1);
+
+        abstractImage.samplePerPixel = json.getJSONAttrInteger("samplePerPixel", 1);
+        abstractImage.bitPerSample = json.getJSONAttrInteger("bitPerSample", 8);
+
         abstractImage.physicalSizeX = json.getJSONAttrDouble("physicalSizeX", null);
         abstractImage.physicalSizeY = json.getJSONAttrDouble("physicalSizeY", null);
         abstractImage.physicalSizeZ = json.getJSONAttrDouble("physicalSizeZ", null);
@@ -111,9 +115,9 @@ public class AbstractImage extends CytomineDomain {
         abstractImage.fps = json.getJSONAttrDouble("fps", null);
 
         abstractImage.magnification = json.getJSONAttrInteger("magnification", null);
-        abstractImage.bitDepth = json.getJSONAttrInteger("bitDepth", null);
         abstractImage.colorspace = json.getJSONAttrStr("colorspace", false);
 
+        abstractImage.tileSize = json.getJSONAttrInteger("tileSize", 256);
 
         return abstractImage;
     }
@@ -134,6 +138,7 @@ public class AbstractImage extends CytomineDomain {
         returnArray.put("channels", abstractImage.getChannels());
         returnArray.put("extrinsicChannels", abstractImage.getExtrinsicChannels());
         returnArray.put("dimensions", abstractImage.getDimensions());
+        returnArray.put("apparentChannels", abstractImage.getExtrinsicChannels());
 
         returnArray.put("physicalSizeX", abstractImage.getPhysicalSizeX());
         returnArray.put("physicalSizeY", abstractImage.getPhysicalSizeY());
@@ -142,9 +147,12 @@ public class AbstractImage extends CytomineDomain {
         returnArray.put("fps", abstractImage.getFps());
         returnArray.put("zoom", abstractImage.getZoomLevels());  // /!!\ Breaking API : image?.getZoomLevels()?.max
 
+        returnArray.put("tileSize", abstractImage.getTileSize());
+        returnArray.put("isVirtual", abstractImage.isVirtual());
 
         returnArray.put("magnification", abstractImage.getMagnification());
-        returnArray.put("bitDepth", abstractImage.getBitDepth());
+        returnArray.put("bitPerSample", abstractImage.getBitPerSample());
+        returnArray.put("samplePerPixel", abstractImage.getSamplePerPixel());
         returnArray.put("colorspace", abstractImage.getColorspace());
         returnArray.put("thumb", UrlApi.getAbstractImageThumbUrlWithMaxSize(abstractImage.id, 512, "png"));
         returnArray.put("preview", UrlApi.getAbstractImageThumbUrlWithMaxSize(abstractImage.id, 1024, "png"));
@@ -152,6 +160,14 @@ public class AbstractImage extends CytomineDomain {
 
         returnArray.put("inProject", abstractImage.getInProject());
         return returnArray;
+    }
+
+    public int getApparentChannels() {
+        return channels * samplePerPixel;
+    }
+
+    public boolean isVirtual() {
+        return uploadedFile!=null? uploadedFile.isVirtual() : false;
     }
 
 
@@ -183,7 +199,7 @@ public class AbstractImage extends CytomineDomain {
         double tmpWidth = width;
         double tmpHeight = height;
         int nbZoom = 0;
-        while (tmpWidth > 256 || tmpHeight > 256) {
+        while (tmpWidth > tileSize || tmpHeight > tileSize) {
             nbZoom++;
             tmpWidth /= 2;
             tmpHeight /= 2;
@@ -195,7 +211,7 @@ public class AbstractImage extends CytomineDomain {
         return originalFilename;
     }
 
-    String getDimensions() {
+    public String getDimensions() {
         List<String> dimensions = new ArrayList<>();
         dimensions.add("X");
         dimensions.add("Y");

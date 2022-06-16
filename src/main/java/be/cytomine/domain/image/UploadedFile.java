@@ -129,11 +129,8 @@ public class UploadedFile extends CytomineDomain implements Serializable {
     }
 
     public String getPath() {
-        if (contentType.equals("virtual/stack") || user == null) {
-            return null;
-        }
-        //[PIMS] Image server base path is no more required.
-        return Paths.get(filename).toString();
+        // //TODO: use a directory per storage
+        return filename;
     }
 
     boolean isArchive() {
@@ -171,5 +168,10 @@ public class UploadedFile extends CytomineDomain implements Serializable {
     public String getImageServerInternalUrl() {
         return this.getImageServer()!=null ? this.getImageServer().getInternalUrl() : null;
     }
+
+    public boolean isVirtual() {
+        return contentType.equalsIgnoreCase("VIRTUALSTACK");
+    }
+
 
 }
