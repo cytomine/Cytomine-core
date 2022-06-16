@@ -8,7 +8,7 @@
         </preConditions>
         <addColumn tableName="abstract_image" >
             <column name="sample_per_pixel" type="INTEGER" defaultValueNumeric="8"/>
-            <column name="bit_per_sample" type="INTEGER"/>
+            <column name="bit_per_sample" type="INTEGER" defaultValueNumeric="8"/>
             <column name="tile_size" type="INTEGER" defaultValueNumeric="256"/>
         </addColumn>
     </changeSet>
