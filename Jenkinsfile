@@ -61,8 +61,28 @@ node {
     sh 'scripts/ciBuildJar.sh'
     }
 
-    stage ('Publish jar') {
-            sh 'scripts/ciPublishJar.sh'
+    withFolderProperties{
+        // if PRIVATE is define in jenkins, the war and the docker image are send to the private cytomine repository.
+        // otherwise, public repo for war and public dockerhub repo for docker image
+        echo("Private: ${env.PRIVATE}")
+
+        if (env.PRIVATE && env.PRIVATE.equals("true")) {
+            stage 'Publish jar (private)'
+            sh 'scriptsCI/ciPublishJarPrivate.sh'
+
+            stage 'Build docker image (private)'
+            withCredentials(
+                [
+                    usernamePassword(credentialsId: 'CYTOMINE_DOCKER_REGISTRY', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_TOKEN')
+                ]
+                ) {
+                    docker.withRegistry('http://repository.cytom.in:5004/v2/', 'CYTOMINE_DOCKER_REGISTRY') {
+                        sh 'scriptsCI/ciBuildDockerImagePrivate.sh'
+                    }
+                }
+        } else {
+            stage 'Publish jar'
+            sh 'scriptsCI/ciPublishJar.sh'
 
             stage 'Build docker image'
             withCredentials(
@@ -71,8 +91,10 @@ node {
                 ]
                 ) {
                     docker.withRegistry('https://index.docker.io/v1/', 'DOCKERHUB_CREDENTIAL') {
-                        sh 'scripts/ciBuildDockerImage.sh'
+                        sh 'scriptsCI/ciBuildDockerImage.sh'
                     }
                 }
+        }
     }
+
 }
