@@ -68,7 +68,7 @@ node {
 
         if (env.PRIVATE && env.PRIVATE.equals("true")) {
             stage 'Publish jar (private)'
-            sh 'scriptsCI/ciPublishJarPrivate.sh'
+            sh 'scripts/ciPublishJarPrivate.sh'
 
             stage 'Build docker image (private)'
             withCredentials(
@@ -77,12 +77,12 @@ node {
                 ]
                 ) {
                     docker.withRegistry('http://repository.cytom.in:5004/v2/', 'CYTOMINE_DOCKER_REGISTRY') {
-                        sh 'scriptsCI/ciBuildDockerImagePrivate.sh'
+                        sh 'scripts/ciBuildDockerImagePrivate.sh'
                     }
                 }
         } else {
             stage 'Publish jar'
-            sh 'scriptsCI/ciPublishJar.sh'
+            sh 'scripts/ciPublishJar.sh'
 
             stage 'Build docker image'
             withCredentials(
@@ -91,7 +91,7 @@ node {
                 ]
                 ) {
                     docker.withRegistry('https://index.docker.io/v1/', 'DOCKERHUB_CREDENTIAL') {
-                        sh 'scriptsCI/ciBuildDockerImage.sh'
+                        sh 'scripts/ciBuildDockerImage.sh'
                     }
                 }
         }

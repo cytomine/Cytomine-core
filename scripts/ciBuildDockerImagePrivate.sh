@@ -8,7 +8,7 @@ echo "************************************** Publish docker ********************
 file='./ci/version'
 VERSION_NUMBER=$(<"$file")
 
-docker build --rm -f scriptsCI/docker/core/Dockerfile -t  repository.cytom.in:5004/core-$CUSTOMER:$VERSION_NUMBER .
+docker build --rm -f scripts/docker/core/Dockerfile -t  repository.cytom.in:5004/core-$CUSTOMER:$VERSION_NUMBER .
 
 docker push repository.cytom.in:5004/core-$CUSTOMER:$VERSION_NUMBER
 
