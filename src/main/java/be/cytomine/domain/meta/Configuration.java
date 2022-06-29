@@ -50,7 +50,7 @@ public class Configuration extends CytomineDomain {
         configuration.id = json.getJSONAttrLong("id",null);
         configuration.key = json.getJSONAttrStr("key", true);
         configuration.value = json.getJSONAttrStr("value", true);
-        configuration.readingRole = ConfigurationReadingRole.valueOf(json.getJSONAttrStr("readingRole",true));
+        configuration.readingRole = ConfigurationReadingRole.valueOf(json.getJSONAttrStr("readingRole",true).toUpperCase());
         configuration.created = json.getJSONAttrDate("created");
         configuration.updated = json.getJSONAttrDate("updated");
         return configuration;

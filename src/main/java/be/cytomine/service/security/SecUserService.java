@@ -68,6 +68,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.security.acls.model.Permission;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -1170,11 +1171,35 @@ public class SecUserService extends ModelService {
     }
 
 
+
+
+
+    public void changeUserPermission(SecUser user, Storage storage, Permission permission) {
+        securityACLService.check(storage, ADMINISTRATION);
+
+        if (user.getId().equals(storage.getUser().getId())) {
+            throw new InvalidRequestException("Cannot change permission for storage owner.");
+        }
+
+        log.info("change permission for user "+user.getId()+" on storage $storage with new permission " + permission.getMask());
+        try {
+            permissionService.deletePermission(storage, user.getUsername());
+        } catch(Exception ignored) {}
+        permissionService.addPermission(storage, user.getUsername(), permission);
+    }
+
+
     public void addUserToStorage(SecUser user, Storage storage) {
         securityACLService.check(storage, ADMINISTRATION);
         log.info("Add user {} to storage {}", user, storage);
         permissionService.addPermission(storage, user.getUsername(), READ);
         permissionService.addPermission(storage, user.getUsername(), WRITE);
+    }
+
+    public void addUserToStorage(SecUser user, Storage storage, Permission permission) {
+        securityACLService.check(storage, ADMINISTRATION);
+        log.info("Add user {} to storage {}", user, storage);
+        permissionService.addPermission(storage, user.getUsername(), permission);
     }
 
     public void deleteUserFromStorage(SecUser user, Storage storage) {
@@ -1185,8 +1210,12 @@ public class SecUserService extends ModelService {
         }
 
         log.info("Remove user {} from storage {}", user, storage);
-        permissionService.deletePermission(storage, user.getUsername(), READ);
-        permissionService.deletePermission(storage, user.getUsername(), WRITE);
+
+        log.info("Remove user " + user + " from storage $storage");
+        int count = uploadedFileRepository.countByUser(user);
+        log.info(count + " uploaded files will be link to storage owner " + storage.getUser().getUsername());
+        uploadedFileRepository.changeUser(user, storage.getUser());
+        permissionService.deletePermission(storage, user.getUsername());
     }
 
     @Override

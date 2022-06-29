@@ -20,23 +20,29 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.repository.image.server.StorageRepository;
+import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
+import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.SecurityUtils;
 import be.cytomine.utils.Task;
+import liquibase.sql.Sql;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import javax.persistence.Tuple;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.*;
 
 import static org.springframework.security.acls.domain.BasePermission.*;
 
@@ -57,12 +63,71 @@ public class StorageService extends ModelService {
 
     private final PermissionService permissionService;
 
+    private final SecUserRepository secUserRepository;
+
     public List<Storage> list() {
         return securityACLService.getStorageList(currentUserService.getCurrentUser(), true);
     }
 
     public List<Storage> list(SecUser user, String searchString) {
-        return securityACLService.getStorageList(user, false, searchString);
+        return list(user, false, searchString);
+    }
+    public List<Storage> list(SecUser user, Boolean adminByPass, String searchString) {
+        return securityACLService.getStorageList(user, adminByPass, searchString);
+    }
+
+    public List<JsonObject> usersStats(Storage storage, String sortColumn, String sortDirection) {
+        Map<String, JsonObject> results = new HashMap<>();
+        List<SecUser> users = secUserRepository.findAllUsersByStorageId(storage.getId());
+        for(SecUser secUser : users) {
+            if (secUser instanceof User user) {
+                JsonObject usersData  = new JsonObject();
+                usersData.put("id", user.getId());
+                usersData.put("username", user.getUsername());
+                usersData.put("firstname", user.getFirstname());
+                usersData.put("lastname", user.getLastname());
+                usersData.put("fullName", user.getFirstname() + " " + user.getLastname());
+                usersData.put("numberOfFiles", 0L);
+                usersData.put("totalSize", 0L);
+                usersData.put("created", user.getCreated());
+                results.put(user.getUsername(), usersData);
+            }
+
+        }
+
+        Map<String, Integer> usersPermissions = permissionService.listUsersAndPermissions(storage);
+
+        for (Map.Entry<String, Integer> entry : usersPermissions.entrySet()) {
+            if (results.containsKey(entry.getKey())) {
+                results.get(entry.getKey()).put("role", permissionService.readFromMask(entry.getValue()));
+            }
+        }
+
+        List<Tuple> stats = storageRepository.listStatsForUsers(storage.getId());
+
+        for (Tuple stat : stats) {
+            String username = stat.get(0, String.class);
+            if(results.containsKey(username)) {
+                results.get(username).put("numberOfFiles", stat.get(2, BigInteger.class).longValue());
+                results.get(username).put("totalSize", stat.get(3, BigDecimal.class).longValue());
+            }
+        }
+
+        List<JsonObject> resultsList = new ArrayList<>(results.values());
+        if (sortColumn!=null && sortDirection!=null) {
+            if (sortDirection.equalsIgnoreCase("desc")) {
+                resultsList.sort(Comparator.comparing(o -> (Date) ((JsonObject) o).get(sortColumn)).reversed());
+            } else {
+                resultsList.sort(Comparator.comparing(o -> (Date) ((JsonObject) o).get(sortColumn)));
+            }
+
+        }
+
+        return resultsList;
+    }
+
+    public List<JsonObject> userAccess(SecUser user) {
+        return securityACLService.getLightStoragesWithMaxPermission(user);
     }
 
     public Optional<Storage> find(Long id) {

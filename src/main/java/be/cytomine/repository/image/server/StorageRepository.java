@@ -20,8 +20,10 @@ import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.security.SecUser;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import javax.persistence.Tuple;
 import java.util.List;
 
 /**
@@ -31,5 +33,11 @@ import java.util.List;
 public interface StorageRepository extends JpaRepository<Storage, Long>, JpaSpecificationExecutor<Storage> {
 
     List<Storage> findAllByUser(SecUser user);
+
+    @Query(value = "SELECT su.username, su.id, count(uf.id) as files, sum(uf.size) as size " +
+            "FROM uploaded_file uf, sec_user su " +
+            "WHERE su.id = uf.user_id AND uf.storage_id = :storageId "  +
+            "GROUP BY su.username, su.id ", nativeQuery = true)
+    List<Tuple> listStatsForUsers(Long storageId);;
 
 }

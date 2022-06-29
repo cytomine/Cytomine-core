@@ -38,6 +38,7 @@ import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.ontology.GenericAnnotationService;
+import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import javax.persistence.Tuple;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -205,6 +207,24 @@ public class SecurityACLService {
                             "and aclEntry.sid = aclSid and aclSid.sid like '"+user.getUsername() +"'");
             return query.getResultList();
         }
+    }
+
+    public List<JsonObject> getLightStoragesWithMaxPermission(SecUser user) {
+        if (currentRoleService.isAdminByNow(user)) {
+            return  getStorageList(user, true).stream().map(x -> JsonObject.of("id", x.getId(), "name", x.getName(), "permission", ADMINISTRATION)).collect(Collectors.toList());
+        }
+
+        Query query = entityManager.createQuery(
+                "select storage.id, storage.name, max(aclEntry.mask) "+
+                        "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, AclClass as aclClass, Storage as storage "+
+                        "where aclClass.className = 'be.cytomine.domain.image.server.Storage'" +
+                        "and aclEntry.aclObjectIdentity = aclObjectId "+
+                        "and storage.id = aclObjectId.objectId "+
+                        "and aclEntry.sid = aclSid and aclSid.sid like '"+user.getUsername()+"' " +
+                        "group by storage.id ORDER BY storage.id", Tuple.class);
+
+        List<Tuple> resultList = query.getResultList();
+        return resultList.stream().map(x -> JsonObject.of("id", x.get(0), "name", x.get(1), "permission", permissionService.readFromMask(x.get(2, Integer.class)))).collect(Collectors.toList());
     }
 
 

@@ -194,6 +194,33 @@ public class SecurityAclServiceTests {
 
     }
 
+    @WithMockUser(username = "user")
+    @Test
+    void list_authorized_storages_with_max_permission() {
+        Storage storage = builder.given_a_storage();
+        User user = builder.given_default_user();
+
+        assertThat(securityACLService.getLightStoragesWithMaxPermission(user).stream().map(x -> x.getId())).doesNotContain(storage.getId());
+
+        permissionService.addPermission(storage, user.getUsername(), READ);
+
+        assertThat(securityACLService.getLightStoragesWithMaxPermission(user).stream().map(x -> x.getId())).contains(storage.getId());
+
+        assertThat(securityACLService.getLightStoragesWithMaxPermission(user).get(0).get("permission")).isEqualTo(READ);
+
+    }
+
+    @WithMockUser(username = "superadmin")
+    @Test
+    void list_authorized_storages_with_max_permission_as_superadmin() {
+        Storage storage = builder.given_a_storage();
+        User user = builder.given_superadmin();
+
+        assertThat(securityACLService.getLightStoragesWithMaxPermission(user).stream().map(x -> x.getId())).contains(storage.getId());
+
+        assertThat(securityACLService.getLightStoragesWithMaxPermission(user).get(0).get("permission")).isEqualTo(ADMINISTRATION);
+
+    }
 
     @WithMockUser(username = "user")
     @Test

@@ -18,11 +18,13 @@ package be.cytomine.repository.image;
 
 import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.image.server.Storage;
+import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -76,6 +78,13 @@ public interface UploadedFileRepository extends JpaRepository<UploadedFile, Long
     void deleteAllByUser(User user);
 
     long countByStorage(Storage storage);
+
+    int countByUser(SecUser user);
+
+
+    @Modifying
+    @Query(value = "UPDATE UploadedFile SET user = :newUser WHERE user = :oldUser")
+    void changeUser(SecUser oldUser, SecUser newUser);
 
 //
 //    @Query(value = "SELECT uf.* " +

@@ -18,12 +18,14 @@ package be.cytomine.service.image.server;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.RelationTerm;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.server.StorageRepository;
@@ -36,6 +38,7 @@ import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.ontology.OntologyService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
+import be.cytomine.utils.JsonObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,6 +89,15 @@ public class StorageServiceTests {
     void list_user_storage_with_success() {
         Storage storage = builder.given_a_storage();
         assertThat(storage).isIn(storageService.list(builder.given_superadmin(), null));
+    }
+
+    @Test
+    void list_user_storage_with_search_string() {
+        Storage storage = builder.given_a_storage();
+        storage.setName("abracadabra");
+
+        assertThat(storage).isIn(storageService.list(builder.given_superadmin(), "acadab"));
+        assertThat(storageService.list(builder.given_superadmin(), "notIN").size()).isEqualTo(0);
     }
 
     @Test
@@ -166,4 +178,69 @@ public class StorageServiceTests {
         assertThat(commandResponse.getStatus()).isEqualTo(200);
         assertThat(storageService.find(storage.getId()).isEmpty());
     }
+
+
+    @Test
+    void users_stats() {
+        User userWithFile = builder.given_a_user();
+        User userWithNoFile = builder.given_a_user();
+        User userNoInStorageButWith1File = builder.given_a_user();
+
+        Storage storage = builder.given_a_storage();
+        UploadedFile uploadedFile = builder.given_a_uploaded_file();
+        uploadedFile.setStorage(storage);
+        uploadedFile.setUser(userWithFile);
+
+        UploadedFile anotherUploadedFile = builder.given_a_uploaded_file();
+        anotherUploadedFile.setStorage(storage);
+        anotherUploadedFile.setUser(userNoInStorageButWith1File);
+
+        builder.addUserToStorage(storage, userWithFile.getUsername());
+        builder.addUserToStorage(storage, userWithNoFile.getUsername());
+
+        List<JsonObject> jsonObjects = storageService.usersStats(storage, "created", "desc");
+
+        assertThat(jsonObjects.size()).isEqualTo(3);
+
+        assertThat(jsonObjects.get(0).getId()).isEqualTo(userWithNoFile.getId());
+        assertThat(jsonObjects.get(0).get("numberOfFiles")).isEqualTo(0L);
+
+        assertThat(jsonObjects.get(1).getId()).isEqualTo(userWithFile.getId());
+        assertThat(jsonObjects.get(1).get("numberOfFiles")).isEqualTo(1L);
+
+        // every storage created with utility class is linked to superadmin users (first created, so last in list)
+        assertThat(jsonObjects.get(2).getId()).isEqualTo(builder.given_superadmin().getId());
+    }
+
+    @Test
+    void users_access() {
+        User user = builder.given_a_user();
+
+        Storage storageWhereUserIsAdmin = builder.given_a_storage();
+        Storage storageWhereUserIsRead = builder.given_a_storage();
+
+        builder.addUserToStorage(storageWhereUserIsAdmin, user.getUsername(), READ);
+        builder.addUserToStorage(storageWhereUserIsAdmin, user.getUsername(), ADMINISTRATION);
+        builder.addUserToStorage(storageWhereUserIsRead, user.getUsername(), READ);
+
+        List<JsonObject> jsonObjects = storageService.userAccess(user);
+
+        assertThat(jsonObjects.size()).isEqualTo(2);
+
+        assertThat(jsonObjects.get(0).getId()).isEqualTo(storageWhereUserIsAdmin.getId());
+        assertThat(jsonObjects.get(0).get("permission")).isEqualTo(ADMINISTRATION);
+
+        assertThat(jsonObjects.get(1).getId()).isEqualTo(storageWhereUserIsRead.getId());
+        assertThat(jsonObjects.get(1).get("permission")).isEqualTo(READ);
+    }
+
+    @Test
+    void users_access_for_user_without_storage() {
+        User userWithoutStorage = builder.given_a_user();
+
+        List<JsonObject> jsonObjects = storageService.userAccess(userWithoutStorage);
+
+        assertThat(jsonObjects.size()).isEqualTo(0);
+    }
+
 }

@@ -34,8 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -67,6 +66,23 @@ public class StorageResourceTests {
                 .andExpect(jsonPath("$.collection[?(@.name=='"+storage.getName()+"')]").exists())
                 .andExpect(jsonPath("$.collection[?(@.name=='"+otherUserStorage.getName()+"')]").doesNotExist());
     }
+
+    @Test
+    @Transactional
+    public void list_all_storages_with_search_string() throws Exception {
+        Storage storage = builder.given_a_storage();
+        storage.setName("abracadabra");
+        restStorageControllerMockMvc.perform(get("/api/storage.json").param("searchString", "acada"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))));
+
+        restStorageControllerMockMvc.perform(get("/api/storage.json").param("searchString", "not"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
+    }
+
 
     @Test
     @Transactional
@@ -178,5 +194,31 @@ public class StorageResourceTests {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());
+    }
+
+
+    @Test
+    @Transactional
+    public void user_stats() throws Exception {
+        Storage storage = builder.given_a_storage();
+
+        restStorageControllerMockMvc.perform(get("/api/storage/{id}/usersstats.json", storage.getId())
+                        .param("sortColumn", "created").param("sortDirection", "desc"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
+                .andExpect(jsonPath("$.collection[?(@.id=='"+storage.getUser().getId()+"')]").exists());
+    }
+
+    @Test
+    @Transactional
+    public void storage_access() throws Exception {
+        Storage storage = builder.given_a_storage();
+
+        restStorageControllerMockMvc.perform(get("/api/storage/access.json"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
+                .andExpect(jsonPath("$.collection[?(@.id=='"+storage.getId()+"')]").exists());
     }
 }

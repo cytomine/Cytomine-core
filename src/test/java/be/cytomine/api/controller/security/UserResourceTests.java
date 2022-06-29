@@ -1061,6 +1061,64 @@ public class UserResourceTests {
 
     }
 
+
+    @Test
+    @Transactional
+    public void add_user_to_storage_with_permission() throws Exception {
+
+        Storage storage = builder.given_a_storage();
+        User user = builder.given_a_user();
+        restUserControllerMockMvc.perform(post("/api/storage/{storage}/user/{user}.json", storage.getId(), user.getId())
+                        .param("permission", "ADMINISTRATION")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), READ)).isTrue();
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), ADMINISTRATION)).isTrue();
+
+    }
+    
+
+    @Test
+    @Transactional
+    public void add_users_to_storage() throws Exception {
+
+        Storage storage = builder.given_a_storage();
+        User user1 = builder.given_a_user();
+        User user2 = builder.given_a_user();
+        restUserControllerMockMvc.perform(post("/api/storage/{storage}/user.json", storage.getId())
+                        .param("users", user1.getId()+","+user2.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        assertThat(permissionService.hasACLPermission(storage, user1.getUsername(), READ)).isTrue();
+        assertThat(permissionService.hasACLPermission(storage, user1.getUsername(), ADMINISTRATION)).isFalse();
+        assertThat(permissionService.hasACLPermission(storage, user2.getUsername(), READ)).isTrue();
+        assertThat(permissionService.hasACLPermission(storage, user2.getUsername(), ADMINISTRATION)).isFalse();
+    }
+
+    @Test
+    @Transactional
+    public void add_users_to_storage_works_even_if_a_bad_user_id_is_given() throws Exception {
+
+        Storage storage = builder.given_a_storage();
+        User user1 = builder.given_a_user();
+        restUserControllerMockMvc.perform(post("/api/storage/{storage}/user.json", storage.getId())
+                        .param("users", user1.getId()+",xxxxxx,0") //bad format + bad id
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isPartialContent());
+
+        assertThat(permissionService.hasACLPermission(storage, user1.getUsername(), READ)).isTrue();
+        assertThat(permissionService.hasACLPermission(storage, user1.getUsername(), ADMINISTRATION)).isFalse();
+    }
+
+
+
+
+
     @Test
     @Transactional
     public void delete_user_from_storage() throws Exception {
@@ -1077,6 +1135,70 @@ public class UserResourceTests {
         assertThat(permissionService.hasACLPermission(storage, user.getUsername(), ADMINISTRATION)).isFalse();
 
     }
+
+    @Test
+    @Transactional
+    public void delete_users_from_storage() throws Exception {
+
+        Storage storage = builder.given_a_storage();
+        User user1 = builder.given_a_user();
+        User user2 = builder.given_a_user();
+        builder.addUserToStorage(storage, user1.getUsername(), READ);
+        builder.addUserToStorage(storage, user2.getUsername(), READ);
+        restUserControllerMockMvc.perform(delete("/api/storage/{storage}/user.json", storage.getId())
+                        .param("users", user1.getId()+","+user2.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        assertThat(permissionService.hasACLPermission(storage, user1.getUsername(), READ)).isFalse();
+        assertThat(permissionService.hasACLPermission(storage, user1.getUsername(), ADMINISTRATION)).isFalse();
+        assertThat(permissionService.hasACLPermission(storage, user2.getUsername(), READ)).isFalse();
+        assertThat(permissionService.hasACLPermission(storage, user2.getUsername(), ADMINISTRATION)).isFalse();
+    }
+
+    @Test
+    @Transactional
+    public void delete_users_to_storage_works_even_if_a_bad_user_id_is_given() throws Exception {
+
+        Storage storage = builder.given_a_storage();
+        User user1 = builder.given_a_user();
+        restUserControllerMockMvc.perform(delete("/api/storage/{storage}/user.json", storage.getId())
+                        .param("users", user1.getId()+",xxxxxx,0") //bad format + bad id
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isPartialContent());
+
+        assertThat(permissionService.hasACLPermission(storage, user1.getUsername(), READ)).isFalse();;
+    }
+
+    @Test
+    @Transactional
+    public void change_user_permission_in_storage() throws Exception {
+
+        Storage storage = builder.given_a_storage();
+        User user = builder.given_a_user();
+        builder.addUserToStorage(storage, user.getUsername(), READ);
+        restUserControllerMockMvc.perform(put("/api/storage/{storage}/user/{user}.json", storage.getId(), user.getId())
+                        .param("permission", "ADMINISTRATION")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), READ)).isTrue();
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), ADMINISTRATION)).isTrue();
+
+        restUserControllerMockMvc.perform(put("/api/storage/{storage}/user/{user}.json", storage.getId(), user.getId())
+                        .param("permission", "READ")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), READ)).isTrue();
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), ADMINISTRATION)).isFalse();
+
+    }
+
 
     @Test
     @Transactional

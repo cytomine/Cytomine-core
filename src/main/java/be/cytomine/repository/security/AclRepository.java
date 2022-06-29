@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import javax.persistence.Tuple;
 import java.util.List;
 
 @Repository
@@ -41,13 +42,8 @@ public interface AclRepository extends JpaRepository<SecUser, Long> {
             "AND ae.acl_object_identity = aoi.id "+
             "AND ae.sid = sid.id ", nativeQuery = true)
     List<Integer> listMaskForUsers(Long domainId, String humanUsername);
-
-    @Query(value = "SELECT mask FROM acl_object_identity aoi, acl_sid sid, acl_entry ae " +
-            "WHERE aoi.object_id_identity = :domainId " +
-            "AND sid.sid = :humanUsername "  +
-            "AND ae.acl_object_identity = aoi.id "+
-            "AND ae.sid = sid.id ", nativeQuery = true)
-    List<Integer> listMaskForUsers(Long domainId);
+    @Query(value = "SELECT acs.sid, max(mask) FROM acl_entry ae, acl_sid acs, acl_object_identity aoi WHERE ae.sid = acs.id AND ae.acl_object_identity = aoi.id AND aoi.object_id_identity = ? GROUP BY acs.sid ", nativeQuery = true)
+    List<Tuple> listUsersPermissions(Long domainId);
 
     @Query(value = "SELECT id FROM acl_object_identity WHERE object_id_identity = :domainId", nativeQuery = true)
     Long getAclObjectIdentityFromDomainId(Long domainId);
@@ -88,6 +84,10 @@ public interface AclRepository extends JpaRepository<SecUser, Long> {
     @Modifying
     @Query(value = "DELETE FROM acl_entry WHERE acl_object_identity = ? AND mask = ? AND sid = ?", nativeQuery = true)
     void deleteAclEntry(Long aclObjectIdentity, int mask, Long sid);
+
+    @Modifying
+    @Query(value = "DELETE FROM acl_entry WHERE acl_object_identity = ? AND sid = ?", nativeQuery = true)
+    void deleteAclEntries(Long aclObjectIdentity, Long sid);
 
     @Query(value = "select secUser from AclObjectIdentity as aclObjectId, AclSid as aclSid, SecUser as secUser where aclObjectId.objectId = :domainId and aclObjectId.ownerSid = aclSid and aclSid.sid = secUser.username")
     List<SecUser> listCreators(Long domainId);

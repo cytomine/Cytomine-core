@@ -1300,6 +1300,43 @@ public class SecUserServiceTests {
         assertThat(permissionService.hasACLPermission(storage, user.getUsername(), READ)).isFalse();
     }
 
+    @Test
+    void add_and_delete_user_to_storage_with_permission() {
+        User user = builder.given_a_user();
+        Storage storage = builder.given_a_storage();
+
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), ADMINISTRATION)).isFalse();
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), READ)).isFalse();
+
+        secUserService.addUserToStorage(user, storage, READ);
+
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), ADMINISTRATION)).isFalse();
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), READ)).isTrue();
+
+        secUserService.deleteUserFromStorage(user, storage);
+
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), ADMINISTRATION)).isFalse();
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), READ)).isFalse();
+    }
+
+    @Test
+    void change_storage_storage_permissions() {
+        User user = builder.given_a_user();
+        Storage storage = builder.given_a_storage();
+
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), ADMINISTRATION)).isFalse();
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), READ)).isFalse();
+
+        secUserService.changeUserPermission(user, storage, ADMINISTRATION);
+
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), ADMINISTRATION)).isTrue();
+
+        secUserService.changeUserPermission(user, storage, READ);
+
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), ADMINISTRATION)).isFalse();
+        assertThat(permissionService.hasACLPermission(storage, user.getUsername(), READ)).isTrue();
+    }
+
 
 
 

@@ -31,6 +31,7 @@ import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.CurrentUserService;
+import be.cytomine.service.PermissionService;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.server.StorageService;
 import be.cytomine.service.ontology.OntologyService;
@@ -48,6 +49,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.acls.domain.BasePermission;
+import org.springframework.security.acls.model.Permission;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -483,18 +486,85 @@ public class RestUserController extends RestCytomineController {
     }
 
     @PostMapping("/storage/{storage}/user/{user}.json")
-    public ResponseEntity<String> addUserToStorage(@PathVariable("storage") Long storageId, @PathVariable("user") Long userId) {
+    public ResponseEntity<String> addUserToStorage(
+            @PathVariable("storage") Long storageId,
+            @PathVariable("user") Long userId,
+            @RequestParam(defaultValue = "READ") String permission) {
         log.debug("REST request to add User {} to storage {}", userId, storageId);
         SecUser user = secUserService.find(userId)
                 .orElseThrow(() -> new ObjectNotFoundException("User", userId));
         Storage storage = storageService.find(storageId)
                 .orElseThrow(() -> new ObjectNotFoundException("Storage", storageId));
-        secUserService.addUserToStorage(user, storage);
+        secUserService.addUserToStorage(user, storage, PermissionService.readFromString(permission));
         return responseSuccess(JsonObject.of("data", JsonObject.of("message", "OK")).toJsonString());
     }
 
+
+
+
+
+    @PostMapping("/storage/{storage}/user.json")
+    public ResponseEntity<String> addUsersToStorage(
+            @PathVariable("storage") Long storageId,
+            @RequestParam("users") String users,
+            @RequestParam(defaultValue = "READ") String permission
+    ) {
+        log.debug("REST request to add Users {} to storage {}", users, storageId);
+        Storage storage = storageService.find(storageId)
+                .orElseThrow(() -> new ObjectNotFoundException("Storage", storageId));
+
+        List<String> usersIds = Arrays.stream(users.split(",")).collect(Collectors.toList());
+
+        String errorMessage = "";
+        List<String> errors = new ArrayList<>();
+        List<String> wrongIds = new ArrayList<>();
+        List<Long> usersValidIds = new ArrayList<>();
+        for (String userId : usersIds) {
+            try{
+                usersValidIds.add(Long.parseLong(userId));
+            } catch(NumberFormatException e){
+                wrongIds.add(userId);
+            }
+        }
+
+        List<SecUser> secUsers = secUserService.list(usersValidIds);
+
+        wrongIds.addAll(usersIds);
+        wrongIds.removeAll(secUsers.stream().map(x -> String.valueOf(x.getId())).collect(Collectors.toList()));
+
+        for (SecUser user : secUsers) {
+            try {
+                secUserService.addUserToStorage(user, storage, PermissionService.readFromString(permission));
+            } catch(Exception e) {
+                errors.add(user.getId().toString());
+            }
+        }
+        if(!errors.isEmpty()) {
+            errorMessage += "Cannot add theses users to the storage ${storage.id} : "+ String.join(",", errors)+". ";
+        }
+        if(!wrongIds.isEmpty()) {
+            errorMessage += String.join(",", wrongIds) +" are not well formatted ids";
+        }
+
+        JsonObject response = new JsonObject();
+        response.put("data", JsonObject.of("message", "OK"));
+        response.put("status", 200);
+
+        if (!errors.isEmpty()  || !wrongIds.isEmpty()) {
+            response.put("data", JsonObject.of("message", errorMessage));
+            return JsonResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(response.toJsonString());
+        } else {
+            response.put("data", JsonObject.of("message", "OK"));
+            response.put("status", 200);
+            return JsonResponseEntity.status(HttpStatus.OK).body(response.toJsonString());
+        }
+    }
+
+
     @DeleteMapping("/storage/{storage}/user/{user}.json")
-    public ResponseEntity<String> deleteUserFromStorage(@PathVariable("storage") Long storageId, @PathVariable("user") Long userId) {
+    public ResponseEntity<String> deleteUserFromStorage(
+            @PathVariable("storage") Long storageId,
+            @PathVariable("user") Long userId) {
         log.debug("REST request to remove User {} from storage {}", userId, storageId);
         SecUser user = secUserService.find(userId)
                 .orElseThrow(() -> new ObjectNotFoundException("User", userId));
@@ -504,6 +574,77 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(JsonObject.of("data", JsonObject.of("message", "OK")).toJsonString());
     }
 
+
+
+
+    @DeleteMapping("/storage/{storage}/user.json")
+    public ResponseEntity<String> deleteUsersFromStorage(@PathVariable("storage") Long storageId, @RequestParam("users") String users) {
+        log.debug("REST request to add Users {} to storage {}", users, storageId);
+        Storage storage = storageService.find(storageId)
+                .orElseThrow(() -> new ObjectNotFoundException("Storage", storageId));
+
+        List<String> usersIds = Arrays.stream(users.split(",")).collect(Collectors.toList());
+
+        String errorMessage = "";
+        List<String> errors = new ArrayList<>();
+        List<String> wrongIds = new ArrayList<>();
+        List<Long> usersValidIds = new ArrayList<>();
+        for (String userId : usersIds) {
+            try{
+                usersValidIds.add(Long.parseLong(userId));
+            } catch(NumberFormatException e){
+                wrongIds.add(userId);
+            }
+        }
+
+        List<SecUser> secUsers = secUserService.list(usersValidIds);
+
+        wrongIds.addAll(usersIds);
+        wrongIds.removeAll(secUsers.stream().map(x -> String.valueOf(x.getId())).collect(Collectors.toList()));
+
+        for (SecUser user : secUsers) {
+            try {
+                secUserService.deleteUserFromStorage(user, storage);
+            } catch(Exception e) {
+                errors.add(user.getId().toString());
+            }
+        }
+        if(!errors.isEmpty()) {
+            errorMessage += "Cannot add theses users to the storage ${storage.id} : "+ String.join(",", errors)+". ";
+        }
+        if(!wrongIds.isEmpty()) {
+            errorMessage += String.join(",", wrongIds) +" are not well formatted ids";
+        }
+
+        JsonObject response = new JsonObject();
+        response.put("data", JsonObject.of("message", "OK"));
+        response.put("status", 200);
+
+        if (!errors.isEmpty()  || !wrongIds.isEmpty()) {
+            response.put("data", JsonObject.of("message", errorMessage));
+            return JsonResponseEntity.status(HttpStatus.PARTIAL_CONTENT).body(response.toJsonString());
+        } else {
+            response.put("data", JsonObject.of("message", "OK"));
+            response.put("status", 200);
+            return JsonResponseEntity.status(HttpStatus.OK).body(response.toJsonString());
+        }
+    }
+    
+
+    @PutMapping("/storage/{storage}/user/{user}.json")
+    public ResponseEntity<String> changeUserPermission(
+            @PathVariable("storage") Long storageId,
+            @PathVariable("user") Long userId,
+            @RequestParam(defaultValue = "READ") String permission) {
+        log.debug("REST request to remove User {} from storage {}", userId, storageId);
+        SecUser user = secUserService.find(userId)
+                .orElseThrow(() -> new ObjectNotFoundException("User", userId));
+        Storage storage = storageService.find(storageId)
+                .orElseThrow(() -> new ObjectNotFoundException("Storage", storageId));
+        secUserService.deleteUserFromStorage(user, storage);
+        secUserService.changeUserPermission(user, storage, PermissionService.readFromString(permission));
+        return responseSuccess(JsonObject.of("data", JsonObject.of("message", "OK")).toJsonString());
+    }
 
     @PutMapping("/user/{user}/password.json")
     public ResponseEntity<String> resetPassword(@PathVariable("user") Long userId,

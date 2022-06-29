@@ -131,6 +131,26 @@ public class UploadedFileServiceTests {
     }
 
     @Test
+    void search_uploadedFile_by_storage() {
+        UploadedFile uploadedFile1 = builder.given_a_uploaded_file();
+        UploadedFile uploadedFile2 = builder.given_a_uploaded_file();
+        uploadedFile2.setStorage(uploadedFile1.getStorage());
+        builder.persistAndReturn(uploadedFile2);
+        UploadedFile uploadedFileNotSameStorage = builder.given_a_uploaded_file();
+        builder.persistAndReturn(uploadedFileNotSameStorage);
+
+        List<SearchParameterEntry> searchParameter = new ArrayList<>();
+        searchParameter.add(new SearchParameterEntry("storage", SearchOperation.in, List.of(uploadedFile1.getStorage().getId())));
+
+        List<Map<String, Object>> list = uploadedFileService.list(searchParameter, "created", "desc", false);
+
+        assertThat(list.size()).isGreaterThanOrEqualTo(2);
+        assertThat(list.stream().map(x -> x.get("id"))).contains(uploadedFile1.getId());
+        assertThat(list.stream().map(x -> x.get("id"))).contains(uploadedFile2.getId());
+        assertThat(list.stream().map(x -> x.get("id"))).doesNotContain(uploadedFileNotSameStorage.getId());
+    }
+
+    @Test
     void search_uploadedFile_by_original_file_name() {
         UploadedFile uploadedFile1 = builder.given_a_uploaded_file();
         uploadedFile1.setOriginalFilename("redIsDead");

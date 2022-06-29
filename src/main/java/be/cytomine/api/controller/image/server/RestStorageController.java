@@ -17,6 +17,8 @@ package be.cytomine.api.controller.image.server;
 */
 
 import be.cytomine.api.controller.RestCytomineController;
+import be.cytomine.domain.image.server.Storage;
+import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.image.server.StorageService;
 import be.cytomine.service.utils.TaskService;
@@ -26,6 +28,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -45,10 +49,12 @@ public class RestStorageController extends RestCytomineController {
      */
     @GetMapping("/storage.json")
     public ResponseEntity<String> list(
-            @RequestParam(defaultValue = "false", required = false) Boolean all
+            @RequestParam(defaultValue = "false", required = false) Boolean all,
+            @RequestParam(defaultValue = "", required = false) String searchString
     ) {
         log.debug("REST request to list storages: all? {}", all);
-        return responseSuccess(all ? storageService.list() : storageService.list(currentUserService.getCurrentUser(), null));
+        List<Storage> storageList = storageService.list(currentUserService.getCurrentUser(), all, searchString);
+        return responseSuccess(storageList);
     }
 
     @GetMapping("/storage/{id}.json")
@@ -60,7 +66,6 @@ public class RestStorageController extends RestCytomineController {
                 .map(this::responseSuccess)
                 .orElseGet(() -> responseNotFound("Storage", id));
     }
-
 
     @PostMapping("/storage.json")
     public ResponseEntity<String> add(@RequestBody String json) {
@@ -80,5 +85,27 @@ public class RestStorageController extends RestCytomineController {
         Task existingTask = taskService.get(task);
         return delete(storageService, JsonObject.of("id", id), existingTask);
     }
+
+    @GetMapping("/storage/{id}/usersstats.json")
+    public ResponseEntity<String> statsPerUser(
+            @PathVariable Long id,
+            @RequestParam(required = false, defaultValue = "created") String sortColumn,
+            @RequestParam(required = false, defaultValue = "desc") String sortDirection
+    ) {
+        log.debug("REST request to list stats: {}", id);
+        Storage storage = storageService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("Storage", id));
+
+        List<JsonObject> storageList = storageService.usersStats(storage, sortColumn, sortDirection);
+        return responseSuccess(storageList);
+    }
+
+    @GetMapping("/storage/access.json")
+    public ResponseEntity<String> storageAccess() {
+        log.debug("REST request to list access");
+        List<JsonObject> storageList = storageService.userAccess(currentUserService.getCurrentUser());
+        return responseSuccess(storageList);
+    }
+
 
 }

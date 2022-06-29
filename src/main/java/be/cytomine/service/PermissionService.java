@@ -30,7 +30,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Tuple;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 @Slf4j
@@ -88,6 +91,29 @@ public class PermissionService {
             log.info("User " + username + " right " + permission.getMask() + " in domain " + domain + " => " + hasACLPermission(domain, username, permission));
         }
         log.debug("Current mask for user {} on domain {} after request: {}", username, domain.getId(), aclRepository.listMaskForUsers(domain.getId(), username));
+    }
+
+
+    public void deletePermission(CytomineDomain domain, String username) {
+        log.info("Delete permission for " + username + ", " + domain.getId());
+
+        Long aclObjectIdentity = aclRepository.getAclObjectIdentityFromDomainId(domain.getId());
+        Long sid = aclRepository.getAclSid(username);
+        if(aclObjectIdentity==null || sid==null) {
+            throw new ObjectNotFoundException("User " + username + " or Object " + domain.getId() + " are not in ACL");
+        }
+        aclRepository.deleteAclEntries(aclObjectIdentity, sid);
+    }
+
+
+
+    public Map<String, Integer> listUsersAndPermissions(CytomineDomain domain) {
+        Map<String, Integer> results = new HashMap<>();
+
+        for (Tuple tuple : aclRepository.listUsersPermissions(domain.getId())) {
+            results.put((String)tuple.get(0), (Integer) tuple.get(1));
+        }
+        return results;
     }
 
     /**
@@ -181,7 +207,7 @@ public class PermissionService {
         return id;
     }
 
-    Permission readFromMask(int mask) {
+    public static Permission readFromMask(int mask) {
         switch (mask) {
             case 1:
                 return BasePermission.READ;
@@ -195,5 +221,21 @@ public class PermissionService {
                 return BasePermission.ADMINISTRATION;
         }
         throw new RuntimeException("Mask " + mask + " not supported");
+    }
+
+    public static Permission readFromString(String permission) {
+        switch (permission) {
+            case "READ":
+                return BasePermission.READ;
+            case "WRITE":
+                return BasePermission.WRITE;
+            case "CREATE":
+                return BasePermission.CREATE;
+            case "DELETE":
+                return BasePermission.DELETE;
+            case "ADMINISTRATION":
+                return BasePermission.ADMINISTRATION;
+        }
+        throw new RuntimeException("Permission " + permission + " not supported");
     }
 }

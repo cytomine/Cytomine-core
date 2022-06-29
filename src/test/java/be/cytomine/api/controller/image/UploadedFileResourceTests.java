@@ -126,6 +126,18 @@ public class UploadedFileResourceTests {
     }
 
 
+    @Test
+    @Transactional
+    public void list_uploaded_with_storage() throws Exception {
+        UploadedFile uploadedFile = builder.given_a_uploaded_file();
+
+        restUploadedFileControllerMockMvc.perform(get("/api/uploadedfile.json")
+                        .param("onlyRootsWithDetails", "true")
+                        .param("storage[in]", uploadedFile.getStorage().getId().toString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.id=="+uploadedFile.getId()+")]").exists());
+    }
 
     @Test
     @Transactional
