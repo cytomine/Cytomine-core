@@ -1,0 +1,6 @@
+{
+  "users": [
+    {"id": "admin", "permissions": ["search"]},
+    {"id":"jdoeLDAP", "sn":  "DoeLDAP", "givenname":  "JohnLDAP", "mail":  "jdoeLDAP@email.com", "permissions": ["search"], "credential":  "goodPassword"}
+  ]
+}

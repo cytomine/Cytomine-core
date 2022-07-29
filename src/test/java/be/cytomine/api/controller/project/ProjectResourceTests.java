@@ -75,7 +75,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
 //@WithMockUser(username = "superadmin")
-@WithUserDetails("superadmin")
+@WithMockUser("superadmin")
 public class ProjectResourceTests {
 
     @Autowired

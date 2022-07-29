@@ -1,0 +1,52 @@
+{
+  "user-store": {
+    "mode": "user-file-store",
+    "modes": {
+      "user-file-store": {
+        "location": "/app/etc/store.json",
+        "users-array-name": "users",
+        "common-password": "itachi",
+        "user-group-ou": "ou=users",
+        "root-entry": "dc=mtr,dc=com",
+        "attribute-mapping": {
+          "sAMAccountName": "obj.id",
+          "uid": "obj.id",
+          "userprincipalname": "obj.id",
+          "mailnickname": "obj.id",
+          "groups": "lime_users|IT",
+          "cn": "obj.id",
+          "password": "obj.credential",
+          "objectClass": "User",
+          "permissions": "obj.permissions",
+          "mail": "obj.mail",
+          "givenname": "obj.givenname",
+          "sn": "obj.sn"
+        },
+        "optional": {
+          "search-permitted-users": [
+            {
+              "dn": "cn=search_user,ou=users,dc=mtr,dc=com",
+              "password": "sasuke"
+            }
+          ]
+        }
+      },
+      "structure-file-store": {}
+    }
+  },
+  "anonymous-bind": {
+    "enabled": true
+  },
+  "protocols": {
+    "ldap": {
+      "enabled": true,
+      "port": 389
+    },
+    "ldaps": {
+      "enabled": true,
+      "port": 636,
+      "key-location": "/app/cert/key.pem",
+      "cert-location": "/app/cert/cert.pem"
+    }
+  }
+}

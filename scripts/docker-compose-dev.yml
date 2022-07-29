@@ -1,22 +1,29 @@
 version: "3.4"
 services:
 
-  postgresqldev:
-    image: cytomine/postgis:v2.0.0
-    restart: unless-stopped
-    ports: [ "5442:5432" ]
+#  postgresqldev:
+#    image: cytomine/postgis:v2.0.0
+#    restart: unless-stopped
+#    ports: [ "5442:5432" ]
+#
+#  mongodbdev:
+#    image: mongo:4.4
+#    restart: unless-stopped
+#    ports: [ "27028:27017" ]
+#    environment:
+#      - MONGO_INITDB_ROOT_USERNAME=mongoadmin
+#      - MONGO_INITDB_ROOT_PASSWORD=secret
+#      - MONGO_INITDB_DATABASE=cytomine
+#
+#  rabbitmqdev:
+#    image: cytomine/rabbitmq:v1.1.2
+#    ports: [ "5683:5672", "15683:15672" ]
+#    restart: unless-stopped
 
-  mongodbdev:
-    image: mongo:4.4
+  ldapdev:
+    image: upekshejay/simple-ldap-test-server
+    ports: [ "389:389", "636:636" ]
     restart: unless-stopped
-    ports: [ "27028:27017" ]
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=mongoadmin
-      - MONGO_INITDB_ROOT_PASSWORD=secret
-      - MONGO_INITDB_DATABASE=cytomine
-
-
-  rabbitmqdev:
-    image: cytomine/rabbitmq:v1.1.2
-    ports: [ "5683:5672", "15683:15672" ]
-    restart: unless-stopped
+    volumes:
+      - "./test/ldap/store.json:/app/etc/store.json"
+      - "./test/ldap/default.json:/app/config/default.json"

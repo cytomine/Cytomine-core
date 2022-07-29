@@ -55,7 +55,7 @@ public class DomainUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLogin + " was not found in the database"));
 
     }
-    private org.springframework.security.core.userdetails.User createSpringSecurityUser(String lowercaseLogin, SecUser user) {
+    public static org.springframework.security.core.userdetails.User createSpringSecurityUser(String lowercaseLogin, SecUser user) {
         if (!user.getEnabled()) {
             throw new ForbiddenException("User " + lowercaseLogin + " was not permitted");
         }

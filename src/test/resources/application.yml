@@ -1,4 +1,5 @@
 spring:
+
   main:
 #    lazy-initialization: true
     allow-circular-references: true
@@ -57,6 +58,36 @@ logging:
     org.springframework.data.mongodb.core.MongoTemplate: DEBUG
 #    org.hibernate.type.descriptor.sql: TRACE
 
+ldap:
+  enabled: false
+  server: "ldap://127.0.0.1:390"
+  principal: "CN=admin,OU=users,DC=mtr,DC=com"
+  password: "itachi"
+  search: "OU=users,DC=mtr,DC=com"
+  attributes: "cn,sn,givenname,mail"
+  passwordAttributeName: "password"
+#ldap:
+#  search:
+#    base: 'ou=users,dc=mtr,dc=com'
+#    filter: '(id={0})'
+#  context:
+#    managerDn: 'CN=admin,OU=users,DC=mtr,DC=com'
+#    managerPassword: 'itachi'
+#    server: 'ldap://127.0.0.1:389'
+#    anonymousReadOnly: true
+#  authorities:
+#    groupSearchBase: ''
+#    ignorePartialResultException: true
+#    retrieveDatabaseRoles: true
+#    groupRoleAttribute: ''
+#    groupSearchFilter: ''
+#    searchSubtree: true
+#  mapper:
+#    userDetailsClass: 'inetOrgPerson'
+#    usePassword: true
+#    convertToUpperCase: true
+#
+
 application:
   serverId: default
   serverURL: http://localhost:8080
@@ -76,6 +107,8 @@ application:
   instanceHostWebsite: instanceHostWebsite.com
   instanceHostSupportMail: instanceHostSupportMail@email.com
   instanceHostPhoneNumber: 0999999999
+
+
 
   authentication:
     jwt:

@@ -21,8 +21,11 @@ import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.security.*;
 import be.cytomine.config.security.JWTConfigurer;
 import be.cytomine.security.jwt.TokenProvider;
+import be.cytomine.security.ldap.LdapClient;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -38,6 +41,7 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 
 import javax.servlet.http.HttpServletResponse;
 
+@Slf4j
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
@@ -46,15 +50,22 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final DomainUserDetailsService domainUserDetailsService;
 
+    private final CASLdapUserDetailsService casLdapUserDetailsService;
+
     private final SecUserRepository secUserRepository;
+
+
 
     @Value("${application.authentication.jwt.token-validity-in-seconds}")
     Long tokenValidityInSeconds;
 
+    @Value("${ldap.enabled}")
+    Boolean ldapEnabled;
 
-    public SecurityConfiguration(TokenProvider tokenProvider, DomainUserDetailsService domainUserDetailsService, SecUserRepository secUserRepository) {
+    public SecurityConfiguration(TokenProvider tokenProvider, DomainUserDetailsService domainUserDetailsService, CASLdapUserDetailsService casLdapUserDetailsService, SecUserRepository secUserRepository) {
         this.tokenProvider = tokenProvider;
         this.domainUserDetailsService = domainUserDetailsService;
+        this.casLdapUserDetailsService = casLdapUserDetailsService;
         this.secUserRepository = secUserRepository;
     }
 
@@ -91,9 +102,16 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return new MessageDigestPasswordEncoder("SHA-256");
     }
 
+
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(domainUserDetailsService).passwordEncoder(passwordEncoder());
+        if (ldapEnabled) {
+            log.info("LDAP authentication configuration");
+            auth.userDetailsService(casLdapUserDetailsService).passwordEncoder(passwordEncoder());
+        } else {
+            log.info("Custom authentication configuration");
+            auth.userDetailsService(domainUserDetailsService).passwordEncoder(passwordEncoder());
+        }
     }
 
     @Override

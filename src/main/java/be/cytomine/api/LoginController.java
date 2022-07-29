@@ -29,8 +29,10 @@ import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.security.AuthWithTokenRepository;
 import be.cytomine.repository.security.ForgotPasswordTokenRepository;
 import be.cytomine.repository.security.UserRepository;
+import be.cytomine.security.CustomUserDetailsAuthenticationProvider;
 import be.cytomine.security.jwt.TokenProvider;
 import be.cytomine.security.jwt.TokenType;
+import be.cytomine.security.ldap.LdapIdentityAuthenticationProvider;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.NotificationService;
 import be.cytomine.utils.JsonObject;
@@ -39,12 +41,14 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -73,6 +77,12 @@ public class LoginController extends RestCytomineController {
     private final NotificationService notificationService;
 
     private final SecurityACLService securityACLService;
+
+    private final Environment env;
+
+    private final CustomUserDetailsAuthenticationProvider customUserDetailsAuthenticationProvider;
+
+    private final LdapIdentityAuthenticationProvider ldapIdentityAuthenticationProvider;
 
 
     @PostMapping("/api/authenticate")
@@ -199,7 +209,29 @@ public class LoginController extends RestCytomineController {
                 username,
                 password
         );
-        Authentication authentication = authenticationManagerBuilder.getOrBuild().authenticate(authenticationToken);
+
+        Authentication authentication;
+        try {
+            log.debug("Try to authenticate user in local database");
+            authentication = customUserDetailsAuthenticationProvider.authenticate(authenticationToken);
+            if (authentication==null) {
+                throw new BadCredentialsException("User " + username + " cannot be authenticate");
+            }
+        } catch (AccountStatusException exception) {
+            log.debug(exception.getClass() + " has been thrown");
+            throw exception;
+        } catch (AuthenticationException exception) {
+            log.debug(exception.getClass() + " has been thrown");
+            if (env.getProperty("ldap.enabled", Boolean.class, false)) {
+                log.debug("Try to authenticate user in LDAP database");
+                authentication = ldapIdentityAuthenticationProvider.authenticate(authenticationToken);
+            } else {
+                throw exception;
+            }
+            if (authentication==null) {
+                throw new BadCredentialsException("User " + username + " cannot be authenticate");
+            }
+        }
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = tokenProvider.createToken(authentication, isRememberMe ? TokenType.REMEMBER_ME : TokenType.SESSION);
         String shortTermToken=  tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM);

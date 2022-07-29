@@ -19,3 +19,12 @@ services:
     image: cytomine/rabbitmq:v1.1.2
     ports: [ "5673:5672", "15673:15672" ]
     restart: unless-stopped
+
+  ldaptest:
+    image: upekshejay/simple-ldap-test-server
+    ports: [ "390:389", "637:636" ]
+    restart: unless-stopped
+    volumes:
+      - "./test/ldap/store.json:/app/etc/store.json"
+      - "./test/ldap/default.json:/app/config/default.json"
+
