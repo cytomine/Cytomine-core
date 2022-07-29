@@ -16,7 +16,7 @@ package be.cytomine.service.database;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.meta.ConfigurationReadingRole;
 import be.cytomine.domain.processing.ImagingServer;
 import be.cytomine.domain.security.SecUser;
@@ -50,7 +50,7 @@ public class BootstrapDataService {
     SecUserRepository secUserRepository;
 
     @Autowired
-    ApplicationConfiguration applicationConfiguration;
+    ApplicationProperties applicationProperties;
 
     public void initData() {
 
@@ -115,7 +115,7 @@ public class BootstrapDataService {
         bootstrapUtilsService.createRelation(PARENT);
 
         bootstrapUtilsService.createConfigurations("WELCOME", "<p>Welcome to the Cytomine software.</p><p>This software is supported by the <a href='https://cytomine.coop'>Cytomine company</a></p>", ConfigurationReadingRole.ALL);
-        bootstrapUtilsService.createConfigurations("admin_email", applicationConfiguration.getAdminEmail(), ConfigurationReadingRole.ADMIN);
+        bootstrapUtilsService.createConfigurations("admin_email", applicationProperties.getAdminEmail(), ConfigurationReadingRole.ADMIN);
 //        bootstrapUtilsService.createConfigurations("notification_email", applicationConfiguration.getNotification().getEmail(), ConfigurationReadingRole.ADMIN);
 //        bootstrapUtilsService.createConfigurations("notification_password", applicationConfiguration.getNotification().getPassword(), ConfigurationReadingRole.ADMIN);
 //        bootstrapUtilsService.createConfigurations("notification_smtp_host", applicationConfiguration.getNotification().getSmtpHost(), ConfigurationReadingRole.ADMIN);
@@ -127,13 +127,13 @@ public class BootstrapDataService {
 //        admin.setPublicKey(applicationConfiguration.getAdminPublicKey());
 //        secUserRepository.save(admin);
 
-        changeUserKeys("admin", applicationConfiguration.getAdminPrivateKey(), applicationConfiguration.getAdminPublicKey());
-        changeUserKeys("superadmin", applicationConfiguration.getSuperAdminPrivateKey(), applicationConfiguration.getSuperAdminPublicKey());
+        changeUserKeys("admin", applicationProperties.getAdminPrivateKey(), applicationProperties.getAdminPublicKey());
+        changeUserKeys("superadmin", applicationProperties.getSuperAdminPrivateKey(), applicationProperties.getSuperAdminPublicKey());
 
         bootstrapUtilsService.addDefaultProcessingServer();
         bootstrapUtilsService.addDefaultConstraints();
 
-        changeUserKeys("rabbitmq", applicationConfiguration.getRabbitMQPrivateKey(), applicationConfiguration.getRabbitMQPublicKey());
+        changeUserKeys("rabbitmq", applicationProperties.getRabbitMQPrivateKey(), applicationProperties.getRabbitMQPublicKey());
 
         bootstrapUtilsService.createSoftwareUserRepository("GitHub", "cytomine", "cytomine","S_");
 //        sur.save(failOnError: true))

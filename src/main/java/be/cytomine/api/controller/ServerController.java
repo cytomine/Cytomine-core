@@ -17,7 +17,7 @@ package be.cytomine.api.controller;
 */
 
 import be.cytomine.api.JsonResponseEntity;
-import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.social.LastConnection;
 import be.cytomine.domain.social.PersistentConnection;
@@ -34,7 +34,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -49,7 +48,7 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class ServerController extends RestCytomineController {
 
-    private final ApplicationConfiguration applicationConfiguration;
+    private final ApplicationProperties applicationProperties;
 
     private final CurrentUserService currentUserService;
 
@@ -69,9 +68,9 @@ public class ServerController extends RestCytomineController {
         JsonObject response = new JsonObject();
         response.put("alive", true);
         response.put("authenticated", SecurityUtils.isAuthenticated());
-        response.put("version", applicationConfiguration.getVersion());
-        response.put("serverURL", applicationConfiguration.getServerURL());
-        response.put("serverID", applicationConfiguration.getServerId());
+        response.put("version", applicationProperties.getVersion());
+        response.put("serverURL", applicationProperties.getServerURL());
+        response.put("serverID", applicationProperties.getServerId());
 
         if (SecurityUtils.isAuthenticated()) {
             SecUser user = currentUserService.getCurrentUser();
@@ -119,8 +118,8 @@ public class ServerController extends RestCytomineController {
     public ResponseEntity<String> status() {
         JsonObject jsonObject = new JsonObject();
         jsonObject.put("alive", true);
-        jsonObject.put("version", applicationConfiguration.getVersion());
-        jsonObject.put("serverURL", applicationConfiguration.getServerURL());
+        jsonObject.put("version", applicationProperties.getVersion());
+        jsonObject.put("serverURL", applicationProperties.getServerURL());
         return ResponseEntity.ok(jsonObject.toJsonString());
     }
 

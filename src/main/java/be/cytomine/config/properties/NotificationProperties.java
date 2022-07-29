@@ -1,4 +1,4 @@
-package be.cytomine.config;
+package be.cytomine.config.properties;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,8 +16,14 @@ package be.cytomine.config;
 * limitations under the License.
 */
 
-import java.util.LinkedHashMap;
-import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
-public class CustomUIProjectConfiguration extends LinkedHashMap<String, LinkedHashMap<String, Boolean>> {
+@Getter
+@Setter
+@ToString
+public class NotificationProperties {
+
+    private String email;
 }

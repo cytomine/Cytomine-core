@@ -16,43 +16,14 @@ package be.cytomine.service.database;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
-import be.cytomine.domain.image.Mime;
-import be.cytomine.domain.image.server.MimeImageServer;
-import be.cytomine.domain.meta.Configuration;
-import be.cytomine.domain.meta.ConfigurationReadingRole;
-import be.cytomine.domain.middleware.ImageServer;
-import be.cytomine.domain.processing.ImageFilter;
-import be.cytomine.domain.processing.ImagingServer;
-import be.cytomine.domain.processing.ParameterConstraint;
-import be.cytomine.domain.processing.SoftwareUserRepository;
 import be.cytomine.domain.security.*;
-import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.repository.image.MimeRepository;
-import be.cytomine.repository.meta.ConfigurationRepository;
-import be.cytomine.repository.middleware.AmqpQueueRepository;
-import be.cytomine.repository.middleware.ImageServerRepository;
-import be.cytomine.repository.middleware.MessageBrokerServerRepository;
-import be.cytomine.repository.ontology.RelationRepository;
-import be.cytomine.repository.processing.ImageFilterRepository;
-import be.cytomine.repository.processing.ImagingServerRepository;
-import be.cytomine.repository.processing.ParameterConstraintRepository;
-import be.cytomine.repository.processing.ProcessingServerRepository;
 import be.cytomine.repository.security.SecRoleRepository;
-import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
-import be.cytomine.service.amqp.AmqpQueueConfigService;
-import be.cytomine.service.image.server.StorageService;
-import be.cytomine.utils.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.env.Environment;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
 import java.util.*;
 
 import static be.cytomine.repository.security.SecRoleRepository.*;

@@ -16,7 +16,7 @@ package be.cytomine.api.controller;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecRole;
@@ -55,7 +55,7 @@ public class CustomUIController extends RestCytomineController {
 
     private final PropertyService propertyService;
 
-    private final ApplicationConfiguration applicationConfiguration;
+    private final ApplicationProperties applicationProperties;
 
     static String CUSTOM_UI_PROJECT = "@CUSTOM_UI_PROJECT";
 
@@ -123,7 +123,7 @@ public class CustomUIController extends RestCytomineController {
         JsonObject globalConfig = new JsonObject();
         Set<String> authorities = roles.stream().map(x -> x.getAuthority()).collect(Collectors.toSet());
 
-        for (Map.Entry<String, List<String>> it : applicationConfiguration.getCustomUI().getGlobal().entrySet()) {
+        for (Map.Entry<String, List<String>> it : applicationProperties.getCustomUI().getGlobal().entrySet()) {
             boolean print;
             List<String> mandatoryRoles = it.getValue();
             if (mandatoryRoles.contains("ALL")) {
@@ -140,7 +140,7 @@ public class CustomUIController extends RestCytomineController {
     public Map<String, Map<String, Boolean>> getProjectConfig(Project project) {
         // clone config so that the default configuration is not updated
         Map<String, Map<String, Boolean>> result = new LinkedHashMap<>();
-        for (Map.Entry<String, LinkedHashMap<String, Boolean>> it : applicationConfiguration.getCustomUI().getProject().entrySet()) {
+        for (Map.Entry<String, LinkedHashMap<String, Boolean>> it : applicationProperties.getCustomUI().getProject().entrySet()) {
             LinkedHashMap<String, Boolean> value = new LinkedHashMap<>();
             for (Map.Entry<String, Boolean> itValue : it.getValue().entrySet()) {
                 value.put(itValue.getKey(), Boolean.valueOf(itValue.getValue().toString()));
