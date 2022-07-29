@@ -22,4 +22,5 @@ WORKDIR /app
 RUN sed -i -- 's/localhost:5433/postgresqltest:5432/g' /app/src/test/resources/application.yml
 RUN sed -i -- 's/host: 127.0.0.1/host: mongodbtest/g' /app/src/test/resources/application.yml
 RUN sed -i -- 's/port: 27018/port: 27017/g' /app/src/test/resources/application.yml
+RUN sed -i -- 's/127.0.0.1:390/ldaptest:390/g' /app/src/test/resources/application.yml
 CMD gradle :test
