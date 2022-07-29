@@ -1,4 +1,4 @@
-package be.cytomine.config;
+package be.cytomine.config.properties;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -19,7 +19,7 @@ package be.cytomine.config;
 import lombok.Data;
 
 @Data
-public class JwtConfiguration {
+public class JwtProperties {
 
     String secret;
 
