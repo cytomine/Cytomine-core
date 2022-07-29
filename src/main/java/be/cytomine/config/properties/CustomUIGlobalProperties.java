@@ -1,4 +1,4 @@
-package be.cytomine.config;
+package be.cytomine.config.properties;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -19,6 +19,6 @@ package be.cytomine.config;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class CustomUIGlobalConfiguration extends LinkedHashMap<String, List<String>> {
+public class CustomUIGlobalProperties extends LinkedHashMap<String, List<String>> {
 
 }

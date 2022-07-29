@@ -1,4 +1,4 @@
-package be.cytomine.config;
+package be.cytomine.config.properties;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,14 +16,7 @@ package be.cytomine.config;
 * limitations under the License.
 */
 
-import lombok.Data;
-import lombok.ToString;
+import java.util.LinkedHashMap;
 
-@Data
-@ToString
-public class CustomUIConfiguration {
-
-    CustomUIGlobalConfiguration global;
-
-    CustomUIProjectConfiguration project;
+public class CustomUIProjectProperties extends LinkedHashMap<String, LinkedHashMap<String, Boolean>> {
 }

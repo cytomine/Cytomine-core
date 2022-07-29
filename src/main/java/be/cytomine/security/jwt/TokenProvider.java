@@ -16,16 +16,11 @@ package be.cytomine.security.jwt;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.exceptions.AuthenticationException;
-import be.cytomine.exceptions.ForbiddenException;
-import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.SecurityUtils;
 import be.cytomine.utils.StringUtils;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import org.slf4j.Logger;
@@ -34,11 +29,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.web.authentication.switchuser.SwitchUserGrantedAuthority;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -69,19 +62,19 @@ public class TokenProvider {
 
     private final SecUserRepository secUserRepository;
 
-    public TokenProvider(ApplicationConfiguration applicationConfiguration, SecUserRepository secUserRepository) {
+    public TokenProvider(ApplicationProperties applicationProperties, SecUserRepository secUserRepository) {
         byte[] keyBytes;
-        String secret = applicationConfiguration.getAuthentication().getJwt().getSecret();
+        String secret = applicationProperties.getAuthentication().getJwt().getSecret();
         keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         jwtParser = Jwts.parserBuilder().setSigningKey(key).build();
         this.secUserRepository = secUserRepository;
         this.tokenValidityInMilliseconds =
-                1000 * applicationConfiguration.getAuthentication().getJwt().getTokenValidityInSeconds();
+                1000 * applicationProperties.getAuthentication().getJwt().getTokenValidityInSeconds();
         this.tokenValidityInMillisecondsForRememberMe =
-                1000 * applicationConfiguration.getAuthentication().getJwt().getTokenValidityInSecondsForRememberMe();
+                1000 * applicationProperties.getAuthentication().getJwt().getTokenValidityInSecondsForRememberMe();
         this.tokenValidityInMillisecondsForShortTerm =
-                1000 * applicationConfiguration.getAuthentication().getJwt().getTokenValidityInSecondsForShortTerm();
+                1000 * applicationProperties.getAuthentication().getJwt().getTokenValidityInSecondsForShortTerm();
     }
 
     public String createToken(Authentication authentication, TokenType tokenType) {

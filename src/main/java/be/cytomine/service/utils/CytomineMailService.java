@@ -16,23 +16,17 @@ package be.cytomine.service.utils;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
-import be.cytomine.config.NotificationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
+import be.cytomine.config.properties.NotificationProperties;
 import be.cytomine.exceptions.MiddlewareException;
 import be.cytomine.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import javax.mail.AuthenticationFailedException;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.File;
@@ -48,7 +42,7 @@ public class CytomineMailService {
     JavaMailSender sender;
 
     @Autowired
-    ApplicationConfiguration applicationConfiguration;
+    ApplicationProperties applicationProperties;
 
     @Value("${spring.mail.host}")
     public String smtpHost;
@@ -59,7 +53,7 @@ public class CytomineMailService {
     }
 
     public void send(String from, String[] to, String[] cc, String[] bcc, String subject, String message, Map<String,File> attachment) throws MessagingException {
-        NotificationConfiguration notificationConfiguration = applicationConfiguration.getNotification();
+        NotificationProperties notificationConfiguration = applicationProperties.getNotification();
         String defaultEmail = notificationConfiguration.getEmail();
 
         if (StringUtils.isBlank(from)) {
@@ -100,7 +94,7 @@ public class CytomineMailService {
         MimeMessage mail = sender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mail, true);
 
-        helper.setReplyTo(applicationConfiguration.getAdminEmail());
+        helper.setReplyTo(applicationProperties.getAdminEmail());
         helper.setFrom(from);
         helper.setTo(to);
         helper.setCc(cc);

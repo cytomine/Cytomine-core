@@ -1,4 +1,4 @@
-package be.cytomine.config;
+package be.cytomine.config.properties;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -21,7 +21,9 @@ import lombok.ToString;
 
 @Data
 @ToString
-public class AuthenticationConfiguration {
+public class CustomUIProperties {
 
-    JwtConfiguration jwt = new JwtConfiguration();
+    CustomUIGlobalProperties global;
+
+    CustomUIProjectProperties project;
 }
