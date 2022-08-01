@@ -66,27 +66,21 @@ ldap:
   search: "OU=users,DC=mtr,DC=com"
   attributes: "cn,sn,givenname,mail"
   passwordAttributeName: "password"
-#ldap:
-#  search:
-#    base: 'ou=users,dc=mtr,dc=com'
-#    filter: '(id={0})'
-#  context:
-#    managerDn: 'CN=admin,OU=users,DC=mtr,DC=com'
-#    managerPassword: 'itachi'
-#    server: 'ldap://127.0.0.1:389'
-#    anonymousReadOnly: true
-#  authorities:
-#    groupSearchBase: ''
-#    ignorePartialResultException: true
-#    retrieveDatabaseRoles: true
-#    groupRoleAttribute: ''
-#    groupSearchFilter: ''
-#    searchSubtree: true
-#  mapper:
-#    userDetailsClass: 'inetOrgPerson'
-#    usePassword: true
-#    convertToUpperCase: true
-#
+
+lti:
+  enabled: false
+  consumers:
+    -
+      key: "lti_consumer_1_key"
+      name: "lti_consumer_1_name"
+      secret: "chuuuut"
+      usernameParameter: "username"
+    -
+      key: "lti_consumer_2_key"
+      name: "lti_consumer_2_name"
+      secret: "password"
+      usernameParameter: "username"
+
 
 application:
   serverId: default

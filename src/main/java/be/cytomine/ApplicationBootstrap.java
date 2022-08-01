@@ -18,6 +18,7 @@ package be.cytomine;
 
 import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.config.nosqlmigration.InitialMongodbSetupMigration;
+import be.cytomine.config.properties.LtiProperties;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -57,7 +58,7 @@ import static be.cytomine.service.database.BootstrapTestsDataService.*;
 @Order(0)
 @Slf4j
 @RequiredArgsConstructor
-@EnableConfigurationProperties({LiquibaseProperties.class, ApplicationProperties.class})
+@EnableConfigurationProperties({LiquibaseProperties.class, ApplicationProperties.class, LtiProperties.class})
 @Transactional
 class ApplicationBootstrap {
 

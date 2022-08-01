@@ -91,7 +91,7 @@ dependencies {
 	implementation "net.bull.javamelody:javamelody-spring-boot-starter:1.91.0"
 
 	/** Enterprise specific dependencies **/
-	implementation 'org.springframework.security:spring-security-acl'
+	implementation 'org.imsglobal:basiclti-util:1.1.2'
 
 }
 

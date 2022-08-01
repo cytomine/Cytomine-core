@@ -17,6 +17,7 @@ package be.cytomine.security;
 */
 
 import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.security.*;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.repository.security.SecRoleRepository;
@@ -63,7 +64,7 @@ public class CASLdapUserDetailsService implements UserDetailsService {
 
     private final EntityManager entityManager;
 
-    private final ApplicationConfiguration applicationConfiguration;
+    private final ApplicationProperties applicationProperties;
 
     private final ApplicationContext applicationContext;
 
@@ -119,7 +120,7 @@ public class CASLdapUserDetailsService implements UserDetailsService {
         user.setEnabled(true);
         user.setPassword(UUID.randomUUID().toString());
         user.setOrigin("LDAP");
-        user.setLanguage(Language.valueOf(applicationConfiguration.getDefaultLanguage()));
+        user.setLanguage(Language.valueOf(applicationProperties.getDefaultLanguage()));
         user.generateKeys();
 
         user = userRepository.save(user);
