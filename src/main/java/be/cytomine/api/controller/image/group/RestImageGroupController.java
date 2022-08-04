@@ -21,6 +21,7 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.image.group.ImageGroupService;
 import be.cytomine.service.project.ProjectService;
+import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -49,5 +50,17 @@ public class RestImageGroupController extends RestCytomineController {
     public ResponseEntity<String> add(@RequestBody String json) {
         log.debug("REST request to save imagegroup: " + json);
         return add(imageGroupService, json);
+    }
+
+    @PutMapping("/imagegroup/{id}.json")
+    public ResponseEntity<String> edit(@PathVariable Long id, @RequestBody JsonObject json) {
+        log.debug("REST request to edit imagegroup: " + id);
+        return update(imageGroupService, json);
+    }
+
+    @DeleteMapping("/imagegroup/{id}.json")
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        log.debug("REST request to delete imagegroup: " + id);
+        return delete(imageGroupService, JsonObject.of("id", id), null);
     }
 }

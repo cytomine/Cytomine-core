@@ -17,7 +17,7 @@ package be.cytomine.service.image.group;
  */
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.command.AddCommand;
+import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.group.ImageGroup;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
@@ -28,6 +28,7 @@ import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.Task;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
+import static org.springframework.security.acls.domain.BasePermission.WRITE;
 
 @Slf4j
 @Service
@@ -87,5 +89,23 @@ public class ImageGroupService extends ModelService {
         securityACLService.checkUser(currentUser);
 
         return executeCommand(new AddCommand(currentUser), null, json);
+    }
+
+    @Override
+    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
+        SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
+        securityACLService.check(domain.container(), WRITE);
+
+        return executeCommand(new EditCommand(currentUser, transaction), domain, jsonNewData);
+    }
+
+    @Override
+    public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
+        SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
+        securityACLService.check(domain.container(), WRITE);
+
+        return executeCommand(new DeleteCommand(currentUser, transaction), domain, null);
     }
 }
