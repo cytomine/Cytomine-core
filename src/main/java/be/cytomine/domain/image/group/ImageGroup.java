@@ -55,7 +55,7 @@ public class ImageGroup extends CytomineDomain {
         ImageGroup imageGroup = (ImageGroup) domain;
 
         returnArray.put("name", imageGroup.getName());
-        returnArray.put("project", imageGroup.getProject());
+        returnArray.put("project", imageGroup.getProject().getId());
 
         return returnArray;
     }
