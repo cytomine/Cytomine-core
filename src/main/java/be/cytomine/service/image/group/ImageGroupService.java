@@ -19,11 +19,14 @@ package be.cytomine.service.image.group;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.group.ImageGroup;
+import be.cytomine.domain.image.group.ImageGroupImageInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.repository.image.group.ImageGroupImageInstanceRepository;
 import be.cytomine.repository.image.group.ImageGroupRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
+import be.cytomine.service.UrlApi;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
@@ -34,8 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
 import static org.springframework.security.acls.domain.BasePermission.WRITE;
@@ -46,16 +48,22 @@ import static org.springframework.security.acls.domain.BasePermission.WRITE;
 public class ImageGroupService extends ModelService {
 
     @Autowired
+    private CurrentUserService currentUserService;
+
+    @Autowired
+    private ImageGroupImageInstanceService imageGroupImageInstanceService;
+
+    @Autowired
     private SecurityACLService securityACLService;
 
     @Autowired
     private TransactionService transactionService;
 
     @Autowired
-    private CurrentUserService currentUserService;
+    private ImageGroupRepository imageGroupRepository;
 
     @Autowired
-    private ImageGroupRepository imageGroupRepository;
+    private ImageGroupImageInstanceRepository imageGroupImageInstanceRepository;
 
     @Override
     public Class currentDomain() {
@@ -73,13 +81,33 @@ public class ImageGroupService extends ModelService {
     }
 
     public Optional<ImageGroup> find(Long id) {
-        Optional<ImageGroup> ImageGroup = imageGroupRepository.findById(id);
-        ImageGroup.ifPresent(group -> securityACLService.check(group.container(), READ));
-        return ImageGroup;
+        Optional<ImageGroup> imageGroup = imageGroupRepository.findById(id);
+        imageGroup.ifPresent(group -> securityACLService.check(group.container(), READ));
+        return imageGroup;
+    }
+
+    public ImageGroup get(Long id) {
+        return find(id).orElse(null);
     }
 
     public List<ImageGroup> list(Project project) {
         securityACLService.check(project, READ);
+
+        List<ImageGroup> groups = imageGroupRepository.findAllByProject(project);
+        for (ImageGroup group : groups) {
+            List<Object> images = new ArrayList<>();
+            for (ImageGroupImageInstance igii : imageGroupImageInstanceService.list(group)) {
+                images.add(Map.of(
+                        "id", igii.getImage().getId(),
+                        "thumb", UrlApi.getImageInstanceThumbUrlWithMaxSize(igii.getImage().getId()),
+                        "width", igii.getImage().getBaseImage().getWidth(),
+                        "height", igii.getImage().getBaseImage().getHeight()
+                ));
+            }
+
+            group.setImages(images);
+        }
+
         return imageGroupRepository.findAllByProject(project);
     }
 
@@ -107,5 +135,11 @@ public class ImageGroupService extends ModelService {
         securityACLService.check(domain.container(), WRITE);
 
         return executeCommand(new DeleteCommand(currentUser, transaction), domain, null);
+    }
+
+    protected void beforeDelete(CytomineDomain domain) {
+        ImageGroup group = (ImageGroup) domain;
+
+        imageGroupImageInstanceRepository.deleteAllByGroup(group);
     }
 }

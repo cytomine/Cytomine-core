@@ -22,10 +22,10 @@ import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Entity;
-import javax.persistence.EntityManager;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Getter
@@ -34,8 +34,11 @@ public class ImageGroup extends CytomineDomain {
 
     private String name;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Project project;
+
+    @Transient
+    private List<Object> images;
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         ImageGroup imageGroup = this;
@@ -57,11 +60,20 @@ public class ImageGroup extends CytomineDomain {
         returnArray.put("name", imageGroup.getName());
         returnArray.put("project", imageGroup.getProject().getId());
 
+        List<Object> images = Optional.ofNullable(imageGroup.getImages()).orElse(new ArrayList<>());
+        returnArray.put("imageInstances", images);
+        returnArray.put("numberOfImages", images.size());
+
         return returnArray;
     }
 
     @Override
     public JsonObject toJsonObject() {
         return getDataFromDomain(this);
+    }
+
+    @Override
+    public CytomineDomain container() {
+        return project.container();
     }
 }

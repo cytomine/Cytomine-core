@@ -5,13 +5,11 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.group.ImageGroupImageInstanceService;
+import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api")
@@ -29,5 +27,21 @@ public class RestImageGroupImageInstanceController extends RestCytomineControlle
         ImageInstance imageInstance = imageInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
         return responseSuccess(imageGroupImageInstanceService.list(imageInstance));
+    }
+
+    @PostMapping("/imagegroup/{group}/imageinstance/{image}.json")
+    public ResponseEntity<String> add(
+            @PathVariable Long group,
+            @PathVariable Long image,
+            @RequestBody String json
+    ) {
+        log.debug("REST request to add image {} to imagegroup {}", image, group);
+        return add(imageGroupImageInstanceService, json);
+    }
+
+    @DeleteMapping("/imagegroup/{group}/imageinstance/{image}.json")
+    public ResponseEntity<String> delete(@PathVariable Long group, @PathVariable Long image) {
+        log.debug("REST request to delete image {} from imagegroup {}", image, group);
+        return delete(imageGroupImageInstanceService, JsonObject.of("group", group, "image", image), null);
     }
 }

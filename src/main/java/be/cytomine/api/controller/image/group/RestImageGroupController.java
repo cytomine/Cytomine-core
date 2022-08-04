@@ -52,6 +52,14 @@ public class RestImageGroupController extends RestCytomineController {
         return add(imageGroupService, json);
     }
 
+    @GetMapping("/imagegroup/{id}.json")
+    public ResponseEntity<String> show(@PathVariable Long id) {
+        log.debug("REST request to get imagegroup: " + id);
+        return imageGroupService.find(id)
+                .map(this::responseSuccess)
+                .orElseThrow(() -> new ObjectNotFoundException("ImageGroup", id));
+    }
+
     @PutMapping("/imagegroup/{id}.json")
     public ResponseEntity<String> edit(@PathVariable Long id, @RequestBody JsonObject json) {
         log.debug("REST request to edit imagegroup: " + id);
