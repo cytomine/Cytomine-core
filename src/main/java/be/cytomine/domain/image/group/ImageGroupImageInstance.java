@@ -32,10 +32,10 @@ import javax.persistence.ManyToOne;
 @Setter
 public class ImageGroupImageInstance extends CytomineDomain {
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     private ImageGroup group;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     private ImageInstance image;
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
