@@ -17,11 +17,16 @@ package be.cytomine.service.image.group;
  */
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.command.AddCommand;
 import be.cytomine.domain.image.group.ImageGroup;
 import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.SecUser;
 import be.cytomine.repository.image.group.ImageGroupRepository;
+import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
+import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.security.SecurityACLService;
+import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +47,12 @@ public class ImageGroupService extends ModelService {
     private SecurityACLService securityACLService;
 
     @Autowired
+    private TransactionService transactionService;
+
+    @Autowired
+    private CurrentUserService currentUserService;
+
+    @Autowired
     private ImageGroupRepository imageGroupRepository;
 
     @Override
@@ -54,6 +65,11 @@ public class ImageGroupService extends ModelService {
         return new ImageGroup().buildDomainFromJson(json, getEntityManager());
     }
 
+    @Override
+    public List<Object> getStringParamsI18n(CytomineDomain domain) {
+        return List.of(domain.getId(), ((ImageGroup) domain).getName(), ((ImageGroup) domain).getProject().getName());
+    }
+
     public Optional<ImageGroup> find(Long id) {
         Optional<ImageGroup> ImageGroup = imageGroupRepository.findById(id);
         ImageGroup.ifPresent(group -> securityACLService.check(group.container(), READ));
@@ -61,7 +77,15 @@ public class ImageGroupService extends ModelService {
     }
 
     public List<ImageGroup> list(Project project) {
-        securityACLService.check(project.container(), READ);
+        securityACLService.check(project, READ);
         return imageGroupRepository.findAllByProject(project);
+    }
+
+    public CommandResponse add(JsonObject json) {
+        transactionService.start();
+        SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
+
+        return executeCommand(new AddCommand(currentUser), null, json);
     }
 }

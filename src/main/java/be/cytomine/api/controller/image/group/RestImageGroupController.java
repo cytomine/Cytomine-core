@@ -44,4 +44,10 @@ public class RestImageGroupController extends RestCytomineController {
 
         return responseSuccess(imageGroupService.list(project));
     }
+
+    @PostMapping("/imagegroup.json")
+    public ResponseEntity<String> add(@RequestBody String json) {
+        log.debug("REST request to save imagegroup: " + json);
+        return add(imageGroupService, json);
+    }
 }
