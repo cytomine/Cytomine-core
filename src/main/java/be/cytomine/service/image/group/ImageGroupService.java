@@ -108,7 +108,7 @@ public class ImageGroupService extends ModelService {
             group.setImages(images);
         }
 
-        return imageGroupRepository.findAllByProject(project);
+        return groups;
     }
 
     public CommandResponse add(JsonObject json) {
