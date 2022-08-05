@@ -39,8 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
 import static org.springframework.security.acls.domain.BasePermission.WRITE;
@@ -141,5 +140,20 @@ public class ImageGroupImageInstanceService extends ModelService {
         securityACLService.check(domain.container(), WRITE);
 
         return executeCommand(new DeleteCommand(currentUser, transaction), domain, null);
+    }
+
+    public List<ImageInstance> getImages(Long groupId, Long imageId) {
+        ImageGroup group = imageGroupService.get(groupId);
+        ImageInstance image = imageInstanceService.get(imageId);
+
+        if (group == null || image == null || get(group, image) == null) {
+            return null;
+        }
+
+        return imageGroupImageInstanceRepository.findAllByGroup(group)
+                .stream()
+                .map((ImageGroupImageInstance::getImage))
+                .sorted(Comparator.comparing(ImageInstance::getBlindInstanceFilename))
+                .toList();
     }
 }
