@@ -30,13 +30,13 @@ import java.util.Optional;
 @Repository
 public interface AnnotationLinkRepository extends JpaRepository<AnnotationLink, Long>, JpaSpecificationExecutor<AnnotationLink> {
 
+    Optional<AnnotationLink> findByAnnotationId(Long id);
+
     Optional<AnnotationLink> findByAnnotationIdAndAnnotationGroup(Long id, AnnotationGroup group);
 
     List<AnnotationLink> findAllByAnnotationGroup(AnnotationGroup group);
 
     /*
-    AnnotationLink findByAnnotationId(Long id);
-
     @Modifying
     @Query(value = "UPDATE AnnotationLink al SET al.annotationGroup = :newGroup WHERE al.annotationGroup =: mergedGroup")
     void setMergedAnnotationGroup(AnnotationGroup newGroup, AnnotationGroup mergedGroup);

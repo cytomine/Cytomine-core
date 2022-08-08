@@ -18,7 +18,6 @@ package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.group.ImageGroup;
-import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.AnnotationGroup;
 import be.cytomine.domain.ontology.AnnotationLink;
 import be.cytomine.domain.project.Project;
@@ -35,14 +34,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
+import java.util.ArrayList;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
 @Slf4j
 @RequiredArgsConstructor
 public class RestAnnotationGroupController extends RestCytomineController {
-
-    private final EntityManager entityManager;
 
     private final AnnotationGroupService annotationGroupService;
 
@@ -150,11 +149,13 @@ public class RestAnnotationGroupController extends RestCytomineController {
     public ResponseEntity<String> listByAnnotation(@PathVariable Long id) {
         log.debug("REST request to list all annotationlinks for annotation " + id);
 
-        AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
-        if (annotation == null) {
-            return responseNotFound("AnnotationLink", "Annotation", id);
+        // TODO: Check if annotation exists
+
+        AnnotationLink link = annotationLinkRepository.findByAnnotationId(id).orElse(null);
+        if (link == null) {
+            return responseSuccess(new ArrayList<>());
         }
-        AnnotationLink link = annotationLinkRepository.findByAnnotationId(id);
+
         return responseSuccess(annotationLinkService.list(link.getAnnotationGroup()));
     }
 }
