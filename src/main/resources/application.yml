@@ -243,6 +243,9 @@ application:
       project-explore-annotation-tracks:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
+      project-explore-annotation-linked-annotations:
+        ADMIN_PROJECT: true
+        CONTRIBUTOR_PROJECT: true
       project-tools-main:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
