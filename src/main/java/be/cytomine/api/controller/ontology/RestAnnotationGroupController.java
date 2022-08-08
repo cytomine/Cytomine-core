@@ -18,9 +18,12 @@ package be.cytomine.api.controller.ontology;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.group.ImageGroup;
+import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.AnnotationGroup;
+import be.cytomine.domain.ontology.AnnotationLink;
 import be.cytomine.domain.project.Project;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.repository.ontology.AnnotationLinkRepository;
 import be.cytomine.service.image.group.ImageGroupService;
 import be.cytomine.service.ontology.AnnotationGroupService;
 import be.cytomine.service.ontology.AnnotationLinkService;
@@ -31,11 +34,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityManager;
+
 @RestController
 @RequestMapping("/api")
 @Slf4j
 @RequiredArgsConstructor
 public class RestAnnotationGroupController extends RestCytomineController {
+
+    private final EntityManager entityManager;
 
     private final AnnotationGroupService annotationGroupService;
 
@@ -45,13 +52,15 @@ public class RestAnnotationGroupController extends RestCytomineController {
 
     private final ProjectService projectService;
 
+    private final AnnotationLinkRepository annotationLinkRepository;
+
     @PostMapping("/annotationgroup.json")
     public ResponseEntity<String> add(@RequestBody String json) {
         log.debug("REST request to save annotationgroup: " + json);
         return add(annotationGroupService, json);
     }
 
-    @GetMapping("/api/annotationgroup/{id}.json")
+    @GetMapping("/annotationgroup/{id}.json")
     public ResponseEntity<String> show(@PathVariable Long id) {
         log.debug("REST request to show annotationgroup: " + id);
         return annotationGroupService.find(id)
@@ -59,26 +68,26 @@ public class RestAnnotationGroupController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("AnnotationGroup", id));
     }
 
-    @PutMapping("/api/annotationgroup/{id}.json")
+    @PutMapping("/annotationgroup/{id}.json")
     public ResponseEntity<String> edit(@PathVariable Long id, @RequestBody JsonObject json) {
         log.debug("REST request to edit annotationgroup: " + id);
         return update(annotationGroupService, json);
     }
 
-    @DeleteMapping("/api/annotationgroup/{id}.json")
+    @DeleteMapping("/annotationgroup/{id}.json")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         log.debug("REST request to delete annotationgroup: " + id);
         return delete(annotationGroupService, JsonObject.of("id", id), null);
     }
 
-    @GetMapping("/api/project/{id}/annotationgroup.json")
+    @GetMapping("/project/{id}/annotationgroup.json")
     public ResponseEntity<String> listByProject(@PathVariable Long id) {
         log.debug("REST request to list annotationgroup for project " + id);
         Project project = projectService.find(id).orElseThrow(() -> new ObjectNotFoundException("Project", id));
         return responseSuccess(annotationGroupService.list(project));
     }
 
-    @GetMapping("/api/imagegroup/{id}/annotationgroup.json")
+    @GetMapping("/imagegroup/{id}/annotationgroup.json")
     public ResponseEntity<String> listByImageGroup(@PathVariable Long id) {
         log.debug("REST request to list annotationgroup for imagegroup " + id);
         ImageGroup group = imageGroupService.find(id).orElseThrow(() -> new ObjectNotFoundException("ImageGroup", id));
@@ -86,7 +95,7 @@ public class RestAnnotationGroupController extends RestCytomineController {
     }
 
     /*
-    @PostMapping("/api/annotationgroup/{id}/annotationgroup/{mergedId}/merge.json")
+    @PostMapping("/annotationgroup/{id}/annotationgroup/{mergedId}/merge.json")
     public ResponseEntity<String> merge(@PathVariable Long id, @PathVariable Long mergedId) {
         log.debug("REST request to merge annotationgroup {} with annotationgroup {}", id, mergedId);
         return responseSuccess(annotationGroupService.merge(id, mergedId));
@@ -94,7 +103,7 @@ public class RestAnnotationGroupController extends RestCytomineController {
      */
 
     /* getAnnotationDomain() not implemented see L197 AnnotationDomain.java
-    @GetMapping("/api/annotationgroup/{annotationGroup}/annotation/{annotation}.json")
+    @GetMapping("/annotationgroup/{annotationGroup}/annotation/{annotation}.json")
     public ResponseEntity<String> show(@PathVariable Long annotation, @PathVariable Long annotationGroup) {
         log.debug("REST request to get annotation {} in annotationgroup {}", annotation, annotationGroup);
 
@@ -118,36 +127,34 @@ public class RestAnnotationGroupController extends RestCytomineController {
     }
      */
 
-    @DeleteMapping("/api/annotationgroup/{annotationGroup}/annotation/{annotation}.json")
+    @DeleteMapping("/annotationgroup/{annotationGroup}/annotation/{annotation}.json")
     public ResponseEntity<String> delete(@PathVariable Long annotation, @PathVariable Long annotationGroup) {
         log.debug("REST request to delete annotation {} in annotationgroup {}", annotation, annotationGroup);
         return delete(imageGroupService, JsonObject.of("annotationId", annotation, "annotationGroup", annotationGroup), null);
     }
 
-    @PostMapping("/api/annotationlink.json")
+    @PostMapping("/annotationlink.json")
     public ResponseEntity<String> add(@RequestBody JsonObject json) {
         log.debug("REST request to save annotationlink: " + json);
         return add(annotationLinkService, json);
     }
 
-    @GetMapping("/api/annotationgroup/{id}/annotationlink.json")
+    @GetMapping("/annotationgroup/{id}/annotationlink.json")
     public ResponseEntity<String> listByAnnotationGroup(@PathVariable Long id) {
         log.debug("REST request to list all annotationlinks for annotationgroup " + id);
         AnnotationGroup annotationGroup = annotationGroupService.find(id).orElseThrow(() -> new ObjectNotFoundException("AnnotationGroup", id));
         return responseSuccess(annotationLinkService.list(annotationGroup));
     }
 
-    /* getAnnotationDomain() not implemented see L197 AnnotationDomain.java
-    @GetMapping("/api/annotation/{id}/annotationlink.json")
+    @GetMapping("/annotation/{id}/annotationlink.json")
     public ResponseEntity<String> listByAnnotation(@PathVariable Long id) {
         log.debug("REST request to list all annotationlinks for annotation " + id);
 
-        AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(id);
+        AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
         if (annotation == null) {
             return responseNotFound("AnnotationLink", "Annotation", id);
         }
         AnnotationLink link = annotationLinkRepository.findByAnnotationId(id);
         return responseSuccess(annotationLinkService.list(link.getAnnotationGroup()));
     }
-     */
 }
