@@ -62,7 +62,7 @@ public class RestAnnotationLinkController extends RestCytomineController {
 
         // TODO: Check if annotation exists
 
-        AnnotationLink link = annotationLinkRepository.findByAnnotationId(id).orElse(null);
+        AnnotationLink link = annotationLinkRepository.findByAnnotationIdent(id).orElse(null);
         if (link == null) {
             return responseSuccess(new ArrayList<>());
         }

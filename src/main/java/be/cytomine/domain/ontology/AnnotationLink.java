@@ -34,7 +34,7 @@ public class AnnotationLink extends CytomineDomain {
 
     String annotationClassName;
 
-    Long annotationId;
+    Long annotationIdent;
 
     @ManyToOne(fetch = FetchType.LAZY)
     AnnotationGroup annotationGroup;
@@ -50,7 +50,7 @@ public class AnnotationLink extends CytomineDomain {
         annotationLink.updated = json.getJSONAttrDate("updated");
 
         annotationLink.annotationClassName = json.getJSONAttrStr("annotationClassName", true);
-        annotationLink.annotationId = json.getJSONAttrLong("annotationId", null);
+        annotationLink.annotationIdent = json.getJSONAttrLong("annotationIdent", null);
         annotationLink.annotationGroup = (AnnotationGroup) json.getJSONAttrDomain(entityManager, "annotationGroup", new AnnotationGroup(), true);
         annotationLink.image = (ImageInstance) json.getJSONAttrDomain(entityManager, "image", new ImageInstance(), true);
 
@@ -62,7 +62,7 @@ public class AnnotationLink extends CytomineDomain {
         AnnotationLink annotationLink = (AnnotationLink) domain;
 
         returnArray.put("annotationClassName", annotationLink.getAnnotationClassName());
-        returnArray.put("annotationId", annotationLink.getAnnotationId());
+        returnArray.put("annotationIdent", annotationLink.getAnnotationIdent());
         returnArray.put("annotationGroup", annotationLink.getAnnotationGroup().getId());
         returnArray.put("image", annotationLink.getImage().getId());
 

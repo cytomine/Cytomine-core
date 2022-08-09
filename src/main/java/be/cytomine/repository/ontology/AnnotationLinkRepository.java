@@ -30,9 +30,9 @@ import java.util.Optional;
 @Repository
 public interface AnnotationLinkRepository extends JpaRepository<AnnotationLink, Long>, JpaSpecificationExecutor<AnnotationLink> {
 
-    Optional<AnnotationLink> findByAnnotationId(Long id);
+    Optional<AnnotationLink> findByAnnotationIdent(Long id);
 
-    Optional<AnnotationLink> findByAnnotationIdAndAnnotationGroup(Long id, AnnotationGroup group);
+    Optional<AnnotationLink> findByAnnotationIdentAndAnnotationGroup(Long id, AnnotationGroup group);
 
     List<AnnotationLink> findAllByAnnotationGroup(AnnotationGroup group);
 
