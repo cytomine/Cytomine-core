@@ -67,7 +67,7 @@ public class RestAnnotationLinkController extends RestCytomineController {
             return responseSuccess(new ArrayList<>());
         }
 
-        return responseSuccess(annotationLinkService.list(link.getAnnotationGroup()));
+        return responseSuccess(annotationLinkService.list(link.getGroup()));
     }
 
     /* getAnnotationDomain() not implemented see L197 AnnotationDomain.java

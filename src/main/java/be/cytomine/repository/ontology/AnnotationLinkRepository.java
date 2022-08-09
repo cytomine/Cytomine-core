@@ -32,9 +32,9 @@ public interface AnnotationLinkRepository extends JpaRepository<AnnotationLink, 
 
     Optional<AnnotationLink> findByAnnotationIdent(Long id);
 
-    Optional<AnnotationLink> findByAnnotationIdentAndAnnotationGroup(Long id, AnnotationGroup group);
+    Optional<AnnotationLink> findByAnnotationIdentAndGroup(Long id, AnnotationGroup group);
 
-    List<AnnotationLink> findAllByAnnotationGroup(AnnotationGroup group);
+    List<AnnotationLink> findAllByGroup(AnnotationGroup group);
 
     /*
     @Modifying

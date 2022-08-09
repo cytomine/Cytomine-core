@@ -24,6 +24,7 @@ import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.AnnotationGroup;
 import be.cytomine.domain.ontology.AnnotationLink;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.AnnotationLinkRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
@@ -36,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +49,12 @@ import static org.springframework.security.acls.domain.BasePermission.WRITE;
 @Service
 @Transactional
 public class AnnotationLinkService extends ModelService {
+
+    @Autowired
+    private EntityManager entityManager;
+
+    @Autowired
+    private AnnotationGroupService annotationGroupService;
 
     @Autowired
     private CurrentUserService currentUserService;
@@ -72,7 +80,7 @@ public class AnnotationLinkService extends ModelService {
 
     @Override
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
-        return List.of(domain.getId(), ((AnnotationLink) domain).getAnnotationGroup().getId());
+        return List.of(domain.getId(), ((AnnotationLink) domain).getGroup().getId());
     }
 
     public Optional<AnnotationLink> find(Long id) {
@@ -82,7 +90,7 @@ public class AnnotationLinkService extends ModelService {
     }
 
     public Optional<AnnotationLink> find(AnnotationGroup group, AnnotationDomain annotation) {
-        Optional<AnnotationLink> annotationLink = annotationLinkRepository.findByAnnotationIdentAndAnnotationGroup(annotation.getId(), group);
+        Optional<AnnotationLink> annotationLink = annotationLinkRepository.findByAnnotationIdentAndGroup(annotation.getId(), group);
         annotationLink.ifPresent(link -> securityACLService.check(link.container(), READ));
         return annotationLink;
     }
@@ -97,13 +105,24 @@ public class AnnotationLinkService extends ModelService {
 
     public List<AnnotationLink> list(AnnotationGroup group) {
         securityACLService.check(group, READ);
-        return annotationLinkRepository.findAllByAnnotationGroup(group);
+        return annotationLinkRepository.findAllByGroup(group);
     }
 
     public CommandResponse add(JsonObject json) {
         transactionService.start();
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
+
+        AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, json.getJSONAttrLong("annotationIdent"));
+        securityACLService.check(annotation.getProject(), READ);
+        securityACLService.checkIsNotReadOnly(annotation.getProject());
+
+        AnnotationGroup group = annotationGroupService.get(json.getJSONAttrLong("group"));
+        if (group.getProject() != annotation.getProject()) {
+            throw new WrongArgumentException("Group and annotation are not in the same project!");
+        }
+
+        json.put("annotationClassName", annotation.getClass().getName());
 
         return executeCommand(new AddCommand(currentUser), null, json);
     }
