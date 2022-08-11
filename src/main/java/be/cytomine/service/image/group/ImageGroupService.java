@@ -20,11 +20,13 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.group.ImageGroup;
 import be.cytomine.domain.image.group.ImageGroupImageInstance;
+import be.cytomine.domain.ontology.AnnotationGroup;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.repository.image.group.ImageGroupImageInstanceRepository;
 import be.cytomine.repository.image.group.ImageGroupRepository;
 import be.cytomine.repository.ontology.AnnotationGroupRepository;
+import be.cytomine.repository.ontology.AnnotationLinkRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.UrlApi;
@@ -62,6 +64,9 @@ public class ImageGroupService extends ModelService {
 
     @Autowired
     private AnnotationGroupRepository annotationGroupRepository;
+
+    @Autowired
+    private AnnotationLinkRepository annotationLinkRepository;
 
     @Autowired
     private ImageGroupRepository imageGroupRepository;
@@ -142,9 +147,14 @@ public class ImageGroupService extends ModelService {
     }
 
     protected void beforeDelete(CytomineDomain domain) {
-        ImageGroup group = (ImageGroup) domain;
+        ImageGroup imageGroup = (ImageGroup) domain;
 
-        annotationGroupRepository.deleteAllByImageGroup(group);
-        imageGroupImageInstanceRepository.deleteAllByGroup(group);
+        List<AnnotationGroup> annotationGroups = annotationGroupRepository.findAllByImageGroup(imageGroup);
+        for (AnnotationGroup annotationGroup : annotationGroups) {
+            annotationLinkRepository.deleteAllByGroup(annotationGroup);
+        }
+
+        annotationGroupRepository.deleteAllByImageGroup(imageGroup);
+        imageGroupImageInstanceRepository.deleteAllByGroup(imageGroup);
     }
 }

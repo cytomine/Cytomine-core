@@ -36,6 +36,8 @@ public interface AnnotationLinkRepository extends JpaRepository<AnnotationLink, 
 
     List<AnnotationLink> findAllByGroup(AnnotationGroup group);
 
+    void deleteAllByGroup(AnnotationGroup group);
+
     /*
     @Modifying
     @Query(value = "UPDATE AnnotationLink al SET al.annotationGroup = :newGroup WHERE al.annotationGroup =: mergedGroup")
