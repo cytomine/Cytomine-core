@@ -82,6 +82,9 @@ public class UserAnnotationListing extends AnnotationListing {
         track.put("annotationTracks", "atr.id");
         map.put("track", track);
 
+        AvailableColumns imageGroup = new AvailableColumns();
+        imageGroup.put("imageGroup", "ig.group_id");
+        map.put("imageGroup", imageGroup);
 
         AvailableColumns image = new AvailableColumns();
         image.put("originalFilename", "ai.original_filename");
@@ -157,6 +160,10 @@ public class UserAnnotationListing extends AnnotationListing {
 
         if (multipleTrack || noTrack || columnsToPrint.contains("track")) {
             from += "LEFT OUTER JOIN annotation_track atr ON a.id = atr.annotation_ident ";
+        }
+
+        if (columnsToPrint.contains("imageGroup")) {
+            from += "LEFT JOIN (SELECT * FROM image_group_image_instance WHERE deleted IS NULL) ig ON a.image_id = ig.image_id ";
         }
 
         if (columnsToPrint.contains("user")) {
