@@ -31,4 +31,6 @@ public interface AnnotationGroupRepository extends JpaRepository<AnnotationGroup
     List<AnnotationGroup> findAllByImageGroup(ImageGroup group);
 
     List<AnnotationGroup> findAllByProject(Project project);
+
+    void deleteAllByImageGroup(ImageGroup group);
 }

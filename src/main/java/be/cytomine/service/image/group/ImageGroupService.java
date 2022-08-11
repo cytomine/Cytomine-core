@@ -24,6 +24,7 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.repository.image.group.ImageGroupImageInstanceRepository;
 import be.cytomine.repository.image.group.ImageGroupRepository;
+import be.cytomine.repository.ontology.AnnotationGroupRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.UrlApi;
@@ -58,6 +59,9 @@ public class ImageGroupService extends ModelService {
 
     @Autowired
     private TransactionService transactionService;
+
+    @Autowired
+    private AnnotationGroupRepository annotationGroupRepository;
 
     @Autowired
     private ImageGroupRepository imageGroupRepository;
@@ -140,6 +144,7 @@ public class ImageGroupService extends ModelService {
     protected void beforeDelete(CytomineDomain domain) {
         ImageGroup group = (ImageGroup) domain;
 
+        annotationGroupRepository.deleteAllByImageGroup(group);
         imageGroupImageInstanceRepository.deleteAllByGroup(group);
     }
 }
