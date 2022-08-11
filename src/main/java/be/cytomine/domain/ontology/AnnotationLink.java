@@ -22,24 +22,29 @@ import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.Entity;
-import javax.persistence.EntityManager;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 @Entity
 @Getter
 @Setter
 public class AnnotationLink extends CytomineDomain {
 
+    @NotNull
     String annotationClassName;
 
+    @NotNull
+    @Column(name = "annotation_ident")
     Long annotationIdent;
 
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id", nullable = false)
     AnnotationGroup group;
 
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "image_id", nullable = false)
     ImageInstance image;
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {

@@ -135,4 +135,15 @@ public class AnnotationLinkService extends ModelService {
 
         return executeCommand(new DeleteCommand(currentUser, transaction), domain, null);
     }
+
+    public CommandResponse addAnnotationLink(String annotationClassName, Long annotationIdent, Long groupId, Long imageId, Transaction transaction) {
+        JsonObject jsonObject = JsonObject.of(
+                "annotationClassName", annotationClassName,
+                "annotationIdent", annotationIdent,
+                "group", groupId,
+                "image", imageId
+        );
+
+        return executeCommand(new AddCommand(currentUserService.getCurrentUser(), transaction), null, jsonObject);
+    }
 }
