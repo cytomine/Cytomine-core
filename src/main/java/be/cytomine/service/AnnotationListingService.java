@@ -225,14 +225,14 @@ public class AnnotationListingService {
 
                 if (groupAsked && tuple.get("group") != null
                         && (long) tuple.get("group") == lastGroupId
-                        && !annotationLinksIds.contains(tuple.get("annotationLinks"))
+                        && !annotationLinksIds.contains(tuple.get("annotationlinks"))
                 ) {
-                    annotationLinksIds.add((Long) tuple.get("annotationLinks"));
+                    annotationLinksIds.add((Long) tuple.get("annotationlinks"));
                     ((List) lastResult.get("annotationLink")).add(new HashMap<>(Map.of(
-                            "id", tuple.get("annotationLinks"),
-                            "annotation", tuple.get("linkedAnnotations"),
-                            "image", tuple.get("linkedImages"),
-                            "updated", tuple.get("linkedUpdated")
+                            "id", tuple.get("annotationlinks"),
+                            "annotation", tuple.get("linkedannotations"),
+                            "image", tuple.get("linkedimages"),
+                            "updated", tuple.get("linkedupdated")
                     )));
                 }
             }
