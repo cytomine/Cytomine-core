@@ -21,6 +21,7 @@ import be.cytomine.domain.ontology.AnnotationGroup;
 import be.cytomine.domain.ontology.AnnotationLink;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.AnnotationLinkRepository;
+import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.ontology.AnnotationGroupService;
 import be.cytomine.service.ontology.AnnotationLinkService;
 import be.cytomine.utils.JsonObject;
@@ -30,6 +31,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -40,6 +42,8 @@ public class RestAnnotationLinkController extends RestCytomineController {
     final private AnnotationGroupService annotationGroupService;
 
     final private AnnotationLinkService annotationLinkService;
+
+    final private TransactionService transactionService;
 
     final private AnnotationLinkRepository annotationLinkRepository;
 
@@ -98,6 +102,12 @@ public class RestAnnotationLinkController extends RestCytomineController {
     @DeleteMapping("/annotationgroup/{annotationGroup}/annotation/{annotation}.json")
     public ResponseEntity<String> delete(@PathVariable Long annotation, @PathVariable Long annotationGroup) {
         log.debug("REST request to delete annotation {} in annotationgroup {}", annotation, annotationGroup);
-        return delete(annotationLinkService, JsonObject.of("annotationId", annotation, "annotationGroup", annotationGroup), null);
+
+        AnnotationLink link = annotationLinkRepository.findByAnnotationIdent(annotation).orElse(null);
+        if (link == null) {
+            return responseNotFound("Annotationlink", Map.of("Annotation", annotation, "AnnotationGroup", annotationGroup));
+        }
+
+        return responseSuccess(annotationLinkService.delete(link, transactionService.start(), null, true));
     }
 }
