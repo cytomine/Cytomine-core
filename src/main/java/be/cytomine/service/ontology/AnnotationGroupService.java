@@ -129,7 +129,6 @@ public class AnnotationGroupService extends ModelService {
         return executeCommand(new DeleteCommand(currentUser, transaction), domain, null);
     }
 
-    /*
     public CommandResponse merge(Long id, Long mergedId) {
         AnnotationGroup ag = get(id);
         AnnotationGroup agToMerge = get(mergedId);
@@ -146,5 +145,4 @@ public class AnnotationGroupService extends ModelService {
 
         return executeCommand(new EditCommand(currentUserService.getCurrentUser(), null), ag, AnnotationGroup.getDataFromDomain(ag));
     }
-     */
 }

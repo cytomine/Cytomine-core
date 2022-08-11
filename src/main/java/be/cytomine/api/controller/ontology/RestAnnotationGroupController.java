@@ -81,11 +81,9 @@ public class RestAnnotationGroupController extends RestCytomineController {
         return responseSuccess(annotationGroupService.list(group));
     }
 
-    /*
     @PostMapping("/annotationgroup/{id}/annotationgroup/{mergedId}/merge.json")
     public ResponseEntity<String> merge(@PathVariable Long id, @PathVariable Long mergedId) {
         log.debug("REST request to merge annotationgroup {} with annotationgroup {}", id, mergedId);
         return responseSuccess(annotationGroupService.merge(id, mergedId));
     }
-     */
 }
