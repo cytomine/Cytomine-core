@@ -19,7 +19,6 @@ package be.cytomine.service.image.group;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.group.ImageGroup;
-import be.cytomine.domain.image.group.ImageGroupImageInstance;
 import be.cytomine.domain.ontology.AnnotationGroup;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
@@ -29,7 +28,6 @@ import be.cytomine.repository.ontology.AnnotationGroupRepository;
 import be.cytomine.repository.ontology.AnnotationLinkRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
-import be.cytomine.service.UrlApi;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
@@ -104,17 +102,7 @@ public class ImageGroupService extends ModelService {
 
         List<ImageGroup> groups = imageGroupRepository.findAllByProject(project);
         for (ImageGroup group : groups) {
-            List<Object> images = new ArrayList<>();
-            for (ImageGroupImageInstance igii : imageGroupImageInstanceService.list(group)) {
-                images.add(Map.of(
-                        "id", igii.getImage().getId(),
-                        "thumb", UrlApi.getImageInstanceThumbUrlWithMaxSize(igii.getImage().getId()),
-                        "width", igii.getImage().getBaseImage().getWidth(),
-                        "height", igii.getImage().getBaseImage().getHeight()
-                ));
-            }
-
-            group.setImages(images);
+            group.setImages(imageGroupImageInstanceService.buildImageInstances(group));
         }
 
         return groups;
