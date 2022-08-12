@@ -499,7 +499,7 @@ public class ImageInstanceService extends ModelService {
         final String finalSortedProperty = sortedProperty;
         boolean joinAI = validatedSearchParameters.stream().anyMatch(x -> x.getProperty().contains(abstractImageAlias + ".") || finalSortedProperty.contains(abstractImageAlias + "."));
         boolean joinMime = validatedSearchParameters.stream().anyMatch(x -> x.getProperty().contains(mimeAlias + ".") || finalSortedProperty.contains(mimeAlias + "."));
-        boolean joinImageGroup = validatedSearchParameters.stream().anyMatch(x -> x.getProperty().contains(imageGroupAlias + ".") || finalSortedProperty.contains(imageGroupAlias + "."));
+        boolean joinImageGroup = validatedSearchParameters.stream().anyMatch(x -> x.getProperty().contains(imageGroupAlias + ".") || finalSortedProperty.contains(imageGroupAlias + ".")) || withImageGroup;
 
         SearchParameterProcessed sqlSearchConditions = SQLSearchParameter.searchParametersToSQLConstraints(validatedSearchParameters);
 
