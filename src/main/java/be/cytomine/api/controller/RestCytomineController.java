@@ -96,6 +96,7 @@ public abstract class RestCytomineController {
         requestParams.putIfAbsent("max", "0");
         requestParams.putIfAbsent("sort", "created");
         requestParams.putIfAbsent("order", "desc");
+        requestParams.putIfAbsent("withImageGroup", "false");
         return requestParams;
     }
 

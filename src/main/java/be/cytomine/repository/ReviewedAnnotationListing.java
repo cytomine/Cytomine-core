@@ -85,6 +85,10 @@ public class ReviewedAnnotationListing extends AnnotationListing {
         term.put("userTerm", "a.user_id"); //user who add the term, is the user that create reviewedannotation (a.user_id)
         map.put("term", term);
 
+        AvailableColumns imageGroup = new AvailableColumns();
+        imageGroup.put("imageGroup", "ig.group_id");
+        map.put("imageGroup", imageGroup);
+
         AvailableColumns group = new AvailableColumns();
         group.put("group", "al.group_id");
         group.put("annotationLinks", "al.id");
@@ -146,6 +150,9 @@ public class ReviewedAnnotationListing extends AnnotationListing {
         } else if (columnsToPrint.contains("term")) {
             from = from + " LEFT OUTER JOIN reviewed_annotation_term at ON a.id = at.reviewed_annotation_terms_id ";
         }
+
+        if (columnsToPrint.contains("imageGroup")) {
+            from += "LEFT JOIN (SELECT * FROM image_group_image_instance WHERE deleted IS NULL) ig ON a.image_id = ig.image_id ";
 
         if (columnsToPrint.contains("group") || annotationGroup != null || annotationGroups != null) {
             from += "LEFT OUTER JOIN (SELECT * FROM annotation_link WHERE deleted IS NULL) al1 ON al1.annotation_ident = a.id ";

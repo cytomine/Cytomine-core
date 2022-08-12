@@ -55,8 +55,9 @@ public class ImageGroupImageInstance extends CytomineDomain {
         JsonObject returnArray = CytomineDomain.getDataFromDomain(domain);
         ImageGroupImageInstance igii = (ImageGroupImageInstance) domain;
 
-        returnArray.put("group", igii.getGroup().getId());
         returnArray.put("image", igii.getImage().getId());
+        returnArray.put("group", igii.getGroup().getId());
+        returnArray.put("groupName", igii.getGroup().getName());
 
         return returnArray;
     }
