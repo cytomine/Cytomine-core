@@ -153,6 +153,7 @@ public class ReviewedAnnotationListing extends AnnotationListing {
 
         if (columnsToPrint.contains("imageGroup")) {
             from += "LEFT JOIN (SELECT * FROM image_group_image_instance WHERE deleted IS NULL) ig ON a.image_id = ig.image_id ";
+        }
 
         if (columnsToPrint.contains("group") || annotationGroup != null || annotationGroups != null) {
             from += "LEFT OUTER JOIN (SELECT * FROM annotation_link WHERE deleted IS NULL) al1 ON al1.annotation_ident = a.id ";
