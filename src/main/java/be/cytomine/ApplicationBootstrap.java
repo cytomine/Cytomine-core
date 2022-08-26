@@ -199,6 +199,9 @@ class ApplicationBootstrap {
         log.info("create multiple IS and Retrieval...");
         bootstrapUtilDataService.createMultipleImageServer();
         bootstrapUtilDataService.updateProcessingServerRabbitQueues();
+
+        log.info("Check image filters...");
+        bootstrapDataService.updateImageFilters();
         log.info ("#############################################################################");
         log.info ("###################              READY              #########################");
         log.info ("#############################################################################");

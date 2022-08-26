@@ -194,14 +194,14 @@ public class BootstrapUtilsService {
         relationRepository.createIfNotExist(name);
     }
 
-    public void createFilter(String name, String baseUrl, ImagingServer imagingServer) {
-        if (imageFilterRepository.findByName(name).isEmpty()) {
-            ImageFilter filter = new ImageFilter();
-            filter.setName(name);
-            filter.setBaseUrl(baseUrl);
-            filter.setImagingServer(imagingServer);
-            imageFilterRepository.save(filter);
-        }
+    public void createFilter(String name, String method, ImagingServer imagingServer, Boolean available) {
+        ImageFilter filter = imageFilterRepository.findByName(name)
+                .orElseGet(ImageFilter::new);
+        filter.setName(name);
+        filter.setMethod(method);
+        filter.setImagingServer(imagingServer);
+        filter.setAvailable(available);
+        imageFilterRepository.save(filter);
     }
 
     public void createMime(String extension, String mimeType) {
@@ -272,7 +272,7 @@ public class BootstrapUtilsService {
        }
    }
 
-    public ImagingServer createImagingServer() {
+    public ImagingServer returnOrCreateImagingServer() {
         String imageServerURL = applicationProperties.getImageServerURL().stream().findFirst()
                 .orElseThrow(() -> new ObjectNotFoundException("No image server defined in configuration"));
         if (imagingServerRepository.findByUrl(imageServerURL).isEmpty()) {
@@ -283,6 +283,7 @@ public class BootstrapUtilsService {
             return imagingServerRepository.findByUrl(imageServerURL).get();
         }
     }
+
 
     public void updateProcessingServerRabbitQueues() {
         // TODO: TRANSLATION DONE, BUT amqpQueueService HAS TO BE IMPLEMENTED
@@ -561,5 +562,6 @@ public class BootstrapUtilsService {
         softwareUserRepository.setPrefix(prefix);
         entityManager.persist(softwareUserRepository);
     }
+
 
 }
