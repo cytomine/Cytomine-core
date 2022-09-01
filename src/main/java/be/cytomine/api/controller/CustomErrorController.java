@@ -29,7 +29,7 @@ public class CustomErrorController implements ErrorController {
         };
 
         String message = switch (statusCode) {
-            case 401 -> "This page is not publicly available To access it, please login first or use a valid token.";
+            case 401 -> "This page is not publicly available. To access it, please login first or use a valid token.";
             case 404 -> "The page does not exists.";
             default-> "";
         };
