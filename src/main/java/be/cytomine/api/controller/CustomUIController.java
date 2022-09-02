@@ -16,12 +16,15 @@ package be.cytomine.api.controller;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
+import be.cytomine.domain.command.Command;
+import be.cytomine.domain.command.DeleteCommand;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecRole;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.exceptions.ServerException;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.meta.PropertyService;
@@ -29,6 +32,7 @@ import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.Lock;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -55,7 +59,7 @@ public class CustomUIController extends RestCytomineController {
 
     private final PropertyService propertyService;
 
-    private final ApplicationConfiguration applicationConfiguration;
+    private final ApplicationProperties applicationProperties;
 
     static String CUSTOM_UI_PROJECT = "@CUSTOM_UI_PROJECT";
 
@@ -97,25 +101,34 @@ public class CustomUIController extends RestCytomineController {
         Project project = projectService.find(projectId)
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
 
-        Optional<Property> optionalProperty = propertyService.findByDomainAndKey(project,CUSTOM_UI_PROJECT);
-        securityACLService.check(project,ADMINISTRATION);
-        if(optionalProperty.isEmpty()) {
-            Property property = new Property();
-            property.setKey(CUSTOM_UI_PROJECT);
-            property.setValue(jsonObject.toJsonString());
-            property.setDomain(project);
+        if (Lock.getInstance().lockCustomUI(project)) {
+            try {
+                Optional<Property> optionalProperty = propertyService.findByDomainAndKey(project,CUSTOM_UI_PROJECT);
+                securityACLService.check(project,ADMINISTRATION);
 
-            CommandResponse result = propertyService.add(property.toJsonObject());
-            responseSuccess((String)((LinkedHashMap)result.getData().get("property")).get("value"));
+                if(optionalProperty.isEmpty()) {
+                    Property property = new Property();
+                    property.setKey(CUSTOM_UI_PROJECT);
+                    property.setValue(jsonObject.toJsonString());
+                    property.setDomain(project);
+
+                    CommandResponse result = propertyService.add(property.toJsonObject());
+                    responseSuccess((String)((LinkedHashMap)result.getData().get("property")).get("value"));
+                } else {
+                    JsonObject jsonEdit = optionalProperty.get().toJsonObject()
+                            .withChange("value", jsonObject.toJsonString());
+
+                    CommandResponse result = propertyService.update(optionalProperty.get(),jsonEdit);
+                    responseSuccess((String)((LinkedHashMap)result.getData().get("property")).get("value"));
+                }
+
+                return responseSuccess(JsonObject.toJsonString(getProjectConfig(project)));
+            } finally {
+                Lock.getInstance().unlockCustomUI(project);
+            }
         } else {
-            JsonObject jsonEdit = optionalProperty.get().toJsonObject()
-                    .withChange("value", jsonObject.toJsonString());
-
-            CommandResponse result = propertyService.update(optionalProperty.get(),jsonEdit);
-            responseSuccess((String)((LinkedHashMap)result.getData().get("property")).get("value"));
+            throw new ServerException("Cannot acquire lock for custom UI project " + project.getId()  + " , tryLock return false");
         }
-
-        return responseSuccess(JsonObject.toJsonString(getProjectConfig(project)));
     }
 
 
@@ -123,7 +136,7 @@ public class CustomUIController extends RestCytomineController {
         JsonObject globalConfig = new JsonObject();
         Set<String> authorities = roles.stream().map(x -> x.getAuthority()).collect(Collectors.toSet());
 
-        for (Map.Entry<String, List<String>> it : applicationConfiguration.getCustomUI().getGlobal().entrySet()) {
+        for (Map.Entry<String, List<String>> it : applicationProperties.getCustomUI().getGlobal().entrySet()) {
             boolean print;
             List<String> mandatoryRoles = it.getValue();
             if (mandatoryRoles.contains("ALL")) {
@@ -140,7 +153,7 @@ public class CustomUIController extends RestCytomineController {
     public Map<String, Map<String, Boolean>> getProjectConfig(Project project) {
         // clone config so that the default configuration is not updated
         Map<String, Map<String, Boolean>> result = new LinkedHashMap<>();
-        for (Map.Entry<String, LinkedHashMap<String, Boolean>> it : applicationConfiguration.getCustomUI().getProject().entrySet()) {
+        for (Map.Entry<String, LinkedHashMap<String, Boolean>> it : applicationProperties.getCustomUI().getProject().entrySet()) {
             LinkedHashMap<String, Boolean> value = new LinkedHashMap<>();
             for (Map.Entry<String, Boolean> itValue : it.getValue().entrySet()) {
                 value.put(itValue.getKey(), Boolean.valueOf(itValue.getValue().toString()));

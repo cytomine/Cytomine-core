@@ -16,7 +16,7 @@ package be.cytomine.service.middleware;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.image.*;
@@ -77,7 +77,7 @@ public class ImageServerService extends ModelService {
     private SimplifyGeometryService simplifyGeometryService;
 
     @Autowired
-    private ApplicationConfiguration applicationConfiguration;
+    private ApplicationProperties applicationProperties;
 
     @Autowired
     public void setImageInstanceService(ImageInstanceService imageInstanceService) {
@@ -220,8 +220,8 @@ public class ImageServerService extends ModelService {
     }
 
     private String hmsInternalUrl() {
-        String url = applicationConfiguration.getHyperspectralServerURL();
-        return (applicationConfiguration.getUseHTTPInternally()) ? url.replace("https", "http") : url;
+        String url = applicationProperties.getHyperspectralServerURL();
+        return (applicationProperties.getUseHTTPInternally()) ? url.replace("https", "http") : url;
     }
 
     //TODO
@@ -230,7 +230,7 @@ public class ImageServerService extends ModelService {
             throw new InvalidRequestException("Companion file has no valid path.");
         }
         LinkedHashMap parameters = new LinkedHashMap();
-        parameters.put("fif", applicationConfiguration.getStoragePath() + "/" + cf.getPath());
+        parameters.put("fif", applicationProperties.getStoragePath() + "/" + cf.getPath());
         return parameters;
     }
 

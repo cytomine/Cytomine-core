@@ -27,6 +27,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.ManyToOne;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Null;
 import java.util.Optional;
 
 @Entity
@@ -39,19 +40,21 @@ public class ImageFilter extends CytomineDomain {
     @Column(nullable = false, unique = true)
     private String name;
 
-    @NotNull
     @NotBlank
-    private String baseUrl;
+    String method;
 
     @ManyToOne
     private ImagingServer imagingServer;
+
+    Boolean available = true;
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         ImageFilter processingServer = (ImageFilter)this;
         processingServer.id = json.getJSONAttrLong("id",null);
         processingServer.name = json.getJSONAttrStr("name", true);
-        processingServer.baseUrl = json.getJSONAttrStr("baseUrl", true);
+        processingServer.method = json.getJSONAttrStr("method", null);
         processingServer.imagingServer = (ImagingServer) json.getJSONAttrDomain(entityManager, "imagingServer", new ImagingServer(), false);
+        processingServer.available = json.getJSONAttrBoolean("available", true);
         processingServer.created = json.getJSONAttrDate("created");
         processingServer.updated = json.getJSONAttrDate("updated");
         return processingServer;
@@ -61,9 +64,16 @@ public class ImageFilter extends CytomineDomain {
         JsonObject returnArray = CytomineDomain.getDataFromDomain(domain);
         ImageFilter processingServer = (ImageFilter)domain;
         returnArray.put("name", processingServer.getName());
-        returnArray.put("baseUrl", processingServer.getBaseUrl());
+        returnArray.put("method", processingServer.getMethod());
         returnArray.put("imagingServer", Optional.ofNullable(processingServer.getImagingServer()).map(CytomineDomain::getId).orElse(null));
+        returnArray.put("available", processingServer.getAvailable());
+        returnArray.put("baseUrl", processingServer.getBaseUrl());
         return returnArray;
+    }
+
+
+    public String getBaseUrl() {
+        return "/filters/"+method+"&url="; // For backwards compatibility
     }
 
     @Override
