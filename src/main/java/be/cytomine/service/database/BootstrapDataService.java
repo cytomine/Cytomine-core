@@ -18,9 +18,11 @@ package be.cytomine.service.database;
 
 import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.meta.ConfigurationReadingRole;
+import be.cytomine.domain.processing.ImageFilter;
 import be.cytomine.domain.processing.ImagingServer;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.repository.processing.ImageFilterRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.service.amqp.AmqpQueueConfigService;
 import be.cytomine.service.utils.Dataset;
@@ -30,6 +32,7 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Map;
 
 import static be.cytomine.domain.ontology.RelationTerm.PARENT;
 
@@ -52,44 +55,20 @@ public class BootstrapDataService {
     @Autowired
     ApplicationProperties applicationProperties;
 
+    @Autowired
+    ImageFilterRepository imageFilterRepository;
+
     public void initData() {
 
         amqpQueueConfigService.initAmqpQueueConfigDefaultValues();
 
         bootstrapUtilsService.initRabbitMq();
 
-        ImagingServer imagingServer = bootstrapUtilsService.createImagingServer();
+        ImagingServer imagingServer = bootstrapUtilsService.returnOrCreateImagingServer();
 
-        bootstrapUtilsService.createFilter("Binary", "/vision/process?method=binary&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Huang Threshold", "/vision/process?method=huang&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Intermodes Threshold", "/vision/process?method=intermodes&url=", imagingServer);
-        bootstrapUtilsService.createFilter("IsoData Threshold", "/vision/process?method=isodata&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Li Threshold", "/vision/process?method=li&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Max Entropy Threshold", "/vision/process?method=maxentropy&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Mean Threshold", "/vision/process?method=mean&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Minimum Threshold", "/vision/process?method=minimum&url=", imagingServer);
-        bootstrapUtilsService.createFilter("MinError(I) Threshold", "/vision/process?method=minerror&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Moments Threshold", "/vision/process?method=moments&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Otsu Threshold", "/vision/process?method=otsu&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Renyi Entropy Threshold", "/vision/process?method=renyientropy&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Shanbhag Threshold", "/vision/process?method=shanbhag&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Triangle Threshold", "/vision/process?method=triangle&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Yen Threshold", "/vision/process?method=yen&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Percentile Threshold", "/vision/process?method=percentile&url=", imagingServer);
-        bootstrapUtilsService.createFilter("H&E Haematoxylin", "/vision/process?method=he-haematoxylin&url=", imagingServer);
-        bootstrapUtilsService.createFilter("H&E Eosin", "/vision/process?method=he-eosin&url=", imagingServer);
-        bootstrapUtilsService.createFilter("HDAB Haematoxylin", "/vision/process?method=hdab-haematoxylin&url=", imagingServer);
-        bootstrapUtilsService.createFilter("HDAB DAB", "/vision/process?method=hdab-dab&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Haematoxylin", "/vision/process?method=haematoxylin&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Eosin", "/vision/process?method=eosin&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Red (RGB)", "/vision/process?method=r_rgb&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Green (RGB)", "/vision/process?method=g_rgb&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Blue (RGB)", "/vision/process?method=b_rgb&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Cyan (CMY)", "/vision/process?method=c_cmy&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Magenta (CMY)", "/vision/process?method=m_cmy&url=", imagingServer);
-        bootstrapUtilsService.createFilter("Yellow (CMY)", "/vision/process?method=y_cmy&url=", imagingServer);
-        
-        
+        initImageFilters(imagingServer);
+
+
         bootstrapUtilsService.createMime("tif", "image/pyrtiff");
         bootstrapUtilsService.createMime("jp2", "image/jp2");
         bootstrapUtilsService.createMime("ndpi", "openslide/ndpi");
@@ -139,11 +118,58 @@ public class BootstrapDataService {
 //        sur.save(failOnError: true))
     }
 
+    public void initImageFilters(ImagingServer imagingServer) {
+
+        List<Map<String, Object>> filters = List.of(
+                Map.of("name", "Binary", "method","binary", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "Huang Threshold", "method","huang", "imagingServer", imagingServer, "available", false),
+                Map.of("name", "Intermodes Threshold", "method","intermodes", "imagingServer", imagingServer, "available", false),
+                Map.of("name", "IsoData Threshold", "method","isodata", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "Li Threshold", "method","li", "imagingServer", imagingServer, "available", false),
+                Map.of("name", "Max Entropy Threshold", "method","maxentropy", "imagingServer", imagingServer, "available", false),
+                Map.of("name", "Mean Threshold", "method","mean", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "Minimum Threshold", "method","minimum", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "MinError(I) Threshold", "method","minerror", "imagingServer", imagingServer, "available", false),
+                Map.of("name", "Moments Threshold", "method","moments", "imagingServer", imagingServer, "available", false),
+                Map.of("name", "Otsu Threshold", "method","otsu", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "Renyi Entropy Threshold", "method","renyientropy", "imagingServer", imagingServer, "available", false),
+                Map.of("name", "Shanbhag Threshold", "method","shanbhag", "imagingServer", imagingServer, "available", false),
+                Map.of("name", "Triangle Threshold", "method","triangle", "imagingServer", imagingServer, "available", false),
+                Map.of("name", "Yen Threshold", "method","yen", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "Percentile Threshold", "method","percentile", "imagingServer", imagingServer, "available", false),
+                Map.of("name", "H&E Haematoxylin", "method","he-haematoxylin", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "H&E Eosin", "method","he-eosin", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "HDAB Haematoxylin", "method","hdab-haematoxylin", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "HDAB DAB", "method","hdab-dab", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "Haematoxylin", "method","haematoxylin", "imagingServer", imagingServer, "available", false), //To be removed: does not exist
+                Map.of("name", "Eosin", "method","eosin", "imagingServer", imagingServer, "available", false), //To be removed: does not exist
+                Map.of("name", "Red (RGB)", "method","r_rgb", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "Green (RGB)", "method","g_rgb", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "Blue (RGB)", "method","b_rgb", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "Cyan (CMY)", "method","c_cmy", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "Magenta (CMY)", "method","m_cmy", "imagingServer", imagingServer, "available", true),
+                Map.of("name", "Yellow (CMY)", "method","y_cmy", "imagingServer", imagingServer, "available", true)
+        );
+
+        for (Map<String, Object> filter : filters) {
+            bootstrapUtilsService.createFilter((String)filter.get("name"), (String)filter.get("method"), (ImagingServer)filter.get("imagingServer"), (Boolean)filter.get("available"));
+        }
+    }
+
     private void changeUserKeys(String username, String privateKey, String publicKey) {
         SecUser user = secUserRepository.findByUsernameLikeIgnoreCase(username)
                 .orElseThrow(() -> new ObjectNotFoundException(username + " user does not exists, cannot set its keys"));
         user.setPrivateKey(privateKey);
         user.setPublicKey(publicKey);
         secUserRepository.save(user);
+    }
+
+    public void updateImageFilters() {
+        ImageFilter imageFilter = imageFilterRepository.findAll().stream().filter(x -> x.getName().equals("Binary")).findFirst().get();
+        if (imageFilter.getMethod()==null) {
+            // still old image filter data
+            initImageFilters(bootstrapUtilsService.returnOrCreateImagingServer());
+        }
+
     }
 }

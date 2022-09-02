@@ -31,6 +31,8 @@ public class Lock {
 
     private Map<Long, ReentrantLock> projectLocks = new ConcurrentHashMap<>();
     private Map<String, ReentrantLock> wsSessionsLock = new ConcurrentHashMap<>();
+
+    private Map<Long, ReentrantLock> customUILocks = new ConcurrentHashMap<>();
     private static Lock lock = null;
 
     private Lock() {}
@@ -61,6 +63,25 @@ public class Lock {
         log.debug("Unlock project " + project.getId());
         projectLocks.get(project.getId()).unlock();
     }
+
+    public boolean lockCustomUI(Project project) {
+        try {
+            log.debug("Try to lock custom UI for project " + project.getId());
+            customUILocks.putIfAbsent(project.getId(), new ReentrantLock());
+            log.debug("Custom UI Project {} current lock {}", project.getId(), customUILocks.get(project.getId()).isLocked());
+            boolean result = customUILocks.get(project.getId()).tryLock(60, TimeUnit.SECONDS);
+            log.debug("Custom UI Project {} lock result {}", project.getId(), result);
+            return result;
+        } catch (InterruptedException e) {
+            throw new ServerException("Cannot acquire lock on domain " + project, e);
+        }
+    }
+
+    public void unlockCustomUI(Project project) {
+        log.debug("Unlock Custom UI  project " + project.getId());
+        customUILocks.get(project.getId()).unlock();
+    }
+
 
     public boolean lockUsedWsSession(String userId) {
         try {
