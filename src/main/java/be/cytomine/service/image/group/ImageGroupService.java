@@ -18,8 +18,6 @@ package be.cytomine.service.image.group;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
-import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.image.group.ImageGroup;
 import be.cytomine.domain.image.group.ImageGroupImageInstance;
 import be.cytomine.domain.project.Project;
