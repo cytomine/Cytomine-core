@@ -1,12 +1,15 @@
 package be.cytomine.config.properties;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.List;
 
 @Data
-@ConfigurationProperties(prefix = "lti", ignoreUnknownFields = false)
+@AllArgsConstructor
+@NoArgsConstructor
 public class LtiProperties {
 
     private boolean enabled;

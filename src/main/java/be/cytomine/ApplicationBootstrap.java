@@ -58,7 +58,7 @@ import static be.cytomine.service.database.BootstrapTestsDataService.*;
 @Order(0)
 @Slf4j
 @RequiredArgsConstructor
-@EnableConfigurationProperties({LiquibaseProperties.class, ApplicationProperties.class, LtiProperties.class})
+@EnableConfigurationProperties({LiquibaseProperties.class, ApplicationProperties.class})
 @Transactional
 class ApplicationBootstrap {
 

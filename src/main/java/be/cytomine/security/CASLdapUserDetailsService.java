@@ -16,7 +16,6 @@ package be.cytomine.security;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
 import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.security.*;
 import be.cytomine.exceptions.ForbiddenException;

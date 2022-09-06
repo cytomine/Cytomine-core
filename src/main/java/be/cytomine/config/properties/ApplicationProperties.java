@@ -115,10 +115,6 @@ public class ApplicationProperties {
     public void setAnnotation(Annotation annotation) {
         this.annotation = annotation;
     }
-
-
-
-
 }
 @ToString
 class Software {
@@ -156,3 +152,4 @@ class Annotation {
         this.maxNumberOfPoint = maxNumberOfPoint;
     }
 }
+
