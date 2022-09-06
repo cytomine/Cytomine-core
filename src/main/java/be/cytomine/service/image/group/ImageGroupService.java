@@ -18,6 +18,8 @@ package be.cytomine.service.image.group;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.image.group.ImageGroup;
 import be.cytomine.domain.image.group.ImageGroupImageInstance;
 import be.cytomine.domain.project.Project;
@@ -40,7 +42,6 @@ import javax.transaction.Transactional;
 import java.util.*;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
-import static org.springframework.security.acls.domain.BasePermission.WRITE;
 
 @Slf4j
 @Service
@@ -115,6 +116,7 @@ public class ImageGroupService extends ModelService {
         transactionService.start();
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
+        securityACLService.check(json.getJSONAttrLong("project"), Project.class, READ);
 
         return executeCommand(new AddCommand(currentUser), null, json);
     }
@@ -123,7 +125,7 @@ public class ImageGroupService extends ModelService {
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
-        securityACLService.check(domain.container(), WRITE);
+        securityACLService.check(domain.container(), READ);
 
         return executeCommand(new EditCommand(currentUser, transaction), domain, jsonNewData);
     }
@@ -132,7 +134,7 @@ public class ImageGroupService extends ModelService {
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
-        securityACLService.check(domain.container(), WRITE);
+        securityACLService.check(domain.container(), READ);
 
         return executeCommand(new DeleteCommand(currentUser, transaction), domain, null);
     }
