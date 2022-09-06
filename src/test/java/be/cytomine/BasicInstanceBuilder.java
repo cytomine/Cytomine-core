@@ -1021,4 +1021,8 @@ public class BasicInstanceBuilder {
     public ImageGroup given_an_imagegroup() {
         return persistAndReturn(given_a_not_persisted_imagegroup(given_a_project()));
     }
+
+    public ImageGroup given_an_imagegroup(Project project) {
+        return persistAndReturn(given_a_not_persisted_imagegroup(project));
+    }
 }
