@@ -18,6 +18,7 @@ package be.cytomine;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.*;
+import be.cytomine.domain.image.group.ImageGroup;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.meta.*;
 import be.cytomine.domain.middleware.ImageServer;
@@ -1006,5 +1007,18 @@ public class BasicInstanceBuilder {
         return secUserSecRole;
     }
 
+    public ImageGroup given_a_not_persisted_imagegroup() {
+        return given_a_not_persisted_imagegroup(given_a_project());
+    }
 
+    public ImageGroup given_a_not_persisted_imagegroup(Project project) {
+        ImageGroup imageGroup = new ImageGroup();
+        imageGroup.setName(randomString());
+        imageGroup.setProject(project);
+        return imageGroup;
+    }
+
+    public ImageGroup given_an_imagegroup() {
+        return persistAndReturn(given_a_not_persisted_imagegroup(given_a_project()));
+    }
 }
