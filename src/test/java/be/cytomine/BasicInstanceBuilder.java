@@ -1056,4 +1056,25 @@ public class BasicInstanceBuilder {
         igii.setImage(image);
         return persistAndReturn(igii);
     }
+
+    public AnnotationGroup given_a_not_persisted_annotation_group(Project project, ImageGroup imageGroup) {
+        AnnotationGroup annotationGroup = new AnnotationGroup();
+        annotationGroup.setProject(project);
+        annotationGroup.setImageGroup(imageGroup);
+        annotationGroup.setType("SAME_OBJECT");
+        return annotationGroup;
+    }
+
+    public AnnotationGroup given_a_not_persisted_annotation_group() {
+        Project project = given_a_project();
+        return given_a_not_persisted_annotation_group(project, given_an_imagegroup(project));
+    }
+
+    public AnnotationGroup given_an_annotation_group(Project project, ImageGroup imageGroup) {
+        return persistAndReturn(given_a_not_persisted_annotation_group(project, imageGroup));
+    }
+
+    public AnnotationGroup given_an_annotation_group() {
+        return persistAndReturn(given_a_not_persisted_annotation_group());
+    }
 }
