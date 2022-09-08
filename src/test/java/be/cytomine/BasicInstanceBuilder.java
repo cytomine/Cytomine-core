@@ -373,7 +373,7 @@ public class BasicInstanceBuilder {
         return given_a_not_persisted_storage(given_superadmin());
     }
 
-    private static String randomString() {
+    public static String randomString() {
         return UUID.randomUUID().toString();
     }
 

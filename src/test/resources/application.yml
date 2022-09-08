@@ -67,19 +67,7 @@ ldap:
   attributes: "cn,sn,givenname,mail"
   passwordAttributeName: "password"
 
-lti:
-  enabled: false
-  consumers:
-    -
-      key: "lti_consumer_1_key"
-      name: "lti_consumer_1_name"
-      secret: "chuuuut"
-      usernameParameter: "username"
-    -
-      key: "lti_consumer_2_key"
-      name: "lti_consumer_2_name"
-      secret: "password"
-      usernameParameter: "username"
+
 
 
 application:
@@ -113,7 +101,14 @@ application:
       token-validity-in-seconds-for-remember-me: 2592000
       token-validity-in-seconds-for-short-term: 300
 
-
+    lti:
+      enabled: true
+      consumers:
+        -
+          key: "consumerKey"
+          name: "consumerName"
+          secret: "secret"
+          usernameParameter: null
 
   defaultLanguage: ENGLISH
   imageServerURL: [http://localhost-ims]

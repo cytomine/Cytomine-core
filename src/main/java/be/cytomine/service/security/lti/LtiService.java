@@ -20,6 +20,7 @@ import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.config.properties.LtiConsumerProperties;
 import be.cytomine.config.properties.LtiProperties;
 import be.cytomine.domain.security.*;
+import be.cytomine.dto.LoginWithRedirection;
 import be.cytomine.exceptions.*;
 import be.cytomine.repository.security.*;
 import be.cytomine.service.image.server.StorageService;
@@ -28,9 +29,9 @@ import be.cytomine.service.security.SecUserService;
 import be.cytomine.utils.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.imsglobal.lti.launch.LtiOauthVerifier;
-import org.imsglobal.lti.launch.LtiVerificationException;
-import org.imsglobal.lti.launch.LtiVerificationResult;
+import net.oauth.*;
+import net.oauth.server.OAuthServlet;
+import org.imsglobal.lti.launch.*;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,7 +68,7 @@ public class LtiService {
 
     private final ProjectService projectService;
 
-    public String verifyAndRedirect(JsonObject params, HttpServletRequest request, LtiProperties ltiProperties, LtiOauthVerifier ltiOauthVerifier) throws LtiVerificationException {
+    public LoginWithRedirection verifyAndRedirect(JsonObject params, HttpServletRequest request, LtiProperties ltiProperties, LtiOauthVerifier ltiOauthVerifier) throws LtiVerificationException {
         String consumerName = params.getJSONAttrStr("tool_consumer_instance_name");
         log.info("loginWithLTI by {}", consumerName);
 
@@ -85,14 +87,17 @@ public class LtiService {
         log.debug("lti version : = {}", params.getJSONAttrStr("lti_version"));
         log.debug("oauth_version = {}", params.getJSONAttrStr("oauth_version"));
 
+
         // check LTI/Oauth validity
-        LtiVerificationResult ltiResult = ltiOauthVerifier.verify(request, privateKey);
+        LtiVerificationResult ltiResult = verify(request, privateKey);//ltiOauthVerifier.verify(request, privateKey);
 
         if (!ltiResult.getSuccess()) {
+            log.error(ltiResult.getMessage());
+            log.error(ltiResult.getError().toString());
             throw new WrongArgumentException("LTI verification failed");
         }
 
-        String username = consumer.getUsernameParameter()!=null ? params.getJSONAttrStr(consumer.getUsernameParameter())
+        String username = StringUtils.isNotBlank(consumer.getUsernameParameter()) ? params.getJSONAttrStr(consumer.getUsernameParameter())
                 : params.getJSONAttrStr("lis_person_sourcedid");
 
         if(username == null || username.isEmpty()) {
@@ -115,7 +120,7 @@ public class LtiService {
 
         String email = params.getJSONAttrStr("lis_person_contact_email_primary");
 
-        log.info("loginWithLTI :{} {} {} {}", firstname, lastname, email, roles);
+        log.debug("loginWithLTI :{} {} {} {}", firstname, lastname, email, roles);
 
         Optional<User> optionalUser = userRepository.findByUsernameLikeIgnoreCase(username);
 
@@ -130,7 +135,7 @@ public class LtiService {
             SecurityUtils.doWithAuth(applicationContext, "superadmin", () -> {
                 User userFromLti;
                 if (optionalUser.isEmpty()) {
-                    log.info("LTI connexion. Create new user " + username);
+                    log.debug("LTI connexion. Create new user " + username);
                     userFromLti = createUnexistingUser(username, firstname, lastname, email);
                 } else {
                     userFromLti = optionalUser.get();
@@ -143,7 +148,7 @@ public class LtiService {
                     log.debug("redirection wanted is {}", redirection);
                     Long projectId = extractProjectId(redirection);
                     if (projectId != null) {
-                        log.info("Project id = " + projectId);
+                        log.debug("Project id = " + projectId);
                         secUserService.addUserToProject(userFromLti, projectService.get(projectId), roles.contains("Instructor"));
                     }
                 }
@@ -151,8 +156,42 @@ public class LtiService {
         } finally {
             SecurityUtils.reauthenticate(applicationContext, username, null);
         }
-        return redirection;
+
+        LoginWithRedirection loginWithRedirection = new LoginWithRedirection();
+        loginWithRedirection.setRedirection(redirection);
+        loginWithRedirection.setUser(userRepository.findByUsernameLikeIgnoreCase(username)
+                .orElseThrow(() -> new ObjectNotFoundException("User", username)));
+
+
+        return loginWithRedirection;
     }
+
+    LtiVerificationResult verify(HttpServletRequest request, String privateKey) {
+        String url = applicationProperties.getServerURL()+"/login/loginWithLTI";
+        log.debug("url = {}", url);
+        OAuthMessage oam = OAuthServlet.getMessage(request, url);
+        String oauth_consumer_key;
+        try {
+            oauth_consumer_key = oam.getConsumerKey();
+        } catch (IOException e) {
+            return new LtiVerificationResult(false, LtiError.BAD_REQUEST, "Unable to find consumer key in message");
+        }
+        log.debug("oauth_consumer_key = {}", oauth_consumer_key);
+        OAuthValidator oav = new SimpleOAuthValidator();
+        OAuthConsumer cons = new OAuthConsumer(null, oauth_consumer_key, privateKey, null);
+        OAuthAccessor acc = new OAuthAccessor(cons);
+        log.debug("privateKey = {}", privateKey);
+        try {
+            oav.validateMessage(oam, acc);
+        } catch (OAuthException  | IOException | java.net.URISyntaxException e) {
+            log.error("Cannot validate LTI", e);
+            return new LtiVerificationResult(false, LtiError.BAD_REQUEST, "Failed to validate: " + e.getLocalizedMessage());
+        }
+        return new LtiVerificationResult(true, new LtiLaunch(request));
+    }
+
+
+
 
     void createUserRoleIfUserIsInstructor(List<String> roles, User userFromLti) {
         SecRole ROLE_USER = secRoleRepository.getUser();
