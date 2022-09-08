@@ -1,4 +1,5 @@
 spring:
+
   main:
 #    lazy-initialization: true
     allow-circular-references: true
@@ -57,6 +58,18 @@ logging:
     org.springframework.data.mongodb.core.MongoTemplate: DEBUG
 #    org.hibernate.type.descriptor.sql: TRACE
 
+ldap:
+  enabled: false
+  server: "ldap://127.0.0.1:390"
+  principal: "CN=admin,OU=users,DC=mtr,DC=com"
+  password: "itachi"
+  search: "OU=users,DC=mtr,DC=com"
+  attributes: "cn,sn,givenname,mail"
+  passwordAttributeName: "password"
+
+
+
+
 application:
   serverId: default
   serverURL: http://localhost:8080
@@ -77,6 +90,8 @@ application:
   instanceHostSupportMail: instanceHostSupportMail@email.com
   instanceHostPhoneNumber: 0999999999
 
+
+
   authentication:
     jwt:
       # This token must be encoded using Base64 and be at least 256 bits long (you can type `openssl rand -base64 64` on your command line to generate a 512 bits one)
@@ -86,7 +101,23 @@ application:
       token-validity-in-seconds-for-remember-me: 2592000
       token-validity-in-seconds-for-short-term: 300
 
+    lti:
+      enabled: true
+      consumers:
+        -
+          key: "consumerKey"
+          name: "consumerName"
+          secret: "secret"
+          usernameParameter: null
 
+    ldap:
+      enabled: false
+      server: "ldap://127.0.0.1:390"
+      principal: "CN=admin,OU=users,DC=mtr,DC=com"
+      password: "itachi"
+      search: "OU=users,DC=mtr,DC=com"
+      attributes: "cn,sn,givenname,mail"
+      passwordAttributeName: "password"
 
   defaultLanguage: ENGLISH
   imageServerURL: [http://localhost-ims]

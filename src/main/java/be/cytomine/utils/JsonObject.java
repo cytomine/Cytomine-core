@@ -44,7 +44,6 @@ public class JsonObject extends HashMap<String, Object> implements JsonInput {
     }
 
 
-
     public boolean isMissing(String key) {
         return !this.containsKey(key) || this.get(key)==null;
     }

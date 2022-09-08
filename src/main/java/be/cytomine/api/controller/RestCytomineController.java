@@ -39,6 +39,7 @@ import be.cytomine.utils.filters.SearchParametersUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -53,6 +54,7 @@ import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -130,7 +132,7 @@ public abstract class RestCytomineController {
             }
         }
 
-        if (request.getMethod().equals("POST")) {
+        if (request.getMethod().equals("POST") && !request.getContentType().equalsIgnoreCase("application/x-www-form-urlencoded")) {
             String bodyData = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
             if (!bodyData.isEmpty()) {
                 Map<String, Object> bodyMap = JsonObject.toMap(bodyData);

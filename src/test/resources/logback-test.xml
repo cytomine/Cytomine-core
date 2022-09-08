@@ -44,4 +44,5 @@
     <logger name="LiquibaseSchemaResolver" level="INFO"/>
     <logger name="springfox.documentation.schema.property" level="ERROR"/>
     <logger name="sun.rmi.transport" level="WARN"/>
+    <logger name="org.springframework.security.ldap" level="DEBUG"/>
 </configuration>
