@@ -42,7 +42,6 @@ import javax.transaction.Transactional;
 import java.util.*;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
-import static org.springframework.security.acls.domain.BasePermission.WRITE;
 
 @Slf4j
 @Service
@@ -137,7 +136,7 @@ public class ImageGroupImageInstanceService extends ModelService {
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
-        securityACLService.check(domain.container(), WRITE);
+        securityACLService.check(domain.container(), READ);
 
         return executeCommand(new DeleteCommand(currentUser, transaction), domain, null);
     }

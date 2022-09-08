@@ -19,6 +19,7 @@ package be.cytomine;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.group.ImageGroup;
+import be.cytomine.domain.image.group.ImageGroupImageInstance;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.meta.*;
 import be.cytomine.domain.middleware.ImageServer;
@@ -1024,5 +1025,35 @@ public class BasicInstanceBuilder {
 
     public ImageGroup given_an_imagegroup(Project project) {
         return persistAndReturn(given_a_not_persisted_imagegroup(project));
+    }
+
+    public ImageGroupImageInstance given_a_not_persisted_imagegroup_imageinstance() {
+        Project project = given_a_project();
+        ImageGroup group = given_an_imagegroup(project);
+        ImageInstance image = given_an_image_instance(project);
+
+        return given_a_not_persisted_imagegroup_imageinstance(group, image);
+    }
+
+    public ImageGroupImageInstance given_a_not_persisted_imagegroup_imageinstance(ImageGroup group, ImageInstance image) {
+        ImageGroupImageInstance igii = new ImageGroupImageInstance();
+        igii.setGroup(group);
+        igii.setImage(image);
+        return igii;
+    }
+
+    public ImageGroupImageInstance given_an_imagegroup_imageinstance() {
+        ImageGroupImageInstance igii = given_a_not_persisted_imagegroup_imageinstance();
+        Project project = given_a_project();
+        igii.setGroup(given_an_imagegroup(project));
+        igii.setImage(given_an_image_instance(project));
+        return persistAndReturn(igii);
+    }
+
+    public ImageGroupImageInstance given_an_imagegroup_imageinstance(ImageGroup group, ImageInstance image) {
+        ImageGroupImageInstance igii = given_a_not_persisted_imagegroup_imageinstance();
+        igii.setGroup(group);
+        igii.setImage(image);
+        return persistAndReturn(igii);
     }
 }
