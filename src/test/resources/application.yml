@@ -110,6 +110,15 @@ application:
           secret: "secret"
           usernameParameter: null
 
+    ldap:
+      enabled: false
+      server: "ldap://127.0.0.1:390"
+      principal: "CN=admin,OU=users,DC=mtr,DC=com"
+      password: "itachi"
+      search: "OU=users,DC=mtr,DC=com"
+      attributes: "cn,sn,givenname,mail"
+      passwordAttributeName: "password"
+
   defaultLanguage: ENGLISH
   imageServerURL: [http://localhost-ims]
   messageBrokerServerURL: messageBrokerServerURL

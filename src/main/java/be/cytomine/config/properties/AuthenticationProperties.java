@@ -26,4 +26,6 @@ public class AuthenticationProperties {
     JwtProperties jwt = new JwtProperties();
 
     LtiProperties lti = new LtiProperties();
+
+    LdapProperties ldap = new LdapProperties();
 }

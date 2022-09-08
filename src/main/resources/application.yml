@@ -52,14 +52,7 @@ javamelody:
     authorized-users: null
     storage-directory: /tmp/javamelody-core
 
-ldap:
-  enabled: false
-  server: "ldap://127.0.0.1:389"
-  principal: "CN=admin,OU=users,DC=mtr,DC=com"
-  password: "itachi"
-  search: "OU=users,DC=mtr,DC=com"
-  attributes: "cn,sn,givenname,mail"
-  passwordAttributeName: "password"
+
 
 application:
   version: 0.0.0 # do not modify this, it will be replace during build (ci)
@@ -92,7 +85,14 @@ application:
       token-validity-in-seconds-for-remember-me: 2592000
       token-validity-in-seconds-for-short-term: 240
 
-
+    ldap:
+      enabled: false
+      server: "ldap://127.0.0.1:389"
+      principal: "CN=admin,OU=users,DC=mtr,DC=com"
+      password: "itachi"
+      search: "OU=users,DC=mtr,DC=com"
+      attributes: "cn,sn,givenname,mail"
+      passwordAttributeName: "password"
 
 
   defaultLanguage: ENGLISH

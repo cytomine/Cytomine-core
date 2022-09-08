@@ -24,6 +24,7 @@ import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.security.jwt.TokenProvider;
 import be.cytomine.security.jwt.TokenType;
+import be.cytomine.security.lti.LitOauthVerifierCustom;
 import be.cytomine.service.security.lti.LtiService;
 import be.cytomine.utils.JsonObject;
 import lombok.AllArgsConstructor;
@@ -60,8 +61,6 @@ public class LoginLTIController extends RestCytomineController {
 
     private final TokenProvider tokenProvider;
 
-    private final UserRepository userRepository;
-
     @RequestMapping(value = "/login/loginWithLTI", method = {GET, POST})
     public RedirectView authorize(
 
@@ -74,17 +73,16 @@ public class LoginLTIController extends RestCytomineController {
             throw new ForbiddenException("LTI is not enabled");
         }
 
-
-        LoginWithRedirection loginWithRedirection = ltiService.verifyAndRedirect(params, request, applicationProperties.getAuthentication().getLti(), new LtiOauthVerifier());
+        LitOauthVerifierCustom litOauthVerifierCustom
+                = new LitOauthVerifierCustom(applicationProperties.getServerURL()+"/login/loginWithLTI");
+        LoginWithRedirection loginWithRedirection = ltiService.verifyAndRedirect(params, request, applicationProperties.getAuthentication().getLti(), litOauthVerifierCustom);
 
         List<GrantedAuthority> authorities = loginWithRedirection.getUser().getRoles().stream().map(x -> new SimpleGrantedAuthority(x.getAuthority())).collect(Collectors.toList());
         Authentication newAuth = new UsernamePasswordAuthenticationToken(loginWithRedirection.getUser().getUsername(),"************", authorities);
         SecurityContextHolder.getContext().setAuthentication(newAuth);
         String token = tokenProvider.createToken(newAuth, TokenType.SESSION);
-        String shortTermToken=  tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM);
         response.setHeader(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
         return new RedirectView(applicationProperties.getServerURL() + "/" + loginWithRedirection.getRedirection() +"?redirect_token=" + URLEncoder.encode(token, Charset.defaultCharset()));
-        //return new RedirectView("http://localhost:8081/#/project/158/images?redirect_token=" + URLEncoder.encode(token, Charset.defaultCharset()));
     }
 
 }

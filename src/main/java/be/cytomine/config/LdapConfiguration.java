@@ -29,13 +29,13 @@ public class LdapConfiguration {
     @Autowired
     Environment env;
 
-    @Value("${ldap.server}")
+    @Value("${application.authentication.ldap.server}")
     private String server;
 
-    @Value("${ldap.principal}")
+    @Value("${application.authentication.ldap.principal}")
     private String principal;
 
-    @Value("${ldap.password}")
+    @Value("${application.authentication.ldap.password}")
     private String password;
 
 

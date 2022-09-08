@@ -222,7 +222,7 @@ public class LoginController extends RestCytomineController {
             throw exception;
         } catch (AuthenticationException exception) {
             log.debug(exception.getClass() + " has been thrown");
-            if (env.getProperty("ldap.enabled", Boolean.class, false)) {
+            if (env.getProperty("application.authentication.ldap.enabled", Boolean.class, false)) {
                 log.debug("Try to authenticate user in LDAP database");
                 authentication = ldapIdentityAuthenticationProvider.authenticate(authenticationToken);
             } else {

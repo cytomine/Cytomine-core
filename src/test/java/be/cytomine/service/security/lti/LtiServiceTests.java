@@ -41,9 +41,7 @@ import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
-import org.imsglobal.lti.launch.LtiOauthVerifier;
-import org.imsglobal.lti.launch.LtiVerificationException;
-import org.imsglobal.lti.launch.LtiVerificationResult;
+import org.imsglobal.lti.launch.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -58,10 +56,7 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -114,6 +109,7 @@ public class LtiServiceTests {
 
         LtiVerificationResult ltiVerificationResult = Mockito.mock(LtiVerificationResult.class);
         Mockito.when(ltiVerificationResult.getSuccess()).thenReturn(responseSuccess);
+        Mockito.when(ltiVerificationResult.getError()).thenReturn(Mockito.mock(LtiError.class));
 
         LtiOauthVerifier ltiOauthVerifier = Mockito.mock(LtiOauthVerifier.class);
         Mockito.when(ltiOauthVerifier.verify(request, "consumerSecret")).thenReturn(ltiVerificationResult);
@@ -384,49 +380,6 @@ public class LtiServiceTests {
                 .orElseThrow(() -> new ObjectNotFoundException("User", username));
         assertThat(secUserService.listAdmins(project)).contains(user);
     }
-
-
-
-
-//
-//lti_verification_instructor_not_in_project_add_user_in_this_project_as_admin()
-
-
-
-//Params:
-//tool_consumer_instance_name
-//oauth_consumer_key
-//lti_version
-//oauth_version
-//
-//
-// this.version = request.getParameter("lti_version");
-//        this.messageType = request.getParameter("lti_message_type");
-//        this.resourceLinkId = request.getParameter("resource_link_id");
-//        this.contextId = request.getParameter("context_id");
-//        this.launchPresentationReturnUrl = request.getParameter("launch_presentation_return_url");
-//        this.toolConsumerInstanceGuid = request.getParameter("tool_consumer_instance_guid");
-//
-//
-//lis_person_sourcedid
-//
-//lis_person_name_given
-//lis_person_name_family
-//
-//roles
-//
-//lis_person_contact_email_primary
-//
-//custom_redirect
-//
-//
-//request.getRequestURL()
-//
-//
-//
-//
-//
-
 
 
     @Test

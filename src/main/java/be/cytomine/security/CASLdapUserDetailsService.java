@@ -78,7 +78,7 @@ public class CASLdapUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsernameLikeIgnoreCase(username)
                 .orElseGet(() -> {
                     try {
-                        Map<String, Object> ldapResults = ldapClient.getUserInfo(env.getProperty("ldap.search", "NO_LDAP_SEARCH"), username, Arrays.stream(env.getProperty("ldap.attributes").split(",")).toList());
+                        Map<String, Object> ldapResults = ldapClient.getUserInfo(env.getProperty("application.authentication.ldap.search", "NO_LDAP_SEARCH"), username, Arrays.stream(env.getProperty("application.authentication.ldap.attributes").split(",")).toList());
                         log.debug("ldap results: " + ldapResults);
 
                         if (ldapResults==null) {

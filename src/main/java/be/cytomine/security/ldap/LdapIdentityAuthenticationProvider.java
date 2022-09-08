@@ -35,12 +35,12 @@ public class LdapIdentityAuthenticationProvider implements AuthenticationProvide
         String username = authentication.getName();
         String password = authentication.getCredentials().toString();
 
-        String search = env.getProperty("ldap.search", "NO_LDAP_SEARCH");
-        List<String> attrIds = Arrays.stream(env.getProperty("ldap.attributes").split(",")).toList();
+        String search = env.getProperty("application.authentication.ldap.search", "NO_LDAP_SEARCH");
+        List<String> attrIds = Arrays.stream(env.getProperty("application.authentication.ldap.attributes").split(",")).toList();
 
         try {
             if (ldapClient.isInLDAP(search, username, attrIds)) {
-                if (ldapClient.hasValidCredential("cn="+username +"," + search, env.getProperty("ldap.passwordAttributeName", "NO_LDAP_SEARCH"), password)) {
+                if (ldapClient.hasValidCredential("cn="+username +"," + search, env.getProperty("application.authentication.ldap.passwordAttributeName", "NO_LDAP_SEARCH"), password)) {
                     UserDetails userDetails = casLdapUserDetailsService.loadUserByUsername(username);
                     return new UsernamePasswordAuthenticationToken(
                             userDetails,

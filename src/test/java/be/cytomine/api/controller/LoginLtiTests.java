@@ -29,6 +29,7 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.security.jwt.TokenProvider;
 import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.lti.LtiServiceTests;
 import be.cytomine.utils.JsonObject;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -170,7 +171,7 @@ class LoginLtiTests {
                         .content(formUrlEncoded)).andReturn();
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8080/#/project/" + project.getId()+ "/images");
+                .startsWith("http://localhost:8080/#/project/" + project.getId()+ "/images?redirect_token=");
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getHeader("Authorization"))
                 .startsWith("Bearer ");
 

@@ -68,7 +68,7 @@ class LoginControllerLDAPTests {
 
     @DynamicPropertySource
     static void dynamicProperties(DynamicPropertyRegistry registry) {
-        registry.add("ldap.enabled", () -> true);
+        registry.add("application.authentication.ldap.enabled", () -> true);
     }
 
     @Test

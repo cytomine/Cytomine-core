@@ -59,7 +59,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Value("${application.authentication.jwt.token-validity-in-seconds}")
     Long tokenValidityInSeconds;
 
-    @Value("${ldap.enabled}")
+    @Value("${application.authentication.ldap.enabled}")
     Boolean ldapEnabled;
 
     public SecurityConfiguration(TokenProvider tokenProvider, DomainUserDetailsService domainUserDetailsService, CASLdapUserDetailsService casLdapUserDetailsService, SecUserRepository secUserRepository) {

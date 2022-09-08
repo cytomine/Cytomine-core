@@ -89,7 +89,7 @@ public class LtiService {
 
 
         // check LTI/Oauth validity
-        LtiVerificationResult ltiResult = verify(request, privateKey);//ltiOauthVerifier.verify(request, privateKey);
+        LtiVerificationResult ltiResult = ltiOauthVerifier.verify(request, privateKey);//ltiOauthVerifier.verify(request, privateKey);
 
         if (!ltiResult.getSuccess()) {
             log.error(ltiResult.getMessage());
@@ -164,30 +164,6 @@ public class LtiService {
 
 
         return loginWithRedirection;
-    }
-
-    LtiVerificationResult verify(HttpServletRequest request, String privateKey) {
-        String url = applicationProperties.getServerURL()+"/login/loginWithLTI";
-        log.debug("url = {}", url);
-        OAuthMessage oam = OAuthServlet.getMessage(request, url);
-        String oauth_consumer_key;
-        try {
-            oauth_consumer_key = oam.getConsumerKey();
-        } catch (IOException e) {
-            return new LtiVerificationResult(false, LtiError.BAD_REQUEST, "Unable to find consumer key in message");
-        }
-        log.debug("oauth_consumer_key = {}", oauth_consumer_key);
-        OAuthValidator oav = new SimpleOAuthValidator();
-        OAuthConsumer cons = new OAuthConsumer(null, oauth_consumer_key, privateKey, null);
-        OAuthAccessor acc = new OAuthAccessor(cons);
-        log.debug("privateKey = {}", privateKey);
-        try {
-            oav.validateMessage(oam, acc);
-        } catch (OAuthException  | IOException | java.net.URISyntaxException e) {
-            log.error("Cannot validate LTI", e);
-            return new LtiVerificationResult(false, LtiError.BAD_REQUEST, "Failed to validate: " + e.getLocalizedMessage());
-        }
-        return new LtiVerificationResult(true, new LtiLaunch(request));
     }
 
 
