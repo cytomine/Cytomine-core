@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
-import static org.springframework.security.acls.domain.BasePermission.WRITE;
 
 @Slf4j
 @Service
@@ -122,6 +121,7 @@ public class AnnotationLinkService extends ModelService {
             throw new WrongArgumentException("Group and annotation are not in the same project!");
         }
 
+        json.put("annotationIdent", annotation.getId());
         json.put("annotationClassName", annotation.getClass().getName());
 
         return executeCommand(new AddCommand(currentUser), null, json);
@@ -131,7 +131,7 @@ public class AnnotationLinkService extends ModelService {
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
-        securityACLService.check(domain.container(), WRITE);
+        securityACLService.check(domain.container(), READ);
 
         return executeCommand(new DeleteCommand(currentUser, transaction), domain, null);
     }
