@@ -153,7 +153,8 @@ public class ParamsService {
             Map.entry("showUser","user"),
             Map.entry("showSlice","slice"),
             Map.entry("showTrack","track"),
-            Map.entry("showImageGroup", "imageGroup")
+            Map.entry("showImageGroup", "imageGroup"),
+            Map.entry("showLink", "group")
     );
 
 

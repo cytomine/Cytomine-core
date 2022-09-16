@@ -1,20 +1,20 @@
 package be.cytomine.repository;
 
 /*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2009-2022. Authors: see NOTICE file.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import javax.persistence.EntityManager;
 import java.util.LinkedHashMap;
@@ -90,6 +90,14 @@ public class AlgoAnnotationListing extends AnnotationListing {
         imageGroup.put("imageGroup", "ig.group_id");
         map.put("imageGroup", imageGroup);
 
+        AvailableColumns group = new AvailableColumns();
+        group.put("group", "al.group_id");
+        group.put("annotationLinks", "al.id");
+        group.put("linkedAnnotations", "al.annotation_ident");
+        group.put("linkedImages", "al.image_id");
+        group.put("linkedUpdated", "al.updated");
+        map.put("group", group);
+
         AvailableColumns image = new AvailableColumns();
         image.put("originalFilename", "ai.original_filename");
         image.put("instanceFilename", "COALESCE(ii.instance_filename, ai.original_filename)");
@@ -153,6 +161,11 @@ public class AlgoAnnotationListing extends AnnotationListing {
 
         if (columnsToPrint.contains("imageGroup")) {
             from += "LEFT JOIN (SELECT * FROM image_group_image_instance WHERE deleted IS NULL) ig ON a.image_id = ig.image_id ";
+        }
+
+        if (columnsToPrint.contains("group") || annotationGroup != null || annotationGroups != null) {
+            from += "LEFT OUTER JOIN (SELECT * FROM annotation_link WHERE deleted IS NULL) al1 ON al1.annotation_ident = a.id ";
+            from += "LEFT OUTER JOIN (SELECT * FROM annotation_link WHERE deleted IS NULL) al ON al.group_id = al1.group_id ";
         }
 
         if (columnsToPrint.contains("image") || tracks != null || track != null) {

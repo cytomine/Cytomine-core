@@ -1,4 +1,4 @@
-package be.cytomine.service.image.group;
+package be.cytomine.service.ontology;
 
 /*
  * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -17,13 +17,16 @@ package be.cytomine.service.image.group;
  */
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.command.*;
+import be.cytomine.domain.command.AddCommand;
+import be.cytomine.domain.command.DeleteCommand;
+import be.cytomine.domain.command.EditCommand;
+import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.image.group.ImageGroup;
 import be.cytomine.domain.ontology.AnnotationGroup;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.repository.image.group.ImageGroupImageInstanceRepository;
-import be.cytomine.repository.image.group.ImageGroupRepository;
+import be.cytomine.exceptions.InvalidRequestException;
+import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.AnnotationGroupRepository;
 import be.cytomine.repository.ontology.AnnotationLinkRepository;
 import be.cytomine.service.CurrentUserService;
@@ -38,20 +41,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Slf4j
 @Service
 @Transactional
-public class ImageGroupService extends ModelService {
+public class AnnotationGroupService extends ModelService {
 
     @Autowired
     private CurrentUserService currentUserService;
-
-    @Autowired
-    private ImageGroupImageInstanceService imageGroupImageInstanceService;
 
     @Autowired
     private SecurityACLService securityACLService;
@@ -63,48 +64,41 @@ public class ImageGroupService extends ModelService {
     private AnnotationGroupRepository annotationGroupRepository;
 
     @Autowired
-    private AnnotationLinkRepository annotationLinkRepository;
-
-    @Autowired
-    private ImageGroupRepository imageGroupRepository;
-
-    @Autowired
-    private ImageGroupImageInstanceRepository imageGroupImageInstanceRepository;
+    AnnotationLinkRepository annotationLinkRepository;
 
     @Override
     public Class currentDomain() {
-        return ImageGroup.class;
+        return AnnotationGroup.class;
     }
 
     @Override
     public CytomineDomain createFromJSON(JsonObject json) {
-        return new ImageGroup().buildDomainFromJson(json, getEntityManager());
+        return new AnnotationGroup().buildDomainFromJson(json, getEntityManager());
     }
 
     @Override
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
-        return List.of(domain.getId(), ((ImageGroup) domain).getName(), ((ImageGroup) domain).getProject().getName());
+        return List.of(domain.getId(), ((AnnotationGroup) domain).getImageGroup().getName());
     }
 
-    public Optional<ImageGroup> find(Long id) {
-        Optional<ImageGroup> imageGroup = imageGroupRepository.findById(id);
-        imageGroup.ifPresent(group -> securityACLService.check(group.container(), READ));
-        return imageGroup;
+    public Optional<AnnotationGroup> find(Long id) {
+        Optional<AnnotationGroup> annotationGroup = annotationGroupRepository.findById(id);
+        annotationGroup.ifPresent(group -> securityACLService.check(group.container(), READ));
+        return annotationGroup;
     }
 
-    public ImageGroup get(Long id) {
+    public AnnotationGroup get(Long id) {
         return find(id).orElse(null);
     }
 
-    public List<ImageGroup> list(Project project) {
+    public List<AnnotationGroup> list(ImageGroup group) {
+        securityACLService.check(group, READ);
+        return annotationGroupRepository.findAllByImageGroup(group);
+    }
+
+    public List<AnnotationGroup> list(Project project) {
         securityACLService.check(project, READ);
-
-        List<ImageGroup> groups = imageGroupRepository.findAllByProject(project);
-        for (ImageGroup group : groups) {
-            group.setImages(imageGroupImageInstanceService.buildImageInstances(group));
-        }
-
-        return groups;
+        return annotationGroupRepository.findAllByProject(project);
     }
 
     public CommandResponse add(JsonObject json) {
@@ -134,15 +128,20 @@ public class ImageGroupService extends ModelService {
         return executeCommand(new DeleteCommand(currentUser, transaction), domain, null);
     }
 
-    protected void beforeDelete(CytomineDomain domain) {
-        ImageGroup imageGroup = (ImageGroup) domain;
+    public CommandResponse merge(Long id, Long mergedId) {
+        AnnotationGroup ag = get(id);
+        AnnotationGroup agToMerge = get(mergedId);
 
-        List<AnnotationGroup> annotationGroups = annotationGroupRepository.findAllByImageGroup(imageGroup);
-        for (AnnotationGroup annotationGroup : annotationGroups) {
-            annotationLinkRepository.deleteAllByGroup(annotationGroup);
+        if (ag == null || agToMerge == null) {
+            throw new ObjectNotFoundException("AnnotationGroup {} not found.", ag == null ? id : mergedId);
+        }
+        if (ag.getProject() != agToMerge.getProject() || ag.getImageGroup() != agToMerge.getImageGroup() || !ag.getType().equals(agToMerge.getType())) {
+            throw new InvalidRequestException("Annotation groups " + id + " and " + mergedId + " are incompatible to be merged.");
         }
 
-        annotationGroupRepository.deleteAllByImageGroup(imageGroup);
-        imageGroupImageInstanceRepository.deleteAllByGroup(imageGroup);
+        annotationLinkRepository.setMergedAnnotationGroup(ag, agToMerge);
+        annotationGroupRepository.delete(agToMerge);
+
+        return executeCommand(new EditCommand(currentUserService.getCurrentUser(), null), ag, AnnotationGroup.getDataFromDomain(ag));
     }
 }

@@ -17,8 +17,10 @@ package be.cytomine.api.controller.image.group;
  */
 
 import be.cytomine.api.controller.RestCytomineController;
+import be.cytomine.domain.image.group.ImageGroup;
 import be.cytomine.domain.project.Project;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.service.image.group.ImageGroupImageInstanceService;
 import be.cytomine.service.image.group.ImageGroupService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.utils.JsonObject;
@@ -32,6 +34,8 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RequiredArgsConstructor
 public class RestImageGroupController extends RestCytomineController {
+
+    private final ImageGroupImageInstanceService imageGroupImageInstanceService;
 
     private final ImageGroupService imageGroupService;
 
@@ -55,9 +59,11 @@ public class RestImageGroupController extends RestCytomineController {
     @GetMapping("/imagegroup/{id}.json")
     public ResponseEntity<String> show(@PathVariable Long id) {
         log.debug("REST request to get imagegroup: " + id);
-        return imageGroupService.find(id)
-                .map(this::responseSuccess)
-                .orElseThrow(() -> new ObjectNotFoundException("ImageGroup", id));
+
+        ImageGroup group = imageGroupService.find(id).orElseThrow(() -> new ObjectNotFoundException("ImageGroup", id));
+        group.setImages(imageGroupImageInstanceService.buildImageInstances(group));
+
+        return responseSuccess(group);
     }
 
     @PutMapping("/imagegroup/{id}.json")

@@ -19,4 +19,6 @@
     <include file="config/liquibase/changelog/00000000_6_image_filters.xml" relativeToChangelogFile="false"/>
     
     <include file="config/liquibase/changelog/00000000_7_z_name.xml" relativeToChangelogFile="false"/>
+    
+    <include file="config/liquibase/changelog/00000000_6_annot_links.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

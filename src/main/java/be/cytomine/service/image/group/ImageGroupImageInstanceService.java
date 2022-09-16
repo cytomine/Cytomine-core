@@ -28,6 +28,7 @@ import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.group.ImageGroupImageInstanceRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
+import be.cytomine.service.UrlApi;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.security.SecurityACLService;
@@ -154,5 +155,20 @@ public class ImageGroupImageInstanceService extends ModelService {
                 .map((ImageGroupImageInstance::getImage))
                 .sorted(Comparator.comparing(ImageInstance::getBlindInstanceFilename))
                 .toList();
+    }
+
+    public List<Object> buildImageInstances(ImageGroup group) {
+        List<Object> images = new ArrayList<>();
+        for (ImageGroupImageInstance igii : list(group)) {
+            images.add(Map.of(
+                    "id", igii.getImage().getId(),
+                    "instanceFilename", igii.getImage().getBlindInstanceFilename(),
+                    "thumb", UrlApi.getImageInstanceThumbUrlWithMaxSize(igii.getImage().getId()),
+                    "width", igii.getImage().getBaseImage().getWidth(),
+                    "height", igii.getImage().getBaseImage().getHeight()
+            ));
+        }
+
+        return images;
     }
 }

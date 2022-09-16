@@ -1091,4 +1091,59 @@ public class BasicInstanceBuilder {
         igii.setImage(image);
         return persistAndReturn(igii);
     }
+
+    public AnnotationGroup given_a_not_persisted_annotation_group(Project project, ImageGroup imageGroup) {
+        AnnotationGroup annotationGroup = new AnnotationGroup();
+        annotationGroup.setProject(project);
+        annotationGroup.setImageGroup(imageGroup);
+        annotationGroup.setType("SAME_OBJECT");
+        return annotationGroup;
+    }
+
+    public AnnotationGroup given_a_not_persisted_annotation_group() {
+        Project project = given_a_project();
+        return given_a_not_persisted_annotation_group(project, given_an_imagegroup(project));
+    }
+
+    public AnnotationGroup given_an_annotation_group(Project project, ImageGroup imageGroup) {
+        return persistAndReturn(given_a_not_persisted_annotation_group(project, imageGroup));
+    }
+
+    public AnnotationGroup given_an_annotation_group() {
+        return persistAndReturn(given_a_not_persisted_annotation_group());
+    }
+
+    public AnnotationLink given_a_not_persisted_annotation_link(
+            UserAnnotation annotation, AnnotationGroup annotationGroup, ImageInstance image
+    ) {
+        AnnotationLink annotationLink = new AnnotationLink();
+        annotationLink.setAnnotationClassName(annotation.getClass().getName());
+        annotationLink.setAnnotationIdent(annotation.getId());
+        annotationLink.setGroup(annotationGroup);
+        annotationLink.setImage(image);
+
+        return annotationLink;
+    }
+
+    public AnnotationLink given_a_not_persisted_annotation_link() {
+        Project project = given_a_project();
+
+        return given_a_not_persisted_annotation_link(
+                given_a_user_annotation(project),
+                given_an_annotation_group(project, given_an_imagegroup(project)),
+                given_an_image_instance(project)
+        );
+    }
+
+    public AnnotationLink given_an_annotation_link(
+            UserAnnotation annotation, AnnotationGroup annotationGroup, ImageInstance image
+    ) {
+        return persistAndReturn(given_a_not_persisted_annotation_link(
+                annotation, annotationGroup, image
+        ));
+    }
+
+    public AnnotationLink given_an_annotation_link() {
+        return persistAndReturn(given_a_not_persisted_annotation_link());
+    }
 }
