@@ -1,4 +1,4 @@
-package be.cytomine.config;
+package be.cytomine.config.properties;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -17,14 +17,11 @@ package be.cytomine.config;
 */
 
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
-@Getter
-@Setter
+@Data
 @ToString
-public class NotificationConfiguration {
+public class AuthenticationProperties {
 
-    private String email;
+    JwtProperties jwt = new JwtProperties();
 }

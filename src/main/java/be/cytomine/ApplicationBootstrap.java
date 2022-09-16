@@ -16,16 +16,11 @@ package be.cytomine;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.config.nosqlmigration.InitialMongodbSetupMigration;
-import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.repository.image.server.StorageRepository;
-import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.service.PermissionService;
@@ -33,54 +28,42 @@ import be.cytomine.service.UrlApi;
 import be.cytomine.service.database.BootstrapDataService;
 import be.cytomine.service.database.BootstrapTestsDataService;
 import be.cytomine.service.database.BootstrapUtilsService;
-import be.cytomine.service.database.SequenceService;
-import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.utils.Dataset;
 import be.cytomine.utils.EnvironmentUtils;
 import be.cytomine.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.thymeleaf.context.Context;
-import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import javax.annotation.PostConstruct;
-import javax.persistence.EntityManager;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static be.cytomine.service.database.BootstrapTestsDataService.*;
-import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
 @Component
 @Order(0)
 @Slf4j
 @RequiredArgsConstructor
-@EnableConfigurationProperties({LiquibaseProperties.class,ApplicationConfiguration.class})
+@EnableConfigurationProperties({LiquibaseProperties.class, ApplicationProperties.class})
 @Transactional
 class ApplicationBootstrap {
 
     private final SecUserRepository secUserRepository;
 
-    private final ApplicationConfiguration applicationConfiguration;
+    private final ApplicationProperties applicationProperties;
 
     private final Environment environment;
 
@@ -152,14 +135,14 @@ class ApplicationBootstrap {
         log.info ("Current directory:" + new File( "./" ).getAbsolutePath());
         log.info ("HeadLess:" + java.awt.GraphicsEnvironment.isHeadless());
         log.info ("JVM Args" + ManagementFactory.getRuntimeMXBean().getInputArguments());
-        log.info (applicationConfiguration.toString());
+        log.info (applicationProperties.toString());
         log.info ("#############################################################################");
         log.info ("#############################################################################");
         log.info ("#############################################################################");
 
         UrlApi.setServerURL(
-                applicationConfiguration.getServerURL(),
-                applicationConfiguration.getUseHTTPInternally()
+                applicationProperties.getServerURL(),
+                applicationProperties.getUseHTTPInternally()
         );
 
         if (EnvironmentUtils.isTest(environment) && secUserRepository.count() == 0) {
@@ -190,23 +173,23 @@ class ApplicationBootstrap {
             bootstrapDataService.initData();
         }
 
-        if (applicationConfiguration.getImageServerPrivateKey()!=null && applicationConfiguration.getImageServerPublicKey()!=null) {
+        if (applicationProperties.getImageServerPrivateKey()!=null && applicationProperties.getImageServerPublicKey()!=null) {
             SecUser imageServerUser = secUserRepository.findByUsernameLikeIgnoreCase("ImageServer1")
                     .orElseThrow(() -> new ObjectNotFoundException("No user imageserver1, cannot assign keys"));
-            imageServerUser.setPrivateKey(applicationConfiguration.getImageServerPrivateKey());
-            imageServerUser.setPublicKey(applicationConfiguration.getImageServerPublicKey());
+            imageServerUser.setPrivateKey(applicationProperties.getImageServerPrivateKey());
+            imageServerUser.setPublicKey(applicationProperties.getImageServerPublicKey());
             secUserRepository.save(imageServerUser);
         }
-        if (applicationConfiguration.getRabbitMQPrivateKey()!=null && applicationConfiguration.getRabbitMQPrivateKey()!=null) {
+        if (applicationProperties.getRabbitMQPrivateKey()!=null && applicationProperties.getRabbitMQPrivateKey()!=null) {
             secUserRepository.findByUsernameLikeIgnoreCase("rabbitmq")
                     .ifPresent(user -> {
-                        user.setPrivateKey(applicationConfiguration.getRabbitMQPrivateKey());
-                        user.setPublicKey(applicationConfiguration.getRabbitMQPublicKey());
+                        user.setPrivateKey(applicationProperties.getRabbitMQPrivateKey());
+                        user.setPublicKey(applicationProperties.getRabbitMQPublicKey());
                             secUserRepository.save(user);
                     });
         }
 
-        File softwareSourceDirectory = new File(applicationConfiguration.getSoftwareSources());
+        File softwareSourceDirectory = new File(applicationProperties.getSoftwareSources());
         if (!softwareSourceDirectory.exists() && !softwareSourceDirectory.mkdirs()) {
             log.error("Software Sources folder doesn't exist");
         }
@@ -216,6 +199,9 @@ class ApplicationBootstrap {
         log.info("create multiple IS and Retrieval...");
         bootstrapUtilDataService.createMultipleImageServer();
         bootstrapUtilDataService.updateProcessingServerRabbitQueues();
+
+        log.info("Check image filters...");
+        bootstrapDataService.updateImageFilters();
         log.info ("#############################################################################");
         log.info ("###################              READY              #########################");
         log.info ("#############################################################################");
@@ -223,7 +209,7 @@ class ApplicationBootstrap {
     }
 
     private void printConfiguration() {
-        log.info("Cytomine-core: " + applicationConfiguration.getVersion());
+        log.info("Cytomine-core: " + applicationProperties.getVersion());
         MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
         log.info("*************** SYSTEM CONFIGURATION ******************");
         log.info("Max memory:" + memoryBean.getHeapMemoryUsage().getMax() / (1024 * 1024) + "MB");
@@ -235,7 +221,7 @@ class ApplicationBootstrap {
 //            log.info(entry.getKey() + "=" + entry.getValue());
 //        }
         log.info("*************** APPLICATION CONFIGURATION ******************");
-        log.info(applicationConfiguration.toString());
+        log.info(applicationProperties.toString());
          final Environment env = applicationContext.getEnvironment();
 
         log.info("====== Environment and configuration ======");

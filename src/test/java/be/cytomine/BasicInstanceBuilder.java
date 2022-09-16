@@ -22,15 +22,19 @@ import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.meta.*;
 import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.*;
+import be.cytomine.domain.processing.ImageFilter;
+import be.cytomine.domain.processing.ImageFilterProject;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.project.ProjectDefaultLayer;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.*;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.MimeRepository;
+import be.cytomine.repository.processing.ImagingServerRepository;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.service.PermissionService;
+import be.cytomine.utils.StringUtils;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.springframework.security.acls.model.Permission;
@@ -43,6 +47,7 @@ import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
@@ -75,6 +80,8 @@ public class BasicInstanceBuilder {
 
     ApplicationBootstrap applicationBootstrap;
 
+    ImagingServerRepository imagingServerRepository;
+
     private static User aUser;
     private static User anAdmin;
     private static User aGuest;
@@ -86,7 +93,8 @@ public class BasicInstanceBuilder {
             PermissionService permissionService,
             SecRoleRepository secRoleRepository,
             MimeRepository mimeRepository,
-            ApplicationBootstrap applicationBootstrap) {
+            ApplicationBootstrap applicationBootstrap,
+            ImagingServerRepository imagingServerRepository) {
         if (secRoleRepository.count()==0) {
             applicationBootstrap.init();
         }
@@ -96,6 +104,7 @@ public class BasicInstanceBuilder {
         this.secRoleRepository = secRoleRepository;
         this.mimeRepository = mimeRepository;
         this.transactionTemplate = transactionTemplate;
+        this.imagingServerRepository = imagingServerRepository;
 
         this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
@@ -223,6 +232,32 @@ public class BasicInstanceBuilder {
         return user;
     }
 
+    public ImageFilterProject given_a_not_persisted_image_filter_project(ImageFilter imageFilter, Project project) {
+        ImageFilterProject imageFilterProject = new ImageFilterProject();
+        imageFilterProject.setImageFilter(imageFilter);
+        imageFilterProject.setProject(project);
+        return imageFilterProject;
+    }
+
+    public ImageFilterProject given_a_image_filter_project() {
+        return persistAndReturn(given_a_not_persisted_image_filter_project(given_a_image_filter(), given_a_project()));
+    }
+
+    public ImageFilterProject given_a_image_filter_project(ImageFilter imageFilter, Project project) {
+        return persistAndReturn(given_a_not_persisted_image_filter_project(imageFilter, project));
+    }
+
+    public ImageFilter given_a_not_persisted_image_filter() {
+        ImageFilter imageFilter = new ImageFilter();
+        imageFilter.setName(randomString());
+        imageFilter.setMethod(randomString());
+        imageFilter.setImagingServer(imagingServerRepository.findAll().stream().findFirst()
+                .orElseThrow(() -> new ObjectNotFoundException("ImageFilter", "(at least one)")));
+        return imageFilter;
+    }
+    public ImageFilter given_a_image_filter() {
+        return persistAndReturn(given_a_not_persisted_image_filter());
+    }
 
     public Term given_a_term() {
         return persistAndReturn(given_a_not_persisted_term(given_an_ontology()));

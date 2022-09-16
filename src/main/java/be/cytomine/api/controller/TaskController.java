@@ -16,30 +16,18 @@ package be.cytomine.api.controller;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.social.LastConnection;
-import be.cytomine.domain.social.PersistentConnection;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.repositorynosql.social.LastConnectionRepository;
-import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
 import be.cytomine.service.CurrentUserService;
-import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.SecurityUtils;
 import be.cytomine.utils.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.RequestContextHolder;
-
-import javax.servlet.http.HttpSession;
-import java.util.Date;
 
 @RestController
 @RequestMapping("/api")

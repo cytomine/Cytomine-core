@@ -16,7 +16,7 @@ package be.cytomine.service.database;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.image.Mime;
 import be.cytomine.domain.image.server.MimeImageServer;
 import be.cytomine.domain.meta.Configuration;
@@ -56,8 +56,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 @Service
 @Slf4j
@@ -74,7 +72,7 @@ public class BootstrapUtilsService {
     UserRepository userRepository;
 
     @Autowired
-    ApplicationConfiguration applicationConfiguration;
+    ApplicationProperties applicationProperties;
 
     @Autowired
     StorageService storageService;
@@ -141,7 +139,7 @@ public class BootstrapUtilsService {
             user.setEmail(email);
             user.setPassword(password);
             user.encodePassword(passwordEncoder);
-            user.setLanguage(Language.valueOf(applicationConfiguration.getDefaultLanguage()));
+            user.setLanguage(Language.valueOf(applicationProperties.getDefaultLanguage()));
             user.setEnabled(true);
             user.setIsDeveloper(false);
             user.setOrigin("BOOTSTRAP");
@@ -196,14 +194,14 @@ public class BootstrapUtilsService {
         relationRepository.createIfNotExist(name);
     }
 
-    public void createFilter(String name, String baseUrl, ImagingServer imagingServer) {
-        if (imageFilterRepository.findByName(name).isEmpty()) {
-            ImageFilter filter = new ImageFilter();
-            filter.setName(name);
-            filter.setBaseUrl(baseUrl);
-            filter.setImagingServer(imagingServer);
-            imageFilterRepository.save(filter);
-        }
+    public void createFilter(String name, String method, ImagingServer imagingServer, Boolean available) {
+        ImageFilter filter = imageFilterRepository.findByName(name)
+                .orElseGet(ImageFilter::new);
+        filter.setName(name);
+        filter.setMethod(method);
+        filter.setImagingServer(imagingServer);
+        filter.setAvailable(available);
+        imageFilterRepository.save(filter);
     }
 
     public void createMime(String extension, String mimeType) {
@@ -240,7 +238,7 @@ public class BootstrapUtilsService {
     public void createMultipleImageServer() {
         for (ImageServer imageServer : imageServerRepository.findAll()) {
             log.info("imageServer '" + imageServer.getUrl() + "'");
-            if(!applicationConfiguration.getImageServerURL().contains(imageServer.getUrl())) {
+            if(!applicationProperties.getImageServerURL().contains(imageServer.getUrl())) {
                 log.info("ImageServer not in config, disable it");
                 imageServer.setAvailable(false);
                 imageServerRepository.save(imageServer);
@@ -249,8 +247,8 @@ public class BootstrapUtilsService {
             }
         }
 
-        for (int i=0; i<applicationConfiguration.getImageServerURL().size(); i++) {
-            createImageServer("IMS " + i, applicationConfiguration.getImageServerURL().get(i), applicationConfiguration.getStoragePath());
+        for (int i = 0; i< applicationProperties.getImageServerURL().size(); i++) {
+            createImageServer("IMS " + i, applicationProperties.getImageServerURL().get(i), applicationProperties.getStoragePath());
         }
     }
     
@@ -274,8 +272,8 @@ public class BootstrapUtilsService {
        }
    }
 
-    public ImagingServer createImagingServer() {
-        String imageServerURL = applicationConfiguration.getImageServerURL().stream().findFirst()
+    public ImagingServer returnOrCreateImagingServer() {
+        String imageServerURL = applicationProperties.getImageServerURL().stream().findFirst()
                 .orElseThrow(() -> new ObjectNotFoundException("No image server defined in configuration"));
         if (imagingServerRepository.findByUrl(imageServerURL).isEmpty()) {
             ImagingServer imagingServer = new ImagingServer();
@@ -285,6 +283,7 @@ public class BootstrapUtilsService {
             return imagingServerRepository.findByUrl(imageServerURL).get();
         }
     }
+
 
     public void updateProcessingServerRabbitQueues() {
         // TODO: TRANSLATION DONE, BUT amqpQueueService HAS TO BE IMPLEMENTED
@@ -563,5 +562,6 @@ public class BootstrapUtilsService {
         softwareUserRepository.setPrefix(prefix);
         entityManager.persist(softwareUserRepository);
     }
+
 
 }

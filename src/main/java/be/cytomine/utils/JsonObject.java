@@ -388,6 +388,14 @@ public class JsonObject extends HashMap<String, Object> implements JsonInput {
         }
     }
 
+    public JsonObject getJSONObject(String attr) {
+        if (this.get(attr) != null && !this.get(attr).toString().equals("null")) {
+            return new JsonObject(getJSONAttrMap(attr));
+        } else {
+            return new JsonObject();
+        }
+    }
+
     public Long getId() {
         return getJSONAttrLong("id");
     }
