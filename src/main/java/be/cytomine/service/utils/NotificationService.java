@@ -16,12 +16,11 @@ package be.cytomine.service.utils;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.security.ForgotPasswordToken;
 import be.cytomine.domain.security.User;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring5.SpringTemplateEngine;
@@ -40,7 +39,7 @@ public class NotificationService {
 
     SpringTemplateEngine templateEngine;
 
-    ApplicationConfiguration applicationConfiguration;
+    ApplicationProperties applicationProperties;
 
     public void notifyWelcome(User sender, User guestUser, ForgotPasswordToken forgotPasswordToken) throws MessagingException {
         String mailTitle = sender.getFirstname() + " " + sender.getLastname() + " invited you to join Cytomine";
@@ -57,10 +56,10 @@ public class NotificationService {
         context.setVariable("username", sender.getUsername());
         context.setVariable("tokenKey", forgotPasswordToken.getTokenKey());
         context.setVariable("expiryDate", forgotPasswordToken.getExpiryDate());
-        context.setVariable("by", applicationConfiguration.getServerURL());
-        context.setVariable("website", applicationConfiguration.getInstanceHostWebsite());
-        context.setVariable("mailFrom", applicationConfiguration.getInstanceHostSupportMail());
-        context.setVariable("phoneNumber", applicationConfiguration.getInstanceHostPhoneNumber());
+        context.setVariable("by", applicationProperties.getServerURL());
+        context.setVariable("website", applicationProperties.getInstanceHostWebsite());
+        context.setVariable("mailFrom", applicationProperties.getInstanceHostSupportMail());
+        context.setVariable("phoneNumber", applicationProperties.getInstanceHostPhoneNumber());
 
         return templateEngine.process("mail/welcome.html", context);
     }
@@ -92,10 +91,10 @@ public class NotificationService {
         context.setVariable("annotationURL", annotationURL);
         context.setVariable("shareAnnotationURL", shareAnnotationURL);
         context.setVariable("cid", cid);
-        context.setVariable("by", applicationConfiguration.getServerURL());
-        context.setVariable("website", applicationConfiguration.getInstanceHostWebsite());
-        context.setVariable("mailFrom", applicationConfiguration.getInstanceHostSupportMail());
-        context.setVariable("phoneNumber", applicationConfiguration.getInstanceHostPhoneNumber());
+        context.setVariable("by", applicationProperties.getServerURL());
+        context.setVariable("website", applicationProperties.getInstanceHostWebsite());
+        context.setVariable("mailFrom", applicationProperties.getInstanceHostSupportMail());
+        context.setVariable("phoneNumber", applicationProperties.getInstanceHostPhoneNumber());
 
         return templateEngine.process("mail/share.html", context);
     }
@@ -110,10 +109,10 @@ public class NotificationService {
     public String buildNotifyForgotUsername(String username) {
         Context context = new Context();
         context.setVariable("username", username);
-        context.setVariable("by", applicationConfiguration.getServerURL());
-        context.setVariable("website", applicationConfiguration.getInstanceHostWebsite());
-        context.setVariable("mailFrom", applicationConfiguration.getInstanceHostSupportMail());
-        context.setVariable("phoneNumber", applicationConfiguration.getInstanceHostPhoneNumber());
+        context.setVariable("by", applicationProperties.getServerURL());
+        context.setVariable("website", applicationProperties.getInstanceHostWebsite());
+        context.setVariable("mailFrom", applicationProperties.getInstanceHostSupportMail());
+        context.setVariable("phoneNumber", applicationProperties.getInstanceHostPhoneNumber());
 
         return templateEngine.process("mail/forgot_username.html", context);
     }
@@ -129,10 +128,10 @@ public class NotificationService {
         context.setVariable("username", username);
         context.setVariable("tokenKey", forgotPasswordToken.getTokenKey());
         context.setVariable("expiryDate", forgotPasswordToken.getExpiryDate());
-        context.setVariable("by", applicationConfiguration.getServerURL());
-        context.setVariable("website", applicationConfiguration.getInstanceHostWebsite());
-        context.setVariable("mailFrom", applicationConfiguration.getInstanceHostSupportMail());
-        context.setVariable("phoneNumber", applicationConfiguration.getInstanceHostPhoneNumber());
+        context.setVariable("by", applicationProperties.getServerURL());
+        context.setVariable("website", applicationProperties.getInstanceHostWebsite());
+        context.setVariable("mailFrom", applicationProperties.getInstanceHostSupportMail());
+        context.setVariable("phoneNumber", applicationProperties.getInstanceHostPhoneNumber());
 
         return templateEngine.process("mail/forgot_password.html", context);
     }

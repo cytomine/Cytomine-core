@@ -16,19 +16,16 @@ package be.cytomine.security;
 * limitations under the License.
 */
 
-import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.config.security.JWTFilter;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.security.jwt.TokenProvider;
 import be.cytomine.security.jwt.TokenType;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestTemplate;
 import org.mockito.Mockito;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockFilterChain;
@@ -37,7 +34,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -54,12 +50,12 @@ class JWTFilterTest {
 
     @BeforeEach
     public void setup() {
-        ApplicationConfiguration applicationConfiguration = new ApplicationConfiguration();
+        ApplicationProperties applicationProperties = new ApplicationProperties();
         String base64Secret = "fd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8";
-        applicationConfiguration.getAuthentication().getJwt().setSecret(base64Secret);
-        applicationConfiguration.getAuthentication().getJwt().setTokenValidityInSeconds(60000L);
-        applicationConfiguration.getAuthentication().getJwt().setTokenValidityInSecondsForRememberMe(60000L);
-        applicationConfiguration.getAuthentication().getJwt().setTokenValidityInSecondsForShortTerm(300L);
+        applicationProperties.getAuthentication().getJwt().setSecret(base64Secret);
+        applicationProperties.getAuthentication().getJwt().setTokenValidityInSeconds(60000L);
+        applicationProperties.getAuthentication().getJwt().setTokenValidityInSecondsForRememberMe(60000L);
+        applicationProperties.getAuthentication().getJwt().setTokenValidityInSecondsForShortTerm(300L);
 
         secUserRepository = Mockito.mock(SecUserRepository.class);
 
@@ -67,7 +63,7 @@ class JWTFilterTest {
         secUser.setUsername("test-user");
         Mockito.when(secUserRepository.findByUsernameLikeIgnoreCase(eq("test-user"))).thenReturn(Optional.of(secUser));
 
-        tokenProvider = new TokenProvider(applicationConfiguration, secUserRepository);
+        tokenProvider = new TokenProvider(applicationProperties, secUserRepository);
 //        ReflectionTestUtils.setField(tokenProvider, "key", Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
 //        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", 6000000);
 //        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMillisecondsForRememberMe", 6000000);

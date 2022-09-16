@@ -1,4 +1,4 @@
-package be.cytomine.config;
+package be.cytomine.config.properties;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,7 +16,6 @@ package be.cytomine.config;
 * limitations under the License.
 */
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -29,7 +28,7 @@ import java.util.List;
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
 @Getter
 @Setter
-public class ApplicationConfiguration {
+public class ApplicationProperties {
 
     private String serverId;
 
@@ -39,13 +38,13 @@ public class ApplicationConfiguration {
 
     private String hyperspectralServerURL;
 
-    private NotificationConfiguration notification;
+    private NotificationProperties notification;
 
     private String storagePath;
 
-    private CustomUIConfiguration customUI;
+    private CustomUIProperties customUI;
 
-    private AuthenticationConfiguration authentication = new AuthenticationConfiguration();
+    private AuthenticationProperties authentication = new AuthenticationProperties();
 
     private String instanceHostWebsite;
 

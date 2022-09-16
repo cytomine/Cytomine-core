@@ -18,9 +18,8 @@ package be.cytomine.api.controller;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.config.ApplicationConfiguration;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.social.LastConnection;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +32,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
@@ -61,7 +59,7 @@ public class CustomUIControllerTests {
     private LastConnectionRepository lastConnectionRepository;
 
     @Autowired
-    private ApplicationConfiguration applicationConfiguration;
+    private ApplicationProperties applicationProperties;
 
     @BeforeEach
     public void before() {
@@ -74,9 +72,9 @@ public class CustomUIControllerTests {
     @Transactional
     @WithMockUser(username = "user")
     public void load_custom_ui_default_config() throws Exception {
-        assertThat(applicationConfiguration.getCustomUI().getProject().get("project-images-tab").get("ADMIN_PROJECT")).isEqualTo(true);
-        System.out.println(applicationConfiguration.getCustomUI().getProject().get("project-annotations-tab"));
-        assertThat(applicationConfiguration.getCustomUI().getProject().get("project-annotations-tab").get("ADMIN_PROJECT")).isEqualTo(true);
+        assertThat(applicationProperties.getCustomUI().getProject().get("project-images-tab").get("ADMIN_PROJECT")).isEqualTo(true);
+        System.out.println(applicationProperties.getCustomUI().getProject().get("project-annotations-tab"));
+        assertThat(applicationProperties.getCustomUI().getProject().get("project-annotations-tab").get("ADMIN_PROJECT")).isEqualTo(true);
     }
 
 

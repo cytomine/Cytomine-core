@@ -76,6 +76,8 @@ public class SliceInstance extends CytomineDomain implements Serializable {
         returnArray.put("channelName", Optional.ofNullable(sliceInstance.baseSlice).map(AbstractSlice::getChannelName).orElse(null));
         returnArray.put("channelColor", Optional.ofNullable(sliceInstance.baseSlice).map(AbstractSlice::getChannelColor).orElse(null));
 
+        returnArray.put("zName", Optional.ofNullable(sliceInstance.baseSlice).map(AbstractSlice::getZName).orElse(null));
+
         return returnArray;
     }
 

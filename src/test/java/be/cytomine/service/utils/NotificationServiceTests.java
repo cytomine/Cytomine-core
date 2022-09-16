@@ -18,34 +18,17 @@ package be.cytomine.service.utils;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.config.ApplicationConfiguration;
-import be.cytomine.domain.meta.Tag;
-import be.cytomine.domain.meta.TagDomainAssociation;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.security.ForgotPasswordToken;
 import be.cytomine.domain.security.User;
-import be.cytomine.exceptions.AlreadyExistException;
-import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.repository.meta.TagRepository;
-import be.cytomine.repository.ontology.RelationTermRepository;
-import be.cytomine.repository.ontology.TermRepository;
-import be.cytomine.service.CommandService;
-import be.cytomine.service.PermissionService;
-import be.cytomine.service.command.TransactionService;
-import be.cytomine.service.meta.TagService;
-import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.utils.CommandResponse;
-import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import javax.mail.MessagingException;
-import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
 import java.io.IOException;
@@ -77,12 +60,12 @@ public class NotificationServiceTests {
 
         CytomineMailService cytomineMailService  = Mockito.mock(CytomineMailService.class);
 
-        ApplicationConfiguration applicationConfiguration = new ApplicationConfiguration();
-        applicationConfiguration.setServerURL("http://serverUrlValue");
-        applicationConfiguration.setInstanceHostWebsite("http://websiteValue");
-        applicationConfiguration.setInstanceHostSupportMail("supportMailValue");
-        applicationConfiguration.setInstanceHostPhoneNumber("phoneNumberValue");
-        NotificationService notificationService = new NotificationService(cytomineMailService, springTemplateEngine, applicationConfiguration);
+        ApplicationProperties applicationProperties = new ApplicationProperties();
+        applicationProperties.setServerURL("http://serverUrlValue");
+        applicationProperties.setInstanceHostWebsite("http://websiteValue");
+        applicationProperties.setInstanceHostSupportMail("supportMailValue");
+        applicationProperties.setInstanceHostPhoneNumber("phoneNumberValue");
+        NotificationService notificationService = new NotificationService(cytomineMailService, springTemplateEngine, applicationProperties);
 
         User user = builder.given_default_user();
         ForgotPasswordToken forgotPasswordToken = new ForgotPasswordToken();
@@ -96,7 +79,7 @@ public class NotificationServiceTests {
         assertThat(content).contains("phoneNumberValue");
 
         // without phone number defined:
-        applicationConfiguration.setInstanceHostPhoneNumber("");
+        applicationProperties.setInstanceHostPhoneNumber("");
         content = notificationService.buildNotifyWelcomeMessage(user ,  forgotPasswordToken);
         System.out.println(content);
         assertThat(content).doesNotContain("phoneNumberValue");
@@ -115,12 +98,12 @@ public class NotificationServiceTests {
         CytomineMailService cytomineMailService  = Mockito.mock(CytomineMailService.class);
 
 
-        ApplicationConfiguration applicationConfiguration = new ApplicationConfiguration();
-        applicationConfiguration.setServerURL("http://serverUrlValue");
-        applicationConfiguration.setInstanceHostWebsite("http://websiteValue");
-        applicationConfiguration.setInstanceHostSupportMail("supportMailValue");
-        applicationConfiguration.setInstanceHostPhoneNumber("phoneNumberValue");
-        NotificationService notificationService = new NotificationService(cytomineMailService, springTemplateEngine, applicationConfiguration);
+        ApplicationProperties applicationProperties = new ApplicationProperties();
+        applicationProperties.setServerURL("http://serverUrlValue");
+        applicationProperties.setInstanceHostWebsite("http://websiteValue");
+        applicationProperties.setInstanceHostSupportMail("supportMailValue");
+        applicationProperties.setInstanceHostPhoneNumber("phoneNumberValue");
+        NotificationService notificationService = new NotificationService(cytomineMailService, springTemplateEngine, applicationProperties);
 
         String content = notificationService.buildNotifyShareAnnotationMessage("fromValue", "commentValue", "http://www.cytomine.com/annotation123", "http://www.cytomine.com/sharedannotation123", "cidValue");
 
@@ -143,12 +126,12 @@ public class NotificationServiceTests {
         CytomineMailService cytomineMailService  = Mockito.mock(CytomineMailService.class);
 
 
-        ApplicationConfiguration applicationConfiguration = new ApplicationConfiguration();
-        applicationConfiguration.setServerURL("http://serverUrlValue");
-        applicationConfiguration.setInstanceHostWebsite("http://websiteValue");
-        applicationConfiguration.setInstanceHostSupportMail("supportMailValue");
-        applicationConfiguration.setInstanceHostPhoneNumber("phoneNumberValue");
-        NotificationService notificationService = new NotificationService(cytomineMailService, springTemplateEngine, applicationConfiguration);
+        ApplicationProperties applicationProperties = new ApplicationProperties();
+        applicationProperties.setServerURL("http://serverUrlValue");
+        applicationProperties.setInstanceHostWebsite("http://websiteValue");
+        applicationProperties.setInstanceHostSupportMail("supportMailValue");
+        applicationProperties.setInstanceHostPhoneNumber("phoneNumberValue");
+        NotificationService notificationService = new NotificationService(cytomineMailService, springTemplateEngine, applicationProperties);
 
         String content = notificationService.buildNotifyForgotUsername("toto");
 
@@ -174,12 +157,12 @@ public class NotificationServiceTests {
         CytomineMailService cytomineMailService  = Mockito.mock(CytomineMailService.class);
 
 
-        ApplicationConfiguration applicationConfiguration = new ApplicationConfiguration();
-        applicationConfiguration.setServerURL("http://serverUrlValue");
-        applicationConfiguration.setInstanceHostWebsite("http://websiteValue");
-        applicationConfiguration.setInstanceHostSupportMail("supportMailValue");
-        applicationConfiguration.setInstanceHostPhoneNumber("phoneNumberValue");
-        NotificationService notificationService = new NotificationService(cytomineMailService, springTemplateEngine, applicationConfiguration);
+        ApplicationProperties applicationProperties = new ApplicationProperties();
+        applicationProperties.setServerURL("http://serverUrlValue");
+        applicationProperties.setInstanceHostWebsite("http://websiteValue");
+        applicationProperties.setInstanceHostSupportMail("supportMailValue");
+        applicationProperties.setInstanceHostPhoneNumber("phoneNumberValue");
+        NotificationService notificationService = new NotificationService(cytomineMailService, springTemplateEngine, applicationProperties);
 
         ForgotPasswordToken forgotPasswordToken = new ForgotPasswordToken();
         forgotPasswordToken.setTokenKey("123456");

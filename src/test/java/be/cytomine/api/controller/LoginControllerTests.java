@@ -119,6 +119,31 @@ class LoginControllerTests {
     }
 
     @Test
+    @Transactional
+    void authorize_fails_with_bad_password() throws Exception {
+        User user = new User();
+        user.setUsername("user-jwt-controller");
+        user.setEmail("user-jwt-controller@example.com");
+        user.setEnabled(true);
+        user.setPassword(passwordEncoder.encode("test"));
+        user.generateKeys();
+        user.setLastname("lastname");
+        user.setFirstname("firstname");
+        user.setOrigin("origin");
+        userRepository.saveAndFlush(user);
+
+        LoginVM login = new LoginVM();
+        login.setUsername("user-jwt-controller");
+        login.setPassword("badPassword");
+        loginControllerMockMvc
+                .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.token").doesNotExist())
+                .andExpect(header().doesNotExist("Authorization"));
+    }
+
+
+    @Test
     void authorize_fails_with_bad_credential() throws Exception {
         LoginVM login = new LoginVM();
         login.setUsername("wrong-user");
@@ -172,7 +197,7 @@ class LoginControllerTests {
         userRepository.saveAndFlush(user);
 
         LoginVM login = new LoginVM();
-        login.setUsername("user-disabled");
+        login.setUsername("user-locked");
         login.setPassword("test");
         loginControllerMockMvc
                 .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))

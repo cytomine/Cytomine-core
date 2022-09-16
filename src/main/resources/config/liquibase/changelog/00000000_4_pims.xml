@@ -14,4 +14,14 @@
             <column name="channel_name" type="VARCHAR(255)"/>
         </addColumn>
     </changeSet>
+    <changeSet author="lrollus (generated)" id="4B">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="abstract_image" columnName="extracted_metadata" /> <!-- may already have been created by v3-v4 migration script -->
+            </not>
+        </preConditions>
+        <addColumn tableName="abstract_image" >
+            <column name="extracted_metadata" type="TIMESTAMP WITHOUT TIME ZONE"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

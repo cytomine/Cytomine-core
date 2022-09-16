@@ -18,11 +18,9 @@ package be.cytomine.api.controller;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.config.ApplicationConfiguration;
-import be.cytomine.domain.meta.Configuration;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.social.LastConnection;
-import be.cytomine.dto.DatedCytomineDomain;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
 import be.cytomine.security.jwt.TokenProvider;
 import be.cytomine.utils.JsonObject;
@@ -52,7 +50,6 @@ import java.util.Map;
 
 import static be.cytomine.security.jwt.TokenType.SHORT_TERM;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.jmx.export.naming.IdentityNamingStrategy.TYPE_KEY;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -82,12 +79,12 @@ public class ServerControllerTests {
     private JwtParser jwtParser;
 
     @Autowired
-    private ApplicationConfiguration applicationConfiguration;
+    private ApplicationProperties applicationProperties;
 
     @BeforeEach
     public void before() {
         byte[] keyBytes;
-        String secret = applicationConfiguration.getAuthentication().getJwt().getSecret();
+        String secret = applicationProperties.getAuthentication().getJwt().getSecret();
         keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         Key key = Keys.hmacShaKeyFor(keyBytes);
         jwtParser = Jwts.parserBuilder().setSigningKey(key).build();

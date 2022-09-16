@@ -150,6 +150,9 @@ application:
       project-explore-image-tags:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
+      project-explore-image-tracks:
+        ADMIN_PROJECT: true
+        CONTRIBUTOR_PROJECT: true
       project-explore-image-properties:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
