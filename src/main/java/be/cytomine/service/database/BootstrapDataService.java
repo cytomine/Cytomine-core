@@ -166,10 +166,11 @@ public class BootstrapDataService {
 
     public void updateImageFilters() {
         ImageFilter imageFilter = imageFilterRepository.findAll().stream().filter(x -> x.getName().equals("Binary")).findFirst().orElse(null);
-        if (imageFilter==null || imageFilter.getMethod()==null) {
-            // still old image filter data
-            initImageFilters(bootstrapUtilsService.returnOrCreateImagingServer());
+        if (imageFilter!=null) {
+            if (imageFilter.getMethod()==null) {
+                // still old image filter data
+                initImageFilters(bootstrapUtilsService.returnOrCreateImagingServer());
+            }
         }
-
     }
 }
