@@ -782,49 +782,51 @@ public class ImageServerService extends ModelService {
             HttpClient httpClient = HttpClient.newBuilder()
                     .version(HttpClient.Version.HTTP_1_1)
                     .build();
-        if ((fullUrl).length() < GET_URL_MAX_LENGTH && (httpMethod==null || httpMethod.equals("GET"))) {
-            log.debug("GET " + fullUrl);
-            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                    .GET()
-                    .uri(URI.create(fullUrl))
-                    .setHeader("content-type", "application/x-www-form-urlencoded")
-                    .setHeader("Accept", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
-            for (Map.Entry<String, Object> entry : headers.entrySet()) {
-                requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
-            }
+            if ((fullUrl).length() < GET_URL_MAX_LENGTH && (httpMethod==null || httpMethod.equals("GET"))) {
+                log.debug("GET " + fullUrl);
+                HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                        .GET()
+                        .uri(URI.create(fullUrl))
+                        .setHeader("content-type", "application/x-www-form-urlencoded")
+                        .setHeader("Accept", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
+                for (Map.Entry<String, Object> entry : headers.entrySet()) {
+                    requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
+                }
 
-            HttpRequest request = requestBuilder.build();
+                HttpRequest request = requestBuilder.build();
 
-            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
-            return processResponse(fullUrl, responseContentType, response);
-        } else {
-            log.debug("POST " + imageServerInternalUrl + path);
-            log.debug(JsonObject.toJsonString(parameters));
-            String requestContentType = "application/json";
-            if (hms) {
-                requestContentType = "application/x-www-form-urlencoded";
-            }
-
-            HttpRequest.BodyPublisher bodyPublisher;
-            if(hms) {
-                bodyPublisher = HttpRequest.BodyPublishers.ofString(StringUtils.urlEncodeUTF8(parameters));
+                HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+                return processResponse(fullUrl, responseContentType, response);
             } else {
-                bodyPublisher = HttpRequest.BodyPublishers.ofString(JsonObject.toJsonString(parameters));
-            }
+                log.debug("POST " + imageServerInternalUrl + path);
+                log.debug(JsonObject.toJsonString(parameters));
+                String requestContentType = "application/json";
+                if (hms) {
+                    requestContentType = "application/x-www-form-urlencoded";
+                }
 
-            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                    .POST(bodyPublisher)
-                    .uri(URI.create(imageServerInternalUrl + path))
-                    .setHeader("Accept", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
-                    .setHeader("content-type", "application/json");
+                HttpRequest.BodyPublisher bodyPublisher;
+                if(hms) {
+                    bodyPublisher = HttpRequest.BodyPublishers.ofString(StringUtils.urlEncodeUTF8(parameters));
+                } else {
+                    bodyPublisher = HttpRequest.BodyPublishers.ofString(JsonObject.toJsonString(parameters));
+                }
 
-            for (Map.Entry<String, Object> entry : headers.entrySet()) {
-                requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
+                HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                        .POST(bodyPublisher)
+                        .uri(URI.create(imageServerInternalUrl + path))
+                        .setHeader("Accept", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+                        .setHeader("content-type", "application/json");
+
+                for (Map.Entry<String, Object> entry : headers.entrySet()) {
+                    requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
+                }
+                HttpRequest request = requestBuilder.build();
+                HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+                return processResponse(fullUrl, responseContentType, response);
             }
-            HttpRequest request = requestBuilder.build();
-            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
-            return processResponse(fullUrl, responseContentType, response);
-        }
+        } catch(NotModifiedException e){
+            throw e;
         } catch(Exception e){
             log.error("Error for url : " + fullUrl + " with parameters " + parameterUrl, e);
             throw new InvalidRequestException("Cannot generate thumb for " + fullUrl + " with " + parameterUrl);

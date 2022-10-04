@@ -145,4 +145,17 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(jsonObject.toJsonString());
     }
+
+    @ExceptionHandler(NotModifiedException.class)
+    public ResponseEntity<?> handleException(NotModifiedException exception) {
+        log.debug("NotModifiedException");
+        HttpHeaders headers = new HttpHeaders();
+        for (Map.Entry<String, String> entry : exception.getHeaders().entrySet()) {
+            headers.add(entry.getKey(), entry.getValue());
+        }
+
+        return JsonResponseEntity.status(HttpStatus.NOT_MODIFIED)
+                        .headers(headers).build();
+    }
+
 }

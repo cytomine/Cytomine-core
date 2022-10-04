@@ -84,4 +84,8 @@ public abstract class CytomineException extends RuntimeException {
     public Map<Object, Object> getValues() {
         return values;
     }
+
+    public Map<String, String> getHeaders() {
+        return headers;
+    }
 }
