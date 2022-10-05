@@ -58,7 +58,7 @@ import static org.springframework.security.acls.domain.BasePermission.*;
 @Transactional
 public class ConfigurationService extends ModelService {
 
-    public static String CONFIG_KEY_LTI_CONSUMERS = "CONFIG_KEY_LTI_CONSUMERS";
+    public static String CONFIG_KEY_LTI_CONSUMERS = "LTI_CONSUMERS";
 
     @Autowired
     private ConfigurationRepository configurationRepository;
