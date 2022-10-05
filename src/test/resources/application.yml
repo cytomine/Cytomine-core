@@ -103,12 +103,6 @@ application:
 
     lti:
       enabled: true
-      consumers:
-        -
-          key: "consumerKey"
-          name: "consumerName"
-          secret: "secret"
-          usernameParameter: null
 
     ldap:
       enabled: false

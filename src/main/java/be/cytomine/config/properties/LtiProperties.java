@@ -13,7 +13,5 @@ import java.util.List;
 public class LtiProperties {
 
     private boolean enabled;
-
-    private List<LtiConsumerProperties> consumers;
 }
 

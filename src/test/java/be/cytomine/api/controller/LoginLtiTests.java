@@ -21,6 +21,8 @@ import be.cytomine.CytomineCoreApplication;
 import be.cytomine.config.properties.LtiConsumerProperties;
 import be.cytomine.config.properties.LtiProperties;
 import be.cytomine.config.security.JWTFilter;
+import be.cytomine.domain.meta.Configuration;
+import be.cytomine.domain.meta.ConfigurationReadingRole;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecRole;
 import be.cytomine.domain.security.User;
@@ -28,6 +30,7 @@ import be.cytomine.dto.LoginVM;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.security.jwt.TokenProvider;
+import be.cytomine.service.meta.ConfigurationService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.lti.LtiServiceTests;
 import be.cytomine.utils.JsonObject;
@@ -77,6 +80,7 @@ class LoginLtiTests {
     @Autowired
     private BasicInstanceBuilder builder;
 
+
     @Test
     @Transactional
     void authorize_workflow() throws Exception {
@@ -87,6 +91,14 @@ class LoginLtiTests {
 //        To: https://ltiapps.net/test/tp.php
 //        Content-Type: application/x-www-form-urlencoded
 //        Parameters:
+
+        Configuration ltiConsumers = new Configuration();
+        ltiConsumers.setKey(ConfigurationService.CONFIG_KEY_LTI_CONSUMERS);
+        ltiConsumers.setValue("""
+                        [{"name":"consumerName","secret":"secret","key":"consumerKey"}]
+                        """);
+        ltiConsumers.setReadingRole(ConfigurationReadingRole.ALL);
+        builder.persistAndReturn(ltiConsumers);
 
         Project project = builder.given_a_project();
         String username = BasicInstanceBuilder.randomString();
