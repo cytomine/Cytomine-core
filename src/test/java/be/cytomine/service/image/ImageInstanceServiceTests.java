@@ -36,7 +36,13 @@ import be.cytomine.domain.social.AnnotationAction;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
+import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.image.UploadedFileRepository;
+import be.cytomine.repository.meta.AttachedFileRepository;
+import be.cytomine.repository.meta.DescriptionRepository;
+import be.cytomine.repository.meta.PropertyRepository;
+import be.cytomine.repository.meta.TagDomainAssociationRepository;
+import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.repositorynosql.social.AnnotationActionRepository;
 import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
 import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
@@ -113,6 +119,24 @@ public class ImageInstanceServiceTests {
 
     @Autowired
     PersistentImageConsultationRepository persistentImageConsultationRepository;
+
+    @Autowired
+    ImageInstanceRepository imageInstanceRepository;
+
+    @Autowired
+    DescriptionRepository descriptionRepository;
+
+    @Autowired
+    PropertyRepository propertyRepository;
+
+    @Autowired
+    TagDomainAssociationRepository tagDomainAssociationRepository;
+
+    @Autowired
+    AttachedFileRepository attachedFileRepository;
+
+    @Autowired
+    UserAnnotationRepository userAnnotationRepository;
 
     @BeforeEach
     public void cleanDB() {
@@ -841,6 +865,203 @@ public class ImageInstanceServiceTests {
         assertThat(imageInstance.getReviewStop()).isNull();
         assertThat(imageInstance.getReviewUser()).isNull();
     }
+
+    @Test
+    void clone_image_with_no_data() throws ClassNotFoundException {
+        Project projectOrigin = builder.given_a_project();
+        Project projectDest = builder.given_a_project();
+        ImageInstance imageInstance = builder.given_an_image_instance(projectOrigin);
+
+        CommandResponse commandResponse = imageInstanceService.cloneImage(
+                imageInstance,
+                projectDest,
+                false,
+                false,
+                false,
+                null,
+                false,
+                false,
+                null);
+
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        assertThat(imageInstanceRepository.findByProjectAndBaseImage(projectDest, imageInstance.getBaseImage()))
+                .isPresent();
+    }
+
+
+
+    @Test
+    void clone_image_with_image_metadata_data() throws ClassNotFoundException {
+        Project projectOrigin = builder.given_a_project();
+        Project projectDest = builder.given_a_project();
+        ImageInstance imageInstance = builder.given_an_image_instance(projectOrigin);
+
+        Description description = builder.given_a_description(imageInstance);
+        Property property = builder.given_a_property(imageInstance, "key", "value");
+        TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), imageInstance);
+        AttachedFile attachedFile = builder.given_a_attached_file(imageInstance);
+
+        CommandResponse commandResponse = imageInstanceService.cloneImage(
+                imageInstance,
+                projectDest,
+                true,
+                false,
+                false,
+                null,
+                false,
+                false,
+                null);
+
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        assertThat(imageInstanceRepository.findByProjectAndBaseImage(projectDest, imageInstance.getBaseImage()))
+                .isPresent();
+
+        ImageInstance imageInstanceCreated = imageInstanceRepository.findByProjectAndBaseImage(projectDest, imageInstance.getBaseImage()).get();
+        assertThat(descriptionRepository.findByDomainIdentAndDomainClassName(imageInstanceCreated.getId(), imageInstanceCreated.getClass().getName())).isPresent();
+        assertThat(propertyRepository.findAllByDomainIdent(imageInstanceCreated.getId())).hasSize(1);
+        assertThat(propertyRepository.findAllByDomainIdent(imageInstanceCreated.getId()).get(0).getKey()).isEqualTo("key");
+        assertThat(propertyRepository.findAllByDomainIdent(imageInstanceCreated.getId()).get(0).getValue()).isEqualTo("value");
+        assertThat(tagDomainAssociationRepository.findAllByDomainIdent(imageInstanceCreated.getId())).hasSize(1);
+        assertThat(tagDomainAssociationRepository.findAllByDomainIdent(imageInstanceCreated.getId()).get(0).getTag()).isEqualTo(tagDomainAssociation.getTag());
+        assertThat(attachedFileRepository.findAllByDomainIdent(imageInstanceCreated.getId())).isNotEmpty();
+    }
+
+    @Test
+    void clone_image_without_image_metadata_data() throws ClassNotFoundException {
+        Project projectOrigin = builder.given_a_project();
+        Project projectDest = builder.given_a_project();
+        ImageInstance imageInstance = builder.given_an_image_instance(projectOrigin);
+
+        Description description = builder.given_a_description(imageInstance);
+        Property property = builder.given_a_property(imageInstance, "key", "value");
+        TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), imageInstance);
+        AttachedFile attachedFile = builder.given_a_attached_file(imageInstance);
+
+        CommandResponse commandResponse = imageInstanceService.cloneImage(
+                imageInstance,
+                projectDest,
+                false,
+                false,
+                false,
+                null,
+                false,
+                false,
+                null);
+
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        assertThat(imageInstanceRepository.findByProjectAndBaseImage(projectDest, imageInstance.getBaseImage()))
+                .isPresent();
+
+        ImageInstance imageInstanceCreated = imageInstanceRepository.findByProjectAndBaseImage(projectDest, imageInstance.getBaseImage()).get();
+        assertThat(descriptionRepository.findByDomainIdentAndDomainClassName(imageInstanceCreated.getId(), imageInstanceCreated.getClass().getName())).isEmpty();
+        assertThat(propertyRepository.findAllByDomainIdent(imageInstanceCreated.getId())).hasSize(0);
+        assertThat(tagDomainAssociationRepository.findAllByDomainIdent(imageInstanceCreated.getId())).hasSize(0);
+        assertThat(attachedFileRepository.findAllByDomainIdent(imageInstanceCreated.getId())).isEmpty();
+    }
+
+
+
+    @Test
+    void clone_image_with_annotations() throws ClassNotFoundException {
+        Project projectOrigin = builder.given_a_project();
+        Project projectDest = builder.given_a_project();
+        SliceInstance sliceInstance = builder.given_a_slice_instance(projectOrigin);
+        ImageInstance imageInstance = sliceInstance.getImage();
+        UserAnnotation userAnnotation = builder.given_a_user_annotation(sliceInstance);
+        Property property = builder.given_a_property(userAnnotation, "key", "value");
+
+        CommandResponse commandResponse = imageInstanceService.cloneImage(
+                imageInstance,
+                projectDest,
+                false,
+                true,
+                true,
+                null,
+                true,
+                true,
+                List.of());
+
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        assertThat(imageInstanceRepository.findByProjectAndBaseImage(projectDest, imageInstance.getBaseImage()))
+                .isPresent();
+
+        ImageInstance imageInstanceCreated = imageInstanceRepository.findByProjectAndBaseImage(projectDest, imageInstance.getBaseImage()).get();
+        assertThat(userAnnotationRepository.findAllByImage(imageInstanceCreated)).hasSize(1);
+        UserAnnotation annotationCreated = userAnnotationRepository.findAllByImage(imageInstanceCreated).get(0);
+        assertThat(propertyRepository.findAllByDomainIdent(annotationCreated.getId())).hasSize(1);
+        assertThat(propertyRepository.findAllByDomainIdent(annotationCreated.getId()).get(0).getKey()).isEqualTo("key");
+    }
+
+    @Test
+    void clone_image_without_annotations() throws ClassNotFoundException {
+        Project projectOrigin = builder.given_a_project();
+        Project projectDest = builder.given_a_project();
+        SliceInstance sliceInstance = builder.given_a_slice_instance(projectOrigin);
+        ImageInstance imageInstance = sliceInstance.getImage();
+        UserAnnotation userAnnotation = builder.given_a_user_annotation(sliceInstance);
+        Property property = builder.given_a_property(userAnnotation, "key", "value");
+
+        CommandResponse commandResponse = imageInstanceService.cloneImage(
+                imageInstance,
+                projectDest,
+                false,
+                false,
+                true,
+                null,
+                false,
+                false,
+                List.of());
+
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        assertThat(imageInstanceRepository.findByProjectAndBaseImage(projectDest, imageInstance.getBaseImage()))
+                .isPresent();
+
+        ImageInstance imageInstanceCreated = imageInstanceRepository.findByProjectAndBaseImage(projectDest, imageInstance.getBaseImage()).get();
+        assertThat(userAnnotationRepository.findAllByImage(imageInstanceCreated)).hasSize(0);
+    }
+
+
+    @Test
+    void clone_image_with_annotations_and_user_layer_mapping() throws ClassNotFoundException {
+        Project projectOrigin = builder.given_a_project();
+        Project projectDest = builder.given_a_project();
+        User user1 = builder.given_a_user();
+        builder.addUserToProject(projectOrigin, user1.getUsername());
+        User user2 = builder.given_a_user();
+        builder.addUserToProject(projectDest, user2.getUsername());
+        SliceInstance sliceInstance = builder.given_a_slice_instance(projectOrigin);
+        ImageInstance imageInstance = sliceInstance.getImage();
+        UserAnnotation userAnnotation = builder.given_a_user_annotation(sliceInstance);
+        userAnnotation.setUser(user1);
+        entityManager.persist(userAnnotation);
+
+        List<Map<String, Object>> annotationsTransfertMap = new ArrayList<>();
+        Map<String, Object> entry = new HashMap<>();
+        entry.put("source", user1.getId());
+        entry.put("destination", user2.getId());
+        annotationsTransfertMap.add(entry);
+
+        CommandResponse commandResponse = imageInstanceService.cloneImage(
+                imageInstance,
+                projectDest,
+                false,
+                true,
+                true,
+                List.of(user1.getId()),
+                false,
+                false,
+                annotationsTransfertMap);
+
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        assertThat(imageInstanceRepository.findByProjectAndBaseImage(projectDest, imageInstance.getBaseImage()))
+                .isPresent();
+
+        ImageInstance imageInstanceCreated = imageInstanceRepository.findByProjectAndBaseImage(projectDest, imageInstance.getBaseImage()).get();
+        assertThat(userAnnotationRepository.findAllByImage(imageInstanceCreated)).hasSize(1);
+        UserAnnotation annotationCreated = userAnnotationRepository.findAllByImage(imageInstanceCreated).get(0);
+        assertThat(annotationCreated.getUser()).isEqualTo(user2);
+    }
+
 
 
 }

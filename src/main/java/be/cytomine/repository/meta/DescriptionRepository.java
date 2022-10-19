@@ -28,4 +28,8 @@ import java.util.Optional;
 public interface DescriptionRepository extends JpaRepository<Description, Long>, JpaSpecificationExecutor<Description>  {
 
     Optional<Description> findByDomainIdentAndDomainClassName(Long id, String className);
+
+    List<Description> findAllByDomainIdent(Long id);
+
+    void deleteAllByDomainIdent(Long id);
 }

@@ -35,6 +35,7 @@ import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.search.ImageSearchExtension;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
+import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,8 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -525,6 +528,40 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
         return responseSuccess(JsonObject.toJsonString(imageInstanceService.computeBounds(project)));
     }
+
+
+    /**
+     * Clone an image instance and (optional) its metadata and all annotations in another project
+     */
+    @PostMapping("/imageinstance/{id}/clone.json")
+    public ResponseEntity<String> cloneImage(
+            @PathVariable Long id
+    ) throws IOException, ClassNotFoundException {
+        log.debug("REST request to clone image {}", id);
+        JsonObject jsonObject = mergeQueryParamsAndBodyParams();
+        ImageInstance imageinstance = imageInstanceService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
+        Project project = projectService.find(jsonObject.getJSONAttrLong("idProject"))
+                .orElseThrow(() -> new ObjectNotFoundException("Project", jsonObject.getJSONAttrLong("idProject")));
+
+        List<Long> usersArray = jsonObject.getJSONAttrListLong("layersArray", new ArrayList<>());
+        List<Map<String, Object>> annotationsTranfertMap = jsonObject.getJSONAttrListMap("annotationsTranfertMap", new ArrayList<>());
+
+        CommandResponse commandResponse = imageInstanceService.cloneImage(
+                imageinstance,
+                project,
+                jsonObject.getJSONAttrBoolean("areImageMetadataCopied", false),
+                jsonObject.getJSONAttrBoolean("areAnnotationsCopied", false),
+                jsonObject.getJSONAttrBoolean("areAnnotationsMetadataCopied", false),
+                usersArray,
+                jsonObject.getJSONAttrBoolean("areAllLayersCopiedOnCurrentUserLayer", false),
+                jsonObject.getJSONAttrBoolean("areMissingLayersCopiedOnCurrentUserLayer", false),
+                annotationsTranfertMap
+        );
+
+        return responseSuccess(commandResponse);
+    }
+
 
     boolean isFilterRequired(Project project) {
         boolean isManager;

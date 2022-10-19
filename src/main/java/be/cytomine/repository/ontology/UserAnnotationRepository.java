@@ -78,4 +78,6 @@ public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, 
     List<UserAnnotation> findAllByImage(ImageInstance image);
 
     List<UserAnnotation> findAllByUser(User user);
+
+    List<UserAnnotation> findAllByImageAndUserIn(ImageInstance imageinstance, List<User> allById);
 }

@@ -131,6 +131,21 @@ public class AnnotationIndexResourceTests {
                 .andReturn();
     }
 
+    @Test
+    public void list_user_annotation_for_image_instance() throws Exception {
+
+        List<AnnotationIndex> all = annotationIndexRepository.findAll();
+        List<AnnotationIndexLightDTO> slices = annotationIndexRepository.findAllBySlice(slice);
+        List<AnnotationIndexLightDTO> slicesLight = annotationIndexRepository.findAllLightBySliceInstance(slice.getId());
+        restAnnotationIndexControllerMockMvc.perform(get("/api/imageinstance/{id}/annotationindex.json", slice.getImage().getId()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")]").exists())
+                .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")].slice").value(slice.getId().intValue()))
+                .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")].countAnnotation").value(4))
+                .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")].countReviewedAnnotation").value(0))
+                .andReturn();
+    }
 
 
 
