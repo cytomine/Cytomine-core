@@ -334,13 +334,15 @@ class ImageServerService extends ModelService {
     }
 
     private byte[] makeRequest(def uri, def server, def parameters, def httpMethod=null) {
+        log.info "uri=$uri"
         def final GET_URL_MAX_LENGTH = 512
         parameters = filterParameters(parameters)
         def url = makeGetUrl(uri, server, parameters)
-
+        log.info "url=$url"
         def http = new HTTPBuilder(server)
         try{
             if ((url.size() < GET_URL_MAX_LENGTH && httpMethod == null) || httpMethod == "GET") {
+                log.info "do get"
                 (byte[]) http.get(path: uri, requestContentType: ContentType.URLENC, query: parameters) { response ->
                     HttpEntity entity = response.getEntity()
                     if (entity != null) {
@@ -352,6 +354,8 @@ class ImageServerService extends ModelService {
             }
             else {
                 (byte[]) http.post(path: uri, requestContentType: ContentType.URLENC, body: parameters) { response ->
+                    log.info "do post"
+                    log.info parameters
                     HttpEntity entity = response.getEntity()
                     if (entity != null) {
                         return EntityUtils.toByteArray(entity)
