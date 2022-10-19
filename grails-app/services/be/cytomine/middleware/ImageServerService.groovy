@@ -344,6 +344,7 @@ class ImageServerService extends ModelService {
             if ((url.size() < GET_URL_MAX_LENGTH && httpMethod == null) || httpMethod == "GET") {
                 log.info "do get"
                 (byte[]) http.get(path: uri, requestContentType: ContentType.URLENC, query: parameters) { response ->
+                    log.info "response ${response.statusLine}"
                     HttpEntity entity = response.getEntity()
                     if (entity != null) {
                         return EntityUtils.toByteArray(entity)
@@ -353,9 +354,10 @@ class ImageServerService extends ModelService {
                 }
             }
             else {
+                log.info "do post"
+                log.info parameters
                 (byte[]) http.post(path: uri, requestContentType: ContentType.URLENC, body: parameters) { response ->
-                    log.info "do post"
-                    log.info parameters
+                    log.info "response ${response.statusLine}"
                     HttpEntity entity = response.getEntity()
                     if (entity != null) {
                         return EntityUtils.toByteArray(entity)
