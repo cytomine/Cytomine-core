@@ -165,7 +165,8 @@ public class RestUserController extends RestCytomineController {
             @RequestParam(value = "sort", defaultValue = "username", required = false) String sortColumn,
             @RequestParam(value = "order", defaultValue = "asc", required = false) String sortDirection,
             @RequestParam(value = "offset", defaultValue = "0", required = false) Long offset,
-            @RequestParam(value = "max", defaultValue = "0", required = false) Long max
+            @RequestParam(value = "max", defaultValue = "0", required = false) Long max,
+            @RequestParam(value = "onlineFilter", required = false) Boolean onlineFilter
     ) {
         log.debug("REST request to list user");
         if (publicKey != null) {
@@ -176,7 +177,7 @@ public class RestUserController extends RestCytomineController {
         UserSearchExtension userSearchExtension = new UserSearchExtension();
         userSearchExtension.setWithRoles(withRoles);
         return responseSuccess(
-                secUserService.list(userSearchExtension, retrieveSearchParameters(), sortColumn, sortDirection, max, offset)
+                secUserService.list(userSearchExtension, retrieveSearchParameters(), onlineFilter, sortColumn, sortDirection, max, offset)
                 , isFilterRequired()
         );
     }

@@ -392,6 +392,54 @@ public class SecUserServiceTests {
     }
 
     @Test
+    void list_users_with_last_connection() {
+
+        User user_with_old_connection = builder.given_a_user("user_with_old_connection");
+        User user_with_online_connection = builder.given_a_user("user_with_online_connection");
+        User user_with_online_fresh_connection = builder.given_a_user("user_with_online_fresh_connection");
+        User user_with_no_connection = builder.given_a_user("user_with_no_connection");
+
+        given_a_last_connection(user_with_old_connection, DateUtils.addSeconds(new Date(), -1000));
+        given_a_last_connection(user_with_online_connection, DateUtils.addSeconds(new Date(), -10));
+        given_a_last_connection(user_with_online_fresh_connection, DateUtils.addSeconds(new Date(), -1));
+
+        Page<Map<String, Object>> list = secUserService.list(new UserSearchExtension(),
+                new ArrayList<>(), null,"lastConnection", "desc", 0L, 0L);
+        assertThat(list.getContent().size()).isGreaterThanOrEqualTo(3);
+        assertThat(list.getContent().get(0).get("username")).isEqualTo(user_with_online_fresh_connection.getUsername());
+        assertThat(list.getContent().get(1).get("username")).isEqualTo(user_with_online_connection.getUsername());
+        assertThat(list.getContent().get(2).get("username")).isEqualTo(user_with_old_connection.getUsername());
+
+        list = secUserService.list(new UserSearchExtension(),
+                new ArrayList<>(), true,"lastConnection", "desc", 0L, 0L);
+        assertThat(list.getContent()).hasSize(2);
+        assertThat(list.getContent().get(0).get("username")).isEqualTo(user_with_online_fresh_connection.getUsername());
+        assertThat(list.getContent().get(1).get("username")).isEqualTo(user_with_online_connection.getUsername());
+
+        list = secUserService.list(new UserSearchExtension(),
+                new ArrayList<>(), true,"lastConnection", "asc", 0L, 0L);
+        assertThat(list.getContent()).hasSize(2);
+        assertThat(list.getContent().get(0).get("username")).isEqualTo(user_with_online_connection.getUsername());
+        assertThat(list.getContent().get(1).get("username")).isEqualTo(user_with_online_fresh_connection.getUsername());
+
+        list = secUserService.list(new UserSearchExtension(),
+                new ArrayList<>(), true,"lastConnection", "desc", 1L, 0L);
+        assertThat(list.getContent()).hasSize(1);
+        assertThat(list.getContent().get(0).get("username")).isEqualTo(user_with_online_fresh_connection.getUsername());
+
+        list = secUserService.list(new UserSearchExtension(),
+                new ArrayList<>(), true,"lastConnection", "desc", 2L, 1L);
+        assertThat(list.getContent()).hasSize(1);
+        assertThat(list.getContent().get(0).get("username")).isEqualTo(user_with_online_connection.getUsername());
+
+        list = secUserService.list(new UserSearchExtension(),
+                new ArrayList<>(), false,"lastConnection", "desc", 200000L, 0L);
+        assertThat(list.getContent().stream().map(x -> x.get("username")))
+                .contains(user_with_old_connection.getUsername(), user_with_no_connection.getUsername())
+                .doesNotContain(user_with_online_fresh_connection.getUsername(),user_with_online_connection.getUsername());
+    }
+
+    @Test
     void list_user_by_project_with_success() {
         User user = builder.given_superadmin();
 
@@ -1346,4 +1394,23 @@ public class SecUserServiceTests {
 
     }
 
+
+
+
+    PersistentConnection given_a_last_connection(SecUser user, Date date) {
+        LastConnection connection = new LastConnection();
+        connection.setId(sequenceService.generateID());
+        connection.setUser(user.getId());
+        connection.setDate(date);
+        connection.setCreated(date);
+        lastConnectionRepository.insert(connection); //don't use save (stateless collection)
+
+        PersistentConnection connectionPersist = new PersistentConnection();
+        connectionPersist.setId(sequenceService.generateID());
+        connectionPersist.setUser(user.getId());
+        connectionPersist.setCreated(date);
+        connectionPersist.setSession(RequestContextHolder.currentRequestAttributes().getSessionId());
+        persistentConnectionRepository.insert(connectionPersist); //don't use save (stateless collection)
+        return connectionPersist;
+    }
 }
