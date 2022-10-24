@@ -94,6 +94,9 @@ application:
       attributes: "cn,sn,givenname,mail"
       passwordAttributeName: "password"
 
+    lti:
+      enabled: false
+
 
   defaultLanguage: ENGLISH
   imageServerURL: [http://localhost-ims]
