@@ -1075,7 +1075,7 @@ public class ImageInstanceService extends ModelService {
 
             List<UserAnnotation> annotations = userAnnotationRepository.findAllByImageAndUserIn(imageinstance, userRepository.findAllById(usersArray));
             for (UserAnnotation annotation : annotations) {
-                Long destinationId = annotationsTranfertMap.stream().filter(x -> x.get("source").equals(annotation.getUser().getId().intValue())).map(x -> Long.parseLong(x.get("destination") + "")).findFirst().orElse(null);
+                Long destinationId = annotationsTranfertMap.stream().filter(x -> Long.valueOf(x.get("source") + "").equals(annotation.getUser().getId())).map(x -> Long.parseLong(x.get("destination") + "")).findFirst().orElse(null);
                 this.copyAnnotation(annotation, copiedImage, null, null, areAllLayersCopiedOnCurrentUserLayer, areMissingLayersCopiedOnCurrentUserLayer, areAnnotationsMetadataCopied, true, destinationId);
             }
         }
