@@ -18,9 +18,11 @@ package be.cytomine.api.controller;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.domain.security.AuthWithToken;
 import be.cytomine.domain.security.ForgotPasswordToken;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.LoginVM;
+import be.cytomine.repository.security.AuthWithTokenRepository;
 import be.cytomine.repository.security.ForgotPasswordTokenRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.config.security.JWTFilter;
@@ -39,6 +41,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
+import java.util.Optional;
+
+import static be.cytomine.utils.DateUtils.MAX_DATE_FOR_DATABASE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -65,6 +71,9 @@ class LoginControllerTests {
 
     @Autowired
     private BasicInstanceBuilder builder;
+
+    @Autowired
+    private AuthWithTokenRepository authWithTokenRepository;
 
     @DynamicPropertySource
     static void dynamicProperties(DynamicPropertyRegistry registry) {
@@ -425,6 +434,58 @@ class LoginControllerTests {
                         .header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jsonObject.getJSONAttrStr("token")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("user"));
+    }
+
+
+    @Test
+    @Transactional
+    @WithMockUser("superadmin")
+    void build_token_for_public_user() throws Exception {
+
+        User user = builder.given_a_public();
+
+        MvcResult mvcResult = loginControllerMockMvc
+                .perform(post("/api/token.json").contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonObject.of("username", user.getUsername(), "validity", "-1").toJsonString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").isNotEmpty()).andReturn();
+        JsonObject jsonObject = JsonObject.toJsonObject(mvcResult.getResponse().getContentAsString());
+
+        String token = jsonObject.getJSONAttrStr("token");
+
+        Optional<AuthWithToken> authWithToken = authWithTokenRepository.findByTokenKeyAndUser(token, user);
+        assertThat(authWithToken).isPresent();
+        assertThat(authWithToken.get().getExpiryDate()).isEqualTo(MAX_DATE_FOR_DATABASE);
+
+
+        loginControllerMockMvc.perform(post("/login/loginWithToken")
+                        .param("username", user.getUsername()).param("tokenKey", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andReturn();
+        jsonObject = JsonObject.toJsonObject(mvcResult.getResponse().getContentAsString());
+
+
+        loginControllerMockMvc.perform(get("/api/user/current.json")
+                        .header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jsonObject.getJSONAttrStr("token")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value(user.getUsername()));
+    }
+
+
+    @Test
+    @Transactional
+    @WithMockUser("superadmin")
+    void build_token_with_no_validity_refused_if_user_not_public() throws Exception {
+
+        User user = builder.given_default_user();
+
+        MvcResult mvcResult = loginControllerMockMvc
+                .perform(post("/api/token.json").contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonObject.of("username", user.getUsername(), "validity", "-1").toJsonString()))
+                .andExpect(status().is4xxClientError()).andReturn();
     }
 
     @Autowired

@@ -73,6 +73,9 @@ import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static be.cytomine.BasicInstanceBuilder.ROLE_ADMIN;
+import static be.cytomine.BasicInstanceBuilder.ROLE_GUEST;
+import static be.cytomine.repository.security.SecRoleRepository.ROLE_USER;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.springframework.security.acls.domain.BasePermission.*;
 
@@ -323,6 +326,37 @@ public class SecUserServiceTests {
         // FAIL because we get superadminjob too. It should not be return as we don't return result with job_id
     }
 
+    @Test
+    void list_users_with_roles_search_filter() {
+
+        User guest = builder.given_a_guest();
+        User user = builder.given_a_user();
+        User admin = builder.given_a_admin();
+        User publicU = builder.given_a_public();
+
+        UserSearchExtension userSearchExtension = new UserSearchExtension();
+
+        userSearchExtension.setWithRoles(true);
+        Page<Map<String, Object>> list = secUserService.list(userSearchExtension,
+                new ArrayList<>(List.of(new SearchParameterEntry("role", SearchOperation.in, "ROLE_GUEST,ROLE_ADMIN"))), "role", "asc", 0L, 0L);
+        assertThat(list.getContent().size()).isGreaterThanOrEqualTo(2);
+
+        assertThat(list.getContent().stream().map(x -> x.get("id"))).contains(guest.getId(), admin.getId()).doesNotContain(user.getId(),publicU.getId());
+
+        list = secUserService.list(userSearchExtension,
+                new ArrayList<>(List.of()), "role", "asc", 0L, 0L);
+        assertThat(list.getContent().size()).isGreaterThanOrEqualTo(2);
+
+        assertThat(list.getContent().stream().map(x -> x.get("id"))).contains(guest.getId(), admin.getId(),user.getId(),publicU.getId());
+        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(guest.getId())).findFirst().get().get("role")).isEqualTo(ROLE_GUEST);
+        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(guest.getId())).findFirst().get().get("public")).isEqualTo(false);
+        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(admin.getId())).findFirst().get().get("role")).isEqualTo(ROLE_ADMIN);
+        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(admin.getId())).findFirst().get().get("public")).isEqualTo(false);
+        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(user.getId())).findFirst().get().get("role")).isEqualTo(ROLE_USER);
+        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(user.getId())).findFirst().get().get("public")).isEqualTo(false);
+        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(publicU.getId())).findFirst().get().get("role")).isEqualTo(ROLE_USER); // public user is a user
+        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(publicU.getId())).findFirst().get().get("public")).isEqualTo(true);
+    }
 
     @Test
     void list_users_with_sort_username() {

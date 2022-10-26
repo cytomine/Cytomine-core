@@ -299,10 +299,10 @@ public class SecUserService extends ModelService {
         return currentUserService.getCurrentUser();
     }
 
-        public Page<Map<String, Object>> list(UserSearchExtension userSearchExtension, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
-            return list(userSearchExtension, searchParameters, null, sortColumn, sortDirection, max, offset);
-        }
-        public Page<Map<String, Object>> list(UserSearchExtension userSearchExtension, List<SearchParameterEntry> searchParameters, Boolean onlineFilter, String sortColumn, String sortDirection, Long max, Long offset) {
+    public Page<Map<String, Object>> list(UserSearchExtension userSearchExtension, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
+        return list(userSearchExtension, searchParameters, null, sortColumn, sortDirection, max, offset);
+    }
+    public Page<Map<String, Object>> list(UserSearchExtension userSearchExtension, List<SearchParameterEntry> searchParameters, Boolean onlineFilter, String sortColumn, String sortDirection, Long max, Long offset) {
 
         securityACLService.checkGuest(currentUserService.getCurrentUser());
 
@@ -338,11 +338,28 @@ public class SecUserService extends ModelService {
             mapParams.put("name", value);
         }
         if (userSearchExtension.isWithRoles()) {
-            select += ", MAX(x.order_number) as role ";
+            select += ", MAX(x.order_number) as role, MIN(x.order_number)=0 as public ";
             from += ", sec_user_sec_role sur, sec_role r " +
-                    "JOIN (VALUES ('ROLE_GUEST', 1), ('ROLE_USER' ,2), ('ROLE_ADMIN', 3), ('ROLE_SUPER_ADMIN', 4)) as x(value, order_number) ON r.authority = x.value ";
+                    "JOIN (VALUES ('ROLE_PUBLIC' ,0), ('ROLE_GUEST', 1), ('ROLE_USER' ,2), ('ROLE_ADMIN', 3), ('ROLE_SUPER_ADMIN', 4)) as x(value, order_number) ON r.authority = x.value ";
             where += "and u.id = sur.sec_user_id and sur.sec_role_id = r.id ";
             groupBy = "GROUP BY u.id ";
+        }
+        Optional<SearchParameterEntry> roleFilter = searchParameters.stream().filter(x -> x.getProperty().equals("role")).findFirst();
+        if (roleFilter.isPresent()) {
+            if (!userSearchExtension.isWithRoles()) {
+                throw new WrongArgumentException("Cannot filter on role without argument withRoles");
+            }
+            List<String> roles = List.of(roleFilter.get().getValue().toString().split(","));
+            if (roles.isEmpty()) {
+                throw new WrongArgumentException("Cannot filter on role without value");
+            }
+            for (String role : roles) {
+                if(secRoleRepository.findByAuthority(role).isEmpty()) {
+                    // not really useful but prevent sql injection + prevent typo mistakes
+                    throw new WrongArgumentException("Role " + role + " does not exists");
+                }
+            }
+            where += "and r.authority IN ('" + String.join("','",roles) + "') ";
         }
 
         if (sortColumn.equals("role")) {
@@ -402,6 +419,7 @@ public class SecUserService extends ModelService {
                         break;
                 }
                 object.put("role", role);
+                object.put("public", (Boolean)result.get("public"));
             }
             results.add(object);
         }
@@ -1004,6 +1022,7 @@ public class SecUserService extends ModelService {
     public CommandResponse add(JsonObject json) {
         synchronized (this.getClass()) {
             SecUser currentUser = currentUserService.getCurrentUser();
+            securityACLService.checkCurrentUserIsNotPublic();
             securityACLService.checkUser(currentUser);
             if (!json.containsKey("user")) {
                 json.put("user", currentUser.getId());
@@ -1028,6 +1047,7 @@ public class SecUserService extends ModelService {
      */
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkCurrentUserIsNotPublic();
         securityACLService.checkIsCreator((SecUser) domain, currentUser);
         if (!jsonNewData.isMissing("password")) {
             changeUserPassword((User)domain, jsonNewData.getJSONAttrStr("password"));
@@ -1053,6 +1073,7 @@ public class SecUserService extends ModelService {
             // TODO: software package
             throw new CytomineMethodNotYetImplementedException("software package not yet implemented");
         } else {
+            securityACLService.checkCurrentUserIsNotPublic();
             securityACLService.checkAdmin(currentUser);
             securityACLService.checkIsSameUser((User) domain, currentUser);
         }

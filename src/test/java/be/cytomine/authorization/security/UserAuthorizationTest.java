@@ -143,6 +143,13 @@ public class UserAuthorizationTest extends AbstractAuthorizationTest {
     }
 
     @Test
+    @WithMockUser(username = PUBLIC)
+    public void public_user_cannot_modify_himself() {
+        User user =userRepository.findByUsernameLikeIgnoreCase(PUBLIC).get();
+        expectForbidden(() -> secUserService.update(user, user.toJsonObject().withChange("lastname", "user_can_modify_himself")));
+    }
+
+    @Test
     @WithMockUser(username = SUPERADMIN)
     public void admin_can_modify_a_user() {
         User user = userRepository.findByUsernameLikeIgnoreCase(USER_NO_ACL).get();
@@ -169,6 +176,13 @@ public class UserAuthorizationTest extends AbstractAuthorizationTest {
     @WithMockUser(username = USER_NO_ACL)
     public void user_cannot_delete_himself() {
         User user = userRepository.findByUsernameLikeIgnoreCase(USER_NO_ACL).get();
+        expectForbidden(() -> secUserService.delete(user, null, null, false));
+    }
+
+    @Test
+    @WithMockUser(username = PUBLIC)
+    public void public_user_cannot_delete_himself() {
+        User user = userRepository.findByUsernameLikeIgnoreCase(PUBLIC).get();
         expectForbidden(() -> secUserService.delete(user, null, null, false));
     }
 

@@ -51,6 +51,8 @@ public abstract class AbstractAuthorizationTest {
 
     public static final String GUEST = "GUEST_ACL";
 
+    public static final String PUBLIC = "PUBLIC_ACL";
+
     public static final String USER_ACL_READ = "USER_ACL_READ";
 
     public static final String USER_ACL_CREATE = "USER_ACL_CREATE";

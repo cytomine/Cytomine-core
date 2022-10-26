@@ -40,7 +40,6 @@ public class AuthWithToken {
     @JoinColumn(name = "user_id", nullable = true)
     private User user;
 
-    @NotNull
     private Date expiryDate;
 
     String tokenKey;

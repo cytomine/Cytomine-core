@@ -166,6 +166,7 @@ class ApplicationBootstrap {
             bootstrapTestsDataService.createUserForTests(USER_ACL_ADMIN);
             bootstrapTestsDataService.createUserForTests(USER_NO_ACL);
             bootstrapTestsDataService.createUserForTests(GUEST);
+            bootstrapTestsDataService.createUserForTests(PUBLIC);
             bootstrapTestsDataService.createUserForTests(CREATOR);
 
 

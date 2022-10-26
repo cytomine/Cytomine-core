@@ -132,6 +132,11 @@ public class CurrentRoleService {
         return authorities.contains("ROLE_GUEST");
     }
 
+    public boolean isPublicByNow(SecUser user) {
+        Set<String> authorities = findCurrentAuthorities(user);
+        return authorities.contains("ROLE_PUBLIC");
+    }
+
     /**
      * Check if user is admin (with admin session closed or opened)
      */
@@ -143,6 +148,10 @@ public class CurrentRoleService {
     }
     public boolean isGuest(SecUser user) {
         return findRealAuthorities(user).contains("ROLE_GUEST");
+    }
+
+    public boolean isPublic(SecUser user) {
+        return findRealAuthorities(user).contains("ROLE_PUBLIC");
     }
 
 

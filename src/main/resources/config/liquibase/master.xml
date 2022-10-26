@@ -17,4 +17,6 @@
     <include file="config/liquibase/changelog/00000000_5_convergence.xml" relativeToChangelogFile="false"/>
 
     <include file="config/liquibase/changelog/00000000_6_image_filters.xml" relativeToChangelogFile="false"/>
+
+    <include file="config/liquibase/changelog/00000000_7_EE_public_role.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

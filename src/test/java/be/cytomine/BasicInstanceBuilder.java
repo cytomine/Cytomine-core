@@ -50,6 +50,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
+import static be.cytomine.repository.security.SecRoleRepository.ROLE_PUBLIC;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
 @Component
@@ -147,6 +148,10 @@ public class BasicInstanceBuilder {
         return given_a_guest(randomString());
     }
 
+    public User given_a_public() {
+        return given_a_public(randomString());
+    }
+
     public User given_a_admin() {
         return given_a_admin(randomString());
     }
@@ -164,6 +169,15 @@ public class BasicInstanceBuilder {
         user.setUsername(username);
         user = persistAndReturn(user);
         addRole(user, ROLE_GUEST);
+        return user;
+    }
+
+    public User given_a_public(String username) {
+        User user = persistAndReturn(given_a_not_persisted_user());
+        user.setUsername(username);
+        user = persistAndReturn(user);
+        addRole(user, ROLE_USER);
+        addRole(user, ROLE_PUBLIC);
         return user;
     }
 
