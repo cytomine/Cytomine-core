@@ -294,7 +294,7 @@ public class SecurityACLService {
     }
 
     public void checkCurrentUserIsNotPublic() {
-        if (currentRoleService.isPublicByNow(currentUserService.getCurrentUser())) {
+        if (currentUserService.getCurrentUser() instanceof User user && user.getPublicUser()) {
             throw new ForbiddenException("A public user cannot perform this action!");
         }
     }

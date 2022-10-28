@@ -338,9 +338,9 @@ public class SecUserService extends ModelService {
             mapParams.put("name", value);
         }
         if (userSearchExtension.isWithRoles()) {
-            select += ", MAX(x.order_number) as role, MIN(x.order_number)=0 as public ";
+            select += ", MAX(x.order_number) as role ";
             from += ", sec_user_sec_role sur, sec_role r " +
-                    "JOIN (VALUES ('ROLE_PUBLIC' ,0), ('ROLE_GUEST', 1), ('ROLE_USER' ,2), ('ROLE_ADMIN', 3), ('ROLE_SUPER_ADMIN', 4)) as x(value, order_number) ON r.authority = x.value ";
+                    "JOIN (VALUES ('ROLE_GUEST', 1), ('ROLE_USER' ,2), ('ROLE_ADMIN', 3), ('ROLE_SUPER_ADMIN', 4)) as x(value, order_number) ON r.authority = x.value ";
             where += "and u.id = sur.sec_user_id and sur.sec_role_id = r.id ";
             groupBy = "GROUP BY u.id ";
         }
@@ -360,6 +360,12 @@ public class SecUserService extends ModelService {
                 }
             }
             where += "and r.authority IN ('" + String.join("','",roles) + "') ";
+        }
+        Optional<SearchParameterEntry> publicFilter = searchParameters.stream().filter(x -> x.getProperty().equals("publicUser")).findFirst();
+        if (publicFilter.isPresent() && publicFilter.get().getValue().equals("true")) {
+            where += "and u.public_user = TRUE ";
+        } else if (publicFilter.isPresent() && publicFilter.get().getValue().equals("false")) {
+            where += "and u.public_user = FALSE ";
         }
 
         if (sortColumn.equals("role")) {
@@ -419,12 +425,9 @@ public class SecUserService extends ModelService {
                         break;
                 }
                 object.put("role", role);
-                object.put("public", (Boolean)result.get("public"));
             }
             results.add(object);
         }
-
-
 
 
         List<Bson> mongoRequest = new ArrayList<>();

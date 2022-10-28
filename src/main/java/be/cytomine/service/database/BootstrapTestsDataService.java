@@ -76,7 +76,7 @@ public class BootstrapTestsDataService {
         ROLES.put(USER_ACL_ADMIN, List.of(ROLE_USER));
         ROLES.put(CREATOR, List.of(ROLE_USER));
         ROLES.put(GUEST, List.of(ROLE_GUEST));
-        ROLES.put(PUBLIC, List.of(ROLE_PUBLIC, ROLE_USER));
+        ROLES.put(PUBLIC, List.of(ROLE_USER));
     }
 
 
@@ -104,6 +104,9 @@ public class BootstrapTestsDataService {
 
         User user = new User();
         user.setUsername(login);
+        if (login.equals(PUBLIC)) {
+            user.setPublicUser(true);
+        }
         user.setEmail(login + "@test.com");
         user.setFirstname("firstname");
         user.setLastname("lastname");

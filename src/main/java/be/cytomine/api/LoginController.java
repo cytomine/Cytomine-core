@@ -62,7 +62,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static be.cytomine.repository.security.SecRoleRepository.ROLE_PUBLIC;
 import static be.cytomine.utils.DateUtils.MAX_DATE_FOR_DATABASE;
 
 @Slf4j
@@ -197,7 +196,7 @@ public class LoginController extends RestCytomineController {
 
         boolean infiniteExpiration = params.getJSONAttrDouble("validity",-1d).equals(-1d);
         Date expiration;
-        if (infiniteExpiration && user.getRoles().stream().anyMatch(x -> x.getAuthority().equals(ROLE_PUBLIC))) {
+        if (infiniteExpiration && user.getPublicUser()) {
             // if user is public, we allow token with no expiration
             expiration = MAX_DATE_FOR_DATABASE;
         } else if (infiniteExpiration) {

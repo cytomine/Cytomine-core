@@ -33,7 +33,6 @@ public interface SecRoleRepository extends JpaRepository<SecRole, Long>, JpaSpec
     String ROLE_USER = "ROLE_USER";
     String ROLE_ADMIN = "ROLE_ADMIN";
     String ROLE_SUPER_ADMIN = "ROLE_SUPER_ADMIN";
-    String ROLE_PUBLIC = "ROLE_PUBLIC";
 
     default SecRole getGuest() {
         return getByAuthority(ROLE_GUEST);
@@ -49,10 +48,6 @@ public interface SecRoleRepository extends JpaRepository<SecRole, Long>, JpaSpec
 
     default SecRole getSuperAdmin() {
         return getByAuthority(ROLE_SUPER_ADMIN);
-    }
-
-    default SecRole getPublic() {
-        return getByAuthority(ROLE_PUBLIC);
     }
 
     SecRole getByAuthority(String authority);
