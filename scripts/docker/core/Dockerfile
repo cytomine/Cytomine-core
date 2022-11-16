@@ -46,5 +46,5 @@ ADD ci/cytomine.jar /app/cytomine.jar
 RUN touch /tmp/addHosts.sh && chmod +x /tmp/addHosts.sh
 RUN ls -ln /app/cytomine.jar
 WORKDIR /app
-ENTRYPOINT ["/app/deploy.sh"]
+CMD ["/app/deploy.sh"]
 #ENTRYPOINT ["java -Djava.awt.headless=true -Xms512m -Xmx4096m -XX:MaxPermSize=512M -XX:+UseConcMarkSweepGC -Djavax.servlet.request.encoding=UTF-8 -Dfile.encoding=UTF-8 -cp /app/cytomine.jar -Dloader.main=be.cytomine.CytomineCoreApplication -Djava.awt.headless=true org.springframework.boot.loader.PropertiesLauncher"]
