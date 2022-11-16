@@ -50,7 +50,6 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
-import static be.cytomine.repository.security.SecRoleRepository.ROLE_PUBLIC;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
 @Component
@@ -175,9 +174,9 @@ public class BasicInstanceBuilder {
     public User given_a_public(String username) {
         User user = persistAndReturn(given_a_not_persisted_user());
         user.setUsername(username);
+        user.setPublicUser(true);
         user = persistAndReturn(user);
         addRole(user, ROLE_USER);
-        addRole(user, ROLE_PUBLIC);
         return user;
     }
 

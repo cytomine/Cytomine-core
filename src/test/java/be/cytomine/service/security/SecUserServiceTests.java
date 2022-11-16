@@ -349,14 +349,31 @@ public class SecUserServiceTests {
 
         assertThat(list.getContent().stream().map(x -> x.get("id"))).contains(guest.getId(), admin.getId(),user.getId(),publicU.getId());
         assertThat(list.getContent().stream().filter(x -> x.get("id").equals(guest.getId())).findFirst().get().get("role")).isEqualTo(ROLE_GUEST);
-        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(guest.getId())).findFirst().get().get("public")).isEqualTo(false);
+        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(guest.getId())).findFirst().get().get("publicUser")).isEqualTo(false);
         assertThat(list.getContent().stream().filter(x -> x.get("id").equals(admin.getId())).findFirst().get().get("role")).isEqualTo(ROLE_ADMIN);
-        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(admin.getId())).findFirst().get().get("public")).isEqualTo(false);
+        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(admin.getId())).findFirst().get().get("publicUser")).isEqualTo(false);
         assertThat(list.getContent().stream().filter(x -> x.get("id").equals(user.getId())).findFirst().get().get("role")).isEqualTo(ROLE_USER);
-        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(user.getId())).findFirst().get().get("public")).isEqualTo(false);
-        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(publicU.getId())).findFirst().get().get("role")).isEqualTo(ROLE_USER); // public user is a user
-        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(publicU.getId())).findFirst().get().get("public")).isEqualTo(true);
+        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(user.getId())).findFirst().get().get("publicUser")).isEqualTo(false);
+        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(publicU.getId())).findFirst().get().get("role")).isEqualTo(ROLE_USER);
+        assertThat(list.getContent().stream().filter(x -> x.get("id").equals(publicU.getId())).findFirst().get().get("publicUser")).isEqualTo(true);
     }
+
+    @Test
+    void list_users_filter_public() {
+
+        User user = builder.given_a_user();
+        User publicU = builder.given_a_public();
+
+        UserSearchExtension userSearchExtension = new UserSearchExtension();
+
+        userSearchExtension.setWithRoles(true);
+        Page<Map<String, Object>> list = secUserService.list(userSearchExtension,
+                new ArrayList<>(List.of(new SearchParameterEntry("publicUser", SearchOperation.equals, "true"))), "role", "asc", 0L, 0L);
+        assertThat(list.getContent().size()).isGreaterThanOrEqualTo(1);
+
+        assertThat(list.getContent().stream().map(x -> x.get("id"))).contains(publicU.getId()).doesNotContain(user.getId());
+    }
+
 
     @Test
     void list_users_with_sort_username() {
