@@ -16,16 +16,18 @@ package be.cytomine.repository.meta;
 * limitations under the License.
 */
 
-import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.meta.Configuration;
 import be.cytomine.domain.meta.ConfigurationReadingRole;
+import be.cytomine.security.ldap.LdapConfigurationInterface;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface ConfigurationRepository extends JpaRepository<Configuration, Long>, JpaSpecificationExecutor<Configuration>  {
+import static be.cytomine.service.meta.ConfigurationService.*;
+
+public interface ConfigurationRepository extends JpaRepository<Configuration, Long>, JpaSpecificationExecutor<Configuration>, LdapConfigurationInterface {
 
 
     List<Configuration> findAllByReadingRole(ConfigurationReadingRole role);
@@ -33,4 +35,25 @@ public interface ConfigurationRepository extends JpaRepository<Configuration, Lo
     List<Configuration> findAllByReadingRoleIn(List<ConfigurationReadingRole> role);
 
     Optional<Configuration> findByKey(String key);
+
+    @Override
+    default String getServer() {
+        return getLdapValue(CONFIG_KEY_LDAP_SERVER);
+    }
+
+    @Override
+    default String getPrincipal() {
+        return getLdapValue(CONFIG_KEY_LDAP_PRINCIPAL);
+    }
+
+    @Override
+    default String getPassword() {
+        return getLdapValue(CONFIG_KEY_LDAP_PASSWORD);
+    }
+
+    default String getLdapValue(String key) {
+       return this.findByKey(key)
+                .map(Configuration::getValue)
+                .orElse("");
+    }
 }

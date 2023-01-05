@@ -940,13 +940,21 @@ public class BasicInstanceBuilder {
     }
 
     public Configuration given_a_configuration(String key) {
-        return persistAndReturn(given_a_not_persisted_configuration(key));
+        return persistAndReturn(given_a_not_persisted_configuration(key, "value"));
+    }
+
+    public Configuration given_a_configuration(String key, String value) {
+        return persistAndReturn(given_a_not_persisted_configuration(key, value));
     }
 
     public Configuration given_a_not_persisted_configuration(String key) {
+        return given_a_not_persisted_configuration(key, "value");
+    }
+
+    public Configuration given_a_not_persisted_configuration(String key, String value) {
         Configuration configuration = new Configuration();
         configuration.setKey(key);
-        configuration.setValue("value");
+        configuration.setValue(value);
         configuration.setReadingRole(ConfigurationReadingRole.ALL);
         return configuration;
     }

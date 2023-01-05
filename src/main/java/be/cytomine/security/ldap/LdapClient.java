@@ -1,9 +1,15 @@
 package be.cytomine.security.ldap;
 
+import be.cytomine.domain.meta.Configuration;
+import be.cytomine.exceptions.ForbiddenException;
+import be.cytomine.utils.StringUtils;
+
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.*;
 import java.util.*;
+
+import static be.cytomine.service.meta.ConfigurationService.*;
 
 public class LdapClient {
 
@@ -13,11 +19,26 @@ public class LdapClient {
 
     private String credentials;
 
-
     public LdapClient(String url, String principal, String credentials) {
         this.url = url;
         this.principal = principal;
         this.credentials = credentials;
+    }
+
+    public LdapClient(LdapConfigurationInterface config) {
+        this.url = config.getServer();
+        this.principal = config.getPrincipal();
+        this.credentials = config.getPassword();
+
+        if (StringUtils.isBlank(this.url)) {
+            throw new ForbiddenException("No LDAP server defined");
+        }
+        if (StringUtils.isBlank(this.principal)) {
+            throw new ForbiddenException("No LDAP principal defined");
+        }
+        if (StringUtils.isBlank(this.credentials)) {
+            throw new ForbiddenException("No LDAP password defined");
+        }
     }
 
     public boolean isInLDAP(String search, String name, List<String> attrIDs) throws NamingException {

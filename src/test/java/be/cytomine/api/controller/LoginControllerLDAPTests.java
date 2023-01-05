@@ -19,13 +19,17 @@ package be.cytomine.api.controller;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.config.security.JWTFilter;
+import be.cytomine.domain.meta.Configuration;
 import be.cytomine.domain.security.ForgotPasswordToken;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.LoginVM;
+import be.cytomine.repository.meta.ConfigurationRepository;
 import be.cytomine.repository.security.ForgotPasswordTokenRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.security.jwt.TokenProvider;
+import be.cytomine.service.meta.ConfigurationService;
 import be.cytomine.utils.JsonObject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -66,11 +70,25 @@ class LoginControllerLDAPTests {
     @Autowired
     private BasicInstanceBuilder builder;
 
+    @Autowired
+    private ConfigurationRepository configurationRepository;
+
     @DynamicPropertySource
     static void dynamicProperties(DynamicPropertyRegistry registry) {
         registry.add("application.authentication.ldap.enabled", () -> true);
     }
 
+    @BeforeEach
+    public void init() {
+        configurationRepository.deleteAll();
+        configurationRepository.findAll();
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_SERVER, "ldap://127.0.0.1:390");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_PRINCIPAL, "CN=admin,OU=users,DC=mtr,DC=com");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_PASSWORD, "itachi");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_SEARCH, "OU=users,DC=mtr,DC=com");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_ATTRIBUTES, "cn,sn,givenname,mail");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_PASSWORD_ATTRIBUTE_NAME, "password");
+    }
     @Test
     @Transactional
     void authorize_valide_credentials_with_user_only_in_local_database() throws Exception {

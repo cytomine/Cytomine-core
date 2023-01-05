@@ -145,6 +145,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 //            .permitAll()
         .and()
             .authorizeRequests()
+            .antMatchers("/api/configuration/key/LOGIN_WELCOME.json").permitAll()
             .antMatchers("/api/authenticate").permitAll()
             .antMatchers("/api/register").permitAll()
             .antMatchers("/api/activate").permitAll()

@@ -3,7 +3,9 @@ package be.cytomine.security;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.security.User;
+import be.cytomine.repository.meta.ConfigurationRepository;
 import be.cytomine.repository.security.UserRepository;
+import be.cytomine.service.meta.ConfigurationService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +40,9 @@ public class CasLdapUserDetailsServiceTests {
     @Autowired
     BasicInstanceBuilder builder;
 
+    @Autowired
+    ConfigurationRepository configurationRepository;
+
     @BeforeEach
     public void cleanUsers() {
         for (User user : userRepository.findAll()) {
@@ -45,7 +50,18 @@ public class CasLdapUserDetailsServiceTests {
                 userRepository.delete(user);
             }
         }
+
+        configurationRepository.deleteAll();
+        configurationRepository.findAll(); // force refresh
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_SERVER, "ldap://127.0.0.1:390");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_PRINCIPAL, "CN=admin,OU=users,DC=mtr,DC=com");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_PASSWORD, "itachi");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_SEARCH, "OU=users,DC=mtr,DC=com");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_ATTRIBUTES, "cn,sn,givenname,mail");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_PASSWORD_ATTRIBUTE_NAME, "password");
     }
+
+
 
     @Test
     public void loading_existing_user_in_ldap_not_yet_in_database_creates_a_new_user() throws NamingException {

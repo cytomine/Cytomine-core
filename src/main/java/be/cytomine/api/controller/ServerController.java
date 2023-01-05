@@ -72,6 +72,7 @@ public class ServerController extends RestCytomineController {
         response.put("serverURL", applicationProperties.getServerURL());
         response.put("serverID", applicationProperties.getServerId());
         response.put("ltiEnabled", applicationProperties.getAuthentication().getLti().isEnabled());
+        response.put("ldapEnabled", applicationProperties.getAuthentication().getLdap().getEnabled());
 
         if (SecurityUtils.isAuthenticated()) {
             SecUser user = currentUserService.getCurrentUser();

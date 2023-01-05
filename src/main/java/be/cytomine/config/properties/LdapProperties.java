@@ -11,15 +11,4 @@ public class LdapProperties {
 
     private Boolean enabled;
 
-    private String server;
-
-    private String principal;
-
-    private String password;
-
-    private String search;
-
-    private String attributes;
-
-    private String passwordAttributeName;
 }
