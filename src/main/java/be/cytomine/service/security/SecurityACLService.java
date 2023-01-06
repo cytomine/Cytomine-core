@@ -195,7 +195,11 @@ public class SecurityACLService {
     public List<Project> getProjectList(SecUser user, Ontology ontology) {
         //faster method
         if (currentRoleService.isAdminByNow(user)) {
-            return projectRepository.findAllByOntology(ontology);
+            if (ontology == null) {
+                return projectRepository.findAll();
+            } else {
+                return projectRepository.findAllByOntology(ontology);
+            }
         }
         else {
             Query query = entityManager.createQuery(

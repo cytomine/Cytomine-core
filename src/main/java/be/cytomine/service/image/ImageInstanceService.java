@@ -26,6 +26,7 @@ import be.cytomine.domain.meta.TagDomainAssociation;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.*;
 import be.cytomine.repository.image.AbstractSliceRepository;
 import be.cytomine.repository.image.ImageInstanceRepository;
@@ -1072,8 +1073,10 @@ public class ImageInstanceService extends ModelService {
                 usersArray = List.of(currentUserService.getCurrentUser().getId());
             }
 
-
-            List<UserAnnotation> annotations = userAnnotationRepository.findAllByImageAndUserIn(imageinstance, userRepository.findAllById(usersArray));
+            List<User> users = userRepository.findAllById(usersArray);
+            log.debug("Clone annotations for {} users", users.size());
+            List<UserAnnotation> annotations = userAnnotationRepository.findAllByImageAndUserIn(imageinstance, users);
+            log.debug("Clone {} annotations", annotations.size());
             for (UserAnnotation annotation : annotations) {
                 Long destinationId = annotationsTranfertMap.stream().filter(x -> Long.valueOf(x.get("source") + "").equals(annotation.getUser().getId())).map(x -> Long.parseLong(x.get("destination") + "")).findFirst().orElse(null);
                 this.copyAnnotation(annotation, copiedImage, null, null, areAllLayersCopiedOnCurrentUserLayer, areMissingLayersCopiedOnCurrentUserLayer, areAnnotationsMetadataCopied, true, destinationId);
@@ -1138,8 +1141,12 @@ public class ImageInstanceService extends ModelService {
         }
 
         boolean userInDestProject = securityACLService.getProjectList(secUserRepository.findById(destinationUser).get(), null).contains(dest.getProject());
+
+        log.debug("copyAnnotation=${}", based.getId());
+
         if(!giveMe && !giveMeMissingAnnot) {
             if(!userInDestProject) {
+                log.debug("user is not in dest project, skip");
                 return;
             }
         }
