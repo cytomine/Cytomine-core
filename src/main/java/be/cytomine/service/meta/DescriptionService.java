@@ -18,6 +18,7 @@ package be.cytomine.service.meta;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
+import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.CompanionFile;
 import be.cytomine.domain.meta.Description;
 import be.cytomine.domain.ontology.AnnotationDomain;
@@ -91,8 +92,12 @@ public class DescriptionService extends ModelService {
             AnnotationDomain annotation = annotationDomainRepository.findById(domainIdent)
                     .orElseThrow(() -> new ObjectNotFoundException("AnnotationDomain", domainIdent));
             domainClassName = annotation.getClass().getName();
+        } else if (domainClassName.contains("AbstractImage")) {
+            AbstractImage abstractImage = getEntityManager().find(AbstractImage.class, domainIdent);
+            securityACLService.check(abstractImage.getUploadedFile().getStorage(), READ);
+        } else {
+            securityACLService.check(domainIdent, domainClassName, READ);
         }
-        securityACLService.check(domainIdent, domainClassName, READ);
         return descriptionRepository.findByDomainIdentAndDomainClassName(domainIdent, domainClassName);
     }
 

@@ -19,12 +19,14 @@ package be.cytomine.api.controller.meta;
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.api.controller.utils.RequestParams;
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.meta.TagRepository;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.service.meta.TagDomainAssociationService;
 import be.cytomine.service.meta.TagService;
+import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
@@ -34,7 +36,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityManager;
 import java.util.List;
+
+import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @RestController
 @RequestMapping("/api")
@@ -53,6 +58,10 @@ public class RestTagDomainAssociationController extends RestCytomineController {
     private final TaskService taskService;
 
     private final AnnotationDomainRepository annotationDomainRepository;
+
+    private final EntityManager entityManager;
+
+    private final SecurityACLService securityACLService;
 
 
 
@@ -81,7 +90,11 @@ public class RestTagDomainAssociationController extends RestCytomineController {
     ) {
         log.debug("REST request to list tags for domain {} {}", domainClassName, domainIdent);
         CytomineDomain domain = null;
-        if(domainClassName.contains("AnnotationDomain")) {
+        if(domainClassName.contains("AbstractImage")) {
+            AbstractImage abstractImage = entityManager.find(AbstractImage.class, domainIdent);
+            securityACLService.check(abstractImage.getUploadedFile().getStorage(), READ);
+            domain = abstractImage;
+        } else if(domainClassName.contains("AnnotationDomain")) {
             domain = annotationDomainRepository.findById(domainIdent).orElse(null);
         } else {
             domain = tagDomainAssociationService.getCytomineDomain(domainClassName, domainIdent);

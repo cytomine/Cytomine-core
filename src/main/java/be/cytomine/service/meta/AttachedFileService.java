@@ -87,7 +87,10 @@ public class AttachedFileService extends ModelService {
     }
 
     public List<AttachedFile> findAllByDomain(String domainClassName, Long domainIdent) {
-        if(domainClassName.contains("AnnotationDomain")) {
+        if(domainClassName.contains("AbstractImage")) {
+            AbstractImage abstractImage = getEntityManager().find(AbstractImage.class, domainIdent);
+            securityACLService.check(abstractImage.getUploadedFile().getStorage(),READ);
+        } else if(domainClassName.contains("AnnotationDomain")) {
             AnnotationDomain annotation = annotationDomainRepository.findById(domainIdent)
                     .orElseThrow(() -> new ObjectNotFoundException(domainClassName, domainIdent));
             securityACLService.check(annotation, READ);
