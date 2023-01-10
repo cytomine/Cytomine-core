@@ -223,6 +223,22 @@ public class PermissionService {
         throw new RuntimeException("Mask " + mask + " not supported");
     }
 
+    public static String readStringFromMask(int mask) {
+        switch (mask) {
+            case 1:
+                return "READ";
+            case 2:
+                return "WRITE";
+            case 4:
+                return "CREATE";
+            case 8:
+                return "DELETE";
+            case 16:
+                return "ADMINISTRATION";
+        }
+        throw new RuntimeException("Mask " + mask + " not supported");
+    }
+
     public static Permission readFromString(String permission) {
         switch (permission) {
             case "READ":

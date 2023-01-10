@@ -228,7 +228,7 @@ public class SecurityACLService {
                         "group by storage.id ORDER BY storage.id", Tuple.class);
 
         List<Tuple> resultList = query.getResultList();
-        return resultList.stream().map(x -> JsonObject.of("id", x.get(0), "name", x.get(1), "permission", permissionService.readFromMask(x.get(2, Integer.class)))).collect(Collectors.toList());
+        return resultList.stream().map(x -> JsonObject.of("id", x.get(0), "name", x.get(1), "permission", permissionService.readStringFromMask(x.get(2, Integer.class)))).collect(Collectors.toList());
     }
 
 

@@ -823,6 +823,20 @@ public class ImageInstanceService extends ModelService {
             sliceInstanceRepository.save(sliceInstance);
         }
 
+        AbstractImage ai = ((ImageInstance) domain).getBaseImage();
+        for (TagDomainAssociation tagDomainAssociation : tagDomainAssociationRepository.findAllByDomainIdent(ai.getId())) {
+            TagDomainAssociation tda = new TagDomainAssociation();
+            tda.setTag(tagDomainAssociation.getTag());
+            tda.setDomain(domain);
+            tagDomainAssociationService.add(tda.toJsonObject());
+        }
+
+        for (Description description : descriptionRepository.findAllByDomainIdent(ai.getId())) {
+            Description d = new Description();
+            d.setData(description.getData());
+            d.setDomain(domain);
+            descriptionService.add(d.toJsonObject());
+        }
     }
 
     protected void beforeDelete(CytomineDomain domain, CommandResponse response) {
