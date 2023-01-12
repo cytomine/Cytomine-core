@@ -16,6 +16,7 @@ package be.cytomine;
 * limitations under the License.
 */
 
+import be.cytomine.utils.EndOfLifeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -30,6 +31,7 @@ import java.io.File;
 @EnableJpaRepositories("be.cytomine.repository")
 public class CytomineCoreApplication {
 
+
 	public static void main(String[] args) {
 		log.info("CytomineCoreApplication.main");
 		log.info("Current directory: " + new File(".").getAbsolutePath());
@@ -38,6 +40,8 @@ public class CytomineCoreApplication {
 		}
 
 		log.info("application.yml found? " + new File("./application.yml").exists());
+
+		EndOfLifeUtils.blockApplicationIfEndOfLifeHasBeenReached();
 
 		SpringApplication.run(CytomineCoreApplication.class, args);
 	}
