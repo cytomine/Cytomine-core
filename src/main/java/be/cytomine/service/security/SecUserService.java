@@ -1194,7 +1194,7 @@ public class SecUserService extends ModelService {
             boolean isLastRepresentative = projectRepresentativeUserService.listByProject(project).size() == 1 &&
                     projectRepresentativeUserService.listByProject(project).get(0).getUser().getId().equals(user.getId());
             if (hasLostAccessToProject && isLastRepresentative) {
-                if (!securityACLService.getProjectList(currentUserService.getCurrentUser(), null).contains(project)) {
+                if (!securityACLService.isUserInProject((User) currentUserService.getCurrentUser(), project)) {
                     // if current user is not in project (= SUPERADMIN), add to the project
                     addUserToProject(currentUserService.getCurrentUser(), project, true);
                 }
