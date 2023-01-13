@@ -215,7 +215,7 @@ public class SecurityACLService {
 
     public List<JsonObject> getLightStoragesWithMaxPermission(SecUser user) {
         if (currentRoleService.isAdminByNow(user)) {
-            return  getStorageList(user, true).stream().map(x -> JsonObject.of("id", x.getId(), "name", x.getName(), "permission", ADMINISTRATION)).collect(Collectors.toList());
+            return  getStorageList(user, true).stream().map(x -> JsonObject.of("id", x.getId(), "name", x.getName(), "permission", ADMINISTRATION.getPattern())).collect(Collectors.toList());
         }
 
         Query query = entityManager.createQuery(
@@ -246,6 +246,18 @@ public class SecurityACLService {
         return usernames;
     }
 
+    public List<Long> getProjectUsersIds(Project project) {
+        Query query = entityManager.createQuery(
+                "select distinct user.id "+
+                        "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, Project as project, User as user "+
+                        "where user.username = aclSid.sid " +
+                        "and aclObjectId.objectId = project.id " +
+                        "and aclEntry.aclObjectIdentity = aclObjectId "+
+                        "and aclEntry.sid = aclSid and project.id = " + project.getId());
+        List<Long> ids = query.getResultList();
+
+        return ids;
+    }
 
     public List<Ontology> getOntologyList(SecUser user) {
         if (currentRoleService.isAdminByNow(user)) return ontologyRepository.findAll();
