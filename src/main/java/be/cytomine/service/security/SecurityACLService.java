@@ -215,7 +215,7 @@ public class SecurityACLService {
 
     public List<JsonObject> getLightStoragesWithMaxPermission(SecUser user) {
         if (currentRoleService.isAdminByNow(user)) {
-            return  getStorageList(user, true).stream().map(x -> JsonObject.of("id", x.getId(), "name", x.getName(), "permission", ADMINISTRATION.getPattern())).collect(Collectors.toList());
+            return  getStorageList(user, true).stream().map(x -> JsonObject.of("id", x.getId(), "name", x.getName(), "permission", "ADMINISTRATION")).collect(Collectors.toList());
         }
 
         Query query = entityManager.createQuery(
