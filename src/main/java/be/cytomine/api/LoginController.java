@@ -186,13 +186,15 @@ public class LoginController extends RestCytomineController {
     @RequestMapping(path = {"/api/token.json"}, method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<String> buildToken() throws IOException {
 
-        securityACLService.checkCurrentUserIsAdmin();
-
         JsonObject params = super.mergeQueryParamsAndBodyParams();
         String username = params.getJSONAttrStr("username");
-
         User user = userRepository.findByUsernameLikeIgnoreCaseAndEnabledIsTrue(username)
                 .orElseThrow(() -> new ObjectNotFoundException("User", username));
+
+        if (!user.getPublicUser()) {
+            // if user is not a public user, token can only be generate by admin
+            securityACLService.checkCurrentUserIsAdmin();
+        }
 
         boolean infiniteExpiration = params.getJSONAttrDouble("validity",-1d).equals(-1d);
         Date expiration;
