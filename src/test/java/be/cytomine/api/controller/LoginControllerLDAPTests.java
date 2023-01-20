@@ -82,7 +82,7 @@ class LoginControllerLDAPTests {
     public void init() {
         configurationRepository.deleteAll();
         configurationRepository.findAll();
-        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_SERVER, "ldap://127.0.0.1:390");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_SERVER, BasicInstanceBuilder.LDAP_URL);
         builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_PRINCIPAL, "CN=admin,OU=users,DC=mtr,DC=com");
         builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_PASSWORD, "itachi");
         builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_SEARCH, "OU=users,DC=mtr,DC=com");
