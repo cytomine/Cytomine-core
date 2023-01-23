@@ -19,13 +19,16 @@ package be.cytomine.api.controller.project;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.meta.TagDomainAssociation;
 import be.cytomine.domain.ontology.UserAnnotation;
+import be.cytomine.domain.project.EditingMode;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastConnection;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.AclRepository;
 import be.cytomine.repository.security.ForgotPasswordTokenRepository;
@@ -35,6 +38,7 @@ import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.ontology.UserAnnotationService;
+import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.social.ProjectConnectionService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -110,6 +114,12 @@ public class ProjectResourceTests {
 
     @Autowired
     SecUserRepository secUserRepository;
+
+    @Autowired
+    ImageInstanceRepository imageInstanceRepository;
+
+    @Autowired
+    SecurityACLService securityACLService;
 
     @BeforeEach
     public void cleanActivities() {
@@ -1117,8 +1127,96 @@ public class ProjectResourceTests {
         assertThat(permissionService.hasACLPermission(project, username, READ)).isTrue();
 
 
+    }
 
 
+
+    @Test
+    @Transactional
+    public void clone_project_with_all_data() throws Exception {
+
+        Project project = given_a_full_project();
+        String newName = BasicInstanceBuilder.randomString();
+
+        restProjectControllerMockMvc.perform(post("/api/project/{id}/clone.json", project.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonObject.of(
+                                "name", newName,
+                                "cloneSetup", true,
+                                "cloneMembers", true,
+                                "cloneImages", true,
+                                "cloneAnnotations", true).toJsonString()))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        assertThat(projectRepository.findByName(newName)).isPresent();
+
+        Project cloned = projectRepository.findByName(newName).get();
+
+        assertThat(cloned.getBlindMode()).isTrue();
+        assertThat(imageInstanceRepository.countAllByProject(cloned)).isEqualTo(1);
+        assertThat(userAnnotationService.countByProject(cloned)).isEqualTo(1);
+        assertThat(securityACLService.getProjectUsers(cloned)).hasSize(3);
+    }
+
+
+    @Test
+    @Transactional
+    public void clone_project_without_anything() throws Exception {
+
+        Project project = given_a_full_project();
+        String newName = BasicInstanceBuilder.randomString();
+
+        restProjectControllerMockMvc.perform(post("/api/project/{id}/clone.json", project.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(JsonObject.of(
+                                "name", newName,
+                                "cloneSetup", false,
+                                "cloneMembers", false,
+                                "cloneImages", false,
+                                "cloneAnnotations", false).toJsonString()))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        assertThat(projectRepository.findByName(newName)).isPresent();
+
+        Project cloned = projectRepository.findByName(newName).get();
+
+        assertThat(cloned.getBlindMode()).isFalse();
+        assertThat(imageInstanceRepository.countAllByProject(cloned)).isEqualTo(0);
+        assertThat(userAnnotationService.countByProject(cloned)).isEqualTo(0);
+        assertThat(securityACLService.getProjectUsers(cloned)).hasSize(1);
+    }
+
+
+
+    private Project given_a_full_project() {
+        Project project = builder.given_a_project();
+        project.setMode(EditingMode.READ_ONLY);
+        project.setBlindMode(true);
+        project = builder.persistAndReturn(project);
+
+
+        builder.addUserToProject(project, builder.given_a_user().getUsername(), READ);
+
+        User user = builder.given_a_user();
+        builder.addUserToProject(project, user.getUsername(), ADMINISTRATION);
+
+        builder.given_a_project_representative_user(project, user);
+
+        SliceInstance sliceInstance = builder.given_a_slice_instance(project);
+
+        builder.given_a_description(sliceInstance.getImage());
+        builder.given_a_property(sliceInstance.getImage(), "key", "value");
+        builder.given_a_tag_association(builder.given_a_tag(), sliceInstance.getImage());
+        builder.given_a_attached_file(sliceInstance.getImage());
+
+        UserAnnotation userAnnotation = builder.given_a_user_annotation(sliceInstance);
+        builder.given_an_annotation_term(userAnnotation);
+        builder.given_a_description(userAnnotation);
+        builder.given_a_property(userAnnotation, "key", "value");
+        builder.given_a_tag_association(builder.given_a_tag(), userAnnotation);
+        return project;
     }
 
 
