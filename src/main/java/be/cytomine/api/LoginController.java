@@ -17,6 +17,7 @@ package be.cytomine.api;
 */
 
 import be.cytomine.api.controller.RestCytomineController;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.security.AuthWithToken;
 import be.cytomine.domain.security.ForgotPasswordToken;
 import be.cytomine.domain.security.SecRole;
@@ -36,6 +37,7 @@ import be.cytomine.security.ldap.LdapIdentityAuthenticationProvider;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.NotificationService;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.StringUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +56,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 import javax.mail.MessagingException;
 import javax.persistence.EntityManager;
@@ -85,6 +88,8 @@ public class LoginController extends RestCytomineController {
     private final CustomUserDetailsAuthenticationProvider customUserDetailsAuthenticationProvider;
 
     private final LdapIdentityAuthenticationProvider ldapIdentityAuthenticationProvider;
+
+    private final ApplicationProperties applicationProperties;
 
 
     @PostMapping("/api/authenticate")
@@ -154,9 +159,10 @@ public class LoginController extends RestCytomineController {
     ForgotPasswordTokenRepository forgotPasswordTokenRepository;
 
     @RequestMapping(path = {"/login/loginWithToken"}, method = {RequestMethod.POST, RequestMethod.GET})
-    public ResponseEntity<String> loginWithToken(
+    public Object loginWithToken(
             @RequestParam String username,
-            @RequestParam String tokenKey
+            @RequestParam String tokenKey,
+            @RequestParam(required = false) String redirect
     ) throws MessagingException {
         User user = userRepository.findByUsernameLikeIgnoreCaseAndEnabledIsTrue(username)
                 .orElseThrow(() -> new ObjectNotFoundException("User", username));
@@ -169,6 +175,9 @@ public class LoginController extends RestCytomineController {
             JWTToken jwtTokens = logInAndGenerateCredentials(user.getUsername(), user.getRoles(), false);
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwtTokens.getToken());
+            if (redirect!=null) {
+                return new RedirectView(applicationProperties.getServerURL() + redirect + "?redirect_token=" + jwtTokens.token);
+            }
             return new ResponseEntity<>(jwtTokens.toJsonObject().toJsonString(), httpHeaders, HttpStatus.OK);
         } else if (forgotPasswordToken.isPresent() && forgotPasswordToken.get().isValid())  {
             user = forgotPasswordToken.get().getUser();
