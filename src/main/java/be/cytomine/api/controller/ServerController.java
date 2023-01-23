@@ -122,7 +122,7 @@ public class ServerController extends RestCytomineController {
         }
     }
 
-    @GetMapping("/status.json")
+    @GetMapping(value = {"/status.json", "/api/status.json"})
     public ResponseEntity<String> status() {
         JsonObject jsonObject = new JsonObject();
         jsonObject.put("alive", true);
