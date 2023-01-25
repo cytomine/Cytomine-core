@@ -414,7 +414,7 @@ public abstract class RestCytomineController {
         } catch (CytomineException e) {
             log.error("add error:" + e.msg);
             log.error(e.toString(), e);
-            return buildJson(Map.of("success", false, "errors", e.msg), e.code);
+            return buildJson(Map.of("success", false, "errors", e.getMessage(), "errorValues", e.getValues()), e.code);
         }
         return null;
     }
@@ -436,7 +436,7 @@ public abstract class RestCytomineController {
             return responseSuccess(result);
         } catch (CytomineException e) {
             log.error(e.toString());
-            return buildJson(Map.of("success", false, "errors", e.msg), e.code);
+            return buildJson(Map.of("success", false, "errors", e.getMessage(), "errorValues", e.getValues()), e.code);
         }
     }
 
@@ -453,7 +453,7 @@ public abstract class RestCytomineController {
             return responseSuccess(result);
         } catch (CytomineException e) {
             log.error(e.toString());
-            return buildJson(Map.of("success", false, "errors", e.msg, "errorValues", e.values), e.code);
+            return buildJson(Map.of("success", false, "errors", e.getMessage(), "errorValues", e.getValues()), e.code);
         }
     }
 
