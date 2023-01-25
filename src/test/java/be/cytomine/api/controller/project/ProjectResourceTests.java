@@ -484,8 +484,8 @@ public class ProjectResourceTests {
                 .andExpect(jsonPath("$.blindMode").value(false))
                 .andExpect(jsonPath("$.isReadOnly").value(false))
                 .andExpect(jsonPath("$.isRestricted").value(false))
-                .andExpect(jsonPath("$.hideUsersLayers").value(true))
-                .andExpect(jsonPath("$.hideAdminsLayers").value(true))
+                .andExpect(jsonPath("$.hideUsersLayers").value(false))
+                .andExpect(jsonPath("$.hideAdminsLayers").value(false))
         ;
     }
 
