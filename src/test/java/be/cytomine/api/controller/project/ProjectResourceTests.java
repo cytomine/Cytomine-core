@@ -20,6 +20,8 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.meta.TagDomainAssociation;
+import be.cytomine.domain.ontology.AnnotationTerm;
+import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
@@ -697,6 +699,24 @@ public class ProjectResourceTests {
         assertThat(permissionService.hasACLPermission(project, newUser.getUsername(), ADMINISTRATION)).isTrue();
         assertThat(permissionService.hasACLPermission(project, newUser.getUsername(), READ)).isTrue();
 
+    }
+
+    @Test
+    @Transactional
+    public void fail_when_editing_project_with_annotation_terms_and_ontology_change() throws Exception {
+        AnnotationTerm annotationTerm = builder.given_an_annotation_term();
+        Project project = annotationTerm.getUserAnnotation().getProject();
+
+        Ontology newOntology = builder.given_an_ontology();
+        restProjectControllerMockMvc.perform(put("/api/project/{id}.json", project.getId())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(project.toJsonObject().withChange("ontology", List.of(newOntology.getId())).toJsonString()))
+                .andDo(print())
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errors").exists())
+                .andExpect(jsonPath("$.errorValues").exists())
+                .andExpect(jsonPath("$.errorValues.userAssociatedTermsCount").value(1));
     }
 
     @Test
