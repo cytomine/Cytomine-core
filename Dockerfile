@@ -68,7 +68,11 @@ ENV LANG C.UTF-8
 ENV DEBIAN_FRONTEND noninteractive
 
 # tomcat configuration
-RUN apt-get -y update && apt-get install -y autoconf automake libpopt-dev libtool make xz-utils
+RUN apt-get update -y \
+    && apt-get install --no-install-recommends --no-install-suggests -y autoconf automake libpopt-dev libtool make xz-utils gettext-base \
+    && apt-get remove --purge --auto-remove -y \
+    && rm -rf /var/lib/apt/lists/*
+    
 RUN cd /tmp/ && wget https://github.com/logrotate/logrotate/releases/download/3.18.0/logrotate-3.18.0.tar.xz && tar -xJf logrotate-3.18.0.tar.xz
 RUN cd /tmp/logrotate-3.18.0 && autoreconf -fiv && ./configure && make
 
