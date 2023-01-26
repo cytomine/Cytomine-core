@@ -75,6 +75,8 @@ public class SecUser extends CytomineDomain {
 
     protected Boolean passwordExpired = false;
 
+    protected Boolean apiEnabled = false;
+
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -130,6 +132,7 @@ public class SecUser extends CytomineDomain {
         returnArray.put("username", user.username);
         returnArray.put("origin", user.origin);
         returnArray.put("algo", user.isAlgo());
+        returnArray.put("apiEnabled", user.getApiEnabled());
         return returnArray;
     }
 

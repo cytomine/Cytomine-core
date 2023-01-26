@@ -374,9 +374,13 @@ public class SecUserService extends ModelService {
             sort = ""; // sort will be done later            
         } else if (sortColumn.equals("fullName")) {
             sort = "ORDER BY u.firstname " + sortDirection + ", u.id ";
+        } else if(sortColumn.equals("apiEnabled")){ // api_enabled column
+            sort = "ORDER BY u.api_enabled "+sortDirection+", u.id ";
         } else if (!sortColumn.equals("id")) { //avoid random sort when multiple values of the
             sort = "ORDER BY u." + sortColumn + " " + sortDirection + ", u.id ";
-        } else sort = "ORDER BY u." + sortColumn + " " + sortDirection + " ";
+        } else {
+            sort = "ORDER BY u." + sortColumn + " " + sortDirection + " ";
+        }
 
         String request = select + from + where + search + groupBy + sort;
 
