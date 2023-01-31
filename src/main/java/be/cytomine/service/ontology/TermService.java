@@ -21,10 +21,8 @@ import be.cytomine.domain.command.*;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.RelationTerm;
 import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.WrongArgumentException;
@@ -35,7 +33,6 @@ import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -116,6 +113,13 @@ public class TermService extends ModelService {
         } else {
             return termRepository.listAllIds(project.getOntology());
         }
+    }
+
+    public String fillEmptyTermIds(String terms, Project project){
+        if (terms == null || terms.equals("")) {
+            return this.getAllTermId(project).stream().map(String::valueOf).collect(Collectors.joining(","));
+        }
+        return terms;
     }
 
     /**
