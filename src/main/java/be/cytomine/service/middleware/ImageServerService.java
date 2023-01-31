@@ -122,7 +122,13 @@ public class ImageServerService extends ModelService {
     }
 
     public String downloadUri(AbstractImage abstractImage) throws IOException {
-        return downloadUri(abstractImage.getUploadedFile());
+        UploadedFile uploadedFile = abstractImage.getUploadedFile();
+        if (uploadedFile.getPath()==null || uploadedFile.getPath().trim().equals("")) {
+            throw new InvalidRequestException("Uploaded file has no valid path.");
+        }
+        // It gets the file specified in the uri.
+        String uri = "/image/"+URLEncoder.encode(uploadedFile.getPath() ,StandardCharsets.UTF_8) +"/export";
+        return uploadedFile.getImageServer().getUrl()+uri;
     }
 
     public String downloadUri(CompanionFile companionFile) throws IOException {
