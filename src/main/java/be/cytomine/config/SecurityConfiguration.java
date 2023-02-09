@@ -143,7 +143,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         .and()
             .apply(securityConfigurerAdapter())
         .and()
-            .addFilter(switchUserFilter());
+            .addFilter(switchUserFilter())
+                .headers()
+                .cacheControl().disable();
         // @formatter:on
     }
 

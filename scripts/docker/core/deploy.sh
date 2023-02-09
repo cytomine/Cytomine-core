@@ -18,5 +18,5 @@
 
 bash /tmp/addHosts.sh
 
-java -jar /app/cytomine.jar
+exec java -jar /app/cytomine.jar
 
