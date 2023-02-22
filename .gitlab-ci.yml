@@ -12,17 +12,18 @@ default:
 
 make_version_name:
   stage: prepare
+  image: 
+    name: alpine:latest
+    entrypoint: ["/bin/bash", "-c"]
   script:
-    - if [[ "$CI_COMMIT_REF_NAME" =~ ^refs/tags/ ]] && [[ "$CI_COMMIT_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-(?:-[a-zA_Z0-9]+)?$ ]]; then
-        echo "CM_VERSION_NAME=$CI_COMMIT_TAG" >> .env;
+    - if [[ "$CI_COMMIT_REF_NAME" =~ ^refs/tags/ ]] && [[ "$CI_COMMIT_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-.+)?$ ]]; then
+        echo "CM_VERSION_NAME=$CI_COMMIT_TAG" > .env;
       else
-        echo "CM_VERSION_NAME=$CI_COMMIT_SHORT_SHA-$(date "+%Y%m%d%H%M%S")-SNAPSHOT" >> .env;
+        echo "CM_VERSION_NAME=$CI_COMMIT_SHORT_SHA-$(date '+%Y%m%d%H%M%S')-SNAPSHOT" > .env;
       fi
   artifacts:
     paths:
       - .env
-
-
 
 print_version_name:
   stage: debug
@@ -31,3 +32,6 @@ print_version_name:
       artifacts: true
   script:
     - cat .env 
+
+
+
