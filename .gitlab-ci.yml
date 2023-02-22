@@ -1,0 +1,33 @@
+stages:
+  - prepare
+  #- format
+  #- test
+  #- build
+  #- publish
+  - debug 
+
+default:
+  tags: 
+    - docker
+
+make_version_name:
+  stage: prepare
+  script:
+    - if [[ "$CI_COMMIT_REF_NAME" =~ ^refs/tags/ ]] && [[ "$CI_COMMIT_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+-(?:-[a-zA_Z0-9]+)?$ ]]; then
+        echo "CM_VERSION_NAME=$CI_COMMIT_TAG" >> .env;
+      else
+        echo "CM_VERSION_NAME=$CI_COMMIT_SHORT_SHA-$(date "+%Y%m%d%H%M%S")-SNAPSHOT" >> .env;
+      fi
+  artifacts:
+    paths:
+      - .env
+
+
+
+print_version_name:
+  stage: debug
+  needs:
+    - job: make_version_name
+      artifacts: true
+  script:
+    - cat .env 
