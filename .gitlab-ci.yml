@@ -1,11 +1,20 @@
 stages:
   - prepare
   #- format
-  #- test
+  - tests
   #- build
   #- publish
   - debug 
 
+variables:
+  GRADLE_USER_HOME: /cache/.gradle
+  POSTGRES_USER: docker
+  POSTGRES_PASSWORD: docker
+  POSTGRES_DB: docker
+  MONGO_INITDB_ROOT_USERNAME: mongoadmin
+  MONGO_INITDB_ROOT_PASSWORD: secret
+  MONGO_INITDB_DATABASE: cytomine
+  
 default:
   tags: 
     - docker
@@ -23,12 +32,44 @@ make_version_name:
   artifacts:
     paths:
       - .env
-    
-download-deps:
+
+# download build and test dependendcies
+dependencies-download:
   stage: prepare
-  image: docker:latest
+  image: gradle:7.4.2-jdk17-alpine
   script:
-    - docker build -f docker/Dockerfile --target deps-downloader .
+    - export GRADLE_USER_HOME=$GRADLE_USER_HOME
+    - mkdir -p /cache/.gradle
+    - gradle clean build --no-daemon --console=verbose
+  artifacts:
+    paths:
+      - build
+
+# running tests
+junit:
+  stage: tests
+  image: gradle:7.4.2-jdk17-alpine
+  needs:
+    - job: dependencies-download
+      artifacts: true
+  services:
+    - alias: postgresql
+      name: registry.cytom.in/cm/rnd/cytomine/tools/envs/postgis:15-3.3-alpine-1.2.0
+    - alias: mongodb
+      name: mongo:6.0.3-focal
+    - alias: rabbitmq
+      name: rabbitmq:3.10
+    - alias: ldap
+      name: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.1
+  script:
+    - export GRADLE_USER_HOME=$GRADLE_USER_HOME
+    - sed -i -- "s/localhost:5433/postgres:5432/g" src/test/resources/application.yml
+    - "sed -i -- 's/host: 127.0.0.1/host: mongodb/g' src/test/resources/application.yml"
+    - "sed -i -- 's/port: 27018/port: 27017/g' src/test/resources/application.yml"
+    - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/resources/application.yml
+    - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/java/be/cytomine/security/LdapClientTests.java
+    - gradle :test --no-daemon
+  
 
 print_version_name:
   stage: debug
