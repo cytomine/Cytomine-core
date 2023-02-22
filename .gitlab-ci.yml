@@ -33,18 +33,6 @@ make_version_name:
     paths:
       - .env
 
-# download build and test dependendcies
-dependencies-download:
-  stage: prepare
-  image: gradle:7.4.2-jdk17-alpine
-  script:
-    - export GRADLE_USER_HOME=$GRADLE_USER_HOME
-    - mkdir -p /cache/.gradle
-    - gradle clean build --no-daemon --console=verbose
-  artifacts:
-    paths:
-      - build
-
 # running tests
 junit:
   stage: tests
@@ -69,7 +57,9 @@ junit:
     - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/resources/application.yml
     - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/java/be/cytomine/security/LdapClientTests.java
     - gradle :test --no-daemon
-  
+  artifacts:
+    paths:
+      - build
 
 print_version_name:
   stage: debug
