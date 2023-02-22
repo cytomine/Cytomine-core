@@ -84,6 +84,7 @@ COPY --from=jar-builder /app/build/libs/cytomine.jar /app/cytomine.jar
 RUN mkdir /docker-entrypoint-cytomine.d/
 COPY --from=scripts-downloader --chmod=774 /root/scripts/cytomine-entrypoint.sh /usr/local/bin/
 COPY --from=scripts-downloader --chmod=774 /root/scripts/envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
+COPY --from=scripts-downloader --chmod=774 /root/scripts/configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
 
 WORKDIR /app
 ENTRYPOINT ["cytomine-entrypoint.sh"]
