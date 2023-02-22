@@ -45,7 +45,7 @@ junit:
     - alias: rabbitmq
       name: rabbitmq:3.10
     - alias: ldap
-      name: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.1
+      name: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.2
   script:
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
     - sed -i -- "s/localhost:5433/postgres:5432/g" src/test/resources/application.yml
