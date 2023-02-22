@@ -37,9 +37,6 @@ make_version_name:
 junit:
   stage: tests
   image: gradle:7.4.2-jdk17-alpine
-  needs:
-    - job: dependencies-download
-      artifacts: true
   services:
     - alias: postgresql
       name: registry.cytom.in/cm/rnd/cytomine/tools/envs/postgis:15-3.3-alpine-1.2.0
