@@ -23,6 +23,12 @@ make_version_name:
   artifacts:
     paths:
       - .env
+    
+download-deps:
+  stage: prepare
+  image: docker:latest
+  script:
+    - docker build -f docker/Dockerfile --target deps-downloader .
 
 print_version_name:
   stage: debug
