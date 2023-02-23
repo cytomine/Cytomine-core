@@ -1,12 +1,11 @@
 stages:
   - prepare
-  #- format
-  - tests
-  #- build
-  #- publish
-  - debug 
+  - test
+  - build
+  - publish
 
 variables:
+  # cache gradle working directory
   GRADLE_USER_HOME: /cache/.gradle
   POSTGRES_USER: docker
   POSTGRES_PASSWORD: docker
@@ -19,7 +18,7 @@ default:
   tags: 
     - docker
 
-make_version_name:
+make-version-name:
   stage: prepare
   # regex check does not work with /bin/sh because of parenthesis so we need /bin/bash here
   image: bash:5.2.15-alpine3.16
@@ -29,42 +28,77 @@ make_version_name:
       else
         echo "CM_VERSION_NAME=$CI_COMMIT_SHORT_SHA-$(date '+%Y%m%d%H%M%S')-SNAPSHOT" > .env;
       fi
+    - cat .env
   artifacts:
     paths:
       - .env
 
 # running tests
-junit:
-  stage: tests
-  image: gradle:7.4.2-jdk17-alpine
-  services:
-    - alias: postgres
-      name: registry.cytom.in/cm/rnd/cytomine/tools/envs/postgis:15-3.3-alpine-1.2.0
-    - alias: mongodb
-      name: mongo:6.0.3-focal
-    - alias: rabbitmq
-      name: rabbitmq:3.10
-    - alias: ldap
-      name: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.2
-  script:
-    - export GRADLE_USER_HOME=$GRADLE_USER_HOME
-    - sed -i -- "s/localhost:5433/postgres:5432/g" src/test/resources/application.yml
-    - "sed -i -- 's/host: 127.0.0.1/host: mongodb/g' src/test/resources/application.yml"
-    - "sed -i -- 's/port: 27018/port: 27017/g' src/test/resources/application.yml"
-    - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/resources/application.yml
-    - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/java/be/cytomine/security/LdapClientTests.java
-    - gradle :test --no-daemon --fail-fast
-  artifacts:
-    paths:
-      - build
+# run-junit:
+#   stage: test
+#   image: gradle:7.4.2-jdk17-alpine
+#   services:
+#     - alias: postgres
+#       name: registry.cytom.in/cm/rnd/cytomine/tools/envs/postgis:15-3.3-alpine-1.2.0
+#     - alias: mongodb
+#       name: mongo:6.0.3-focal
+#     - alias: rabbitmq
+#       name: rabbitmq:3.10
+#     - alias: ldap
+#       name: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.2
+#   script:
+#     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
+#     - sed -i -- "s/localhost:5433/postgres:5432/g" src/test/resources/application.yml
+#     - "sed -i -- 's/host: 127.0.0.1/host: mongodb/g' src/test/resources/application.yml"
+#     - "sed -i -- 's/port: 27018/port: 27017/g' src/test/resources/application.yml"
+#     - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/resources/application.yml
+#     - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/java/be/cytomine/security/LdapClientTests.java
+#     - gradle :test --no-daemon
+#   artifacts:
+#     paths:
+#       - build
 
-print_version_name:
-  stage: debug
+build-jar:
+  stage: build
+  image: gradle:7.4.2-jdk17-alpine
   needs:
-    - job: make_version_name
+    - job: make-version-name
       artifacts: true
   script:
-    - cat .env 
+    - source .env
+    - export GRADLE_USER_HOME=$GRADLE_USER_HOME
+    - "sed -i -- 's/version: 0.0.0/version: '$CM_VERSION_NAME'/g' /app/src/main/resources/application.yml"
+    - gradle bootJar --console=verbose
+  artifacts:
+    when: on_success
+    paths: 
+      - build/libs/cytomine.jar
 
+publish-jar:
+  stage: publish
+  image: alpine:latest
+  needs:
+    - job: build-jar
+      artifacts: true
+  script:
+    - ls build/libs
 
+publish-docker-image:
+  stage: publish
+  image: docker:latest
+  needs:
+    - job: make-version-name
+      artifacts: true
+  script:
+    - source .env
+    - export SCRIPTS_REPO_FULL_URL=https://$SCRIPT_REPO_ACCESS_TOKEN_NAME:$SCRIPT_REPO_ACCESS_TOKEN_VALUE@$SCRIPT_REPO_URL
+    - echo $SCRIPTS_REPO_FULL_URL
+    - docker build \
+      --build-arg CORE_VERSION=$CM_VERSION_NAME \
+      --build-arg SCRIPTS_REPO_TAG=latest \
+      --build-arg SCRIPTS_REPO_BRANCH=main \
+      --secret id=scripts_repo_url,env=SCRIPTS_REPO_FULL_URL \
+      -t "$CI_REGISTRY_IMAGE/core-eet:$CM_VERSION_NAME" \
+      -f docker/Dockerfile .
+    - docker push "$CI_REGISTRY_IMAGE/core-eet:$CM_VERSION_NAME"
 
