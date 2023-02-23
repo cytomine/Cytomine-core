@@ -67,7 +67,7 @@ build-jar:
   script:
     - source .env
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
-    - "sed -i -- 's/version: 0.0.0/version: '$CM_VERSION_NAME'/g' /app/src/main/resources/application.yml"
+    - "sed -i -- 's/version: 0.0.0/version: '$CM_VERSION_NAME'/g' src/main/resources/application.yml"
     - gradle bootJar --console=verbose
   artifacts:
     when: on_success
@@ -93,12 +93,13 @@ publish-docker-image:
     - source .env
     - export SCRIPTS_REPO_FULL_URL=https://$SCRIPT_REPO_ACCESS_TOKEN_NAME:$SCRIPT_REPO_ACCESS_TOKEN_VALUE@$SCRIPT_REPO_URL
     - echo $SCRIPTS_REPO_FULL_URL
-    - docker build \
-      --build-arg CORE_VERSION=$CM_VERSION_NAME \
-      --build-arg SCRIPTS_REPO_TAG=latest \
-      --build-arg SCRIPTS_REPO_BRANCH=main \
-      --secret id=scripts_repo_url,env=SCRIPTS_REPO_FULL_URL \
-      -t "$CI_REGISTRY_IMAGE/core-eet:$CM_VERSION_NAME" \
+    - |
+      docker build
+      --build-arg CORE_VERSION=$CM_VERSION_NAME
+      --build-arg SCRIPTS_REPO_TAG=latest
+      --build-arg SCRIPTS_REPO_BRANCH=main
+      --secret id=scripts_repo_url,env=SCRIPTS_REPO_FULL_URL
+      -t "$CI_REGISTRY_IMAGE/core-eet:$CM_VERSION_NAME"
       -f docker/Dockerfile .
     - docker push "$CI_REGISTRY_IMAGE/core-eet:$CM_VERSION_NAME"
 
