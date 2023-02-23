@@ -93,13 +93,6 @@ publish-docker-image:
     - source .env
     - export SCRIPTS_REPO_FULL_URL=https://${SCRIPTS_REPO_ACCESS_TOKEN_NAME}:${SCRIPTS_REPO_ACCESS_TOKEN_VALUE}@${SCRIPTS_REPO_URL}
     - echo ${SCRIPTS_REPO_FULL_URL}
-    - |
-      docker build
-      --build-arg CORE_VERSION=${CM_VERSION_NAME}
-      --build-arg SCRIPTS_REPO_TAG=latest
-      --build-arg SCRIPTS_REPO_BRANCH=main
-      --secret id=scripts_repo_url,env=SCRIPTS_REPO_FULL_URL
-      -t "${CI_REGISTRY_IMAGE}/core-eet:${CM_VERSION_NAME}"
-      -f docker/Dockerfile .
+    - docker build --build-arg CORE_VERSION=${CM_VERSION_NAME} --build-arg SCRIPTS_REPO_TAG=latest --build-arg SCRIPTS_REPO_BRANCH=main --secret id=scripts_repo_url,env=SCRIPTS_REPO_FULL_URL -t "${CI_REGISTRY_IMAGE}/core-eet:${CM_VERSION_NAME}" -f docker/Dockerfile .
     - docker push "${CI_REGISTRY_IMAGE}/core-eet:${CM_VERSION_NAME}"
 
