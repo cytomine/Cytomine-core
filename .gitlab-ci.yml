@@ -65,8 +65,8 @@ build-jar:
   needs:
     - job: make-version-name
       artifacts: true
-    #- job: run-junit
-    #  artifacts: false
+    - job: run-junit
+      artifacts: false
   script:
     - source .env
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
@@ -98,8 +98,8 @@ publish-docker-image:
   needs:
     - job: make-version-name
       artifacts: true
-    #- job: run-junit
-    #  artifacts: false
+    - job: run-junit
+      artifacts: false
   script:
     - source .env
     - export SCRIPTS_REPO_FULL_URL=https://${SCRIPTS_REPO_ACCESS_TOKEN_NAME}:${SCRIPTS_REPO_ACCESS_TOKEN_VALUE}@${SCRIPTS_REPO_URL}
