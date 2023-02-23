@@ -1,6 +1,5 @@
 ARG CORE_VERSION
 ARG SCRIPTS_REPO_TAG
-ARG SCRIPTS_REPO_BRANCH
 
 
 #######################################################################################
@@ -41,14 +40,13 @@ RUN gradle bootJar --console=verbose
 ## Stage 3: downloading provisioning scripts
 FROM alpine/git:2.36.3 as scripts-downloader
 ARG SCRIPTS_REPO_TAG
-ARG SCRIPTS_REPO_BRANCH
 
 WORKDIR /root
 RUN mkdir scripts
 RUN --mount=type=secret,id=scripts_repo_url \
     git clone $(cat /run/secrets/scripts_repo_url) /root/scripts \
     && cd /root/scripts \
-    && git checkout tags/${SCRIPTS_REPO_TAG} -b ${SCRIPTS_REPO_BRANCH}
+    && git checkout tags/${SCRIPTS_REPO_TAG}
 
 #######################################################################################
 ## Stage 4: Cytomine core image
