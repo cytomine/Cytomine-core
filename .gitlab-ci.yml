@@ -56,6 +56,7 @@ run-junit:
   artifacts:
     reports:
       junit: build/test-results/test/**/TEST-*.xml
+      # TODO integrate code coverage
 
 build-jar:
   stage: build
