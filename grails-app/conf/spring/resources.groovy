@@ -20,6 +20,7 @@ import be.cytomine.spring.CustomAjaxAwareAuthenticationEntryPoint
 import be.cytomine.spring.CustomDefaultRedirectStrategy
 import be.cytomine.spring.CustomSavedRequestAwareAuthenticationSuccessHandler
 import be.cytomine.web.CytomineMultipartHttpServletRequest
+import be.cytomine.PatchedInterceptUrlMapFilterInvocationDefinition
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.web.authentication.AjaxAwareAuthenticationSuccessHandler
 import grails.util.Holders
@@ -92,5 +93,12 @@ beans = {
     currentRoleServiceProxy(org.springframework.aop.scope.ScopedProxyFactoryBean) {
         targetBeanName = 'currentRoleService'
         proxyTargetClass = true
+    }
+
+    def conf = SpringSecurityUtils.securityConfig
+    objectDefinitionSource(be.cytomine.PatchedInterceptUrlMapFilterInvocationDefinition) {
+        if (conf.rejectIfNoRule instanceof Boolean) {
+            rejectIfNoRule = conf.rejectIfNoRule
+        }
     }
 }
