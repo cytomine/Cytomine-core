@@ -40,7 +40,7 @@ run-junit:
     - alias: postgres
       name: registry.cytom.in/cm/rnd/cytomine/tools/envs/postgis:15-3.3-alpine-1.2.0
     - alias: mongodb
-      name: mongo:6.0.3-focal
+      name: mongo:4.4.18-focal
     - alias: rabbitmq
       name: rabbitmq:3.10
     - alias: ldap

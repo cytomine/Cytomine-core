@@ -21,9 +21,7 @@ services:
 #    restart: unless-stopped
 
   ldapdev:
-    image: upekshejay/simple-ldap-test-server
+    image: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.2
+    container_name: ldap
     ports: [ "389:389", "636:636" ]
     restart: unless-stopped
-    volumes:
-      - "./test/ldap/store.json:/app/etc/store.json"
-      - "./test/ldap/default.json:/app/config/default.json"
