@@ -15,6 +15,7 @@ variables:
   MONGO_INITDB_DATABASE: cytomine
   DOCKERHUB_CORE_REPO: cytomine/core
   DOCKER_TMP_IMAGE_NAME: $CI_PIPELINE_ID:latest
+  DOCKER_TMP_JAR_IMAGE_NAME: $CI_PIPELINE_ID-jar-builder:latest
   
 # variable to register in project:
 # - DOCKERHUB_URL: url of dockerhub (e.g. docker.io)
@@ -78,18 +79,24 @@ run-junit:
 
 build-jar:
   stage: build
-  image: gradle:7.4.2-jdk17-alpine
+  image: docker:latest
   rules:
     - if: $CI_COMMIT_TAG
   needs:
+    # no dependence on junit tests success. This allow for build 
+    # stage jobs to run in parallel with tests. If test fails, 
+    # publish jobs are aborted  
     - job: make-version-name
       artifacts: true
   script:
     - source .env
-    - export GRADLE_USER_HOME=$GRADLE_USER_HOME
-    - "sed -i -- 's/version: 0.0.0/version: '$CM_VERSION'/g' src/main/resources/application.yml"
-    - gradle bootJar --console=verbose
-    - mv build/libs/cytomine.jar build/libs/cytomine-$CM_VERSION.jar
+    - docker build --build-arg CORE_VERSION=${CM_VERSION} -t $DOCKER_TMP_JAR_IMAGE_NAME -f docker/Dockerfile --target jar-builder .
+    - docker run --name $CI_PIPELINE_ID-builder-container -t $DOCKER_TMP_JAR_IMAGE_NAME
+    - mkdir -p build/libs/
+    - docker cp $CI_PIPELINE_ID-builder-container:/app/build/libs/cytomine.jar build/libs/cytomine-$CM_VERSION.jar
+  after_script:
+    - docker rm $CI_PIPELINE_ID-builder-container
+    - docker rmi $DOCKER_TMP_JAR_IMAGE_NAME
   artifacts:
     when: on_success
     expire_in: never
@@ -100,8 +107,8 @@ build-docker-image:
   stage: build
   image: docker:latest
   needs:
-    - job: make-version-name
-      artifacts: true
+    - job: build-jar
+      artifacts: false
   rules:
     - if: $CI_COMMIT_TAG
   script:
@@ -109,7 +116,6 @@ build-docker-image:
     - export SCRIPTS_REPO_FULL_URL=https://${SCRIPTS_REPO_ACCESS_TOKEN_NAME}:${SCRIPTS_REPO_ACCESS_TOKEN_VALUE}@${SCRIPTS_REPO_URL}
     - docker build --build-arg CORE_VERSION=${CM_VERSION} --build-arg SCRIPTS_REPO_TAG=latest --secret id=scripts_repo_url,env=SCRIPTS_REPO_FULL_URL -t $DOCKER_TMP_IMAGE_NAME -f docker/Dockerfile .
 
- 
 publish-docker-image: 
   stage: publish
   image: docker:latest
