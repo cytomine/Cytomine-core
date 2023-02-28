@@ -10,7 +10,6 @@
         <appender-ref ref="STDOUT"/>
     </root>
     <logger name="be.cytomine" level="debug"/>
-    <logger name="be.cytomine" level="debug"/>
     <logger name="org.mongodb" level="warn"/>
     <logger name="org.springframework" level="warn"/>
     <logger name="org.hibernate" level="warn"/>
