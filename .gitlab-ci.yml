@@ -141,7 +141,7 @@ publish-docker-image:
         export TARGET_CI_REGISTRY_USER=$CI_REGISTRY_USER
         export TARGET_CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD
       fi
-    - echo "registry:$TARGET_CI_REGISTRY user:$TARGET_CI_REGISTRY_USER ($TARGET_CI_REGISTRY_PASSWORD)"
+    - echo "Target > registry:$TARGET_CI_REGISTRY user:$TARGET_CI_REGISTRY_USER"
     - docker login -u $TARGET_CI_REGISTRY_USER -p $TARGET_CI_REGISTRY_PASSWORD $TARGET_CI_REGISTRY
     - export DOCKER_IMAGE_NAME_FULL=$DOCKER_IMAGE_NAME:$CM_VERSION
     - docker tag $DOCKER_TMP_IMAGE_NAME $DOCKER_IMAGE_NAME_FULL
@@ -160,5 +160,7 @@ publish-jar:
       artifacts: true
     - job: build-jar
       artifacts: true
+    - job: run-junit
+      artifacts: false
   script:
     - echo "TODO upload somehwere"
