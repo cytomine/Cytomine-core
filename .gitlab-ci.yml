@@ -117,20 +117,23 @@ publish-docker-image:
     - job: run-junit
       artifacts: false
   rules:
-    - if: $IS_OPEN_SOURCE_RELEASE_CANDIDATE
-      variables:
-        DOCKER_IMAGE_NAME: cytomine/core
-        TARGET_CI_REGISTRY: $DOCKERHUB_URL
-        TARGET_CI_REGISTRY_USER: $DOCKERHUB_USER
-        TARGET_CI_REGISTRY_PASSWORD: $DOCKERHUB_PASSWORD
-    - if: ! $IS_OPEN_SOURCE_RELEASE_CANDIDATE
-      variables:
-        DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE
-        TARGET_CI_REGISTRY: $CI_REGISTRY
-        TARGET_CI_REGISTRY_USER: $CI_REGISTRY_USER
-        TARGET_CI_REGISTRY_PASSWORD: $CI_REGISTRY_PASSWORD 
+    - if: $CI_COMMIT_TAG
   script:
     - source .env
+    - |
+      if [ $IS_OPEN_SOURCE_RELEASE_CANDIDATE = "true" ]; then
+        echo "Open-source release candidate (=$IS_OPEN_SOURCE_RELEASE_CANDIDATE) > push image to DockerHub"
+        export DOCKER_IMAGE_NAME=cytomine/core
+        export TARGET_CI_REGISTRY=$DOCKERHUB_URL
+        export TARGET_CI_REGISTRY_USER=$DOCKERHUB_USER
+        export TARGET_CI_REGISTRY_PASSWORD=$DOCKERHUB_PASSWORD
+      else
+        echo "Closed-source release candidate (=$IS_OPEN_SOURCE_RELEASE_CANDIDATE) > push image to private GitLab registry"
+        export DOCKER_IMAGE_NAME=$CI_REGISTRY_IMAGE
+        export TARGET_CI_REGISTRY=$CI_REGISTRY
+        export TARGET_CI_REGISTRY_USER=$CI_REGISTRY_USER
+        export TARGET_CI_REGISTRY_PASSWORD=$CI_REGISTRY_PASSWORD
+      fi
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
     - export DOCKER_IMAGE_NAME_FULL=$DOCKER_IMAGE_NAME:$CM_VERSION
     - docker tag $DOCKER_TMP_IMAGE_NAME $DOCKER_IMAGE_NAME_FULL
