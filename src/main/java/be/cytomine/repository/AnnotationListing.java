@@ -476,7 +476,7 @@ public abstract class AnnotationListing {
                 try {
                     AnnotationDomain base = AnnotationDomain.getAnnotationDomain(entityManager, ((Long)baseAnnotation), null);
                     //ST_distance(a.location,ST_GeometryFromText('POINT (0 0)'))
-                    return "AND ST_distance(a.location,ST_GeometryFromText('"+base.getWktLocation() + "}')) <= "+maxDistanceBaseAnnotation+"\n";
+                    return "AND ST_distance(a.location,ST_GeometryFromText('"+base.getWktLocation() + "')) <= "+maxDistanceBaseAnnotation+"\n";
                 } catch (Exception e) {
                     return "AND ST_distance(a.location,ST_GeometryFromText('"+baseAnnotation+ "')) <= " + maxDistanceBaseAnnotation + "\n";
                 }
