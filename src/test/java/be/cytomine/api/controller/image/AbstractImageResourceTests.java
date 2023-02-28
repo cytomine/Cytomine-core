@@ -792,7 +792,7 @@ public class AbstractImageResourceTests {
                 .andDo(print()).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
         assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/file/"+URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8)+"/export");
+                .isEqualTo("http://localhost:8888/image/"+URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8)+"/export");
 
 
     }

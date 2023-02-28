@@ -371,7 +371,7 @@ public class BasicInstanceBuilder {
         return persistAndReturn(uploadedFile);
     }
 
-    public UploadedFile given_a_not_persisted_uploaded_file() {
+    public UploadedFile given_a_not_persisted_uploaded_file(String contentType) {
         UploadedFile uploadedFile = new UploadedFile();
         uploadedFile.setStorage(given_a_storage());
         uploadedFile.setUser(given_superadmin());
@@ -379,10 +379,14 @@ public class BasicInstanceBuilder {
         uploadedFile.setOriginalFilename(randomString());
         uploadedFile.setExt("tif");
         uploadedFile.setImageServer(given_an_image_server());
-        uploadedFile.setContentType("image/pyrtiff");
+        uploadedFile.setContentType(contentType);
         uploadedFile.setSize(100L);
         uploadedFile.setParent(null);
         return uploadedFile;
+    }
+
+    public UploadedFile given_a_not_persisted_uploaded_file() {
+        return given_a_not_persisted_uploaded_file("PYRTIFF");
     }
 
     public Storage given_a_storage() {

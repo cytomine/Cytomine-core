@@ -21,6 +21,7 @@ import be.cytomine.CytomineCoreApplication;
 import be.cytomine.authorization.AbstractAuthorizationTest;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
+import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.Ontology;
@@ -200,7 +201,7 @@ public class ImageServerServiceTests {
     //http://localhost-ims/image/download?fif=%2Fdata%2Fimages%2F58%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs
 
     @Test
-    void retrieve_download_uri() throws IOException {
+    void retrieve_abstract_image_download_uri() throws IOException {
         AbstractImage image = builder.given_an_abstract_image();
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
@@ -208,10 +209,22 @@ public class ImageServerServiceTests {
         image.getUploadedFile().setContentType("MRXS");
 
         assertThat(imageServerService.downloadUri(image))
-                .isEqualTo("http://localhost:8888/file/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/export");
+                .isEqualTo("http://localhost:8888/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/export");
 
         assertThat(imageServerService.downloadUri(image.getUploadedFile()))
                 .isEqualTo("http://localhost:8888/file/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/export");
+    }
+
+    @Test
+    void retrieve_uploaded_file_download_uri() throws IOException {
+        UploadedFile uploadedFile = builder.given_a_not_persisted_uploaded_file();
+        uploadedFile.getImageServer().setBasePath("/data/images");
+        uploadedFile.getImageServer().setUrl("http://localhost:8888");
+        uploadedFile.setFilename("1636379100999/CMU-2.zip");
+        uploadedFile.setContentType("ZIP");
+
+        assertThat(imageServerService.downloadUri(uploadedFile))
+                .isEqualTo("http://localhost:8888/file/" + URLEncoder.encode(uploadedFile.getPath(), StandardCharsets.UTF_8) + "/export");
     }
 
     @Test

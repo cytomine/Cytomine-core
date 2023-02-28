@@ -28,6 +28,7 @@ import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
+import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
 import be.cytomine.service.security.SecUserService;
@@ -73,6 +74,8 @@ public class RestReviewedAnnotationController extends RestCytomineController {
     private final TaskService taskService;
 
     private final SecUserService secUserService;
+
+    private final TermService termService;
 
     @GetMapping("/reviewedannotation.json")
     public ResponseEntity<String> list(
@@ -269,9 +272,9 @@ public class RestReviewedAnnotationController extends RestCytomineController {
     /**
      * Download a report (pdf, xls,...) with reviewed annotation data from a specific project
      */
-    @GetMapping("/project/{project}/reviewedannotation/download")
+    @GetMapping("/project/{idProject}/reviewedannotation/download")
     public void downloadDocumentByProject(
-            @PathVariable Long project,
+            @PathVariable Long idProject,
             @RequestParam String format,
             @RequestParam String terms,
             @RequestParam String reviewUsers,
@@ -279,11 +282,14 @@ public class RestReviewedAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Long beforeThan,
             @RequestParam(required = false) Long afterThan
     ) throws IOException {
-        reviewUsers = secUserService.fillEmptyUserIds(reviewUsers, project);
+        Project project = projectService.find(idProject)
+                .orElseThrow(() -> new ObjectNotFoundException("Project", idProject));
+        reviewUsers = secUserService.fillEmptyUserIds(reviewUsers, idProject);
+        terms = termService.fillEmptyTermIds(terms, project);
         JsonObject params = mergeQueryParamsAndBodyParams();
         params.put("reviewed", true);
-        byte[] report = annotationListingBuilder.buildAnnotationReport(project, reviewUsers, params, terms, format);
-        responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
+        byte[] report = annotationListingBuilder.buildAnnotationReport(idProject, reviewUsers, params, terms, format);
+        responseReportFile(reportService.getAnnotationReportFileName(format, idProject), report, format);
     }
 
     @RequestMapping(value = "/reviewedannotation/{id}/crop.{format}", method = {GET, POST})
