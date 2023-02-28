@@ -68,6 +68,8 @@ run-junit:
     - sed -i -- "s/localhost:5433/postgres:5432/g" src/test/resources/application.yml
     - "sed -i -- 's/host: 127.0.0.1/host: mongodb/g' src/test/resources/application.yml"
     - "sed -i -- 's/port: 27018/port: 27017/g' src/test/resources/application.yml"
+    # test log too large for gitlab if executed at 'debug' log level 
+    - sed -i -- "s/name=\"be.cytomine\" level=\"debug\"/name=\"be.cytomine\" level=\"info\"/g" src/test/resources/logback-test.xml  
     - gradle :test --no-daemon
   artifacts:
     reports:
