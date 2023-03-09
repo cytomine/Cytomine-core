@@ -41,5 +41,5 @@ docker build \
   --build-arg CORE_VERSION=$CORE_VERSION \
   --build-arg SCRIPTS_REPO_TAG=$SCRIPTS_REPO_TAG \
   --secret id=scripts_repo_url,env=SCRIPTS_REPO_URL \
-  -t "$DOCKER_NAMESPACE/core:$CORE_VERSION" -f docker/Dockerfile .
+  -t "$DOCKER_NAMESPACE/core:$CORE_VERSION" -f docker/Dockerfile . $@
 
