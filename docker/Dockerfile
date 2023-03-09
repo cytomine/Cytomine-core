@@ -40,7 +40,6 @@ RUN gradle bootJar --console=verbose
 ## Stage 3: downloading provisioning scripts
 FROM alpine/git:2.36.3 as scripts-downloader
 ARG SCRIPTS_REPO_TAG
-ARG SCRIPTS_REPO_BRANCH
 
 WORKDIR /root
 RUN mkdir scripts
