@@ -4,7 +4,7 @@ ARG SCRIPTS_REPO_TAG
 
 #######################################################################################
 # Stage: core dependencies download via gradle
-FROM gradle:7.4.2-jdk17-alpine AS deps-downloader
+FROM gradle:7.2-jdk17-alpine AS deps-downloader
 
 # We first copy the build.gradle file and the binaries stored in the source repository.
 # This way, we retrieve all gradle dependencies at the beginning. All these steps will be
@@ -20,7 +20,7 @@ RUN gradle clean build --no-daemon --console=verbose
 
 #######################################################################################
 ## Stage: building the core jar file
-FROM gradle:7.4.2-jdk17-alpine AS jar-builder
+FROM gradle:7.2-jdk17-alpine AS jar-builder
 
 ENV GRADLE_USER_HOME=/opt/gradle/.gradle
 COPY --from=deps-downloader /opt/gradle/.gradle /opt/gradle/.gradle
@@ -50,7 +50,12 @@ RUN --mount=type=secret,id=scripts_repo_url \
 
 #######################################################################################
 ## Stage: Cytomine core development image
-FROM gradle:7.4.2-jdk17-alpine AS development
+FROM gradle:7.2-jdk17-alpine AS development
+
+RUN apk update && apk add gettext
+
+ENV GRADLE_USER_HOME=/opt/gradle/.gradle
+COPY --from=deps-downloader /opt/gradle/.gradle /opt/gradle/.gradle
 
 # startup scripts
 RUN mkdir /docker-entrypoint-cytomine.d/
@@ -59,10 +64,11 @@ COPY --from=scripts-downloader --chmod=774 /root/scripts/envsubst-on-templates-a
 COPY --from=scripts-downloader --chmod=774 /root/scripts/configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
 
 # core base folder must be mounted in run command or compose file
+EXPOSE 5005
 
 WORKDIR /app
 ENTRYPOINT ["cytomine-entrypoint.sh"]
-CMD ["gradle", ":bootRun", "--debug-jvm", "-Dorg.gradle.debug.host=*"]
+CMD ["gradle", ":bootRun", "--debug-jvm"]
 
 #######################################################################################
 ## Stage: Cytomine core image
@@ -76,7 +82,7 @@ ENV LANG C.UTF-8
 ENV DEBIAN_FRONTEND noninteractive
 
 # tomcat configurations
-RUN apt-get update -y && apt-get install --no-install-recommends --no-install-suggests -y logrotate
+RUN apt-get update -y && apt-get install --no-install-recommends --no-install-suggests -y logrotate gettext
 
 COPY --from=jar-builder /app/build/libs/cytomine.jar /app/cytomine.jar
 
