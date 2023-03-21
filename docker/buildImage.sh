@@ -29,7 +29,6 @@ fi
 CORE_VERSION=${CORE_VERSION}
 SCRIPTS_REPO_TAG=${SCRIPTS_REPO_TAG:-"latest"}  # TODO get latest tag automatically
 DOCKER_NAMESPACE=${DOCKER_NAMESPACE:-"cytomine"}
-SCRIPTS_REPO_BRANCH=${SCRIPTS_REPO_BRANCH:-"master"}
 
 ME=$(basename $0)
 
@@ -41,7 +40,6 @@ fi
 docker build \
   --build-arg CORE_VERSION=$CORE_VERSION \
   --build-arg SCRIPTS_REPO_TAG=$SCRIPTS_REPO_TAG \
-  --build-arg SCRIPTS_REPO_BRANCH=$SCRIPTS_REPO_BRANCH \
   --secret id=scripts_repo_url,env=SCRIPTS_REPO_URL \
-  -t "$DOCKER_NAMESPACE/core:$CORE_VERSION" -f docker/Dockerfile .
+  -t "$DOCKER_NAMESPACE/core:$CORE_VERSION" -f docker/Dockerfile . $@
 
