@@ -18,6 +18,7 @@ package be.cytomine.api.controller.image;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
@@ -82,7 +83,9 @@ public class ImageInstanceResourceTests {
 
     @Autowired
     private PropertyRepository propertyRepository;
-    
+
+    @Autowired
+    private ApplicationProperties applicationProperties;
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
     
@@ -119,16 +122,16 @@ public class ImageInstanceResourceTests {
     @Transactional
     public void get_an_image_instance() throws Exception {
         ImageInstance image = given_test_image_instance();
-
+        String serverUrl = applicationProperties.getServerURL();
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}.json", image.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(image.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.image.ImageInstance"))
                 .andExpect(jsonPath("$.created").exists())
-                .andExpect(jsonPath("$.preview").value("http://localhost:8080/api/imageinstance/"+image.getId()+"/thumb.png?maxSize=1024"))
-                .andExpect(jsonPath("$.thumb").value("http://localhost:8080/api/imageinstance/"+image.getId()+"/thumb.png?maxSize=512"))
-                .andExpect(jsonPath("$.macroURL").value("http://localhost:8080/api/imageinstance/"+image.getId()+"/associated/macro.png?maxWidth=512"))
+                .andExpect(jsonPath("$.preview").value(serverUrl + "/api/imageinstance/"+image.getId()+"/thumb.png?maxSize=1024"))
+                .andExpect(jsonPath("$.thumb").value(serverUrl + "/api/imageinstance/"+image.getId()+"/thumb.png?maxSize=512"))
+                .andExpect(jsonPath("$.macroURL").value(serverUrl + "/api/imageinstance/"+image.getId()+"/associated/macro.png?maxWidth=512"))
                 .andExpect(jsonPath("$.reviewStop").hasJsonPath())
                 .andExpect(jsonPath("$.baseImage").value(image.getBaseImage().getId()))
                 .andExpect(jsonPath("$.project").value(image.getProject().getId()))

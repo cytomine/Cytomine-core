@@ -19,6 +19,7 @@ package be.cytomine.api.controller.ontology;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.TestUtils;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
@@ -95,6 +96,9 @@ public class ReviewedAnnotationResourceTests {
 
     @Autowired
     private ReviewedAnnotationRepository reviewedAnnotationRepository;
+
+    @Autowired
+    private ApplicationProperties applicationProperties;
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
 
@@ -286,7 +290,7 @@ public class ReviewedAnnotationResourceTests {
     }
 
     private void checkResult(String delimiter, MvcResult result) throws UnsupportedEncodingException {
-        TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.reviewedAnnotation, this.project, this.image, this.me, this.term, "reviewedannotation");
+        TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.reviewedAnnotation, this.project, this.image, this.me, this.term, "reviewedannotation", applicationProperties.getServerURL());
     }
 
     @Test
