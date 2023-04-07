@@ -66,9 +66,8 @@ run-junit:
       name: rabbitmq:3.10
   script:
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
-    - sed -i -- "s/localhost:5433/postgres:5432/g" src/test/resources/application.yml
-    - "sed -i -- 's/host: 127.0.0.1/host: mongodb/g' src/test/resources/application.yml"
-    - "sed -i -- 's/port: 27018/port: 27017/g' src/test/resources/application.yml"
+    - sed -i -- "s/localhost:5432/postgres:5432/g" src/test/resources/application.yml
+    - "sed -i -- 's/host: localhost/host: mongodb/g' src/test/resources/application.yml"
     # test log too large for gitlab if executed at 'debug' log level
     - sed -i -- "s/name=\"be.cytomine\" level=\"debug\"/name=\"be.cytomine\" level=\"info\"/g" src/test/resources/logback-test.xml
     - gradle :test --no-daemon
@@ -113,8 +112,7 @@ build-docker-image:
   rules:
     - if: $CI_COMMIT_TAG
   script:
-    - export SCRIPTS_REPO_FULL_URL=https://$SCRIPTS_REPO_ACCESS_TOKEN_NAME:$SCRIPTS_REPO_ACCESS_TOKEN_VALUE@$SCRIPTS_REPO_URL
-    - docker build --build-arg CORE_VERSION=$CM_VERSION --build-arg SCRIPTS_REPO_TAG=latest --secret id=scripts_repo_url,env=SCRIPTS_REPO_FULL_URL -t $DOCKER_TMP_IMAGE_NAME -f docker/Dockerfile .
+    - docker build --build-arg CORE_VERSION=$CM_VERSION -t $DOCKER_TMP_IMAGE_NAME -f docker/Dockerfile .
 
 publish-docker-image:
   stage: publish
