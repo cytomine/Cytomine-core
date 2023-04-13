@@ -621,6 +621,20 @@ public class BasicInstanceBuilder {
         return annotation;
     }
 
+        public UserAnnotation given_a_not_persisted_guest_annotation() {
+        UserAnnotation annotation = new UserAnnotation();
+        annotation.setUser(given_a_guest());
+        try {
+            annotation.setLocation(new WKTReader().read("POLYGON ((1983 2168, 2107 2160, 2047 2074, 1983 2168))"));
+        } catch (ParseException ignored) {
+
+        }
+        annotation.setSlice(given_a_slice_instance());
+        annotation.setImage(annotation.getSlice().getImage());
+        annotation.setProject(annotation.getImage().getProject());
+        return annotation;
+    }
+
     public UserAnnotation given_a_user_annotation(Project project) {
         UserAnnotation annotation = given_a_not_persisted_user_annotation();
         annotation.getSlice().setProject(project);

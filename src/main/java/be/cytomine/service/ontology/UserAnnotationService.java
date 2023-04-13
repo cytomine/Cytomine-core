@@ -20,14 +20,12 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.AnnotationLight;
 import be.cytomine.dto.SimplifiedAnnotation;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
@@ -55,7 +53,6 @@ import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -331,13 +328,18 @@ public class UserAnnotationService extends ModelService {
         jsonObject.put("projectObject", project);
 
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.check(project, READ);
-        securityACLService.checkIsNotReadOnly(project);
-        securityACLService.checkUser(currentUser);
 
+        //Check if user has at least READ permission for the project
+        securityACLService.check(project, READ, currentUser);
+        //Check if project EditingMode is not READ_ONLY
+        securityACLService.checkIsNotReadOnly(project);
+        //Check if user has a role that allows to create annotations
+        securityACLService.checkGuest(currentUser);
+        //If user info is missing from input, add it
         if (jsonObject.isMissing("user")) {
             jsonObject.put("user", currentUser.getId());
             jsonObject.put("userObject", currentUser);
+            // check if user is the owner of the annotation, if not check project editing mode and user role
         } else if (!Objects.equals(jsonObject.getJSONAttrLong("user"), currentUser.getId())) {
             securityACLService.checkFullOrRestrictedForOwner(project, null);
         }
