@@ -2,29 +2,35 @@ version: "3.4"
 services:
 
   postgresqltest:
-    image: cytomine/postgis:v2.0.0
+    image: registry.cytom.in/cm/rnd/cytomine/tools/envs/postgis:15-3.3-alpine-1.2.0
+    container_name: postgres
     restart: unless-stopped
-    ports: [ "5433:5432" ]
+    ports: [ "5432:5432" ]
+    environment:
+      - POSTGRES_USER=docker
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=docker
 
   mongodbtest:
-    image: mongo:4.4
+    image: mongo:4.4.18-focal
+    container_name: mongodb
     restart: unless-stopped
-    ports: [ "27018:27017" ]
+    ports: [ "27017:27017" ]
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoadmin
       - MONGO_INITDB_ROOT_PASSWORD=secret
       - MONGO_INITDB_DATABASE=cytomine
 
   rabbitmqtest:
-    image: cytomine/rabbitmq:v1.1.2
-    ports: [ "5673:5672", "15673:15672" ]
+    image: rabbitmq:3.10
+    container_name: rabbitmq
+    ports: [ "5672:5672", "15672:15672" ]
     restart: unless-stopped
 
   ldaptest:
-    image: upekshejay/simple-ldap-test-server
-    ports: [ "390:389", "637:636" ]
+    image: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.2
+    container_name: ldap
+    ports: [ "389:389", "636:636" ]
     restart: unless-stopped
-    volumes:
-      - "./test/ldap/store.json:/app/etc/store.json"
-      - "./test/ldap/default.json:/app/config/default.json"
+
 
