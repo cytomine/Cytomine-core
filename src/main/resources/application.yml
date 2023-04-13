@@ -69,6 +69,7 @@ application:
   softwareSources: softwareSources/
   useHTTPInternally: true
   storagePath: "/data/images"
+  elasticsearchServerURL: http://localhost:9200
 
   instanceHostWebsite: "https://www.cytomine.org"
   instanceHostSupportMail: "support@cytomine.coop"
