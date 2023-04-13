@@ -195,7 +195,11 @@ public class SecurityACLService {
     public List<Project> getProjectList(SecUser user, Ontology ontology) {
         //faster method
         if (currentRoleService.isAdminByNow(user)) {
-            return projectRepository.findAllByOntology(ontology);
+            if (ontology == null) {
+                return projectRepository.findAll();
+            } else {
+                return projectRepository.findAllByOntology(ontology);
+            }
         }
         else {
             Query query = entityManager.createQuery(
@@ -224,7 +228,7 @@ public class SecurityACLService {
                         "group by storage.id ORDER BY storage.id", Tuple.class);
 
         List<Tuple> resultList = query.getResultList();
-        return resultList.stream().map(x -> JsonObject.of("id", x.get(0), "name", x.get(1), "permission", permissionService.readFromMask(x.get(2, Integer.class)))).collect(Collectors.toList());
+        return resultList.stream().map(x -> JsonObject.of("id", x.get(0), "name", x.get(1), "permission", permissionService.readStringFromMask(x.get(2, Integer.class)))).collect(Collectors.toList());
     }
 
 
@@ -293,6 +297,11 @@ public class SecurityACLService {
         }
     }
 
+    public void checkCurrentUserIsNotPublic() {
+        if (currentUserService.getCurrentUser() instanceof User user && user.getPublicUser()) {
+            throw new ForbiddenException("A public user cannot perform this action!");
+        }
+    }
 
     public void checkGuest() {
         checkGuest(currentUserService.getCurrentUser());

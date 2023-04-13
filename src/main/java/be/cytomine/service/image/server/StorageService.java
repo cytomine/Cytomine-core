@@ -99,7 +99,7 @@ public class StorageService extends ModelService {
 
         for (Map.Entry<String, Integer> entry : usersPermissions.entrySet()) {
             if (results.containsKey(entry.getKey())) {
-                results.get(entry.getKey()).put("role", permissionService.readFromMask(entry.getValue()));
+                results.get(entry.getKey()).put("role", permissionService.readStringFromMask(entry.getValue()));
             }
         }
 

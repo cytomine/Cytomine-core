@@ -228,10 +228,10 @@ public class StorageServiceTests {
         assertThat(jsonObjects.size()).isEqualTo(2);
 
         assertThat(jsonObjects.get(0).getId()).isEqualTo(storageWhereUserIsAdmin.getId());
-        assertThat(jsonObjects.get(0).get("permission")).isEqualTo(ADMINISTRATION);
+        assertThat(jsonObjects.get(0).get("permission")).isEqualTo("ADMINISTRATION");
 
         assertThat(jsonObjects.get(1).getId()).isEqualTo(storageWhereUserIsRead.getId());
-        assertThat(jsonObjects.get(1).get("permission")).isEqualTo(READ);
+        assertThat(jsonObjects.get(1).get("permission")).isEqualTo("READ");
     }
 
     @Test

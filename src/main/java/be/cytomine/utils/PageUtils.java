@@ -19,11 +19,24 @@ package be.cytomine.utils;
 import liquibase.pro.packaged.T;
 import org.springframework.data.domain.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PageUtils {
 
     public static <T> Page<T> buildPageFromPageResults(List<T> data, Long max, Long offset, Long total) {
         return new PageImpl<T>(data, new OffsetBasedPageRequest(offset, (max==0 ? Integer.MAX_VALUE : max.intValue()), Sort.unsorted()), total);
+    }
+    public static <T> Page<T> buildPageFromListResults(List<T> data, Long maxParameter, Long offsetParameter) {
+        Long offset = offsetParameter != null ? offsetParameter : 0;
+        Long max = (maxParameter != null && maxParameter!=0) ? maxParameter : Integer.MAX_VALUE;
+        List subList;
+        if (offset >= data.size()) {
+            subList = new ArrayList();
+        } else {
+            int maxForCollection = (int)Math.min(data.size() - offset, max);
+            subList = data.subList(offset.intValue(),offset.intValue() + maxForCollection);
+        }
+        return new PageImpl<T>(subList, new OffsetBasedPageRequest(offset, max.intValue(), Sort.unsorted()), data.size());
     }
 }

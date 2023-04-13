@@ -86,14 +86,10 @@ application:
       token-validity-in-seconds-for-short-term: 240
 
     ldap:
-      enabled: false
-      server: "ldap://127.0.0.1:389"
-      principal: "CN=admin,OU=users,DC=mtr,DC=com"
-      password: "itachi"
-      search: "OU=users,DC=mtr,DC=com"
-      attributes: "cn,sn,givenname,mail"
-      passwordAttributeName: "password"
+      enabled: true
 
+    lti:
+      enabled: true
 
   defaultLanguage: ENGLISH
   imageServerURL: [http://localhost-ims]

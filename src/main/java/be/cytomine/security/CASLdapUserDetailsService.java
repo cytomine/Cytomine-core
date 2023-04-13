@@ -17,14 +17,17 @@ package be.cytomine.security;
 */
 
 import be.cytomine.config.properties.ApplicationProperties;
+import be.cytomine.domain.meta.Configuration;
 import be.cytomine.domain.security.*;
 import be.cytomine.exceptions.ForbiddenException;
+import be.cytomine.repository.meta.ConfigurationRepository;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.security.ldap.LdapClient;
 import be.cytomine.service.image.server.StorageService;
+import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -43,6 +46,7 @@ import javax.persistence.EntityManager;
 import java.util.*;
 
 import static be.cytomine.security.DomainUserDetailsService.createSpringSecurityUser;
+import static be.cytomine.service.meta.ConfigurationService.*;
 
 /**
  * Authenticate a user from the database.
@@ -54,7 +58,6 @@ public class CASLdapUserDetailsService implements UserDetailsService {
 
     private final Logger log = LoggerFactory.getLogger(CASLdapUserDetailsService.class);
 
-    private final LdapClient ldapClient;
     private final UserRepository userRepository;
 
     private final SecRoleRepository secRoleRepository;
@@ -69,6 +72,9 @@ public class CASLdapUserDetailsService implements UserDetailsService {
 
     private final StorageService storageService;
 
+    private final ConfigurationRepository configurationRepository;
+
+
     @Override
     public UserDetails loadUserByUsername(String username)
             throws UsernameNotFoundException {
@@ -78,7 +84,21 @@ public class CASLdapUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsernameLikeIgnoreCase(username)
                 .orElseGet(() -> {
                     try {
-                        Map<String, Object> ldapResults = ldapClient.getUserInfo(env.getProperty("application.authentication.ldap.search", "NO_LDAP_SEARCH"), username, Arrays.stream(env.getProperty("application.authentication.ldap.attributes").split(",")).toList());
+                        LdapClient client = new LdapClient(configurationRepository);
+
+                        String search = configurationRepository.findByKey(CONFIG_KEY_LDAP_SEARCH)
+                                .map(Configuration::getValue)
+                                .orElse("NO_LDAP_SEARCH");
+
+                        String attributes = configurationRepository.findByKey(CONFIG_KEY_LDAP_ATTRIBUTES)
+                                .map(Configuration::getValue)
+                                .orElse("");
+
+                        Map<String, Object> ldapResults = client.getUserInfo(
+                                search,
+                                username,
+                                Arrays.stream(attributes.split(",")
+                                ).toList());
                         log.debug("ldap results: " + ldapResults);
 
                         if (ldapResults==null) {

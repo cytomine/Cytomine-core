@@ -3,11 +3,13 @@ package be.cytomine.security.authentication;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.security.User;
+import be.cytomine.repository.meta.ConfigurationRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.security.CASLdapUserDetailsService;
 import be.cytomine.security.CustomUserDetailsAuthenticationProvider;
 import be.cytomine.security.ldap.LdapClient;
 import be.cytomine.security.ldap.LdapIdentityAuthenticationProvider;
+import be.cytomine.service.meta.ConfigurationService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,9 +36,6 @@ public class LdapIdentityAuthenticationProviderTests {
     SecUserRepository secUserRepository;
 
     @Autowired
-    LdapClient ldapClient;
-
-    @Autowired
     Environment env;
 
     @Autowired
@@ -50,10 +49,22 @@ public class LdapIdentityAuthenticationProviderTests {
 
     LdapIdentityAuthenticationProvider ldapIdentityAuthenticationProvider;
 
+    @Autowired
+    ConfigurationRepository configurationRepository;
+
     @BeforeEach
     public void initUser() {
         ldapIdentityAuthenticationProvider
-                = new LdapIdentityAuthenticationProvider(ldapClient, env, casLdapUserDetailsService);
+                = new LdapIdentityAuthenticationProvider(env, casLdapUserDetailsService, configurationRepository);
+
+        configurationRepository.deleteAll();
+        configurationRepository.findAll(); // force refresh
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_SERVER, "ldap://127.0.0.1:390");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_PRINCIPAL, "CN=admin,OU=users,DC=mtr,DC=com");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_PASSWORD, "itachi");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_SEARCH, "OU=users,DC=mtr,DC=com");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_ATTRIBUTES, "cn,sn,givenname,mail");
+        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_PASSWORD_ATTRIBUTE_NAME, "password");
     }
 
     @Test

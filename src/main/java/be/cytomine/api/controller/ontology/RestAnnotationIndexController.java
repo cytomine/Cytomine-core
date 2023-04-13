@@ -17,8 +17,11 @@ package be.cytomine.api.controller.ontology;
 */
 
 import be.cytomine.api.controller.RestCytomineController;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.service.image.ImageInstanceService;
+import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.image.SliceInstanceService;
 import be.cytomine.service.ontology.AnnotationIndexService;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +41,10 @@ public class RestAnnotationIndexController extends RestCytomineController {
     private final AnnotationIndexService annotationIndexService;
 
     private final SliceInstanceService sliceInstanceService;
+
+    private final ImageInstanceService imageInstanceService;
+
+    private final SliceCoordinatesService sliceCoordinatesService;
     /**
      * List all ontology visible for the current user
      * For each ontology, print the terms tree
@@ -49,6 +56,17 @@ public class RestAnnotationIndexController extends RestCytomineController {
         log.debug("REST request to get annotationindex for slice {}", id);
         SliceInstance sliceInstance = sliceInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", id));
+        return responseSuccess(annotationIndexService.list(sliceInstance));
+    }
+
+    @GetMapping("/imageinstance/{id}/annotationindex.json")
+    public ResponseEntity<String> listByImageInstance(
+            @PathVariable Long id
+    ) {
+        log.debug("REST request to get annotationindex for imageinstance {}", id);
+        ImageInstance imageInstance = imageInstanceService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
+        SliceInstance sliceInstance = sliceCoordinatesService.getReferenceSliceOptimized(imageInstance);
         return responseSuccess(annotationIndexService.list(sliceInstance));
     }
 

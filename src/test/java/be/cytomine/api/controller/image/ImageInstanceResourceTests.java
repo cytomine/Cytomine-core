@@ -22,15 +22,26 @@ import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.meta.AttachedFile;
+import be.cytomine.domain.meta.Description;
+import be.cytomine.domain.meta.Property;
+import be.cytomine.domain.meta.TagDomainAssociation;
+import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
+import be.cytomine.repository.image.ImageInstanceRepository;
+import be.cytomine.repository.meta.AttachedFileRepository;
+import be.cytomine.repository.meta.DescriptionRepository;
 import be.cytomine.repository.meta.PropertyRepository;
+import be.cytomine.repository.meta.TagDomainAssociationRepository;
+import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.common.Json;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterAll;
@@ -82,6 +93,21 @@ public class ImageInstanceResourceTests {
 
     @Autowired
     private PropertyRepository propertyRepository;
+
+    @Autowired
+    ImageInstanceRepository imageInstanceRepository;
+
+    @Autowired
+    DescriptionRepository descriptionRepository;
+
+    @Autowired
+    TagDomainAssociationRepository tagDomainAssociationRepository;
+
+    @Autowired
+    AttachedFileRepository attachedFileRepository;
+
+    @Autowired
+    UserAnnotationRepository userAnnotationRepository;
     
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
@@ -1003,5 +1029,132 @@ public class ImageInstanceResourceTests {
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))))
                 .andExpect(jsonPath("$.collection[0].color").value("#f00"));
     }
+
+
+
+    @Test
+    @Transactional
+    public void clone_image_instance() throws Exception {
+        Project projectOrigin = builder.given_a_project();
+        Project projectDest = builder.given_a_project();
+        User user1 = builder.given_a_user();
+        builder.addUserToProject(projectOrigin, user1.getUsername());
+        User user2 = builder.given_a_user();
+        builder.addUserToProject(projectDest, user2.getUsername());
+        SliceInstance sliceInstance = builder.given_a_slice_instance(projectOrigin);
+        ImageInstance imageInstance = sliceInstance.getImage();
+
+        Description description = builder.given_a_description(imageInstance);
+        Property property = builder.given_a_property(imageInstance, "key", "value");
+        TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), imageInstance);
+        AttachedFile attachedFile = builder.given_a_attached_file(imageInstance);
+
+        UserAnnotation userAnnotation = builder.given_a_user_annotation(sliceInstance);
+        userAnnotation.setUser(user1);
+        em.persist(userAnnotation);
+
+        Property annotationProperty = builder.given_a_property(userAnnotation, "key", "value");
+
+        List<Map<String, Object>> annotationsTransfertMap = new ArrayList<>();
+        Map<String, Object> entry = new HashMap<>();
+        entry.put("source", user1.getId());
+        entry.put("destination", user2.getId());
+        annotationsTransfertMap.add(entry);
+
+
+        JsonObject body = new JsonObject();
+        body.put("idProject", projectDest.getId());
+        body.put("areImageMetadataCopied", true);
+        body.put("areAnnotationsCopied", true);
+        body.put("areAnnotationsMetadataCopied", true);
+        body.put("layersArray", List.of(user1.getId()));
+        body.put("annotationsTranfertMap", List.of(JsonObject.of("source", user1.getId(), "destination", user2.getId())));
+
+        restImageInstanceControllerMockMvc.perform(post("/api/imageinstance/{id}/clone.json", imageInstance.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body.toJsonString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.printMessage").value(true))
+                .andExpect(jsonPath("$.callback").exists())
+                .andExpect(jsonPath("$.callback.imageinstanceID").exists())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.command").exists())
+                .andExpect(jsonPath("$.imageinstance.id").exists());
+
+
+        ImageInstance imageInstanceCreated = imageInstanceRepository.findByProjectAndBaseImage(projectDest, imageInstance.getBaseImage()).get();
+        AssertionsForClassTypes.assertThat(descriptionRepository.findByDomainIdentAndDomainClassName(imageInstanceCreated.getId(), imageInstanceCreated.getClass().getName())).isPresent();
+        assertThat(propertyRepository.findAllByDomainIdent(imageInstanceCreated.getId())).hasSize(1);
+        assertThat(propertyRepository.findAllByDomainIdent(imageInstanceCreated.getId()).get(0).getKey()).isEqualTo("key");
+        assertThat(propertyRepository.findAllByDomainIdent(imageInstanceCreated.getId()).get(0).getValue()).isEqualTo("value");
+        assertThat(tagDomainAssociationRepository.findAllByDomainIdent(imageInstanceCreated.getId())).hasSize(1);
+        AssertionsForClassTypes.assertThat(tagDomainAssociationRepository.findAllByDomainIdent(imageInstanceCreated.getId()).get(0).getTag()).isEqualTo(tagDomainAssociation.getTag());
+        assertThat(attachedFileRepository.findAllByDomainIdent(imageInstanceCreated.getId())).isNotEmpty();
+        assertThat(userAnnotationRepository.findAllByImage(imageInstanceCreated)).hasSize(1);
+        UserAnnotation annotationCreated = userAnnotationRepository.findAllByImage(imageInstanceCreated).get(0);
+        assertThat(annotationCreated.getUser()).isEqualTo(user2);
+    }
+
+
+    @Test
+    @Transactional
+    public void clone_image_instance_without_data() throws Exception {
+        Project projectOrigin = builder.given_a_project();
+        Project projectDest = builder.given_a_project();
+        User user1 = builder.given_a_user();
+        builder.addUserToProject(projectOrigin, user1.getUsername());
+        User user2 = builder.given_a_user();
+        builder.addUserToProject(projectDest, user2.getUsername());
+        SliceInstance sliceInstance = builder.given_a_slice_instance(projectOrigin);
+        ImageInstance imageInstance = sliceInstance.getImage();
+
+        Description description = builder.given_a_description(imageInstance);
+        Property property = builder.given_a_property(imageInstance, "key", "value");
+        TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), imageInstance);
+        AttachedFile attachedFile = builder.given_a_attached_file(imageInstance);
+
+        UserAnnotation userAnnotation = builder.given_a_user_annotation(sliceInstance);
+        userAnnotation.setUser(user1);
+        em.persist(userAnnotation);
+
+        Property annotationProperty = builder.given_a_property(userAnnotation, "key", "value");
+
+        List<Map<String, Object>> annotationsTransfertMap = new ArrayList<>();
+        Map<String, Object> entry = new HashMap<>();
+        entry.put("source", user1.getId());
+        entry.put("destination", user2.getId());
+        annotationsTransfertMap.add(entry);
+
+
+        JsonObject body = new JsonObject();
+        body.put("idProject", projectDest.getId());
+        body.put("areImageMetadataCopied", false);
+        body.put("areAnnotationsCopied", false);
+        body.put("areAnnotationsMetadataCopied", false);
+
+        restImageInstanceControllerMockMvc.perform(post("/api/imageinstance/{id}/clone.json", imageInstance.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body.toJsonString()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.printMessage").value(true))
+                .andExpect(jsonPath("$.callback").exists())
+                .andExpect(jsonPath("$.callback.imageinstanceID").exists())
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.command").exists())
+                .andExpect(jsonPath("$.imageinstance.id").exists());
+
+
+        ImageInstance imageInstanceCreated = imageInstanceRepository.findByProjectAndBaseImage(projectDest, imageInstance.getBaseImage()).get();
+        assertThat(descriptionRepository.findByDomainIdentAndDomainClassName(imageInstanceCreated.getId(), imageInstanceCreated.getClass().getName())).isEmpty();
+        assertThat(propertyRepository.findAllByDomainIdent(imageInstanceCreated.getId())).hasSize(0);
+        assertThat(tagDomainAssociationRepository.findAllByDomainIdent(imageInstanceCreated.getId())).hasSize(0);
+        assertThat(attachedFileRepository.findAllByDomainIdent(imageInstanceCreated.getId())).isEmpty();
+        assertThat(userAnnotationRepository.findAllByImage(imageInstanceCreated)).hasSize(0);
+    }
+
+
+
 
 }

@@ -44,4 +44,8 @@ public interface TagDomainAssociationRepository extends JpaRepository<TagDomainA
     @Override
     @EntityGraph(attributePaths = {"tag"})
     List<TagDomainAssociation> findAll(@Nullable Specification<TagDomainAssociation> spec, Sort sort);
+
+    void deleteAllByDomainIdent(Long id);
+
+    List<TagDomainAssociation> findAllByDomainIdent(Long id);
 }

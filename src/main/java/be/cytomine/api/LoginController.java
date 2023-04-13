@@ -62,6 +62,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static be.cytomine.utils.DateUtils.MAX_DATE_FOR_DATABASE;
+
 @Slf4j
 @RestController
 @RequestMapping("")
@@ -189,14 +191,24 @@ public class LoginController extends RestCytomineController {
         JsonObject params = super.mergeQueryParamsAndBodyParams();
         String username = params.getJSONAttrStr("username");
 
-        Double validity = params.getJSONAttrDouble("validity", 60d);
         User user = userRepository.findByUsernameLikeIgnoreCaseAndEnabledIsTrue(username)
                 .orElseThrow(() -> new ObjectNotFoundException("User", username));
+
+        boolean infiniteExpiration = params.getJSONAttrDouble("validity",-1d).equals(-1d);
+        Date expiration;
+        if (infiniteExpiration && user.getPublicUser()) {
+            // if user is public, we allow token with no expiration
+            expiration = MAX_DATE_FOR_DATABASE;
+        } else if (infiniteExpiration) {
+            throw new WrongArgumentException("Infinite validity can only be set for token link to public user");
+        } else {
+            expiration = DateUtils.addMinutes(new Date(), params.getJSONAttrDouble("validity", 60d).intValue());
+        }
 
         String tokenKey = UUID.randomUUID().toString();
         AuthWithToken token = new AuthWithToken();
         token.setUser(user);
-        token.setExpiryDate(DateUtils.addMinutes(new Date(), validity.intValue()));
+        token.setExpiryDate(expiration);
         token.setTokenKey(tokenKey);
         authWithTokenRepository.save(token);
         return  responseSuccess(JsonObject.of("success", true, "token", token.getTokenKey()));

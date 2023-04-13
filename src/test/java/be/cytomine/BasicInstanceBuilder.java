@@ -147,6 +147,10 @@ public class BasicInstanceBuilder {
         return given_a_guest(randomString());
     }
 
+    public User given_a_public() {
+        return given_a_public(randomString());
+    }
+
     public User given_a_admin() {
         return given_a_admin(randomString());
     }
@@ -164,6 +168,15 @@ public class BasicInstanceBuilder {
         user.setUsername(username);
         user = persistAndReturn(user);
         addRole(user, ROLE_GUEST);
+        return user;
+    }
+
+    public User given_a_public(String username) {
+        User user = persistAndReturn(given_a_not_persisted_user());
+        user.setUsername(username);
+        user.setPublicUser(true);
+        user = persistAndReturn(user);
+        addRole(user, ROLE_USER);
         return user;
     }
 
@@ -927,13 +940,21 @@ public class BasicInstanceBuilder {
     }
 
     public Configuration given_a_configuration(String key) {
-        return persistAndReturn(given_a_not_persisted_configuration(key));
+        return persistAndReturn(given_a_not_persisted_configuration(key, "value"));
+    }
+
+    public Configuration given_a_configuration(String key, String value) {
+        return persistAndReturn(given_a_not_persisted_configuration(key, value));
     }
 
     public Configuration given_a_not_persisted_configuration(String key) {
+        return given_a_not_persisted_configuration(key, "value");
+    }
+
+    public Configuration given_a_not_persisted_configuration(String key, String value) {
         Configuration configuration = new Configuration();
         configuration.setKey(key);
-        configuration.setValue("value");
+        configuration.setValue(value);
         configuration.setReadingRole(ConfigurationReadingRole.ALL);
         return configuration;
     }

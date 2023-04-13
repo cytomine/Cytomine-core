@@ -157,6 +157,7 @@ public class AbstractImage extends CytomineDomain {
         returnArray.put("thumb", UrlApi.getAbstractImageThumbUrlWithMaxSize(abstractImage.id, 512, "png"));
         returnArray.put("preview", UrlApi.getAbstractImageThumbUrlWithMaxSize(abstractImage.id, 1024, "png"));
         returnArray.put("macroURL", UrlApi.getAssociatedImage(abstractImage, "macro", Optional.ofNullable(abstractImage.getUploadedFile()).map(UploadedFile::getContentType).orElse(null), 512, "png"));
+        returnArray.put("imageServerUrl",  abstractImage.getImageServerUrl());
 
         returnArray.put("inProject", abstractImage.getInProject());
         return returnArray;

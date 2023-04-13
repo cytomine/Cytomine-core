@@ -19,6 +19,7 @@ package be.cytomine.utils;
 import be.cytomine.domain.CytomineDomain;
 
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
@@ -28,6 +29,16 @@ public class DateUtils {
 
     public static SimpleDateFormat MONGO_DB_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     public static SimpleDateFormat REPORT_FILENAME_FORMAT = new SimpleDateFormat("yyyyMMdd_hhmmss");
+
+    public static Date MAX_DATE_FOR_DATABASE;
+
+    static {
+        try {
+            MAX_DATE_FOR_DATABASE = new SimpleDateFormat("yyyyMMdd").parse("99991231");
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static String getTimeToString(Date date) {
         if (date == null) {

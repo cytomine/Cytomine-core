@@ -407,6 +407,15 @@ public class JsonObject extends HashMap<String, Object> implements JsonInput {
         return (List<Map<String, Object>>) this.get(attr);
     }
 
+    public List<Map<String, Object>> getJSONAttrListMap(String attr, List<Map<String, Object>> defaultValue) {
+        List<Map<String, Object>> val = (List<Map<String, Object>>) this.get(attr);
+        if (val == null) {
+            return defaultValue;
+        } else {
+            return val;
+        }
+    }
+
     public Map<String, Object> getJSONAttrMap(String attr) {
         return (Map<String, Object>) this.get(attr);
     }

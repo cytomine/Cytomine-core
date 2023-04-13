@@ -19,16 +19,26 @@ package be.cytomine.service.image;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.*;
+import be.cytomine.domain.meta.AttachedFile;
+import be.cytomine.domain.meta.Description;
 import be.cytomine.domain.meta.Property;
+import be.cytomine.domain.meta.TagDomainAssociation;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.*;
 import be.cytomine.repository.image.AbstractSliceRepository;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.image.NestedImageInstanceRepository;
 import be.cytomine.repository.image.SliceInstanceRepository;
+import be.cytomine.repository.meta.AttachedFileRepository;
+import be.cytomine.repository.meta.DescriptionRepository;
+import be.cytomine.repository.meta.PropertyRepository;
+import be.cytomine.repository.meta.TagDomainAssociationRepository;
 import be.cytomine.repository.ontology.*;
+import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.repositorynosql.social.AnnotationActionRepository;
 import be.cytomine.repositorynosql.social.LastUserPositionRepository;
 import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
@@ -37,7 +47,10 @@ import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.ImageInstanceBounds;
+import be.cytomine.service.meta.AttachedFileService;
+import be.cytomine.service.meta.DescriptionService;
 import be.cytomine.service.meta.PropertyService;
+import be.cytomine.service.meta.TagDomainAssociationService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.*;
 import be.cytomine.service.search.ImageSearchExtension;
@@ -154,6 +167,41 @@ public class ImageInstanceService extends ModelService {
 
     @Autowired
     MongoClient mongoClient;
+
+    @Autowired
+    DescriptionRepository descriptionRepository;
+
+    @Autowired
+    DescriptionService descriptionService;
+
+    @Autowired
+    PropertyRepository propertyRepository;
+
+    @Autowired
+    TagDomainAssociationRepository tagDomainAssociationRepository;
+
+    @Autowired
+    TagDomainAssociationService tagDomainAssociationService;
+
+    @Autowired
+    AttachedFileRepository attachedFileRepository;
+
+    @Autowired
+    AttachedFileService attachedFileService;
+
+    @Autowired
+    SecUserRepository secUserRepository;
+
+    @Autowired
+    UserRepository userRepository;
+
+
+    @Autowired
+    AnnotationTermRepository annotationTermRepository;
+
+    @Autowired
+    AnnotationTermService annotationTermService;
+
 
     private AlgoAnnotationService algoAnnotationService;
 
@@ -775,6 +823,20 @@ public class ImageInstanceService extends ModelService {
             sliceInstanceRepository.save(sliceInstance);
         }
 
+        AbstractImage ai = ((ImageInstance) domain).getBaseImage();
+        for (TagDomainAssociation tagDomainAssociation : tagDomainAssociationRepository.findAllByDomainIdent(ai.getId())) {
+            TagDomainAssociation tda = new TagDomainAssociation();
+            tda.setTag(tagDomainAssociation.getTag());
+            tda.setDomain(domain);
+            tagDomainAssociationService.add(tda.toJsonObject());
+        }
+
+        for (Description description : descriptionRepository.findAllByDomainIdent(ai.getId())) {
+            Description d = new Description();
+            d.setData(description.getData());
+            d.setDomain(domain);
+            descriptionService.add(d.toJsonObject());
+        }
     }
 
     protected void beforeDelete(CytomineDomain domain, CommandResponse response) {
@@ -984,4 +1046,161 @@ public class ImageInstanceService extends ModelService {
         }
         saveDomain(imageInstance);
     }
+
+    public CommandResponse cloneImage(ImageInstance imageinstance, Project project, Boolean areImageMetadataCopied, Boolean areAnnotationsCopied, Boolean areAnnotationsMetadataCopied, List<Long> usersArray, Boolean areAllLayersCopiedOnCurrentUserLayer, Boolean areMissingLayersCopiedOnCurrentUserLayer, List<Map<String, Object>> annotationsTranfertMap) throws ClassNotFoundException {
+
+        log.debug("Clone image {} in project {}", imageinstance.getId(), project.getId());
+        log.debug("Copy metadata ? {}", areImageMetadataCopied);
+        log.debug("Copy annotation ? {}", areAnnotationsCopied);
+        log.debug("Copy annotation metadata ? {}", areAnnotationsMetadataCopied);
+        log.debug("Copy transfert map ? {}", annotationsTranfertMap);
+
+        securityACLService.checkFullOrRestrictedForOwner(project, currentUserService.getCurrentUser());
+        securityACLService.checkIsAdminContainer(project, currentUserService.getCurrentUser());
+        securityACLService.checkIsAdminContainer(imageinstance.getProject(),currentUserService.getCurrentUser());
+
+        CommandResponse result = new CommandResponse();
+
+        //if imageInstance exist, copy metadata on it
+        Optional<ImageInstance> alreadyExistingImage = imageInstanceRepository.findByProjectAndBaseImage(project, imageinstance.getBaseImage());
+        if (alreadyExistingImage.isPresent()) {
+            result.setStatus(200);
+            result.setData(JsonObject.of("imageinstance", imageinstance.toJsonObject()));
+        } else {
+            JsonObject json = imageinstance.toJsonObject();
+            json.put("project", project.getId());
+            json.remove("id");
+            json.remove("updated");
+            result = add(json);
+        }
+
+        ImageInstance copiedImage = get(Long.parseLong(((Map<String,Object>)result.getData().get("imageinstance")).get("id")+""));
+
+        //step 2 : fetch & create the description, properties
+        if(areImageMetadataCopied){
+            this.copyMetadata(imageinstance, copiedImage);
+        }
+
+        //step 3 & 4 : copyAnnotation and metadata
+        if(areAnnotationsCopied){
+            if(usersArray==null || usersArray.isEmpty()){
+                usersArray = List.of(currentUserService.getCurrentUser().getId());
+            }
+
+            List<User> users = userRepository.findAllById(usersArray);
+            log.debug("Clone annotations for {} users", users.size());
+            List<UserAnnotation> annotations = userAnnotationRepository.findAllByImageAndUserIn(imageinstance, users);
+            log.debug("Clone {} annotations", annotations.size());
+            for (UserAnnotation annotation : annotations) {
+                Long destinationId = annotationsTranfertMap.stream().filter(x -> Long.valueOf(x.get("source") + "").equals(annotation.getUser().getId())).map(x -> Long.parseLong(x.get("destination") + "")).findFirst().orElse(null);
+                this.copyAnnotation(annotation, copiedImage, null, null, areAllLayersCopiedOnCurrentUserLayer, areMissingLayersCopiedOnCurrentUserLayer, areAnnotationsMetadataCopied, true, destinationId);
+            }
+        }
+        return result;
+    }
+
+    private void copyMetadata(CytomineDomain based, CytomineDomain dest) throws ClassNotFoundException {
+
+        //copy description
+        descriptionRepository.deleteAllByDomainIdent(dest.getId());
+        for (Description description : descriptionRepository.findAllByDomainIdent(based.getId())) {
+            JsonObject jsonObject = description.toJsonObject();
+            jsonObject.remove("updated");
+            jsonObject.remove("id");
+            jsonObject.put("domainIdent", dest.getId());
+            descriptionService.add(jsonObject);
+        }
+
+        //copy properties
+        propertyRepository.deleteAllByDomainIdent(dest.getId());
+        for (Property property : propertyRepository.findAllByDomainIdent(based.getId())) {
+            JsonObject jsonObject = property.toJsonObject();
+            jsonObject.remove("updated");
+            jsonObject.remove("id");
+            jsonObject.put("domainIdent", dest.getId());
+            propertyService.add(jsonObject);
+        }
+
+        //copy tags
+        tagDomainAssociationRepository.deleteAllByDomainIdent(dest.getId());
+        for (TagDomainAssociation property : tagDomainAssociationRepository.findAllByDomainIdent(based.getId())) {
+            JsonObject jsonObject = property.toJsonObject();
+            jsonObject.remove("updated");
+            jsonObject.remove("id");
+            jsonObject.put("domainIdent", dest.getId());
+            tagDomainAssociationService.add(jsonObject);
+        }
+
+        //copy attached files
+        attachedFileRepository.deleteAllByDomainIdent(dest.getId());
+        for (AttachedFile attachedFile : attachedFileRepository.findAllByDomainIdent(based.getId())) {
+            attachedFileService.create(attachedFile.getFilename(), attachedFile.getData(), attachedFile.getKey(), dest.getId(), attachedFile.getDomainClassName());
+        }
+    }
+
+
+
+    private void copyAnnotation(UserAnnotation based, ImageInstance dest, List<SecUser> usersProject, SecUser currentUser,Boolean giveMe,
+                                Boolean giveMeMissingAnnot, Boolean areAnnotationsMetadataCopied, Boolean takeAllTerms, Long destinationUser) throws ClassNotFoundException {
+        log.info("copyAnnotation=${}", based.getId());
+
+        if(currentUser==null) {
+            currentUser = currentUserService.getCurrentUser();
+        }
+        if(usersProject==null || usersProject.isEmpty()) {
+            usersProject = List.of(currentUser);
+        }
+        if(destinationUser==null) {
+            destinationUser = based.getUser().getId();
+        }
+
+        boolean userInDestProject = securityACLService.getProjectList(secUserRepository.findById(destinationUser).get(), null).contains(dest.getProject());
+
+        log.debug("copyAnnotation=${}", based.getId());
+
+        if(!giveMe && !giveMeMissingAnnot) {
+            if(!userInDestProject) {
+                log.debug("user is not in dest project, skip");
+                return;
+            }
+        }
+
+        //copy annotation
+        JsonObject jsonObject = based.toJsonObject();
+        jsonObject.remove("updated");
+        jsonObject.remove("term");
+        jsonObject.put("image", dest.getId());
+
+        AbstractSlice abSliceOrigin = based.getSlice().getBaseSlice();
+        AbstractSlice abSliceDest = abstractSliceRepository.findByImageAndChannelAndZStackAndTime(dest.getBaseImage(),  abSliceOrigin.getChannel(), abSliceOrigin.getTime(), abSliceOrigin.getZStack()).get();
+
+        jsonObject.put("slice", sliceInstanceRepository.findByBaseSliceAndImage(abSliceDest, dest).get().getId());
+        jsonObject.put("project", dest.getProject().getId());
+        jsonObject.put("user", destinationUser);
+
+        if(giveMe || (!userInDestProject && giveMeMissingAnnot)) {
+            jsonObject.put("user", currentUser.getId());
+        }
+
+        CommandResponse result = userAnnotationService.add(jsonObject);
+        UserAnnotation annotation = userAnnotationRepository.getById(result.getObject().getId());
+
+
+        for (AnnotationTerm basedAT : annotationTermRepository.findAllByUserAnnotation(based)) {
+            if(basedAT.getTerm().getOntology()==dest.getProject().getOntology()) {
+                if(takeAllTerms || usersProject.contains(basedAT.getUser().getId())){
+                    JsonObject json = basedAT.toJsonObject();
+                    json.remove("updated");
+                    json.remove("id");
+                    json.put("userannotation", annotation.getId());
+                    annotationTermService.add(json);
+                }
+            }
+        }
+
+        if(areAnnotationsMetadataCopied) {
+            this.copyMetadata(based, annotation);
+        }
+    }
+
 }

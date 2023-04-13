@@ -89,7 +89,9 @@ public class LtiServiceTests {
     private final static LtiConsumerProperties LTI_CONSUMER_PROPERTIES =
             new LtiConsumerProperties("consumerKey", "consumerName", "consumerSecret", "consumerUsernameParameter");
 
-    private final static LtiProperties LTI_PROPERTIES = new LtiProperties(true, List.of(LTI_CONSUMER_PROPERTIES));
+    private final static List<LtiConsumerProperties> LTI_CONSUMERS_PROPERTIES =
+           List.of(LTI_CONSUMER_PROPERTIES);
+    private final static LtiProperties LTI_PROPERTIES = new LtiProperties(true);
 
     JsonObject given_a_lti_request_params() {
         String username = BasicInstanceBuilder.randomString();
@@ -129,7 +131,7 @@ public class LtiServiceTests {
 
 
         LoginWithRedirection redirection =
-                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, ltiOauthVerifier);
+                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, LTI_CONSUMERS_PROPERTIES, ltiOauthVerifier);
 
 
         assertThat(redirection.getRedirection()).isEqualTo("/");
@@ -155,7 +157,7 @@ public class LtiServiceTests {
         User userInDatabase = builder.given_a_user(username);
 
         LoginWithRedirection redirection =
-                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, ltiOauthVerifier);
+                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, LTI_CONSUMERS_PROPERTIES, ltiOauthVerifier);
 
 
         assertThat(redirection.getRedirection()).isEqualTo("/");
@@ -180,7 +182,7 @@ public class LtiServiceTests {
         LtiOauthVerifier ltiOauthVerifier = given_a_lti_verifier(true, request);
 
         Assertions.assertThrows(WrongArgumentException.class,
-                () -> {ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, ltiOauthVerifier);},
+                () -> {ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, LTI_CONSUMERS_PROPERTIES, ltiOauthVerifier);},
                  "Untrusted LTI Consumer"
         );
     }
@@ -197,11 +199,11 @@ public class LtiServiceTests {
         LtiConsumerProperties properties =
                 new LtiConsumerProperties("consumerKey", "consumerName", null, "consumerUsernameParameter");
 
-        LtiProperties propertiesWithConsumerPrivateKeyNull = new LtiProperties(true, List.of(properties));
+        LtiProperties propertiesWithConsumerPrivateKeyNull = new LtiProperties(true);
 
 
         Assertions.assertThrows(WrongArgumentException.class,
-                () -> {ltiService.verifyAndRedirect(params, request, propertiesWithConsumerPrivateKeyNull, ltiOauthVerifier);},
+                () -> {ltiService.verifyAndRedirect(params, request, propertiesWithConsumerPrivateKeyNull,  List.of(properties), ltiOauthVerifier);},
                 "Untrusted LTI Consumer, no private key"
         );
     }
@@ -215,7 +217,7 @@ public class LtiServiceTests {
         LtiOauthVerifier ltiOauthVerifier = given_a_lti_verifier(false, request);
 
         Assertions.assertThrows(WrongArgumentException.class,
-                () -> {ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, ltiOauthVerifier);},
+                () -> {ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES,  LTI_CONSUMERS_PROPERTIES, ltiOauthVerifier);},
                 "LTI verification failed"
         );
     }
@@ -234,11 +236,11 @@ public class LtiServiceTests {
         LtiConsumerProperties properties =
                 new LtiConsumerProperties("consumerKey", "consumerName", "consumerSecret", null);
 
-        LtiProperties ltiProperties = new LtiProperties(true, List.of(properties));
+        LtiProperties ltiProperties = new LtiProperties(true);
 
 
         LoginWithRedirection redirection =
-                ltiService.verifyAndRedirect(params, request, ltiProperties, ltiOauthVerifier);
+                ltiService.verifyAndRedirect(params, request, ltiProperties, List.of(properties), ltiOauthVerifier);
 
         assertThat(redirection.getRedirection()).isEqualTo("/");
 
@@ -260,7 +262,7 @@ public class LtiServiceTests {
         LtiOauthVerifier ltiOauthVerifier = given_a_lti_verifier(true, request);
 
         Assertions.assertThrows(WrongArgumentException.class,
-                () -> {ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, ltiOauthVerifier);},
+                () -> {ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, LTI_CONSUMERS_PROPERTIES, ltiOauthVerifier);},
                 "username parameter is empty."
         );
     }
@@ -275,7 +277,7 @@ public class LtiServiceTests {
         LtiOauthVerifier ltiOauthVerifier = given_a_lti_verifier(true, request);
 
         Assertions.assertThrows(WrongArgumentException.class,
-                () -> {ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, ltiOauthVerifier);},
+                () -> {ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, LTI_CONSUMERS_PROPERTIES, ltiOauthVerifier);},
                 "Email not found."
         );
     }
@@ -294,7 +296,7 @@ public class LtiServiceTests {
         params.put("custom_redirect", "#/project/"+project.getId()+"/images");
 
         LoginWithRedirection redirection =
-                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, ltiOauthVerifier);
+                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, LTI_CONSUMERS_PROPERTIES, ltiOauthVerifier);
 
         assertThat(redirection.getRedirection()).isEqualTo("#/project/"+project.getId()+"/images");
 
@@ -321,7 +323,7 @@ public class LtiServiceTests {
         params.put("custom_redirect", "#/project/"+project.getId()+"/images");
 
         LoginWithRedirection redirection =
-                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, ltiOauthVerifier);
+                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, LTI_CONSUMERS_PROPERTIES, ltiOauthVerifier);
 
         assertThat(redirection.getRedirection()).isEqualTo("#/project/"+project.getId()+"/images");
 
@@ -345,7 +347,7 @@ public class LtiServiceTests {
 
 
         LoginWithRedirection redirection =
-                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, ltiOauthVerifier);
+                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, LTI_CONSUMERS_PROPERTIES, ltiOauthVerifier);
 
 
         assertThat(redirection.getRedirection()).isEqualTo("/");
@@ -371,7 +373,7 @@ public class LtiServiceTests {
         params.put("custom_redirect", "#/project/"+project.getId()+"/images");
 
         LoginWithRedirection redirection =
-                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, ltiOauthVerifier);
+                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, LTI_CONSUMERS_PROPERTIES, ltiOauthVerifier);
 
         assertThat(redirection.getRedirection()).isEqualTo( "#/project/"+project.getId()+"/images");
 

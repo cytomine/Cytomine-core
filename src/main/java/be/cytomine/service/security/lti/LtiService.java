@@ -68,14 +68,14 @@ public class LtiService {
 
     private final ProjectService projectService;
 
-    public LoginWithRedirection verifyAndRedirect(JsonObject params, HttpServletRequest request, LtiProperties ltiProperties, LtiOauthVerifier ltiOauthVerifier) throws LtiVerificationException {
+    public LoginWithRedirection verifyAndRedirect(JsonObject params, HttpServletRequest request, LtiProperties ltiProperties, List<LtiConsumerProperties> ltiConsumers, LtiOauthVerifier ltiOauthVerifier) throws LtiVerificationException {
         String consumerName = params.getJSONAttrStr("tool_consumer_instance_name");
         log.info("loginWithLTI by {}", consumerName);
 
         String aAuthConsumerKey = params.getJSONAttrStr("oauth_consumer_key");
         log.debug("oauth_consumer_key = {}", aAuthConsumerKey);
 
-        LtiConsumerProperties consumer = ltiProperties.getConsumers().stream().filter(x -> x.getKey().equals(aAuthConsumerKey)).findFirst()
+        LtiConsumerProperties consumer = ltiConsumers.stream().filter(x -> x.getKey().equals(aAuthConsumerKey)).findFirst()
                 .orElseThrow(() -> new WrongArgumentException("Untrusted LTI Consumer"));
 
         String privateKey = consumer.getSecret();

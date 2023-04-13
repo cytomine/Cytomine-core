@@ -38,6 +38,8 @@ public class BootstrapTestsDataService {
 
     public static final String GUEST = "GUEST_ACL";
 
+    public static final String PUBLIC = "PUBLIC_ACL";
+
     public static final String USER_ACL_READ = "USER_ACL_READ";
 
     public static final String USER_ACL_CREATE = "USER_ACL_CREATE";
@@ -74,6 +76,7 @@ public class BootstrapTestsDataService {
         ROLES.put(USER_ACL_ADMIN, List.of(ROLE_USER));
         ROLES.put(CREATOR, List.of(ROLE_USER));
         ROLES.put(GUEST, List.of(ROLE_GUEST));
+        ROLES.put(PUBLIC, List.of(ROLE_USER));
     }
 
 
@@ -101,6 +104,9 @@ public class BootstrapTestsDataService {
 
         User user = new User();
         user.setUsername(login);
+        if (login.equals(PUBLIC)) {
+            user.setPublicUser(true);
+        }
         user.setEmail(login + "@test.com");
         user.setFirstname("firstname");
         user.setLastname("lastname");

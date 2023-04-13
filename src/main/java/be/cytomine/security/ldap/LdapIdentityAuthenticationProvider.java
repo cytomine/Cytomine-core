@@ -1,5 +1,7 @@
 package be.cytomine.security.ldap;
 
+import be.cytomine.domain.meta.Configuration;
+import be.cytomine.repository.meta.ConfigurationRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.security.CASLdapUserDetailsService;
 import lombok.AllArgsConstructor;
@@ -18,16 +20,18 @@ import javax.naming.NamingException;
 import java.util.Arrays;
 import java.util.List;
 
+import static be.cytomine.service.meta.ConfigurationService.*;
+
 @Slf4j
 @AllArgsConstructor
 @Component
 public class LdapIdentityAuthenticationProvider implements AuthenticationProvider {
 
-    private final LdapClient ldapClient;
-
     private final Environment env;
 
     private final CASLdapUserDetailsService casLdapUserDetailsService;
+
+    private final ConfigurationRepository configurationRepository;
 
     @Override
     public Authentication authenticate(Authentication authentication) {
@@ -35,12 +39,25 @@ public class LdapIdentityAuthenticationProvider implements AuthenticationProvide
         String username = authentication.getName();
         String password = authentication.getCredentials().toString();
 
-        String search = env.getProperty("application.authentication.ldap.search", "NO_LDAP_SEARCH");
-        List<String> attrIds = Arrays.stream(env.getProperty("application.authentication.ldap.attributes").split(",")).toList();
+        LdapClient ldapClient = new LdapClient(configurationRepository);
+
+        String search = configurationRepository.findByKey(CONFIG_KEY_LDAP_SEARCH)
+                .map(Configuration::getValue)
+                .orElse("NO_LDAP_SEARCH");
+
+        String attributes = configurationRepository.findByKey(CONFIG_KEY_LDAP_ATTRIBUTES)
+                .map(Configuration::getValue)
+                .orElse("");
+
+        String passwordAttributeName = configurationRepository.findByKey(CONFIG_KEY_LDAP_PASSWORD_ATTRIBUTE_NAME)
+                .map(Configuration::getValue)
+                .orElse("NO_LDAP_SEARCH");
+
+        List<String> attrIds = Arrays.stream(attributes.split(",")).toList();
 
         try {
             if (ldapClient.isInLDAP(search, username, attrIds)) {
-                if (ldapClient.hasValidCredential("cn="+username +"," + search, env.getProperty("application.authentication.ldap.passwordAttributeName", "NO_LDAP_SEARCH"), password)) {
+                if (ldapClient.hasValidCredential("cn="+username +"," + search, passwordAttributeName, password)) {
                     UserDetails userDetails = casLdapUserDetailsService.loadUserByUsername(username);
                     return new UsernamePasswordAuthenticationToken(
                             userDetails,

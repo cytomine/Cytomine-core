@@ -68,6 +68,9 @@ public class User extends SecUser {
     @JoinColumn(name = "user_id", nullable = true)
     protected User creator;
 
+
+    protected Boolean publicUser = false;
+
     public User() {
         super();
     }
@@ -125,6 +128,7 @@ public class User extends SecUser {
         } else if (json.containsKey("password")) {
             user.password = json.getJSONAttrStr("password"); //user is created
         }
+        user.publicUser = json.getJSONAttrBoolean("publicUser", false);
         user.created = json.getJSONAttrDate("created");
         user.updated = json.getJSONAttrDate("updated");
         user.enabled = json.getJSONAttrBoolean("enabled", true);
@@ -154,6 +158,7 @@ public class User extends SecUser {
         }
         returnArray.put("isDeveloper", user.isDeveloper);
         returnArray.put("enabled", user.enabled);
+        returnArray.put("publicUser", user.getPublicUser());
         returnArray.put("user", user.creator);
         return returnArray;
     }

@@ -25,8 +25,11 @@ import be.cytomine.repositorynosql.social.LastConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
 import be.cytomine.security.jwt.TokenProvider;
 import be.cytomine.security.jwt.TokenType;
+import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.database.SequenceService;
+import be.cytomine.service.security.SecurityACLService;
+import be.cytomine.utils.EndOfLifeUtils;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +43,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 @RestController
@@ -60,6 +64,8 @@ public class ServerController extends RestCytomineController {
 
     private final TokenProvider tokenProvider;
 
+    private final CurrentRoleService currentRoleService;
+
     //@Secured("IS_AUTHENTICATED_REMEMBERED") //TODO????
     @RequestMapping(value = {"/server/ping.json", "/server/ping"}, method = {RequestMethod.GET, RequestMethod.POST}) // without.json is deprecated
     public ResponseEntity<String> ping(HttpSession session) throws IOException {
@@ -71,6 +77,8 @@ public class ServerController extends RestCytomineController {
         response.put("version", applicationProperties.getVersion());
         response.put("serverURL", applicationProperties.getServerURL());
         response.put("serverID", applicationProperties.getServerId());
+        response.put("ltiEnabled", applicationProperties.getAuthentication().getLti().isEnabled());
+        response.put("ldapEnabled", applicationProperties.getAuthentication().getLdap().getEnabled());
 
         if (SecurityUtils.isAuthenticated()) {
             SecUser user = currentUserService.getCurrentUser();
@@ -120,6 +128,9 @@ public class ServerController extends RestCytomineController {
         jsonObject.put("alive", true);
         jsonObject.put("version", applicationProperties.getVersion());
         jsonObject.put("serverURL", applicationProperties.getServerURL());
+        if (SecurityUtils.isAuthenticated() && currentRoleService.isAdmin(currentUserService.getCurrentUser())) {
+            jsonObject.put("endOfLife", EndOfLifeUtils.END_OF_LIFE.format(DateTimeFormatter.ISO_DATE_TIME));
+        }
         return ResponseEntity.ok(jsonObject.toJsonString());
     }
 
