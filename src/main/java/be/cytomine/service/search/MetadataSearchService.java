@@ -27,10 +27,7 @@ import org.springframework.data.elasticsearch.core.query.StringQuery;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -47,7 +44,7 @@ public class MetadataSearchService {
         String prefixQuery = "{\"dis_max\": { \"queries\": [";
         String suffixQuery = "]}}";
         String termsString = String.format("{ \"terms\": { \"domain_ident\": %s } },", parameters.get("imageIds"));
-        StringBuilder queries = new StringBuilder();
+        List<String> queries = new LinkedList<>();
 
         HashMap<String, Object> filters = (HashMap) parameters.get("filters");
         for (Map.Entry<String, Object> entry : filters.entrySet()) {
@@ -56,12 +53,14 @@ public class MetadataSearchService {
                 entry.getValue()
             );
             String matchString = String.format("{\"match\": {\"key\": \"%s\"}}", entry.getKey());
-            queries.append(String.format("{\"bool\": { \"must\": [ %s ] } }", queryString + termsString + matchString));
+            queries.add(String.format("{\"bool\": { \"must\": [ %s ] } }", queryString + termsString + matchString));
         }
 
-        log.debug("Elasticsearch query: " + prefixQuery + queries + suffixQuery);
+        String query = prefixQuery + String.join(",", queries) + suffixQuery;
 
-        return new StringQuery(prefixQuery + queries + suffixQuery);
+        log.debug("Elasticsearch query: " + query);
+
+        return new StringQuery(query);
     }
 
     public List<Long> search(JsonObject body) {
@@ -72,11 +71,12 @@ public class MetadataSearchService {
         );
         log.debug(String.format("Total hits: %d", searchHits.getTotalHits()));
 
-        List<Long> ids = new ArrayList<>();
+        Set<Long> ids = new HashSet<>();
+
         for (SearchHit<Property> hit : searchHits) {
             ids.add(hit.getContent().getDomainIdent());
         }
 
-        return ids;
+        return ids.stream().toList();
     }
 }
