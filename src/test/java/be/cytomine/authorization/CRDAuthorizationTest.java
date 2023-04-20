@@ -106,7 +106,7 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
             if (indexRoleRequired==-1 || indexCurrenRole==-1) {
                 throw new RuntimeException("Cannot find index for role " + roleRequired.get() + " or " + currentRole);
             }
-            return indexCurrenRole <= indexRoleRequired;
+            return indexCurrenRole < indexRoleRequired;
         }
 
     }
