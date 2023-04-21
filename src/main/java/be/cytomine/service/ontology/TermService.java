@@ -133,7 +133,7 @@ public class TermService extends ModelService {
             throw new WrongArgumentException("Ontology is mandatory for term creation");
         }
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkUser(currentUser);
+        securityACLService.checkGuest(currentUser);
         securityACLService.check(jsonObject.getJSONAttrLong("ontology"), Ontology.class ,WRITE);
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
     }

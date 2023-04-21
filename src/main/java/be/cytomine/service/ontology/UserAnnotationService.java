@@ -475,10 +475,12 @@ public class UserAnnotationService extends ModelService {
      */
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkUser(currentUser);
-        securityACLService.check(domain.container(), READ);
-        //securityACLService.checkIsSameUserOrAdminContainer(annotation,annotation.user,currentUser)
-        securityACLService.checkFullOrRestrictedForOwner(domain, ((UserAnnotation)domain).getUser());
+        //Check if user has a role that allows to update annotations
+        securityACLService.checkGuest(currentUser);
+        //Check if user has at least READ permission for the project
+        securityACLService.check(domain.container(), READ, currentUser);
+        //Check if user is admin, the project mode and if is the owner of the annotation
+        securityACLService.checkFullOrRestrictedForOwner(domain, ((UserAnnotation) domain).getUser());
 
         // TODO: what about image/project ??
 
@@ -538,7 +540,6 @@ public class UserAnnotationService extends ModelService {
         response.getData().put("annotation", response.getData().get("userannotation"));
         response.getData().remove("userannotation");
     }
-
 
 
     /**

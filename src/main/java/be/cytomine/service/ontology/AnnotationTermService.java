@@ -122,7 +122,8 @@ public class AnnotationTermService extends ModelService {
     @Override
     public CommandResponse add(JsonObject jsonObject) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkUser(currentUser);
+        //Check if user has a role that allows to associate terms with annotations
+        securityACLService.checkGuest(currentUser);
         SecUser creator = userRepository.findById(jsonObject.getJSONAttrLong("user", -1L))
                 .orElse(currentUser);
         jsonObject.put("user", creator.getId());
@@ -130,7 +131,8 @@ public class AnnotationTermService extends ModelService {
         UserAnnotation ua = userAnnotationRepository.findById(
                 jsonObject.getJSONAttrLong("userannotation", -1L)
         ).orElseThrow(() -> new ObjectNotFoundException("UserAnnotation", jsonObject.getJSONAttrStr("userannotation")));
-        securityACLService.check(ua.container(),READ);
+        //Check if user has at least READ permission for the project
+        securityACLService.check(ua.container(), READ, currentUser);
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
     }
     /**
@@ -144,8 +146,11 @@ public class AnnotationTermService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkUser(currentUser);
+        //Check if user has a role that allows to associate terms with annotations
+        securityACLService.checkGuest(currentUser);
+        //if term is added from a user, check if the user has permission for UserAnnotation domain
         securityACLService.check(((AnnotationTerm)domain).getUserAnnotation().getId(), UserAnnotation.class, READ);
+        //Check if user is admin, the project mode and if is the owner of the annotation
         securityACLService.checkFullOrRestrictedForOwner(domain, ((AnnotationTerm)domain).getUserAnnotation().getUser());
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
@@ -179,7 +184,7 @@ public class AnnotationTermService extends ModelService {
         SecUser currentUser = currentUserService.getCurrentUser();
         AnnotationDomain annotation = AnnotationDomain.findAnnotationDomain(getEntityManager(), idAnnotation)
                 .orElseThrow(() -> new ObjectNotFoundException("Annotation", idAnnotation));
-        securityACLService.check(annotation.container(),READ);
+        securityACLService.check(annotation.container(),READ,currentUser);
         if (annotation instanceof UserAnnotation) {
             Transaction transaction = transactionService.start();
 
