@@ -62,7 +62,7 @@ A Jenkins file is provided.
 7. Publish tests coverage reports on Jenkins
 8. Shutdown postgresql, mongodb and rabbitmq configurations.
 9. Build and publish a jar
-10. Build and publish a docker image 
+10. Build and publish a docker image. 
 
 ## Upgrade from old version Cytomine dataset
 
