@@ -25,7 +25,7 @@ Tests can be executed with Gradle:
 
 Or via your favorite IDE (right click on `/src/test/java` and choose *Run Tests in cytomine-core*)
 
-After tests, you can shutdown the configuration:
+After tests, you can shutdown the configuration :
 
 `docker-compose -f scripts/docker-compose-test.yml down -v`
 
