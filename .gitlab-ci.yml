@@ -10,6 +10,7 @@ variables:
   POSTGRES_USER: docker
   POSTGRES_PASSWORD: docker
   POSTGRES_DB: docker
+  POSTGIS_VERSION: "postgis:15-3.3-alpine-1.2.0"
   MONGO_INITDB_ROOT_USERNAME: mongoadmin
   MONGO_INITDB_ROOT_PASSWORD: secret
   MONGO_INITDB_DATABASE: cytomine
@@ -64,7 +65,7 @@ run-junit:
   image: gradle:7.4.2-jdk17-alpine
   services:
     - alias: postgres
-      name: registry.cytom.in/cm/rnd/cytomine/tools/envs/postgis:15-3.3-alpine-1.2.0
+      name: cytomine/postgis:${POSTGIS_VERSION}
     - alias: mongodb
       name: mongo:4.4.18-focal
     - alias: rabbitmq
