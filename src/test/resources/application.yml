@@ -37,7 +37,7 @@ spring:
     mongodb:
       authentication-database: admin
       username: mongoadmin
-      password: password
+      password: secret
       database: cytomine
       port: 27017
       host: localhost
