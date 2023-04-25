@@ -55,6 +55,15 @@ public class SQLSearchParameter {
                 translated.add(parameter);
             }
 
+            if (parameter.property.equals("include")) {
+                result.add(new SearchParameterEntry(
+                    "base_image_id",
+                    parameter.operation,
+                    convertSearchParameter(Long.class, parameter.getValue(), entityManager))
+                );
+
+                translated.add(parameter);
+            }
         }
 
         searchParameters.removeAll(translated);
