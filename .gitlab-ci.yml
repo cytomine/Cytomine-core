@@ -9,7 +9,7 @@ variables:
   GRADLE_USER_HOME: /cache/.gradle
   POSTGRES_USER: docker
   POSTGRES_PASSWORD: docker
-  POSTGRES_DB: password
+  POSTGRES_DB: docker
   MONGO_INITDB_ROOT_USERNAME: mongoadmin
   MONGO_INITDB_ROOT_PASSWORD: secret
   MONGO_INITDB_DATABASE: cytomine
