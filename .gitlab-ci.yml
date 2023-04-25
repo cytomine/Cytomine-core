@@ -10,7 +10,7 @@ variables:
   POSTGRES_USER: docker
   POSTGRES_PASSWORD: docker
   POSTGRES_DB: docker
-  POSTGIS_VERSION: "postgis:15-3.3-alpine-1.2.0"
+  POSTGIS_VERSION: "15-3.3-alpine-1.2.0"
   MONGO_INITDB_ROOT_USERNAME: mongoadmin
   MONGO_INITDB_ROOT_PASSWORD: secret
   MONGO_INITDB_DATABASE: cytomine
