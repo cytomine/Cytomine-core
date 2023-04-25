@@ -567,7 +567,7 @@ public class ImageInstanceService extends ModelService {
             from += "JOIN abstract_image "+ abstractImageAlias + " ON " + abstractImageAlias + ".id = " + imageInstanceAlias + ".base_image_id ";
         }
         if (joinMime) {
-            select += ", " + mimeAlias + ".* ";
+            select += ", " + mimeAlias + ".content_type ";
             from += "JOIN uploaded_file  " + mimeAlias + " ON " + mimeAlias + ".id = " + abstractImageAlias + ".uploaded_file_id ";
         }
 
