@@ -18,15 +18,14 @@ package be.cytomine.authorization.meta;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.authorization.CRDAuthorizationTest;
 import be.cytomine.authorization.CRUDAuthorizationTest;
 import be.cytomine.domain.image.AbstractImage;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.meta.Description;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.EditingMode;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.User;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.meta.DescriptionService;
 import be.cytomine.service.security.SecurityACLService;
@@ -55,6 +54,7 @@ public class DescriptionAuthorizationTest extends CRUDAuthorizationTest {
     private Project project = null;
     private AnnotationDomain annotationDomain = null;
     private AbstractImage abstractImage = null;
+
 
     @Autowired
     DescriptionService descriptionService;
@@ -102,6 +102,8 @@ public class DescriptionAuthorizationTest extends CRUDAuthorizationTest {
         });
     }
 
+
+    // ANNOTATIONS
     @Test
     @WithMockUser(username = USER_ACL_READ)
     public void user_cannot_add_in_readonly_mode(){
@@ -147,13 +149,45 @@ public class DescriptionAuthorizationTest extends CRUDAuthorizationTest {
 
     @Override
     protected void when_i_edit_domain() {
-        descriptionService.update(descriptionForProject, descriptionForProject.toJsonObject());
+       descriptionService.update(descriptionForAnnotation, descriptionForAnnotation.toJsonObject());
     }
+
 
     @Override
     protected void when_i_delete_domain() {
         Description description = builder.given_a_description(annotationDomain);
         descriptionService.delete(description, null, null, true);
+    }
+
+    //IMAGE
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_add_for_image(){
+        ImageInstance imageInstance=builder.given_an_image_instance(project);
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(imageInstance).toJsonObject()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_cannot_add_in_restricted_mode_for_image(){
+        ImageInstance imageInstance=builder.given_an_image_instance(project);
+        annotationDomain.getProject().setMode(EditingMode.RESTRICTED);
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(imageInstance).toJsonObject()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_add_in_restricted_mode_for_image_if_owner(){
+        ImageInstance imageInstance=builder.given_an_image_instance(project);
+        imageInstance.getProject().setMode(EditingMode.RESTRICTED);
+        imageInstance.setUser(userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get());
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(imageInstance).toJsonObject()));
+    }
+
+    @Test
+    @WithMockUser(username = GUEST)
+    public void guest_cannot_add_image(){
+        expectForbidden(() -> descriptionService.add(builder.given_a_not_persisted_description(builder.given_an_image_instance()).toJsonObject()));
     }
 
     @Override
@@ -186,6 +220,7 @@ public class DescriptionAuthorizationTest extends CRUDAuthorizationTest {
     protected Optional<String> minimalRoleForEdit() {
         return Optional.of("ROLE_USER");
     }
+
 
 
 }
