@@ -183,16 +183,16 @@ public class AnnotationTermAuthorizationTest extends CRDAuthorizationTest {
 
     @Override
     protected Optional<String> minimalRoleForCreate() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
     @Override
     protected Optional<String> minimalRoleForDelete() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
     @Override
     protected Optional<String> minimalRoleForEdit() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 }
