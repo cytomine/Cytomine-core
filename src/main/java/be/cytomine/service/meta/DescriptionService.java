@@ -18,10 +18,8 @@ package be.cytomine.service.meta;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
-import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.meta.Description;
 import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -97,13 +95,10 @@ public class DescriptionService extends ModelService {
 
     public CommandResponse add(JsonObject jsonObject) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        //Is domain Project?
-        if(jsonObject.getJSONAttrStr("domainClassName").equals(Project.class.getName())){
-            securityACLService.checkGuest(currentUser);
-            //Check if user has at least WRITE permission for Project domain, e.g.: is a manager
-            securityACLService.check(jsonObject.getJSONAttrLong("domainIdent"),jsonObject.getJSONAttrStr("domainClassName"),WRITE);
-            //TODO when is getting into this?
-        } else if(jsonObject.getJSONAttrStr("domainClassName").contains("AnnotationDomain")) {
+        //Get the associated domain
+        CytomineDomain domain = getCytomineDomain(jsonObject.getJSONAttrStr("domainClassName"), jsonObject.getJSONAttrLong("domainIdent"));
+        //TODO when is getting into this?
+        if(jsonObject.getJSONAttrStr("domainClassName").contains("AnnotationDomain")) {
             //I am adding this in case this is used, to check a min of ROLE_USER
             securityACLService.checkUser(currentUser);
             AnnotationDomain annotation = annotationDomainRepository.findById(jsonObject.getJSONAttrLong("domainIdent"))
@@ -111,20 +106,8 @@ public class DescriptionService extends ModelService {
             jsonObject.put("domainClassName", annotation.getClass().getName());
             securityACLService.check(jsonObject.getJSONAttrLong("domainIdent"), annotation.getClass().getName(), READ);
             securityACLService.checkFullOrRestrictedForOwner(jsonObject.getJSONAttrLong("domainIdent"), annotation.getClass().getName(), "user");
-            //Is domain ImageInstance?
-        }else if(jsonObject.getJSONAttrStr("domainClassName").equals(ImageInstance.class.getName())){
-                //Only ROLE_USER can add descriptions to image instances
-                securityACLService.checkUser(currentUser);
-                //Check if user has at least READ permission for the domain Image Instance
-                securityACLService.check(jsonObject.getJSONAttrLong("domainIdent"),jsonObject.getJSONAttrStr("domainClassName"),READ);
-            //Check if user is admin, the project mode and if is the owner of the image
-                securityACLService.checkFullOrRestrictedForOwner(jsonObject.getJSONAttrLong("domainIdent"),jsonObject.getJSONAttrStr("domainClassName"), "user");
-        } else {
-            securityACLService.checkGuest(currentUser);
-            //Check if user has at least READ permission for the domain, e.g. UserAnnotation
-            securityACLService.check(jsonObject.getJSONAttrLong("domainIdent"),jsonObject.getJSONAttrStr("domainClassName"),READ);
-            //Check if user is admin, the project mode and if is the owner of the annotation
-            securityACLService.checkFullOrRestrictedForOwner(jsonObject.getJSONAttrLong("domainIdent"),jsonObject.getJSONAttrStr("domainClassName"), "user");
+        }else{
+            securityACLService.checkUserAccessRightsForMeta( domain,  currentUser);
         }
         Command command = new AddCommand(currentUser,null);
         return executeCommand(command,null, jsonObject);
@@ -133,42 +116,20 @@ public class DescriptionService extends ModelService {
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        checkUserAccessRights(domain,currentUser);
+        CytomineDomain parentDomain = getCytomineDomain(((Description) domain).getDomainClassName(), ((Description) domain).getDomainIdent());
+        securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
     }
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        checkUserAccessRights(domain,currentUser);
+        CytomineDomain parentDomain = getCytomineDomain(((Description) domain).getDomainClassName(), ((Description) domain).getDomainIdent());
+        securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }
 
-
-    private void checkUserAccessRights(CytomineDomain domain, SecUser currentUser){
-        Description description = (Description)domain;
-
-        if(description.getDomainClassName().equals(Project.class.getName())){
-            securityACLService.checkGuest(currentUser);
-            //Check if user has at least WRITE permission for Project domain, e.g.: is a manager
-            securityACLService.check(description.container(),WRITE);
-        }else if(description.getDomainClassName().equals(ImageInstance.class.getName())) {
-            //Only ROLE_USER can add/update descriptions to image instances
-            securityACLService.checkUser(currentUser);
-            //Check if user has at least READ permission for the Image container
-            securityACLService.check(description.container(),READ);
-            //Check if user is admin, the project mode and if is the owner of the image
-            securityACLService.checkFullOrRestrictedForOwner(description.getDomainIdent(), description.getDomainClassName(), "user");
-        }else {
-            securityACLService.checkGuest(currentUser);
-            //Check if user has at least READ permission for the parent container
-            securityACLService.check(description.container(),READ);
-            //Check if user is admin, the project mode and if is the owner of the image
-            securityACLService.checkFullOrRestrictedForOwner(description.getDomainIdent(),description.getDomainClassName(), "user");
-        }
-
-    }
 
     @Override
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
