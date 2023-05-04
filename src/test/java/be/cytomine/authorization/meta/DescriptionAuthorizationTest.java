@@ -51,9 +51,13 @@ public class DescriptionAuthorizationTest extends CRUDAuthorizationTest {
     private Description descriptionForAnnotation = null;
     private Description descriptionForAbstractImage = null;
 
+    private Description descriptionForImageInstance = null;
+
     private Project project = null;
     private AnnotationDomain annotationDomain = null;
     private AbstractImage abstractImage = null;
+
+    private  ImageInstance imageInstance = null;
 
 
     @Autowired
@@ -74,10 +78,12 @@ public class DescriptionAuthorizationTest extends CRUDAuthorizationTest {
             project = builder.given_a_project();
             annotationDomain = builder.given_a_user_annotation();
             abstractImage = builder.given_an_abstract_image();
+            imageInstance=builder.given_an_image_instance(project);
 
             descriptionForProject = builder.given_a_description(project);
             descriptionForAnnotation = builder.given_a_description(annotationDomain);
             descriptionForAbstractImage = builder.given_a_description(abstractImage);
+            descriptionForImageInstance=builder.given_a_description(imageInstance);
 
             ;
             initACL(project);
@@ -171,8 +177,8 @@ public class DescriptionAuthorizationTest extends CRUDAuthorizationTest {
     @WithMockUser(username = USER_ACL_READ)
     public void user_cannot_add_in_restricted_mode_for_image(){
         ImageInstance imageInstance=builder.given_an_image_instance(project);
-        annotationDomain.getProject().setMode(EditingMode.RESTRICTED);
-        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(imageInstance).toJsonObject()));
+        imageInstance.getProject().setMode(EditingMode.RESTRICTED);
+        expectForbidden(() -> descriptionService.add(builder.given_a_not_persisted_description(imageInstance).toJsonObject()));
     }
 
     @Test
@@ -188,6 +194,135 @@ public class DescriptionAuthorizationTest extends CRUDAuthorizationTest {
     @WithMockUser(username = GUEST)
     public void guest_cannot_add_image(){
         expectForbidden(() -> descriptionService.add(builder.given_a_not_persisted_description(builder.given_an_image_instance()).toJsonObject()));
+    }
+
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_edit_for_image(){
+        expectOK(() -> descriptionService.update(descriptionForImageInstance, descriptionForImageInstance.toJsonObject(),null,null));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_cannot_edit_in_restricted_mode_for_image(){
+        ImageInstance imageInstance=builder.given_an_image_instance(project);
+        imageInstance.getProject().setMode(EditingMode.RESTRICTED);
+        expectForbidden(() -> descriptionService.update(builder.given_a_description(imageInstance), builder.given_a_description(imageInstance).toJsonObject(),null));
+
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_edit_in_restricted_mode_for_image_if_owner(){
+        ImageInstance imageInstance=builder.given_an_image_instance(project);
+        imageInstance.getProject().setMode(EditingMode.RESTRICTED);
+        imageInstance.setUser(userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get());
+        Description descriptionForImage = builder.given_a_description(imageInstance);
+        expectOK(() -> descriptionService.update(descriptionForImage, descriptionForImage.toJsonObject(),null));
+    }
+
+    @Test
+    @WithMockUser(username = GUEST)
+    public void guest_cannot_edit_image(){
+        Description descriptionForImage = builder.given_a_description(imageInstance);
+        expectForbidden(() -> descriptionService.update(descriptionForImage, descriptionForImage.toJsonObject(),null));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_delete_for_image(){
+        expectOK(() -> descriptionService.delete(descriptionForImageInstance, null,null,true));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_cannot_delete_in_restricted_mode_for_image(){
+        ImageInstance imageInstance=builder.given_an_image_instance(project);
+        imageInstance.getProject().setMode(EditingMode.RESTRICTED);
+        expectForbidden(() -> descriptionService.delete(builder.given_a_description(imageInstance), null,null,true));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_delete_in_restricted_mode_for_image_if_owner(){
+        ImageInstance imageInstance=builder.given_an_image_instance(project);
+        imageInstance.getProject().setMode(EditingMode.RESTRICTED);
+        imageInstance.setUser(userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get());
+        expectOK(() -> descriptionService.delete(builder.given_a_description(imageInstance), null,null,true));
+    }
+
+    @Test
+    @WithMockUser(username = GUEST)
+    public void guest_cannot_delete_for_image(){
+        expectForbidden(() -> descriptionService.delete(descriptionForImageInstance, null,null,true));
+    }
+
+
+
+    //PROJECT
+
+    @Test
+    @WithMockUser(username = SUPERADMIN)
+    public void admin_can_add_for_project(){
+        expectOK (() -> descriptionService.add(builder.given_a_not_persisted_description(builder.given_a_project()).toJsonObject()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_cannot_add_for_project(){
+        expectForbidden (() -> descriptionService.add(builder.given_a_not_persisted_description(builder.given_a_project()).toJsonObject()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_WRITE)
+    public void user_with_write_can_add_for_project(){
+        Project projectLocal = builder.given_a_project();
+        initACL(projectLocal);
+        expectOK (() -> descriptionService.add(builder.given_a_not_persisted_description(projectLocal).toJsonObject()));
+    }
+
+    @Test
+    @WithMockUser(username = SUPERADMIN)
+    public void admin_can_edit_for_project(){
+        expectOK (() -> descriptionService.update(descriptionForProject,descriptionForProject.toJsonObject(),null,null));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_cannot_edit_for_project(){
+        expectForbidden (() -> descriptionService.update(descriptionForProject,descriptionForProject.toJsonObject(),null,null));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_WRITE)
+    public void user_with_write_can_edit_for_project(){
+        Project projectLocal = builder.given_a_project();
+        initACL(projectLocal);
+        Description description = builder.given_a_description(projectLocal);
+        expectOK (() -> descriptionService.update(description,description.toJsonObject(),null));
+    }
+
+
+    @Test
+    @WithMockUser(username = SUPERADMIN)
+    public void admin_can_delete_for_project(){
+        expectOK (() -> descriptionService.delete(builder.given_a_description(builder.given_a_project()),null,null,true));
+    }
+
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_cannot_delete_for_project(){
+        expectForbidden (() -> descriptionService.delete(builder.given_a_description(builder.given_a_project()),null,null,true));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_WRITE)
+    public void user_with_write_can_delete_for_project(){
+        Project projectLocal = builder.given_a_project();
+        initACL(projectLocal);
+        expectOK (() -> descriptionService.delete(builder.given_a_description(projectLocal),null,null,true));
     }
 
     @Override
@@ -208,17 +343,17 @@ public class DescriptionAuthorizationTest extends CRUDAuthorizationTest {
 
     @Override
     protected Optional<String> minimalRoleForCreate() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
     @Override
     protected Optional<String> minimalRoleForDelete() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
     @Override
     protected Optional<String> minimalRoleForEdit() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
 
