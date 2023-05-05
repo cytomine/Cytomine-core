@@ -18,16 +18,24 @@ package be.cytomine.service.search;
 
 import be.cytomine.domain.meta.Property;
 import be.cytomine.utils.JsonObject;
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
+import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
+import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
-import org.springframework.data.elasticsearch.core.query.StringQuery;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -39,44 +47,70 @@ public class MetadataSearchService {
     public MetadataSearchService(ElasticsearchOperations operations) {
         this.operations = operations;
     }
+    
+    public List<Long> search(JsonObject body) {
+        List<FieldValue> imageIDs = (List<FieldValue>) ((List<Integer>) body.get("imageIds"))
+            .stream()
+            .map(x -> FieldValue.of(x))
+            .collect(Collectors.toList());
+        TermsQueryField termsQueryField = new TermsQueryField.Builder().value(imageIDs).build();
+        Query byDomainId = TermsQuery.of(ts -> ts.field("domain_ident").terms(termsQueryField))._toQuery();
 
-    private StringQuery buildStringQuery(JsonObject parameters) {
-        String prefixQuery = "{\"dis_max\": { \"queries\": [";
-        String suffixQuery = "]}}";
-        String termsString = String.format("{ \"terms\": { \"domain_ident\": %s } },", parameters.get("imageIds"));
-        List<String> queries = new LinkedList<>();
-
-        HashMap<String, Object> filters = (HashMap) parameters.get("filters");
+        List<Query> subqueries = new ArrayList<>();
+        HashMap<String, Object> filters = (HashMap) body.get("filters");
         for (Map.Entry<String, Object> entry : filters.entrySet()) {
-            String queryString = String.format(
-                "{ \"query_string\": { \"query\": \"*%s*\", \"default_field\": \"value\" } },",
-                entry.getValue()
-            );
-            String matchString = String.format("{\"match\": {\"key\": \"%s\"}}", entry.getKey());
-            queries.add(String.format("{\"bool\": { \"must\": [ %s ] } }", queryString + termsString + matchString));
+            Query byValue = QueryStringQuery.of(qs -> qs
+                    .query(String.format("*%s*", entry.getValue()))
+                    .defaultField("value"))
+                ._toQuery();
+
+            Query byKey = MatchQuery.of(m -> m
+                    .field("key")
+                    .query(entry.getKey()))
+                ._toQuery();
+
+            Query byKeyword = BoolQuery.of(b -> b
+                .must(byValue)
+                .must(byDomainId)
+                .must(byKey)
+            )._toQuery();
+
+            subqueries.add(byKeyword);
         }
 
-        String query = prefixQuery + String.join(",", queries) + suffixQuery;
+        NativeQuery query = NativeQuery.builder()
+            .withAggregation("domain_id", Aggregation.of(a -> a.terms(ta -> ta.field("domain_ident"))))
+            .withQuery(q -> q.bool(b -> b.should(subqueries)))
+            .build();
+        log.debug(String.format("Elasticsearch %s", query.getQuery()));
 
-        log.debug("Elasticsearch query: " + query);
-
-        return new StringQuery(query);
-    }
-
-    public List<Long> search(JsonObject body) {
         SearchHits<Property> searchHits = operations.search(
-            this.buildStringQuery(body),
+            query,
             Property.class,
             IndexCoordinates.of("properties")
         );
         log.debug(String.format("Total hits: %d", searchHits.getTotalHits()));
 
-        Set<Long> ids = new HashSet<>();
+        ElasticsearchAggregations aggregations = (ElasticsearchAggregations) searchHits.getAggregations();
 
-        for (SearchHit<Property> hit : searchHits) {
-            ids.add(hit.getContent().getDomainIdent());
+        Map<String, Long> buckets = aggregations
+            .aggregations()
+            .get(0)
+            .aggregation()
+            .getAggregate()
+            .lterms()
+            .buckets()
+            .array()
+            .stream()
+            .collect(Collectors.toMap(LongTermsBucket::key, LongTermsBucket::docCount));
+
+        List<Long> IDs = new ArrayList<>();
+        for (Map.Entry<String, Long> entry : buckets.entrySet()) {
+            if (entry.getValue() == filters.size()) {
+                IDs.add(Long.valueOf(entry.getKey()));
+            }
         }
 
-        return ids.stream().toList();
+        return IDs;
     }
 }
