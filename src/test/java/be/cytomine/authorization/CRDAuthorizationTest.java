@@ -173,16 +173,15 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
     }
 
 
-    //TODO uncomment when Guest profile is fully implemented
-//    @Test
-//    @WithMockUser(username = GUEST)
-//    public void guest_add_domain() {
-//        if (isPermissionRoleForbidden(minimalRoleForCreate(), "ROLE_GUEST")) {
-//            expectForbidden (() -> when_i_add_domain());
-//        } else {
-//            expectOK (() -> when_i_add_domain());
-//        }
-//    }
+    @Test
+    @WithMockUser(username = GUEST)
+    public void guest_add_domain() {
+        if (isPermissionRoleForbidden(minimalRoleForCreate(), "ROLE_GUEST")) {
+            expectForbidden (() -> when_i_add_domain());
+        } else {
+            expectOK (() -> when_i_add_domain());
+        }
+    }
 
     // *****************************
     // DELETE
@@ -277,9 +276,9 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
 //    @WithMockUser(username = GUEST)
 //    public void guest_delete_domain() {
 //        if (isPermissionRoleForbidden(minimalRoleForDelete(), "ROLE_GUEST")) {
-//            expectForbidden (() -> when_i_add_domain());
+//            expectForbidden (() -> when_i_delete_domain());
 //        } else {
-//            expectOK (() -> when_i_add_domain());
+//            expectOK (() -> when_i_delete_domain());
 //        }
 //    }
 
