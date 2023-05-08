@@ -110,18 +110,17 @@ public abstract class CRUDAuthorizationTest extends CRDAuthorizationTest {
         }
     }
 
-    //TODO uncomment when Guest profile is fully implemented
-//    @Test
-//    @WithMockUser(username = GUEST)
-//    public void guest_edit_domain() {
-//        if (minimalRoleForEdit().isPresent() && minimalRoleForEdit().get().equals("CREATOR")) {
-//            expectForbidden (() -> when_i_edit_domain());
-//        } else if (isPermissionRoleForbidden(minimalRoleForEdit(), "ROLE_GUEST")) {
-//            expectForbidden (() -> when_i_edit_domain());
-//        } else {
-//            expectOK (() -> when_i_edit_domain());
-//        }
-//    }
+   @Test
+    @WithMockUser(username = GUEST)
+    public void guest_edit_domain() {
+        if (minimalRoleForEdit().isPresent() && minimalRoleForEdit().get().equals("CREATOR")) {
+            expectForbidden (() -> when_i_edit_domain());
+        } else if (isPermissionRoleForbidden(minimalRoleForEdit(), "ROLE_GUEST")) {
+            expectForbidden (() -> when_i_edit_domain());
+        } else {
+            expectOK (() -> when_i_edit_domain());
+        }
+    }
 
 
     protected abstract void when_i_edit_domain();

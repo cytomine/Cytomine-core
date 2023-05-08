@@ -271,16 +271,15 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
     }
 
 
-    //TODO uncomment when Guest profile is fully implemented
-//    @Test
-//    @WithMockUser(username = GUEST)
-//    public void guest_delete_domain() {
-//        if (isPermissionRoleForbidden(minimalRoleForDelete(), "ROLE_GUEST")) {
-//            expectForbidden (() -> when_i_delete_domain());
-//        } else {
-//            expectOK (() -> when_i_delete_domain());
-//        }
-//    }
+   @Test
+    @WithMockUser(username = GUEST)
+    public void guest_delete_domain() {
+        if (isPermissionRoleForbidden(minimalRoleForDelete(), "ROLE_GUEST")) {
+            expectForbidden (() -> when_i_delete_domain());
+        } else {
+            expectOK (() -> when_i_delete_domain());
+        }
+    }
 
 
     protected abstract void when_i_get_domain();

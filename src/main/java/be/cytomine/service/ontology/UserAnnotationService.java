@@ -553,10 +553,12 @@ public class UserAnnotationService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.check(domain.container(), READ);
-        securityACLService.checkUser(currentUser);
-
-        securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((UserAnnotation)domain).getUser());
+        //Check if user has a role that allows to delete annotations
+        securityACLService.checkGuest(currentUser);
+        //Check if user has at least READ permission for the project
+        securityACLService.check(domain.container(), READ, currentUser);
+        //Check if user is admin, the project mode and if is the owner of the annotation
+        securityACLService.checkFullOrRestrictedForOwner(domain, ((UserAnnotation)domain).getUser());
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }
