@@ -49,7 +49,7 @@ public class TestUtils {
         return classLoader.getResourceAsStream(fileName);
     }
 
-    public static void checkSpreadsheetAnnotationResult(String delimiter, MvcResult result, AnnotationDomain annotationDomain, Project project, ImageInstance imageInstance, User user, Term term, String cropPath) throws UnsupportedEncodingException {
+    public static void checkSpreadsheetAnnotationResult(String delimiter, MvcResult result, AnnotationDomain annotationDomain, Project project, ImageInstance imageInstance, User user, Term term, String cropPath, String serverUrl) throws UnsupportedEncodingException {
         String[] rows = result.getResponse().getContentAsString().split("\n");
         String[] userAnnotationResult = rows[1].split(delimiter);
         assertThat(userAnnotationResult[0]).isEqualTo(annotationDomain.getId().toString());
@@ -61,7 +61,7 @@ public class TestUtils {
         assertThat(userAnnotationResult[6]).isEqualTo(imageInstance.getBlindInstanceFilename());
         assertThat(userAnnotationResult[7]).isEqualTo(user.getUsername());
         assertThat(userAnnotationResult[8]).isEqualTo(term.getName());
-        assertThat(userAnnotationResult[9]).isEqualTo("http://localhost:8080/api/"+ cropPath +"/"+ annotationDomain.getId() +"/crop.png");
-        assertThat(userAnnotationResult[10].replace("\r","")).isEqualTo("http://localhost:8080/#/project/"+project.getId()+"/image/"+imageInstance.getId()+"/annotation/"+annotationDomain.getId());
+        assertThat(userAnnotationResult[9]).isEqualTo(serverUrl + "/api/"+ cropPath +"/"+ annotationDomain.getId() +"/crop.png");
+        assertThat(userAnnotationResult[10].replace("\r","")).isEqualTo(serverUrl + "/#/project/"+project.getId()+"/image/"+imageInstance.getId()+"/annotation/"+annotationDomain.getId());
     }
 }

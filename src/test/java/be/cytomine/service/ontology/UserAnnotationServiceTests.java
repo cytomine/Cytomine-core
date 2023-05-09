@@ -262,6 +262,25 @@ public class UserAnnotationServiceTests {
     }
 
     @Test
+    void add_valid_guest_annotation_with_success() {
+        UserAnnotation userAnnotation = builder.given_a_not_persisted_guest_annotation();
+        CommandResponse commandResponse = userAnnotationService.add(userAnnotation.toJsonObject());
+
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        assertThat(userAnnotationService.find(commandResponse.getObject().getId())).isPresent();
+        UserAnnotation created = userAnnotationService.find(commandResponse.getObject().getId()).get();
+
+        commandService.undo();
+
+        AssertionsForClassTypes.assertThat(userAnnotationService.find(commandResponse.getObject().getId())).isEmpty();
+
+        commandService.redo();
+
+        AssertionsForClassTypes.assertThat(userAnnotationService.find(commandResponse.getObject().getId())).isPresent();
+    }
+
+    @Test
     void add_big_user_annotation_with_max_number_of_points() throws ParseException {
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation();
         userAnnotation.setLocation(new WKTReader().read(TestUtils.getResourceFileAsString("dataset/very_big_annotation.txt")));

@@ -125,9 +125,9 @@ public class RestAnnotationDomainController extends RestCytomineController {
             @RequestParam String format,
             @RequestParam(required = false) String users,
             @RequestParam(required = false) String reviewUsers,
-            @RequestParam Boolean reviewed,
-            @RequestParam String terms,
-            @RequestParam String images,
+            @RequestParam(defaultValue = "false") Boolean reviewed,
+            @RequestParam(required = false) String terms,
+            @RequestParam(required = false) String images,
             @RequestParam(required = false) Long beforeThan,
             @RequestParam(required = false) Long afterThan
     ) throws IOException {
@@ -135,7 +135,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
             restReviewedAnnotationController.downloadDocumentByProject(project, format, terms, reviewUsers, images, beforeThan, afterThan);
         }
         else {
-            if (!users.isEmpty() && false) { // SecUser.read(users.first()).algo()
+            if ((users != null && !users.isEmpty()) && false) { // SecUser.read(users.first()).algo()
                 restAlgoAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
             } else {
                 restUserAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);

@@ -126,8 +126,8 @@ public class Project extends CytomineDomain {
             returnArray.put("isRestricted", true);
         }
 
-        returnArray.put("hideUsersLayers", true);
-        returnArray.put("hideAdminsLayers", true);
+        returnArray.put("hideUsersLayers", project.hideUsersLayers);
+        returnArray.put("hideAdminsLayers", project.hideAdminsLayers);
 
         return returnArray;
     }

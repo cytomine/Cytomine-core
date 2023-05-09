@@ -32,6 +32,7 @@ import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.SharedAnnotationService;
+import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
@@ -61,6 +62,8 @@ public class RestUserAnnotationController extends RestCytomineController {
     private final ProjectService projectService;
 
     private final SecUserService secUserService;
+
+    private final TermService termService;
 
     private final ReportService reportService;
 
@@ -112,9 +115,9 @@ public class RestUserAnnotationController extends RestCytomineController {
     /**
      * Download a report (pdf, xls,...) with user annotation data from a specific project
      */
-    @GetMapping("/project/{project}/userannotation/download")
+    @GetMapping("/project/{idProject}/userannotation/download")
     public void downloadDocumentByProject(
-            @PathVariable Long project,
+            @PathVariable Long idProject,
             @RequestParam String format,
             @RequestParam String terms,
             @RequestParam String users,
@@ -122,10 +125,13 @@ public class RestUserAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Long beforeThan,
             @RequestParam(required = false) Long afterThan
     ) throws IOException {
-        users = secUserService.fillEmptyUserIds(users, project);
+        Project project = projectService.find(idProject)
+                .orElseThrow(() -> new ObjectNotFoundException("Project", idProject));
+        users = secUserService.fillEmptyUserIds(users, idProject);
+        terms = termService.fillEmptyTermIds(terms, project);
         JsonObject params = mergeQueryParamsAndBodyParams();
-        byte[] report = annotationListingBuilder.buildAnnotationReport(project, users, params, terms, format);
-        responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
+        byte[] report = annotationListingBuilder.buildAnnotationReport(idProject, users, params, terms, format);
+        responseReportFile(reportService.getAnnotationReportFileName(format, idProject), report, format);
     }
 
     /**

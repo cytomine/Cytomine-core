@@ -106,7 +106,7 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
             if (indexRoleRequired==-1 || indexCurrenRole==-1) {
                 throw new RuntimeException("Cannot find index for role " + roleRequired.get() + " or " + currentRole);
             }
-            return indexCurrenRole <= indexRoleRequired;
+            return indexCurrenRole < indexRoleRequired;
         }
 
     }
@@ -171,6 +171,7 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
             expectOK (() -> when_i_add_domain());
         }
     }
+
 
     @Test
     @WithMockUser(username = GUEST)
@@ -269,13 +270,14 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
         }
     }
 
-    @Test
+
+   @Test
     @WithMockUser(username = GUEST)
     public void guest_delete_domain() {
         if (isPermissionRoleForbidden(minimalRoleForDelete(), "ROLE_GUEST")) {
-            expectForbidden (() -> when_i_add_domain());
+            expectForbidden (() -> when_i_delete_domain());
         } else {
-            expectOK (() -> when_i_add_domain());
+            expectOK (() -> when_i_delete_domain());
         }
     }
 

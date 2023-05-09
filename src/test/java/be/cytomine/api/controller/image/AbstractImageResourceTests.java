@@ -19,6 +19,7 @@ package be.cytomine.api.controller.image;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.api.ApiExceptionHandler;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.server.Storage;
@@ -88,6 +89,9 @@ public class AbstractImageResourceTests {
 
     @Autowired
     private PropertyRepository propertyRepository;
+
+    @Autowired
+    private ApplicationProperties applicationProperties;
 
 //    @Autowired
 //    private RestAbstractImageController restAbstractImageController;
@@ -408,6 +412,7 @@ public class AbstractImageResourceTests {
 
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
         slice.setUploadedFile(image.getUploadedFile());
+        String serverUrl = applicationProperties.getServerURL();
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}.json", image.getId()))
                 .andDo(print())
@@ -416,9 +421,9 @@ public class AbstractImageResourceTests {
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.image.AbstractImage"))
                 .andExpect(jsonPath("$.created").exists())
                 .andExpect(jsonPath("$.contentType").value("MRXS"))
-                .andExpect(jsonPath("$.preview").value("http://localhost:8080/api/abstractimage/"+image.getId()+"/thumb.png?maxSize=1024"))
-                .andExpect(jsonPath("$.thumb").value("http://localhost:8080/api/abstractimage/"+image.getId()+"/thumb.png?maxSize=512"))
-                .andExpect(jsonPath("$.macroURL").value("http://localhost:8080/api/abstractimage/"+image.getId()+"/associated/macro.png?maxWidth=512"))
+                .andExpect(jsonPath("$.preview").value(serverUrl + "/api/abstractimage/"+image.getId()+"/thumb.png?maxSize=1024"))
+                .andExpect(jsonPath("$.thumb").value(serverUrl + "/api/abstractimage/"+image.getId()+"/thumb.png?maxSize=512"))
+                .andExpect(jsonPath("$.macroURL").value(serverUrl + "/api/abstractimage/"+image.getId()+"/associated/macro.png?maxWidth=512"))
                 .andExpect(jsonPath("$.path").value("1636379100999/CMU-2/CMU-2.mrxs"))
                 .andExpect(jsonPath("$.height").value(220696))
                 .andExpect(jsonPath("$.width").value(109240))
@@ -792,7 +797,7 @@ public class AbstractImageResourceTests {
                 .andDo(print()).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
         assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/file/"+URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8)+"/export");
+                .isEqualTo("http://localhost:8888/image/"+URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8)+"/export");
 
 
     }

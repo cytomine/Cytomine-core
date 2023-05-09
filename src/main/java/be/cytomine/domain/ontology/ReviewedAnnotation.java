@@ -161,7 +161,7 @@ public class ReviewedAnnotation extends AnnotationDomain implements Serializable
         annotation.image = (ImageInstance)json.getJSONAttrDomain(entityManager, "image", new ImageInstance(), true);
         annotation.project = annotation.getImage().getProject();
         annotation.user = (SecUser)json.getJSONAttrDomain(entityManager, "user", new SecUser(), true);
-        annotation.reviewUser = (User)json.getJSONAttrDomain(entityManager, "reviewUser", new SecUser(), true);
+        annotation.reviewUser = (SecUser)json.getJSONAttrDomain(entityManager, "reviewUser", new SecUser(), true);
 
         annotation.status = json.getJSONAttrInteger("status",0);
         annotation.geometryCompression = json.getJSONAttrDouble("geometryCompression",0D);
