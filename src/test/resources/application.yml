@@ -6,7 +6,7 @@ spring:
 
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:postgresql://localhost:5433/docker
+    url: jdbc:postgresql://localhost:5432/docker
     username: docker
     password: docker
     hikari:
@@ -20,6 +20,7 @@ spring:
         format_sql: true
         jdbc:
           batch_size: 500
+
   mail:
     host: disabled
     port: 587
@@ -39,8 +40,8 @@ spring:
       username: mongoadmin
       password: secret
       database: cytomine
-      port: 27018 #do not change
-      host: 127.0.0.1 #do not change
+      port: 27017
+      host: localhost
 
       #uri: 'mongodb://mongoadmin:secret@localhost:27018/cytomine?authSource=admin&retryWrites=false' #?retryWrites=false&authSource=admin'
       #auto-index-creation: true
@@ -64,14 +65,14 @@ ldap:
 application:
   serverId: default
   serverURL: http://localhost:8080
-  adminPassword: adminPassword
+  adminPassword: password
   adminEmail: adminEmail@adminEmail.com
   adminPrivateKey: adminPrivateKey
   adminPublicKey: adminPublicKey
   superAdminPrivateKey: superAdminPrivateKey
   superAdminPublicKey: superAdminPublicKey
-  ImageServerPrivateKey: ImageServerPrivateKey
-  ImageServerPublicKey: ImageServerPublicKey
+  ImageServerPrivateKey: imageServerPrivateKey
+  ImageServerPublicKey: imageServerPublicKey
   rabbitMQPrivateKey: rabbitMQPrivateKey
   rabbitMQPublicKey: rabbitMQPublicKey
   softwareSources: softwareSources/
@@ -99,7 +100,7 @@ application:
       enabled: false
 
   defaultLanguage: ENGLISH
-  imageServerURL: [http://localhost-ims]
+  imageServerURL: [http://ims.cytomine.local]
   messageBrokerServerURL: messageBrokerServerURL
   annotation:
     maxNumberOfPoint: 200

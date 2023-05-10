@@ -110,7 +110,7 @@ public abstract class CRUDAuthorizationTest extends CRDAuthorizationTest {
         }
     }
 
-    @Test
+   @Test
     @WithMockUser(username = GUEST)
     public void guest_edit_domain() {
         if (minimalRoleForEdit().isPresent() && minimalRoleForEdit().get().equals("CREATOR")) {

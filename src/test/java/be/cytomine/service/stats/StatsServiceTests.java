@@ -522,6 +522,7 @@ public class StatsServiceTests {
         assertThat(response.getJSONAttrLong("total")).isGreaterThanOrEqualTo(193396892+445132860);
         assertThat(response.getJSONAttrLong("available")).isGreaterThanOrEqualTo(445132860);
         assertThat(response.getJSONAttrLong("used")).isGreaterThanOrEqualTo(193396892);
+        assertThat(response.getJSONAttrDouble("usedP")).isGreaterThan(0);
 
     }
 

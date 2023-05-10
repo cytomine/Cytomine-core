@@ -384,7 +384,7 @@ public class BasicInstanceBuilder {
         return persistAndReturn(uploadedFile);
     }
 
-    public UploadedFile given_a_not_persisted_uploaded_file() {
+    public UploadedFile given_a_not_persisted_uploaded_file(String contentType) {
         UploadedFile uploadedFile = new UploadedFile();
         uploadedFile.setStorage(given_a_storage());
         uploadedFile.setUser(given_superadmin());
@@ -392,10 +392,14 @@ public class BasicInstanceBuilder {
         uploadedFile.setOriginalFilename(randomString());
         uploadedFile.setExt("tif");
         uploadedFile.setImageServer(given_an_image_server());
-        uploadedFile.setContentType("image/pyrtiff");
+        uploadedFile.setContentType(contentType);
         uploadedFile.setSize(100L);
         uploadedFile.setParent(null);
         return uploadedFile;
+    }
+
+    public UploadedFile given_a_not_persisted_uploaded_file() {
+        return given_a_not_persisted_uploaded_file("PYRTIFF");
     }
 
     public Storage given_a_storage() {
@@ -619,6 +623,20 @@ public class BasicInstanceBuilder {
     public UserAnnotation given_a_not_persisted_user_annotation() {
         UserAnnotation annotation = new UserAnnotation();
         annotation.setUser(given_superadmin());
+        try {
+            annotation.setLocation(new WKTReader().read("POLYGON ((1983 2168, 2107 2160, 2047 2074, 1983 2168))"));
+        } catch (ParseException ignored) {
+
+        }
+        annotation.setSlice(given_a_slice_instance());
+        annotation.setImage(annotation.getSlice().getImage());
+        annotation.setProject(annotation.getImage().getProject());
+        return annotation;
+    }
+
+        public UserAnnotation given_a_not_persisted_guest_annotation() {
+        UserAnnotation annotation = new UserAnnotation();
+        annotation.setUser(given_a_guest());
         try {
             annotation.setLocation(new WKTReader().read("POLYGON ((1983 2168, 2107 2160, 2047 2074, 1983 2168))"));
         } catch (ParseException ignored) {

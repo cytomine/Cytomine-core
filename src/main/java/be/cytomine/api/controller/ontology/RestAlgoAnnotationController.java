@@ -31,6 +31,7 @@ import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.AlgoAnnotationService;
 import be.cytomine.service.ontology.SharedAnnotationService;
+import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
 import be.cytomine.service.security.SecUserService;
@@ -70,6 +71,9 @@ public class RestAlgoAnnotationController extends RestCytomineController {
     private final ReportService reportService;
 
     private final SecUserService secUserService;
+
+    private final TermService termService;
+
 
     /**
      * List all annotation (created by algo) visible for the current user
@@ -170,9 +174,9 @@ public class RestAlgoAnnotationController extends RestCytomineController {
     /**
      * DDownload a report (pdf, xls,...) with software annotation data from a specific project
      */
-    @GetMapping("/project/{project}/algoannotation/download")
+    @GetMapping("/project/{idProject}/algoannotation/download")
     public void downloadDocumentByProject(
-            @PathVariable Long project,
+            @PathVariable Long idProject,
             @RequestParam String format,
             @RequestParam String terms,
             @RequestParam String users,
@@ -180,10 +184,13 @@ public class RestAlgoAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Long beforeThan,
             @RequestParam(required = false) Long afterThan
     ) throws IOException {
-        users = secUserService.fillEmptyUserIds(users, project);
+        Project project = projectService.find(idProject)
+                .orElseThrow(() -> new ObjectNotFoundException("Project", idProject));
+        users = secUserService.fillEmptyUserIds(users, idProject);
+        terms = termService.fillEmptyTermIds(terms, project);
         JsonObject params = mergeQueryParamsAndBodyParams();
-        byte[] report = annotationListingBuilder.buildAnnotationReport(project, users, params, terms, format);
-        responseReportFile(reportService.getAnnotationReportFileName(format, project), report, format);
+        byte[] report = annotationListingBuilder.buildAnnotationReport(idProject, users, params, terms, format);
+        responseReportFile(reportService.getAnnotationReportFileName(format, idProject), report, format);
     }
     // TODO
 //    @RestApiMethod(description="Download a report (pdf, xls,...) with software annotation data from a specific project")

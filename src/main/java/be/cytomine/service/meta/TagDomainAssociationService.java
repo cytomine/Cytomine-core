@@ -1,40 +1,33 @@
 package be.cytomine.service.meta;
 
 /*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2009-2022. Authors: see NOTICE file.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.UploadedFile;
-import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.meta.Tag;
 import be.cytomine.domain.meta.TagDomainAssociation;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.meta.TagDomainAssociationRepository;
-import be.cytomine.repository.meta.TagRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
-import be.cytomine.service.PermissionService;
-import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -45,13 +38,10 @@ import be.cytomine.utils.filters.SearchParameterEntry;
 import be.cytomine.utils.filters.SpecificationBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.criteria.Join;
 import javax.transaction.Transactional;
 import java.util.*;
 
@@ -146,27 +136,13 @@ public class TagDomainAssociationService extends ModelService {
     @Override
     public CommandResponse add(JsonObject jsonObject) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkCurrentUserIsUser();
-        CytomineDomain domain = null;
-        try {
-            domain = (CytomineDomain)getEntityManager()
-                    .find(Class.forName(jsonObject.getJSONAttrStr("domainClassName")), jsonObject.getJSONAttrLong("domainIdent"));
-        } catch (ClassNotFoundException ignored) {
-        }
-        if (domain==null) {
-            throw new WrongArgumentException("Property has no associated domain:"+ jsonObject.toJsonString());
-        }
-
-
-        if (!domain.getClass().getName().contains("AbstractImage")) {
-            securityACLService.check(domain.container(),READ);
-            if (domain.userDomainCreator()!=null) {
-                securityACLService.checkFullOrRestrictedForOwner(domain, domain.userDomainCreator());
-            } else if (domain instanceof Project) {
-                securityACLService.check(domain.container(),WRITE);
-            } else {
-                securityACLService.checkFullOrRestrictedForOwner(domain, null);
-            }
+        //Get the associated domain
+        CytomineDomain domain = getCytomineDomain(jsonObject.getJSONAttrStr("domainClassName"), jsonObject.getJSONAttrLong("domainIdent"));
+        if(!domain.getClass().getName().contains("AbstractImage")) {
+            securityACLService.checkUserAccessRightsForMeta( domain,  currentUser);
+        }else{
+            //TODO when is this used ?
+            securityACLService.checkUser(currentUser);
         }
         jsonObject.put("user", currentUser.getId());
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
@@ -177,11 +153,12 @@ public class TagDomainAssociationService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkCurrentUserIsUser();
-        if(!domain.getClass().getName().contains("AbstractImage")) {
-            securityACLService.check(domain.container(), READ);
-            CytomineDomain cytomineDomain = getCytomineDomain(((TagDomainAssociation) domain).getDomainClassName(), ((TagDomainAssociation) domain).getDomainIdent());
-            securityACLService.checkFullOrRestrictedForOwner(cytomineDomain, cytomineDomain.userDomainCreator());
+        CytomineDomain parentDomain = getCytomineDomain(((TagDomainAssociation) domain).getDomainClassName(), ((TagDomainAssociation) domain).getDomainIdent());
+        if(!parentDomain.getClass().getName().contains("AbstractImage")) {
+            securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
+        }else{
+            //TODO when is this used ?
+            securityACLService.checkUser(currentUser);
         }
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
@@ -190,8 +167,6 @@ public class TagDomainAssociationService extends ModelService {
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
         return List.of(((TagDomainAssociation)domain).getTag().getName(), ((TagDomainAssociation)domain).getDomainIdent(), ((TagDomainAssociation)domain).getDomainClassName());
     }
-
-
 
     @Override
     public CytomineDomain createFromJSON(JsonObject json) {

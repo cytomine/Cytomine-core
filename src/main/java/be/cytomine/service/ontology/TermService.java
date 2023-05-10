@@ -21,10 +21,8 @@ import be.cytomine.domain.command.*;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.RelationTerm;
 import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.WrongArgumentException;
@@ -35,7 +33,6 @@ import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -118,6 +115,13 @@ public class TermService extends ModelService {
         }
     }
 
+    public String fillEmptyTermIds(String terms, Project project){
+        if (terms == null || terms.equals("")) {
+            return this.getAllTermId(project).stream().map(String::valueOf).collect(Collectors.joining(","));
+        }
+        return terms;
+    }
+
     /**
      * Add the new domain with JSON data
      * @param jsonObject New domain data
@@ -129,7 +133,7 @@ public class TermService extends ModelService {
             throw new WrongArgumentException("Ontology is mandatory for term creation");
         }
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkUser(currentUser);
+        securityACLService.checkGuest(currentUser);
         securityACLService.check(jsonObject.getJSONAttrLong("ontology"), Ontology.class ,WRITE);
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
     }

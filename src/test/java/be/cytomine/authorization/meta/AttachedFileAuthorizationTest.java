@@ -20,7 +20,9 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.authorization.CRDAuthorizationTest;
 import be.cytomine.authorization.CRUDAuthorizationTest;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.meta.AttachedFile;
+import be.cytomine.domain.meta.TagDomainAssociation;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.EditingMode;
@@ -152,7 +154,7 @@ public class AttachedFileAuthorizationTest extends CRDAuthorizationTest {
         });
     }
 
-
+    // ANNOTATIONS
     @Override
     public void when_i_get_domain() {
         attachedFileService.findById(attachedFile.getId());
@@ -173,6 +175,113 @@ public class AttachedFileAuthorizationTest extends CRDAuthorizationTest {
         attachedFileService.delete(attachedFile, null, null, true);
     }
 
+    //IMAGE
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_add_for_image(){
+        ImageInstance attachedFileImage = builder.given_an_image_instance(project);
+        expectOK(() ->     attachedFileService.create("test", "hello".getBytes(), "test", attachedFileImage.getId(), attachedFileImage.getClass().getName()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_cannot_add_in_restricted_mode_for_image(){
+        ImageInstance attachedFileImage = builder.given_an_image_instance(project);
+        attachedFileImage.getProject().setMode(EditingMode.RESTRICTED);
+        expectForbidden(() ->   attachedFileService.create("test", "hello".getBytes(), "test", attachedFileImage.getId(), attachedFileImage.getClass().getName()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_add_in_restricted_mode_for_image_if_owner(){
+        ImageInstance attachedFileImage=builder.given_an_image_instance(project);
+        attachedFileImage.getProject().setMode(EditingMode.RESTRICTED);
+        attachedFileImage.setUser(userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get());
+        expectOK(() ->   attachedFileService.create("test", "hello".getBytes(), "test", attachedFileImage.getId(), attachedFileImage.getClass().getName()));
+    }
+
+    @Test
+    @WithMockUser(username = GUEST)
+    public void guest_cannot_add_for_image(){
+        ImageInstance attachedFileImage = builder.given_an_image_instance(project);
+        expectForbidden(() -> attachedFileService.create("test", "hello".getBytes(), "test", attachedFileImage.getId(), attachedFileImage.getClass().getName()));
+    }
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_delete_for_image(){
+        ImageInstance attachedFileImage = builder.given_an_image_instance(project);
+        AttachedFile attachedFile = builder.given_a_attached_file(attachedFileImage);
+        expectOK(() ->  attachedFileService.delete(attachedFile, null, null, true));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_cannot_delete_in_restricted_mode_for_image(){
+        ImageInstance attachedFileImage = builder.given_an_image_instance(project);
+        attachedFileImage.getProject().setMode(EditingMode.RESTRICTED);
+        AttachedFile attachedFile = builder.given_a_attached_file(attachedFileImage);
+        expectForbidden(() ->  attachedFileService.delete(attachedFile, null, null, true));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_delete_in_restricted_mode_for_image_if_owner(){
+        ImageInstance attachedFileImage=builder.given_an_image_instance(project);
+        attachedFileImage.getProject().setMode(EditingMode.RESTRICTED);
+        attachedFileImage.setUser(userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get());
+        AttachedFile attachedFile = builder.given_a_attached_file(attachedFileImage);
+        expectOK(() ->  attachedFileService.delete(attachedFile, null, null, true));
+    }
+
+    @Test
+    @WithMockUser(username = GUEST)
+    public void guest_cannot_delete_for_image(){
+        ImageInstance attachedFileImage = builder.given_an_image_instance(project);
+        AttachedFile attachedFile = builder.given_a_attached_file(attachedFileImage);
+        expectForbidden(() ->  attachedFileService.delete(attachedFile, null, null, true));}
+
+    //PROJECT
+    @Test
+    @WithMockUser(username = SUPERADMIN)
+    public void admin_can_add_for_project(){
+        expectOK(() ->     attachedFileService.create("test", "hello".getBytes(), "test", project.getId(), project.getClass().getName()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_cannot_add_for_project(){
+        expectForbidden (() -> attachedFileService.create("test", "hello".getBytes(), "test", project.getId(), project.getClass().getName()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_WRITE)
+    public void user_with_write_can_add_for_project(){
+        expectOK (() -> attachedFileService.create("test", "hello".getBytes(), "test", project.getId(), project.getClass().getName()));
+    }
+
+    @Test
+    @WithMockUser(username = SUPERADMIN)
+    public void admin_can_delete_for_project(){
+        AttachedFile attachedFile = builder.given_a_attached_file(project);
+        expectOK(() ->  attachedFileService.delete(attachedFile, null, null, true));
+   }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_cannot_delete_for_project(){
+
+        AttachedFile attachedFile = builder.given_a_attached_file(project);
+        expectForbidden (() ->  attachedFileService.delete(attachedFile, null, null, true));
+    }
+    @Test
+    @WithMockUser(username = USER_ACL_WRITE)
+    public void user_with_write_can_delete_for_project(){
+        AttachedFile attachedFile = builder.given_a_attached_file(project);
+        expectOK (() -> attachedFileService.delete(attachedFile, null, null, true));
+    }
+
+
     @Override
     protected Optional<Permission> minimalPermissionForCreate() {
         return Optional.of(BasePermission.WRITE);
@@ -191,16 +300,16 @@ public class AttachedFileAuthorizationTest extends CRDAuthorizationTest {
 
     @Override
     protected Optional<String> minimalRoleForCreate() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
     @Override
     protected Optional<String> minimalRoleForDelete() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
     @Override
     protected Optional<String> minimalRoleForEdit() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 }
