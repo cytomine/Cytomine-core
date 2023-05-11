@@ -22,6 +22,7 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.LongTermsBucket;
 import co.elastic.clients.elasticsearch._types.query_dsl.*;
+import co.elastic.clients.json.JsonData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
@@ -47,9 +48,45 @@ public class MetadataSearchService {
     public MetadataSearchService(ElasticsearchOperations operations) {
         this.operations = operations;
     }
-    
+
+    private Query buildRangeQuery(List<Integer> bounds, String value) {
+        Query matchKey = MatchQuery.of(mq -> mq
+                .field("key")
+                .query(value))
+            ._toQuery();
+
+        Query byRange = RangeQuery.of(rq -> rq
+                .field("value")
+                .gte(JsonData.of(bounds.get(0)))
+                .lte(JsonData.of(bounds.get(1))))
+            ._toQuery();
+
+        return BoolQuery.of(bq -> bq
+                .must(matchKey)
+                .must(byRange))
+            ._toQuery();
+    }
+
+    private Query buildStringQuery(String key, String value, Query byDomainId) {
+        Query byValue = QueryStringQuery.of(qs -> qs
+                .query(String.format("*%s*", value))
+                .defaultField("value"))
+            ._toQuery();
+
+        Query byKey = MatchQuery.of(m -> m
+                .field("key")
+                .query(key))
+            ._toQuery();
+
+        return BoolQuery.of(b -> b
+            .must(byValue)
+            .must(byDomainId)
+            .must(byKey)
+        )._toQuery();
+    }
+
     public List<Long> search(JsonObject body) {
-        List<FieldValue> imageIDs = (List<FieldValue>) ((List<Integer>) body.get("imageIds"))
+        List<FieldValue> imageIDs = ((List<Integer>) body.get("imageIds"))
             .stream()
             .map(x -> FieldValue.of(x))
             .collect(Collectors.toList());
@@ -59,23 +96,11 @@ public class MetadataSearchService {
         List<Query> subqueries = new ArrayList<>();
         HashMap<String, Object> filters = (HashMap) body.get("filters");
         for (Map.Entry<String, Object> entry : filters.entrySet()) {
-            Query byValue = QueryStringQuery.of(qs -> qs
-                    .query(String.format("*%s*", entry.getValue()))
-                    .defaultField("value"))
-                ._toQuery();
-
-            Query byKey = MatchQuery.of(m -> m
-                    .field("key")
-                    .query(entry.getKey()))
-                ._toQuery();
-
-            Query byKeyword = BoolQuery.of(b -> b
-                .must(byValue)
-                .must(byDomainId)
-                .must(byKey)
-            )._toQuery();
-
-            subqueries.add(byKeyword);
+            if (entry.getValue().toString().startsWith("[")) {
+                subqueries.add(buildRangeQuery((List<Integer>) entry.getValue(), entry.getKey()));
+            } else {
+                subqueries.add(buildStringQuery(entry.getKey(), (String) entry.getValue(), byDomainId));
+            }
         }
 
         NativeQuery query = NativeQuery.builder()
