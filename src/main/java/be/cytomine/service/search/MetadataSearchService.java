@@ -32,10 +32,7 @@ import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -137,5 +134,32 @@ public class MetadataSearchService {
         }
 
         return IDs;
+    }
+
+    public List<String> searchAutoCompletion(String key, String search) {
+        Query byKeyword = MatchQuery.of(mq -> mq
+                .field("key")
+                .query(key))
+            ._toQuery();
+
+        Query autocomplete = QueryStringQuery.of(qsq -> qsq
+                .defaultField("value")
+                .query(String.format("%s*", search)))
+            ._toQuery();
+
+        NativeQuery query = NativeQuery.builder()
+            .withQuery(q -> q.bool(b -> b
+                .must(byKeyword)
+                .must(autocomplete)))
+            .build();
+
+        SearchHits<Property> searchHits = operations.search(
+            query,
+            Property.class,
+            IndexCoordinates.of("properties")
+        );
+
+        Set<String> unique = new HashSet<>(searchHits.stream().map(hit -> hit.getContent().getValue()).toList());
+        return unique.stream().toList();
     }
 }
