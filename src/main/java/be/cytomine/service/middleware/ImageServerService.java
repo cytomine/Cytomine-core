@@ -122,7 +122,13 @@ public class ImageServerService extends ModelService {
     }
 
     public String downloadUri(AbstractImage abstractImage) throws IOException {
-        return downloadUri(abstractImage.getUploadedFile());
+        UploadedFile uploadedFile = abstractImage.getUploadedFile();
+        if (uploadedFile.getPath()==null || uploadedFile.getPath().trim().equals("")) {
+            throw new InvalidRequestException("Uploaded file has no valid path.");
+        }
+        // It gets the file specified in the uri.
+        String uri = "/image/"+URLEncoder.encode(uploadedFile.getPath() ,StandardCharsets.UTF_8) +"/export";
+        return uploadedFile.getImageServer().getUrl()+uri;
     }
 
     public String downloadUri(CompanionFile companionFile) throws IOException {
@@ -767,12 +773,6 @@ public class ImageServerService extends ModelService {
         String parameterUrl = "";
         String fullUrl = "";
 
-        //TODO:
-//        if (responseContentType == "image/webp") {
-//            // Avoid parser registry to throw a warning for unknown content type
-//            def parserRegistry = http.getParser()
-//            parserRegistry.putAt("image/webp", parserRegistry.getDefaultParser())
-//        }
         String responseContentType = formatToContentType(format);
 
         try {
@@ -782,21 +782,12 @@ public class ImageServerService extends ModelService {
             HttpClient httpClient = HttpClient.newBuilder()
                     .version(HttpClient.Version.HTTP_1_1)
                     .build();
+
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder();
             if ((fullUrl).length() < GET_URL_MAX_LENGTH && (httpMethod==null || httpMethod.equals("GET"))) {
                 log.debug("GET " + fullUrl);
-                HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                        .GET()
-                        .uri(URI.create(fullUrl))
-                        .setHeader("content-type", "application/x-www-form-urlencoded")
-                        .setHeader("Accept", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9");
-                for (Map.Entry<String, Object> entry : headers.entrySet()) {
-                    requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
-                }
-
-                HttpRequest request = requestBuilder.build();
-
-                HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
-                return processResponse(fullUrl, responseContentType, response);
+                requestBuilder.GET()
+                        .uri(URI.create(fullUrl));
             } else {
                 log.debug("POST " + imageServerInternalUrl + path);
                 log.debug(JsonObject.toJsonString(parameters));
@@ -812,19 +803,17 @@ public class ImageServerService extends ModelService {
                     bodyPublisher = HttpRequest.BodyPublishers.ofString(JsonObject.toJsonString(parameters));
                 }
 
-                HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                        .POST(bodyPublisher)
+                requestBuilder.POST(bodyPublisher)
                         .uri(URI.create(imageServerInternalUrl + path))
-                        .setHeader("Accept", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
-                        .setHeader("content-type", "application/json");
-
-                for (Map.Entry<String, Object> entry : headers.entrySet()) {
-                    requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
-                }
-                HttpRequest request = requestBuilder.build();
-                HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
-                return processResponse(fullUrl, responseContentType, response);
+                        .setHeader("content-type", requestContentType);
             }
+            requestBuilder.setHeader("Accept", responseContentType);
+            for (Map.Entry<String, Object> entry : headers.entrySet()) {
+                requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
+            }
+            HttpRequest request = requestBuilder.build();
+            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+            return processResponse(fullUrl, responseContentType, response);
         } catch(NotModifiedException e){
             throw e;
         } catch(Exception e){

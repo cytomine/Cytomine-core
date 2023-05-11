@@ -1258,6 +1258,8 @@ public class SecUserService extends ModelService {
     public void addUserToStorage(SecUser user, Storage storage) {
         securityACLService.check(storage, ADMINISTRATION);
         log.info("Add user {} to storage {}", user, storage);
+        //check that user has at least ROLE_USER
+        securityACLService.checkUser(user);
         permissionService.addPermission(storage, user.getUsername(), READ);
         permissionService.addPermission(storage, user.getUsername(), WRITE);
     }
@@ -1265,6 +1267,8 @@ public class SecUserService extends ModelService {
     public void addUserToStorage(SecUser user, Storage storage, Permission permission) {
         securityACLService.check(storage, ADMINISTRATION);
         log.info("Add user {} to storage {}", user, storage);
+        //check that user has at least ROLE_USER
+        securityACLService.checkUser(user);
         permissionService.addPermission(storage, user.getUsername(), permission);
     }
 

@@ -40,7 +40,6 @@ import be.cytomine.service.PermissionService;
 import be.cytomine.service.ontology.GenericAnnotationService;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.StringUtils;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.acls.model.Permission;
@@ -56,8 +55,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
-import static org.springframework.security.acls.domain.BasePermission.READ;
+import static org.springframework.security.acls.domain.BasePermission.*;
 
 @Slf4j
 @Service
@@ -498,5 +496,30 @@ public class SecurityACLService {
             }
         }
         return domain.container();
+    }
+
+
+    public void checkUserAccessRightsForMeta(CytomineDomain domain, SecUser currentUser){
+        //Is domain Project?
+        if(domain instanceof Project){
+            checkGuest(currentUser);
+            //Check if user has at least WRITE permission for Project domain, e.g.: is a manager
+            check( domain,WRITE,  currentUser);
+           // check(domain,WRITE);
+        } else if(domain instanceof ImageInstance){
+            //Only ROLE_USER can associate meta domains to image instances
+            checkUser(currentUser);
+            //Check if user has at least READ permission for the domain Image Instance
+            check( domain,READ,  currentUser);
+            //Check if user is admin, the project mode and if is the owner of the image storage
+            checkFullOrRestrictedForOwner(domain, domain.userDomainCreator());
+        } else {
+            checkGuest(currentUser);
+            //Check if user has at least READ permission for the domain, e.g. UserAnnotation
+            check( domain,READ,  currentUser);
+            //Check if user is admin, the project mode and if is the owner of the annotation
+            checkFullOrRestrictedForOwner(domain, domain.userDomainCreator());
+        }
+
     }
 }

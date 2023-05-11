@@ -21,7 +21,6 @@ import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
@@ -147,9 +146,11 @@ public class RestAnnotationTermController extends RestCytomineController {
     public ResponseEntity<String> add(@RequestBody JsonObject json) {
         log.debug("REST request to save annotation term : " + json);
 
+        //Get annotation, it can be a userAnnotation, an algoAnnotation or a Reviewed
         AnnotationDomain annotation =
                 annotationDomainRepository.findById(json.get("annotationIdent")!=null ? json.getJSONAttrLong("annotationIdent") : json.getJSONAttrLong("userannotation"))
                 .orElseThrow(() -> new ObjectNotFoundException("Annotation", "annotationIdent="+json.getJSONAttrStr("annotationIdent","null") + "-userannotation="+json.getJSONAttrStr("userannotation","null")));
+        // If the term is added by an algo
         if (secUserService.getCurrentUser().isAlgo()) {
             //TODO:: won't work if we add an annotation term to a algoannotation
             if (!annotation.isUserAnnotation() && !annotation.isAlgoAnnotation()) {
@@ -157,7 +158,9 @@ public class RestAnnotationTermController extends RestCytomineController {
             }
             return responseSuccess(algoAnnotationTermService.add(json));
         } else {
+            //if term is added from a user, check if the user has permission for UserAnnotation domain
             securityACLService.check(json.getJSONAttrLong("userannotation"),UserAnnotation.class,READ);
+            //Check if user is admin, the project mode and if is the owner of the annotation
             securityACLService.checkFullOrRestrictedForOwner(json.getJSONAttrLong("userannotation"),UserAnnotation.class, "user");
             return responseSuccess(annotationTermService.add(json));
         }

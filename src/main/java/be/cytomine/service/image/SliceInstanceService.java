@@ -29,17 +29,12 @@ import be.cytomine.repository.ontology.AnnotationIndexRepository;
 import be.cytomine.repository.ontology.AnnotationTrackRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
-import be.cytomine.service.dto.AnnotationIndexLightDTO;
-import be.cytomine.service.ontology.AnnotationIndexService;
 import be.cytomine.service.ontology.AnnotationTrackService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
-import be.cytomine.utils.filters.SearchParameterEntry;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.FetchMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -47,7 +42,6 @@ import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
@@ -155,6 +149,7 @@ public class SliceInstanceService extends ModelService {
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),READ); // TODO?????
+        securityACLService.checkUser(currentUser);
         securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((SliceInstance)domain).getImage().getUser());
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);

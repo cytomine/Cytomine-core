@@ -19,14 +19,13 @@ package be.cytomine.authorization.meta;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.authorization.CRDAuthorizationTest;
-import be.cytomine.authorization.CRUDAuthorizationTest;
 import be.cytomine.domain.image.AbstractImage;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.meta.TagDomainAssociation;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.EditingMode;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.User;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.meta.TagDomainAssociationService;
 import be.cytomine.service.security.SecurityACLService;
@@ -120,7 +119,7 @@ public class TagDomainAssociationAuthorizationTest extends CRDAuthorizationTest 
                 .doesNotContain(tagDomainAssociationForProject, tagDomainAssociationForAnnotation)
                 .contains(tagDomainAssociationForAbstractImage);
     }
-
+    // ANNOTATIONS
     @Test
     @WithMockUser(username = USER_ACL_READ)
     public void user_cannot_add_in_readonly_mode(){
@@ -166,9 +165,115 @@ public class TagDomainAssociationAuthorizationTest extends CRDAuthorizationTest 
 
     @Override
     protected void when_i_delete_domain() {
-        TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), project);
+        TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), annotationDomain);
         tagDomainAssociationService.delete(tagDomainAssociation, null, null, true);
     }
+
+    //IMAGE
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_add_for_image(){
+        ImageInstance imageInstance=builder.given_an_image_instance(project);
+       expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(),imageInstance).toJsonObject()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_cannot_add_in_restricted_mode_for_image(){
+        ImageInstance imageInstance=builder.given_an_image_instance(project);
+        imageInstance.getProject().setMode(EditingMode.RESTRICTED);
+        expectForbidden(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(),imageInstance).toJsonObject()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_add_in_restricted_mode_for_image_if_owner(){
+        ImageInstance imageInstance=builder.given_an_image_instance(project);
+        imageInstance.getProject().setMode(EditingMode.RESTRICTED);
+        imageInstance.setUser(userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get());
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(),imageInstance).toJsonObject()));
+    }
+
+    @Test
+    @WithMockUser(username = GUEST)
+    public void guest_cannot_add_for_image(){
+        expectForbidden(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(),builder.given_an_image_instance()).toJsonObject()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_delete_for_image(){
+        ImageInstance imageInstance=builder.given_an_image_instance(project);
+        TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), imageInstance);
+        expectOK (() -> tagDomainAssociationService.delete(tagDomainAssociation, null, null, true));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_cannot_delete_in_restricted_mode_for_image(){
+        ImageInstance imageInstance=builder.given_an_image_instance(project);
+        imageInstance.getProject().setMode(EditingMode.RESTRICTED);
+        expectForbidden(() -> tagDomainAssociationService.delete(builder.given_a_tag_association(builder.given_a_tag(),imageInstance),null,null,true));
+    }
+
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_can_delete_in_restricted_mode_for_image_if_owner(){
+        ImageInstance imageInstance=builder.given_an_image_instance(project);
+        imageInstance.getProject().setMode(EditingMode.RESTRICTED);
+        imageInstance.setUser(userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get());
+        expectOK(() -> tagDomainAssociationService.delete(builder.given_a_tag_association(builder.given_a_tag(),imageInstance),null,null,true));
+    }
+
+    @Test
+    @WithMockUser(username = GUEST)
+    public void guest_cannot_delete_for_image(){
+        expectForbidden(() -> tagDomainAssociationService.delete(builder.given_a_tag_association(builder.given_a_tag(),builder.given_an_image_instance()),null,null,true));
+    }
+
+//PROJECT
+
+    @Test
+    @WithMockUser(username = SUPERADMIN)
+    public void admin_can_add_for_project(){
+        expectOK (() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(),project).toJsonObject()));
+    }
+
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_cannot_add_for_project(){
+        expectForbidden (() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(),project).toJsonObject()));
+
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_WRITE)
+    public void user_with_write_can_add_for_project(){
+        expectOK (() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(),project).toJsonObject()));
+    }
+
+
+    @Test
+    @WithMockUser(username = SUPERADMIN)
+    public void admin_can_delete_for_project(){
+        expectOK (() -> tagDomainAssociationService.delete(builder.given_a_tag_association(builder.given_a_tag(),project), null,null,true));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_cannot_delete_for_project(){
+        expectForbidden (() -> tagDomainAssociationService.delete(builder.given_a_tag_association(builder.given_a_tag(),project),null,null ,true));
+
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_WRITE)
+    public void user_with_write_can_delete_for_project(){
+        expectOK (() -> tagDomainAssociationService.delete(builder.given_a_tag_association(builder.given_a_tag(),project),null,null,true));
+    }
+
 
     @Override
     protected Optional<Permission> minimalPermissionForCreate() {
@@ -188,17 +293,17 @@ public class TagDomainAssociationAuthorizationTest extends CRDAuthorizationTest 
 
     @Override
     protected Optional<String> minimalRoleForCreate() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
     @Override
     protected Optional<String> minimalRoleForDelete() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
     @Override
     protected Optional<String> minimalRoleForEdit() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
 
