@@ -32,6 +32,8 @@ public class RequestParams extends HashMap<String, String> {
         return !isNull(key) && get(key).equals(value);
     }
 
+    public boolean getWithImageGroup() { return get("withImageGroup").equals("true"); }
+
     public Long getOffset() {
         return Long.parseLong(get("offset"));
     }

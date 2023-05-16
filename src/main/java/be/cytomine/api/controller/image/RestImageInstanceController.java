@@ -1,35 +1,38 @@
 package be.cytomine.api.controller.image;
 
 /*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2009-2022. Authors: see NOTICE file.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.api.controller.utils.RequestParams;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.image.group.ImageGroup;
+import be.cytomine.domain.image.group.ImageGroupImageInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ForbiddenException;
-import be.cytomine.exceptions.InvalidRequestException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.dto.*;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.SliceCoordinatesService;
+import be.cytomine.service.image.group.ImageGroupImageInstanceService;
+import be.cytomine.service.image.group.ImageGroupService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.search.ImageSearchExtension;
@@ -46,6 +49,7 @@ import org.springframework.web.servlet.view.RedirectView;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -57,10 +61,14 @@ public class RestImageInstanceController extends RestCytomineController {
 
     private final ImageInstanceService imageInstanceService;
 
+    private final ImageGroupService imageGroupService;
+
+    private final ImageGroupImageInstanceService imageGroupImageInstanceService;
+
     private final ImageServerService imageServerService;
 
     private final SecUserService secUserService;
-    
+
     private final SliceCoordinatesService sliceCoordinatesService;
 
     private final SecurityACLService securityACLService;
@@ -128,7 +136,7 @@ public class RestImageInstanceController extends RestCytomineController {
             imageSearchExtension.setWithLastActivity(withLastActivity);
             return responseSuccess(imageInstanceService.listExtended(project, imageSearchExtension, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax()), isFilterRequired(project));
         } else {
-            return responseSuccess(imageInstanceService.list(project, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax(), false), isFilterRequired(project));
+            return responseSuccess(imageInstanceService.list(project, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax(), false, requestParams.getWithImageGroup()), isFilterRequired(project));
         }
     }
 
@@ -197,8 +205,8 @@ public class RestImageInstanceController extends RestCytomineController {
         thumbParameter.setInverse(inverse);
         thumbParameter.setContrast(contrast);
         thumbParameter.setGamma(gamma);
-        thumbParameter.setMaxBits(bits!=null && bits.equals("max"));
-        thumbParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
+        thumbParameter.setMaxBits(bits != null && bits.equals("max"));
+        thumbParameter.setBits(bits != null && !bits.equals("max") ? Integer.parseInt(bits) : null);
         ImageInstance imageInstance = imageInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
 
@@ -227,8 +235,8 @@ public class RestImageInstanceController extends RestCytomineController {
         previewParameter.setInverse(inverse);
         previewParameter.setContrast(contrast);
         previewParameter.setGamma(gamma);
-        previewParameter.setMaxBits(bits!=null &&  bits.equals("max"));
-        previewParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
+        previewParameter.setMaxBits(bits != null && bits.equals("max"));
+        previewParameter.setBits(bits != null && !bits.equals("max") ? Integer.parseInt(bits) : null);
 
         ImageInstance imageInstance = imageInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
@@ -245,7 +253,6 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
         return responseSuccess(imageServerService.associated(imageInstance));
     }
-
 
 
     @GetMapping("/imageinstance/{id}/histogram.json")
@@ -286,10 +293,6 @@ public class RestImageInstanceController extends RestCytomineController {
     }
 
 
-
-
-
-
     @RequestMapping(value = "/imageinstance/{id}/associated/{label}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public void label(
             @PathVariable Long id,
@@ -306,6 +309,7 @@ public class RestImageInstanceController extends RestCytomineController {
         String etag = getRequestETag();
         responseImage(imageServerService.label(imageInstance, labelParameter, etag));
     }
+
     //
     @RequestMapping(value = "/imageinstance/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public void crop(
@@ -366,8 +370,8 @@ public class RestImageInstanceController extends RestCytomineController {
         cropParameter.setThickness(thickness);
         cropParameter.setColor(color);
         cropParameter.setJpegQuality(jpegQuality);
-        cropParameter.setMaxBits(bits!=null && bits.equals("max"));
-        cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
+        cropParameter.setMaxBits(bits != null && bits.equals("max"));
+        cropParameter.setBits(bits != null && !bits.equals("max") ? Integer.parseInt(bits) : null);
         cropParameter.setFormat(format);
         String etag = getRequestETag();
         responseImage(imageServerService.crop(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), cropParameter, etag));
@@ -478,7 +482,7 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
 
         boolean canDownload = imageinstance.getProject().getAreImagesDownloadable();
-        if(!canDownload) {
+        if (!canDownload) {
             // TODO: in abstract image, there is no check for that ?!?
             securityACLService.checkIsAdminContainer(imageinstance.getProject());
         }
@@ -513,7 +517,7 @@ public class RestImageInstanceController extends RestCytomineController {
         //TODO
         throw new CytomineMethodNotYetImplementedException("");
     }
-    
+
     // TODO
 
     @GetMapping("/project/{projectId}/bounds/imageinstance.json")
@@ -560,4 +564,13 @@ public class RestImageInstanceController extends RestCytomineController {
         element.put("fullPath", null);
     }
 
+    @GetMapping("/imagegroup/{imageGroup}/imageinstance.json")
+    public ResponseEntity<String> listByImageGroup(@PathVariable Long imageGroup) {
+        ImageGroup group = imageGroupService.get(imageGroup);
+        if (group == null) {
+            return responseNotFound("ImageInstance", "ImageGroup", imageGroup);
+        }
+
+        return responseSuccess(imageGroupImageInstanceService.list(group).stream().map(ImageGroupImageInstance::getImage).collect(Collectors.toList()));
+    }
 }
