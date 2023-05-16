@@ -552,7 +552,8 @@ public class UserAnnotationService extends ModelService {
 
 
     protected void afterUpdate(CytomineDomain domain, CommandResponse response) {
-        userAnnotationRepository.updateAnnotationLink(domain.getId());
+        String query = "UPDATE annotation_link SET updated = NOW() WHERE annotation_ident = " + domain.getId();
+        getEntityManager().createNativeQuery(query);
 
         response.getData().put("annotation", response.getData().get("userannotation"));
         response.getData().remove("userannotation");
