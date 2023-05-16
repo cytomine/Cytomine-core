@@ -97,17 +97,17 @@ public class AnnotationLinkAuthorizationTest extends CRDAuthorizationTest {
 
     @Override
     protected Optional<String> minimalRoleForCreate() {
-        return Optional.of("ROLE_GUEST");
+        return Optional.of("ROLE_USER");
     }
 
     @Override
     protected Optional<String> minimalRoleForDelete() {
-        return Optional.of("ROLE_GUEST");
+        return Optional.of("ROLE_USER");
     }
 
     @Override
     protected Optional<String> minimalRoleForEdit() {
-        return Optional.of("ROLE_GUEST");
+        return Optional.of("ROLE_USER");
     }
 
     @Test
