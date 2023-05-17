@@ -20,6 +20,7 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.authorization.CRDAuthorizationTest;
 import be.cytomine.authorization.CRUDAuthorizationTest;
+import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.meta.TagDomainAssociation;
@@ -54,6 +55,7 @@ public class AttachedFileAuthorizationTest extends CRDAuthorizationTest {
     private Project project = null;
 
     private AnnotationDomain attachedFileAnnotation = null;
+    private AbstractImage abstractImage = null;
 
     @Autowired
     AttachedFileService attachedFileService;
@@ -73,7 +75,9 @@ public class AttachedFileAuthorizationTest extends CRDAuthorizationTest {
             attachedFileAnnotation = builder.given_a_user_annotation();
             project = attachedFileAnnotation.getProject();
             attachedFile = builder.given_a_attached_file(attachedFileAnnotation);
+            abstractImage = builder.given_an_abstract_image();
             initACL(attachedFileAnnotation.container());
+            initACL(abstractImage.getUploadedFile().getStorage());
         }
         project.setMode(EditingMode.CLASSIC);
     }
@@ -279,6 +283,33 @@ public class AttachedFileAuthorizationTest extends CRDAuthorizationTest {
     public void user_with_write_can_delete_for_project(){
         AttachedFile attachedFile = builder.given_a_attached_file(project);
         expectOK (() -> attachedFileService.delete(attachedFile, null, null, true));
+    }
+
+    //ABSTRACT IMAGE
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_can_add_abstract_image(){
+        expectOK (() -> attachedFileService.create("test", "hello".getBytes(), "test", abstractImage.getId(), abstractImage.getClass().getName()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_NO_ACL)
+    public void user_without_acl_cannot_add_abstract_image(){
+        expectForbidden (() -> attachedFileService.create("test", "hello".getBytes(), "test", abstractImage.getId(), abstractImage.getClass().getName()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_can_delete_for_abstract_image(){
+        AttachedFile attachedFile = builder.given_a_attached_file(abstractImage);
+        expectOK(() ->  attachedFileService.delete(attachedFile, null, null, true));
+    }
+
+    @Test
+    @WithMockUser(username = USER_NO_ACL)
+    public void user_without_acl_cannot_delete_for_abstract_image(){
+        AttachedFile attachedFile = builder.given_a_attached_file(abstractImage);
+        expectForbidden(() ->  attachedFileService.delete(attachedFile, null, null, true));
     }
 
 

@@ -325,6 +325,47 @@ public class PropertyAuthorizationTest extends CRUDAuthorizationTest {
     }
 
 
+    //ABSTRACT IMAGE
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_can_add_for_abstract_image(){
+        expectOK (() -> propertyService.add(builder.given_a_not_persisted_property(abstractImage, "key", "value").toJsonObject()));
+    }
+    @Test
+    @WithMockUser(username = USER_NO_ACL)
+    public void user_without_acl_cannot_add_for_abstract_image(){
+        expectForbidden (() -> propertyService.add(builder.given_a_not_persisted_property(abstractImage, "key", "value").toJsonObject()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_can_edit_for_abstract_image(){
+        expectOK (() -> propertyService.update(propertyForAbstractImage,propertyForAbstractImage.toJsonObject(),null,null));
+    }
+
+    @Test
+    @WithMockUser(username = USER_NO_ACL)
+    public void user_without_acl_cannot_edit_for_abstract_image(){
+        expectForbidden (() -> propertyService.update(propertyForAbstractImage,propertyForAbstractImage.toJsonObject(),null,null));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_can_delete_for_abstract_image(){
+        AbstractImage abstractImageLocal = builder.given_an_abstract_image();
+        initACL(abstractImageLocal.getUploadedFile().getStorage());
+        expectOK (() -> propertyService.delete(builder.given_a_property(abstractImageLocal),null,null,true));
+    }
+
+    @Test
+    @WithMockUser(username = USER_NO_ACL)
+    public void user_without_acl_cannot_delete_for_abstract_image(){
+        AbstractImage abstractImageLocal = builder.given_an_abstract_image();
+        initACL(abstractImageLocal.getUploadedFile().getStorage());
+        expectForbidden (() -> propertyService.delete(builder.given_a_property(abstractImageLocal),null,null,true));
+    }
+
     @Override
     protected Optional<Permission> minimalPermissionForCreate() {
         return Optional.of(BasePermission.READ);

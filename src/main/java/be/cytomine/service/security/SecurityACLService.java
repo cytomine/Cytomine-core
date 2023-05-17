@@ -501,6 +501,11 @@ public class SecurityACLService {
             check( domain,READ,  currentUser);
             //Check if user is admin, the project mode and if is the owner of the image storage
             checkFullOrRestrictedForOwner(domain, domain.userDomainCreator());
+        }if(domain instanceof AbstractImage){
+            //Only ROLE_USER can associate meta domains to image instances
+            checkUser(currentUser);
+            //Check if user has at least READ permission for the storage
+            check( domain,READ,  currentUser);
         } else {
             checkGuest(currentUser);
             //Check if user has at least READ permission for the domain, e.g. UserAnnotation
