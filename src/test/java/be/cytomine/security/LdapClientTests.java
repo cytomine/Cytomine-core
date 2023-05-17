@@ -1,5 +1,6 @@
 package be.cytomine.security;
 
+import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.security.ldap.LdapClient;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LdapClientTests {
 
     private LdapClient ldapClient = new LdapClient(
-        "ldap://127.0.0.1:390",
+            BasicInstanceBuilder.LDAP_URL,
         "CN=admin,OU=users,DC=mtr,DC=com",
         "itachi"
     );

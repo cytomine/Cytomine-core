@@ -55,6 +55,8 @@ import static org.springframework.security.acls.domain.BasePermission.ADMINISTRA
 @Component
 @Transactional
 public class BasicInstanceBuilder {
+    
+    public static String LDAP_URL = "ldap://127.0.0.1:390";
 
     private User SUPERADMIN;
 

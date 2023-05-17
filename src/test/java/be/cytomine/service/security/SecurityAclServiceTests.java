@@ -218,7 +218,7 @@ public class SecurityAclServiceTests {
 
         assertThat(securityACLService.getLightStoragesWithMaxPermission(user).stream().map(x -> x.getId())).contains(storage.getId());
 
-        assertThat(securityACLService.getLightStoragesWithMaxPermission(user).get(0).get("permission")).isEqualTo(ADMINISTRATION);
+        assertThat(securityACLService.getLightStoragesWithMaxPermission(user).get(0).get("permission")).isEqualTo("ADMINISTRATION");
 
     }
 

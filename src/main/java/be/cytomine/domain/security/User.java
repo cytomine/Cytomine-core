@@ -82,7 +82,9 @@ public class User extends SecUser {
 
     @PreUpdate
     public void beforeUpdate() {
-
+        if (!apiEnabled) {
+            generateKeys();
+        }
     }
 
     /**
@@ -132,7 +134,7 @@ public class User extends SecUser {
         user.created = json.getJSONAttrDate("created");
         user.updated = json.getJSONAttrDate("updated");
         user.enabled = json.getJSONAttrBoolean("enabled", true);
-
+        user.apiEnabled = json.getJSONAttrBoolean("apiEnabled", false);
         if (user.getPublicKey() == null || user.getPrivateKey() == null || "".equals(json.get("publicKey")) || "".equals(json.get("privateKey"))) {
             user.generateKeys();
         }

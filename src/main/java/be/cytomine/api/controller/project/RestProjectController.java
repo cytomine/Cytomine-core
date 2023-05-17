@@ -18,6 +18,7 @@ package be.cytomine.api.controller.project;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.command.CommandHistory;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
@@ -27,11 +28,14 @@ import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
+import be.cytomine.service.project.ProjectClonerService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.search.ProjectSearchExtension;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.utils.TaskService;
+import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.StringUtils;
 import be.cytomine.utils.Task;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +45,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.mail.MessagingException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +57,8 @@ import java.util.Map;
 public class RestProjectController extends RestCytomineController {
 
     private final ProjectService projectService;
+
+    private final ProjectClonerService projectClonerService;
     private final ProjectRepository projectRepository;
 
     private final TaskService taskService;
@@ -260,7 +267,26 @@ public class RestProjectController extends RestCytomineController {
     }
 
 
+    @PostMapping("/project/{id}/clone.json")
+    public ResponseEntity<String> cloneProject(
+            @PathVariable Long id
+    ) throws IOException {
+        log.debug("REST request to clone image {}", id);
+        JsonObject jsonObject = mergeQueryParamsAndBodyParams();
+        Project project = projectService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("Project", id));
 
+        CommandResponse commandResponse = projectClonerService.cloneProject(
+                project,
+                jsonObject.getJSONAttrStr("name"),
+                jsonObject.getJSONAttrBoolean("cloneSetup", true),
+                jsonObject.getJSONAttrBoolean("cloneMembers", true),
+                jsonObject.getJSONAttrBoolean("cloneImages", true),
+                jsonObject.getJSONAttrBoolean("cloneAnnotations", true)
+        );
+
+        return responseSuccess(commandResponse);
+    }
 
 //    @RestApiMethod(description="Invite a not yer existing user to the project")
 //    @RestApiParams(params=[

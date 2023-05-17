@@ -37,6 +37,7 @@ import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.StringUtils;
 import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -544,7 +545,10 @@ public class RestImageInstanceController extends RestCytomineController {
         Project project = projectService.find(jsonObject.getJSONAttrLong("idProject"))
                 .orElseThrow(() -> new ObjectNotFoundException("Project", jsonObject.getJSONAttrLong("idProject")));
 
-        List<Long> usersArray = jsonObject.getJSONAttrListLong("layersArray", new ArrayList<>());
+        List<Long> usersArray = new ArrayList<>();
+        if (StringUtils.isNotBlank(jsonObject.getJSONAttrStr("layersArray"))) {
+            usersArray = jsonObject.getJSONAttrListLong("layersArray", new ArrayList<>());
+        }
         List<Map<String, Object>> annotationsTranfertMap = jsonObject.getJSONAttrListMap("annotationsTranfertMap", new ArrayList<>());
 
         CommandResponse commandResponse = imageInstanceService.cloneImage(

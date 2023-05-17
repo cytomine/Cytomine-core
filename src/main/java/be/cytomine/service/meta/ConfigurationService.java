@@ -58,6 +58,7 @@ import static org.springframework.security.acls.domain.BasePermission.*;
 @Transactional
 public class ConfigurationService extends ModelService {
 
+    public static List<String> CONFIGURATIONS_ACCESSIBLE_FOR_ANONYMOUS = List.of("LOGIN_WELCOME", "DEMO_ACCOUNT");
     public static String CONFIG_KEY_LTI_CONSUMERS = "LTI_CONSUMERS";
 
     public static String CONFIG_KEY_LDAP_SERVER = "LDAP_SERVER";
@@ -97,8 +98,8 @@ public class ConfigurationService extends ModelService {
     }
 
     public Optional<Configuration> findByKey(String key) {
-        if(key.equals("LOGIN_WELCOME")) { // login welcome message must be accessible from anonymous user
-            return configurationRepository.findByKey("LOGIN_WELCOME");
+        if(CONFIGURATIONS_ACCESSIBLE_FOR_ANONYMOUS.contains(key)) {
+            return configurationRepository.findByKey(key);
         } else {
             securityACLService.checkGuest(currentUserService.getCurrentUser());
             Optional<Configuration> config = configurationRepository.findByKey(key);
