@@ -149,7 +149,7 @@ class ApplicationBootstrap {
         if (EnvironmentUtils.isTest(environment) && secUserRepository.count() == 0) {
             bootstrapDataService.initData();
             //noSQLCollectionService.cleanActivityDB() TODO:
-            bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", dataset.ADMINEMAIL, dataset.ADMINPASSWORD, List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
+            bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", dataset.ADMINEMAIL, dataset.ADMINPASSWORD, List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"),null,null);
 
             // same as superadmin, but a userjob
             bootstrapUtilDataService.createUserJob("superadminjob", dataset.ADMINPASSWORD,
@@ -173,22 +173,6 @@ class ApplicationBootstrap {
         } else if (secUserRepository.count() == 0) {
             //if database is empty, put minimal data
             bootstrapDataService.initData();
-        }
-
-        if (applicationProperties.getImageServerPrivateKey()!=null && applicationProperties.getImageServerPublicKey()!=null) {
-            SecUser imageServerUser = secUserRepository.findByUsernameLikeIgnoreCase("ImageServer1")
-                    .orElseThrow(() -> new ObjectNotFoundException("No user imageserver1, cannot assign keys"));
-            imageServerUser.setPrivateKey(applicationProperties.getImageServerPrivateKey());
-            imageServerUser.setPublicKey(applicationProperties.getImageServerPublicKey());
-            secUserRepository.save(imageServerUser);
-        }
-        if (applicationProperties.getRabbitMQPrivateKey()!=null && applicationProperties.getRabbitMQPrivateKey()!=null) {
-            secUserRepository.findByUsernameLikeIgnoreCase("rabbitmq")
-                    .ifPresent(user -> {
-                        user.setPrivateKey(applicationProperties.getRabbitMQPrivateKey());
-                        user.setPublicKey(applicationProperties.getRabbitMQPublicKey());
-                            secUserRepository.save(user);
-                    });
         }
 
         File softwareSourceDirectory = new File(applicationProperties.getSoftwareSources());
