@@ -127,8 +127,8 @@ build-docker-image:
   rules:
     - if: $CI_COMMIT_TAG
   script:
-    - echo "Log in to ${CI_REGISTRY} as user ${CI_REGISTRY_USER}"
-    - docker login -u ${CI_REGISTRY_USER} -p ${CI_REGISTRY_PASSWORD} ${CI_REGISTRY}
+    - echo "Log in to Gitlab docker registry"
+    - echo ${DOCKER_REGISTRY_CYTOM_IN_AUTH_CONFIG} > ~/.docker/config.json
 
     - echo "Build the docker image ${DOCKER_IMAGE_NAME}:${CM_VERSION}"
     - docker build --build-arg CORE_VERSION=${CM_VERSION} -t ${DOCKER_IMAGE_NAME}:${CM_VERSION} -f docker/Dockerfile .
