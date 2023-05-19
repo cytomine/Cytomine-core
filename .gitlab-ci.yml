@@ -131,7 +131,7 @@ build-docker-image:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
     - echo "Build the docker image $DOCKER_IMAGE_NAME:$CM_VERSION"
-    - docker build --build-arg CORE_VERSION=$CM_VERSION -t $DOCKER_IMAGE_NAME:$CM_VERSION" -f docker/Dockerfile .
+    - docker build --build-arg CORE_VERSION=$CM_VERSION -t $DOCKER_IMAGE_NAME:$CM_VERSION -f docker/Dockerfile .
 
     - echo "Pushing docker image ${$DOCKER_IMAGE_NAME}:${CM_VERSION}"
     - docker push $DOCKER_IMAGE_NAME:$CM_VERSION
