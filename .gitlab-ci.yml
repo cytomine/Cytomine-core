@@ -128,6 +128,7 @@ build-docker-image:
     - if: $CI_COMMIT_TAG
   script:
     - echo "Log in to Gitlab docker registry"
+    - mkdir -p ~/.docker
     - echo ${DOCKER_REGISTRY_CYTOM_IN_AUTH_CONFIG} > ~/.docker/config.json
 
     - echo "Build the docker image ${DOCKER_IMAGE_NAME}:${CM_VERSION}"
