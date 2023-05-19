@@ -95,12 +95,7 @@ public class AttachedFileService extends ModelService {
     public AttachedFile create(String filename,byte[] data, String key, Long domainIdent,String domainClassName) throws ClassNotFoundException {
         SecUser currentUser = currentUserService.getCurrentUser();
         CytomineDomain recipientDomain = getCytomineDomain(domainClassName, domainIdent);
-
-        if (recipientDomain instanceof AbstractImage) {
-            securityACLService.checkUser(currentUser);
-            securityACLService.check(domainIdent,domainClassName,READ);
-        } else{ securityACLService.checkUserAccessRightsForMeta( recipientDomain,  currentUser);}
-
+        securityACLService.checkUserAccessRightsForMeta( recipientDomain,  currentUser);
         AttachedFile file = new AttachedFile();
         file.setDomainIdent(domainIdent);
         file.setDomainClassName(domainClassName);
@@ -120,12 +115,7 @@ public class AttachedFileService extends ModelService {
         if (parentDomain == null) {
             throw new ObjectNotFoundException(attachedFile.getDomainClassName(), attachedFile.getDomainIdent());
         }
-
-        if (parentDomain instanceof AbstractImage) {
-            securityACLService.checkUser(currentUser);
-            securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),READ);
-        } else{ securityACLService.checkUserAccessRightsForMeta( parentDomain,  currentUser);}
-
+        securityACLService.checkUserAccessRightsForMeta( parentDomain,  currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }

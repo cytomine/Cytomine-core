@@ -138,12 +138,7 @@ public class TagDomainAssociationService extends ModelService {
         SecUser currentUser = currentUserService.getCurrentUser();
         //Get the associated domain
         CytomineDomain domain = getCytomineDomain(jsonObject.getJSONAttrStr("domainClassName"), jsonObject.getJSONAttrLong("domainIdent"));
-        if(!domain.getClass().getName().contains("AbstractImage")) {
-            securityACLService.checkUserAccessRightsForMeta( domain,  currentUser);
-        }else{
-            //TODO when is this used ?
-            securityACLService.checkUser(currentUser);
-        }
+        securityACLService.checkUserAccessRightsForMeta( domain,  currentUser);
         jsonObject.put("user", currentUser.getId());
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
     }
@@ -154,12 +149,7 @@ public class TagDomainAssociationService extends ModelService {
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
         CytomineDomain parentDomain = getCytomineDomain(((TagDomainAssociation) domain).getDomainClassName(), ((TagDomainAssociation) domain).getDomainIdent());
-        if(!parentDomain.getClass().getName().contains("AbstractImage")) {
-            securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
-        }else{
-            //TODO when is this used ?
-            securityACLService.checkUser(currentUser);
-        }
+        securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }
