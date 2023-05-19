@@ -37,19 +37,6 @@ RUN sed -i -- 's/version: 0.0.0/version: '$CORE_VERSION'/g' /app/src/main/resour
 RUN gradle bootJar --console=verbose
 
 #######################################################################################
-## Stage: downloading provisioning scripts
-FROM alpine/git:2.36.3 as scripts-downloader
-
-ARG SCRIPTS_REPO_TAG="latest"
-
-WORKDIR /root
-RUN mkdir scripts
-RUN --mount=type=secret,id=scripts_repo_url \
-    git clone $(cat /run/secrets/scripts_repo_url) /root/scripts \
-    && cd /root/scripts \
-    && git checkout tags/${SCRIPTS_REPO_TAG}
-
-#######################################################################################
 ## Stage: Cytomine core development image
 FROM gradle:7.2-jdk17-alpine AS development
 
@@ -60,9 +47,9 @@ COPY --from=deps-downloader /opt/gradle/.gradle /opt/gradle/.gradle
 
 # startup scripts
 RUN mkdir /docker-entrypoint-cytomine.d/
-COPY --from=scripts-downloader --chmod=774 /root/scripts/cytomine-entrypoint.sh /usr/local/bin/
-COPY --from=scripts-downloader --chmod=774 /root/scripts/envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
-COPY --from=scripts-downloader --chmod=774 /root/scripts/configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
+COPY --from=cytomine/entrypoint-scripts:1.3.0 --chmod=774 /cytomine-entrypoint.sh /usr/local/bin/
+COPY --from=cytomine/entrypoint-scripts:1.3.0 --chmod=774 /envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
+COPY --from=cytomine/entrypoint-scripts:1.3.0 --chmod=774 /configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
 
 # core base folder must be mounted in run command or compose file
 EXPOSE 5005
@@ -89,9 +76,9 @@ COPY --from=jar-builder /app/build/libs/cytomine.jar /app/cytomine.jar
 
 # entrypoint scripts
 RUN mkdir /docker-entrypoint-cytomine.d/
-COPY --from=scripts-downloader --chmod=774 /root/scripts/cytomine-entrypoint.sh /usr/local/bin/
-COPY --from=scripts-downloader --chmod=774 /root/scripts/envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
-COPY --from=scripts-downloader --chmod=774 /root/scripts/configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
+COPY --from=cytomine/entrypoint-scripts:1.3.0 --chmod=774 /cytomine-entrypoint.sh /usr/local/bin/
+COPY --from=cytomine/entrypoint-scripts:1.3.0 --chmod=774 /envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
+COPY --from=cytomine/entrypoint-scripts:1.3.0 --chmod=774 /configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
 
 WORKDIR /app
 ENTRYPOINT ["cytomine-entrypoint.sh"]
