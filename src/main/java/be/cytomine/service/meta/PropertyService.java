@@ -104,12 +104,7 @@ public class PropertyService extends ModelService {
     public CommandResponse add(JsonObject jsonObject, Transaction transaction, Task task) {
         SecUser currentUser = currentUserService.getCurrentUser();
         CytomineDomain domain = getCytomineDomain(jsonObject.getJSONAttrStr("domainClassName"), jsonObject.getJSONAttrLong("domainIdent"));
-        if(!domain.getClass().getName().contains("AbstractImage")) {
-            securityACLService.checkUserAccessRightsForMeta( domain,  currentUser);
-        }else{
-            //TODO when is this used ?
-            securityACLService.checkUser(currentUser);
-        }
+        securityACLService.checkUserAccessRightsForMeta( domain,  currentUser);
         Command command = new AddCommand(currentUser,transaction);
         return executeCommand(command,null, jsonObject);
     }
@@ -128,12 +123,7 @@ public class PropertyService extends ModelService {
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
         CytomineDomain parentDomain = getCytomineDomain(((Property) domain).getDomainClassName(), ((Property) domain).getDomainIdent());
-        if(!parentDomain.getClass().getName().contains("AbstractImage")) {
-            securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
-        }else{
-            //TODO when is this used ?
-            securityACLService.checkUser(currentUser);
-        }
+        securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
     }
 
@@ -141,12 +131,7 @@ public class PropertyService extends ModelService {
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
         CytomineDomain parentDomain = getCytomineDomain(((Property) domain).getDomainClassName(), ((Property) domain).getDomainIdent());
-        if(!parentDomain.getClass().getName().contains("AbstractImage")) {
-            securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
-        }else{
-            //TODO when is this used ?
-            securityACLService.checkUser(currentUser);
-        }
+        securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }

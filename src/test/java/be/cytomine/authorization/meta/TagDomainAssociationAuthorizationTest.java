@@ -274,6 +274,33 @@ public class TagDomainAssociationAuthorizationTest extends CRDAuthorizationTest 
         expectOK (() -> tagDomainAssociationService.delete(builder.given_a_tag_association(builder.given_a_tag(),project),null,null,true));
     }
 
+    //ABSTRACT IMAGE
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_can_add_for_abstract_image(){
+        expectOK (() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(),abstractImage).toJsonObject()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_NO_ACL)
+    public void user_without_acl_cannot_add_for_abstract_image(){
+        expectForbidden (() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(),abstractImage).toJsonObject()));
+    }
+
+    @Test
+    @WithMockUser(username = USER_ACL_READ)
+    public void user_with_read_can_delete_for_abstract_image(){
+        expectOK (() -> tagDomainAssociationService.delete(builder.given_a_tag_association(builder.given_a_tag(),abstractImage),null,null,true));
+
+    }
+
+    @Test
+    @WithMockUser(username = USER_NO_ACL)
+    public void user_without_acl_cannot_delete_for_abstract_image(){
+        expectForbidden (() -> tagDomainAssociationService.delete(builder.given_a_tag_association(builder.given_a_tag(),abstractImage),null,null,true));
+
+    }
+
 
     @Override
     protected Optional<Permission> minimalPermissionForCreate() {
