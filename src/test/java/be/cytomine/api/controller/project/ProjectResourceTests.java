@@ -27,7 +27,6 @@ import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.EditingMode;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
-import be.cytomine.domain.social.LastConnection;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.ImageInstanceRepository;
@@ -36,34 +35,29 @@ import be.cytomine.repository.security.AclRepository;
 import be.cytomine.repository.security.ForgotPasswordTokenRepository;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.ontology.UserAnnotationService;
+import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.social.ProjectConnectionService;
+import be.cytomine.service.utils.NotificationService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
-import liquibase.pro.packaged.A;
 import org.apache.commons.lang3.time.DateUtils;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.test.context.support.WithUserDetails;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.mail.MessagingException;
 import javax.persistence.EntityManager;
 
 import java.util.Date;
@@ -71,6 +65,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.mock;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -122,6 +118,10 @@ public class ProjectResourceTests {
 
     @Autowired
     SecurityACLService securityACLService;
+
+    @Autowired
+    ProjectService projectService;
+
 
     @BeforeEach
     public void cleanActivities() {
@@ -1125,6 +1125,9 @@ public class ProjectResourceTests {
         Project project = builder.given_a_project();
         forgotPasswordTokenRepository.deleteAll();
         String username = "invitedUser"+System.currentTimeMillis();
+        NotificationService notificationService = mock(NotificationService.class);
+        ReflectionTestUtils.setField(projectService, "notificationService", notificationService);
+        doNothing().when(notificationService).notifyWelcome(Mockito.any(),Mockito.any(),Mockito.any());
         // invite user
         restProjectControllerMockMvc.perform(post("/api/project/{id}/invitation.json", project.getId())
                         .contentType(MediaType.APPLICATION_JSON)

@@ -837,6 +837,24 @@ public class ImageInstanceService extends ModelService {
             d.setDomain(domain);
             descriptionService.add(d.toJsonObject());
         }
+
+        for (Property property : propertyRepository.findAllByDomainIdent(ai.getId())) {
+            Property p= new Property();
+            p.setKey(property.getKey());
+            p.setValue(property.getValue());
+            p.setDomain(domain);
+            propertyService.add(p.toJsonObject());
+        }
+
+        for(AttachedFile attachedFile:attachedFileRepository.findAllByDomainIdent(ai.getId())){
+            try {
+                attachedFileService.create(attachedFile.getFilename(),attachedFile.getData(),attachedFile.getKey(),domain.getId(),domain.getClass().getName());
+            } catch (ClassNotFoundException e) {
+                log.error(String.format("Failed to copy attached image with id: %s to ImageInstance with id: %s",attachedFile.getId(), domain.getId()));
+            }
+
+        }
+
     }
 
     protected void beforeDelete(CytomineDomain domain, CommandResponse response) {
