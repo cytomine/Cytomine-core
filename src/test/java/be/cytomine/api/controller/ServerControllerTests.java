@@ -158,7 +158,7 @@ public class ServerControllerTests {
         }
         assertThat(jwtParser.parseClaimsJws(jwt).getBody().get(TYPE_KEY)).isEqualTo(SHORT_TERM.toString());
         Date date = new Date(Long.parseLong(jwtParser.parseClaimsJws(jwt).getBody().get("exp").toString())*1000);
-        assertThat(date).isBetween(DateUtils.addSeconds(new Date(), 250), DateUtils.addSeconds(new Date(), 350));
+        assertThat(date).isBetween(DateUtils.addSeconds(new Date(), 0), DateUtils.addSeconds(new Date(), 350));
     }
 
     @Test

@@ -129,7 +129,7 @@ public class BootstrapUtilsService {
         secRoleRepository.createIfNotExist(role);
     }
 
-    public void createUser(String username, String firstname, String lastname, String email, String password, List<String> roles) {
+    public void createUser(String username, String firstname, String lastname, String email, String password, List<String> roles,String privateKey,String publicKey) {
         if (userRepository.findByUsernameLikeIgnoreCase(username).isEmpty()) {
             log.info("Creating {}...", username);
             User user = new User();
@@ -143,7 +143,13 @@ public class BootstrapUtilsService {
             user.setEnabled(true);
             user.setIsDeveloper(false);
             user.setOrigin("BOOTSTRAP");
-            user.generateKeys();
+            if(privateKey==null||publicKey==null) {
+                user.generateKeys();
+            }else{
+                user.setPrivateKey(privateKey);
+                user.setPublicKey(publicKey);
+            }
+            user.setApiEnabled(true);
 
             log.info("Saving {}...", user.getUsername());
             user = userRepository.save(user);
