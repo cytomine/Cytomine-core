@@ -4,7 +4,7 @@ include:
 
 
 stages:
-#  - prepare
+  - prepare
   - test
   - build
 #  - publish
