@@ -77,10 +77,4 @@ public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, 
     List<UserAnnotation> findAllByImage(ImageInstance image);
 
     List<UserAnnotation> findAllByUser(User user);
-
-    @Query(
-            value = "UPDATE annotation_link SET updated = NOW() where annotation_ident = :domainId",
-            nativeQuery = true
-    )
-    void updateAnnotationLink(Long domainId);
 }
