@@ -18,6 +18,7 @@ package be.cytomine.api.controller.social;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.security.SecUser;
@@ -75,6 +76,9 @@ public class ImageConsultationResourceTests {
 
     @Autowired
     SliceCoordinatesService sliceCoordinatesService;
+
+    @Autowired
+    ApplicationProperties applicationProperties;
 
     @BeforeEach
     public void cleanDB() {
@@ -265,13 +269,14 @@ public class ImageConsultationResourceTests {
 
         String[] rows = mvcResult.getResponse().getContentAsString().split("\n");
         String[] imageConsultationResult = rows[1].split(";");
+        String serverUrl = applicationProperties.getServerURL();
         AssertionsForClassTypes.assertThat(imageConsultationResult[0]).isEqualTo("0");
         AssertionsForClassTypes.assertThat(imageConsultationResult[1]).isEqualTo(currentDate.toString());
         AssertionsForClassTypes.assertThat(imageConsultationResult[2]).isEqualTo(currentDate.toString());
         AssertionsForClassTypes.assertThat(imageConsultationResult[3]).isEqualTo("2");
         AssertionsForClassTypes.assertThat(imageConsultationResult[4]).isEqualTo(imageInstance1.getId().toString());
         AssertionsForClassTypes.assertThat(imageConsultationResult[5]).isEqualTo(imageInstance1.getBlindInstanceFilename());
-        AssertionsForClassTypes.assertThat(imageConsultationResult[6]).isEqualTo("http://localhost:8080/api/imageinstance/"+imageInstance1.getId()+"/thumb.png?maxSize=512");
+        AssertionsForClassTypes.assertThat(imageConsultationResult[6]).isEqualTo(serverUrl + "/api/imageinstance/"+imageInstance1.getId()+"/thumb.png?maxSize=512");
         AssertionsForClassTypes.assertThat(imageConsultationResult[7].replace("\r", "")).isEqualTo("0");
     }
 

@@ -488,9 +488,12 @@ public class StatsService {
             }
         }
         Long total = used + available;
+        double percentage = 0.0;
+        if (total > 0) {
+            percentage = (double) used / (double) total;
+        }
 
-
-        return JsonObject.of("total", total, "available", available, "used", used, "usedP", ((double)(used/total)));
+        return JsonObject.of("total", total, "available", available, "used", used, "usedP", percentage);
     }
 
     public List<JsonObject> statConnectionsEvolution(Project project, int daysRange, Date startDate, Date endDate, boolean accumulate) {

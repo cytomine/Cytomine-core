@@ -20,14 +20,12 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.AnnotationLight;
 import be.cytomine.dto.SimplifiedAnnotation;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
@@ -55,7 +53,6 @@ import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -334,13 +331,18 @@ public class UserAnnotationService extends ModelService {
         jsonObject.put("projectObject", project);
 
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.check(project, READ);
-        securityACLService.checkIsNotReadOnly(project);
-        securityACLService.checkUser(currentUser);
 
+        //Check if user has at least READ permission for the project
+        securityACLService.check(project, READ, currentUser);
+        //Check if project EditingMode is not READ_ONLY
+        securityACLService.checkIsNotReadOnly(project);
+        //Check if user has a role that allows to create annotations
+        securityACLService.checkGuest(currentUser);
+        //If user info is missing from input, add it
         if (jsonObject.isMissing("user")) {
             jsonObject.put("user", currentUser.getId());
             jsonObject.put("userObject", currentUser);
+            // check if user is the owner of the annotation, if not check project editing mode and user role
         } else if (!Objects.equals(jsonObject.getJSONAttrLong("user"), currentUser.getId())) {
             securityACLService.checkFullOrRestrictedForOwner(project, null);
         }
@@ -492,10 +494,12 @@ public class UserAnnotationService extends ModelService {
      */
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkUser(currentUser);
-        securityACLService.check(domain.container(), READ);
-        //securityACLService.checkIsSameUserOrAdminContainer(annotation,annotation.user,currentUser)
-        securityACLService.checkFullOrRestrictedForOwner(domain, ((UserAnnotation)domain).getUser());
+        //Check if user has a role that allows to update annotations
+        securityACLService.checkGuest(currentUser);
+        //Check if user has at least READ permission for the project
+        securityACLService.check(domain.container(), READ, currentUser);
+        //Check if user is admin, the project mode and if is the owner of the annotation
+        securityACLService.checkFullOrRestrictedForOwner(domain, ((UserAnnotation) domain).getUser());
 
         // TODO: what about image/project ??
 
@@ -560,7 +564,6 @@ public class UserAnnotationService extends ModelService {
     }
 
 
-
     /**
      * Delete this domain
      * @param domain Domain to delete
@@ -572,10 +575,12 @@ public class UserAnnotationService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.check(domain.container(), READ);
-        securityACLService.checkUser(currentUser);
-
-        securityACLService.checkFullOrRestrictedForOwner(domain.container(), ((UserAnnotation)domain).getUser());
+        //Check if user has a role that allows to delete annotations
+        securityACLService.checkGuest(currentUser);
+        //Check if user has at least READ permission for the project
+        securityACLService.check(domain.container(), READ, currentUser);
+        //Check if user is admin, the project mode and if is the owner of the annotation
+        securityACLService.checkFullOrRestrictedForOwner(domain, ((UserAnnotation)domain).getUser());
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }

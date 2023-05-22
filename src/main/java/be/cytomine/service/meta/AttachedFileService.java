@@ -21,36 +21,22 @@ import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.ontology.RelationTerm;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.AlreadyExistException;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.meta.AttachedFileRepository;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
-import be.cytomine.repository.ontology.AnnotationTermRepository;
-import be.cytomine.repository.ontology.RelationRepository;
-import be.cytomine.repository.ontology.TermRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
-import be.cytomine.service.ontology.RelationTermService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import static org.springframework.security.acls.domain.BasePermission.*;
@@ -104,17 +90,13 @@ public class AttachedFileService extends ModelService {
     }
 
     public AttachedFile create(String filename,byte[] data, String key, Long domainIdent,String domainClassName) throws ClassNotFoundException {
-        securityACLService.checkUser(currentUserService.getCurrentUser());
-        CytomineDomain recipientDomain = (CytomineDomain)getEntityManager().find(Class.forName(domainClassName), domainIdent);
+        SecUser currentUser = currentUserService.getCurrentUser();
+        CytomineDomain recipientDomain = getCytomineDomain(domainClassName, domainIdent);
 
         if (recipientDomain instanceof AbstractImage) {
+            securityACLService.checkUser(currentUser);
             securityACLService.check(domainIdent,domainClassName,READ);
-        } else if(recipientDomain instanceof Project || !(recipientDomain.container() instanceof Project)) {
-            securityACLService.check(domainIdent,domainClassName,WRITE);
-        } else {
-            securityACLService.check(domainIdent,domainClassName,READ);
-            securityACLService.checkFullOrRestrictedForOwner(domainIdent,domainClassName, "user");
-        }
+        } else{ securityACLService.checkUserAccessRightsForMeta( recipientDomain,  currentUser);}
 
         AttachedFile file = new AttachedFile();
         file.setDomainIdent(domainIdent);
@@ -129,22 +111,18 @@ public class AttachedFileService extends ModelService {
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkUser(currentUser);
         AttachedFile attachedFile = (AttachedFile)domain;
+        CytomineDomain parentDomain = getCytomineDomain(attachedFile.getDomainClassName(), attachedFile.getDomainIdent());
 
-        CytomineDomain recipientDomain = getCytomineDomain(attachedFile.getDomainClassName(), attachedFile.getDomainIdent());
-        if (recipientDomain == null) {
+        if (parentDomain == null) {
             throw new ObjectNotFoundException(attachedFile.getDomainClassName(), attachedFile.getDomainIdent());
         }
 
-        securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),READ);
-        if (recipientDomain instanceof AbstractImage) {
+        if (parentDomain instanceof AbstractImage) {
+            securityACLService.checkUser(currentUser);
             securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),READ);
-        } else if(recipientDomain instanceof Project || !(recipientDomain.container() instanceof Project)) {
-            securityACLService.check(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(),DELETE);
-        } else {
-            securityACLService.checkFullOrRestrictedForOwner(attachedFile.getDomainIdent(),attachedFile.getDomainClassName(), "user");
-        }
+        } else{ securityACLService.checkUserAccessRightsForMeta( parentDomain,  currentUser);}
+
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }

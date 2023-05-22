@@ -238,7 +238,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
                 projectRepresentativeUserService.find(project, user).get(), null, null, false
         );});
 
-        expectOK(() -> {descriptionService.add(builder.given_a_not_persisted_description(project).toJsonObject());});
+        expectForbidden(() -> {descriptionService.add(builder.given_a_not_persisted_description(project).toJsonObject());});
         expectForbidden(() -> {attachedFileService.create("test.txt", new String("hello").getBytes(), "test", project.getId(), project.getClass().getName());});
         expectForbidden(() -> {propertyService.add(builder.given_a_not_persisted_property(project, UUID.randomUUID().toString(), "value").toJsonObject());});
         expectForbidden(() -> {tagDomainAssociationService.add(builder.given_a_tag_association(builder.given_a_tag(), project).toJsonObject());});
@@ -608,7 +608,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         );});
 
         //Description check if not readonly mode, other metadata stick to Write permission. To fix
-        expectOK(() -> {descriptionService.add(builder.given_a_not_persisted_description(project).toJsonObject());});
+        expectForbidden(() -> {descriptionService.add(builder.given_a_not_persisted_description(project).toJsonObject());});
         expectForbidden(() -> {attachedFileService.create("test.txt", new String("hello").getBytes(), "test", project.getId(), project.getClass().getName());});
         expectForbidden(() -> {propertyService.add(builder.given_a_property(project).toJsonObject());});
         expectForbidden(() -> {tagDomainAssociationService.add(builder.given_a_tag_association(builder.given_a_tag(), project).toJsonObject());});
