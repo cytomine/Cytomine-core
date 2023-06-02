@@ -34,8 +34,6 @@ import be.cytomine.utils.Task;
 import com.vividsolutions.jts.geom.Geometry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.Query;
@@ -64,9 +62,6 @@ public class PropertyService extends ModelService {
     @Autowired
     private AnnotationDomainRepository annotationDomainRepository;
 
-    @Qualifier("resourceLoader")
-    @Autowired
-    private   ResourceLoader resourceLoader;
 
     @Override
     public Class currentDomain() {
@@ -82,7 +77,7 @@ public class PropertyService extends ModelService {
     public List<Property> list(CytomineDomain cytomineDomain) {
         // This is to filter out image metadata properties for users in case project is in blind mode
         if(cytomineDomain.getClass().getName().contains("ImageInstance")&&securityACLService.isFilterRequired((Project) cytomineDomain.container())) {
-            List<String> prefixesToFilter= ResourcesUtils.getPropertiesValuesList(resourceLoader,"classpath:metaPrefix.properties");
+            List<String> prefixesToFilter= ResourcesUtils.getPropertiesValuesList();
             List<Property> values = propertyRepository.findByDomainIdentAndExcludedKeys(cytomineDomain.getId(), String.join(";", prefixesToFilter));
             return values;
         }else{
@@ -252,6 +247,6 @@ public class PropertyService extends ModelService {
     }
 
     public List<String> listMetaPrefixes() {
-        return ResourcesUtils.getPropertiesValuesList(resourceLoader,"classpath:metaPrefix.properties");
+        return ResourcesUtils.getPropertiesValuesList();
     }
 }
