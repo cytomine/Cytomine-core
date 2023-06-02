@@ -77,6 +77,12 @@ public class RestPropertyController extends RestCytomineController {
         return responseSuccess(propertyService.list(project));
     }
 
+    @GetMapping("/prefix/property.json")
+    public ResponseEntity<String> listByMetaPrefixes() {
+        log.debug("REST request to list metadata prefixes for properties");
+        return responseSuccess(propertyService.listMetaPrefixes());
+    }
+
 
     @GetMapping("/annotation/{annotation}/property.json")
     public ResponseEntity<String> listByAnnotation(
