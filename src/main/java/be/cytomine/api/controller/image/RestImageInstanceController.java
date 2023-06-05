@@ -300,7 +300,7 @@ public class RestImageInstanceController extends RestCytomineController {
             @PathVariable String label,
             @PathVariable String format,
             @RequestParam(defaultValue = "256") Integer maxSize) throws IOException {
-        log.debug("REST request to get associated image of a abstract image");
+        log.debug("REST request to get associated image of an imageInstance image");
         ImageInstance imageInstance = imageInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
         if(securityACLService.isFilterRequired(imageInstance.getProject())){
