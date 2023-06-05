@@ -246,7 +246,4 @@ public class PropertyService extends ModelService {
         return resultList.stream().map(x -> Map.of("idAnnotation", castToLong(x.get(0)), "x", x.get(1), "y", x.get(2), "value", x.get(3))).collect(Collectors.toList());
     }
 
-    public List<String> listMetaPrefixes() {
-        return ResourcesUtils.getPropertiesValuesList();
-    }
 }
