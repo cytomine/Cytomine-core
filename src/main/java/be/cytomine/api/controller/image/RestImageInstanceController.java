@@ -303,6 +303,9 @@ public class RestImageInstanceController extends RestCytomineController {
         log.debug("REST request to get associated image of a abstract image");
         ImageInstance imageInstance = imageInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
+        if(securityACLService.isFilterRequired(imageInstance.getProject())){
+            throw new ForbiddenException("You don't have the right to read or modify this resource! "  + imageInstance.getClass().toString() + " " + id);
+        }
         LabelParameter labelParameter = new LabelParameter();
         labelParameter.setFormat(format);
         labelParameter.setLabel(label);
