@@ -562,7 +562,7 @@ public class ImageInstanceService extends ModelService {
         sort = " ORDER BY " + sortedProperty;
         sort += (sortDirection.equals("desc")) ? " DESC " : " ASC ";
 
-        if (joinAI) {
+        if (joinAI || joinMime) {
             select += ", " + ABSTRACT_IMAGE_COLUMNS_FOR_SEARCH.stream().map(x -> abstractImageAlias + "." + x).collect(Collectors.joining(",")) + " ";
             from += "JOIN abstract_image "+ abstractImageAlias + " ON " + abstractImageAlias + ".id = " + imageInstanceAlias + ".base_image_id ";
         }
