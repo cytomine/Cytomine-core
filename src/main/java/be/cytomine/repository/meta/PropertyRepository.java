@@ -42,6 +42,5 @@ public interface PropertyRepository extends JpaRepository<Property, Long>, JpaSp
     List<Property> findByDomainIdentAndExcludedKeys(@Param("domainIdent") Long domainIdent, @Param("excludedKeys") String excludedKeys);
 
 
-
     void deleteAllByDomainIdent(Long id);
 }

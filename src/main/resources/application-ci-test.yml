@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/docker
+  data:
+    mongodb:
+      host: mongodb
+      password: secret
+
+application:
+  serverURL: http://localhost
+  adminPassword: password
+  useHTTPInternally: true
+
+  authentication:
+    jwt:
+      secret: +MbQeThWmZq4t6w9z$C&F)J@NcRfUjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9y$B?
+
+  

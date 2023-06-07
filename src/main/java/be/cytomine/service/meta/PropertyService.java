@@ -87,7 +87,7 @@ public class PropertyService extends ModelService {
     }
 
     public Optional<Property> findById(Long id) {
-        
+
         Optional<Property> property = propertyRepository.findById(id);
         if (property.isPresent()  && !property.get().getDomainClassName().contains("Software")) {
             securityACLService.check(property.get().container(),READ);

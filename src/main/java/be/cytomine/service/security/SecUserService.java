@@ -26,7 +26,6 @@ import be.cytomine.domain.project.ProjectDefaultLayer;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.*;
 import be.cytomine.domain.social.LastConnection;
-import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.dto.AuthInformation;
 import be.cytomine.dto.NamedCytomineDomain;
 import be.cytomine.exceptions.*;
@@ -59,12 +58,10 @@ import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.service.social.ImageConsultationService;
 import be.cytomine.service.social.ProjectConnectionService;
 import be.cytomine.service.social.UserPositionService;
-import be.cytomine.service.social.WebSocketUserPositionHandler;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Accumulators;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.bson.Document;
@@ -82,12 +79,10 @@ import javax.persistence.Tuple;
 import javax.persistence.TupleElement;
 import java.math.BigInteger;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static be.cytomine.service.social.UserPositionService.DATABASE_NAME;
-import static com.mongodb.client.model.Aggregates.group;
 import static java.util.stream.Collectors.toList;
 import static org.springframework.security.acls.domain.BasePermission.*;
 
@@ -462,7 +457,12 @@ public class SecUserService extends ModelService {
         }
 
         if (sortColumn.equals("lastConnection") && sortDirection.equals("asc")) {
-            results = results.stream().sorted(Comparator.comparing(a -> ((Date) a.get("lastConnection")))).collect(Collectors.toList());
+            results = results.stream()
+                    .sorted(Comparator.comparing(a -> {
+                        Object lastConnection = a.get("lastConnection");
+                        return lastConnection != null ? (Date) lastConnection : new Date(0); // or another default value
+                    }))
+                    .collect(Collectors.toList());
         } else if (sortColumn.equals("lastConnection") && sortDirection.equals("desc")) {
             results = results.stream().sorted((o1, o2) -> {
                 return o1.get("lastConnection")==null ? 1 : o2.get("lastConnection")==null ? -1 : -((Date)o1.get("lastConnection")).compareTo((Date)o2.get("lastConnection"));
