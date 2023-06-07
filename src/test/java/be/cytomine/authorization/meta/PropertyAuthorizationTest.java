@@ -110,6 +110,25 @@ public class PropertyAuthorizationTest extends CRUDAuthorizationTest {
         });
     }
 
+    @Test
+    @WithMockUser(username = USER_NO_ACL)
+    public void user_without_read_cannot_list_for_domain(){
+        expectForbidden(() -> {
+            propertyService.list(abstractImage);
+        });
+        expectForbidden(() -> {
+            propertyService.list(imageInstance);
+        });
+
+        expectForbidden(() -> {
+            propertyService.list(project);
+        });
+        expectForbidden(() -> {
+            propertyService.list(annotationDomain);
+        });
+    }
+
+
     //ANNOTATIONS
     @Test
     @WithMockUser(username = USER_ACL_READ)

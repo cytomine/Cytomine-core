@@ -58,6 +58,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -290,7 +291,7 @@ public class UserAnnotationResourceTests {
     public void download_user_annotation_xls_document() throws Exception {
         buildDownloadContext();
         MvcResult mvcResult = performDownload("xls");
-        checkResult(";", mvcResult);
+        checkXLSResult( mvcResult);
     }
 
     @Test
@@ -320,6 +321,10 @@ public class UserAnnotationResourceTests {
 
     private void checkResult(String delimiter, MvcResult result) throws UnsupportedEncodingException {
         TestUtils.checkSpreadsheetAnnotationResult(delimiter, result, this.userAnnotation, this.project, this.image, this.me, this.term, "userannotation", applicationProperties.getServerURL());
+    }
+
+    private void checkXLSResult( MvcResult result) throws IOException {
+        TestUtils.checkSpreadsheetXLSAnnotationResult( result, this.userAnnotation, this.project, this.image, this.me, this.term, "userannotation", applicationProperties.getServerURL());
     }
 
     private MvcResult performDownload(String format) throws Exception {
