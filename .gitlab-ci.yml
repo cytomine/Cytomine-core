@@ -86,7 +86,7 @@ run-junit:
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
     # test log too large for gitlab if executed at 'debug' log level
     - sed -i -- "s/name=\"be.cytomine\" level=\"debug\"/name=\"be.cytomine\" level=\"info\"/g" src/test/resources/logback-test.xml
-    - gradle :test -Dspring.profiles.active="ci-test,default" --no-daemon 
+    - gradle :test -Dspring.profiles.active="ci-test" --no-daemon 
   artifacts:
     reports:
       junit: build/test-results/test/**/TEST-*.xml
