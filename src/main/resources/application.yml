@@ -1,7 +1,7 @@
 spring:
   profiles:
-    active:
-      - "custom_ui_defaults"
+    active: default
+    include: custom-ui
   main:
     allow-circular-references: true
  
@@ -62,7 +62,7 @@ application:
   serverId: ${SERVER_ID:default}
   serverURL: ${SERVER_URL:#{'http://cytomine.local'}}
   storagePath: ${STORAGE_PATH:/data/images}
-  useHTTPInternally: ${:false}
+  useHTTPInternally: ${USE_HTTP_INTERNALLY:false}
   
   adminPassword: ${ADMIN_PASSWORD:adminPassword}
   adminEmail: ${ADMIN_EMAIL:adminEmail@adminEmail.com}
@@ -74,10 +74,10 @@ application:
   ImageServerPrivateKey: ${IMAGE_SERVER_PRIVATE_KEY:imageServerPrivateKey}
   rabbitMQPublicKey: ${RABBITMQ_PUBLIC_KEY:rabbitMQPublicKey}
   rabbitMQPrivateKey: ${RABBITMQ_PRIVATE_KEY:rabbitMQPrivateKey}
-  
+  softwareSources: ${SOFTWARE_SOURCES:softwareSources/}
   instanceHostWebsite: ${INSTANCE_HOST_WEBSITE_URL:#{'https://www.cytomine.com'}}
   instanceHostSupportMail: ${INSTANCE_HOST_SUPPORT_MAIL:support@cytomine.coop}
-  instanceHostPhoneNumber: ${INSTANCE_HOST_PHONE_NUMBER}
+  instanceHostPhoneNumber: ${INSTANCE_HOST_PHONE_NUMBER:0032123123}
   defaultLanguage: ${DEFAULT_LANGUAGE:ENGLISH}
 
   authentication:
