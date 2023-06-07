@@ -84,9 +84,11 @@ run-junit:
       name: rabbitmq:3.10
   script:
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
+    - sed -i -- "s/localhost:5432/postgres:5432/g" src/test/resources/application.yml
+    - "sed -i -- 's/host: localhost/host: mongodb/g' src/test/resources/application.yml"
     # test log too large for gitlab if executed at 'debug' log level
     - sed -i -- "s/name=\"be.cytomine\" level=\"debug\"/name=\"be.cytomine\" level=\"info\"/g" src/test/resources/logback-test.xml
-    - gradle :test -Dspring.profiles.active="ci-test" --no-daemon 
+    - gradle :test --no-daemon
   artifacts:
     reports:
       junit: build/test-results/test/**/TEST-*.xml
