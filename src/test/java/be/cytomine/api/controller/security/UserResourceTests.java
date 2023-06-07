@@ -1,20 +1,20 @@
 package be.cytomine.api.controller.security;
 
 /*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2009-2022. Authors: see NOTICE file.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
@@ -37,6 +37,11 @@ import be.cytomine.service.social.UserPositionService;
 import be.cytomine.service.social.UserPositionServiceTests;
 import be.cytomine.utils.JsonObject;
 import org.apache.commons.lang3.time.DateUtils;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +57,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 
 import javax.persistence.EntityManager;
-
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
 
@@ -72,55 +78,39 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class UserResourceTests {
 
     @Autowired
-    private BasicInstanceBuilder builder;
-
-    @Autowired
-    private MockMvc restUserControllerMockMvc;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private PermissionService permissionService;
-
-    @Autowired
     PersistentConnectionRepository persistentConnectionRepository;
-
     @Autowired
     LastConnectionRepository lastConnectionRepository;
-
     @Autowired
     PersistentImageConsultationRepository persistentImageConsultationRepository;
-
     @Autowired
     PersistentProjectConnectionRepository persistentProjectConnectionRepository;
-
     @Autowired
     ProjectConnectionRepository projectConnectionRepository;
-
     @Autowired
     PersistentUserPositionRepository persistentUserPositionRepository;
-
     @Autowired
     LastUserPositionRepository lastUserPositionRepository;
-
     @Autowired
     SequenceService sequenceService;
-
     @Autowired
     EntityManager entityManager;
-
     @Autowired
     UserPositionService userPositionService;
-
     @Autowired
     ImageConsultationService imageConsultationService;
-
     @Autowired
     ProjectConnectionService projectConnectionService;
+    @Autowired
+    private BasicInstanceBuilder builder;
+    @Autowired
+    private MockMvc restUserControllerMockMvc;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    @Autowired
+    private PermissionService permissionService;
 
     @BeforeEach
     public void init() {
@@ -185,9 +175,9 @@ public class UserResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectAdmin.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectUser.getUsername()+"')]").doesNotExist());
-        
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectAdmin.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectUser.getUsername() + "')]").doesNotExist());
+
     }
 
     @Test
@@ -203,8 +193,8 @@ public class UserResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectAdmin.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectUser.getUsername()+"')]").doesNotExist());
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectAdmin.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectUser.getUsername() + "')]").doesNotExist());
 
     }
 
@@ -223,8 +213,8 @@ public class UserResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectPrepresentative.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectUser.getUsername()+"')]").doesNotExist());
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectPrepresentative.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectUser.getUsername() + "')]").doesNotExist());
     }
 
     @Test
@@ -241,8 +231,8 @@ public class UserResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectCreator.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectUser.getUsername()+"')]").doesNotExist());
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectCreator.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectUser.getUsername() + "')]").doesNotExist());
     }
 
 
@@ -261,9 +251,9 @@ public class UserResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectAdmin.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectUser.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+simpleUser.getUsername()+"')]").doesNotExist());
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectAdmin.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectUser.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + simpleUser.getUsername() + "')]").doesNotExist());
     }
 
 
@@ -281,11 +271,10 @@ public class UserResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.username=='"+storageAdmin.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+storageUser.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+simpleUser.getUsername()+"')]").doesNotExist());
+                .andExpect(jsonPath("$.collection[?(@.username=='" + storageAdmin.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + storageUser.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + simpleUser.getUsername() + "')]").doesNotExist());
     }
-
 
 
     @Test
@@ -301,9 +290,9 @@ public class UserResourceTests {
         restUserControllerMockMvc.perform(get("/api/project/{id}/userlayer.json", project.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectAdmin.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectUser.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+simpleUser.getUsername()+"')]").doesNotExist());
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectAdmin.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectUser.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + simpleUser.getUsername() + "')]").doesNotExist());
     }
 
 
@@ -326,9 +315,9 @@ public class UserResourceTests {
                 )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+simpleUser.getUsername()+"')].role").value("ROLE_USER"))
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectUser.getUsername()+"')].role").value("ROLE_USER"))
-                .andExpect(jsonPath("$.collection[?(@.username=='"+simpleUser.getUsername()+"')].role").value("ROLE_USER"));
+                .andExpect(jsonPath("$.collection[?(@.username=='" + simpleUser.getUsername() + "')].role").value("ROLE_USER"))
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectUser.getUsername() + "')].role").value("ROLE_USER"))
+                .andExpect(jsonPath("$.collection[?(@.username=='" + simpleUser.getUsername() + "')].role").value("ROLE_USER"));
     }
 
     @Test
@@ -562,7 +551,6 @@ public class UserResourceTests {
     }
 
 
-
     @Test
     @Transactional
     public void get_current_user() throws Exception {
@@ -589,7 +577,6 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.algo").value(false))
                 .andExpect(jsonPath("$.email").value(currentUser.getEmail()))
                 .andExpect(jsonPath("$.username").value(currentUser.getUsername()));
-
 
 
 //current user:
@@ -797,14 +784,14 @@ public class UserResourceTests {
                         .param("projectRole[in]", "contributor,manager,representative")
                         .param("sort", "")
                         .param("order", "")
-                        )
+                )
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectPrepresentative.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectAdmin.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectUser.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+simpleUser.getUsername()+"')]").doesNotExist());
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectPrepresentative.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectAdmin.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectUser.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + simpleUser.getUsername() + "')]").doesNotExist());
 
         restUserControllerMockMvc.perform(get("/api/project/{id}/user.json", project.getId())
                         .param("max", "25")
@@ -816,10 +803,10 @@ public class UserResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectPrepresentative.getUsername()+"')]").exists())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectAdmin.getUsername()+"')]").doesNotExist())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+projectUser.getUsername()+"')]").doesNotExist())
-                .andExpect(jsonPath("$.collection[?(@.username=='"+simpleUser.getUsername()+"')]").doesNotExist());
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectPrepresentative.getUsername() + "')]").exists())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectAdmin.getUsername() + "')]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectUser.getUsername() + "')]").doesNotExist())
+                .andExpect(jsonPath("$.collection[?(@.username=='" + simpleUser.getUsername() + "')]").doesNotExist());
     }
 
 
@@ -929,7 +916,7 @@ public class UserResourceTests {
         User user1 = builder.given_a_user();
         User user2 = builder.given_a_user();
         restUserControllerMockMvc.perform(post("/api/project/{project}/user.json", project.getId())
-                        .param("users", user1.getId()+","+user2.getId())
+                        .param("users", user1.getId() + "," + user2.getId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk());
@@ -947,7 +934,7 @@ public class UserResourceTests {
         Project project = builder.given_a_project();
         User user1 = builder.given_a_user();
         restUserControllerMockMvc.perform(post("/api/project/{project}/user.json", project.getId())
-                        .param("users", user1.getId()+",xxxxxx,0") //bad format + bad id
+                        .param("users", user1.getId() + ",xxxxxx,0") //bad format + bad id
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isPartialContent());
@@ -984,7 +971,7 @@ public class UserResourceTests {
         builder.addUserToProject(project, user1.getUsername(), READ);
         builder.addUserToProject(project, user2.getUsername(), READ);
         restUserControllerMockMvc.perform(delete("/api/project/{project}/user.json", project.getId())
-                        .param("users", user1.getId()+","+user2.getId())
+                        .param("users", user1.getId() + "," + user2.getId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isOk());
@@ -1002,12 +989,13 @@ public class UserResourceTests {
         Project project = builder.given_a_project();
         User user1 = builder.given_a_user();
         restUserControllerMockMvc.perform(delete("/api/project/{project}/user.json", project.getId())
-                        .param("users", user1.getId()+",xxxxxx,0") //bad format + bad id
+                        .param("users", user1.getId() + ",xxxxxx,0") //bad format + bad id
                         .contentType(MediaType.APPLICATION_JSON))
                 .andDo(print())
                 .andExpect(status().isPartialContent());
 
-        assertThat(permissionService.hasACLPermission(project, user1.getUsername(), READ)).isFalse();;
+        assertThat(permissionService.hasACLPermission(project, user1.getUsername(), READ)).isFalse();
+        ;
     }
 
 
@@ -1303,7 +1291,7 @@ public class UserResourceTests {
         User user = builder.given_a_user("Paul");
         Project project = builder.given_a_project_with_user(user);
         MvcResult mvcResult = performDownload("xls", project, "application/octet-stream");
-        checkResult(";", mvcResult, user);
+        checkXLSResult(mvcResult, user);
     }
 
     @Test
@@ -1328,6 +1316,30 @@ public class UserResourceTests {
         AssertionsForClassTypes.assertThat(userAnnotationResult[0]).isEqualTo(user.getUsername());
         AssertionsForClassTypes.assertThat(userAnnotationResult[1]).isEqualTo(user.getFirstname());
         AssertionsForClassTypes.assertThat(userAnnotationResult[2].replace("\r", "")).isEqualTo(user.getLastname());
+    }
+
+    private void checkXLSResult(MvcResult result, User user) throws IOException {
+        byte[] spreadsheetData = result.getResponse().getContentAsByteArray();
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(spreadsheetData);
+        Workbook workbook = null;
+
+        workbook = new HSSFWorkbook(inputStream);
+
+        Sheet sheet = workbook.getSheetAt(0);
+
+        Row row = sheet.getRow(1); // Assuming the data starts from the second row
+        Cell[] cells = new Cell[row.getLastCellNum()];
+        for (int i = 0; i < row.getLastCellNum(); i++) {
+            cells[i] = row.getCell(i);
+        }
+
+        AssertionsForClassTypes.assertThat(cells[0].getStringCellValue()).isEqualTo(user.getUsername());
+        AssertionsForClassTypes.assertThat(cells[1].getStringCellValue()).isEqualTo(user.getFirstname());
+        AssertionsForClassTypes.assertThat(cells[2].getStringCellValue().replace("\r", "")).isEqualTo(user.getLastname());
+
+
+        workbook.close();
+
     }
 
     private MvcResult performDownload(String format, Project project, String type) throws Exception {

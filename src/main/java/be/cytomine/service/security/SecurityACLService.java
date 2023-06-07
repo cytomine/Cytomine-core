@@ -480,4 +480,16 @@ public class SecurityACLService {
         }
 
     }
+
+    public boolean isFilterRequired(Project project) {
+        boolean isManager;
+        try {
+            checkIsAdminContainer(project);
+            isManager = true;
+        } catch (ForbiddenException ex) {
+            isManager = false;
+        }
+        return project.getBlindMode() && !isManager;
+    }
+
 }

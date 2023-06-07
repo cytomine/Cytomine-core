@@ -112,13 +112,13 @@ public class ReportServiceTests {
 
     @Test
     public void generate_xls_report_with_annotations() throws ServerException {
-        when(mockSpreadsheetWriterService.writeSpreadsheet(any()))
+        when(mockSpreadsheetWriterService.writeSpreadsheetXLS(any()))
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateAnnotationsReport("projectName", terms, users, dataMap, "xls");
         verify(mockReportFormatService, times(1))
                 .formatAnnotationsForReport(ReportService.ANNOTATION_REPORT_COLUMNS, dataMap);
         verify(mockSpreadsheetWriterService, times(1))
-                .writeSpreadsheet(any());
+                .writeSpreadsheetXLS(any());
         assertArrayEquals(returnedReport, generatedReport);
     }
 
@@ -148,13 +148,13 @@ public class ReportServiceTests {
 
     @Test
     public void generate_xls_report_with_users() throws ServerException {
-        when(mockSpreadsheetWriterService.writeSpreadsheet(any()))
+        when(mockSpreadsheetWriterService.writeSpreadsheetXLS(any()))
                 .thenReturn(returnedReport);
         byte[] generatedReport = reportService.generateUsersReport("projectName", dataMap, "xls");
         verify(mockReportFormatService, times(1))
                 .formatMapForReport(ReportService.USER_REPORT_COLUMNS, dataMap);
         verify(mockSpreadsheetWriterService, times(1))
-                .writeSpreadsheet(any());
+                .writeSpreadsheetXLS(any());
         assertArrayEquals(returnedReport, generatedReport);
     }
 

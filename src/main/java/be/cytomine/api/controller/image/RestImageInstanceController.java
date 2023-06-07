@@ -75,7 +75,7 @@ public class RestImageInstanceController extends RestCytomineController {
         log.debug("REST request to get image instance {}", id);
 
         return imageInstanceService.find(id)
-                .map(x -> responseSuccess(x, isFilterRequired(x.getProject())))
+                .map(x -> responseSuccess(x, securityACLService.isFilterRequired(x.getProject())))
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
     }
 
@@ -120,15 +120,15 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("Project", id));
         RequestParams requestParams = retrievePageableParameters();
         if (light) {
-            return responseSuccess(imageInstanceService.listLight(project), isFilterRequired(project));
+            return responseSuccess(imageInstanceService.listLight(project), securityACLService.isFilterRequired(project));
         } else if (tree) {
-            return responseSuccess(imageInstanceService.listTree(project, requestParams.getOffset(), requestParams.getMax()), isFilterRequired(project));
+            return responseSuccess(imageInstanceService.listTree(project, requestParams.getOffset(), requestParams.getMax()), securityACLService.isFilterRequired(project));
         } else if (withLastActivity) {
             ImageSearchExtension imageSearchExtension = new ImageSearchExtension();
             imageSearchExtension.setWithLastActivity(withLastActivity);
-            return responseSuccess(imageInstanceService.listExtended(project, imageSearchExtension, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax()), isFilterRequired(project));
+            return responseSuccess(imageInstanceService.listExtended(project, imageSearchExtension, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax()), securityACLService.isFilterRequired(project));
         } else {
-            return responseSuccess(imageInstanceService.list(project, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax(), false), isFilterRequired(project));
+            return responseSuccess(imageInstanceService.list(project, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax(), false), securityACLService.isFilterRequired(project));
         }
     }
 
@@ -141,7 +141,7 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
 
         return imageInstanceService.next(imageInstance)
-                .map(x -> responseSuccess(x, isFilterRequired(x.getProject())))
+                .map(x -> responseSuccess(x, securityACLService.isFilterRequired(x.getProject())))
                 .orElseGet(() -> responseSuccess(new JsonObject()));
     }
 
@@ -154,7 +154,7 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
 
         return imageInstanceService.previous(imageInstance)
-                .map(x -> responseSuccess(x, isFilterRequired(x.getProject())))
+                .map(x -> responseSuccess(x, securityACLService.isFilterRequired(x.getProject())))
                 .orElseGet(() -> responseSuccess(new JsonObject()));
     }
 
@@ -296,9 +296,12 @@ public class RestImageInstanceController extends RestCytomineController {
             @PathVariable String label,
             @PathVariable String format,
             @RequestParam(defaultValue = "256") Integer maxSize) throws IOException {
-        log.debug("REST request to get associated image of a abstract image");
+        log.debug("REST request to get associated image of an imageInstance image");
         ImageInstance imageInstance = imageInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
+        if(securityACLService.isFilterRequired(imageInstance.getProject())){
+            throw new ForbiddenException("You don't have the right to read or modify this resource! "  + imageInstance.getClass().toString() + " " + id);
+        }
         LabelParameter labelParameter = new LabelParameter();
         labelParameter.setFormat(format);
         labelParameter.setLabel(label);
@@ -526,16 +529,6 @@ public class RestImageInstanceController extends RestCytomineController {
         return responseSuccess(JsonObject.toJsonString(imageInstanceService.computeBounds(project)));
     }
 
-    boolean isFilterRequired(Project project) {
-        boolean isManager;
-        try {
-            securityACLService.checkIsAdminContainer(project);
-            isManager = true;
-        } catch (ForbiddenException ex) {
-            isManager = false;
-        }
-        return project.getBlindMode() && !isManager;
-    }
 
 //    protected void processElementsBeforeRendering(JsonObject jsonObject) {
 //        boolean filterEnabled = false;
