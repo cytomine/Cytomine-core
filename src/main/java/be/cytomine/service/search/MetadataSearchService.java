@@ -65,14 +65,14 @@ public class MetadataSearchService {
     }
 
     private Query buildStringQuery(String key, String value, Query byDomainId) {
-        Query byValue = QueryStringQuery.of(qs -> qs
-                .query(String.format("*%s*", value))
+        Query byValue = QueryStringQuery.of(qsq -> qsq
+                .query(String.format("%s*", value))
                 .defaultField("value"))
             ._toQuery();
 
-        Query byKey = MatchQuery.of(m -> m
-                .field("key")
-                .query(key))
+        Query byKey = QueryStringQuery.of(qsq -> qsq
+                .query(key.replace(".", "*."))
+                .defaultField("key"))
             ._toQuery();
 
         return BoolQuery.of(b -> b
@@ -137,9 +137,9 @@ public class MetadataSearchService {
     }
 
     public List<String> searchAutoCompletion(String key, String search) {
-        Query byKeyword = MatchQuery.of(mq -> mq
-                .field("key")
-                .query(key))
+        Query byKeyword = QueryStringQuery.of(qsq -> qsq
+                .query(key.replace(".", "*."))
+                .defaultField("key"))
             ._toQuery();
 
         Query autocomplete = QueryStringQuery.of(qsq -> qsq
