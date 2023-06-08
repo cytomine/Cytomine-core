@@ -160,6 +160,9 @@ public class ImageInstanceService extends ModelService {
     PropertyService propertyService;
 
     @Autowired
+    PropertyRepository propertyRepository;
+
+    @Autowired
     AnnotationTrackRepository annotationTrackRepository;
 
     @Autowired
@@ -173,9 +176,6 @@ public class ImageInstanceService extends ModelService {
 
     @Autowired
     DescriptionService descriptionService;
-
-    @Autowired
-    PropertyRepository propertyRepository;
 
     @Autowired
     TagDomainAssociationRepository tagDomainAssociationRepository;
@@ -822,7 +822,7 @@ public class ImageInstanceService extends ModelService {
             sliceInstance.setProject(((ImageInstance)domain).getProject());
             sliceInstanceRepository.save(sliceInstance);
         }
-
+        //We copy the properties from baseImage so image instance will have the image metadata properties
         AbstractImage ai = ((ImageInstance) domain).getBaseImage();
         for (TagDomainAssociation tagDomainAssociation : tagDomainAssociationRepository.findAllByDomainIdent(ai.getId())) {
             TagDomainAssociation tda = new TagDomainAssociation();

@@ -29,6 +29,7 @@ import be.cytomine.service.ModelService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.ResourcesUtils;
 import be.cytomine.utils.Task;
 import com.vividsolutions.jts.geom.Geometry;
 import lombok.extern.slf4j.Slf4j;
@@ -57,9 +58,10 @@ public class PropertyService extends ModelService {
 
     @Autowired
     private PropertyRepository propertyRepository;
-    
+
     @Autowired
     private AnnotationDomainRepository annotationDomainRepository;
+
 
     @Override
     public Class currentDomain() {
@@ -73,16 +75,21 @@ public class PropertyService extends ModelService {
     }
 
     public List<Property> list(CytomineDomain cytomineDomain) {
-        if(!cytomineDomain.getClass().getName().contains("AbstractImage")) {
+        // This is to filter out image metadata properties for users in case project is in blind mode
+        if(cytomineDomain.getClass().getName().contains("ImageInstance")&&securityACLService.isFilterRequired((Project) cytomineDomain.container())) {
+            List<String> prefixesToFilter= ResourcesUtils.getPropertiesValuesList();
+            List<Property> values = propertyRepository.findByDomainIdentAndExcludedKeys(cytomineDomain.getId(), String.join(";", prefixesToFilter));
+            return values;
+        }else{
             securityACLService.check(cytomineDomain.container(),READ);
+            return propertyRepository.findAllByDomainIdent(cytomineDomain.getId());
         }
-        return propertyRepository.findAllByDomainIdent(cytomineDomain.getId());
     }
 
     public Optional<Property> findById(Long id) {
-        
+
         Optional<Property> property = propertyRepository.findById(id);
-        if (property.isPresent() && !property.get().getDomainClassName().contains("AbstractImage") && !property.get().getDomainClassName().contains("Software")) {
+        if (property.isPresent()  && !property.get().getDomainClassName().contains("Software")) {
             securityACLService.check(property.get().container(),READ);
         }
         return property;
@@ -90,7 +97,7 @@ public class PropertyService extends ModelService {
 
     public Optional<Property> findByDomainAndKey(CytomineDomain domain, String key) {
         Optional<Property> property = propertyRepository.findByDomainIdentAndKey(domain.getId(), key);
-        if (property.isPresent() && !property.get().getDomainClassName().contains("AbstractImage") && !property.get().getDomainClassName().contains("Software")) {
+        if (property.isPresent()  && !property.get().getDomainClassName().contains("Software")) {
             securityACLService.check(property.get().container(),READ);
         }
         return property;
