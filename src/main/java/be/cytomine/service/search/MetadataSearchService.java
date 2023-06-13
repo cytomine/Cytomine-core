@@ -160,6 +160,6 @@ public class MetadataSearchService {
         );
 
         Set<String> unique = new HashSet<>(searchHits.stream().map(hit -> hit.getContent().getValue()).toList());
-        return unique.stream().toList();
+        return unique.stream().sorted().toList();
     }
 }
