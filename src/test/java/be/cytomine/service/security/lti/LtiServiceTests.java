@@ -460,38 +460,6 @@ public class LtiServiceTests {
 
     }
 
-//    JsonObject params = given_a_lti_request_params();
-//        params.put("roles", "Instructor");
-//No need to test this method, it is tested in the method above
-
-//    @Test
-//    void create_user_role_if_user_is_instructor() {
-//        User user = builder.given_a_guest();
-//
-//        assertThat(user.getRoles().stream().map(SecRole::getAuthority)).containsExactly("ROLE_GUEST");
-//        ltiService.createUserRoleIfUserIsInstructor(List.of("Instructor"), user,builder.given_a_user_role().getSecRole());
-//        assertThat(user.getRoles().stream().map(SecRole::getAuthority)).containsExactlyInAnyOrder("ROLE_GUEST", "ROLE_USER");
-//    }
-//
-//    @Test
-//    void ignore_user_role_if_instructor_is_has_already_user_role() {
-//        User user = builder.given_a_user();
-//
-//        assertThat(user.getRoles().stream().map(SecRole::getAuthority)).containsExactlyInAnyOrder( "ROLE_USER");
-//        ltiService.createUserRoleIfUserIsInstructor(List.of("Instructor"), user, builder.given_a_user_role().getSecRole());
-//        assertThat(user.getRoles().stream().map(SecRole::getAuthority)).containsExactlyInAnyOrder("ROLE_USER");
-//    }
-//
-//    @Test
-//    void do_not_add_user_role_if_user_is_not_instructor() {
-//        User user = builder.given_a_guest();
-//
-//        assertThat(user.getRoles().stream().map(SecRole::getAuthority)).containsExactly("ROLE_GUEST");
-//        ltiService.createUserRoleIfUserIsInstructor(List.of("NotInstructor"), user,builder.given_a_user_role().getSecRole());
-//        assertThat(user.getRoles().stream().map(SecRole::getAuthority)).containsExactly("ROLE_GUEST");
-//    }
-
-
     @Test
     void create_unexisting_user_with_guest_role() {
 
