@@ -225,7 +225,7 @@ public class LtiService {
     }
 
     static Long extractProjectId(String redirection) {
-        log.info("Extract projectId if from {}", redirection);
+        log.info("Extract projectId from {}", redirection);
         Long projectId = null;
         if (redirection.contains("tabs-image-")) {
             projectId = Long.parseLong(redirection.split("tabs-image-")[1].split("-")[0]);
