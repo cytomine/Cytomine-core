@@ -1,4 +1,5 @@
 ARG CORE_VERSION
+ARG CORE_REVISION
 ARG SCRIPTS_REPO_TAG
 
 
@@ -61,6 +62,17 @@ CMD ["gradle", ":bootRun", "--debug-jvm"]
 #######################################################################################
 ## Stage: Cytomine core image
 FROM openjdk:17-slim-bullseye as production
+
+ARG CORE_VERSION
+ARG CORE_REVISION
+
+LABEL org.opencontainers.image.authors='support@cytomine.com' \
+      org.opencontainers.image.url='https://www.cytomine.org/' \
+      org.opencontainers.image.documentation='https://doc.cytomine.org/' \
+      org.opencontainers.image.source='https://gitlab.cytom.in/cm/rnd/cytomine/core/core-ee' \
+      org.opencontainers.image.vendor='Cytomine Corporation SA' \
+      org.opencontainers.image.version=${CORE_VERSION} \
+      org.opencontainers.image.revision=${CORE_REVISION}
 
 # base librairies and configuration
 RUN apt-get update -y && apt-get -y install logrotate
