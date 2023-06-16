@@ -1,10 +1,13 @@
 ARG CORE_VERSION
-ARG SCRIPTS_REPO_TAG
+ARG CORE_REVISION
+ARG ENTRYPOINT_SCRIPTS_VERSION=1.3.0
+ARG GRADLE_VERSION=7.2-jdk17-alpine
+ARG OPENJDK_VERSION=17-slim-bullseye
 
 
 #######################################################################################
 # Stage: core dependencies download via gradle
-FROM gradle:7.2-jdk17-alpine AS deps-downloader
+FROM gradle:${GRADLE_VERSION} AS deps-downloader
 
 # We first copy the build.gradle file and the binaries stored in the source repository.
 # This way, we retrieve all gradle dependencies at the beginning. All these steps will be
@@ -20,7 +23,7 @@ RUN gradle clean build --no-daemon --console=verbose
 
 #######################################################################################
 ## Stage: building the core jar file
-FROM gradle:7.2-jdk17-alpine AS jar-builder
+FROM gradle:${GRADLE_VERSION} AS jar-builder
 
 ENV GRADLE_USER_HOME=/opt/gradle/.gradle
 COPY --from=deps-downloader /opt/gradle/.gradle /opt/gradle/.gradle
@@ -37,22 +40,12 @@ RUN sed -i -- 's/version: 0.0.0/version: '$CORE_VERSION'/g' /app/src/main/resour
 RUN gradle bootJar --console=verbose
 
 #######################################################################################
-## Stage: downloading provisioning scripts
-FROM alpine/git:2.36.3 as scripts-downloader
-
-ARG SCRIPTS_REPO_TAG="latest"
-ARG SCRIPT_REPO_URL="https://github.com/cytomine/cytomine-docker-entrypoint-scripts.git"
-
-WORKDIR /root
-
-RUN mkdir scripts
-RUN git clone $SCRIPT_REPO_URL /root/scripts \
-    && cd /root/scripts \
-    && git checkout tags/$SCRIPTS_REPO_TAG
+## Stage: entrypoint script. Use a multi-stage because COPY --from cannot interpolate variables
+FROM cytomine/entrypoint-scripts:${ENTRYPOINT_SCRIPTS_VERSION} as entrypoint-scripts
 
 #######################################################################################
 ## Stage: Cytomine core development image
-FROM gradle:7.2-jdk17-alpine AS development
+FROM gradle:${GRADLE_VERSION} AS development
 
 RUN apk update && apk add gettext
 
@@ -61,9 +54,9 @@ COPY --from=deps-downloader /opt/gradle/.gradle /opt/gradle/.gradle
 
 # startup scripts
 RUN mkdir /docker-entrypoint-cytomine.d/
-COPY --from=scripts-downloader --chmod=774 /root/scripts/cytomine-entrypoint.sh /usr/local/bin/
-COPY --from=scripts-downloader --chmod=774 /root/scripts/envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
-COPY --from=scripts-downloader --chmod=774 /root/scripts/configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
+COPY --from=entrypoint-scripts --chmod=774 /root/scripts/cytomine-entrypoint.sh /usr/local/bin/
+COPY --from=entrypoint-scripts --chmod=774 /root/scripts/envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
+COPY --from=entrypoint-scripts --chmod=774 /root/scripts/configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
 
 # core base folder must be mounted in run command or compose file
 EXPOSE 5005
@@ -74,7 +67,24 @@ CMD ["gradle", ":bootRun", "--debug-jvm"]
 
 #######################################################################################
 ## Stage: Cytomine core image
-FROM openjdk:17-slim-bullseye as production
+FROM openjdk:${OPENJDK_VERSION} as production
+
+ARG CORE_VERSION
+ARG CORE_REVISION
+ARG ENTRYPOINT_SCRIPTS_VERSION
+ARG GRADLE_VERSION
+ARG OPENJDK_VERSION
+
+LABEL org.opencontainers.image.authors='support@cytomine.com' \
+      org.opencontainers.image.url='https://www.cytomine.org/' \
+      org.opencontainers.image.documentation='https://doc.cytomine.org/' \
+      org.opencontainers.image.source='https://github.com/cytomine/Cytomine-core-spring' \
+      org.opencontainers.image.vendor='Cytomine Corporation SA' \
+      org.opencontainers.image.version=${CORE_VERSION} \
+      org.opencontainers.image.revision=${CORE_REVISION} \
+      org.opencontainers.image.deps.openjdk.version=${OPENJDK_VERSION} \
+      org.opencontainers.image.deps.gradle.version=${GRADLE_VERSION} \
+      org.opencontainers.image.deps.node.entrypoint.scripts.version=${ENTRYPOINT_SCRIPTS_VERSION}
 
 # base librairies and configuration
 RUN apt-get update -y && apt-get -y install logrotate
@@ -90,9 +100,9 @@ COPY --from=jar-builder /app/build/libs/cytomine.jar /app/cytomine.jar
 
 # entrypoint scripts
 RUN mkdir /docker-entrypoint-cytomine.d/
-COPY --from=scripts-downloader --chmod=774 /root/scripts/cytomine-entrypoint.sh /usr/local/bin/
-COPY --from=scripts-downloader --chmod=774 /root/scripts/envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
-COPY --from=scripts-downloader --chmod=774 /root/scripts/configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
+COPY --from=entrypoint-scripts --chmod=774 /root/scripts/cytomine-entrypoint.sh /usr/local/bin/
+COPY --from=entrypoint-scripts --chmod=774 /root/scripts/envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
+COPY --from=entrypoint-scripts --chmod=774 /root/scripts/configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
 COPY --chmod=774 ./scripts/generate-meta-prefix-file.sh /docker-entrypoint-cytomine.d/875-generate-meta-prefix-file.sh
 
 WORKDIR /app
