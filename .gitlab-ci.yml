@@ -11,6 +11,10 @@ stages:
 
 variables:
   DOCKER_IMAGE_NAME: 'registry.cytom.in/cm/rnd/cytomine/products/entreprise-edition-teaching/core-ee'
+  ENTRYPOINT_SCRIPTS_VERSION: '1.3.0'
+  GRADLE_VERSION: '7.2-jdk17-alpine'
+  OPENJDK_VERSION: '17-slim-bullseye'
+
 #  # cache gradle working directory
 #  GRADLE_USER_HOME: /cache/.gradle
 #  POSTGRES_USER: docker
@@ -36,6 +40,7 @@ make-version-name:
   # regex check does not work with /bin/sh because of parenthesis so we need /bin/bash here
   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/bash:5.2.15-alpine3.16
   script:
+    # TODO: reuse the tag regexp common job/rule
     - | # If no tag has been pushed ($CI_COMMIT_TAG is empty), name it as SNAPSHOT
       if [ -z ${CI_COMMIT_TAG} ]; then
         echo "CM_VERSION=${CI_COMMIT_BRANCH}" > .env
@@ -132,7 +137,17 @@ build-push-docker-image:
     - echo ${DOCKER_AUTH_CONFIG} > ~/.docker/config.json
 
     - echo "Build the docker image ${DOCKER_IMAGE_NAME}:${CM_VERSION}"
-    - docker build --build-arg CORE_VERSION=${CM_VERSION} --build-arg CORE_REVISION=${CI_COMMIT_SHORT_SHA} -t ${DOCKER_IMAGE_NAME}:${CM_VERSION} -f docker/Dockerfile .
+    - |
+      docker build \
+        --build-arg CORE_VERSION=${CM_VERSION} \
+        --build-arg CORE_REVISION=${CI_COMMIT_SHORT_SHA} \
+        --build-arg ENTRYPOINT_SCRIPTS_VERSION=${ENTRYPOINT_SCRIPTS_VERSION} \
+        --build-arg GRADLE_VERSION=${GRADLE_VERSION} \
+        --build-arg OPENJDK_VERSION=${OPENJDK_VERSION} \
+        -t ${DOCKER_IMAGE_NAME}:${CM_VERSION} \
+        -t ${DOCKER_IMAGE_NAME}:latest \
+        -f docker/Dockerfile \
+        .
 
     - echo "Pushing docker image ${DOCKER_IMAGE_NAME}:${CM_VERSION}"
     - docker push ${DOCKER_IMAGE_NAME}:${CM_VERSION}
