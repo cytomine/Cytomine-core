@@ -123,10 +123,6 @@ build-push-docker-image:
   stage: build
   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:latest
   needs:
-#    - job: build-docker-image
-#      artifacts: false  # artifact are in docker cache (is it a safe assumption in a multi-runner env ?)
-#    - job: run-junit
-#      artifacts: false
     - job: make-version-name
       artifacts: true
   rules:
@@ -149,13 +145,10 @@ build-push-docker-image:
         -f docker/Dockerfile \
         .
 
-    - echo "Pushing docker image ${DOCKER_IMAGE_NAME}:${CM_VERSION}"
+    - echo "Pushing docker image ${DOCKER_IMAGE_NAME}:${CM_VERSION} and ${DOCKER_IMAGE_NAME}:latest"
     - docker push ${DOCKER_IMAGE_NAME}:${CM_VERSION}
-    - echo "Successfully pushed docker image ${DOCKER_IMAGE_NAME}:${CM_VERSION}"
-
-#  after_script:
-#    # cleaning up images
-#    - docker rmi $CI_REGISTRY_IMAGE:$CM_VERSION $DOCKER_TMP_IMAGE_NAME
+    - docker push ${DOCKER_IMAGE_NAME}:latest
+    - echo "Successfully pushed docker image ${DOCKER_IMAGE_NAME}:${CM_VERSION} and ${DOCKER_IMAGE_NAME}:latest"
 
 #publish-jar:
 #  stage: publish
