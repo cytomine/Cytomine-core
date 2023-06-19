@@ -84,7 +84,7 @@ LABEL org.opencontainers.image.authors='support@cytomine.com' \
       org.opencontainers.image.revision=${CORE_REVISION} \
       org.opencontainers.image.deps.openjdk.version=${OPENJDK_VERSION} \
       org.opencontainers.image.deps.gradle.version=${GRADLE_VERSION} \
-      org.opencontainers.image.deps.node.entrypoint.scripts.version=${ENTRYPOINT_SCRIPTS_VERSION}
+      org.opencontainers.image.deps.entrypoint.scripts.version=${ENTRYPOINT_SCRIPTS_VERSION}
 
 # base librairies and configuration
 RUN apt-get update -y && apt-get -y install logrotate
