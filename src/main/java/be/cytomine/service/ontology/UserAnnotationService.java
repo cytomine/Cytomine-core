@@ -71,6 +71,9 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 public class UserAnnotationService extends ModelService {
 
     @Autowired
+    private AnnotationLinkService annotationLinkService;
+
+    @Autowired
     private UserAnnotationRepository userAnnotationRepository;
 
     @Autowired
@@ -452,6 +455,22 @@ public class UserAnnotationService extends ModelService {
             ((Map<String, Object>)commandResponse.getData().get("annotation")).put("annotationTrack", annotationTracks);
             ((Map<String, Object>)commandResponse.getData().get("annotation")).put("track", annotationTracks.stream().map(x -> x.getTrack()).collect(Collectors.toList()));
         }
+
+        // Add annotation-group/link if any
+        Long groupId = jsonObject.getJSONAttrLong("group", null);
+        if (groupId != null) {
+            CommandResponse response = annotationLinkService.addAnnotationLink(
+                    UserAnnotation.class.getName(),
+                    addedAnnotation.getId(),
+                    groupId,
+                    addedAnnotation.getImage().getId(),
+                    transaction
+            );
+
+            ((Map<String, Object>)commandResponse.getData().get("annotation")).put("group", groupId);
+            ((Map<String, Object>)commandResponse.getData().get("annotation")).put("annotationLinks", response.getData().get("annotationlink"));
+        }
+
         log.debug("end of add command");
         return commandResponse;
     }
@@ -537,6 +556,9 @@ public class UserAnnotationService extends ModelService {
 
 
     protected void afterUpdate(CytomineDomain domain, CommandResponse response) {
+        String query = "UPDATE annotation_link SET updated = NOW() WHERE annotation_ident = " + domain.getId();
+        getEntityManager().createNativeQuery(query);
+
         response.getData().put("annotation", response.getData().get("userannotation"));
         response.getData().remove("userannotation");
     }

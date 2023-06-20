@@ -1120,6 +1120,23 @@
             </column>
             <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
         </createTable>
+        <createTable tableName="image_group_image_instance">
+            <column name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="image_group_image_instance_pkey"/>
+            </column>
+            <column name="version" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created" type="TIMESTAMP WITHOUT TIME ZONE"/>
+            <column name="updated" type="TIMESTAMP WITHOUT TIME ZONE"/>
+            <column name="deleted" type="TIMESTAMP WITHOUT TIME ZONE"/>
+            <column name="group_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="image_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
         <createTable tableName="image_sequence">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="image_sequence_pkey"/>
