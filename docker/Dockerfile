@@ -93,7 +93,7 @@ ENV LANG C.UTF-8
 
 # base librairies and configuration
 RUN apt-get update -y \
-    && apt-get install --no-install-recommends --no-install-suggests --no-cache -y \
+    && apt-get install --no-install-recommends --no-install-suggests -y \
       logrotate=3.18* \
       gettext=0.21* \
     && rm -rf /var/lib/apt/lists/* \
