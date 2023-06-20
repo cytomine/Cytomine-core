@@ -42,7 +42,7 @@ lint-dockerfiles:
   #variables:
   #  HADOLINT_OPT: --ignore DL3008
   script:
-    - hadolint ${HADOLINT_OPT} Dockerfile
+    - hadolint ${HADOLINT_OPT} docker/Dockerfile
   rules:
     - changes:
         - docker/Dockerfile
