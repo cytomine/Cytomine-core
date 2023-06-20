@@ -35,7 +35,7 @@ COPY ../build.gradle /app/build.gradle
 ARG CORE_VERSION
 ENV CORE_VERSION=$CORE_VERSION
 
-RUN sed -i -- 's/version: 0.0.0/version: '$CORE_VERSION'/g' /app/src/main/resources/application.yml \
+RUN sed -i -- 's/version: 0.0.0/version: '$CORE_VERSION'/g' /app/src/main/resources/application.yml && \
     gradle bootJar --console=verbose
 
 #######################################################################################
@@ -91,12 +91,12 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
 
 # base librairies and configuration
-RUN apt-get update -y && \
-    apt-get install --no-install-recommends --no-install-suggests --no-cache -y \
+RUN apt-get update -y \
+    && apt-get install --no-install-recommends --no-install-suggests -y \
       logrotate=3.18* \
-      gettext=0.21* && \
-    rm -rf /var/lib/apt/lists/* \
-    sed -i "/su root syslog/c\su root root" /etc/logrotate.conf
+      gettext=0.21* \
+    && rm -rf /var/lib/apt/lists/* \
+    && sed -i "/su root syslog/c\su root root" /etc/logrotate.conf
 
 COPY --from=jar-builder /app/build/libs/cytomine.jar /app/cytomine.jar
 
