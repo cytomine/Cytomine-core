@@ -36,7 +36,7 @@ COPY ../build.gradle /app/build.gradle
 ARG CORE_VERSION
 ENV CORE_VERSION=$CORE_VERSION
 
-RUN sed -i -- 's/version: 0.0.0/version: '$CORE_VERSION'/g' /app/src/main/resources/application.yml \
+RUN sed -i -- 's/version: 0.0.0/version: '$CORE_VERSION'/g' /app/src/main/resources/application.yml && \
     gradle bootJar --console=verbose
 
 #######################################################################################
