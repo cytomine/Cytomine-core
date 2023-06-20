@@ -75,16 +75,16 @@ ARG ENTRYPOINT_SCRIPTS_VERSION
 ARG GRADLE_VERSION
 ARG OPENJDK_VERSION
 
-LABEL org.opencontainers.image.authors='support@cytomine.com' \
-      org.opencontainers.image.url='https://www.cytomine.org/' \
-      org.opencontainers.image.documentation='https://doc.cytomine.org/' \
-      org.opencontainers.image.source='https://gitlab.cytom.in/cm/rnd/cytomine/core/core-ee' \
-      org.opencontainers.image.vendor='Cytomine Corporation SA' \
-      org.opencontainers.image.version=${CORE_VERSION} \
-      org.opencontainers.image.revision=${CORE_REVISION} \
-      org.opencontainers.image.deps.openjdk.version=${OPENJDK_VERSION} \
-      org.opencontainers.image.deps.gradle.version=${GRADLE_VERSION} \
-      org.opencontainers.image.deps.entrypoint.scripts.version=${ENTRYPOINT_SCRIPTS_VERSION}
+LABEL org.opencontainers.image.authors="support@cytomine.com" \
+      org.opencontainers.image.url="https://www.cytomine.org/" \
+      org.opencontainers.image.documentation="https://doc.cytomine.org/" \
+      org.opencontainers.image.source="https://gitlab.cytom.in/cm/rnd/cytomine/core/core-ee" \
+      org.opencontainers.image.vendor="Cytomine Corporation SA" \
+      org.opencontainers.image.version="${CORE_VERSION}" \
+      org.opencontainers.image.revision="${CORE_REVISION}" \
+      org.opencontainers.image.deps.openjdk.version="${OPENJDK_VERSION}" \
+      org.opencontainers.image.deps.gradle.version="${GRADLE_VERSION}" \
+      org.opencontainers.image.deps.entrypoint.scripts.version="${ENTRYPOINT_SCRIPTS_VERSION}"
 
 # base librairies and configuration
 RUN apt-get update -y && apt-get -y install logrotate
