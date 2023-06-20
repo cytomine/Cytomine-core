@@ -106,8 +106,10 @@ public class ReportService {
     public byte[] generateReport(String title, Object[][] data, List<ReportColumn> columns, String format) throws ServerException {
         float[] columnWidth = reportFormatService.getColumnWidth(columns);
         switch (format){
-            case "csv": case "xls" :
+            case "csv":
                 return spreadsheetReportService.writeSpreadsheet(data);
+            case "xls":
+                return spreadsheetReportService.writeSpreadsheetXLS(data);
             case "pdf":
                 return pdfReportService.writePDF(data, title, columnWidth, HAS_PAGINATION, HAS_HEADER);
             default :

@@ -89,6 +89,11 @@ dependencies {
 	implementation 'com.github.dhorions:boxable:1.6'
 
 	implementation "net.bull.javamelody:javamelody-spring-boot-starter:1.91.0"
+	// https://mvnrepository.com/artifact/org.apache.poi/poi
+	implementation 'org.apache.poi:poi:5.2.3'
+	// https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml
+	implementation 'org.apache.poi:poi-ooxml:5.2.3'
+
 
 }
 

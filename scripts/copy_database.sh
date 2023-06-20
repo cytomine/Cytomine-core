@@ -1,1 +1,0 @@
-pg_dump -C -h localhost -p 5432 -U docker docker | psql -h localhost -p 5442 -U docker docker

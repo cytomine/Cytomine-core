@@ -1,5 +1,5 @@
 *
 !src
 !build.gradle
-!scripts/docker
+!scripts
 !ci/cytomine.jar
