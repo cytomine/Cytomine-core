@@ -35,9 +35,8 @@ COPY ../build.gradle /app/build.gradle
 ARG CORE_VERSION
 ENV CORE_VERSION=$CORE_VERSION
 
-RUN sed -i -- 's/version: 0.0.0/version: '$CORE_VERSION'/g' /app/src/main/resources/application.yml
-
-RUN gradle bootJar --console=verbose
+RUN sed -i -- 's/version: 0.0.0/version: '$CORE_VERSION'/g' /app/src/main/resources/application.yml \
+    gradle bootJar --console=verbose
 
 #######################################################################################
 ## Stage: entrypoint script. Use a multi-stage because COPY --from cannot interpolate variables
@@ -47,7 +46,9 @@ FROM cytomine/entrypoint-scripts:${ENTRYPOINT_SCRIPTS_VERSION} as entrypoint-scr
 ## Stage: Cytomine core development image
 FROM gradle:${GRADLE_VERSION} AS development
 
-RUN apk update && apk add gettext
+RUN apk update && \
+    apk add --no-cache \
+    gettext~=0.21
 
 ENV GRADLE_USER_HOME=/opt/gradle/.gradle
 COPY --from=deps-downloader /opt/gradle/.gradle /opt/gradle/.gradle
@@ -75,26 +76,27 @@ ARG ENTRYPOINT_SCRIPTS_VERSION
 ARG GRADLE_VERSION
 ARG OPENJDK_VERSION
 
-LABEL org.opencontainers.image.authors='support@cytomine.com' \
-      org.opencontainers.image.url='https://www.cytomine.org/' \
-      org.opencontainers.image.documentation='https://doc.cytomine.org/' \
-      org.opencontainers.image.source='https://github.com/cytomine/Cytomine-core-spring' \
-      org.opencontainers.image.vendor='Cytomine Corporation SA' \
-      org.opencontainers.image.version=${CORE_VERSION} \
-      org.opencontainers.image.revision=${CORE_REVISION} \
-      org.opencontainers.image.deps.openjdk.version=${OPENJDK_VERSION} \
-      org.opencontainers.image.deps.gradle.version=${GRADLE_VERSION} \
-      org.opencontainers.image.deps.entrypoint.scripts.version=${ENTRYPOINT_SCRIPTS_VERSION}
+LABEL org.opencontainers.image.authors="support@cytomine.com" \
+      org.opencontainers.image.url="https://www.cytomine.org/" \
+      org.opencontainers.image.documentation="https://doc.cytomine.org/" \
+      org.opencontainers.image.source="https://github.com/cytomine/Cytomine-core-spring" \
+      org.opencontainers.image.vendor="Cytomine Corporation SA" \
+      org.opencontainers.image.version="${CORE_VERSION}" \
+      org.opencontainers.image.revision="${CORE_REVISION}" \
+      org.opencontainers.image.deps.openjdk.version="${OPENJDK_VERSION}" \
+      org.opencontainers.image.deps.gradle.version="${GRADLE_VERSION}" \
+      org.opencontainers.image.deps.entrypoint.scripts.version="${ENTRYPOINT_SCRIPTS_VERSION}"
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV LANG C.UTF-8
 
 # base librairies and configuration
-RUN apt-get update -y && apt-get -y install logrotate
-
-RUN sed -i "/su root syslog/c\su root root" /etc/logrotate.conf
-ENV LANG C.UTF-8
-ENV DEBIAN_FRONTEND noninteractive
-
-# tomcat configurations
-RUN apt-get update -y && apt-get install --no-install-recommends --no-install-suggests -y logrotate gettext
+RUN apt-get update -y && \
+    apt-get install --no-install-recommends --no-install-suggests --no-cache -y \
+      logrotate=3.18* \
+      gettext=0.21* && \
+    rm -rf /var/lib/apt/lists/* \
+    sed -i "/su root syslog/c\su root root" /etc/logrotate.conf
 
 COPY --from=jar-builder /app/build/libs/cytomine.jar /app/cytomine.jar
 
