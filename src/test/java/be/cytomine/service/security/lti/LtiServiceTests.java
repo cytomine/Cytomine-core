@@ -87,7 +87,7 @@ public class LtiServiceTests {
 
 
     private final static LtiConsumerProperties LTI_CONSUMER_PROPERTIES =
-            new LtiConsumerProperties("consumerKey", "consumerName", "consumerSecret", "consumerUsernameParameter");
+            new LtiConsumerProperties("jisc.ac.uk", "consumerName", "secret", "consumerUsernameParameter");
 
     private final static List<LtiConsumerProperties> LTI_CONSUMERS_PROPERTIES =
            List.of(LTI_CONSUMER_PROPERTIES);
@@ -97,7 +97,7 @@ public class LtiServiceTests {
         String username = BasicInstanceBuilder.randomString();
         JsonObject params = new JsonObject();
         params.put("tool_consumer_instance_name", "consumerName");
-        params.put("oauth_consumer_key", "consumerKey");
+        params.put("oauth_consumer_key", "jisc.ac.uk");
         params.put("lti_version", "1.2.3");
         params.put("oauth_version", "2");
         params.put("consumerUsernameParameter", username);
@@ -114,7 +114,7 @@ public class LtiServiceTests {
         Mockito.when(ltiVerificationResult.getError()).thenReturn(Mockito.mock(LtiError.class));
 
         LtiOauthVerifier ltiOauthVerifier = Mockito.mock(LtiOauthVerifier.class);
-        Mockito.when(ltiOauthVerifier.verify(request, "consumerSecret")).thenReturn(ltiVerificationResult);
+        Mockito.when(ltiOauthVerifier.verify(request, "secret")).thenReturn(ltiVerificationResult);
         return ltiOauthVerifier;
     }
 
@@ -143,7 +143,6 @@ public class LtiServiceTests {
         assertThat(user.getFirstname()).isEqualTo("userFirstName");
         assertThat(user.getRoles().stream().map(x -> x.getAuthority())).hasSize(1).contains("ROLE_GUEST");
     }
-
 
     @Test
     void lti_verification_user_already_exists() throws LtiVerificationException {
@@ -197,7 +196,7 @@ public class LtiServiceTests {
         LtiOauthVerifier ltiOauthVerifier = given_a_lti_verifier(true, request);
 
         LtiConsumerProperties properties =
-                new LtiConsumerProperties("consumerKey", "consumerName", null, "consumerUsernameParameter");
+                new LtiConsumerProperties("jisc.ac.uk", "consumerName", null, "consumerUsernameParameter");
 
         LtiProperties propertiesWithConsumerPrivateKeyNull = new LtiProperties(true);
 
@@ -234,7 +233,7 @@ public class LtiServiceTests {
 
 
         LtiConsumerProperties properties =
-                new LtiConsumerProperties("consumerKey", "consumerName", "consumerSecret", null);
+                new LtiConsumerProperties("jisc.ac.uk", "consumerName", "secret", null);
 
         LtiProperties ltiProperties = new LtiProperties(true);
 
@@ -356,6 +355,7 @@ public class LtiServiceTests {
         User user = userRepository.findByUsernameLikeIgnoreCase(username)
                 .orElseThrow(() -> new ObjectNotFoundException("User", username));
         assertThat(user.getRoles().stream().map(x -> x.getAuthority())).contains("ROLE_USER");
+        assertThat(storageRepository.findAllByUser(user)).hasSize(1);
     }
 
     @Test
@@ -382,35 +382,83 @@ public class LtiServiceTests {
                 .orElseThrow(() -> new ObjectNotFoundException("User", username));
         assertThat(secUserService.listAdmins(project)).contains(user);
     }
-
-
+    //TODO
     @Test
-    void create_user_role_if_user_is_instructor() {
-        User user = builder.given_a_guest();
+    void lti_create_user_role_if_user_is_instructor() throws LtiVerificationException {
 
-        assertThat(user.getRoles().stream().map(SecRole::getAuthority)).containsExactly("ROLE_GUEST");
-        ltiService.createUserRoleIfUserIsInstructor(List.of("Instructor"), user);
-        assertThat(user.getRoles().stream().map(SecRole::getAuthority)).containsExactlyInAnyOrder("ROLE_GUEST", "ROLE_USER");
+        JsonObject params = given_a_lti_request_params();
+        params.put("roles", "Instructor");
+        String username = params.getJSONAttrStr("consumerUsernameParameter");
+        assertThat(userRepository.findByUsernameLikeIgnoreCase(username).isPresent()).isEqualTo(false);
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+
+        LtiOauthVerifier ltiOauthVerifier = given_a_lti_verifier(true, request);
+
+
+        LoginWithRedirection redirection =
+                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, LTI_CONSUMERS_PROPERTIES, ltiOauthVerifier);
+
+
+        assertThat(redirection.getRedirection()).isEqualTo("/");
+
+        // user has been created
+        User user = userRepository.findByUsernameLikeIgnoreCase(username)
+                .orElseThrow(() -> new ObjectNotFoundException("User", username));
+        assertThat(user.getRoles().stream().map(x -> x.getAuthority())).contains("ROLE_USER");
+
     }
 
     @Test
-    void ignore_user_role_if_instructor_is_has_already_user_role() {
-        User user = builder.given_a_user();
+    void lti_ignore_user_role_if_instructor_is_has_already_user_role() throws LtiVerificationException {
 
-        assertThat(user.getRoles().stream().map(SecRole::getAuthority)).containsExactlyInAnyOrder( "ROLE_USER");
-        ltiService.createUserRoleIfUserIsInstructor(List.of("Instructor"), user);
-        assertThat(user.getRoles().stream().map(SecRole::getAuthority)).containsExactlyInAnyOrder("ROLE_USER");
+        JsonObject params = given_a_lti_request_params();
+        String username = params.getJSONAttrStr("consumerUsernameParameter");
+
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+
+        LtiOauthVerifier ltiOauthVerifier = given_a_lti_verifier(true, request);
+        User userInDatabase = builder.given_a_user(username);
+        assertThat(userInDatabase.getRoles().stream().map(SecRole::getAuthority)).containsExactlyInAnyOrder( "ROLE_USER");
+
+        LoginWithRedirection redirection =
+                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, LTI_CONSUMERS_PROPERTIES, ltiOauthVerifier);
+
+
+        assertThat(redirection.getRedirection()).isEqualTo("/");
+
+        // user has been created
+        User user = userRepository.findByUsernameLikeIgnoreCase(username)
+                .orElseThrow(() -> new ObjectNotFoundException("User", username));
+        assertThat(user.getLastname()).isEqualTo(userInDatabase.getLastname());
+        assertThat(user.getFirstname()).isEqualTo(userInDatabase.getFirstname());
+        assertThat(user.getEmail()).isEqualTo(userInDatabase.getEmail());
+        assertThat(user.getRoles().stream().map(x -> x.getAuthority())).contains("ROLE_USER");
     }
 
     @Test
-    void do_not_add_user_role_if_user_is_not_instructor() {
-        User user = builder.given_a_guest();
+    void do_not_add_user_role_if_user_is_not_instructor() throws LtiVerificationException {
 
-        assertThat(user.getRoles().stream().map(SecRole::getAuthority)).containsExactly("ROLE_GUEST");
-        ltiService.createUserRoleIfUserIsInstructor(List.of("NotInstructor"), user);
-        assertThat(user.getRoles().stream().map(SecRole::getAuthority)).containsExactly("ROLE_GUEST");
+        JsonObject params = given_a_lti_request_params();
+        params.put("roles", "Student");
+        String username = params.getJSONAttrStr("consumerUsernameParameter");
+        assertThat(userRepository.findByUsernameLikeIgnoreCase(username).isPresent()).isEqualTo(false);
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+
+        LtiOauthVerifier ltiOauthVerifier = given_a_lti_verifier(true, request);
+
+
+        LoginWithRedirection redirection =
+                ltiService.verifyAndRedirect(params, request, LTI_PROPERTIES, LTI_CONSUMERS_PROPERTIES, ltiOauthVerifier);
+
+
+        assertThat(redirection.getRedirection()).isEqualTo("/");
+
+        // user has been created
+        User user = userRepository.findByUsernameLikeIgnoreCase(username)
+                .orElseThrow(() -> new ObjectNotFoundException("User", username));
+        assertThat(user.getRoles().stream().map(x -> x.getAuthority())).contains("ROLE_GUEST");
+
     }
-
 
     @Test
     void create_unexisting_user_with_guest_role() {
@@ -431,8 +479,6 @@ public class LtiServiceTests {
         assertThat(user.getOrigin()).isEqualTo("LTI");
         assertThat(user.getPassword()).hasSize(UUID.randomUUID().toString().length());
         assertThat(user.getRoles().stream().map(SecRole::getAuthority)).containsExactly("ROLE_GUEST");
-
-        assertThat(storageRepository.findAllByUser(user)).hasSize(1);
     }
 
 
