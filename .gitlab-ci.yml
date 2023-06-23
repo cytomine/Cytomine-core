@@ -84,7 +84,7 @@ run-junit:
       name: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.2
   variables:
     MONGO_USER: mongoadmin
-    MONGO_PASS: secret
+    MONGO_PASS: password
     MONGO_DB_NAME: cytomine
     MONGO_PORT: 27017
     MONGO_HOST: mongodb
