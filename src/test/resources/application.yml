@@ -6,9 +6,9 @@ spring:
 
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:postgresql://localhost:5432/docker
-    username: docker
-    password: docker
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGIS_DB_NAME:docker}
+    username: ${POSTGRES_USER:docker}
+    password: ${POSTGRES_PASSWORD:docker}
     hikari:
       poolName: Hikari
       auto-commit: false
@@ -37,11 +37,11 @@ spring:
   data:
     mongodb:
       authentication-database: admin
-      username: mongoadmin
-      password: secret
-      database: cytomine
-      port: 27017
-      host: localhost
+      username: ${MONGO_USER:mongoadmin}
+      password: ${MONGO_PASS:password}
+      database: ${MONGO_DB_NAME:cytomine}
+      port: ${MONGO_PORT:27017}
+      host: ${MONGO_HOST:localhost}
 
       #uri: 'mongodb://mongoadmin:secret@localhost:27018/cytomine?authSource=admin&retryWrites=false' #?retryWrites=false&authSource=admin'
       #auto-index-creation: true
