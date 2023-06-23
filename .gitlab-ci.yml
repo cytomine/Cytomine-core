@@ -83,6 +83,9 @@ run-junit:
     - alias: ldap
       name: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.2
   variables:
+    MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+    MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
+    MONGO_INIT_DATABASE: ${MONGO_DB_NAME}
     MONGO_USER: mongoadmin
     MONGO_PASS: password
     MONGO_DB_NAME: cytomine
@@ -97,9 +100,9 @@ run-junit:
     POSTGRES_USER: docker
   script:
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
-    - "sed -i -- 's/host: 127.0.0.1/host: mongodb/g' src/test/resources/application.yml"
-    - "sed -i -- 's/port: 27018/port: 27017/g' src/test/resources/application.yml"
-    - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/resources/application.yml
+    #- "sed -i -- 's/host: 127.0.0.1/host: mongodb/g' src/test/resources/application.yml"
+    #- "sed -i -- 's/port: 27018/port: 27017/g' src/test/resources/application.yml"
+    #- sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/resources/application.yml
     - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/java/be/cytomine/BasicInstanceBuilder.java
     # test log too large for gitlab if executed at 'debug' log level
     - sed -i -- "s/name=\"be.cytomine\" level=\"debug\"/name=\"be.cytomine\" level=\"info\"/g" src/test/resources/logback-test.xml
