@@ -82,6 +82,11 @@ run-junit:
       name: rabbitmq:3.10
     - alias: ldap
       name: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.2
+  variables:
+    POSTGRES_DB: docker
+    POSTGRES_USER: docker
+    POSTGRES_PASSWORD: docker
+    POSTGRES_HOST_AUTH_METHOD: trust
   script:
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
     - sed -i -- "s/localhost:5432/postgres:5432/g" src/test/resources/application.yml
