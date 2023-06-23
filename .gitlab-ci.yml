@@ -80,6 +80,8 @@ run-junit:
       name: mongo:4.4.18-focal
     - alias: rabbitmq
       name: rabbitmq:3.10
+    - alias: ims.cytomine.local
+      name: registry.cytom.in/cm/rnd/cytomine/products/entreprise-edition-teaching/pims-ee-package:0.0.2
     - alias: ldap
       name: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.2
   variables:
