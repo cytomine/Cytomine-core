@@ -70,32 +70,32 @@ make-version-name:
     reports:
       dotenv: .env
 
-#run-junit:
-#  stage: test
-#  image: gradle:7.4.2-jdk17-alpine
-#  services:
-#    - alias: postgres
-#      name: registry.cytom.in/cm/rnd/cytomine/tools/envs/postgis:15-3.3-alpine-1.2.0
-#    - alias: mongodb
-#      name: mongo:4.4.18-focal
-#    - alias: rabbitmq
-#      name: rabbitmq:3.10
-#    - alias: ldap
-#      name: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.2
-#  script:
-#    - export GRADLE_USER_HOME=$GRADLE_USER_HOME
-#    - sed -i -- "s/localhost:5433/postgres:5432/g" src/test/resources/application.yml
-#    - "sed -i -- 's/host: 127.0.0.1/host: mongodb/g' src/test/resources/application.yml"
-#    - "sed -i -- 's/port: 27018/port: 27017/g' src/test/resources/application.yml"
-#    - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/resources/application.yml
-#    - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/java/be/cytomine/security/LdapClientTests.java
-#    # test log too large for gitlab if executed at 'debug' log level
-#    - sed -i -- "s/name=\"be.cytomine\" level=\"debug\"/name=\"be.cytomine\" level=\"info\"/g" src/test/resources/logback-test.xml
-#    - gradle :test --no-daemon
-#  artifacts:
-#    reports:
-#      junit: build/test-results/test/**/TEST-*.xml
-#      # TODO integrate code coverage
+run-junit:
+  stage: test
+  image: gradle:7.4.2-jdk17-alpine
+  services:
+    - alias: postgres
+      name: registry.cytom.in/cm/rnd/cytomine/tools/envs/postgis:15-3.3-alpine-1.2.0
+    - alias: mongodb
+      name: mongo:4.4.18-focal
+    - alias: rabbitmq
+      name: rabbitmq:3.10
+    - alias: ldap
+      name: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.2
+  script:
+    - export GRADLE_USER_HOME=$GRADLE_USER_HOME
+    - sed -i -- "s/localhost:5433/postgres:5432/g" src/test/resources/application.yml
+    - "sed -i -- 's/host: 127.0.0.1/host: mongodb/g' src/test/resources/application.yml"
+    - "sed -i -- 's/port: 27018/port: 27017/g' src/test/resources/application.yml"
+    - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/resources/application.yml
+    - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/java/be/cytomine/security/LdapClientTests.java
+    # test log too large for gitlab if executed at 'debug' log level
+    - sed -i -- "s/name=\"be.cytomine\" level=\"debug\"/name=\"be.cytomine\" level=\"info\"/g" src/test/resources/logback-test.xml
+    - gradle :test --no-daemon
+  artifacts:
+    reports:
+      junit: build/test-results/test/**/TEST-*.xml
+      # TODO integrate code coverage
 
 #build-jar:
 #  stage: build
