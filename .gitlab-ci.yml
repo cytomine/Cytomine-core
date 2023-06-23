@@ -84,7 +84,7 @@ run-junit:
       name: registry.cytom.in/cm/rnd/cytomine/tools/envs/ldap:0.5.5-0.0.2
   script:
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
-    - sed -i -- "s/localhost:5433/postgres:5432/g" src/test/resources/application.yml
+    - sed -i -- "s/localhost:5432/postgres:5432/g" src/test/resources/application.yml
     - "sed -i -- 's/host: 127.0.0.1/host: mongodb/g' src/test/resources/application.yml"
     - "sed -i -- 's/port: 27018/port: 27017/g' src/test/resources/application.yml"
     - sed -i -- "s/127.0.0.1:390/ldap:389/g" src/test/resources/application.yml
