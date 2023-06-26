@@ -37,7 +37,6 @@ import be.cytomine.security.ldap.LdapIdentityAuthenticationProvider;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.NotificationService;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.StringUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +58,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
 import javax.mail.MessagingException;
-import javax.persistence.EntityManager;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.*;
@@ -91,6 +91,47 @@ public class LoginController extends RestCytomineController {
 
     private final ApplicationProperties applicationProperties;
 
+
+
+    @RequestMapping(
+            method = RequestMethod.GET,
+            value = {"/saml/login"})
+    public void loginWithSSO(HttpServletRequest request,HttpServletResponse response) throws IOException {
+//        List<Object> userName = principal.getAttribute("cn");
+//        String email =(String) principal.getFirstAttribute("mail");
+//        //model.addAttribute("userAttributes", principal.getAttributes());
+//         response.sendRedirect("http://cytomine.local");
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+   //   boolean isRememberMe =true;
+//        String token = tokenProvider.createToken(authentication, isRememberMe ? TokenType.REMEMBER_ME : TokenType.SESSION);
+//        String shortTermToken=  tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM);
+//        HttpHeaders httpHeaders = new HttpHeaders();
+//        httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
+//     //   return new JWTToken(token, shortTermToken);
+     String username= authentication.getName();
+        User user = userRepository.findByUsernameLikeIgnoreCaseAndEnabledIsTrue(username)
+                .orElseThrow(() -> new ObjectNotFoundException("User",username));
+//
+//        if (!user.getPublicUser()) {
+//            // if user is not a public user, token can only be generate by admin
+//            securityACLService.checkCurrentUserIsAdmin();
+//        }
+
+
+        Date expiration = DateUtils.addMinutes(new Date(), (int)60d);
+
+
+        String tokenKey = UUID.randomUUID().toString();
+        AuthWithToken token = new AuthWithToken();
+        token.setUser(user);
+        token.setExpiryDate(expiration);
+        token.setTokenKey(tokenKey);
+        authWithTokenRepository.save(token);
+
+
+        response.sendRedirect(request.getParameter("cytomine_redirect")+"#/?token="+token.getTokenKey()+"&username="+authentication.getName());
+    }
 
     @PostMapping("/api/authenticate")
     public ResponseEntity<JWTToken> authorize(@Valid @RequestBody LoginVM loginVM) {
