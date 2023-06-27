@@ -108,7 +108,15 @@ public class LoginLTIController extends RestCytomineController {
         SecurityContextHolder.getContext().setAuthentication(newAuth);
         String token = tokenProvider.createToken(newAuth, TokenType.SESSION);
         response.setHeader(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
-        return new RedirectView(applicationProperties.getServerURL() + "/" + loginWithRedirection.getRedirection() +"?redirect_token=" + URLEncoder.encode(token, Charset.defaultCharset()));
+        String redirectURL;
+        if(loginWithRedirection.getRedirection().startsWith("http"))
+        {
+           redirectURL = loginWithRedirection.getRedirection() ;
+        }else{
+          redirectURL = applicationProperties.getServerURL() + (loginWithRedirection.getRedirection().startsWith("/") ? "" : "/") + loginWithRedirection.getRedirection();
+        }
+        log.debug("Redirect to {}", redirectURL);
+        return new RedirectView(redirectURL+"?redirect_token=" + URLEncoder.encode(token, Charset.defaultCharset()));
     }
 
 }
