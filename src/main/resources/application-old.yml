@@ -1,11 +1,17 @@
+# This configuration replicates the 'src/main/resources/application.yml' as it was
+# before refactoring the configurations files into relevant profiles.
+# It is mainly there for the record.  
+
 spring:
   main:
-    #    lazy-initialization: true
+#    lazy-initialization: true
     allow-circular-references: true
+  thymeleaf:
+    prefix: 'classpath:/templates/'
 
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:postgresql://localhost:5432/docker
+    url: jdbc:postgresql://localhost:5442/docker
     username: docker
     password: docker
     hikari:
@@ -16,22 +22,14 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         jdbc:
-          batch_size: 500
-
-  mail:
-    host: disabled
-    port: 587
-    username: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: postmaster@sandboxdcb41...5909.mailgun.org
-    password: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: 0da253cf5...24-4662f38e
+          batch_size: 50
   # Replace by 'prod, faker' to add the faker context and have sample data loaded in production
   #liquibase:
   #  contexts: prod
   liquibase:
     change-log: classpath:config/liquibase/master.xml
-  profiles:
-    active: test
 
   data:
     mongodb:
@@ -39,44 +37,46 @@ spring:
       username: mongoadmin
       password: secret
       database: cytomine
-      port: 27017
+      port: 27028
       host: localhost
 
-      #uri: 'mongodb://mongoadmin:secret@localhost:27018/cytomine?authSource=admin&retryWrites=false' #?retryWrites=false&authSource=admin'
-      #auto-index-creation: true
-mongock:
-  migration-scan-package:
-    be.cytomine.config.nosqlmigration
+  mail:
+    host: smtp.mailgun.org
+    port: 587
+    username: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: postmaster@sandboxdcb41...5909.mailgun.org
+    password: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: 0da253cf5...24-4662f38e
 
+server:
   port: 8080
 
 javamelody:
   enabled: false
-
-logging:
-  level:
-    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
-#    org.hibernate.type.descriptor.sql: TRACE
+#  url-exclude-pattern: /notify*
+  init-parameters:
+    authorized-users: null
+    storage-directory: /tmp/javamelody-core
 
 application:
+  version: 0.0.0 # do not modify this, it will be replace during build (ci)
   serverId: default
-  serverURL: http://localhost:8080
-  adminPassword: password
+  serverURL: http://localhost-core
+  adminPassword: adminPassword
   adminEmail: adminEmail@adminEmail.com
   adminPrivateKey: adminPrivateKey
   adminPublicKey: adminPublicKey
   superAdminPrivateKey: superAdminPrivateKey
   superAdminPublicKey: superAdminPublicKey
-  ImageServerPrivateKey: imageServerPrivateKey
-  ImageServerPublicKey: imageServerPublicKey
+  ImageServerPrivateKey: 2fd0480e-0d83-453b-b4fc-b75da8fed1a2
+  ImageServerPublicKey: e87916c4-549c-4806-8605-f756e646d778
   rabbitMQPrivateKey: rabbitMQPrivateKey
   rabbitMQPublicKey: rabbitMQPublicKey
   softwareSources: softwareSources/
   useHTTPInternally: true
+  storagePath: "/data/images"
 
-  instanceHostWebsite: instanceHostWebsite.com
-  instanceHostSupportMail: instanceHostSupportMail@email.com
-  instanceHostPhoneNumber: 0999999999
+  instanceHostWebsite: "https://www.cytomine.org"
+  instanceHostSupportMail: "support@cytomine.coop"
+  instanceHostPhoneNumber:
 
   authentication:
     jwt:
@@ -85,12 +85,13 @@ application:
       # Token is valid 24 hours
       token-validity-in-seconds: 86400
       token-validity-in-seconds-for-remember-me: 2592000
-      token-validity-in-seconds-for-short-term: 300
+      token-validity-in-seconds-for-short-term: 240
+
 
 
 
   defaultLanguage: ENGLISH
-  imageServerURL: [http://ims.cytomine.local]
+  imageServerURL: [http://localhost-ims]
   messageBrokerServerURL: messageBrokerServerURL
   annotation:
     maxNumberOfPoint: 200
@@ -100,6 +101,10 @@ application:
 
   notification:
     email: email@email.com
+#    password: password
+#    smtpHost: host
+#    smtpPort: 1
+
 
   customUI:
     global:
@@ -108,7 +113,7 @@ application:
       project: [ "ALL" ]
       ontology: [ "ROLE_ADMIN" ]
       storage: [ "ROLE_USER","ROLE_ADMIN" ]
-      software: [ "ROLE_USER", "ROLE_ADMIN" ]
+      software: [ "ROLE_ADMIN" ]
       activity: [ "ALL" ]
       admin: [ "ROLE_ADMIN" ]
       help: [ "ALL" ]
@@ -144,6 +149,9 @@ application:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
       project-explore-image-tags:
+        ADMIN_PROJECT: true
+        CONTRIBUTOR_PROJECT: true
+      project-explore-image-tracks:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
       project-explore-image-properties:

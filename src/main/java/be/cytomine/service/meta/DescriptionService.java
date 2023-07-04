@@ -1,31 +1,28 @@
 package be.cytomine.service.meta;
 
 /*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2009-2022. Authors: see NOTICE file.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
-import be.cytomine.domain.image.CompanionFile;
 import be.cytomine.domain.meta.Description;
 import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.meta.DescriptionRepository;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.service.CurrentUserService;
@@ -97,51 +94,38 @@ public class DescriptionService extends ModelService {
     }
 
     public CommandResponse add(JsonObject jsonObject) {
-        securityACLService.checkCurrentUserIsUser();
-        if(jsonObject.getJSONAttrStr("domainClassName").equals(Project.class.getName())){
-            securityACLService.check(jsonObject.getJSONAttrLong("domainIdent"),jsonObject.getJSONAttrStr("domainClassName"),READ);
-            securityACLService.checkIsNotReadOnly(jsonObject.getJSONAttrLong("domainIdent"),jsonObject.getJSONAttrStr("domainClassName"));
-        } else if(jsonObject.getJSONAttrStr("domainClassName").contains("AnnotationDomain")){
+        SecUser currentUser = currentUserService.getCurrentUser();
+        //Get the associated domain
+        CytomineDomain domain = getCytomineDomain(jsonObject.getJSONAttrStr("domainClassName"), jsonObject.getJSONAttrLong("domainIdent"));
+        //TODO when is getting into this?
+        if(jsonObject.getJSONAttrStr("domainClassName").contains("AnnotationDomain")) {
+            //I am adding this in case this is used, to check a min of ROLE_USER
+            securityACLService.checkUser(currentUser);
             AnnotationDomain annotation = annotationDomainRepository.findById(jsonObject.getJSONAttrLong("domainIdent"))
                     .orElseThrow(() -> new ObjectNotFoundException("AnnotationDomain", jsonObject.getJSONAttrLong("domainIdent")));
             jsonObject.put("domainClassName", annotation.getClass().getName());
-            securityACLService.check(jsonObject.getJSONAttrLong("domainIdent"),annotation.getClass().getName(),READ);
-            securityACLService.checkFullOrRestrictedForOwner(jsonObject.getJSONAttrLong("domainIdent"),annotation.getClass().getName(), "user");
-        } else {
-            securityACLService.check(jsonObject.getJSONAttrLong("domainIdent"),jsonObject.getJSONAttrStr("domainClassName"),READ);
-            securityACLService.checkFullOrRestrictedForOwner(jsonObject.getJSONAttrLong("domainIdent"),jsonObject.getJSONAttrStr("domainClassName"), "user");
+            securityACLService.check(jsonObject.getJSONAttrLong("domainIdent"), annotation.getClass().getName(), READ);
+            securityACLService.checkFullOrRestrictedForOwner(jsonObject.getJSONAttrLong("domainIdent"), annotation.getClass().getName(), "user");
+        }else{
+            securityACLService.checkUserAccessRightsForMeta( domain,  currentUser);
         }
-
-        SecUser currentUser = currentUserService.getCurrentUser();
         Command command = new AddCommand(currentUser,null);
         return executeCommand(command,null, jsonObject);
     }
 
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        securityACLService.checkCurrentUserIsUser();
-        Description description = (Description)domain;
-        securityACLService.check(description.container(),READ);
-
-        if(description.getDomainClassName().equals(Project.class.getName())){
-            securityACLService.checkIsNotReadOnly(description);
-        } else {
-            securityACLService.checkFullOrRestrictedForOwner(description.getDomainIdent(),description.getDomainClassName(), "user");
-        }
         SecUser currentUser = currentUserService.getCurrentUser();
+        CytomineDomain parentDomain = getCytomineDomain(((Description) domain).getDomainClassName(), ((Description) domain).getDomainIdent());
+        securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
     }
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        securityACLService.checkCurrentUserIsUser();
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.check(domain.container(),READ);
-        if (domain.userDomainCreator()!=null) {
-            securityACLService.checkFullOrRestrictedForOwner(domain,domain.userDomainCreator());
-        } else {
-            securityACLService.checkIsNotReadOnly(domain);
-        }
+        CytomineDomain parentDomain = getCytomineDomain(((Description) domain).getDomainClassName(), ((Description) domain).getDomainIdent());
+        securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }

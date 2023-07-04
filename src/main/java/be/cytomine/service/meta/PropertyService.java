@@ -19,11 +19,9 @@ package be.cytomine.service.meta;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.meta.Configuration;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.service.CurrentUserService;
@@ -31,6 +29,7 @@ import be.cytomine.service.ModelService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.ResourcesUtils;
 import be.cytomine.utils.Task;
 import com.vividsolutions.jts.geom.Geometry;
 import lombok.extern.slf4j.Slf4j;
@@ -40,13 +39,11 @@ import org.springframework.stereotype.Service;
 import javax.persistence.Query;
 import javax.persistence.Tuple;
 import javax.transaction.Transactional;
-import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static be.cytomine.utils.SQLUtils.castToLong;
 import static org.springframework.security.acls.domain.BasePermission.READ;
-import static org.springframework.security.acls.domain.BasePermission.WRITE;
 
 @Slf4j
 @Service
@@ -77,16 +74,21 @@ public class PropertyService extends ModelService {
     }
 
     public List<Property> list(CytomineDomain cytomineDomain) {
-        if(!cytomineDomain.getClass().getName().contains("AbstractImage")) {
+        // This is to filter out image metadata properties for users in case project is in blind mode
+        if(cytomineDomain.getClass().getName().contains("ImageInstance")&&securityACLService.isFilterRequired((Project) cytomineDomain.container())) {
+            List<String> prefixesToFilter= ResourcesUtils.getPropertiesValuesList();
+            List<Property> values = propertyRepository.findByDomainIdentAndExcludedKeys(cytomineDomain.getId(), String.join(";", prefixesToFilter));
+            return values;
+        }else{
             securityACLService.check(cytomineDomain.container(),READ);
+            return propertyRepository.findAllByDomainIdent(cytomineDomain.getId());
         }
-        return propertyRepository.findAllByDomainIdent(cytomineDomain.getId());
     }
 
     public Optional<Property> findById(Long id) {
-        
+
         Optional<Property> property = propertyRepository.findById(id);
-        if (property.isPresent() && !property.get().getDomainClassName().contains("AbstractImage") && !property.get().getDomainClassName().contains("Software")) {
+        if (property.isPresent()  && !property.get().getDomainClassName().contains("Software")) {
             securityACLService.check(property.get().container(),READ);
         }
         return property;
@@ -94,7 +96,7 @@ public class PropertyService extends ModelService {
 
     public Optional<Property> findByDomainAndKey(CytomineDomain domain, String key) {
         Optional<Property> property = propertyRepository.findByDomainIdentAndKey(domain.getId(), key);
-        if (property.isPresent() && !property.get().getDomainClassName().contains("AbstractImage") && !property.get().getDomainClassName().contains("Software")) {
+        if (property.isPresent()  && !property.get().getDomainClassName().contains("Software")) {
             securityACLService.check(property.get().container(),READ);
         }
         return property;
@@ -106,35 +108,14 @@ public class PropertyService extends ModelService {
     }
 
     public CommandResponse add(JsonObject jsonObject, Transaction transaction, Task task) {
-        securityACLService.checkCurrentUserIsUser();
-        CytomineDomain domain = null;
-        try {
-            domain = (CytomineDomain)getEntityManager()
-                    .find(Class.forName(jsonObject.getJSONAttrStr("domainClassName")), jsonObject.getJSONAttrLong("domainIdent"));
-        } catch (ClassNotFoundException ignored) {
-        }
-        if (domain==null) {
-            throw new WrongArgumentException("Property has no associated domain:"+ jsonObject.toJsonString());
-        }
-
-        log.debug("check permission: " +  domain);
-        securityACLService.check(domain.container(),READ);
-        if (!domain.getClass().getName().contains("AbstractImage")) {
-            if (domain instanceof Project) {
-                securityACLService.check(domain.container(),WRITE);
-            }
-            log.debug("check if userDomainCreator: " +  domain);
-            if (domain.userDomainCreator()!=null) {
-                log.debug("userDomainCreator " + domain.userDomainCreator().getUsername() );
-                log.debug("current user " + currentUserService.getCurrentUsername() );
-                securityACLService.checkFullOrRestrictedForOwner(domain, domain.userDomainCreator());
-            } else {
-                log.debug("check if not readonly " + domain);
-                securityACLService.checkIsNotReadOnly(domain);
-            }
-        }
-
         SecUser currentUser = currentUserService.getCurrentUser();
+        CytomineDomain domain = getCytomineDomain(jsonObject.getJSONAttrStr("domainClassName"), jsonObject.getJSONAttrLong("domainIdent"));
+        if(!domain.getClass().getName().contains("AbstractImage")) {
+            securityACLService.checkUserAccessRightsForMeta( domain,  currentUser);
+        }else{
+            //TODO when is this used ?
+            securityACLService.checkUser(currentUser);
+        }
         Command command = new AddCommand(currentUser,transaction);
         return executeCommand(command,null, jsonObject);
     }
@@ -151,48 +132,26 @@ public class PropertyService extends ModelService {
 
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        securityACLService.checkCurrentUserIsUser();
-        Property property = (Property)domain;
-        if(!property.getDomainClassName().contains("AbstractImage")) {
-            securityACLService.check(property.container(),READ);
-            CytomineDomain parent = null;
-            try {
-                parent = (CytomineDomain)getEntityManager()
-                        .find(Class.forName(property.getDomainClassName()), property.getDomainIdent());
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-            if (parent!=null && parent.userDomainCreator()!=null) {
-                securityACLService.checkFullOrRestrictedForOwner(property, parent.userDomainCreator());
-            } else {
-                securityACLService.checkIsNotReadOnly(property);
-            }
-        }
         SecUser currentUser = currentUserService.getCurrentUser();
+        CytomineDomain parentDomain = getCytomineDomain(((Property) domain).getDomainClassName(), ((Property) domain).getDomainIdent());
+        if(!parentDomain.getClass().getName().contains("AbstractImage")) {
+            securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
+        }else{
+            //TODO when is this used ?
+            securityACLService.checkUser(currentUser);
+        }
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
     }
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkCurrentUserIsUser();
-        Property property = (Property)domain;
-        if(!property.getDomainClassName().contains("AbstractImage")) {
-            securityACLService.check(property.container(),READ);
-            CytomineDomain parent = null;
-            try {
-                parent = (CytomineDomain)getEntityManager()
-                        .find(Class.forName(property.getDomainClassName()), property.getDomainIdent());
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-            if (parent!=null && parent.userDomainCreator()!=null) {
-                securityACLService.checkFullOrRestrictedForOwner(property, parent.userDomainCreator());
-            }  else if (((Property) domain).getDomainClassName().contains("Project")){
-                securityACLService.check(((Property) domain).getDomainIdent(),((Property) domain).getDomainClassName(), WRITE);
-            } else {
-                securityACLService.checkIsNotReadOnly(property);
-            }
+        CytomineDomain parentDomain = getCytomineDomain(((Property) domain).getDomainClassName(), ((Property) domain).getDomainIdent());
+        if(!parentDomain.getClass().getName().contains("AbstractImage")) {
+            securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
+        }else{
+            //TODO when is this used ?
+            securityACLService.checkUser(currentUser);
         }
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);

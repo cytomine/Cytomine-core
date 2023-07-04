@@ -1,117 +1,15 @@
-spring:
-  main:
-    #    lazy-initialization: true
-    allow-circular-references: true
-
-  datasource:
-    type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:postgresql://localhost:5432/docker
-    username: docker
-    password: docker
-    hikari:
-      poolName: Hikari
-      auto-commit: false
-  jpa:
-    database-platform: be.cytomine.config.CustomPostgreSQLDialect
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-        jdbc:
-          batch_size: 500
-
-  mail:
-    host: disabled
-    port: 587
-    username: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: postmaster@sandboxdcb41...5909.mailgun.org
-    password: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: 0da253cf5...24-4662f38e
-  # Replace by 'prod, faker' to add the faker context and have sample data loaded in production
-  #liquibase:
-  #  contexts: prod
-  liquibase:
-    change-log: classpath:config/liquibase/master.xml
-  profiles:
-    active: test
-
-  data:
-    mongodb:
-      authentication-database: admin
-      username: mongoadmin
-      password: secret
-      database: cytomine
-      port: 27017
-      host: localhost
-
-      #uri: 'mongodb://mongoadmin:secret@localhost:27018/cytomine?authSource=admin&retryWrites=false' #?retryWrites=false&authSource=admin'
-      #auto-index-creation: true
-mongock:
-  migration-scan-package:
-    be.cytomine.config.nosqlmigration
-
-  port: 8080
-
-javamelody:
-  enabled: false
-
-logging:
-  level:
-    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
-#    org.hibernate.type.descriptor.sql: TRACE
-
 application:
-  serverId: default
-  serverURL: http://localhost:8080
-  adminPassword: password
-  adminEmail: adminEmail@adminEmail.com
-  adminPrivateKey: adminPrivateKey
-  adminPublicKey: adminPublicKey
-  superAdminPrivateKey: superAdminPrivateKey
-  superAdminPublicKey: superAdminPublicKey
-  ImageServerPrivateKey: imageServerPrivateKey
-  ImageServerPublicKey: imageServerPublicKey
-  rabbitMQPrivateKey: rabbitMQPrivateKey
-  rabbitMQPublicKey: rabbitMQPublicKey
-  softwareSources: softwareSources/
-  useHTTPInternally: true
-
-  instanceHostWebsite: instanceHostWebsite.com
-  instanceHostSupportMail: instanceHostSupportMail@email.com
-  instanceHostPhoneNumber: 0999999999
-
-  authentication:
-    jwt:
-      # This token must be encoded using Base64 and be at least 256 bits long (you can type `openssl rand -base64 64` on your command line to generate a 512 bits one)
-      secret: +MbQeThWmZq4t6w9z$C&F)J@NcRfUjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9y$B?
-      # Token is valid 24 hours
-      token-validity-in-seconds: 86400
-      token-validity-in-seconds-for-remember-me: 2592000
-      token-validity-in-seconds-for-short-term: 300
-
-
-
-  defaultLanguage: ENGLISH
-  imageServerURL: [http://ims.cytomine.local]
-  messageBrokerServerURL: messageBrokerServerURL
-  annotation:
-    maxNumberOfPoint: 200
-  software:
-    path:
-      softwareImages: softwareImages/
-
-  notification:
-    email: email@email.com
-
   customUI:
     global:
       dashboard: ["ALL"]
-      search: [ "ROLE_ADMIN" ]
-      project: [ "ALL" ]
-      ontology: [ "ROLE_ADMIN" ]
-      storage: [ "ROLE_USER","ROLE_ADMIN" ]
-      software: [ "ROLE_USER", "ROLE_ADMIN" ]
-      activity: [ "ALL" ]
-      admin: [ "ROLE_ADMIN" ]
-      help: [ "ALL" ]
+      search: ["ROLE_ADMIN"]
+      project: ["ALL"]
+      ontology: ["ROLE_ADMIN"]
+      storage: ["ROLE_USER","ROLE_ADMIN"]
+      software: ["ROLE_ADMIN"]
+      activity: ["ALL"]
+      admin: ["ROLE_ADMIN"]
+      help: ["ALL"]
       feedback: ["ROLE_USER","ROLE_ADMIN"]
       explore: ["ROLE_USER","ROLE_ADMIN"]
 
@@ -144,6 +42,9 @@ application:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
       project-explore-image-tags:
+        ADMIN_PROJECT: true
+        CONTRIBUTOR_PROJECT: true
+      project-explore-image-tracks:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
       project-explore-image-properties:
@@ -237,6 +138,9 @@ application:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
       project-explore-annotation-tracks:
+        ADMIN_PROJECT: true
+        CONTRIBUTOR_PROJECT: true
+      project-explore-image-metadata:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
       project-tools-main:

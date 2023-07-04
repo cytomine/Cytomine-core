@@ -19,20 +19,14 @@ package be.cytomine.authorization.ontology;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.authorization.CRUDAuthorizationTest;
-import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.AnnotationTerm;
-import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.EditingMode;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.User;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -173,16 +167,16 @@ public class UserAnnotationAuthorizationTest extends CRUDAuthorizationTest {
 
     @Override
     protected Optional<String> minimalRoleForCreate() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
     @Override
     protected Optional<String> minimalRoleForDelete() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 
     @Override
     protected Optional<String> minimalRoleForEdit() {
-        return Optional.of("ROLE_USER");
+        return Optional.of("ROLE_GUEST");
     }
 }

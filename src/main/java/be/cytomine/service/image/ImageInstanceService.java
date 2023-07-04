@@ -28,6 +28,7 @@ import be.cytomine.repository.image.AbstractSliceRepository;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.image.NestedImageInstanceRepository;
 import be.cytomine.repository.image.SliceInstanceRepository;
+import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.repository.ontology.*;
 import be.cytomine.repositorynosql.social.AnnotationActionRepository;
 import be.cytomine.repositorynosql.social.LastUserPositionRepository;
@@ -145,6 +146,9 @@ public class ImageInstanceService extends ModelService {
 
     @Autowired
     PropertyService propertyService;
+
+    @Autowired
+    PropertyRepository propertyRepository;
 
     @Autowired
     AnnotationTrackRepository annotationTrackRepository;
@@ -773,6 +777,15 @@ public class ImageInstanceService extends ModelService {
             sliceInstance.setImage((ImageInstance)domain);
             sliceInstance.setProject(((ImageInstance)domain).getProject());
             sliceInstanceRepository.save(sliceInstance);
+        }
+        //We copy the properties from baseImage so image instance will have the image metadata properties
+        AbstractImage ai = ((ImageInstance) domain).getBaseImage();
+        for (Property property : propertyRepository.findAllByDomainIdent(ai.getId())) {
+            Property p= new Property();
+            p.setKey(property.getKey());
+            p.setValue(property.getValue());
+            p.setDomain(domain);
+            propertyService.add(p.toJsonObject());
         }
 
     }
