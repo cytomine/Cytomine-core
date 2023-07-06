@@ -52,6 +52,23 @@ lint-dockerfiles:
     - when: never
       allow_failure: true
 
+lint-dockerfiles:
+  stage: prepare
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/hadolint/hadolint:latest-alpine
+  # Uncomment to silent some warnings if needed
+  #variables:
+  #  HADOLINT_OPT: --ignore DL3008
+  script:
+    - hadolint ${HADOLINT_OPT} docker/Dockerfile
+  rules:
+    - changes:
+        - docker/Dockerfile
+      when: always
+
+    # If the Dockerfile has not been changed, this job can be skipped
+    - when: never
+      allow_failure: true
+
 make-version-name:
   stage: prepare
   # regex check does not work with /bin/sh because of parenthesis so we need /bin/bash here
