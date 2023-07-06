@@ -33,7 +33,6 @@ import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.utils.*;
-import liquibase.pro.packaged.fU;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
@@ -200,7 +199,6 @@ public class ImageServerService extends ModelService {
 
     public String downloadUri(UploadedFile uploadedFile) throws IOException {
         return this.buildImageServerInternalFullUrl(uploadedFile, "file", "/export");
-
     }
 
     public String downloadUri(AbstractImage abstractImage) throws IOException {
