@@ -110,6 +110,26 @@ public class ImageServerService extends ModelService {
         return ((List<Map<String,Object>>)jsonObject.get("items")).stream().map(x -> StringUtils.keysToCamelCase(x)).toList();
     }
 
+    public String getImageServerURIWithEncodedPath(UploadedFile uploadedFile, String targetResource, String pathSuffix) {
+        if (uploadedFile.getPath()==null || uploadedFile.getPath().trim().equals("")) {
+            throw new InvalidRequestException("Uploaded file has no valid path.");
+        }
+        String path = uploadedFile.getPath();
+        
+        // Apache reverse proxy does not support '%2F' encoding inside a path
+        // whereas pims supports both '/' and '%2F'. Therefore, we revert the 
+        // encoding of the `/` to support routing through an Apache proxy.
+        // see issue cm/rnd/cytomine/core/core-ce#84
+        String encodedPath = URLEncoder.encode(path ,StandardCharsets.UTF_8).replace("%2F", "/");
+
+        // make sure no double slash
+        targetResource = org.apache.commons.lang3.StringUtils.strip(targetResource, "/");
+        pathSuffix = org.apache.commons.lang3.StringUtils.strip(pathSuffix, "/");
+        encodedPath = org.apache.commons.lang3.StringUtils.strip(encodedPath, "/");
+
+        return "/" + targetResource + "/" + encodedPath + "/" + pathSuffix;
+    }
+
 
     public String downloadUri(UploadedFile uploadedFile) throws IOException {
         if (uploadedFile.getPath()==null || uploadedFile.getPath().trim().equals("")) {

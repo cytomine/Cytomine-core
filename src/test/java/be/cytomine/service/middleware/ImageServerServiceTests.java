@@ -781,4 +781,20 @@ public class ImageServerServiceTests {
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
         all.subList(Math.max(all.size() - 3, 0), all.size()).forEach(x -> System.out.println(x.getMethod() + " " + x.getAbsoluteUrl() + " " + x.getBodyAsString()));
     }
+    
+    @Test
+    void test_get_image_server_uri_with_encoded_path() {
+        UploadedFile uploadedFile = builder.given_a_uploaded_file();
+
+        uploadedFile.setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG");
+        assertThat(imageServerService.getImageServerURIWithEncodedPath(uploadedFile, "file", "/upload"))
+                .isEqualTo("/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG/upload");
+
+
+        uploadedFile.setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file??.JPG");
+        assertThat(imageServerService.getImageServerURIWithEncodedPath(uploadedFile, "file", "/upload"))
+                .isEqualTo("/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file%3F%3F.JPG/upload");
+
+    }
+
 }
