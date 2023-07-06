@@ -81,6 +81,9 @@ application:
   instanceHostPhoneNumber: ${INSTANCE_HOST_PHONE_NUMBER:+320/000.00.00}
   defaultLanguage: ${DEFAULT_LANGUAGE:ENGLISH}
 
+  notification:
+    email: ${DEFAULT_FROM_EMAIL:no-reply@cytomine.com}
+
   authentication:
     jwt:
       # This token must be encoded using Base64 and be at least 256 bits long (you can type `openssl rand -base64 64` on your command line to generate a 512 bits one)
