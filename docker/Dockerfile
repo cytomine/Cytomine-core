@@ -49,7 +49,7 @@ FROM gradle:${GRADLE_VERSION} AS development
 
 RUN apk update && \
     apk add --no-cache \
-      gettext~=0.21
+    gettext~=0.21
 
 ENV GRADLE_USER_HOME=/opt/gradle/.gradle
 COPY --from=deps-downloader /opt/gradle/.gradle /opt/gradle/.gradle
@@ -106,6 +106,7 @@ RUN mkdir /docker-entrypoint-cytomine.d/
 COPY --from=entrypoint-scripts --chmod=774 /cytomine-entrypoint.sh /usr/local/bin/
 COPY --from=entrypoint-scripts --chmod=774 /envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
 COPY --from=entrypoint-scripts --chmod=774 /configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
+COPY --chmod=774 ./scripts/generate-meta-prefix-file.sh /docker-entrypoint-cytomine.d/875-generate-meta-prefix-file.sh
 
 WORKDIR /app
 ENTRYPOINT ["cytomine-entrypoint.sh"]
