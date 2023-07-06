@@ -110,26 +110,66 @@ public class ImageServerService extends ModelService {
         return ((List<Map<String,Object>>)jsonObject.get("items")).stream().map(x -> StringUtils.keysToCamelCase(x)).toList();
     }
 
-    public String getImageServerURIWithEncodedPath(UploadedFile uploadedFile, String targetResource, String pathSuffix) {
-        if (uploadedFile.getPath()==null || uploadedFile.getPath().trim().equals("")) {
+    /**
+     * Build a pims url path with valid escaping
+     * @param targetResource The prefix resource prepend to the URI path (e.g. 'file', 'image')
+     * @param imsPath The pims path of the resource (a relative file path to the pims file)
+     * @param pathSuffix The suffix resource to append to the URI path  
+     * @return '/{targetResource}/{path}/{pathSuffix}' but done smartly to avoid encoding issues and 
+     */
+    public String buildEncodedUriPath(String targetResource, String imsPath, String pathSuffix) {
+        if (imsPath == null || imsPath.trim().equals("")) {
             throw new InvalidRequestException("Uploaded file has no valid path.");
         }
-        String path = uploadedFile.getPath();
+        
+        // strip "/" (to avoid double slash) and encode 
+        targetResource = org.apache.commons.lang3.StringUtils.strip(targetResource, "/");
+        targetResource = URLEncoder.encode(targetResource, StandardCharsets.UTF_8);
+
+        pathSuffix = org.apache.commons.lang3.StringUtils.strip(pathSuffix, "/");
+        pathSuffix = URLEncoder.encode(pathSuffix, StandardCharsets.UTF_8);
         
         // Apache reverse proxy does not support '%2F' encoding inside a path
         // whereas pims supports both '/' and '%2F'. Therefore, we revert the 
         // encoding of the `/` to support routing through an Apache proxy.
         // see issue cm/rnd/cytomine/core/core-ce#84
-        String encodedPath = URLEncoder.encode(path ,StandardCharsets.UTF_8).replace("%2F", "/");
-
-        // make sure no double slash
-        targetResource = org.apache.commons.lang3.StringUtils.strip(targetResource, "/");
-        pathSuffix = org.apache.commons.lang3.StringUtils.strip(pathSuffix, "/");
+        String encodedPath = URLEncoder.encode(imsPath ,StandardCharsets.UTF_8).replace("%2F", "/");
         encodedPath = org.apache.commons.lang3.StringUtils.strip(encodedPath, "/");
 
         return "/" + targetResource + "/" + encodedPath + "/" + pathSuffix;
     }
 
+    public String buildImageServerFullUrl(UploadedFile uploadedFile, String targetResource, String pathSuffix) {
+        String serverUrl = uploadedFile.getImageServerUrl();
+        if (serverUrl == null) {
+            throw new InvalidRequestException("No image server URL registered");
+        }
+        return serverUrl + this.buildEncodedUriPath(targetResource, uploadedFile.getPath(), pathSuffix);
+    }
+
+    public String buildImageServerFullUrl(AbstractImage abstractImage, String targetResource, String pathSuffix) {
+        String serverUrl = abstractImage.getImageServerUrl();
+        if (serverUrl == null) {
+            throw new InvalidRequestException("No image server URL registered");
+        }
+        return serverUrl + this.buildEncodedUriPath(targetResource, abstractImage.getPath(), pathSuffix);
+    }
+
+    public String buildImageServerInternalFullUrl(UploadedFile uploadedFile, String targetResource, String pathSuffix) {
+        String serverUrl = uploadedFile.getImageServerInternalUrl();
+        if (serverUrl == null) {
+            throw new InvalidRequestException("No image server URL registered");
+        }
+        return serverUrl + this.buildEncodedUriPath(targetResource, uploadedFile.getPath(), pathSuffix);
+    }
+
+    public String buildImageServerInternalFullUrl(AbstractImage abstractImage, String targetResource, String pathSuffix) {
+        String serverUrl = abstractImage.getImageServerInternalUrl();
+        if (serverUrl == null) {
+            throw new InvalidRequestException("No image server URL registered");
+        }
+        return serverUrl + this.buildEncodedUriPath(targetResource, abstractImage.getPath(), pathSuffix);
+    }
 
     public String downloadUri(UploadedFile uploadedFile) throws IOException {
         if (uploadedFile.getPath()==null || uploadedFile.getPath().trim().equals("")) {

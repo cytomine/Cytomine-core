@@ -783,17 +783,35 @@ public class ImageServerServiceTests {
     }
     
     @Test
-    void test_get_image_server_uri_with_encoded_path() {
+    void test_build_image_server_url_functions() {
         UploadedFile uploadedFile = builder.given_a_uploaded_file();
+        String serverUrl1 = uploadedFile.getImageServerUrl();
 
         uploadedFile.setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG");
-        assertThat(imageServerService.getImageServerURIWithEncodedPath(uploadedFile, "file", "/upload"))
-                .isEqualTo("/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG/upload");
+        assertThat(imageServerService.buildImageServerFullUrl(uploadedFile, "file", "/upload"))
+                .isEqualTo(serverUrl1 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG/upload");
 
 
         uploadedFile.setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file??.JPG");
-        assertThat(imageServerService.getImageServerURIWithEncodedPath(uploadedFile, "file", "/upload"))
-                .isEqualTo("/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file%3F%3F.JPG/upload");
+        assertThat(imageServerService.buildImageServerFullUrl(uploadedFile, "file", "/upload"))
+                .isEqualTo(serverUrl1 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file%3F%3F.JPG/upload");
+
+        AbstractImage abstractImage = builder.given_an_abstract_image();
+        String serverUrl2 = abstractImage.getImageServerUrl(),
+                internalServerUrl2 = abstractImage.getImageServerInternalUrl();
+
+        abstractImage.getUploadedFile().setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG");
+        assertThat(imageServerService.buildImageServerFullUrl(abstractImage, "file", "/upload"))
+                .isEqualTo(serverUrl2 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG/upload");
+        assertThat(imageServerService.buildImageServerInternalFullUrl(abstractImage, "file", "/upload"))
+                .isEqualTo(internalServerUrl2 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG/upload");
+
+
+        abstractImage.getUploadedFile().setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file??.JPG");
+        assertThat(imageServerService.buildImageServerFullUrl(abstractImage, "file", "/upload"))
+                .isEqualTo(serverUrl2 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file%3F%3F.JPG/upload");
+        assertThat(imageServerService.buildImageServerInternalFullUrl(abstractImage, "file", "/upload"))
+                .isEqualTo(internalServerUrl2 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file%3F%3F.JPG/upload");
 
     }
 
