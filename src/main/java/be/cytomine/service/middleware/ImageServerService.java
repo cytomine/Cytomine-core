@@ -33,6 +33,8 @@ import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.utils.*;
+import liquibase.pro.packaged.fU;
+
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
@@ -117,17 +119,14 @@ public class ImageServerService extends ModelService {
      * @param pathSuffix The suffix resource to append to the URI path  
      * @return '/{targetResource}/{path}/{pathSuffix}' but done smartly to avoid encoding issues and 
      */
-    public String buildEncodedUriPath(String targetResource, String imsPath, String pathSuffix) {
+    protected String buildEncodedUri(String targetResource, String imsPath, String pathSuffix) {
         if (imsPath == null || imsPath.trim().equals("")) {
             throw new InvalidRequestException("Uploaded file has no valid path.");
         }
         
         // strip "/" (to avoid double slash) and encode 
         targetResource = org.apache.commons.lang3.StringUtils.strip(targetResource, "/");
-        targetResource = URLEncoder.encode(targetResource, StandardCharsets.UTF_8);
-
         pathSuffix = org.apache.commons.lang3.StringUtils.strip(pathSuffix, "/");
-        pathSuffix = URLEncoder.encode(pathSuffix, StandardCharsets.UTF_8);
         
         // Apache reverse proxy does not support '%2F' encoding inside a path
         // whereas pims supports both '/' and '%2F'. Therefore, we revert the 
@@ -139,12 +138,24 @@ public class ImageServerService extends ModelService {
         return "/" + targetResource + "/" + encodedPath + "/" + pathSuffix;
     }
 
+    protected String buildEncodedUri(String targetResource, UploadedFile uploadedFile, String pathSuffix) {
+        return this.buildEncodedUri(targetResource, uploadedFile.getPath(), pathSuffix);
+    }
+
+    protected String buildEncodedUri(String targetResource, AbstractImage abstractImage, String pathSuffix) {
+        return this.buildEncodedUri(targetResource, abstractImage.getPath(), pathSuffix);
+    }
+
+    protected String buildEncodedUri(String targetResource, AbstractSlice abstractSlice, String pathSuffix) {
+        return this.buildEncodedUri(targetResource, abstractSlice.getPath(), pathSuffix);
+    }
+
     public String buildImageServerFullUrl(UploadedFile uploadedFile, String targetResource, String pathSuffix) {
         String serverUrl = uploadedFile.getImageServerUrl();
         if (serverUrl == null) {
             throw new InvalidRequestException("No image server URL registered");
         }
-        return serverUrl + this.buildEncodedUriPath(targetResource, uploadedFile.getPath(), pathSuffix);
+        return serverUrl + this.buildEncodedUri(targetResource, uploadedFile, pathSuffix);
     }
 
     public String buildImageServerFullUrl(AbstractImage abstractImage, String targetResource, String pathSuffix) {
@@ -152,7 +163,15 @@ public class ImageServerService extends ModelService {
         if (serverUrl == null) {
             throw new InvalidRequestException("No image server URL registered");
         }
-        return serverUrl + this.buildEncodedUriPath(targetResource, abstractImage.getPath(), pathSuffix);
+        return serverUrl + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
+    }
+
+    public String buildImageServerFullUrl(AbstractSlice abstractSlice, String targetResource, String pathSuffix) {
+        String serverUrl = abstractSlice.getImageServerUrl();
+        if (serverUrl == null) {
+            throw new InvalidRequestException("No image server URL registered");
+        }
+        return serverUrl + this.buildEncodedUri(targetResource, abstractSlice, pathSuffix);
     }
 
     public String buildImageServerInternalFullUrl(UploadedFile uploadedFile, String targetResource, String pathSuffix) {
@@ -160,7 +179,7 @@ public class ImageServerService extends ModelService {
         if (serverUrl == null) {
             throw new InvalidRequestException("No image server URL registered");
         }
-        return serverUrl + this.buildEncodedUriPath(targetResource, uploadedFile.getPath(), pathSuffix);
+        return serverUrl + this.buildEncodedUri(targetResource, uploadedFile, pathSuffix);
     }
 
     public String buildImageServerInternalFullUrl(AbstractImage abstractImage, String targetResource, String pathSuffix) {
@@ -168,27 +187,24 @@ public class ImageServerService extends ModelService {
         if (serverUrl == null) {
             throw new InvalidRequestException("No image server URL registered");
         }
-        return serverUrl + this.buildEncodedUriPath(targetResource, abstractImage.getPath(), pathSuffix);
+        return serverUrl + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
+    }
+    
+    public String buildImageServerInternalFullUrl(AbstractSlice abstractSlice, String targetResource, String pathSuffix) {
+        String serverUrl = abstractSlice.getImageServerInternalUrl();
+        if (serverUrl == null) {
+            throw new InvalidRequestException("No image server URL registered");
+        }
+        return serverUrl + this.buildEncodedUri(targetResource, abstractSlice, pathSuffix);
     }
 
     public String downloadUri(UploadedFile uploadedFile) throws IOException {
-        if (uploadedFile.getPath()==null || uploadedFile.getPath().trim().equals("")) {
-            throw new InvalidRequestException("Uploaded file has no valid path.");
-        }
-        // It gets the file specified in the uri.
-        String uri = "/file/"+URLEncoder.encode(uploadedFile.getPath() ,StandardCharsets.UTF_8) +"/export";
-        return uploadedFile.getImageServer().getUrl()+uri;
+        return this.buildImageServerInternalFullUrl(uploadedFile, "file", "/export");
 
     }
 
     public String downloadUri(AbstractImage abstractImage) throws IOException {
-        UploadedFile uploadedFile = abstractImage.getUploadedFile();
-        if (uploadedFile.getPath()==null || uploadedFile.getPath().trim().equals("")) {
-            throw new InvalidRequestException("Uploaded file has no valid path.");
-        }
-        // It gets the file specified in the uri.
-        String uri = "/image/"+URLEncoder.encode(uploadedFile.getPath() ,StandardCharsets.UTF_8) +"/export";
-        return uploadedFile.getImageServer().getUrl()+uri;
+        return this.buildImageServerFullUrl(abstractImage, "image", "/export");
     }
 
     public String downloadUri(CompanionFile companionFile) throws IOException {
@@ -196,22 +212,18 @@ public class ImageServerService extends ModelService {
     }
 
     public Map<String, Object> properties(AbstractImage image) throws IOException {
-        String server = image.getImageServerInternalUrl();
-        String path = image.getPath();
-        String content = getContentFromUrl(server + "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/info");
-        return JsonObject.toMap(content);
+        String fullUrl = this.buildImageServerInternalFullUrl(image, "image", "/info");
+        return JsonObject.toMap(getContentFromUrl(fullUrl));
     }
 
     public List<Map<String, Object>> rawProperties(AbstractImage image) throws IOException {
-        String server = image.getImageServerInternalUrl();
-        String path = image.getPath();
-        String content = getContentFromUrl(server + "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/metadata");
-        return JsonObject.toJsonObject(content).getJSONAttrListMap("items");
+        String fullUrl = this.buildImageServerInternalFullUrl(image, "image", "/metadata");
+        return JsonObject.toJsonObject(getContentFromUrl(fullUrl)).getJSONAttrListMap("items");
     }
+
     public Map<String, Object> imageHistogram(AbstractImage image, int nBins) {
         String server = image.getImageServerInternalUrl();
-        String path = image.getPath();
-        String uri = "/image/"+URLEncoder.encode(path ,StandardCharsets.UTF_8)+"/histogram/per-image";
+        String uri = this.buildEncodedUri("image", image, "/histogram/per-image");
         LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
         PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
         Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
@@ -224,8 +236,7 @@ public class ImageServerService extends ModelService {
 
     public Map<String, Object> imageHistogramBounds(AbstractImage image, int nBins) {
         String server = image.getImageServerInternalUrl();
-        String path = image.getPath();
-        String uri = "/image/"+URLEncoder.encode(path ,StandardCharsets.UTF_8)+"/histogram/per-image/bounds";
+        String uri = this.buildEncodedUri("image", image, "/histogram/per-image/bounds");
         LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
         PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
         Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
@@ -234,8 +245,7 @@ public class ImageServerService extends ModelService {
 
     public List<Map<String, Object>> channelHistograms(AbstractImage image, int nBins) {
         String server = image.getImageServerInternalUrl();
-        String path = image.getPath();
-        String uri = "/image/"+URLEncoder.encode(path ,StandardCharsets.UTF_8)+"/histogram/per-channels";
+        String uri = this.buildEncodedUri("image", image, "/histogram/per-channels");
         LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
         PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
         Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
@@ -246,20 +256,17 @@ public class ImageServerService extends ModelService {
 
     public List<Map<String, Object>> channelHistogramBounds(AbstractImage image) {
         String server = image.getImageServerInternalUrl();
-        String path = image.getPath();
-        String uri = "/image/"+URLEncoder.encode(path ,StandardCharsets.UTF_8)+"/histogram/per-channels/bounds";
+        String uri = this.buildEncodedUri("image", image, "/histogram/per-channels/bounds");
         PimsResponse pimsResponse = makeRequest("GET", server, uri, new LinkedHashMap<>(), "json", Map.of());
         Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
         List<Map<String, Object>> items = (List<Map<String, Object>>) json.get("items");
         return items.stream().map(x -> renameChannelHistogramKeys(StringUtils.keysToCamelCase(x))).toList();
-
     }
 
 
     public List<Map<String, Object>> planeHistograms(AbstractSlice slice, int nBins, boolean allChannels) {
         String server = slice.getImageServerInternalUrl();
-        String path = slice.getPath();
-        String uri = "/image/"+URLEncoder.encode(path ,StandardCharsets.UTF_8)+"/histogram/per-plane/z/" + slice.getZStack() + "/t/" + slice.getTime();
+        String uri = this.buildEncodedUri("image", slice, "/histogram/per-plane/z/" + slice.getZStack() + "/t/" + slice.getTime());
         LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
         if (!allChannels) {
             params.put("channels", slice.getChannel());
@@ -273,8 +280,7 @@ public class ImageServerService extends ModelService {
 
     public List<Map<String, Object>> planeHistogramBounds(AbstractSlice slice, boolean allChannels) {
         String server = slice.getImageServerInternalUrl();
-        String path = slice.getPath();
-        String uri = "/image/"+URLEncoder.encode(path ,StandardCharsets.UTF_8)+"/histogram/per-plane/z/" + slice.getZStack() + "/t/" + slice.getTime() + "/bounds";
+        String uri = this.buildEncodedUri("image", slice, "/histogram/per-plane/z/" + slice.getZStack() + "/t/" + slice.getTime() + "/bounds");
         LinkedHashMap<String, Object> params = new LinkedHashMap<>();
         if (!allChannels) {
             params.put("channels", slice.getChannel());
@@ -364,20 +370,14 @@ public class ImageServerService extends ModelService {
         return JsonObject.toMap(new String(response.getContent()));
     }
 
-
-
     public List<String> associated(AbstractImage image) throws IOException {
-        String server = image.getImageServerInternalUrl();
-        String path = image.getPath();
-        String content = getContentFromUrl(server + ("/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/info/associated"));
-        return JsonObject.toJsonObject(content).getJSONAttrListMap("items").stream().map(x -> (String)x.get("name")).toList();
+        String fullUrl = this.buildImageServerInternalFullUrl(image, "image", "/info/associated");
+        return JsonObject.toJsonObject(getContentFromUrl(fullUrl)).getJSONAttrListMap("items").stream().map(x -> (String)x.get("name")).toList();
     }
 
     public List<String> associated(ImageInstance image) throws IOException {
         return associated(image.getBaseImage());
     }
-
-
 
     public PimsResponse  label(ImageInstance image, LabelParameter params, String etag) {
         return label(image.getBaseImage(), params, etag);
@@ -385,13 +385,11 @@ public class ImageServerService extends ModelService {
 
     public PimsResponse label(AbstractImage image, LabelParameter params, String etag) {
         String server = image.getImageServerInternalUrl();
-        String path = image.getPath();
+        String uri = buildEncodedUri("image", image, "/associated/" + params.getLabel().toLowerCase());
         String format = checkFormat(params.getFormat(), List.of("jpg", "png", "webp"));
 
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
         parameters.put("length", params.getMaxSize());
-
-        String uri = "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/associated/" + params.getLabel().toLowerCase();
 
         Map<String, Object> headers = new LinkedHashMap<>();
         if (etag!=null) {
@@ -409,13 +407,10 @@ public class ImageServerService extends ModelService {
     }
 
     public PimsResponse thumb(AbstractSlice slice, ImageParameter params, String etag) {
-
         String server = slice.getImageServerInternalUrl();
-        String path = slice.getPath();
-
+        String uri = this.buildEncodedUri("image", slice, "/thumb");
         String format = checkFormat(params.getFormat(), List.of("jpg", "png", "webp"));
-        String uri = "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/thumb";
-
+        
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
 
         if (slice.getImage().getChannels()!=null && slice.getImage().getChannels() > 1) {
@@ -433,7 +428,7 @@ public class ImageServerService extends ModelService {
 
         if (params.getBits()!=null) {
             parameters.put("bits", params.getMaxBits() ? "AUTO" : params.getBits());
-            uri = "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/resized";
+            uri = this.buildEncodedUri("image", slice, "/resized");
         }
 
         if (params.getInverse()!=null && params.getInverse()) {
@@ -495,8 +490,7 @@ public class ImageServerService extends ModelService {
     public PimsResponse crop(AbstractSlice slice, CropParameter cropParameter, String etag) throws UnsupportedEncodingException, ParseException {
 
         String server = slice.getImageServerInternalUrl();
-        String path = slice.getPath();
-        String cropUrl = cropUrl(path, cropParameter);
+        String uri = cropUri(slice.getPath(), cropParameter);
         LinkedHashMap<String,Object> parameters = cropParameters(cropParameter);
 
         if (slice.getImage().getChannels()!=null && slice.getImage().getChannels() > 1) {
@@ -519,7 +513,7 @@ public class ImageServerService extends ModelService {
             }
         }
 
-        return makeRequest("POST", server, cropUrl, parameters, format, headers);
+        return makeRequest("POST", server, uri, parameters, format, headers);
     }
 
 
@@ -548,17 +542,17 @@ public class ImageServerService extends ModelService {
         return headers;
     }
 
-    public String cropUrl(String filePath, CropParameter cropParameter) throws UnsupportedEncodingException, ParseException {
+    public String cropUri(String filePath, CropParameter cropParameter) throws UnsupportedEncodingException, ParseException {
 //        LinkedHashMap<String, Object> parameters = cropParameters(cropParameter);
         String uri;
         if (cropParameter.getDraw()!=null && cropParameter.getDraw()) {
-            uri = "/image/"+URLEncoder.encode(filePath, StandardCharsets.UTF_8)+"/annotation/drawing";
+            uri = this.buildEncodedUri("image", filePath, "/annotation/drawing");
         } else if (cropParameter.getMask()!=null && cropParameter.getMask()) {
-            uri = "/image/"+URLEncoder.encode(filePath, StandardCharsets.UTF_8)+"/annotation/mask";
+            uri = this.buildEncodedUri("image", filePath, "/annotation/mask");
         } else if (cropParameter.getAlphaMask()!=null && cropParameter.getAlphaMask()) {
-            uri = "/image/"+URLEncoder.encode(filePath, StandardCharsets.UTF_8)+"/annotation/crop";
+            uri = this.buildEncodedUri("image", filePath, "/annotation/crop");
         } else {
-            uri = "/image/"+URLEncoder.encode(filePath, StandardCharsets.UTF_8)+"/annotation/crop";
+            uri = this.buildEncodedUri("image", filePath, "/annotation/crop");
         }
         return  uri;
     }
@@ -657,11 +651,9 @@ public class ImageServerService extends ModelService {
 
     public PimsResponse window(AbstractSlice slice, WindowParameter windowParameter, String etag) throws UnsupportedEncodingException, ParseException {
         String server = slice.getImageServerInternalUrl();
-        String path = slice.getPath();
+        String uri = this.buildEncodedUri("image", slice, "/window");
 
         LinkedHashMap<String, Object> parameters = windowParameters(windowParameter);
-
-        String uri = "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/window";
 
         if (slice.getImage().getChannels()!=null && slice.getImage().getChannels() > 1) {
             parameters.put("channels", slice.getChannel());
@@ -690,13 +682,8 @@ public class ImageServerService extends ModelService {
     }
 
     public String windowUrl(AbstractSlice slice, WindowParameter windowParameter) throws UnsupportedEncodingException, ParseException {
-        String server = slice.getImageServerInternalUrl();
-        String path = slice.getPath();
-
         LinkedHashMap<String, Object> parameters = windowParameters(windowParameter);
-
-        String uri = "/image/"+URLEncoder.encode(path, StandardCharsets.UTF_8)+"/window";
-        return server + uri + "?" + makeParameterUrl(parameters);
+        return this.buildImageServerInternalFullUrl(slice, "image", "/window") + "?" + makeParameterUrl(parameters);
     }
 
     public LinkedHashMap<String,Object> windowParameters(WindowParameter windowParameter) throws ParseException {

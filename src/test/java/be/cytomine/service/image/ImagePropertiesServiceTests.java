@@ -109,7 +109,7 @@ public class ImagePropertiesServiceTests {
         image.setColorspace("empty");
 
         configureFor("localhost", 8888); //       /image/upload1644425985928451/LUNG1_pyr.tif/info
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/info"))
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info"))
                 .willReturn(
                         aResponse().withBody(
                             """
@@ -165,7 +165,7 @@ public class ImagePropertiesServiceTests {
         );
 
 
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8) + "/metadata"))
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/metadata"))
                 .willReturn(
                         aResponse().withBody(
                                 """
