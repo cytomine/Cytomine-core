@@ -1,29 +1,29 @@
 package be.cytomine.api;
 
 /*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2009-2022. Authors: see NOTICE file.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.config.properties.ApplicationProperties;
+import be.cytomine.config.security.JWTFilter;
 import be.cytomine.domain.security.AuthWithToken;
 import be.cytomine.domain.security.ForgotPasswordToken;
 import be.cytomine.domain.security.SecRole;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.LoginVM;
-import be.cytomine.config.security.JWTFilter;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
@@ -47,7 +47,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
@@ -75,8 +74,6 @@ public class LoginController extends RestCytomineController {
 
     private final TokenProvider tokenProvider;
 
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
-
     private final UserRepository userRepository;
 
     private final NotificationService notificationService;
@@ -90,47 +87,33 @@ public class LoginController extends RestCytomineController {
     private final LdapIdentityAuthenticationProvider ldapIdentityAuthenticationProvider;
 
     private final ApplicationProperties applicationProperties;
-
+    @Autowired
+    AuthWithTokenRepository authWithTokenRepository;
+    @Autowired
+    ForgotPasswordTokenRepository forgotPasswordTokenRepository;
 
 
     @RequestMapping(
             method = RequestMethod.GET,
             value = {"/saml/login"})
-    public void loginWithSSO(HttpServletRequest request,HttpServletResponse response) throws IOException {
-//        List<Object> userName = principal.getAttribute("cn");
-//        String email =(String) principal.getFirstAttribute("mail");
-//        //model.addAttribute("userAttributes", principal.getAttributes());
-//         response.sendRedirect("http://cytomine.local");
+    public void loginWithSSO(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-   //   boolean isRememberMe =true;
-//        String token = tokenProvider.createToken(authentication, isRememberMe ? TokenType.REMEMBER_ME : TokenType.SESSION);
-//        String shortTermToken=  tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM);
-//        HttpHeaders httpHeaders = new HttpHeaders();
-//        httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
-//     //   return new JWTToken(token, shortTermToken);
-     String username= authentication.getName();
+        String username = authentication.getName();
+        log.debug("User {} logged in with SSO", username);
         User user = userRepository.findByUsernameLikeIgnoreCaseAndEnabledIsTrue(username)
-                .orElseThrow(() -> new ObjectNotFoundException("User",username));
-//
-//        if (!user.getPublicUser()) {
-//            // if user is not a public user, token can only be generate by admin
-//            securityACLService.checkCurrentUserIsAdmin();
-//        }
-
-
-        Date expiration = DateUtils.addMinutes(new Date(), (int)60d);
-
-
+                .orElseThrow(() -> new ObjectNotFoundException("User", username));
+        log.debug("generate tokenKey for user {} ", username);
+        Date expiration = DateUtils.addMinutes(new Date(), (int) 60d);
         String tokenKey = UUID.randomUUID().toString();
         AuthWithToken token = new AuthWithToken();
         token.setUser(user);
         token.setExpiryDate(expiration);
         token.setTokenKey(tokenKey);
         authWithTokenRepository.save(token);
-
-
-        response.sendRedirect(request.getParameter("cytomine_redirect")+"#/?token="+token.getTokenKey()+"&username="+authentication.getName());
+        log.debug("tokenKey: {} generated for user {} ", tokenKey, username);
+        log.debug("redirect to {}", request.getParameter("cytomine_redirect"));
+        response.sendRedirect(request.getParameter("cytomine_redirect") + "#/?token=" + token.getTokenKey() + "&username=" + authentication.getName());
     }
 
     @PostMapping("/api/authenticate")
@@ -154,8 +137,6 @@ public class LoginController extends RestCytomineController {
         }
     }
 
-
-
     @RequestMapping(path = {"/login/forgotUsername"}, method = {RequestMethod.POST})
     public ResponseEntity<String> checkPassword(@RequestBody MultiValueMap<String, String> formData) throws MessagingException {
         log.debug("REST request to retrieve username");
@@ -163,18 +144,15 @@ public class LoginController extends RestCytomineController {
         User user = userRepository.findByEmailLikeIgnoreCase(formData.getFirst("j_email"))
                 .orElseThrow(() -> new ObjectNotFoundException("User", JsonObject.of("email", formData.getFirst("j_email")).toJsonString()));
         notificationService.notifyForgotUsername(user);
-        return responseSuccess(JsonObject.of("message","Check your inbox"));
+        return responseSuccess(JsonObject.of("message", "Check your inbox"));
     }
-
-
-
 
     @RequestMapping(path = {"/login/forgotPassword"}, method = {RequestMethod.POST})
     public ResponseEntity<String> forgotPassword(
             @RequestBody MultiValueMap<String, String> formData
     ) throws MessagingException {
         String username = formData.getFirst("j_username");
-        if (username!=null) {
+        if (username != null) {
             Optional<User> user = userRepository.findByUsernameLikeIgnoreCase(username); //we are not logged, so we bypass the service
             if (user.isPresent()) {
                 String tokenKey = UUID.randomUUID().toString();
@@ -193,12 +171,6 @@ public class LoginController extends RestCytomineController {
         return responseSuccess(JsonObject.of()); //no explicit error
     }
 
-    @Autowired
-    AuthWithTokenRepository authWithTokenRepository;
-
-    @Autowired
-    ForgotPasswordTokenRepository forgotPasswordTokenRepository;
-
     @RequestMapping(path = {"/login/loginWithToken"}, method = {RequestMethod.POST, RequestMethod.GET})
     public Object loginWithToken(
             @RequestParam String username,
@@ -212,15 +184,15 @@ public class LoginController extends RestCytomineController {
         Optional<ForgotPasswordToken> forgotPasswordToken = forgotPasswordTokenRepository.findByTokenKeyAndUser(tokenKey, user);
 
         //check first if a entry is made for this token
-        if (authToken.isPresent() && authToken.get().isValid())  {
+        if (authToken.isPresent() && authToken.get().isValid()) {
             JWTToken jwtTokens = logInAndGenerateCredentials(user.getUsername(), user.getRoles(), false);
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwtTokens.getToken());
-            if (redirect!=null) {
+            if (redirect != null) {
                 return new RedirectView(applicationProperties.getServerURL() + redirect + "?redirect_token=" + jwtTokens.token);
             }
             return new ResponseEntity<>(jwtTokens.toJsonObject().toJsonString(), httpHeaders, HttpStatus.OK);
-        } else if (forgotPasswordToken.isPresent() && forgotPasswordToken.get().isValid())  {
+        } else if (forgotPasswordToken.isPresent() && forgotPasswordToken.get().isValid()) {
             user = forgotPasswordToken.get().getUser();
             user.setPasswordExpired(true);
             userRepository.save(user);
@@ -246,7 +218,7 @@ public class LoginController extends RestCytomineController {
             securityACLService.checkCurrentUserIsAdmin();
         }
 
-        boolean infiniteExpiration = params.getJSONAttrDouble("validity",-1d).equals(-1d);
+        boolean infiniteExpiration = params.getJSONAttrDouble("validity", -1d).equals(-1d);
         Date expiration;
         if (infiniteExpiration && user.getPublicUser()) {
             // if user is public, we allow token with no expiration
@@ -263,9 +235,8 @@ public class LoginController extends RestCytomineController {
         token.setExpiryDate(expiration);
         token.setTokenKey(tokenKey);
         authWithTokenRepository.save(token);
-        return  responseSuccess(JsonObject.of("success", true, "token", token.getTokenKey()));
+        return responseSuccess(JsonObject.of("success", true, "token", token.getTokenKey()));
     }
-
 
 
     private JWTToken logInAndGenerateCredentials(String username, String password, Boolean isRememberMe) {
@@ -278,7 +249,7 @@ public class LoginController extends RestCytomineController {
         try {
             log.debug("Try to authenticate user in local database");
             authentication = customUserDetailsAuthenticationProvider.authenticate(authenticationToken);
-            if (authentication==null) {
+            if (authentication == null) {
                 throw new BadCredentialsException("User " + username + " cannot be authenticate");
             }
         } catch (AccountStatusException exception) {
@@ -292,13 +263,13 @@ public class LoginController extends RestCytomineController {
             } else {
                 throw exception;
             }
-            if (authentication==null) {
+            if (authentication == null) {
                 throw new BadCredentialsException("User " + username + " cannot be authenticate");
             }
         }
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = tokenProvider.createToken(authentication, isRememberMe ? TokenType.REMEMBER_ME : TokenType.SESSION);
-        String shortTermToken=  tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM);
+        String shortTermToken = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM);
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
         return new JWTToken(token, shortTermToken);
@@ -307,10 +278,10 @@ public class LoginController extends RestCytomineController {
 
     private JWTToken logInAndGenerateCredentials(String username, Set<SecRole> roles, Boolean isRememberMe) {
         List<GrantedAuthority> authorities = roles.stream().map(x -> new SimpleGrantedAuthority(x.getAuthority())).collect(Collectors.toList());
-        Authentication newAuth = new UsernamePasswordAuthenticationToken(username,"************",authorities);
+        Authentication newAuth = new UsernamePasswordAuthenticationToken(username, "************", authorities);
         SecurityContextHolder.getContext().setAuthentication(newAuth);
         String token = tokenProvider.createToken(newAuth, isRememberMe ? TokenType.REMEMBER_ME : TokenType.SESSION);
-        String shortTermToken=  tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM);
+        String shortTermToken = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM);
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
         return new JWTToken(token, shortTermToken);
@@ -340,6 +311,8 @@ public class LoginController extends RestCytomineController {
             return shortTermToken;
         }
 
-        public JsonObject toJsonObject() {return JsonObject.of("token", token, "shortTermToken", shortTermToken);}
+        public JsonObject toJsonObject() {
+            return JsonObject.of("token", token, "shortTermToken", shortTermToken);
+        }
     }
 }
