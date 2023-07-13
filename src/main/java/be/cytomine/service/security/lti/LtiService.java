@@ -134,14 +134,23 @@ public class LtiService {
         try {
             SecurityUtils.doWithAuth(applicationContext, "superadmin", () -> {
                 User userFromLti;
+                boolean createStorage=false;
                 if (optionalUser.isEmpty()) {
                     log.debug("LTI connexion. Create new user " + username);
                     userFromLti = createUnexistingUser(username, firstname, lastname, email);
+                    createStorage=true;
+
                 } else {
                     userFromLti = optionalUser.get();
                 }
-
-                createUserRoleIfUserIsInstructor(roles, userFromLti);
+                SecRole ROLE_USER = secRoleRepository.getUser();
+                if (roles.contains("Instructor") && !userFromLti.getRoles().contains(ROLE_USER)) {
+                    createUserRoleIfUserIsInstructor(roles, userFromLti,ROLE_USER);
+                    if(createStorage) {
+                        SecurityUtils.doWithAuth(applicationContext, "admin", () -> storageService.createStorage(userFromLti));
+                    }
+                }
+                log.debug("User {} has roles {}", userFromLti.getUsername(), userFromLti.getRoles());
                 log.info("redirect to " + params.getJSONAttrStr("custom_redirect",""));
 
                 if (!params.isMissing("custom_redirect")) {
@@ -169,19 +178,15 @@ public class LtiService {
 
 
 
-    void createUserRoleIfUserIsInstructor(List<String> roles, User userFromLti) {
-        SecRole ROLE_USER = secRoleRepository.getUser();
-        if (roles.contains("Instructor") && !userFromLti.getRoles().contains(ROLE_USER)) {
+    void createUserRoleIfUserIsInstructor(List<String> roles, User userFromLti,SecRole secRole) {
             SecUserSecRole secUsersecRole = new SecUserSecRole();
             secUsersecRole.setSecUser(userFromLti);
-            secUsersecRole.setSecRole(ROLE_USER);
-
+            secUsersecRole.setSecRole(secRole);
             entityManager.persist(secUsersecRole);
             entityManager.flush();
             entityManager.refresh(userFromLti);
-
             userRepository.findByUsernameLikeIgnoreCase(userFromLti.getUsername()).get();
-        }
+
     }
 
     User createUnexistingUser(String username, String firstname, String lastname, String email) {
@@ -215,13 +220,12 @@ public class LtiService {
 
         User finalUser = userRepository.findByUsernameLikeIgnoreCase(user.getUsername()).get();
 
-        SecurityUtils.doWithAuth(applicationContext, "admin", () -> storageService.createStorage(finalUser));
-
         userFromLti = finalUser;
         return userFromLti;
     }
 
     static Long extractProjectId(String redirection) {
+        log.info("Extract projectId from {}", redirection);
         Long projectId = null;
         if (redirection.contains("tabs-image-")) {
             projectId = Long.parseLong(redirection.split("tabs-image-")[1].split("-")[0]);
@@ -237,26 +241,15 @@ public class LtiService {
             projectId = Long.parseLong(redirection.split("tabs-config-")[1]);
         } else if (redirection.contains("tabs-usersconfig-")) {
             projectId = Long.parseLong(redirection.split("tabs-usersconfig-")[1]);
-        } else {
-
-            String matched;
-
-            Pattern p1 = Pattern.compile("#\\/project\\/\\d+\\/images");//. represents single character
-            Matcher m1 = p1.matcher(redirection);
-
-            if (m1.matches()) {
-                matched = m1.group(0);
-                projectId = Long.parseLong(matched.split("#/project/")[1].split("/images")[0]);
-            }
-
-            Pattern p2 = Pattern.compile("#\\/project\\/\\d+\\/image\\/\\d+");//. represents single character
-            Matcher m2 = p2.matcher(redirection);
-
-            if (m2.matches()) {
-                matched = m2.group(0);
-                projectId = Long.parseLong(matched.split("#/project/")[1].split("/image/")[0]);
+        }
+        else if(redirection.contains("project")){
+            Pattern pattern = Pattern.compile("(?<=project/)\\d+");
+            Matcher matcher = pattern.matcher(redirection);
+            if (matcher.find()) {
+                projectId = Long.parseLong(matcher.group());
             }
         }
+        log.info("ProjectId is {}", projectId);
         return projectId;
     }
 }

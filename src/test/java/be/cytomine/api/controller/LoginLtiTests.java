@@ -18,9 +18,7 @@ package be.cytomine.api.controller;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.config.properties.LtiConsumerProperties;
-import be.cytomine.config.properties.LtiProperties;
-import be.cytomine.config.security.JWTFilter;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.meta.Configuration;
 import be.cytomine.domain.meta.ConfigurationReadingRole;
 import be.cytomine.domain.project.Project;
@@ -29,12 +27,9 @@ import be.cytomine.domain.security.User;
 import be.cytomine.dto.LoginVM;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.security.UserRepository;
-import be.cytomine.security.jwt.TokenProvider;
 import be.cytomine.service.meta.ConfigurationService;
 import be.cytomine.service.security.SecUserService;
-import be.cytomine.service.security.lti.LtiServiceTests;
 import be.cytomine.utils.JsonObject;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.message.BasicNameValuePair;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -44,24 +39,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.net.URLEncoder;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
@@ -80,6 +68,9 @@ class LoginLtiTests {
     @Autowired
     private BasicInstanceBuilder builder;
 
+    @Autowired
+    private ApplicationProperties applicationProperties;
+
 
     @Test
     @Transactional
@@ -95,7 +86,7 @@ class LoginLtiTests {
         Configuration ltiConsumers = new Configuration();
         ltiConsumers.setKey(ConfigurationService.CONFIG_KEY_LTI_CONSUMERS);
         ltiConsumers.setValue("""
-                        [{"name":"consumerName","secret":"secret","key":"consumerKey"}]
+                        [{"name":"consumerName","secret":"secret","key":"jisc.ac.uk"}]
                         """);
         ltiConsumers.setReadingRole(ConfigurationReadingRole.ALL);
         builder.persistAndReturn(ltiConsumers);
@@ -141,7 +132,7 @@ class LoginLtiTests {
         jsonObject.put("lti_version","LTI-1p0");
         jsonObject.put("oauth_callback","about:blank");
 
-        jsonObject.put("oauth_consumer_key","consumerKey");
+        jsonObject.put("oauth_consumer_key","jisc.ac.uk");
 
         jsonObject.put("oauth_nonce","a1c1c6ed883cb589ddf3a848ccb4afd3");
         jsonObject.put("oauth_signature","cs7ieGAMDMNry3EbWHWsOkI4AsA=");
@@ -169,7 +160,7 @@ class LoginLtiTests {
         jsonObject.entrySet().forEach(x -> map.put(x.getKey(), (String)x.getValue()));
 
         LtiOauthSigner ltiOauthSigner = new LtiOauthSigner();
-        Map<String, String> stringStringMap = ltiOauthSigner.signParameters(map, "consumerKey", "secret", "http://localhost:8080/login/loginWithLTI", "POST");
+        Map<String, String> stringStringMap = ltiOauthSigner.signParameters(map, "jisc.ac.uk", "secret", applicationProperties.getServerURL()+"/login/loginWithLTI", "POST");
         System.out.println("Signature before: {}" + jsonObject.get("oauth_signature"));
         System.out.println("Signature after: {}" + stringStringMap.get("oauth_signature"));
 
@@ -183,7 +174,7 @@ class LoginLtiTests {
                         .content(formUrlEncoded)).andReturn();
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getHeader("Location"))
-                .startsWith("http://localhost:8080/#/project/" + project.getId()+ "/images?redirect_token=");
+                .startsWith( applicationProperties.getServerURL()+"/#/project/" + project.getId()+ "/images?redirect_token=");
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getHeader("Authorization"))
                 .startsWith("Bearer ");
 
