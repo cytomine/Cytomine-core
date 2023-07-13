@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: default
+    active: ${SPRING_PROFILES_ACTIVE:default, dev, saml}
     include: custom-ui
 
   main:
@@ -8,6 +8,7 @@ spring:
  
   thymeleaf:
     prefix: 'classpath:/templates/'
+
 
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
@@ -50,6 +51,7 @@ spring:
 
 server:
   port: ${PORT:8080}
+
 
 javamelody:
   enabled: ${JAVAMELODY_ENABLED:false}

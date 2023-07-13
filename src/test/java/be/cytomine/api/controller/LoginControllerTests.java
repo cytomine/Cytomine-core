@@ -1,23 +1,25 @@
 package be.cytomine.api.controller;
 
 /*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2009-2022. Authors: see NOTICE file.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.config.properties.ApplicationProperties;
+import be.cytomine.config.security.JWTFilter;
 import be.cytomine.domain.security.AuthWithToken;
 import be.cytomine.domain.security.ForgotPasswordToken;
 import be.cytomine.domain.security.User;
@@ -25,7 +27,6 @@ import be.cytomine.dto.LoginVM;
 import be.cytomine.repository.security.AuthWithTokenRepository;
 import be.cytomine.repository.security.ForgotPasswordTokenRepository;
 import be.cytomine.repository.security.UserRepository;
-import be.cytomine.config.security.JWTFilter;
 import be.cytomine.security.jwt.TokenProvider;
 import be.cytomine.utils.JsonObject;
 import org.junit.jupiter.api.Test;
@@ -33,51 +34,102 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.junit.jupiter.EnabledIf;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.util.Collection;
 import java.util.Optional;
 
 import static be.cytomine.utils.DateUtils.MAX_DATE_FOR_DATABASE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
-@SpringBootTest(classes = CytomineCoreApplication.class)
+@SpringBootTest(classes = {CytomineCoreApplication.class, TestWebMvcConfig.class})
 @AutoConfigureMockMvc
 class LoginControllerTests {
 
     @Autowired
+    ForgotPasswordTokenRepository forgotPasswordTokenRepository;
+    @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private PasswordEncoder passwordEncoder;
-
     @Autowired
     private TokenProvider tokenProvider;
-
     @Autowired
     private MockMvc loginControllerMockMvc;
-
     @Autowired
     private BasicInstanceBuilder builder;
-
     @Autowired
     private AuthWithTokenRepository authWithTokenRepository;
+    @Autowired
+    private ApplicationProperties applicationProperties;
 
     @DynamicPropertySource
     static void dynamicProperties(DynamicPropertyRegistry registry) {
         registry.add("application.authentication.ldap.enabled", () -> false);
+    }
+
+    @EnabledIf(expression = "#{environment.acceptsProfiles('saml')}", loadContext = true)
+    @Test
+    void loginWithSSO_shibboleth_flow() throws Exception {
+
+        String mockRedirectURI = "http://cytomine.mock/";
+
+        // Initial request to /saml/login with mockRedirectURI
+        MvcResult result = loginControllerMockMvc.perform(get("/saml/login?cytomine_redirect=" + mockRedirectURI))
+                .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
+                .andReturn();
+
+        MockHttpServletResponse response = result.getResponse();
+        String samlFirstRedirection = response.getHeader("Location");
+
+        assertEquals(302, response.getStatus());
+        assertTrue(samlFirstRedirection.contains("/saml2/authenticate/shibboleth"));
+
+        // Following the redirection to the redirected internal endpoint
+        MvcResult redirectedResult = loginControllerMockMvc.perform(get(samlFirstRedirection))
+                .andExpect(MockMvcResultMatchers.status().is3xxRedirection())
+                .andReturn();
+
+        MockHttpServletResponse samlResponse = redirectedResult.getResponse();
+        assertEquals(302, samlResponse.getStatus());
+        String samlResponseLocation = samlResponse.getHeader("Location");
+        assertTrue(samlResponseLocation.contains("/SAML2/Redirect/SSO"));
+
+        // Extract headers from the previous response and use them in the new request
+        MockHttpServletRequestBuilder samlRequestBuilder = get(samlResponseLocation);
+        Collection<String> headerNames = samlResponse.getHeaderNames();
+
+        for (String headerName : headerNames) {
+            String headerValue = samlResponse.getHeader(headerName);
+            samlRequestBuilder.header(headerName, headerValue);
+        }
+
+        // Follow the second redirection
+        MvcResult finalResult = loginControllerMockMvc.perform(samlRequestBuilder)
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andReturn();
+
+        MockHttpServletResponse finalResponse = finalResult.getResponse();
+        assertEquals(200, finalResponse.getStatus());
+        //At this point we reached shibboleth's login page
     }
 
     @Test
@@ -98,12 +150,12 @@ class LoginControllerTests {
         login.setUsername("user-jwt-controller");
         login.setPassword("test");
         loginControllerMockMvc
-            .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.token").isString())
-            .andExpect(jsonPath("$.token").isNotEmpty())
-            .andExpect(header().string("Authorization", not(nullValue())))
-            .andExpect(header().string("Authorization", not(is(emptyString()))));
+                .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(header().string("Authorization", not(nullValue())))
+                .andExpect(header().string("Authorization", not(is(emptyString()))));
     }
 
     @Test
@@ -125,13 +177,13 @@ class LoginControllerTests {
         login.setPassword("test");
         login.setRememberMe(true);
         loginControllerMockMvc
-            .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
+                .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
                 .andDo(print())
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.token").isString())
-            .andExpect(jsonPath("$.token").isNotEmpty())
-            .andExpect(header().string("Authorization", not(nullValue())))
-            .andExpect(header().string("Authorization", not(is(emptyString()))));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(header().string("Authorization", not(nullValue())))
+                .andExpect(header().string("Authorization", not(is(emptyString()))));
     }
 
     @Test
@@ -158,17 +210,16 @@ class LoginControllerTests {
                 .andExpect(header().doesNotExist("Authorization"));
     }
 
-
     @Test
     void authorize_fails_with_bad_credential() throws Exception {
         LoginVM login = new LoginVM();
         login.setUsername("wrong-user");
         login.setPassword("wrong password");
         loginControllerMockMvc
-            .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
-            .andExpect(status().isForbidden())
-            .andExpect(jsonPath("$.token").doesNotExist())
-            .andExpect(header().doesNotExist("Authorization"));
+                .perform(post("/api/authenticate").contentType(MediaType.APPLICATION_JSON).content(JsonObject.toJsonString(login)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.token").doesNotExist())
+                .andExpect(header().doesNotExist("Authorization"));
     }
 
     @Test
@@ -196,7 +247,6 @@ class LoginControllerTests {
                 .andExpect(header().doesNotExist("Authorization"));
     }
 
-
     @Test
     @Transactional
     void authorize_fails_with_locked_user() throws Exception {
@@ -221,7 +271,6 @@ class LoginControllerTests {
                 .andExpect(jsonPath("$.token").doesNotExist())
                 .andExpect(header().doesNotExist("Authorization"));
     }
-
 
     @Test
     @Transactional
@@ -284,7 +333,6 @@ class LoginControllerTests {
                 .andExpect(jsonPath("$.username").value("user-jwt-controller-workflow"));
     }
 
-
     @Test
     @Transactional
     void authorize_workflow_locked_user() throws Exception {
@@ -322,7 +370,6 @@ class LoginControllerTests {
                         .header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token))
                 .andExpect(status().isForbidden());
     }
-
 
     @Test
     @Transactional
@@ -362,7 +409,6 @@ class LoginControllerTests {
                 .andExpect(status().isForbidden());
     }
 
-
     @Test
     @Transactional
     void authorize_workflow_user_disabled() throws Exception {
@@ -401,8 +447,6 @@ class LoginControllerTests {
                 .andExpect(status().isForbidden());
     }
 
-
-
     @Test
     @Transactional
     @WithMockUser("superadmin")
@@ -423,9 +467,9 @@ class LoginControllerTests {
 
         loginControllerMockMvc.perform(post("/login/loginWithToken")
                         .param("username", user.getUsername()).param("tokenKey", token))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.token").isString())
-                    .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isString())
+                .andExpect(jsonPath("$.token").isNotEmpty())
                 .andReturn();
         jsonObject = JsonObject.toJsonObject(mvcResult.getResponse().getContentAsString());
 
@@ -435,7 +479,6 @@ class LoginControllerTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("user"));
     }
-
 
     @Test
     @Transactional
@@ -474,7 +517,6 @@ class LoginControllerTests {
                 .andExpect(jsonPath("$.username").value(user.getUsername()));
     }
 
-
     @Test
     @Transactional
     @WithMockUser("superadmin")
@@ -488,9 +530,6 @@ class LoginControllerTests {
                 .andExpect(status().is4xxClientError()).andReturn();
     }
 
-    @Autowired
-    ForgotPasswordTokenRepository forgotPasswordTokenRepository;
-
     @Test
     @Transactional
     void forgot_password_token() throws Exception {
@@ -500,8 +539,8 @@ class LoginControllerTests {
         forgotPasswordTokenRepository.deleteAll();
 
         loginControllerMockMvc
-                    .perform(post("/login/forgotPassword").contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                            .content("j_username=" + user.getUsername()));
+                .perform(post("/login/forgotPassword").contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .content("j_username=" + user.getUsername()));
 
         assertThat(forgotPasswordTokenRepository.findAll()).hasSize(1);
 
