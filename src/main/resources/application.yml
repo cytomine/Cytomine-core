@@ -63,7 +63,7 @@ application:
   version: 0.0.0 # do not modify this, it will be replace during build (ci)
   
   serverId: ${SERVER_ID:default}
-  serverURL: ${SERVER_URL:#{'http://cytomine.local'}}
+  serverURL: ${SERVER_URL:http://cytomine.local}
   storagePath: ${STORAGE_PATH:/data/images}
   useHTTPInternally: ${USE_HTTP_INTERNALLY:false}
   
@@ -78,7 +78,7 @@ application:
   rabbitMQPublicKey: ${RABBITMQ_PUBLIC_KEY:rabbitMQPublicKey}
   rabbitMQPrivateKey: ${RABBITMQ_PRIVATE_KEY:rabbitMQPrivateKey}
   softwareSources: ${SOFTWARE_SOURCES:/tmp/softwareSources/}
-  instanceHostWebsite: ${INSTANCE_HOST_WEBSITE_URL:#{'https://www.cytomine.com'}}
+  instanceHostWebsite: ${INSTANCE_HOST_WEBSITE_URL:https://www.cytomine.com}
   instanceHostSupportMail: ${INSTANCE_HOST_SUPPORT_MAIL:support@cytomine.com}
   instanceHostPhoneNumber: ${INSTANCE_HOST_PHONE_NUMBER:+320/000.00.00}
   defaultLanguage: ${DEFAULT_LANGUAGE:ENGLISH}
@@ -102,7 +102,7 @@ application:
       enabled: true
 
   imageServerURL:
-    - ${IMAGE_SERVER_URL:#{'http://ims.cytomine.local'}}
+    - ${IMAGE_SERVER_URL:http://ims.cytomine.local}
   
   annotation:
     maxNumberOfPoint: ${ANNOTATION_MAX_POINTS:200}
