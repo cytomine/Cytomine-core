@@ -197,6 +197,11 @@ public class ImageInstanceService extends ModelService {
         return imageInstanceRepository.findTopByProjectAndCreatedGreaterThanOrderByCreatedAsc(imageInstance.getProject(), imageInstance.getCreated());
     }
 
+    public List<ImageInstance> listByAbstractImage(AbstractImage ai) {
+        securityACLService.check(ai, READ);
+        return imageInstanceRepository.findAllByBaseImage(ai);
+    }
+
     public List<ImageInstance> listByProject(Project project) {
         securityACLService.check(project, READ);
         return imageInstanceRepository.findAllByProject(project);
