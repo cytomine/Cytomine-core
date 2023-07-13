@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -37,34 +36,19 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.converter.RsaKeyConverters;
 import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.saml2.core.Saml2X509Credential;
-import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticatedPrincipal;
 import org.springframework.security.saml2.provider.service.metadata.OpenSamlMetadataResolver;
-import org.springframework.security.saml2.provider.service.registration.*;
+import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.security.saml2.provider.service.servlet.filter.Saml2WebSsoAuthenticationFilter;
 import org.springframework.security.saml2.provider.service.web.DefaultRelyingPartyRegistrationResolver;
 import org.springframework.security.saml2.provider.service.web.RelyingPartyRegistrationResolver;
 import org.springframework.security.saml2.provider.service.web.Saml2MetadataFilter;
-import org.springframework.security.saml2.provider.service.web.authentication.logout.OpenSaml4LogoutRequestResolver;
-import org.springframework.security.web.authentication.logout.CookieClearingLogoutHandler;
-import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import javax.servlet.http.HttpServletResponse;
-
-import java.io.InputStream;
-import java.security.KeyFactory;
-import java.security.PrivateKey;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.ArrayList;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
@@ -99,7 +83,7 @@ public class SecurityConfiguration {
             //override default sp metadata endpoint
             filter.setRequestMatcher(new AntPathRequestMatcher("/saml2/sp-metadata/{registrationId}", "GET"));
 
-            http.requestMatchers().antMatchers("/saml/**", "/saml2/**", "/login/saml2/**",  "/logout/saml2/**").and()
+            http.requestMatchers().antMatchers("/saml/**", "/saml2/**", "/login/saml2/**", "/logout/saml2/**").and()
                     .authorizeRequests()
                     .anyRequest().authenticated()
                     .and()
