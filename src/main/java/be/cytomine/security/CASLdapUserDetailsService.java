@@ -99,11 +99,11 @@ public class CASLdapUserDetailsService implements UserDetailsService {
                                 username,
                                 Arrays.stream(attributes.split(",")
                                 ).toList());
-                        log.debug("ldap results: " + ldapResults);
 
                         if (ldapResults==null) {
                             throw new UsernameNotFoundException("Username " + username + " not found in ldap");
                         }
+                        log.debug("ldap results: " + ldapResults);
                         return createUserFromLdapResults(username, ldapResults);
                     } catch (NamingException e) {
                         throw new RuntimeException(e);
@@ -118,6 +118,7 @@ public class CASLdapUserDetailsService implements UserDetailsService {
     }
 
     public User createUserFromLdapResults(String username, Map<String, Object> ldapResponse) {
+        log.debug("creating user from ldap results with username: {}", username);
         String firstname;
         String lastname;
         String mail;
@@ -126,8 +127,7 @@ public class CASLdapUserDetailsService implements UserDetailsService {
             lastname = (String)ldapResponse.get("sn");
             mail = (String)ldapResponse.get("mail");
         } catch(Exception e){
-            log.error(e.getMessage());
-            e.printStackTrace();
+            log.error("Error while creating user from LDAP results: {}", e.getMessage());
             throw e;
         }
 
@@ -143,6 +143,7 @@ public class CASLdapUserDetailsService implements UserDetailsService {
         user.generateKeys();
 
         user = userRepository.save(user);
+        log.debug("user created: {}", user.getUsername());
 
 
         SecRole userRole = secRoleRepository.getGuest();
@@ -156,7 +157,10 @@ public class CASLdapUserDetailsService implements UserDetailsService {
         entityManager.refresh(user);
 
         User finalUser = userRepository.findByUsernameLikeIgnoreCase(user.getUsername()).get();
-        SecurityUtils.doWithAuth(applicationContext, "admin", () -> storageService.createStorage(finalUser));
+        log.debug("user roles: {} assigned to user: {}", finalUser.getRoles().toString(), finalUser.getUsername());
+        //TODO should a storage be created since user is guest by default?
+     //   SecurityUtils.doWithAuth(applicationContext, "admin", () -> storageService.createStorage(finalUser));
+        log.debug("Created user from LDAP results: {}", user);
         return user;
     }
 }
