@@ -31,6 +31,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.saml2.provider.service.authentication.DefaultSaml2AuthenticatedPrincipal;
 import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
 import org.springframework.security.web.authentication.switchuser.SwitchUserGrantedAuthority;
 
@@ -85,6 +86,11 @@ public class SecurityUtils {
             PartialCurrentUser partialCurrentUser = new PartialCurrentUser();
             partialCurrentUser.setUsername(((UserDetails) authentication.getPrincipal()).getUsername());
             return partialCurrentUser;
+        }else if(authentication.getPrincipal() instanceof DefaultSaml2AuthenticatedPrincipal){
+            PartialCurrentUser partialCurrentUser = new PartialCurrentUser();
+            partialCurrentUser.setUsername(((DefaultSaml2AuthenticatedPrincipal) authentication.getPrincipal()).getAttribute("cn").get(0).toString());
+            return partialCurrentUser;
+
         }
         return null;
     }

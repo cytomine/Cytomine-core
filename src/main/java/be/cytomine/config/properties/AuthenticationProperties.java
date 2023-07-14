@@ -28,4 +28,6 @@ public class AuthenticationProperties {
     LtiProperties lti = new LtiProperties();
 
     LdapProperties ldap = new LdapProperties();
+
+    Saml2Properties saml2= new Saml2Properties();
 }
