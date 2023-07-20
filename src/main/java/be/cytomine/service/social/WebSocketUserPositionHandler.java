@@ -2,23 +2,24 @@ package be.cytomine.service.social;
 
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.exceptions.ServerException;
+import be.cytomine.repository.image.ImageInstanceRepository;
+import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.service.CytomineWebSocketHandler;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.SliceInstanceService;
 import be.cytomine.service.security.SecUserService;
+import be.cytomine.utils.JsonObject;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.*;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketMessage;
+import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator;
-import org.springframework.web.socket.handler.WebSocketSessionDecorator;
 
 import java.io.IOException;
 import java.util.*;
@@ -47,6 +48,12 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
 
     @Autowired
     SecUserService secUserService;
+
+    @Autowired
+    ImageInstanceRepository imageInstanceRepository;
+
+    @Autowired
+    SecUserRepository secUserRepository;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
@@ -79,20 +86,33 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         log.debug("Closing user position WebSocket connection from {}", session.getRemoteAddress());
     }
 
+    // TODO "protocol" it, it probably will have to be re-made with the rest of the WS impl
+    // When a follower sends a message, it only contains the broadcaster user id
+    // When a broadcaster sends a message, it contains its viewer position
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) {
-        String broadcasterId = message.getPayload().toString();
+        // Payload is a bytes array.
+        String payload = message.getPayload().toString();
         String followerId = session.getAttributes().get("userId").toString();
         String imageId = session.getAttributes().get("imageId").toString();
 
-        ConcurrentWebSocketSessionDecorator broadcastSession = sessionsBroadcast.get(broadcasterId+"/"+imageId);
+        boolean isNumeric = StringUtils.isNumeric(message.getPayload().toString());
+
+        if (!isNumeric) {
+            Map<String, Object> payloadMap = JsonObject.toMap(payload);
+            String userId = session.getAttributes().get("userId").toString();
+            sendPositionToFollowers(userId, imageId, message.getPayload().toString());
+            return;
+        }
+
+        ConcurrentWebSocketSessionDecorator broadcastSession = sessionsBroadcast.get(payload + "/" + imageId);
         ConcurrentWebSocketSessionDecorator followerSession = getSession(followerId, session.getId());
 
-        if(broadcastSession!=null && followerSession != null){
+        if (broadcastSession != null && followerSession != null) {
             addToTrackedSessions(broadcastSession, followerSession);
         }
 
-        moveFollowerAfterInitialConnection(Long.parseLong(broadcasterId), Long.parseLong(imageId), session);
+        moveFollowerAfterInitialConnection(Long.parseLong(payload), Long.parseLong(imageId), session);
     }
 
     private ConcurrentWebSocketSessionDecorator getSession(String followerId, String sessionId){
@@ -130,8 +150,7 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         }
     }
 
-    private void moveFollowerAfterInitialConnection(Long userId, Long imageId, WebSocketSession session){
-
+    private void moveFollowerAfterInitialConnection(Long userId, Long imageId, WebSocketSession session) {
         // TODO : Uncomment to bypass authentication (websocket are not longer authenticated)
         // Comment for tests
         // ------------------------------------------------ //
@@ -140,12 +159,21 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         //SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
         // ------------------------------------------------ //
 
-        ImageInstance imageInstance = imageInstanceService.get(imageId);
-        SecUser secUser = secUserService.get(userId);
-        Optional<LastUserPosition> lastPosition = userPositionService.lastPositionByUser(imageInstance, null, secUser, false);
-        if(lastPosition.isPresent()){
-            TextMessage position = new TextMessage(lastPosition.get().toJsonObject().toJsonString());
-            sendPosition(session, position);
+        //ImageInstance imageInstance = imageInstanceService.get(imageId);
+        //SecUser secUser = secUserService.get(userId);
+
+        // TODO: We should not have to bypass the authentication or ACL system to do this
+        // TODO: The context should hold the authenticated user with a proper WebSocket configuration and implementation
+        // I left the previous comments before these 2 TODOs in case someone wonders what's going on here.
+        ImageInstance imgInstance = imageInstanceRepository.getById(imageId);
+        Optional<SecUser> secUser = secUserRepository.findById(userId);
+
+        if (secUser.isPresent()) {
+            Optional<LastUserPosition> lastPosition = userPositionService.lastPositionByUserBypassACL(imgInstance, null, secUser.get(), false);
+            if (lastPosition.isPresent()) {
+                TextMessage position = new TextMessage(lastPosition.get().toJsonObject().toJsonString());
+                sendPosition(session, position);
+            }
         }
     }
 

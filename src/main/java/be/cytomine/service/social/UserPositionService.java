@@ -216,6 +216,18 @@ public class UserPositionService {
     public Optional<LastUserPosition> lastPositionByUser(ImageInstance image, SliceInstance slice, SecUser user, boolean broadcast) {
         securityACLService.check(image,READ);
 
+        return getLastUserPosition(image, slice, user, broadcast);
+    }
+
+    /**
+     * TODO Do not bypass ACL checks.
+     * Temporary solution to the WebSocket issue
+     */
+    public Optional<LastUserPosition> lastPositionByUserBypassACL(ImageInstance image, SliceInstance slice, SecUser user, boolean broadcast) {
+        return getLastUserPosition(image, slice, user, broadcast);
+    }
+
+    private Optional<LastUserPosition> getLastUserPosition(ImageInstance image, SliceInstance slice, SecUser user, boolean broadcast) {
         Query query = new Query();
         query.addCriteria(Criteria.where("user").is(user.getId()));
         query.addCriteria(Criteria.where("image").is(image.getId()));
