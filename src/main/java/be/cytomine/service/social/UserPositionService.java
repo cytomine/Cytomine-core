@@ -166,13 +166,15 @@ public class UserPositionService {
         position.setImageName(imageInstance.getBlindInstanceFilename());
         lastUserPositionRepository.insert(position);
 
-        if(lastPosition.isPresent() && !LastUserPosition.isSameLocation(lastPosition.get().getLocation(), currentLocation)){
-            try{
-                webSocketUserPositionHandler.sendPositionToFollowers(user.getId().toString(), imageInstance.getId().toString(), position.toJsonObject().toJsonString());
-            }catch (ServerException e){
-                log.error(e.getMessage());
-            }
-        }
+        // It used to be WS through HTTP polling.
+        // It probably can be removed at some point.
+        //if(lastPosition.isPresent() && !LastUserPosition.isSameLocation(lastPosition.get().getLocation(), currentLocation)){
+        //    try{
+        //        webSocketUserPositionHandler.sendPositionToFollowers(user.getId().toString(), imageInstance.getId().toString(), position.toJsonObject().toJsonString());
+        //    }catch (ServerException e){
+        //        log.error(e.getMessage());
+        //    }
+        //}
 
         PersistentUserPosition persistedPosition = new PersistentUserPosition();
         persistedPosition.setId(sequenceService.generateID());
