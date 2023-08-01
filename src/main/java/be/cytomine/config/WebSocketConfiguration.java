@@ -14,10 +14,12 @@ import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 import org.springframework.web.socket.server.HandshakeInterceptor;
+import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
 import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
@@ -49,42 +51,51 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(webSocketUserPositionHandler,"/ws/user-position/*/*/*").setAllowedOrigins("*").addInterceptors(idInterceptor());
+        registry.addHandler(webSocketUserPositionHandler, "/ws/user-position/*/*/*").setAllowedOrigins("*").addInterceptors(idInterceptor());
     }
 
     @Bean
     @Transactional
     public HandshakeInterceptor idInterceptor() {
-        return new HandshakeInterceptor() {
-            @Override
-            public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, org.springframework.web.socket.WebSocketHandler wsHandler, Map<String, Object> attributes) throws MalformedURLException, UnsupportedEncodingException {
-                String path = request.getURI().getPath();
-                String[] splitPath = path.split("/");
+        return new HandshakeInterceptorImpl();
+    }
 
-                String userId = splitPath[splitPath.length - 3];
-                String imageId = splitPath[splitPath.length - 2];
-                String broadcast = splitPath[splitPath.length - 1];
+    class HandshakeInterceptorImpl extends HttpSessionHandshakeInterceptor {
 
-                attributes.put("userId", userId);
-                attributes.put("imageId", imageId);
-                attributes.put("broadcast", broadcast);
+        @Override
+        public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, org.springframework.web.socket.WebSocketHandler wsHandler, Map<String, Object> attributes) throws MalformedURLException, UnsupportedEncodingException {
+            String path = request.getURI().getPath();
+            String[] splitPath = path.split("/");
 
-                Map<String, String> params = StringUtils.splitQuery(request.getURI().toURL());
+            String userId = splitPath[splitPath.length - 3];
+            String imageId = splitPath[splitPath.length - 2];
+            String broadcast = splitPath[splitPath.length - 1];
 
-                Authentication authentication = tokenProvider.getAuthentication(resolveToken(params.get("Authorization")));
+            attributes.put("userId", userId);
+            attributes.put("imageId", imageId);
+            attributes.put("broadcast", broadcast);
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+            Map<String, String> params = StringUtils.splitQuery(request.getURI().toURL());
 
-                securityACLService.checkIsCurrentUserSameUser(Long.parseLong(userId));
+            Authentication authentication = tokenProvider.getAuthentication(resolveToken(params.get("Authorization")));
 
-                Long projectId = projectRepository.findByProjectIdByImageInstanceId(Long.parseLong(imageId));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                securityACLService.check(projectId, Project.class, READ);
+            securityACLService.checkIsCurrentUserSameUser(Long.parseLong(userId));
 
-                return true;
-            }
-            @Override
-            public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, org.springframework.web.socket.WebSocketHandler wsHandler, Exception exception) {}
-        };
+            Long projectId = projectRepository.findByProjectIdByImageInstanceId(Long.parseLong(imageId));
+
+            securityACLService.check(projectId, Project.class, READ);
+
+            return true;
+        }
+
+        @Override
+        public void afterHandshake(ServerHttpRequest request,
+                                   ServerHttpResponse response, WebSocketHandler wsHandler,
+                                   Exception ex) {
+            super.afterHandshake(request, response, wsHandler, ex);
+        }
+
     }
 }
