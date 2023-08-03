@@ -26,8 +26,10 @@ public class TestWebMvcConfig implements WebMvcConfigurer {
     private ApplicationProperties applicationProperties;
 
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addViewController(applicationProperties.getAuthentication().getSaml2().getShibboleth().get("ssoRedirectURI"))
-                .setViewName("forward:" + applicationProperties.getAuthentication().getSaml2().getShibboleth().get("ssoURI"));
+        Map<String, String> shibboleth = applicationProperties.getAuthentication().getSaml2().getShibboleth();
+        if (shibboleth != null) {
+            registry.addViewController(shibboleth.get("ssoRedirectURI")).setViewName("forward:" + shibboleth.get("ssoURI"));
+        }
     }
 
     @Override

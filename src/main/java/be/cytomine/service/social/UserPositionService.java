@@ -166,13 +166,15 @@ public class UserPositionService {
         position.setImageName(imageInstance.getBlindInstanceFilename());
         lastUserPositionRepository.insert(position);
 
-        if(lastPosition.isPresent() && !LastUserPosition.isSameLocation(lastPosition.get().getLocation(), currentLocation)){
-            try{
-                webSocketUserPositionHandler.sendPositionToFollowers(user.getId().toString(), imageInstance.getId().toString(), position.toJsonObject().toJsonString());
-            }catch (ServerException e){
-                log.error(e.getMessage());
-            }
-        }
+        // It used to be WS through HTTP polling.
+        // It probably can be removed at some point.
+        //if(lastPosition.isPresent() && !LastUserPosition.isSameLocation(lastPosition.get().getLocation(), currentLocation)){
+        //    try{
+        //        webSocketUserPositionHandler.sendPositionToFollowers(user.getId().toString(), imageInstance.getId().toString(), position.toJsonObject().toJsonString());
+        //    }catch (ServerException e){
+        //        log.error(e.getMessage());
+        //    }
+        //}
 
         PersistentUserPosition persistedPosition = new PersistentUserPosition();
         persistedPosition.setId(sequenceService.generateID());
@@ -216,6 +218,18 @@ public class UserPositionService {
     public Optional<LastUserPosition> lastPositionByUser(ImageInstance image, SliceInstance slice, SecUser user, boolean broadcast) {
         securityACLService.check(image,READ);
 
+        return getLastUserPosition(image, slice, user, broadcast);
+    }
+
+    /**
+     * TODO Do not bypass ACL checks.
+     * Temporary solution to the WebSocket issue
+     */
+    public Optional<LastUserPosition> lastPositionByUserBypassACL(ImageInstance image, SliceInstance slice, SecUser user, boolean broadcast) {
+        return getLastUserPosition(image, slice, user, broadcast);
+    }
+
+    private Optional<LastUserPosition> getLastUserPosition(ImageInstance image, SliceInstance slice, SecUser user, boolean broadcast) {
         Query query = new Query();
         query.addCriteria(Criteria.where("user").is(user.getId()));
         query.addCriteria(Criteria.where("image").is(image.getId()));
