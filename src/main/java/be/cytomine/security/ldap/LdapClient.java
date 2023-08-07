@@ -3,6 +3,7 @@ package be.cytomine.security.ldap;
 import be.cytomine.domain.meta.Configuration;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.utils.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -11,6 +12,8 @@ import java.util.*;
 
 import static be.cytomine.service.meta.ConfigurationService.*;
 
+
+@Slf4j
 public class LdapClient {
 
     private String url;
@@ -57,20 +60,27 @@ public class LdapClient {
         env.put(DirContext.SECURITY_PRINCIPAL, principal);
         env.put(DirContext.SECURITY_CREDENTIALS, credentials);
         //env.put("java.naming.ldap.factory.socket", "MySSLSocketFactory");
+        log.debug("Initialising LDAP context");
         DirContext dirContext = null;
         dirContext  = new InitialDirContext(env);
         Map<String, Object> properties = null;
+        log.debug("Searching LDAP for {} with filter {}", search,filter);
         NamingEnumeration e = dirContext.search(search, filter,ctls);
         while (e.hasMore()) {
             properties = new LinkedHashMap<>();
             SearchResult entry = (SearchResult) e.next();
-            System.out.println(entry.toString());
+            log.debug("Found entry: {}", entry.getName());
             Iterator<? extends Attribute> iterator = entry.getAttributes().getAll().asIterator();
             while (iterator.hasNext()) {
                 Attribute attribute = iterator.next();
-                System.out.println(attribute.toString() + " ");
+                log.debug("Attribute: {} = {}", attribute.getID(), attribute.get());
                 properties.put(attribute.getID(), attribute.get());
             }
+        }
+        if (properties != null) {
+            log.debug("User properties found: {}", properties);
+        } else {
+            log.debug("No user properties found for search: {}", search);
         }
         return properties;
     }
@@ -91,6 +101,7 @@ public class LdapClient {
         dirContext  = new InitialDirContext(env);
         NamingEnumeration<SearchResult> results = dirContext.search(dn, comparisonFilter, ctls);
         Boolean match = results.hasMore();
+        log.debug("Attribute value match for DN '{}', attributeName '{}' and value '{}': {}", dn, attributeName, value, match);
         return match;
     }
 

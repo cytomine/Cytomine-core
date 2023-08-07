@@ -44,20 +44,22 @@ public class LdapIdentityAuthenticationProvider implements AuthenticationProvide
         String search = configurationRepository.findByKey(CONFIG_KEY_LDAP_SEARCH)
                 .map(Configuration::getValue)
                 .orElse("NO_LDAP_SEARCH");
+        log.debug("LdapIdentityAuthenticationProvider search: {}", search);
 
         String attributes = configurationRepository.findByKey(CONFIG_KEY_LDAP_ATTRIBUTES)
                 .map(Configuration::getValue)
                 .orElse("");
-
+        log.debug("LdapIdentityAuthenticationProvider attributes: {}", attributes);
         String passwordAttributeName = configurationRepository.findByKey(CONFIG_KEY_LDAP_PASSWORD_ATTRIBUTE_NAME)
                 .map(Configuration::getValue)
                 .orElse("NO_LDAP_SEARCH");
-
+        log.debug("LdapIdentityAuthenticationProvider passwordAttributeName: {}", passwordAttributeName);
         List<String> attrIds = Arrays.stream(attributes.split(",")).toList();
 
         try {
             if (ldapClient.isInLDAP(search, username, attrIds)) {
                 if (ldapClient.hasValidCredential("cn="+username +"," + search, passwordAttributeName, password)) {
+                    log.debug("authenticated with LDAP");
                     UserDetails userDetails = casLdapUserDetailsService.loadUserByUsername(username);
                     return new UsernamePasswordAuthenticationToken(
                             userDetails,

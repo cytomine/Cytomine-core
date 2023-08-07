@@ -100,6 +100,11 @@ public class StorageAuthorizationTest extends CRUDAuthorizationTest {
     }
 
     @Override
+    public void guest_with_permission_get_domain() {
+        expectForbidden (() -> when_i_get_domain());
+    }
+
+    @Override
     protected void when_i_add_domain() {
         storageService.add(builder.given_a_not_persisted_storage().toJsonObject());
     }

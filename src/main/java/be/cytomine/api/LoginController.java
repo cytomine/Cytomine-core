@@ -253,18 +253,23 @@ public class LoginController extends RestCytomineController {
                 throw new BadCredentialsException("User " + username + " cannot be authenticate");
             }
         } catch (AccountStatusException exception) {
-            log.debug(exception.getClass() + " has been thrown");
+            log.error("Error while authenticating user in local database", exception);
             throw exception;
         } catch (AuthenticationException exception) {
-            log.debug(exception.getClass() + " has been thrown");
+            log.error("Error while authenticating user in local database", exception);
             if (env.getProperty("application.authentication.ldap.enabled", Boolean.class, false)) {
                 log.debug("Try to authenticate user in LDAP database");
-                authentication = ldapIdentityAuthenticationProvider.authenticate(authenticationToken);
+                try {
+                    authentication = ldapIdentityAuthenticationProvider.authenticate(authenticationToken);
+                    if (authentication==null) {
+                        throw new BadCredentialsException("User " + username + " cannot be authenticate");
+                    }
+                } catch (Exception exp) {
+                    log.error("Error while authenticating user in LDAP database", exp);
+                    throw new BadCredentialsException("User " + username + " cannot be authenticate");
+                }
             } else {
                 throw exception;
-            }
-            if (authentication == null) {
-                throw new BadCredentialsException("User " + username + " cannot be authenticate");
             }
         }
         SecurityContextHolder.getContext().setAuthentication(authentication);
