@@ -112,8 +112,14 @@ public class LoginController extends RestCytomineController {
         token.setTokenKey(tokenKey);
         authWithTokenRepository.save(token);
         log.debug("tokenKey: {} generated for user {} ", tokenKey, username);
-        log.debug("redirect to {}", request.getParameter("cytomine_redirect"));
-        response.sendRedirect(request.getParameter("cytomine_redirect") + "#/?token=" + token.getTokenKey() + "&username=" + authentication.getName());
+
+        // Fix redirection URL if it was already ending with '#/'
+        String redirection = request.getParameter("cytomine_redirect");
+        if(redirection != null && redirection.endsWith("#/"))
+            redirection = redirection.substring(0, redirection.length()-3);
+
+        log.debug("redirect to {}", redirection);
+        response.sendRedirect(redirection + "#/?token=" + token.getTokenKey() + "&username=" + authentication.getName());
     }
 
     @PostMapping("/api/authenticate")
