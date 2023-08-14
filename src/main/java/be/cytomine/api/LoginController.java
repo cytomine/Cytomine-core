@@ -55,6 +55,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
@@ -113,13 +115,26 @@ public class LoginController extends RestCytomineController {
         authWithTokenRepository.save(token);
         log.debug("tokenKey: {} generated for user {} ", tokenKey, username);
 
-        // Fix redirection URL if it was already ending with '#/'
+        // Prepare redirection
         String redirection = request.getParameter("cytomine_redirect");
-        if(redirection != null && redirection.endsWith("#/"))
-            redirection = redirection.substring(0, redirection.length()-3);
+        UriComponents originalRedirection = UriComponentsBuilder.fromHttpUrl(redirection).build();
+        String originalFragment = originalRedirection.getFragment();
 
-        log.debug("redirect to {}", redirection);
-        response.sendRedirect(redirection + "#/?token=" + token.getTokenKey() + "&username=" + authentication.getName());
+        // Parse the optional fragment as a URI to be able to work as query params
+        UriComponents tmpFragmentToParseAsURI = UriComponentsBuilder
+                .fromUriString(originalFragment)
+                .queryParam("token", token.getTokenKey())
+                .queryParam("username", authentication.getName())
+                .build(); // this would merge already existing query params from the original fragment
+
+        // Keep the original redirection URL, but override the new fragment
+        UriComponents finalRedirection = UriComponentsBuilder
+                .fromHttpUrl(originalRedirection.toString())  // keep the original request
+                .fragment(tmpFragmentToParseAsURI.toString()) // but apply a new merged fragment
+                .build();
+
+        log.debug("redirect to {}", finalRedirection);
+        response.sendRedirect(finalRedirection.toString());
     }
 
     @PostMapping("/api/authenticate")
