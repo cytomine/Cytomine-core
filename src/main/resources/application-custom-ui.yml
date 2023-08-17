@@ -143,6 +143,9 @@ application:
       project-explore-annotation-tracks:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
+      project-explore-annotation-linked-annotations:
+        ADMIN_PROJECT: true
+        CONTRIBUTOR_PROJECT: true
       project-explore-image-metadata:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
@@ -219,6 +222,12 @@ application:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
       project-tools-undo-redo:
+        ADMIN_PROJECT: true
+        CONTRIBUTOR_PROJECT: true
+      project-tools-link":
+        ADMIN_PROJECT: true
+        CONTRIBUTOR_PROJECT: true
+      project-tools-unlink:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
       project-annotations-term-piegraph:
