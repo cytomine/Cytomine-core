@@ -17,6 +17,9 @@ application:
       project-images-tab:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
+      project-image-groups-tab:
+        ADMIN_PROJECT: true
+        CONTRIBUTOR_PROJECT: true
       project-annotations-tab:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true

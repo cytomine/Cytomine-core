@@ -136,7 +136,19 @@ public class RestImageInstanceController extends RestCytomineController {
             imageSearchExtension.setWithLastActivity(withLastActivity);
             return responseSuccess(imageInstanceService.listExtended(project, imageSearchExtension, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax()), securityACLService.isFilterRequired(project));
         } else {
-            return responseSuccess(imageInstanceService.list(project, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax(), false, requestParams.getWithImageGroup()), securityACLService.isFilterRequired(project));
+            return responseSuccess(
+                imageInstanceService.list(
+                    project,
+                    retrieveSearchParameters(),
+                    requestParams.getSort(),
+                    requestParams.getOrder(),
+                    requestParams.getOffset(),
+                    requestParams.getMax(),
+                    false,
+                    requestParams.getWithImageGroup()
+                ),
+                securityACLService.isFilterRequired(project)
+            );
         }
     }
 
