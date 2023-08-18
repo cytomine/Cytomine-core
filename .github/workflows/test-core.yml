@@ -55,4 +55,6 @@ jobs:
           gradle-version: ${{ vars.GRADLE_VERSION }}
 
       - name: Test core
-        run: ./gradlew :test --no-daemon
+        run: |
+          sed -i -- "s/name=\"be.cytomine\" level=\"debug\"/name=\"be.cytomine\" level=\"info\"/g" src/test/resources/logback-test.xml
+          ./gradlew :test --no-daemon
