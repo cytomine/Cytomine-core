@@ -29,6 +29,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.saml2.core.Saml2ResponseValidatorResult;
 import org.springframework.security.saml2.provider.service.authentication.DefaultSaml2AuthenticatedPrincipal;
 import org.springframework.security.saml2.provider.service.authentication.OpenSamlAuthenticationProvider;
@@ -76,6 +77,8 @@ public class OpenSamlAuthenticationProviderWrapper {
             SecurityContextHolder.getContext().setAuthentication(newAuth);
             log.debug("jwt token generated and successfully set in security context");
             return newAuth;
+        } catch (UsernameNotFoundException usernameNotFoundException) {
+            throw usernameNotFoundException;
         } catch (Exception e) {
             log.error("error authenticating with saml2", e);
             throw new RuntimeException(e);

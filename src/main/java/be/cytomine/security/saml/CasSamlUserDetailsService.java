@@ -23,6 +23,7 @@ import be.cytomine.domain.security.Language;
 import be.cytomine.domain.security.SecRole;
 import be.cytomine.domain.security.SecUserSecRole;
 import be.cytomine.domain.security.User;
+import be.cytomine.exceptions.AuthenticationException;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.image.server.StorageService;
@@ -33,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -43,10 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static be.cytomine.security.DomainUserDetailsService.createSpringSecurityUser;
 
@@ -75,6 +74,9 @@ public class CasSamlUserDetailsService implements UserDetailsService {
 
         //Attributes from saml auth server
         LinkedHashMap<String, List<Object>> attributes = (LinkedHashMap<String, List<Object>>) saml2AuthenticatedPrincipal.getAttributes();
+        if(attributes == null || attributes.isEmpty())
+            throw new UsernameNotFoundException("User not known from Identity Provider.");
+
         log.debug("SAML attributes: {}", attributes.toString());
         String registrationId = saml2AuthenticatedPrincipal.getRelyingPartyRegistrationId();
         log.debug("SAML registrationId: {}", registrationId);
@@ -93,19 +95,21 @@ public class CasSamlUserDetailsService implements UserDetailsService {
             log.error("no configuration with name: {} found in application.authentication.saml2", registrationId, e.getMessage());
             throw e;
         }
-        String username;
-        try {
-            username = (String) attributes.get(attributeMap.get("username")).get(0);
-        } catch (Exception e) {
-            log.error("no mapping found for attribute: username", e.getMessage());
-            throw e;
+        String username = getSAMLAttributeValue("username", attributes, attributeMap);
+        if(username == null){
+            log.error("No mapping found for attribute: username.");
+            throw new UsernameNotFoundException("No mapping found for attribute: 'username'. The SAML attribute '" + attributeMap.get("username") + "' was not received from idP for that user. Make sure the mapping is done right in the SAML configuration attributeMappingFile. This file can be set in the SHIBBOLETH_ATTRIBUTE_MAPPING_FILE env var.");
         }
         log.debug("SAML username: {}", username);
         User user = userRepository.findByUsernameLikeIgnoreCase(username)
                 .orElseGet(() -> {
                     try {
                         return createUserFromSamlResults(username, attributes, attributeMap, registrationId, password);
+                    } catch (NoSuchFieldException nsfe){
+                        // If the idP replies no group that matches our roles, DENY access.
+                        throw new UsernameNotFoundException(nsfe.getMessage());
                     } catch (Exception e) {
+                        // Other exception are runtime exceptions.
                         throw new RuntimeException(e);
                     }
                 }); //User does not exists in our database
@@ -116,76 +120,96 @@ public class CasSamlUserDetailsService implements UserDetailsService {
         return createSpringSecurityUser(username, user);
     }
 
+    private String getSAMLAttributeValue(String attribute, LinkedHashMap<String, List<Object>> samlAttributes, Map<String, String> attributeMap){
+        try{
+            return (String) samlAttributes.get(attributeMap.get(attribute)).get(0);
+        } catch (Exception e){
+            log.warn("No mapping for attribute '"+attribute+"'");
+            return null;
+        }
+    }
+
+    private boolean hasSAMLAttributeContaining(String groupAttribute, String groupName, LinkedHashMap<String, List<Object>> samlAttributes, Map<String, String> attributeMap){
+        if(samlAttributes != null && attributeMap != null && groupAttribute != null && attributeMap.containsKey(groupAttribute)){
+            String mappedGroupAttribute = attributeMap.get(groupAttribute);
+            String mappedGroupName = attributeMap.get(groupName);
+            log.debug("Looking for any value of attribute '" + mappedGroupAttribute + "' that contains the substring '" + mappedGroupName + "'");
+            return samlAttributes.get(mappedGroupAttribute).stream().anyMatch(
+                        groupValue -> ((String)groupValue).contains(mappedGroupName)
+                    );
+        } else {
+            return false;
+        }
+    }
+
     public User createUserFromSamlResults(String username, LinkedHashMap<String, List<Object>> samlAttributes, Map<String, String> attributeMap, String registrationId, String password) throws NoSuchFieldException {
 
-        log.debug("creating user from saml results with username: {}", username);
-        String firstname;
-        String lastname;
-        String mail;
-        try {
-            firstname = (String) samlAttributes.get(attributeMap.get("firstname")).get(0);
-            lastname = (String) samlAttributes.get(attributeMap.get("lastname")).get(0);
-            mail = (String) samlAttributes.get(attributeMap.get("mail")).get(0);
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw e;
-        }
+            if(username != null && !username.isBlank()) {
+                log.debug("creating user from saml results with username: {}", username);
+                String firstname = getSAMLAttributeValue("firstname", samlAttributes, attributeMap);
+                String lastname = getSAMLAttributeValue("lastname", samlAttributes, attributeMap);
+                String mail = getSAMLAttributeValue("mail", samlAttributes, attributeMap);
 
-        User user = new User();
-        user.setUsername(username);
-        user.setLastname(lastname);
-        user.setFirstname(firstname);
-        user.setEmail(mail);
-        user.setEnabled(true);
-        user.setPassword(password);
-        user.setOrigin(registrationId);
-        user.setLanguage(Language.valueOf(applicationProperties.getDefaultLanguage()));
-        user.generateKeys();
+                User user = new User();
+                user.setUsername(username);
+                user.setLastname(lastname);
+                user.setFirstname(firstname);
+                user.setEmail(mail);
+                user.setEnabled(true);
+                user.setPassword(password);
+                user.setOrigin(registrationId);
+                user.setLanguage(Language.valueOf(applicationProperties.getDefaultLanguage()));
+                user.generateKeys();
 
-        user = userRepository.save(user);
-        log.debug("user created: {}", user.getUsername());
+                user = userRepository.save(user);
+                log.debug("user created: {}", user.getUsername());
 
-        String group_attribute = attributeMap.get("group");
-        List<SecRole> userRoles = new ArrayList<>();
+                String group_attribute = attributeMap.get("group");
+                List<SecRole> userRoles = new ArrayList<>();
 
-        if (samlAttributes.containsKey(group_attribute)) {
-            log.debug("group attribute found: {}", group_attribute);
-            String group = (String) samlAttributes.get(group_attribute).get(0);
-            log.debug("user group: {}", group);
+                if (samlAttributes.containsKey(group_attribute)) {
+                    log.debug("group attribute found: {}", group_attribute);
 
-            if (attributeMap.containsKey("admin_role") && group.equals(attributeMap.get("admin_role"))) {
-                // We need to have both roles assigned, so admin can open an admin session and a user session
-                userRoles.add(secRoleRepository.getAdmin());
-                userRoles.add(secRoleRepository.getUser());
-            } else if (attributeMap.containsKey("user_role") && group.equals(attributeMap.get("user_role"))) {
-                userRoles.add(secRoleRepository.getUser());
-            } else if (attributeMap.containsKey("guest_role") && group.equals(attributeMap.get("guest_role"))) {
-                userRoles.add(secRoleRepository.getGuest());
+
+                    if (hasSAMLAttributeContaining("group", "admin_role", samlAttributes, attributeMap)) {
+                        // We need to have both roles assigned, so admin can open an admin session and a user session
+                        userRoles.add(secRoleRepository.getAdmin());
+                        userRoles.add(secRoleRepository.getUser());
+                        log.debug("Found. User has been promoted to ROLE_ADMIN and ROLE_USER.");
+                    } else if (hasSAMLAttributeContaining("group", "user_role", samlAttributes, attributeMap)) {
+                        userRoles.add(secRoleRepository.getUser());
+                        log.debug("Found. User has been promoted toROLE_USER.");
+                    } else if (hasSAMLAttributeContaining("group", "guest_role", samlAttributes, attributeMap)) {
+                        userRoles.add(secRoleRepository.getGuest());
+                        log.debug("Found. User has been promoted to ROLE_ADMIN and ROLE_GUEST.");
+                    } else {
+                        throw new NoSuchFieldException("user group doesn't match our mapped user roles");
+                    }
+                } else {
+                    throw new NoSuchFieldException("No mapping found for attribute: 'group'. The SAML attribute '" + attributeMap.get("group") + "' was not received from idP for that user. Make sure the mapping is done right in the SAML configuration attributeMappingFile. This file can be set in the SHIBBOLETH_ATTRIBUTE_MAPPING_FILE env var.");
+                }
+
+
+                for (SecRole userRole : userRoles) {
+                    SecUserSecRole secUsersecRole = new SecUserSecRole();
+                    secUsersecRole.setSecUser(user);
+                    secUsersecRole.setSecRole(userRole);
+                    entityManager.persist(secUsersecRole);
+                    entityManager.flush();
+                }
+                entityManager.refresh(user);
+                User finalUser = userRepository.findByUsernameLikeIgnoreCase(user.getUsername()).get();
+                log.debug("user roles: {} assigned to user: {}", finalUser.getRoles().toString(), finalUser.getUsername());
+
+                if (finalUser.getRoles().stream().anyMatch(userRole -> userRole.getAuthority().equals("ROLE_ADMIN") || userRole.getAuthority().equals("ROLE_USER"))) {
+                    log.debug("creating storage for user: {}", finalUser.getUsername());
+                    SecurityUtils.doWithAuth(applicationContext, "admin", () -> storageService.createStorage(finalUser));
+                }
+
+                return user;
             } else {
-                throw new NoSuchFieldException("user group doesn't match our mapped user roles");
+                throw new RuntimeException("Cannot create user with an empty username.");
             }
-        } else {
-            throw new NoSuchFieldException("no group attribute found for group: " + group_attribute);
-        }
-
-
-        for (SecRole userRole : userRoles) {
-            SecUserSecRole secUsersecRole = new SecUserSecRole();
-            secUsersecRole.setSecUser(user);
-            secUsersecRole.setSecRole(userRole);
-            entityManager.persist(secUsersecRole);
-            entityManager.flush();
-        }
-        entityManager.refresh(user);
-        User finalUser = userRepository.findByUsernameLikeIgnoreCase(user.getUsername()).get();
-        log.debug("user roles: {} assigned to user: {}", finalUser.getRoles().toString(), finalUser.getUsername());
-
-        if (finalUser.getRoles().stream().anyMatch(userRole -> userRole.getAuthority().equals("ROLE_ADMIN") || userRole.getAuthority().equals("ROLE_USER"))) {
-            log.debug("creating storage for user: {}", finalUser.getUsername());
-            SecurityUtils.doWithAuth(applicationContext, "admin", () -> storageService.createStorage(finalUser));
-        }
-
-        return user;
     }
 
     @Override
