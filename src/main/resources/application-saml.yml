@@ -11,6 +11,10 @@ spring:
                 credentials:
                   - private-key-location: ${SHIBBOLETH_SP_PRIVATE_KEY:classpath:local.key}
                     certificate-location: ${SHIBBOLETH_SP_CERTIFICATE:classpath:local.crt}
+              decryption:
+                credentials:
+                  - private-key-location: ${SHIBBOLETH_SP_PRIVATE_KEY:classpath:local.key}
+                    certificate-location: ${SHIBBOLETH_SP_CERTIFICATE:classpath:local.crt}
 application:
   authentication:
     saml2:
