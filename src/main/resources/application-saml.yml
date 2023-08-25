@@ -3,6 +3,7 @@ spring:
       saml2:
         relyingparty:
           registration:
+            # Our sp-metadata will be served at http://cytomine.local//saml2/sp-metadata/shibboleth
             shibboleth:
               identityprovider:
                 entity-id: ${SHIBBOLETH_ENTITY_ID:https://idp.cytom.in/idp}
@@ -15,6 +16,9 @@ spring:
                 credentials:
                   - private-key-location: ${SHIBBOLETH_SP_PRIVATE_KEY:classpath:local.key}
                     certificate-location: ${SHIBBOLETH_SP_CERTIFICATE:classpath:local.crt}
+              entity-id: ${SHIBBOLETH_ENTITY_ID:http://cytomine.local/saml2/sp-metadata/shibboleth}
+              acs:
+                location: ${SHIBBOLETH_ACS_LOCATION:http://cytomine.local/login/saml2/sso/shibboleth}
 application:
   authentication:
     saml2:

@@ -83,7 +83,7 @@ public class SecurityConfiguration {
             //override default sp metadata endpoint
             filter.setRequestMatcher(new AntPathRequestMatcher("/saml2/sp-metadata/{registrationId}", "GET"));
 
-            http.requestMatchers().antMatchers("/saml/**", "/saml2/**", "/login/saml2/**", "/logout/saml2/**").and()
+            http.requestMatchers().antMatchers("/saml/**", "/saml2/**", "/login/saml2/**", "/login/saml2/sso/**", "/logout/saml2/**").and()
                     .authorizeRequests()
                     .anyRequest().authenticated()
                     .and()
