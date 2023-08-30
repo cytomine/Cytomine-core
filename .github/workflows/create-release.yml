@@ -6,7 +6,7 @@ on:
       - "*.*.*"
 
 env:
-  JAR_FILE: "cytomine-${{ github.ref_name }}.jar"
+  JAR_FILE: "cytomine-core-${{ github.ref_name }}.jar"
 
 jobs:
   build-jar:
