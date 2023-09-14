@@ -3,10 +3,19 @@ spring:
       saml2:
         relyingparty:
           registration:
-            # Our sp-metadata will be served at http://cytomine.local//saml2/sp-metadata/shibboleth
+            # Our sp-metadata will be served at http://cytomine.local/saml2/sp-metadata/shibboleth
             shibboleth:
               identityprovider:
                 metadata-uri: ${SHIBBOLETH_METADATA_URI:https://idp.cytom.in/idp/shibboleth}
+
+              # The private key should not be in PKCS#8 but PKCS#1
+              # Generate a 2048-bit RSA Public / Private key pair
+              #  openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout private.key -out public.crt
+              #
+              # Convert the PKCS#8 format private-key to PKCS#1 unencrypted format
+              #  openssl rsa -in private.key -out rsaprivate.key
+              #
+              # You can then set SHIBBOLETH_SP_PRIVATE_KEY=rsaprivate.key and SHIBBOLETH_SP_CERTIFICATE=public.crt
               signing:
                 credentials:
                   - private-key-location: ${SHIBBOLETH_SP_PRIVATE_KEY:classpath:local.key}
