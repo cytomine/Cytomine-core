@@ -6,6 +6,8 @@ spring:
             # Our sp-metadata will be served at http://cytomine.local/saml2/sp-metadata/shibboleth
             shibboleth:
               identityprovider:
+                singlesignon:
+                  sign-request: ${SHIBBOLETH_SSO_SIGN_REQUEST:false}
                 metadata-uri: ${SHIBBOLETH_METADATA_URI:https://idp.cytom.in/idp/shibboleth}
 
               # The private key should not be in PKCS#8 but PKCS#1
