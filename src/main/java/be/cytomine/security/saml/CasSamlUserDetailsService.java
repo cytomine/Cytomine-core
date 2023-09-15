@@ -32,6 +32,7 @@ import be.cytomine.utils.SecurityUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.access.AccessDeniedException;
@@ -124,7 +125,14 @@ public class CasSamlUserDetailsService implements UserDetailsService {
         try{
             return (String) samlAttributes.get(attributeMap.get(attribute)).get(0);
         } catch (Exception e){
-            log.warn("No mapping for attribute '"+attribute+"'");
+            String debug="";
+            try{
+                debug = JSONObject.toJSONString(samlAttributes);
+            } catch (Exception ex){
+                debug="?";
+            }
+
+            log.warn("No mapping for attribute '"+attribute+"'. SAML attributes: " + debug );
             return null;
         }
     }
