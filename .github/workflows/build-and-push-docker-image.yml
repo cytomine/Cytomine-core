@@ -30,4 +30,6 @@ jobs:
           context: .
           file: ./docker/Dockerfile
           push: true
-          tags: cytomineuliege/core:${{ github.ref_name }}
+          tags: |
+            cytomineuliege/core:latest
+            cytomineuliege/core:${{ github.ref_name }}
