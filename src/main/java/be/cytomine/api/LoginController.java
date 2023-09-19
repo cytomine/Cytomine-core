@@ -134,7 +134,7 @@ public class LoginController extends RestCytomineController {
                 .fragment(tmpFragmentToParseAsURI.toString()) // but apply a new merged fragment
                 .build();
 
-        log.debug("redirect to {}", finalRedirection);
+        log.warn("redirect to {}", finalRedirection, finalRedirection.getScheme());
         response.sendRedirect(finalRedirection.toString());
     }
 
