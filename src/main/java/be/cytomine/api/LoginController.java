@@ -130,6 +130,7 @@ public class LoginController extends RestCytomineController {
         // Keep the original redirection URL, but override the new fragment
         UriComponents finalRedirection = UriComponentsBuilder
                 .fromHttpUrl(originalRedirection.toString())  // keep the original request
+                .scheme(originalRedirection.getScheme())
                 .fragment(tmpFragmentToParseAsURI.toString()) // but apply a new merged fragment
                 .build();
 
