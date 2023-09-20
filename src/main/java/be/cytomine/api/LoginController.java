@@ -102,7 +102,7 @@ public class LoginController extends RestCytomineController {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        log.debug("User {} logged in with SSO", username);
+        log.warn("User {} logged in with SSO", username);
         User user = userRepository.findByUsernameLikeIgnoreCaseAndEnabledIsTrue(username)
                 .orElseThrow(() -> new ObjectNotFoundException("User", username));
         log.debug("generate tokenKey for user {} ", username);
@@ -134,7 +134,7 @@ public class LoginController extends RestCytomineController {
                 .fragment(tmpFragmentToParseAsURI.toString()) // but apply a new merged fragment
                 .build();
 
-        log.warn("redirect to {}", finalRedirection, finalRedirection.getScheme());
+        log.warn("redirect to {} {}", finalRedirection, finalRedirection.getScheme());
         response.sendRedirect(finalRedirection.toString());
     }
 
