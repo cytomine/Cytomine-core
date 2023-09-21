@@ -29,7 +29,6 @@ spring:
               entity-id: ${SHIBBOLETH_ENTITY_ID:http://cytomine.local/saml2/sp-metadata/shibboleth}
               acs:
                 location: ${SHIBBOLETH_ACS_LOCATION:http://cytomine.local/login/saml2/sso/shibboleth}
-
 application:
   authentication:
     saml2:
