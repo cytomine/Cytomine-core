@@ -29,6 +29,7 @@ spring:
               entity-id: ${SHIBBOLETH_ENTITY_ID:http://cytomine.local/saml2/sp-metadata/shibboleth}
               acs:
                 location: ${SHIBBOLETH_ACS_LOCATION:http://cytomine.local/login/saml2/sso/shibboleth}
+
 application:
   authentication:
     saml2:
@@ -40,3 +41,5 @@ application:
         #these are used from the unit tests of the login method, can be skipped in production
         ssoURI: ${SHIBBOLETH_SSO_URI:https://idp.cytom.in/idp/profile/SAML2/Redirect/SSO?execution=e2s1}
         ssoRedirectURI: ${SHIBBOLETH_SSO_REDIRECT_URI:/idp/profile/SAML2/Redirect/SSO}
+server:
+  forward-headers-strategy: native
