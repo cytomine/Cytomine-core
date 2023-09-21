@@ -40,3 +40,5 @@ application:
         #these are used from the unit tests of the login method, can be skipped in production
         ssoURI: ${SHIBBOLETH_SSO_URI:https://idp.cytom.in/idp/profile/SAML2/Redirect/SSO?execution=e2s1}
         ssoRedirectURI: ${SHIBBOLETH_SSO_REDIRECT_URI:/idp/profile/SAML2/Redirect/SSO}
+server:
+  forward-headers-strategy: native
