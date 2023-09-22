@@ -58,3 +58,27 @@ jobs:
         run: |
           sed -i -- "s/name=\"be.cytomine\" level=\"debug\"/name=\"be.cytomine\" level=\"info\"/g" src/test/resources/logback-test.xml
           ./gradlew :test --no-daemon
+
+      - name: Upload test reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: reports
+          path: build/reports/
+          retention-days: 30
+
+      - name: Upload test results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: build/test-results/
+          retention-days: 30
+
+      - name: Upload Java Code Coverage (JaCoCo)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: jacoco
+          path: build/jacoco/
+          retention-days: 30
