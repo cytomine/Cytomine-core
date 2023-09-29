@@ -46,6 +46,10 @@ public class MetadataSearchService {
         this.operations = operations;
     }
 
+    private String encodeString(String value) {
+        return value.replaceAll("[\\[+\\]+:{}^~?\\\\/()><=\"!]", "\\\\$0");
+    }
+
     private Query buildRangeQuery(List<Integer> bounds, String value) {
         Query matchKey = MatchQuery.of(mq -> mq
                 .field("key")
@@ -66,7 +70,7 @@ public class MetadataSearchService {
 
     private Query buildStringQuery(String key, String value, Query byDomainId) {
         Query byValue = QueryStringQuery.of(qsq -> qsq
-                .query(String.format("%s*", value))
+                .query(String.format("%s*", encodeString(value)))
                 .defaultField("value"))
             ._toQuery();
 
@@ -144,7 +148,7 @@ public class MetadataSearchService {
 
         Query autocomplete = QueryStringQuery.of(qsq -> qsq
                 .defaultField("value")
-                .query(String.format("%s*", search)))
+                .query(String.format("%s*", encodeString(search))))
             ._toQuery();
 
         NativeQuery query = NativeQuery.builder()
