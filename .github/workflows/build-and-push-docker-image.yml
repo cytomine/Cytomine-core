@@ -13,6 +13,24 @@ jobs:
       - name: Set up the repository
         uses: actions/checkout@v3
 
+      - name: Release check
+        id: release
+        run: |
+          if [[ ${{ github.ref_name }} =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "release=true" >> $GITHUB_OUTPUT
+          else
+            echo "release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: cytomineuliege/core
+          tags: |
+            type=raw,value=latest,enable=${{ steps.release.outputs.release }}
+            type=semver,pattern={{raw}}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -29,7 +47,6 @@ jobs:
             CORE_VERSION=${{ github.ref_name }}
           context: .
           file: ./docker/Dockerfile
+          labels: ${{ steps.meta.outputs.labels }}
           push: true
-          tags: |
-            cytomineuliege/core:latest
-            cytomineuliege/core:${{ github.ref_name }}
+          tags: ${{ steps.meta.outputs.tags }}
