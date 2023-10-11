@@ -514,12 +514,13 @@ public class UploadedFileResourceTests {
         uploadedFile.getImageServer().setBasePath("/data/images");
         uploadedFile.getImageServer().setUrl("http://localhost:8888");
         uploadedFile.setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        uploadedFile.setOriginalFilename("CMU-2.mrxs");
         uploadedFile.setContentType("MRXS");
         MvcResult mvcResult = restUploadedFileControllerMockMvc.perform(get("/api/uploadedfile/{id}/download", uploadedFile.getId()))
                 .andDo(print()).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
         assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/file/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/")+"/export");
+                .isEqualTo("http://localhost:8888/file/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=CMU-2.mrxs");
 
 
     }
