@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class MetadataSearchService {
 
-    private ElasticsearchOperations operations;
+    private final ElasticsearchOperations operations;
 
     public MetadataSearchService(ElasticsearchOperations operations) {
         this.operations = operations;
@@ -87,9 +87,9 @@ public class MetadataSearchService {
     }
 
     public List<Long> search(JsonObject body) {
-        List<FieldValue> imageIDs = ((List<Integer>) body.get("imageIds"))
+        List<FieldValue> imageIDs = ((List<Long>) body.get("imageIds"))
             .stream()
-            .map(x -> FieldValue.of(x))
+            .map(FieldValue::of)
             .collect(Collectors.toList());
         TermsQueryField termsQueryField = new TermsQueryField.Builder().value(imageIDs).build();
         Query byDomainId = TermsQuery.of(ts -> ts.field("domain_ident").terms(termsQueryField))._toQuery();
