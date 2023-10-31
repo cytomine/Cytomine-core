@@ -147,7 +147,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
     public void crop(
             @PathVariable Long id,
             @PathVariable String format,
-            @RequestParam(defaultValue = "256") Integer maxSize,
+            @RequestParam(required = false) Integer maxSize,
             @RequestParam(required = false) String geometry,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String boundaries,
@@ -211,7 +211,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
     public ResponseEntity<String> cropParameters(
             @PathVariable Long id,
             @PathVariable String format,
-            @RequestParam(defaultValue = "256") Integer maxSize,
+            @RequestParam(required = false) Integer maxSize,
             @RequestParam(required = false) String geometry,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String boundaries,

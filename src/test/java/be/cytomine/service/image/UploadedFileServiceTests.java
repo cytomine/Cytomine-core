@@ -264,10 +264,6 @@ public class UploadedFileServiceTests {
         assertThat(uploadedfileChildToAdd.getLTree()).contains(uploadedFileToAdd.getLTree());
 
         assertThat(uploadedfileSubSubChildToAdd.getParent().getId()).isEqualTo(uploadedfileSubChildToAdd.getId());
-        uploadedFileService.delete(uploadedfileSubChildToAdd, null, null, false);
-        entityManager.refresh(uploadedfileSubSubChildToAdd);
-        assertThat(uploadedfileSubSubChildToAdd.getParent().getId()).isEqualTo(uploadedfileChildToAdd.getId());
-
     }
 
     @Test
@@ -361,17 +357,28 @@ public class UploadedFileServiceTests {
         uploadedFile.setProjects(new Long[] {123L});
         builder.persistAndReturn(uploadedFile);
 
+        UploadedFile uploadedFileChild = builder.given_a_uploaded_file();
+        uploadedFileChild.setOriginalFilename("child");
+        uploadedFileChild.setParent(entityManager.find(UploadedFile.class, uploadedFile.getId()));
+        builder.persistAndReturn(uploadedFileChild);
+
+        UploadedFile uploadedFileSubChild = builder.given_a_uploaded_file();
+        uploadedFileSubChild.setParent(uploadedFileChild);
+        builder.persistAndReturn(uploadedFileSubChild);
+
         AbstractImage abstractImage = builder.given_an_abstract_image();
-        abstractImage.setUploadedFile(uploadedFile);
+        abstractImage.setUploadedFile(uploadedFileSubChild);
 
         AbstractSlice abstractSlice = builder.given_an_abstract_slice();
-        abstractSlice.setUploadedFile(uploadedFile);
+        abstractSlice.setUploadedFile(uploadedFileSubChild);
 
         CommandResponse commandResponse = uploadedFileService.delete(uploadedFile, null, null, true);
 
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);
         assertThat(uploadedFileService.find(abstractImage.getUploadedFile().getId()).isEmpty());
+        assertThat(uploadedFileService.find(uploadedFileChild.getId()).isEmpty());
+        assertThat(uploadedFileService.find(uploadedFileSubChild.getId()).isEmpty());
         assertThat(abstractImageRepository.findById(abstractImage.getId()).isEmpty());
     }
 
@@ -381,5 +388,27 @@ public class UploadedFileServiceTests {
         Assertions.assertThrows(ForbiddenException.class, () ->
                 uploadedFileService.delete(imageInstance.getBaseImage().getUploadedFile(), null, null, false)
         );
+    }
+
+    @Test
+    void delete_uploaded_file_child() {
+        UploadedFile uploadedFile = builder.given_a_uploaded_file();
+        uploadedFile.setOriginalFilename("parent");
+        builder.persistAndReturn(uploadedFile);
+
+        entityManager.detach(uploadedFile);
+
+        UploadedFile uploadedFileChild = builder.given_a_uploaded_file();
+        uploadedFileChild.setOriginalFilename("child");
+        uploadedFileChild.setParent(entityManager.find(UploadedFile.class, uploadedFile.getId()));
+        builder.persistAndReturn(uploadedFileChild);
+
+
+        UploadedFile uploadedFileSubChild = builder.given_a_uploaded_file();
+        uploadedFileSubChild.setParent(uploadedFileChild);
+        builder.persistAndReturn(uploadedFileSubChild);
+
+        Assertions.assertThrows(ForbiddenException.class, () ->
+                uploadedFileService.delete(uploadedFileChild, null, null, false));
     }
 }
