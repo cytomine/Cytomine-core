@@ -83,10 +83,10 @@ public class MetadataSearchServiceTests {
 
         JsonObject filters = new JsonObject(parameters);
 
-        List<Long> actualSuggestions = metadataSearchService.search(filters);
-        List<Long> expectedSuggestions = List.of(ai1.getId());
+        List<Long> actualIDs = metadataSearchService.search(filters);
+        List<Long> expectedIDs = List.of(ai1.getId());
 
-        assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
+        assertThat(actualIDs).isEqualTo(expectedIDs);
     }
 
     @Test
@@ -111,10 +111,10 @@ public class MetadataSearchServiceTests {
 
         JsonObject filters = new JsonObject(parameters);
 
-        List<Long> actualSuggestions = metadataSearchService.search(filters);
-        List<Long> expectedSuggestions = List.of(ai1.getId());
+        List<Long> actualIDs = metadataSearchService.search(filters);
+        List<Long> expectedIDs = List.of(ai1.getId());
 
-        assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
+        assertThat(actualIDs).isEqualTo(expectedIDs);
     }
 
     @Test
@@ -140,10 +140,10 @@ public class MetadataSearchServiceTests {
 
         JsonObject filters = new JsonObject(parameters);
 
-        List<Long> actualSuggestions = metadataSearchService.search(filters);
-        List<Long> expectedSuggestions = List.of(ai1.getId());
+        List<Long> actualIDs = metadataSearchService.search(filters);
+        List<Long> expectedIDs = List.of(ai1.getId());
 
-        assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
+        assertThat(actualIDs).isEqualTo(expectedIDs);
     }
 
     @Test
