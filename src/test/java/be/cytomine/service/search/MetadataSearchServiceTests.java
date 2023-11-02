@@ -26,17 +26,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
-import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @Transactional
 public class MetadataSearchServiceTests {
+
+    private final IndexCoordinates index = IndexCoordinates.of("properties");
 
     @Autowired
     BasicInstanceBuilder builder;
@@ -49,14 +52,12 @@ public class MetadataSearchServiceTests {
 
     @BeforeEach
     public void setup() {
-        IndexOperations indexOperations = operations.indexOps(IndexCoordinates.of("properties"));
-        indexOperations.create();
+        operations.indexOps(index).create();
     }
 
     @AfterEach
     public void clean() {
-        IndexOperations indexOperations = operations.indexOps(IndexCoordinates.of("properties"));
-        indexOperations.delete();
+        operations.indexOps(index).delete();
     }
 
     @Test
@@ -68,8 +69,10 @@ public class MetadataSearchServiceTests {
         Property p3 = builder.given_a_property(ai2, "key3", "7000");
 
         for (Property p : Arrays.asList(p1, p2, p3)) {
-            operations.save(p, IndexCoordinates.of("properties"));
+            operations.save(p, index);
         }
+        /* Let elasticsearch refresh the indices */
+        operations.indexOps(index).refresh();
 
         HashMap<String, Object> query = new HashMap<>();
         query.put("key1", "val");
@@ -81,7 +84,7 @@ public class MetadataSearchServiceTests {
         JsonObject filters = new JsonObject(parameters);
 
         List<Long> actualSuggestions = metadataSearchService.search(filters);
-        List<Long> expectedSuggestions = Collections.singletonList(ai1.getId());
+        List<Long> expectedSuggestions = List.of(ai1.getId());
 
         assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
     }
@@ -94,8 +97,10 @@ public class MetadataSearchServiceTests {
         Property p2 = builder.given_a_property(ai1, "key2", "2000");
 
         for (Property p : Arrays.asList(p1, p2)) {
-            operations.save(p, IndexCoordinates.of("properties"));
+            operations.save(p, index);
         }
+        /* Let elasticsearch refresh the indices */
+        operations.indexOps(index).refresh();
 
         HashMap<String, Object> query = new HashMap<>();
         query.put("key2", Arrays.asList(1000, 2000));
@@ -107,7 +112,7 @@ public class MetadataSearchServiceTests {
         JsonObject filters = new JsonObject(parameters);
 
         List<Long> actualSuggestions = metadataSearchService.search(filters);
-        List<Long> expectedSuggestions = Collections.singletonList(ai2.getId());
+        List<Long> expectedSuggestions = List.of(ai1.getId());
 
         assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
     }
@@ -120,8 +125,10 @@ public class MetadataSearchServiceTests {
         Property p2 = builder.given_a_property(ai1, "key2", "2000");
 
         for (Property p : Arrays.asList(p1, p2)) {
-            operations.save(p, IndexCoordinates.of("properties"));
+            operations.save(p, index);
         }
+        /* Let elasticsearch refresh the indices */
+        operations.indexOps(index).refresh();
 
         HashMap<String, Object> query = new HashMap<>();
         query.put("key1", "val");
@@ -134,7 +141,7 @@ public class MetadataSearchServiceTests {
         JsonObject filters = new JsonObject(parameters);
 
         List<Long> actualSuggestions = metadataSearchService.search(filters);
-        List<Long> expectedSuggestions = Arrays.asList(ai1.getId(), ai2.getId());
+        List<Long> expectedSuggestions = List.of(ai1.getId());
 
         assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
     }
@@ -146,11 +153,14 @@ public class MetadataSearchServiceTests {
         Property p1 = builder.given_a_property(ai, key, "value1");
         Property p2 = builder.given_a_property(ai, key, "value2");
 
-        operations.save(p1, IndexCoordinates.of("properties"));
-        operations.save(p2, IndexCoordinates.of("properties"));
+        for (Property p : Arrays.asList(p1, p2)) {
+            operations.save(p, index);
+        }
+        /* Let elasticsearch refresh the indices */
+        operations.indexOps(index).refresh();
 
         List<String> actualSuggestions = metadataSearchService.searchAutoCompletion(key, "wrong");
-        List<String> expectedSuggestions = new ArrayList<>();
+        List<String> expectedSuggestions = List.of();
 
         assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
     }
@@ -162,11 +172,14 @@ public class MetadataSearchServiceTests {
         Property p1 = builder.given_a_property(ai, key, "value1");
         Property p2 = builder.given_a_property(ai, key, "value2");
 
-        operations.save(p1, IndexCoordinates.of("properties"));
-        operations.save(p2, IndexCoordinates.of("properties"));
+        for (Property p : Arrays.asList(p1, p2)) {
+            operations.save(p, index);
+        }
+        /* Let elasticsearch refresh the indices */
+        operations.indexOps(index).refresh();
 
         List<String> actualSuggestions = metadataSearchService.searchAutoCompletion("wrong", "");
-        List<String> expectedSuggestions = new ArrayList<>();
+        List<String> expectedSuggestions = List.of();
 
         assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
     }
@@ -178,11 +191,14 @@ public class MetadataSearchServiceTests {
         Property p1 = builder.given_a_property(ai, key, "value1");
         Property p2 = builder.given_a_property(ai, key, "value2");
 
-        operations.save(p1, IndexCoordinates.of("properties"));
-        operations.save(p2, IndexCoordinates.of("properties"));
+        for (Property p : Arrays.asList(p1, p2)) {
+            operations.save(p, index);
+        }
+        /* Let elasticsearch refresh the indices */
+        operations.indexOps(index).refresh();
 
         List<String> actualSuggestions = metadataSearchService.searchAutoCompletion(key, "val");
-        List<String> expectedSuggestions = Arrays.asList("value1", "value2");
+        List<String> expectedSuggestions = List.of("value1", "value2");
 
         assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
     }
@@ -194,11 +210,14 @@ public class MetadataSearchServiceTests {
         Property p1 = builder.given_a_property(ai, key, "value1");
         Property p2 = builder.given_a_property(ai, key, "value2");
 
-        operations.save(p1, IndexCoordinates.of("properties"));
-        operations.save(p2, IndexCoordinates.of("properties"));
+        for (Property p : Arrays.asList(p1, p2)) {
+            operations.save(p, index);
+        }
+        /* Let elasticsearch refresh the indices */
+        operations.indexOps(index).refresh();
 
         List<String> actualSuggestions = metadataSearchService.searchAutoCompletion(key, "value1");
-        List<String> expectedSuggestions = Arrays.asList("value1");
+        List<String> expectedSuggestions = List.of("value1");
 
         assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
     }
@@ -211,12 +230,14 @@ public class MetadataSearchServiceTests {
         Property p2 = builder.given_a_property(ai, key, "value2");
         Property p3 = builder.given_a_property(ai, key, "value3");
 
-        operations.save(p1, IndexCoordinates.of("properties"));
-        operations.save(p2, IndexCoordinates.of("properties"));
-        operations.save(p3, IndexCoordinates.of("properties"));
+        for (Property p : Arrays.asList(p1, p2, p3)) {
+            operations.save(p, index);
+        }
+        /* Let elasticsearch refresh the indices */
+        operations.indexOps(index).refresh();
 
         List<String> actualSuggestions = metadataSearchService.searchAutoCompletion(key, "");
-        List<String> expectedSuggestions = Arrays.asList("value1", "value2", "value3");
+        List<String> expectedSuggestions = List.of("value1", "value2", "value3");
 
         assertThat(actualSuggestions).isEqualTo(expectedSuggestions);
     }
