@@ -134,7 +134,9 @@ public class ImageServerService extends ModelService {
         String encodedPath = URLEncoder.encode(imsPath ,StandardCharsets.UTF_8).replace("%2F", "/");
         encodedPath = org.apache.commons.lang3.StringUtils.strip(encodedPath, "/");
 
-        return "/" + targetResource + "/" + encodedPath + "/" + pathSuffix;
+        pathSuffix = pathSuffix != null ? "/" + pathSuffix : "";
+
+        return "/" + targetResource + "/" + encodedPath + pathSuffix;
     }
 
     protected String buildEncodedUri(String targetResource, UploadedFile uploadedFile, String pathSuffix) {
@@ -195,6 +197,14 @@ public class ImageServerService extends ModelService {
             throw new InvalidRequestException("No image server URL registered");
         }
         return serverUrl + this.buildEncodedUri(targetResource, abstractSlice, pathSuffix);
+    }
+
+    // [EEx ONLY]
+    public void deleteFile(UploadedFile uploadedFile) throws IOException {
+        String server = uploadedFile.getImageServerInternalUrl();
+        String uri = this.buildEncodedUri("image", uploadedFile, null);
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+        makeRequest("DELETE", server, uri, parameters, "json", Map.of());
     }
 
     public String downloadUri(UploadedFile uploadedFile) throws IOException {
@@ -833,6 +843,10 @@ public class ImageServerService extends ModelService {
                 log.debug("GET " + fullUrl);
                 requestBuilder.GET()
                         .uri(URI.create(fullUrl));
+            } else if (httpMethod.equals("DELETE")) {
+                log.debug("DELETE" + fullUrl);
+                requestBuilder.DELETE()
+                        .uri(URI.create(fullUrl));
             } else {
                 log.debug("POST " + imageServerInternalUrl + path);
                 log.debug(JsonObject.toJsonString(parameters));
@@ -863,7 +877,7 @@ public class ImageServerService extends ModelService {
             throw e;
         } catch(Exception e){
             log.error("Error for url : " + fullUrl + " with parameters " + parameterUrl, e);
-            throw new InvalidRequestException("Cannot generate thumb for " + fullUrl + " with " + parameterUrl);
+            throw new InvalidRequestException("Error of communication with PIMS for " + fullUrl + " with " + parameterUrl);
         }
     }
 
