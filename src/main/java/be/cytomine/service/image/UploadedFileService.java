@@ -403,7 +403,7 @@ public class UploadedFileService extends ModelService {
     protected void afterDelete(CytomineDomain domain, CommandResponse response) {
 
         UploadedFile uf = (UploadedFile) domain;
-        if (uf.getParent() == null) {
+        if (uf.getParent() == null && uf.getStatus() % 2 == 0) {
             try {
                 imageServerService.deleteFile(uf);
             } catch (Exception e) {
