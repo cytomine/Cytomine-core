@@ -86,9 +86,32 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return new AjaxLogoutSuccessHandler();
     }
 
+        /**
+     * Argon2 is intentionally slow: slow-hashing functions are good for storing passwords, because it is time/resource consuming to crack them.
+     * SHA-512 is not designed for storing passwords. so insecure and deprecated so in future check if sha256 use it if not use argon2 or bcrypt.
+     * recommended way is to use DelegatingPasswordEncoder()
+     * @return
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
+//        Digest based password encoding is not considered secure.
+//        Have to keep it for old Clients
         return new MessageDigestPasswordEncoder("SHA-256");
+
+//        To-Do: something along these lines ....
+//        PasswordEncoder current = new MessageDigestPasswordEncoder("SHA-256");
+//
+//        String idForEncode = "argon2";
+//
+//        Map<String,PasswordEncoder> encoders = new HashMap<>();
+//        encoders.put("bcrypt", new BCryptPasswordEncoder());
+//        encoders.put("pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8());
+//        encoders.put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8());
+//        encoders.put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8());
+//        encoders.put("sha256", new MessageDigestPasswordEncoder("SHA-256"));
+//
+//
+//        return new DelegatingPasswordEncoder(idForEncode, encoders);
     }
 
     @Override
