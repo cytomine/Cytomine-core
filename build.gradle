@@ -29,6 +29,7 @@ springBoot {
 	mainClass = "be.cytomine.CytomineCoreApplication"
 }
 
+ext['spring-security.version']='5.8.8'
 
 dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-logging"
