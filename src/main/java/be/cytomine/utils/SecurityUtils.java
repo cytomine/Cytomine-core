@@ -144,9 +144,12 @@ public class SecurityUtils {
 //            SecurityContext securityContext = null;
 //            if (httpSession != null) {
 //                securityContext = (SecurityContext)httpSession.getAttribute(
+                          // replaced by DelegatingSecurityContextRepository in Spring Security 6
 //                        HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
 //                if (securityContext != null) {
 //                    SecurityContextHolder.setContext(securityContext);
+                    // due to how Spring Sec 6 is we must also do this
+                    // securityContextRepository.saveContext(context, request, response);
 //                    set = true;
 //                }
 //            }

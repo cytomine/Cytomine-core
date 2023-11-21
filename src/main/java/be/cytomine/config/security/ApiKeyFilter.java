@@ -80,6 +80,8 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 //            SecurityContext context = SecurityContextHolder.createEmptyContext();
 //            context.setAuthentication(domainUserDetailsService.getAuthentication(apiKey));
 //            SecurityContextHolder.setContext(context);
+              // due to how Spring Sec 6 is we must also do this
+              // securityContextRepository.saveContext(context, request, response);
 //
 //            filterChain.doFilter(request, response);
 //        } catch (AuthenticationException failed) {

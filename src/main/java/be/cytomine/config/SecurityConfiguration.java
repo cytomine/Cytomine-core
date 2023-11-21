@@ -33,8 +33,10 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -134,6 +136,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return new JWTConfigurer(tokenProvider);
     }
 
+    /**
+     * Spring Security 6 Require Explicit Saving of SecurityContextRepository
+     * @param http the {@link HttpSecurity} to modify
+     * @throws Exception
+     */
     @Override
     public void configure(HttpSecurity http) throws Exception {
 // @formatter:off
@@ -161,6 +168,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers(HttpMethod.GET, "/server/**").permitAll()
             .antMatchers(HttpMethod.POST, "/server/**").permitAll()
             .antMatchers("/**").permitAll()
+
 //        .and()
 //            .httpBasic()
         .and()
@@ -168,7 +176,15 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         .and()
             .addFilter(switchUserFilter())
                 .headers()
-                .cacheControl().disable();
+                .cacheControl().disable()
+        // For Spring 6, opting into it within 5.8 as far as it doesn't break my app we can safely migrate
+        // Remove me once we migrated as these are the defaults behaviors in Spring Sec 6
+        .and()
+            .securityContext((securityContext) -> securityContext
+                    .requireExplicitSave(true))
+            .sessionManagement((sessions) -> sessions
+                    .requireExplicitAuthenticationStrategy(true)
+            );
         // @formatter:on
     }
 
@@ -186,5 +202,5 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 //        '/login/**':    ['IS_AUTHENTICATED_ANONYMOUSLY'],
 //        '/logout/**':   ['IS_AUTHENTICATED_ANONYMOUSLY'],
 //        '/status/**':   ['IS_AUTHENTICATED_ANONYMOUSLY']
-//]
+//        ]
 }
