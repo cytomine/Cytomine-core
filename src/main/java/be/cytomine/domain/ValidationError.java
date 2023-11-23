@@ -16,11 +16,10 @@ package be.cytomine.domain;
 * limitations under the License.
 */
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolation;
 
 @Getter
 @Setter

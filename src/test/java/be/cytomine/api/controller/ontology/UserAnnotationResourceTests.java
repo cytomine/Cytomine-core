@@ -24,27 +24,19 @@ import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.ontology.AnnotationTerm;
 import be.cytomine.domain.ontology.SharedAnnotation;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
-import be.cytomine.service.CommandService;
-import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.StringUtils;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
-import com.github.tomakehurst.wiremock.common.Json;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
 import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.*;
-import org.mortbay.util.ajax.JSON;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,12 +44,10 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -462,7 +452,7 @@ public class UserAnnotationResourceTests {
 
 
     @Test
-    @javax.transaction.Transactional
+    @jakarta.transaction.Transactional
     public void get_user_annotation_crop() throws Exception {
         UserAnnotation annotation = given_a_user_annotation_with_valid_image_server(builder);
 
@@ -491,7 +481,7 @@ public class UserAnnotationResourceTests {
     }
 
     @Test
-    @javax.transaction.Transactional
+    @jakarta.transaction.Transactional
     public void get_user_annotation_crop_mask() throws Exception {
         UserAnnotation annotation = given_a_user_annotation_with_valid_image_server(builder);
 
@@ -521,7 +511,7 @@ public class UserAnnotationResourceTests {
 
 
     @Test
-    @javax.transaction.Transactional
+    @jakarta.transaction.Transactional
     public void get_user_annotation_alpha_mask() throws Exception {
         UserAnnotation annotation = given_a_user_annotation_with_valid_image_server(builder);
 

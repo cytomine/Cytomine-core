@@ -24,8 +24,8 @@ import be.cytomine.utils.ClassUtils;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 import java.util.HashMap;
 
 @Entity

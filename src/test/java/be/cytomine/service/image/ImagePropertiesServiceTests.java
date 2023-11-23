@@ -19,23 +19,18 @@ package be.cytomine.service.image;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.meta.Property;
-import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.repository.meta.PropertyRepository;
-import be.cytomine.service.dto.*;
 import be.cytomine.service.middleware.ImageServerService;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.vividsolutions.jts.io.ParseException;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 

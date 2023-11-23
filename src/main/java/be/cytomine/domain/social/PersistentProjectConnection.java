@@ -16,26 +16,17 @@ package be.cytomine.domain.social;
 * limitations under the License.
 */
 
-import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.CytomineSocialDomain;
-import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.security.User;
 import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
-import org.bson.codecs.pojo.annotations.BsonIgnore;
-import org.hibernate.annotations.GenericGenerator;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.annotation.Transient;
-import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -84,7 +75,7 @@ public class PersistentProjectConnection extends CytomineSocialDomain implements
 
     Integer countCreatedAnnotations;
 
-    @javax.persistence.Transient
+    @jakarta.persistence.Transient
     @Transient // we need both
     Map<String, Object> extraProperties = new LinkedHashMap<>();
 

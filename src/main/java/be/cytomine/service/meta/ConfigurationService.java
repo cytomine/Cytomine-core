@@ -18,22 +18,12 @@ package be.cytomine.service.meta;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
-import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.meta.Configuration;
 import be.cytomine.domain.meta.ConfigurationReadingRole;
-import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ForbiddenException;
-import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.repository.meta.AttachedFileRepository;
 import be.cytomine.repository.meta.ConfigurationRepository;
-import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
@@ -45,13 +35,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-
-import static org.springframework.security.acls.domain.BasePermission.*;
 
 @Slf4j
 @Service

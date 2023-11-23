@@ -21,58 +21,39 @@ import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.*;
-import be.cytomine.domain.project.EditingMode;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.*;
-import be.cytomine.dto.NamedCytomineDomain;
-import be.cytomine.exceptions.ConstraintException;
-import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.repository.middleware.ImageServerRepository;
-import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repositorynosql.social.*;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.database.SequenceService;
-import be.cytomine.service.dto.ProjectBounds;
-import be.cytomine.service.dto.StorageStats;
-import be.cytomine.service.ontology.UserAnnotationService;
-import be.cytomine.service.project.ProjectRepresentativeUserService;
-import be.cytomine.service.project.ProjectService;
-import be.cytomine.service.search.ProjectSearchExtension;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.social.AnnotationActionService;
 import be.cytomine.service.social.ImageConsultationService;
 import be.cytomine.service.social.ProjectConnectionService;
 import be.cytomine.service.social.UserPositionService;
-import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.filters.SearchOperation;
-import be.cytomine.utils.filters.SearchParameterEntry;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.vividsolutions.jts.io.ParseException;
 import org.apache.commons.lang3.time.DateUtils;
-import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.web.context.request.RequestContextHolder;
 
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
-import java.io.IOException;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
-import static org.springframework.security.acls.domain.BasePermission.READ;
 
 
 @SpringBootTest(classes = CytomineCoreApplication.class)

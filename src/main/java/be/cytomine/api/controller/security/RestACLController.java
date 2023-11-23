@@ -17,7 +17,6 @@ package be.cytomine.api.controller.security;
 */
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.CytomineException;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -32,7 +31,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 
 @RestController
 @RequestMapping("/api")

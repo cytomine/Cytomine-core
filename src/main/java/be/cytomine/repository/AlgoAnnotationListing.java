@@ -16,7 +16,7 @@ package be.cytomine.repository;
 * limitations under the License.
 */
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 

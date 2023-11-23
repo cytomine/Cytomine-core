@@ -36,9 +36,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.Query;
-import javax.persistence.Tuple;
-import javax.transaction.Transactional;
+import jakarta.persistence.Query;
+import jakarta.persistence.Tuple;
+import jakarta.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 

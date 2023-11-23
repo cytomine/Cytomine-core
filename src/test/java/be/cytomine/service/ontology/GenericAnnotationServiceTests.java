@@ -18,41 +18,22 @@ package be.cytomine.service.ontology;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.TestUtils;
-import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.ReviewedAnnotation;
-import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
-import be.cytomine.domain.security.User;
-import be.cytomine.dto.AnnotationLight;
-import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.command.TransactionService;
-import be.cytomine.service.dto.AnnotationResult;
-import be.cytomine.service.ontology.GenericAnnotationService;
-import be.cytomine.service.ontology.UserAnnotationService;
-import be.cytomine.utils.CommandResponse;
-import be.cytomine.utils.JsonObject;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
-import org.apache.commons.lang3.time.DateUtils;
-import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

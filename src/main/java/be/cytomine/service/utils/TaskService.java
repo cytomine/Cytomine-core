@@ -22,15 +22,14 @@ import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.Task;
 import be.cytomine.utils.TaskComment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import javax.persistence.Tuple;
-import javax.transaction.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Tuple;
+import jakarta.transaction.Transactional;
 
 import java.math.BigInteger;
 import java.util.Date;
@@ -186,7 +185,7 @@ public class TaskService {
             row = (Object[])entityManager.createNativeQuery(
                             "SELECT id,progress,project_id,user_id FROM task where id = ?")
                     .setParameter(1, id.longValue()).getSingleResult();
-        }catch (javax.persistence.NoResultException ex) {
+        }catch (jakarta.persistence.NoResultException ex) {
             return null;
         }
 

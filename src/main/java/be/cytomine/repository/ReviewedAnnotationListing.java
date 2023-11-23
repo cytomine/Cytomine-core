@@ -22,7 +22,7 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;

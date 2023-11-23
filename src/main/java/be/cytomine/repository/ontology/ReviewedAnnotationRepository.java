@@ -19,17 +19,14 @@ package be.cytomine.repository.ontology;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.ReviewedAnnotation;
 import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
-import be.cytomine.dto.AnnotationLight;
 import be.cytomine.dto.ReviewedAnnotationStatsEntry;
-import be.cytomine.service.UrlApi;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
-import javax.persistence.Tuple;
+import jakarta.persistence.Tuple;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;

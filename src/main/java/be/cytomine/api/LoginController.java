@@ -51,9 +51,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
-import javax.mail.MessagingException;
-import javax.persistence.EntityManager;
-import javax.validation.Valid;
+import jakarta.mail.MessagingException;
+import jakarta.persistence.EntityManager;
+import jakarta.validation.Valid;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;

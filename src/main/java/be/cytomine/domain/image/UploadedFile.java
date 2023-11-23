@@ -27,9 +27,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
-import java.nio.file.Paths;
 import java.util.Set;
 
 @Entity

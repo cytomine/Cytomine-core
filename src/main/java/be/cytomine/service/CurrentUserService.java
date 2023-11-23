@@ -23,20 +23,11 @@ import be.cytomine.exceptions.ServerException;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.security.current.CurrentUser;
 import be.cytomine.utils.SecurityUtils;
-import be.cytomine.utils.WeakConcurrentHashMap;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.*;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import jakarta.persistence.EntityManager;
 
 @Slf4j
 @Service

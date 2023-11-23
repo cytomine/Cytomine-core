@@ -16,11 +16,7 @@ package be.cytomine.authorization;
 * limitations under the License.
 */
 
-import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.security.SecRole;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.SecUserSecRole;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.repository.security.SecRoleRepository;
@@ -34,13 +30,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 
-import static be.cytomine.BasicInstanceBuilder.*;
-import static be.cytomine.service.database.BootstrapTestsDataService.*;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.*;
 
 @Transactional
 public abstract class AbstractAuthorizationTest {

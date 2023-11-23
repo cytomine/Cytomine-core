@@ -34,7 +34,6 @@ import be.cytomine.repository.processing.ImagingServerRepository;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.service.PermissionService;
-import be.cytomine.utils.StringUtils;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import org.springframework.security.acls.model.Permission;
@@ -43,11 +42,10 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.UUID;
 
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;

@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @Transactional
 public abstract class CRUDAuthorizationTest extends CRDAuthorizationTest {

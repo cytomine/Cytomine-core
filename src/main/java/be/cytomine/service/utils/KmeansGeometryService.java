@@ -29,9 +29,9 @@ import com.vividsolutions.jts.io.WKTReader;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import javax.persistence.Tuple;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
+import jakarta.persistence.Tuple;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;

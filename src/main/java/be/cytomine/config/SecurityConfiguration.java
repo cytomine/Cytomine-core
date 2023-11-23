@@ -41,8 +41,8 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity

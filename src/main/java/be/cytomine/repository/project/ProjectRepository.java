@@ -16,7 +16,6 @@ package be.cytomine.repository.project;
 * limitations under the License.
 */
 
-import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
@@ -26,7 +25,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import javax.persistence.Tuple;
+import jakarta.persistence.Tuple;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;

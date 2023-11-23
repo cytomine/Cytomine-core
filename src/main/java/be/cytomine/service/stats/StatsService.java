@@ -48,11 +48,10 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
-import javax.persistence.Tuple;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Tuple;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
 
