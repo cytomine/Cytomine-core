@@ -216,7 +216,12 @@ public class ImageServerService extends ModelService {
 
     public List<Map<String, Object>> rawProperties(AbstractImage image) throws IOException {
         String fullUrl = this.buildImageServerInternalFullUrl(image, "image", "/metadata");
-        return JsonObject.toJsonObject(getContentFromUrl(fullUrl)).getJSONAttrListMap("items");
+        return JsonObject.toJsonObject(getContentFromUrl(fullUrl))
+                .getJSONAttrListMap("items").stream().map(StringUtils::keysToCamelCase).toList();
+    }
+
+    public List<Map<String, Object>> rawProperties(ImageInstance image) throws IOException {
+        return this.rawProperties(image.getBaseImage());
     }
 
     public Map<String, Object> imageHistogram(AbstractImage image, int nBins) {

@@ -507,17 +507,12 @@ public class RestImageInstanceController extends RestCytomineController {
     @GetMapping("/imageinstance/{id}/metadata.json")
     public ResponseEntity<String> metadata(
             @PathVariable Long id
-    ) {
+    ) throws IOException {
         log.debug("REST request get metadata for imageinstance {}", id);
-        ImageInstance imageinstance = imageInstanceService.find(id)
+        ImageInstance imageInstance = imageInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
-
-        //responseSuccess(propertyService.list(imageinstance.getBaseImage()));
-        //TODO
-        throw new CytomineMethodNotYetImplementedException("");
+        return responseSuccess(imageServerService.rawProperties(imageInstance));
     }
-    
-    // TODO
 
     @GetMapping("/project/{projectId}/bounds/imageinstance.json")
     public ResponseEntity<String> bounds(
