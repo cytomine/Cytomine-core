@@ -8,8 +8,6 @@
 
     <include file="config/liquibase/changelog/00000000_1_domain.xml" relativeToChangelogFile="false"/>
 
-    <include file="config/liquibase/changelog/00000000_2_grant.xml" relativeToChangelogFile="false"/>
-
     <include file="config/liquibase/changelog/00000000_3_trigger.sql" relativeToChangelogFile="false"/>
 
     <include file="config/liquibase/changelog/00000000_4_pims.xml" relativeToChangelogFile="false"/>
@@ -17,4 +15,6 @@
     <include file="config/liquibase/changelog/00000000_5_convergence.xml" relativeToChangelogFile="false"/>
 
     <include file="config/liquibase/changelog/00000000_6_image_filters.xml" relativeToChangelogFile="false"/>
+
+    <include file="config/liquibase/changelog/00000000_7_delete_useless_pg_users.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>
