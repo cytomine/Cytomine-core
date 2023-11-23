@@ -27,7 +27,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
@@ -41,11 +41,12 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 
+import javax.servlet.DispatcherType;
 import javax.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
+@EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfiguration {
 
     private final TokenProvider tokenProvider;
@@ -92,7 +93,7 @@ public class SecurityConfiguration {
         return new AjaxLogoutSuccessHandler();
     }
 
-        /**
+    /**
      * Argon2 is intentionally slow: slow-hashing functions are good for storing passwords, because it is time/resource consuming to crack them.
      * SHA-512 is not designed for storing passwords. so insecure and deprecated so in future check if sha256 use it if not use argon2 or bcrypt.
      * recommended way is to use DelegatingPasswordEncoder()
@@ -120,6 +121,7 @@ public class SecurityConfiguration {
     }
 
       // TODO: we are trying to migrate this to exposing a Bean is it really working? NOT sure more testing is needed
+     // Check out: authManager(UserDetailsService detailsService) for how we migrated
 //    @Override
 //    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 //        auth.userDetailsService(domainUserDetailsService).passwordEncoder(passwordEncoder());
@@ -155,6 +157,7 @@ public class SecurityConfiguration {
     }
 
     /**
+     * HTTP SECURITY CONFIG
      * Spring Security 6 Require Explicit Saving of SecurityContextRepository
      *
      * @param http the {@link HttpSecurity} to modify
@@ -174,36 +177,39 @@ public class SecurityConfiguration {
 //            .logoutUrl("/api/logout")
 //            .logoutSuccessHandler(ajaxLogoutSuccessHandler())
 //            .permitAll()
-        .and()
-            .authorizeRequests()
-            .requestMatchers("/api/authenticate").permitAll()
-            .requestMatchers("/api/register").permitAll()
-            .requestMatchers("/api/activate").permitAll()
-            .requestMatchers("/api/account/resetPassword/init").permitAll()
-            .requestMatchers("/api/account/resetPassword/finish").permitAll()
-            .requestMatchers("/api/login/impersonate*").hasAuthority("ROLE_ADMIN")
-            .requestMatchers("/api/**").authenticated()
-            .requestMatchers("/session/admin/**").authenticated()
-            .requestMatchers(HttpMethod.GET, "/server/**").permitAll()
-            .requestMatchers(HttpMethod.POST, "/server/**").permitAll()
-            .requestMatchers("/**").permitAll()
+            .and()
+                .authorizeHttpRequests()
+                .requestMatchers("/api/authenticate").permitAll()
+                .requestMatchers("/api/register").permitAll()
+                .requestMatchers("/api/activate").permitAll()
+                .requestMatchers("/api/account/resetPassword/init").permitAll()
+                .requestMatchers("/api/account/resetPassword/finish").permitAll()
+                .requestMatchers("/api/login/impersonate*").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/**").authenticated()
+                .requestMatchers("/session/admin/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/server/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/server/**").permitAll()
+                .requestMatchers("/**").permitAll()
+                // For spring 6 (this is default behaviour this line was added to simulate that) [It’s recommended that Spring Security secure all dispatch types]
+                .shouldFilterAllDispatcherTypes(true)
+                .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
 
 //        .and()
 //            .httpBasic()
-        .and()
-            .apply(securityConfigurerAdapter())
-        .and()
-            .addFilter(switchUserFilter())
-                .headers()
-                .cacheControl().disable()
-        // For Spring 6, opting into it within 5.8 as far as it doesn't break my app we can safely migrate
-        // Remove me once we migrated as these are the defaults behaviors in Spring Sec 6
-        .and()
-            .securityContext((securityContext) -> securityContext
-                    .requireExplicitSave(true))
-            .sessionManagement((sessions) -> sessions
-                    .requireExplicitAuthenticationStrategy(true)
-            );
+            .and()
+                .apply(securityConfigurerAdapter())
+            .and()
+                .addFilter(switchUserFilter())
+                    .headers()
+                    .cacheControl().disable()
+            // For Spring 6, opting into it within 5.8 as far as it doesn't break my app we can safely migrate
+            // Remove me once we migrated as these are the defaults behaviors in Spring Sec 6
+            .and()
+                .securityContext((securityContext) -> securityContext
+                        .requireExplicitSave(true))
+                .sessionManagement((sessions) -> sessions
+                        .requireExplicitAuthenticationStrategy(true)
+                );
 
         return http.build();
         // @formatter:on
