@@ -511,6 +511,10 @@ public class RestImageInstanceController extends RestCytomineController {
         log.debug("REST request get metadata for imageinstance {}", id);
         ImageInstance imageInstance = imageInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
+
+        if (securityACLService.isFilterRequired(imageInstance.getProject())) {
+            throw new ForbiddenException("You don't have the right to read or modify this resource! "  + imageInstance.getClass().toString() + " " + id);
+        }
         return responseSuccess(imageServerService.rawProperties(imageInstance));
     }
 
