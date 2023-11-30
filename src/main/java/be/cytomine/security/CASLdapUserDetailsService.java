@@ -94,8 +94,13 @@ public class CASLdapUserDetailsService implements UserDetailsService {
                                 .map(Configuration::getValue)
                                 .orElse("");
 
+                        String usernameAttributeName = configurationRepository.findByKey(CONFIG_KEY_LDAP_USERNAME_ATTRIBUTE_NAME)
+                                .map(Configuration::getValue)
+                                .orElse("cn");
+
                         Map<String, Object> ldapResults = client.getUserInfo(
                                 search,
+                                usernameAttributeName,
                                 username,
                                 Arrays.stream(attributes.split(",")
                                 ).toList());
@@ -119,13 +124,26 @@ public class CASLdapUserDetailsService implements UserDetailsService {
 
     public User createUserFromLdapResults(String username, Map<String, Object> ldapResponse) {
         log.debug("creating user from ldap results with username: {}", username);
+
+        String firstnameAttributeName = configurationRepository.findByKey(CONFIG_KEY_LDAP_FIRSTNAME_ATTRIBUTE_NAME)
+                .map(Configuration::getValue)
+                .orElse("givenname");
+
+        String lastnameAttributeName = configurationRepository.findByKey(CONFIG_KEY_LDAP_LASTNAME_ATTRIBUTE_NAME)
+                .map(Configuration::getValue)
+                .orElse("sn");
+
+        String emailAttributeName = configurationRepository.findByKey(CONFIG_KEY_LDAP_EMAIL_ATTRIBUTE_NAME)
+                .map(Configuration::getValue)
+                .orElse("mail");
+        
         String firstname;
         String lastname;
         String mail;
         try {
-            firstname = (String)ldapResponse.get("givenname");
-            lastname = (String)ldapResponse.get("sn");
-            mail = (String)ldapResponse.get("mail");
+            firstname = (String)ldapResponse.get(firstnameAttributeName);
+            lastname = (String)ldapResponse.get(lastnameAttributeName);
+            mail = (String)ldapResponse.get(emailAttributeName);
         } catch(Exception e){
             log.error("Error while creating user from LDAP results: {}", e.getMessage());
             throw e;

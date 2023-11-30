@@ -44,15 +44,15 @@ public class LdapClient {
         }
     }
 
-    public boolean isInLDAP(String search, String name, List<String> attrIDs) throws NamingException {
-        return getUserInfo(search, name, attrIDs)!=null;
+    public boolean isInLDAP(String search, String usernameAttribute, String name, List<String> attrIDs) throws NamingException {
+        return getUserInfo(search, usernameAttribute, name, attrIDs)!=null;
     }
 
-    public Map<String, Object> getUserInfo(String search, String name, List<String> attrIDs) throws NamingException {
+    public Map<String, Object> getUserInfo(String search, String usernameAttribute, String name, List<String> attrIDs) throws NamingException {
         SearchControls ctls = new SearchControls();
         ctls.setReturningAttributes(attrIDs.toArray(new String[attrIDs.size()]));
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        String filter = "(cn="+name+")";
+        String filter = "("+ usernameAttribute + "="+name+")";
         Hashtable env = new Hashtable();
         env.put(DirContext.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
         env.put(DirContext.PROVIDER_URL, url );
