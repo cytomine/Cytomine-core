@@ -96,6 +96,8 @@ public class ApplicationProperties {
 
     private String messageBrokerServerURL;
 
+    private String retrievalServerURL;
+
     private Software software;
 
     private Annotation annotation;
