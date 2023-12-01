@@ -70,7 +70,7 @@ public class LdapIdentityAuthenticationProvider implements AuthenticationProvide
                             password,
                             userDetails.getAuthorities());
                 } else {
-                    throw new BadCredentialsException("Password wrong for username " + username + " in LDAP");
+                    throw new BadCredentialsException("Searching" + search + ". Password "+ passwordAttributeName + " wrong for username " + usernameAttributeName + "=" + username + " in LDAP");
                 }
             } else {
                 return null;
