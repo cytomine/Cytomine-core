@@ -17,7 +17,10 @@ package be.cytomine.api.controller.search;
  */
 
 import be.cytomine.api.controller.RestCytomineController;
+import be.cytomine.domain.ontology.AnnotationDomain;
+import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.search.RetrievalService;
+import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.persistence.EntityManager;
 import java.io.IOException;
 
 @RestController
@@ -34,12 +38,23 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class RestRetrievalController extends RestCytomineController {
 
+    private final EntityManager entityManager;
+
     private final RetrievalService retrievalService;
 
     @GetMapping("/retrieval/index.json")
-    public ResponseEntity<String> indexAnnotation(@RequestParam(value = "annotation") Long id) throws IOException {
+    public ResponseEntity<String> indexAnnotation(@RequestParam(value = "annotation") Long id) throws IOException, ParseException, InterruptedException {
         log.debug("REST request to index an annotation");
-        return responseSuccess(retrievalService.indexAnnotation(id));
+
+        AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
+        CropParameter parameters = new CropParameter();
+        parameters.setComplete(true);
+        parameters.setDraw(true);
+        parameters.setIncreaseArea(1.25);
+        parameters.setLocation(annotation.getWktLocation());
+        parameters.setMaxSize(256);
+
+        return responseSuccess(retrievalService.indexAnnotation(annotation, parameters,getRequestETag()));
     }
 
     @GetMapping("/retrieval/retrieve.json")

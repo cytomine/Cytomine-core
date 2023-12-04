@@ -18,14 +18,24 @@ package be.cytomine.service.search;
 
 import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.search.RetrievalServer;
+import be.cytomine.dto.PimsResponse;
 import be.cytomine.service.ModelService;
+import be.cytomine.service.dto.CropParameter;
+import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.utils.JsonObject;
+import com.vividsolutions.jts.io.ParseException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static be.cytomine.utils.HttpUtils.getContentFromUrl;
@@ -36,8 +46,11 @@ public class RetrievalService extends ModelService {
 
     private final ApplicationProperties applicationProperties;
 
-    public RetrievalService(ApplicationProperties applicationProperties) {
+    private final ImageServerService imageServerService;
+
+    public RetrievalService(ApplicationProperties applicationProperties, ImageServerService imageServerService) {
         this.applicationProperties = applicationProperties;
+        this.imageServerService = imageServerService;
     }
 
     @Override
@@ -50,10 +63,28 @@ public class RetrievalService extends ModelService {
         return new RetrievalServer().buildDomainFromJson(json, getEntityManager());
     }
 
-    public String indexAnnotation(Long id) throws IOException {
+    public String indexAnnotation(AnnotationDomain annotation, CropParameter parameters, String etag) throws IOException, ParseException, InterruptedException {
         String url = applicationProperties.getRetrievalServerURL() + "/images/index";
 
-        return getContentFromUrl(url);
+        // Request annotation crop from PIMS
+        PimsResponse crop = imageServerService.crop(annotation.getSlice().getBaseSlice(), parameters, etag);
+
+        // Send request to cbir server
+        HttpRequest request = HttpRequest
+            .newBuilder()
+            .uri(URI.create(url))
+            .POST(HttpRequest.BodyPublishers.ofByteArray(crop.getContent()))
+            .build();
+
+        HttpClient client = HttpClient
+            .newBuilder()
+            .build();
+
+        HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+
+        log.info(Arrays.toString(response.body()));
+
+        return "";
     }
 
     public List<Long> retrieveSimilarImages(Long id) throws IOException {
