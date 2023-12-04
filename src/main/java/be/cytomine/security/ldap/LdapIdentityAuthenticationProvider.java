@@ -50,10 +50,6 @@ public class LdapIdentityAuthenticationProvider implements AuthenticationProvide
                 .map(Configuration::getValue)
                 .orElse("");
         log.debug("LdapIdentityAuthenticationProvider attributes: {}", attributes);
-        String passwordAttributeName = configurationRepository.findByKey(CONFIG_KEY_LDAP_PASSWORD_ATTRIBUTE_NAME)
-                .map(Configuration::getValue)
-                .orElse("NO_LDAP_SEARCH");
-        log.debug("LdapIdentityAuthenticationProvider passwordAttributeName: {}", passwordAttributeName);
         String usernameAttributeName = configurationRepository.findByKey(CONFIG_KEY_LDAP_USERNAME_ATTRIBUTE_NAME)
                 .map(Configuration::getValue)
                 .orElse("cn");
@@ -62,7 +58,7 @@ public class LdapIdentityAuthenticationProvider implements AuthenticationProvide
 
         try {
             if (ldapClient.isInLDAP(search, usernameAttributeName, username, attrIds)) {
-                if (ldapClient.hasValidCredential(usernameAttributeName + "=" + username + "," + search, passwordAttributeName, password)) {
+                if (ldapClient.hasValidCredential(usernameAttributeName + "=" + username + "," + search, password)) {
                     log.debug("authenticated with LDAP");
                     UserDetails userDetails = casLdapUserDetailsService.loadUserByUsername(username);
                     return new UsernamePasswordAuthenticationToken(
@@ -70,7 +66,7 @@ public class LdapIdentityAuthenticationProvider implements AuthenticationProvide
                             password,
                             userDetails.getAuthorities());
                 } else {
-                    throw new BadCredentialsException("Searching '" + usernameAttributeName + "=" + username + "," + search + "' with filter '("+ passwordAttributeName + "=" + password + ")' returned no result in LDAP");
+                    throw new BadCredentialsException("Searching '" + usernameAttributeName + "=" + username + "," + search + "'with given password returned no result in LDAP");
                 }
             } else {
                 return null;

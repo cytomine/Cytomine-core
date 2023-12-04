@@ -85,17 +85,17 @@ public class LdapClientTests {
 
     @Test
     public void check_valid_password() throws NamingException {
-        assertThat(ldapClient.hasValidCredential("cn=jdoeLDAP,OU=users,DC=mtr,DC=com", "password", "goodPassword")).isTrue();
+        assertThat(ldapClient.hasValidCredential("cn=jdoeLDAP,OU=users,DC=mtr,DC=com", "goodPassword")).isTrue();
     }
 
     @Test
     public void check_unvalid_password_for_user() throws NamingException {
-        assertThat(ldapClient.hasValidCredential("cn=admin,OU=users,DC=mtr,DC=com", "password", "goodPassword")).isFalse();
+        assertThat(ldapClient.hasValidCredential("cn=admin,OU=users,DC=mtr,DC=com", "goodPassword")).isFalse();
     }
 
     @Test
     public void check_unvalid_password() throws NamingException {
-        assertThat(ldapClient.hasValidCredential("cn=jdoeLDAP,OU=users,DC=mtr,DC=com", "password", "badPassword")).isFalse();
+        assertThat(ldapClient.hasValidCredential("cn=jdoeLDAP,OU=users,DC=mtr,DC=com",  "badPassword")).isFalse();
     }
 }
 

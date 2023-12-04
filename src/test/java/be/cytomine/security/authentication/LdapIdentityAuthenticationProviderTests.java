@@ -64,7 +64,6 @@ public class LdapIdentityAuthenticationProviderTests {
         builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_PASSWORD, "itachi");
         builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_SEARCH, "OU=users,DC=mtr,DC=com");
         builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_ATTRIBUTES, "cn,sn,givenname,mail");
-        builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_PASSWORD_ATTRIBUTE_NAME, "password");
         builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_USERNAME_ATTRIBUTE_NAME, "cn");
         builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_EMAIL_ATTRIBUTE_NAME, "mail");
         builder.given_a_configuration(ConfigurationService.CONFIG_KEY_LDAP_FIRSTNAME_ATTRIBUTE_NAME, "givenname");
