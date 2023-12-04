@@ -5,9 +5,9 @@ spring:
 
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:postgresql://localhost:5432/docker
-    username: docker
-    password: docker
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGIS_DB_NAME:docker}
+    username: ${POSTGRES_USER:docker}
+    password: ${POSTGRES_PASSWORD:docker}
     hikari:
       poolName: Hikari
       auto-commit: false
@@ -75,6 +75,12 @@ application:
   instanceHostWebsite: instanceHostWebsite.com
   instanceHostSupportMail: instanceHostSupportMail@email.com
   instanceHostPhoneNumber: 0999999999
+
+  appEngine:
+    enabled: true
+    url: http://localhost:8083
+    apiBasePath: /api/v1/
+
 
   authentication:
     jwt:

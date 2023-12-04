@@ -9,6 +9,12 @@ spring:
   thymeleaf:
     prefix: 'classpath:/templates/'
 
+  servlet:
+    multipart:
+      max-file-size: 15GB
+      max-request-size: 15GB
+      location: /tmp/multipart
+
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     url: jdbc:postgresql://${POSTGIS_HOST:localhost}:${POSTGIS_PORT:5432}/${POSTGIS_DB_NAME:docker}
@@ -95,3 +101,8 @@ application:
 
   annotation:
     maxNumberOfPoint: ${ANNOTATION_MAX_POINTS:200}
+
+  appEngine:
+    enabled: ${APP_ENGINE_ENABLED:true}
+    url: ${APP_ENGINE_URL:http://localhost:8082} # TODO
+    apiBasePath: ${APP_ENGINE_API_BASE_PATH:/api/v1/}

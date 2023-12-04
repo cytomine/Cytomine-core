@@ -45,6 +45,8 @@ public class ApplicationProperties {
 
     private AuthenticationProperties authentication = new AuthenticationProperties();
 
+    private AppEngineProperties appEngine;
+
     private String instanceHostWebsite;
 
     private String instanceHostSupportMail;
