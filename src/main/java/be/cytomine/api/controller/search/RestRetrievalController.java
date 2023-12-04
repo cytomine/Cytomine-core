@@ -50,6 +50,7 @@ public class RestRetrievalController extends RestCytomineController {
         CropParameter parameters = new CropParameter();
         parameters.setComplete(true);
         parameters.setDraw(true);
+        parameters.setFormat("png");
         parameters.setIncreaseArea(1.25);
         parameters.setLocation(annotation.getWktLocation());
         parameters.setMaxSize(256);

@@ -64,7 +64,7 @@ public class RetrievalService extends ModelService {
     }
 
     public String indexAnnotation(AnnotationDomain annotation, CropParameter parameters, String etag) throws IOException, ParseException, InterruptedException {
-        String url = applicationProperties.getRetrievalServerURL() + "/images/index";
+        String url = applicationProperties.getRetrievalServerURL() + "/api/images/index";
 
         // Request annotation crop from PIMS
         PimsResponse crop = imageServerService.crop(annotation.getSlice().getBaseSlice(), parameters, etag);
