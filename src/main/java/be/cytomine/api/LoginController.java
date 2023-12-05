@@ -278,7 +278,7 @@ public class LoginController extends RestCytomineController {
             log.error("Error while authenticating user in local database", exception);
             throw exception;
         } catch (AuthenticationException exception) {
-            log.error("Error while authenticating user in local database", exception);
+            log.debug("Error while authenticating user in local database: {0}", exception.getMessage());
             if (env.getProperty("application.authentication.ldap.enabled", Boolean.class, false)) {
                 log.debug("Try to authenticate user in LDAP database");
                 try {

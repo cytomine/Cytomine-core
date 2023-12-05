@@ -50,15 +50,15 @@ public class LdapIdentityAuthenticationProvider implements AuthenticationProvide
                 .map(Configuration::getValue)
                 .orElse("");
         log.debug("LdapIdentityAuthenticationProvider attributes: {}", attributes);
-        String passwordAttributeName = configurationRepository.findByKey(CONFIG_KEY_LDAP_PASSWORD_ATTRIBUTE_NAME)
+        String usernameAttributeName = configurationRepository.findByKey(CONFIG_KEY_LDAP_USERNAME_ATTRIBUTE_NAME)
                 .map(Configuration::getValue)
-                .orElse("NO_LDAP_SEARCH");
-        log.debug("LdapIdentityAuthenticationProvider passwordAttributeName: {}", passwordAttributeName);
+                .orElse("cn");
+        log.debug("LdapIdentityAuthenticationProvider usernameAttributeName: {}", usernameAttributeName);
         List<String> attrIds = Arrays.stream(attributes.split(",")).toList();
 
         try {
-            if (ldapClient.isInLDAP(search, username, attrIds)) {
-                if (ldapClient.hasValidCredential("cn="+username +"," + search, passwordAttributeName, password)) {
+            if (ldapClient.isInLDAP(search, usernameAttributeName, username, attrIds)) {
+                if (ldapClient.hasValidCredential(usernameAttributeName + "=" + username + "," + search, password)) {
                     log.debug("authenticated with LDAP");
                     UserDetails userDetails = casLdapUserDetailsService.loadUserByUsername(username);
                     return new UsernamePasswordAuthenticationToken(
@@ -66,7 +66,7 @@ public class LdapIdentityAuthenticationProvider implements AuthenticationProvide
                             password,
                             userDetails.getAuthorities());
                 } else {
-                    throw new BadCredentialsException("Password wrong for username " + username + " in LDAP");
+                    throw new BadCredentialsException("Searching '" + usernameAttributeName + "=" + username + "," + search + "'with given password returned no result in LDAP");
                 }
             } else {
                 return null;

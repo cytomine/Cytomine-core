@@ -44,25 +44,36 @@ public class LdapClient {
         }
     }
 
-    public boolean isInLDAP(String search, String name, List<String> attrIDs) throws NamingException {
-        return getUserInfo(search, name, attrIDs)!=null;
+    private String getFilter(String attribute, String value) {
+        return "(" + attribute + "=" + value + ")";
     }
 
-    public Map<String, Object> getUserInfo(String search, String name, List<String> attrIDs) throws NamingException {
-        SearchControls ctls = new SearchControls();
-        ctls.setReturningAttributes(attrIDs.toArray(new String[attrIDs.size()]));
-        ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        String filter = "(cn="+name+")";
+    private DirContext getDirContext(String principal, String credentials) throws NamingException {
         Hashtable env = new Hashtable();
         env.put(DirContext.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        env.put(DirContext.PROVIDER_URL, url );
+        env.put(DirContext.PROVIDER_URL, url);
         env.put(DirContext.SECURITY_AUTHENTICATION, "simple");
         env.put(DirContext.SECURITY_PRINCIPAL, principal);
         env.put(DirContext.SECURITY_CREDENTIALS, credentials);
-        //env.put("java.naming.ldap.factory.socket", "MySSLSocketFactory");
+        return new InitialDirContext(env);
+    }
+
+    private DirContext getAdminDirContext() throws NamingException {
+        return this.getDirContext(this.principal, this.credentials);
+    }
+
+    public boolean isInLDAP(String search, String usernameAttribute, String name, List<String> attrIDs) throws NamingException {
+        return getUserInfo(search, usernameAttribute, name, attrIDs)!=null;
+    }
+
+    public Map<String, Object> getUserInfo(String search, String usernameAttribute, String name, List<String> attrIDs) throws NamingException {
+        SearchControls ctls = new SearchControls();
+        ctls.setReturningAttributes(attrIDs.toArray(new String[attrIDs.size()]));
+        ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        String filter = getFilter(usernameAttribute, name);
+
         log.debug("Initialising LDAP context");
-        DirContext dirContext = null;
-        dirContext  = new InitialDirContext(env);
+        DirContext dirContext = this.getAdminDirContext();
         Map<String, Object> properties = null;
         log.debug("Searching LDAP for {} with filter {}", search,filter);
         NamingEnumeration e = dirContext.search(search, filter,ctls);
@@ -85,28 +96,29 @@ public class LdapClient {
         return properties;
     }
 
-    public boolean hasAttributeValue(String dn, String attributeName, String value) throws NamingException {
+    public boolean hasAttributeValue(DirContext dirContext, String dn, String attributeName, String value) throws NamingException {
         SearchControls ctls = new SearchControls();
         ctls.setReturningAttributes(new String[0]);       // Return no attrs
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE); // Search object only
-        String comparisonFilter = "(" + attributeName + "="+value+")";
-        Hashtable env = new Hashtable();
-        env.put(DirContext.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-        env.put(DirContext.PROVIDER_URL, url );
-        env.put(DirContext.SECURITY_AUTHENTICATION, "simple");
-        env.put(DirContext.SECURITY_PRINCIPAL, principal);
-        env.put(DirContext.SECURITY_CREDENTIALS, credentials);
-        //env.put("java.naming.ldap.factory.socket", "MySSLSocketFactory");
-        DirContext dirContext = null;
-        dirContext  = new InitialDirContext(env);
+        String comparisonFilter = getFilter(attributeName, value);
         NamingEnumeration<SearchResult> results = dirContext.search(dn, comparisonFilter, ctls);
         Boolean match = results.hasMore();
         log.debug("Attribute value match for DN '{}', attributeName '{}' and value '{}': {}", dn, attributeName, value, match);
         return match;
     }
 
-    public boolean hasValidCredential(String dn, String attributeName, String value) throws NamingException {
-       return hasAttributeValue(dn, attributeName, value);
+    public boolean hasAttributeValue(String dn, String attributeName, String value) throws NamingException {
+        return hasAttributeValue(this.getAdminDirContext(), dn, attributeName, value);
+    }
+
+    public boolean hasValidCredential(String dn, String password) {
+        try {
+            DirContext context = this.getDirContext(dn, password);
+            context.close();
+            return true;
+        } catch (NamingException e) {
+            return false;
+        }
     }
 
 }

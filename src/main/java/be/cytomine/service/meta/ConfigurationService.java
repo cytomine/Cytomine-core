@@ -66,7 +66,10 @@ public class ConfigurationService extends ModelService {
     public static String CONFIG_KEY_LDAP_PASSWORD = "LDAP_PASSWORD";
     public static String CONFIG_KEY_LDAP_SEARCH = "LDAP_SEARCH";
     public static String CONFIG_KEY_LDAP_ATTRIBUTES = "LDAP_ATTRIBUTES";
-    public static String CONFIG_KEY_LDAP_PASSWORD_ATTRIBUTE_NAME = "LDAP_PASSWORD_ATTRIBUTE_NAME";
+    public static String CONFIG_KEY_LDAP_USERNAME_ATTRIBUTE_NAME = "LDAP_USERNAME_ATTRIBUTE_NAME";
+    public static String CONFIG_KEY_LDAP_FIRSTNAME_ATTRIBUTE_NAME = "LDAP_FIRSTNAME_ATTRIBUTE_NAME";
+    public static String CONFIG_KEY_LDAP_LASTNAME_ATTRIBUTE_NAME = "LDAP_LASTNAME_ATTRIBUTE_NAME";
+    public static String CONFIG_KEY_LDAP_EMAIL_ATTRIBUTE_NAME = "LDAP_EMAIL_ATTRIBUTE_NAME";
 
     @Autowired
     private ConfigurationRepository configurationRepository;

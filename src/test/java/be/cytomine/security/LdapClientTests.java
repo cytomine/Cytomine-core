@@ -24,7 +24,7 @@ public class LdapClientTests {
 
     @Test
     public void retrieve_existing_user_from_ldap() throws NamingException {
-        Map<String, Object> jdoe = ldapClient.getUserInfo("OU=users,DC=mtr,DC=com", "jdoeLDAP", List.of("cn", "sn", "givenname", "mail", "userPassword"));
+        Map<String, Object> jdoe = ldapClient.getUserInfo("OU=users,DC=mtr,DC=com", "cn", "jdoeLDAP", List.of("cn", "sn", "givenname", "mail", "userPassword"));
         assertThat(jdoe).isNotNull();
         assertThat(jdoe).containsOnlyKeys("cn", "sn", "givenname", "mail");
         assertThat(jdoe.get("cn")).isEqualTo("jdoeLDAP");
@@ -32,19 +32,45 @@ public class LdapClientTests {
     }
 
     @Test
+    public void retrieve_existing_user_from_ldap_with_attribute_name() throws NamingException {
+        Map<String, Object> jdoe = ldapClient.getUserInfo("OU=users,DC=mtr,DC=com", "uid", "jdoeLDAP", List.of("cn", "sn", "givenname", "mail", "userPassword"));
+        assertThat(jdoe).isNotNull();
+        assertThat(jdoe).containsOnlyKeys("cn", "sn", "givenname", "mail");
+        assertThat(jdoe.get("cn")).isEqualTo("jdoeLDAP");
+        assertThat(jdoe.get("mail")).isEqualTo("jdoeLDAP@email.com");
+    }
+
+    @Test
+    public void retrieve_existing_user_from_ldap_with_invalid_attribute_name() throws NamingException {
+        Map<String, Object> jdoe = ldapClient.getUserInfo("OU=users,DC=mtr,DC=com", "notgood", "jdoeLDAP", List.of("cn", "sn", "givenname", "mail", "userPassword"));
+        assertThat(jdoe).isNull();
+    }
+
+    @Test
     public void retrieve_unexisting_user_from_ldap() throws NamingException {
-        Map<String, Object> jdoe = ldapClient.getUserInfo("OU=users,DC=mtr,DC=com", "jdoeNotInLDAP", List.of("cn", "sn", "givenname", "mail"));
+        Map<String, Object> jdoe = ldapClient.getUserInfo("OU=users,DC=mtr,DC=com", "cn", "jdoeNotInLDAP", List.of("cn", "sn", "givenname", "mail"));
         assertThat(jdoe).isNull();
     }
 
     @Test
     public void check_existing_user_from_ldap() throws NamingException {
-        assertThat(ldapClient.isInLDAP("OU=users,DC=mtr,DC=com", "jdoeLDAP", List.of("cn"))).isTrue();
+        assertThat(ldapClient.isInLDAP("OU=users,DC=mtr,DC=com", "cn", "jdoeLDAP", List.of("cn"))).isTrue();
     }
 
     @Test
     public void check_unexisting_user_from_ldap() throws NamingException {
-        assertThat(ldapClient.isInLDAP("OU=users,DC=mtr,DC=com", "jdoeNotInLDAP", List.of("cn"))).isFalse();
+        assertThat(ldapClient.isInLDAP("OU=users,DC=mtr,DC=com", "cn", "jdoeNotInLDAP", List.of("cn"))).isFalse();
+    }
+
+    @Test
+    public void check_existing_user_from_ldap_with_attribute_name() throws NamingException {
+        assertThat(ldapClient.isInLDAP("OU=users,DC=mtr,DC=com", "uid", "jdoeLDAP", List.of("cn"))).isTrue();
+    }
+
+
+    @Test
+    public void check_existing_user_from_ldap_with_invalid_attribute_name() throws NamingException {
+        assertThat(ldapClient.isInLDAP("OU=users,DC=mtr,DC=com", "notgood", "jdoeLDAP", List.of("cn"))).isFalse();
     }
 
     @Test
@@ -59,17 +85,17 @@ public class LdapClientTests {
 
     @Test
     public void check_valid_password() throws NamingException {
-        assertThat(ldapClient.hasValidCredential("cn=jdoeLDAP,OU=users,DC=mtr,DC=com", "password", "goodPassword")).isTrue();
+        assertThat(ldapClient.hasValidCredential("cn=jdoeLDAP,OU=users,DC=mtr,DC=com", "goodPassword")).isTrue();
     }
 
     @Test
     public void check_unvalid_password_for_user() throws NamingException {
-        assertThat(ldapClient.hasValidCredential("cn=admin,OU=users,DC=mtr,DC=com", "password", "goodPassword")).isFalse();
+        assertThat(ldapClient.hasValidCredential("cn=admin,OU=users,DC=mtr,DC=com", "goodPassword")).isFalse();
     }
 
     @Test
     public void check_unvalid_password() throws NamingException {
-        assertThat(ldapClient.hasValidCredential("cn=jdoeLDAP,OU=users,DC=mtr,DC=com", "password", "badPassword")).isFalse();
+        assertThat(ldapClient.hasValidCredential("cn=jdoeLDAP,OU=users,DC=mtr,DC=com",  "badPassword")).isFalse();
     }
 }
 
