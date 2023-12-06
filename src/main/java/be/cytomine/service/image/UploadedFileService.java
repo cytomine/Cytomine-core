@@ -25,6 +25,7 @@ import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.exceptions.ServerException;
 import be.cytomine.repository.image.AbstractImageRepository;
 import be.cytomine.repository.image.AbstractSliceRepository;
 import be.cytomine.repository.image.CompanionFileRepository;
@@ -32,6 +33,7 @@ import be.cytomine.repository.image.UploadedFileRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.UrlApi;
+import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.*;
@@ -39,7 +41,6 @@ import be.cytomine.utils.filters.SQLSearchParameter;
 import be.cytomine.utils.filters.SearchOperation;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import be.cytomine.utils.filters.SearchParameterProcessed;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -50,6 +51,7 @@ import javax.persistence.Query;
 import javax.persistence.Tuple;
 import javax.persistence.TupleElement;
 import javax.transaction.Transactional;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -91,6 +93,9 @@ public class UploadedFileService extends ModelService {
 
     @Autowired
     private TaskService taskService;
+
+    @Autowired
+    private ImageServerService imageServerService;
 
 
     @Override
@@ -391,6 +396,20 @@ public class UploadedFileService extends ModelService {
 
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
+    }
+
+    // [EEx ONLY]
+    @Override
+    protected void afterDelete(CytomineDomain domain, CommandResponse response) {
+
+        UploadedFile uf = (UploadedFile) domain;
+        if (uf.getParent() == null && uf.getStatus() % 2 == 0) {
+            try {
+                imageServerService.deleteFile(uf);
+            } catch (Exception e) {
+                log.warn("Error with PIMS: impossible to delete uploaded file " + uf + " on disk.");
+            }
+        }
     }
 
     /**
