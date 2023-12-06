@@ -263,7 +263,7 @@ public class RestUserAnnotationController extends RestCytomineController {
     public void crop(
             @PathVariable Long id,
             @PathVariable String format,
-            @RequestParam(defaultValue = "256") Integer maxSize,
+            @RequestParam(required = false) Integer maxSize,
             @RequestParam(required = false) String geometry,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String boundaries,
@@ -328,7 +328,7 @@ public class RestUserAnnotationController extends RestCytomineController {
     public void cropMask(
             @PathVariable Long id,
             @PathVariable String format,
-            @RequestParam(defaultValue = "256") Integer maxSize,
+            @RequestParam(required = false) Integer maxSize,
             @RequestParam(required = false) String geometry,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String boundaries,
@@ -391,7 +391,7 @@ public class RestUserAnnotationController extends RestCytomineController {
     public void cropAlphaMask(
             @PathVariable Long id,
             @PathVariable String format,
-            @RequestParam(defaultValue = "256") Integer maxSize,
+            @RequestParam(required = false) Integer maxSize,
             @RequestParam(required = false) String geometry,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String boundaries,

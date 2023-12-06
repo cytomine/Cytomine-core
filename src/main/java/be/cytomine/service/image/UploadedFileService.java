@@ -23,6 +23,7 @@ import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
+import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.AbstractImageRepository;
 import be.cytomine.repository.image.AbstractSliceRepository;
@@ -370,7 +371,8 @@ public class UploadedFileService extends ModelService {
     }
 
     /**
-     * Delete this domain
+     * Delete an uploaded file root. As a consequence, all children are also deleted.
+     *
      * @param domain Domain to delete
      * @param transaction Transaction link with this command
      * @param task Task for this command
@@ -382,6 +384,28 @@ public class UploadedFileService extends ModelService {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(),WRITE);
+
+        if (((UploadedFile) domain).getParent() != null) {
+            throw new ForbiddenException("Uploaded File has a parent and can not be deleted.");
+        }
+
+        Command c = new DeleteCommand(currentUser, transaction);
+        return executeCommand(c,domain, null);
+    }
+
+    /**
+     * Delete an uploaded file child.
+     */
+    private CommandResponse deleteChild(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
+        /* We need another method than `delete()` because
+           * uploaded file children have reference to uploaded file parent, thus they are no root.
+           * `delete()` signature is standardized for its usage in RestCytomineController,
+              so it is not possible to add a flag in the method.
+         */
+        SecUser currentUser = currentUserService.getCurrentUser();
+        securityACLService.checkUser(currentUser);
+        securityACLService.check(domain.container(),WRITE);
+
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }
@@ -428,24 +452,12 @@ public class UploadedFileService extends ModelService {
     private void deleteDependentUploadedFile(CytomineDomain domain, Transaction transaction, Task task) {
         log.info("deleteDependentUploadedFile");
         UploadedFile uploadedFile = (UploadedFile)domain;
-        taskService.updateTask(task, task!=null ? "Delete " + uploadedFileRepository.countByParent(uploadedFile)+ " uploadedFiles parents":"");
+        taskService.updateTask(task, task!=null ? "Delete " + uploadedFileRepository.countByParent(uploadedFile)+ " uploadedFiles children":"");
 
-        // Update all children so that their parent is the grandfather
+        // Dependent uploaded files are necessarily children, because only a root can be deleted.
         for (UploadedFile child : uploadedFileRepository.findAllByParent(uploadedFile)) {
-            child.setParent(uploadedFile.getParent());
-            this.update(child, child.toJsonObject(), transaction);
+            this.deleteChild(child, transaction, task, false);
         }
-
-        String currentTree = uploadedFile.getLTree()!=null ?  uploadedFile.getLTree() : "";
-        String request = "UPDATE uploaded_file SET l_tree = '' WHERE id= "+uploadedFile.getId()+";\n";
-        String parentTree = (uploadedFile.getParent()!=null && uploadedFile.getParent().getLTree()!=null)? uploadedFile.getParent().getLTree() : "";
-        if (!parentTree.isEmpty()) {
-            request += "UPDATE uploaded_file " +
-                    "SET l_tree = '" +parentTree +"' || subpath(l_tree, nlevel('" +currentTree +"')) " +
-                    "WHERE l_tree <@ '" +currentTree +"';";
-        }
-        getEntityManager().createNativeQuery(request);
-
     }
 
 
