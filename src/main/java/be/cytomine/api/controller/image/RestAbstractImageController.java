@@ -18,6 +18,7 @@ package be.cytomine.api.controller.image;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.AbstractImage;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -371,28 +372,15 @@ public class RestAbstractImageController extends RestCytomineController {
         responseImage(imageServerService.window(sliceCoordinatesService.getReferenceSlice(abstractImage), windowParameter, etag));
     }
 
-
-
-
-
-    @PostMapping("/abstractimage/{id}/properties/clear.json")
-    public ResponseEntity<String> clearPeroperties(@PathVariable Long id) {
-        log.debug("REST request to get available associated images");
+    @GetMapping("/abstractimage/{id}/metadata.json")
+    public ResponseEntity<String> metadata(
+            @PathVariable Long id
+    ) throws IOException {
+        log.debug("REST request get metadata for abstractimage {}", id);
         AbstractImage abstractImage = abstractImageService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
-        imagePropertiesService.clear(abstractImage);
-        return responseSuccess(new JsonObject());
+        return responseSuccess(imageServerService.rawProperties(abstractImage));
     }
-
-    @PostMapping("/abstractimage/{id}/properties/populate.json")
-    public ResponseEntity<String> populateProperties(@PathVariable Long id) throws IOException {
-        log.debug("REST request to get available associated images");
-        AbstractImage abstractImage = abstractImageService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
-        imagePropertiesService.populate(abstractImage);
-        return responseSuccess(new JsonObject());
-    }
-
 
     @PostMapping("/abstractimage/{id}/properties/extract.json")
     public ResponseEntity<String> extractUseful(@PathVariable Long id) throws IOException, IllegalAccessException {

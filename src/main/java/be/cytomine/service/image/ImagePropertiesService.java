@@ -63,37 +63,6 @@ public class ImagePropertiesService {
     @Autowired
     AbstractSliceRepository abstractSliceRepository;
 
-    public void clear(AbstractImage image) {
-        propertyRepository.deleteAllByDomainIdent(image.getId());
-    }
-
-
-    public void populate(AbstractImage image) throws IOException {
-        List<Map<String, Object>> properties = imageServerService.rawProperties(image);
-
-        for (Map<String, Object> it : properties) {
-            String namespace = it.get("namespace")!=null? (String)it.get("namespace") + ".": "";
-            String key = it.get("key")!=null? namespace + (String)it.get("key").toString().trim() : null;
-            String value = it.get("value")!=null? (String)it.get("value").toString().trim() : null;
-
-            if (key!=null && value!=null) {
-                key = key.replaceAll("\u0000", "");
-                value = value.replaceAll("\u0000", "");
-                log.debug("Read property: {} => {} for abstract image {}", key, value, image);
-                Optional<Property> optionalProperty = propertyRepository.findByDomainIdentAndKey(image.getId(), key);
-                if (optionalProperty.isEmpty()) {
-                    log.debug("New property: {} => {} for abstract image {}", key, value, image);
-                    Property property = new Property();
-                    property.setKey(key);
-                    property.setValue(value);
-                    property.setDomainIdent(image.getId());
-                    property.setDomainClassName(image.getClass().getName());
-                    propertyRepository.save(property);
-                }
-            }
-        }
-    }
-
     public void extractUseful(AbstractImage image) throws IOException, IllegalAccessException {
         extractUseful(image, false);
     }
@@ -161,8 +130,6 @@ public class ImagePropertiesService {
     }
 
     public void regenerate(AbstractImage image, boolean deep) throws IOException, IllegalAccessException {
-        clear(image);
-        populate(image);
         extractUseful(image, deep);
     }
 }

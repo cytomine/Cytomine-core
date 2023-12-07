@@ -28,17 +28,6 @@ public class ResourcesUtils {
      *
      * @return
      */
-    public static Map<String, String> getPropertiesPrefixMap()  {
-        String propertiesFileUri = Optional.ofNullable(environment.getProperty("METADATA_PREFIXES_FILE_URI"))
-                .orElse("classpath:metaPrefix.properties");
-        return getPropertiesMap(propertiesFileUri);
-    }
-
-
-    /** Loads the key values properties from resources file in a Map
-     *
-     * @return
-     */
     public static Map<String, String> getPropertiesMap(String propertiesFileUri)  {
         Map<String, String> resourcePropertiesMap = new HashMap<String, String>();
         try {
@@ -53,13 +42,4 @@ public class ResourcesUtils {
         }
         return resourcePropertiesMap;
     }
-
-    /** Loads the values of properties from resources file in a List
-     *
-     * @return
-     */
-    public static List<String> getPropertiesValuesList( )  {
-        return new ArrayList<String>(getPropertiesPrefixMap().values());
-    }
-
 }

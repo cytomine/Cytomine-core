@@ -516,7 +516,7 @@ public class ImageInstanceService extends ModelService {
 
         String sortedProperty = ReflectionUtils.findField(ImageInstance.class, sortColumn)!=null ? imageInstanceAlias + "." + sortColumn : null;
         if(sortColumn.equals("blindedName")) {
-            sortColumn = "id";
+            sortedProperty = imageInstanceAlias + ".baseImageId";
         }
 
         if (sortedProperty==null) sortedProperty = ReflectionUtils.findField(AbstractImage.class, sortColumn)!=null ? abstractImageAlias + "." + sortColumn : null;
