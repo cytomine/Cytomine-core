@@ -208,11 +208,15 @@ public class ImageServerService extends ModelService {
     }
 
     public String downloadUri(UploadedFile uploadedFile) throws IOException {
-        return this.buildImageServerInternalFullUrl(uploadedFile, "file", "/export");
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+        parameters.put("filename", uploadedFile.getOriginalFilename());
+        return this.buildImageServerInternalFullUrl(uploadedFile, "file", "/export") + "?" + makeParameterUrl(parameters);
     }
 
     public String downloadUri(AbstractImage abstractImage) throws IOException {
-        return this.buildImageServerFullUrl(abstractImage, "image", "/export");
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+        parameters.put("filename", abstractImage.getOriginalFilename());
+        return this.buildImageServerFullUrl(abstractImage, "image", "/export") + "?" + makeParameterUrl(parameters);
     }
 
     public String downloadUri(CompanionFile companionFile) throws IOException {
