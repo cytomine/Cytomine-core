@@ -802,129 +802,30 @@ public class AbstractImageResourceTests {
 
     }
 
-
     @Test
-    public void clear_properties_from_abstract_image() throws Exception {
+    @Transactional
+    public void get_abstract_image_metadata() throws Exception {
         AbstractImage image = given_test_abstract_image();
-        builder.given_a_property(image, "cytomine.width", "value1");
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "cytomine.width")).isPresent();
-        restAbstractImageControllerMockMvc.perform(post("/api/abstractimage/{id}/properties/clear.json", image.getId()))
-                .andDo(print())
-                .andExpect(status().isOk());
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "cytomine.width")).isEmpty();
-
-    }
-
-
-    @Test
-    public void extract_populated_properties_to_abstract_image() throws Exception {
-        AbstractImage image = given_test_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
-        image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("MRXS");
-
-
-        image.setWidth(1);
-        image.setPhysicalSizeX(2d);
-        image.setColorspace("empty");
-
         configureFor("localhost", 8888);
         stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/metadata"))
                 .willReturn(
-                        aResponse().withBody(
-                                """
-                                {"size":14,"items":
-                                [{"key":"ImageWidth","value":30720,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"ImageLength","value":25600,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"BitsPerSample","value":"(8, 8, 8)","type":"UNKNOWN","namespace":"TIFF"},
-                                {"key":"Compression","value":"JPEG","type":"STRING","namespace":"TIFF"},
-                                {"key":"PhotometricInterpretation","value":"YCBCR","type":"STRING","namespace":"TIFF"},
-                                {"key":"Orientation","value":"TOPLEFT","type":"STRING","namespace":"TIFF"},
-                                {"key":"SamplesPerPixel","value":3,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"XResolution","value":"(429496703, 4294967295)","type":"UNKNOWN","namespace":"TIFF"},
-                                {"key":"YResolution","value":"(429496703, 4294967295)","type":"UNKNOWN","namespace":"TIFF"},
-                                {"key":"PlanarConfiguration","value":"CONTIG","type":"STRING","namespace":"TIFF"},
-                                {"key":"ResolutionUnit","value":"CENTIMETER","type":"STRING","namespace":"TIFF"},
-                                {"key":"TileWidth","value":256,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"TileLength","value":256,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"ReferenceBlackWhite","value":"(0, 1, 255, 1, 128, 1, 255, 1, 128, 1, 255, 1)","type":"UNKNOWN","namespace":"TIFF"}]
-                                }
-                                """
-                        )
+                        aResponse().withBody("{\"size\":11,\"items\":[{\"key\":\"JFIFVersion\",\"value\":1.01,\"type\":\"DECIMAL\",\"namespace\":\"JFIF\"}," +
+                                "{\"key\":\"ResolutionUnit\",\"value\":\"inches\",\"type\":\"STRING\",\"namespace\":\"JFIF\"},{\"key\":\"XResolution\"," +
+                                "\"value\":300,\"type\":\"INTEGER\",\"namespace\":\"JFIF\"},{\"key\":\"YResolution\",\"value\":300,\"type\":\"INTEGER\"," +
+                                "\"namespace\":\"JFIF\"},{\"key\":\"ProfileCMMType\",\"value\":\"Little CMS\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileVersion\",\"value\":\"4.3.0\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileClass\",\"value\":\"Display Device Profile\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ColorSpaceData\",\"value\":\"RGB\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileConnectionSpace\",\"value\":\"XYZ\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileDateTime\",\"value\":\"2021:03:02 20:40:36\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileFileSignature\",\"value\":\"acsp\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}]}")
                 )
         );
-
-        restAbstractImageControllerMockMvc.perform(post("/api/abstractimage/{id}/properties/populate.json", image.getId()))
+        restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/metadata.json", image.getId()))
                 .andDo(print())
-                .andExpect(status().isOk());
-
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "TIFF.ImageWidth")).isPresent();
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "TIFF.ImageWidth").get().getValue()).isEqualTo("30720");
-
-
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info"))
-                .willReturn(
-                        aResponse().withBody(
-                                """
-                                  {"image":
-                                      {
-                                          "original_format":"PYRTIFF",
-                                          "width":30720,
-                                          "height":25600,
-                                          "depth":1,
-                                          "duration":1,
-                                          "physical_size_x":100000.00617,
-                                          "physical_size_y":100000.00617,
-                                          "physical_size_z":null,
-                                          "frame_rate":null,
-                                          "n_channels":3,
-                                          "n_concrete_channels":1,
-                                          "n_samples":3,
-                                          "n_planes":1,
-                                          "are_rgb_planes":true,
-                                          "n_distinct_channels":1,
-                                          "acquired_at":null,
-                                          "description":"",
-                                          "pixel_type":"uint8",
-                                          "significant_bits":8,"bits":8},
-                                          "instrument":
-                                              {"microscope":{"model":null},
-                                               "objective":{"nominal_magnification":null,"calibrated_magnification":null}},
-                                               "associated":[],
-                                               "channels":[
-                                                  {"index":0,"suggested_name":"R","emission_wavelength":null,"excitation_wavelength":null,"color":"#f00"},
-                                                  {"index":1,"suggested_name":"G","emission_wavelength":null,"excitation_wavelength":null,"color":"#0f0"},
-                                                  {"index":2,"suggested_name":"B","emission_wavelength":null,"excitation_wavelength":null,"color":"#00f"}
-                                               ],
-                                               "representations":[
-                                                  {"role":"UPLOAD",
-                                                   "file":
-                                                      {"file_type":"SINGLE",
-                                                      "filepath":"/data/images/upload1644425985928451/LUNG1_pyr.tif",
-                                                      "stem":"LUNG1_pyr",
-                                                      "extension":".tif",
-                                                      "created_at":"2022-05-05T22:16:23.318839",
-                                                      "size":126616954,"is_symbolic":false,"role":"UPLOAD"}
-                                                      },
-                                                      {"role":"ORIGINAL",
-                                                      "file":
-                                                          {"file_type":"SINGLE","filepath":"/data/images/upload1644425985928451/processed/original.PYRTIFF","stem":"original","extension":".PYRTIFF","created_at":"2022-05-05T22:16:23.318839","size":126616954,"is_symbolic":true,"role":"ORIGINAL"}
-                                                          },
-                                                          {"role":"SPATIAL","file":{"file_type":"SINGLE","filepath":"/data/images/upload1644425985928451/processed/visualisation.PYRTIFF","stem":"visualisation","extension":".PYRTIFF","created_at":"2022-05-05T22:16:23.318839","size":126616954,"is_symbolic":true,"role":"SPATIAL"},"pyramid":{"n_tiers":8,"tiers":[{"zoom":7,"level":0,"width":30720,"height":25600,"tile_width":256,"tile_height":256,"downsampling_factor":1.0,"n_tiles":12000,"n_tx":120,"n_ty":100},{"zoom":6,"level":1,"width":15360,"height":12800,"tile_width":256,"tile_height":256,"downsampling_factor":2.0,"n_tiles":3000,"n_tx":60,"n_ty":50},{"zoom":5,"level":2,"width":7680,"height":6400,"tile_width":256,"tile_height":256,"downsampling_factor":4.0,"n_tiles":750,"n_tx":30,"n_ty":25},{"zoom":4,"level":3,"width":3840,"height":3200,"tile_width":256,"tile_height":256,"downsampling_factor":8.0,"n_tiles":195,"n_tx":15,"n_ty":13},{"zoom":3,"level":4,"width":1920,"height":1600,"tile_width":256,"tile_height":256,"downsampling_factor":16.0,"n_tiles":56,"n_tx":8,"n_ty":7},{"zoom":2,"level":5,"width":960,"height":800,"tile_width":256,"tile_height":256,"downsampling_factor":32.0,"n_tiles":16,"n_tx":4,"n_ty":4},{"zoom":1,"level":6,"width":480,"height":400,"tile_width":256,"tile_height":256,"downsampling_factor":64.0,"n_tiles":4,"n_tx":2,"n_ty":2},{"zoom":0,"level":7,"width":240,"height":200,"tile_width":256,"tile_height":256,"downsampling_factor":128.0,"n_tiles":1,"n_tx":1,"n_ty":1}]}}]}
-      
-                                  """
-                        )
-                )
-        );
-
-        restAbstractImageControllerMockMvc.perform(post("/api/abstractimage/{id}/properties/extract.json", image.getId()))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-        assertThat(image.getWidth()).isEqualTo(30720);
-        assertThat(image.getHeight()).isEqualTo(25600);
-        assertThat(image.getColorspace()).isEqualTo("empty");
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(11))))
+                .andExpect(jsonPath("$.collection[?(@.key==\"ProfileClass\")]").exists());
     }
 
 
@@ -942,39 +843,6 @@ public class AbstractImageResourceTests {
         image.setColorspace("empty");
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/metadata"))
-                .willReturn(
-                        aResponse().withBody(
-                                """
-                                {"size":14,"items":
-                                [{"key":"ImageWidth","value":30720,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"ImageLength","value":25600,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"BitsPerSample","value":"(8, 8, 8)","type":"UNKNOWN","namespace":"TIFF"},
-                                {"key":"Compression","value":"JPEG","type":"STRING","namespace":"TIFF"},
-                                {"key":"PhotometricInterpretation","value":"YCBCR","type":"STRING","namespace":"TIFF"},
-                                {"key":"Orientation","value":"TOPLEFT","type":"STRING","namespace":"TIFF"},
-                                {"key":"SamplesPerPixel","value":3,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"XResolution","value":"(429496703, 4294967295)","type":"UNKNOWN","namespace":"TIFF"},
-                                {"key":"YResolution","value":"(429496703, 4294967295)","type":"UNKNOWN","namespace":"TIFF"},
-                                {"key":"PlanarConfiguration","value":"CONTIG","type":"STRING","namespace":"TIFF"},
-                                {"key":"ResolutionUnit","value":"CENTIMETER","type":"STRING","namespace":"TIFF"},
-                                {"key":"TileWidth","value":256,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"TileLength","value":256,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"ReferenceBlackWhite","value":"(0, 1, 255, 1, 128, 1, 255, 1, 128, 1, 255, 1)","type":"UNKNOWN","namespace":"TIFF"}]
-                                }
-                                """
-                        )
-                )
-        );
-
-        restAbstractImageControllerMockMvc.perform(post("/api/abstractimage/{id}/properties/populate.json", image.getId()))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "TIFF.ImageWidth")).isPresent();
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "TIFF.ImageWidth").get().getValue()).isEqualTo("30720");
-
-
         stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info"))
                 .willReturn(
                         aResponse().withBody(

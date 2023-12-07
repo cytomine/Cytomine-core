@@ -865,6 +865,32 @@ public class ImageInstanceResourceTests {
 
     }
 
+    @Test
+    @Transactional
+    public void get_image_instance_metadata() throws Exception {
+        ImageInstance image = given_test_image_instance();
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/metadata"))
+                .willReturn(
+                        aResponse().withBody("{\"size\":11,\"items\":[{\"key\":\"JFIFVersion\",\"value\":1.01,\"type\":\"DECIMAL\",\"namespace\":\"JFIF\"}," +
+                                "{\"key\":\"ResolutionUnit\",\"value\":\"inches\",\"type\":\"STRING\",\"namespace\":\"JFIF\"},{\"key\":\"XResolution\"," +
+                                "\"value\":300,\"type\":\"INTEGER\",\"namespace\":\"JFIF\"},{\"key\":\"YResolution\",\"value\":300,\"type\":\"INTEGER\"," +
+                                "\"namespace\":\"JFIF\"},{\"key\":\"ProfileCMMType\",\"value\":\"Little CMS\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileVersion\",\"value\":\"4.3.0\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileClass\",\"value\":\"Display Device Profile\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ColorSpaceData\",\"value\":\"RGB\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileConnectionSpace\",\"value\":\"XYZ\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileDateTime\",\"value\":\"2021:03:02 20:40:36\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileFileSignature\",\"value\":\"acsp\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}]}")
+                )
+        );
+        restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/metadata.json", image.getId()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(11))))
+                .andExpect(jsonPath("$.collection[?(@.key==\"ProfileClass\")]").exists());
+    }
+
 
 
     @Test
