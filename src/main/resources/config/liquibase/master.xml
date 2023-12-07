@@ -21,4 +21,8 @@
     <include file="config/liquibase/changelog/00000000_7_EE_public_role.xml" relativeToChangelogFile="false"/>
 
     <include file="config/liquibase/changelog/00000000_8_EE_api_key_disabled.xml" relativeToChangelogFile="false"/>
+
+    <include file="config/liquibase/changelog/00000000_7_delete_useless_pg_users.xml" relativeToChangelogFile="false"/>
+
+    <include file="/config/liquibase/changelog/00000000_8_remove_raw_metadata_from_image_properties.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>
