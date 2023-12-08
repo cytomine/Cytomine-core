@@ -29,13 +29,13 @@ import com.vividsolutions.jts.io.ParseException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static be.cytomine.utils.HttpUtils.getContentFromUrl;
@@ -68,21 +68,33 @@ public class RetrievalService extends ModelService {
 
         // Request annotation crop from PIMS
         PimsResponse crop = imageServerService.crop(annotation.getSlice().getBaseSlice(), parameters, etag);
+        byte[] data = "--data\r\nContent-Disposition: form-data; name=\"image\"; filename=\"patch.png\"\r\n\r\n".getBytes();
+        byte[] suffix = "\r\n--data--\r\n".getBytes();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        baos.write(data);
+        baos.write(crop.getContent());
+        baos.write(suffix);
+        data = baos.toByteArray();
 
         // Send request to cbir server
         HttpRequest request = HttpRequest
             .newBuilder()
+            .setHeader("Accept", "*/*")
+            .setHeader("Accept-Encoding", "gzip, deflate")
+            .setHeader("Content-Type", "multipart/form-data; boundary=data")
             .uri(URI.create(url))
-            .POST(HttpRequest.BodyPublishers.ofByteArray(crop.getContent()))
+            .POST(HttpRequest.BodyPublishers.ofByteArray(data))
             .build();
 
         HttpClient client = HttpClient
             .newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
             .build();
 
         HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
 
-        log.info(Arrays.toString(response.body()));
+        log.info(request.toString());
+        log.info(String.valueOf(response.statusCode()));
 
         return "";
     }
