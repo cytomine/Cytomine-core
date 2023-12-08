@@ -17,6 +17,7 @@ package be.cytomine;
 */
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.appengine.TaskRun;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.meta.*;
@@ -1035,5 +1036,21 @@ public class BasicInstanceBuilder {
         return secUserSecRole;
     }
 
+
+    public TaskRun given_a_not_persisted_task_run() {
+        return given_a_not_persisted_task_run(given_a_project(), UUID.randomUUID());
+    }
+
+    public TaskRun given_a_not_persisted_task_run(Project project, UUID taskRunId) {
+        TaskRun taskRun = new TaskRun();
+        taskRun.setProject(project);
+        taskRun.setUser(given_superadmin());
+        taskRun.setTaskRunId(taskRunId);
+        return taskRun;
+    }
+
+    public TaskRun given_a_task_run() {
+        return persistAndReturn(given_a_not_persisted_task_run(given_a_project(), UUID.randomUUID()));
+    }
 
 }

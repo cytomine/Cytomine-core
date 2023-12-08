@@ -1,6 +1,7 @@
 package be.cytomine.service.middleware;
 
 import be.cytomine.CytomineCoreApplication;
+import be.cytomine.service.appengine.AppEngineService;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -12,8 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import javax.transaction.Transactional;
-
-import java.net.http.HttpResponse;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,7 +26,7 @@ public class AppEngineServiceTests {
     @Autowired
     AppEngineService appEngineService;
 
-    private static WireMockServer wireMockServer = new WireMockServer(8083);
+    private static WireMockServer wireMockServer = new WireMockServer(8889);
 
     @BeforeAll
     public static void beforeAll() {
@@ -44,7 +43,7 @@ public class AppEngineServiceTests {
 
     @Test
     void get_() {
-        configureFor("localhost", 8083);
+        configureFor("localhost", 8889);
         stubFor(get(urlEqualTo("/api/v1/task"))
                 .willReturn(
                         aResponse().withBody(

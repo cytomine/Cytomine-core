@@ -1,7 +1,7 @@
 package be.cytomine.api.controller.appengine;
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.service.middleware.AppEngineService;
+import be.cytomine.service.appengine.AppEngineService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

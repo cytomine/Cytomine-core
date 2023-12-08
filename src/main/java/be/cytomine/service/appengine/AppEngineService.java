@@ -1,13 +1,12 @@
-package be.cytomine.service.middleware;
+package be.cytomine.service.appengine;
 
 import be.cytomine.api.JsonResponseEntity;
 import be.cytomine.exceptions.MiddlewareException;
-import be.cytomine.exceptions.ServerException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.NotImplementedException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -36,17 +35,31 @@ public class AppEngineService {
         }
     }
 
-    public ResponseEntity<String> post(String uri, MultiValueMap<String, Object> body, MediaType contentType) {
+    public <B> ResponseEntity<String> sendWithBody(HttpMethod method, String uri, B body, MediaType contentType) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(contentType);
-        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
+        HttpEntity<B> request = new HttpEntity<>(body, headers);
 
         try {
-            return new RestTemplate().postForEntity(buildFullUrl(uri), request, String.class);
+            if (method.matches("POST")) {
+                return new RestTemplate().postForEntity(buildFullUrl(uri), request, String.class);
+            } else if (method.matches("PUT")) {
+                return new RestTemplate().exchange(buildFullUrl(uri), HttpMethod.PUT, request, String.class);
+            } else {
+                throw new NotImplementedException("sendWithBody not implemented with method than {POST, PUT}");
+            }
         } catch (HttpClientErrorException e) {
             return JsonResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
         } catch (HttpServerErrorException.InternalServerError e) {
             throw new MiddlewareException("App engine returned a 500 HTTP error.");
         }
+    }
+
+    public <B> ResponseEntity<String> post(String uri, B body, MediaType contentType) {
+        return sendWithBody(HttpMethod.POST, uri, body, contentType);
+    }
+
+    public <B> ResponseEntity<String> put(String uri, B body, MediaType contentType) {
+        return sendWithBody(HttpMethod.PUT, uri, body, contentType);
     }
 }
