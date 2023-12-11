@@ -68,22 +68,19 @@ public class RetrievalService extends ModelService {
 
         // Request annotation crop from PIMS
         PimsResponse crop = imageServerService.crop(annotation.getSlice().getBaseSlice(), parameters, etag);
-        byte[] data = "--data\r\nContent-Disposition: form-data; name=\"image\"; filename=\"patch.png\"\r\n\r\n".getBytes();
+        byte[] prefix = "--data\r\nContent-Disposition: form-data; name=\"image\"; filename=\"patch.png\"\r\n\r\n".getBytes();
         byte[] suffix = "\r\n--data--\r\n".getBytes();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        baos.write(data);
+        baos.write(prefix);
         baos.write(crop.getContent());
         baos.write(suffix);
-        data = baos.toByteArray();
 
         // Send request to cbir server
         HttpRequest request = HttpRequest
             .newBuilder()
-            .setHeader("Accept", "*/*")
-            .setHeader("Accept-Encoding", "gzip, deflate")
             .setHeader("Content-Type", "multipart/form-data; boundary=data")
             .uri(URI.create(url))
-            .POST(HttpRequest.BodyPublishers.ofByteArray(data))
+            .POST(HttpRequest.BodyPublishers.ofByteArray(baos.toByteArray()))
             .build();
 
         HttpClient client = HttpClient
