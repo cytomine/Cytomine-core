@@ -785,6 +785,7 @@ public class AbstractImageResourceTests {
         image.getUploadedFile().getImageServer().setBasePath("/data/images");
         image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        image.getUploadedFile().setOriginalFilename("CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         return image;
     }
@@ -797,7 +798,7 @@ public class AbstractImageResourceTests {
                 .andDo(print()).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
         assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/image/"+URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export");
+                .isEqualTo("http://localhost:8888/image/"+URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=" + URLEncoder.encode(image.getOriginalFilename(), StandardCharsets.UTF_8));
 
 
     }
