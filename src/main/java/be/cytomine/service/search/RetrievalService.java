@@ -38,8 +38,6 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-import static be.cytomine.utils.HttpUtils.getContentFromUrl;
-
 @Service
 @Slf4j
 public class RetrievalService extends ModelService {
@@ -70,13 +68,18 @@ public class RetrievalService extends ModelService {
         return new RetrievalServer().buildDomainFromJson(json, getEntityManager());
     }
 
-    private HttpRequest buildRequest(String url, byte[] data) throws IOException {
+    private HttpRequest buildRequest(String url, byte[] image) throws IOException {
+        return buildRequest(url, image, "".getBytes());
+    }
+
+    private HttpRequest buildRequest(String url, byte[] image, byte[] parameters) throws IOException {
         byte[] prefix = "--data\r\nContent-Disposition: form-data; name=\"image\"; filename=\"patch.png\"\r\n\r\n".getBytes();
         byte[] suffix = "\r\n--data--\r\n".getBytes();
 
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        byteStream.write(parameters);
         byteStream.write(prefix);
-        byteStream.write(data);
+        byteStream.write(image);
         byteStream.write(suffix);
 
         return HttpRequest
@@ -103,9 +106,24 @@ public class RetrievalService extends ModelService {
         return "";
     }
 
-    public List<Long> retrieveSimilarImages(AnnotationDomain annotation, CropParameter parameters, String etag) throws IOException {
-        String url = applicationProperties.getRetrievalServerURL() + "/images/retrieve";
-        String response = getContentFromUrl(url);
+    public List<Long> retrieveSimilarImages(AnnotationDomain annotation, CropParameter parameters, String etag, Long nrt_neigh) throws IOException, ParseException, InterruptedException {
+        String url = applicationProperties.getRetrievalServerURL() + "/api/images/retrieve";
+
+        // Request annotation crop from PIMS
+        PimsResponse crop = imageServerService.crop(annotation.getSlice().getBaseSlice(), parameters, etag);
+
+        // Format nrt_neigh variable
+        byte[] requestParameters = String.format(
+            "--data\r\nContent-Disposition: form-data; name=\"nrt_neigh\"\r\n\r\n%s\r\n",
+            nrt_neigh
+        ).getBytes();
+
+        HttpResponse<byte[]> response = this.client.send(
+            buildRequest(url, crop.getContent(), requestParameters),
+            HttpResponse.BodyHandlers.ofByteArray()
+        );
+
+        log.info(String.valueOf(response.statusCode()));
 
         return new ArrayList<>();
     }

@@ -42,25 +42,45 @@ public class RestRetrievalController extends RestCytomineController {
 
     private final RetrievalService retrievalService;
 
-    @GetMapping("/retrieval/index.json")
-    public ResponseEntity<String> indexAnnotation(@RequestParam(value = "annotation") Long id) throws IOException, ParseException, InterruptedException {
-        log.debug("REST request to index an annotation");
-
-        AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
+    private CropParameter getParameters(String location) {
         CropParameter parameters = new CropParameter();
         parameters.setComplete(true);
         parameters.setDraw(true);
         parameters.setFormat("png");
         parameters.setIncreaseArea(1.25);
-        parameters.setLocation(annotation.getWktLocation());
+        parameters.setLocation(location);
         parameters.setMaxSize(256);
 
-        return responseSuccess(retrievalService.indexAnnotation(annotation, parameters,getRequestETag()));
+        return parameters;
+    }
+
+    @GetMapping("/retrieval/index.json")
+    public ResponseEntity<String> indexAnnotation(@RequestParam(value = "annotation") Long id) throws IOException, ParseException, InterruptedException {
+        log.debug("REST request to index an annotation");
+
+        AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
+        CropParameter parameters = getParameters(annotation.getWktLocation());
+
+        return responseSuccess(retrievalService.indexAnnotation(annotation, parameters, getRequestETag()));
     }
 
     @GetMapping("/retrieval/retrieve.json")
-    public ResponseEntity<String> retrieveSimilarAnnotations(@RequestParam(value = "annotation") Long id) throws IOException {
+    public ResponseEntity<String> retrieveSimilarAnnotations(
+        @RequestParam(value = "annotation") Long id,
+        @RequestParam(value = "nrt_neigh") Long nrt_neigh
+    ) throws IOException, ParseException, InterruptedException {
         log.debug("REST request to retrieve similar annotations given a query annotation {}", id);
-        return responseSuccess(retrievalService.retrieveSimilarImages(id));
+
+        AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
+        CropParameter parameters = getParameters(annotation.getWktLocation());
+
+        return responseSuccess(
+            retrievalService.retrieveSimilarImages(
+                annotation,
+                parameters,
+                getRequestETag(),
+                nrt_neigh
+            )
+        );
     }
 }
