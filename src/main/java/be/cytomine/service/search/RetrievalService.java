@@ -48,9 +48,16 @@ public class RetrievalService extends ModelService {
 
     private final ImageServerService imageServerService;
 
+    private final HttpClient client;
+
     public RetrievalService(ApplicationProperties applicationProperties, ImageServerService imageServerService) {
         this.applicationProperties = applicationProperties;
         this.imageServerService = imageServerService;
+
+        this.client = HttpClient
+            .newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .build();
     }
 
     @Override
@@ -63,40 +70,40 @@ public class RetrievalService extends ModelService {
         return new RetrievalServer().buildDomainFromJson(json, getEntityManager());
     }
 
+    private HttpRequest buildRequest(String url, byte[] data) throws IOException {
+        byte[] prefix = "--data\r\nContent-Disposition: form-data; name=\"image\"; filename=\"patch.png\"\r\n\r\n".getBytes();
+        byte[] suffix = "\r\n--data--\r\n".getBytes();
+
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        byteStream.write(prefix);
+        byteStream.write(data);
+        byteStream.write(suffix);
+
+        return HttpRequest
+            .newBuilder()
+            .setHeader("Content-Type", "multipart/form-data; boundary=data")
+            .uri(URI.create(url))
+            .POST(HttpRequest.BodyPublishers.ofByteArray(byteStream.toByteArray()))
+            .build();
+    }
+
     public String indexAnnotation(AnnotationDomain annotation, CropParameter parameters, String etag) throws IOException, ParseException, InterruptedException {
         String url = applicationProperties.getRetrievalServerURL() + "/api/images/index";
 
         // Request annotation crop from PIMS
         PimsResponse crop = imageServerService.crop(annotation.getSlice().getBaseSlice(), parameters, etag);
-        byte[] prefix = "--data\r\nContent-Disposition: form-data; name=\"image\"; filename=\"patch.png\"\r\n\r\n".getBytes();
-        byte[] suffix = "\r\n--data--\r\n".getBytes();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        baos.write(prefix);
-        baos.write(crop.getContent());
-        baos.write(suffix);
 
-        // Send request to cbir server
-        HttpRequest request = HttpRequest
-            .newBuilder()
-            .setHeader("Content-Type", "multipart/form-data; boundary=data")
-            .uri(URI.create(url))
-            .POST(HttpRequest.BodyPublishers.ofByteArray(baos.toByteArray()))
-            .build();
+        HttpResponse<byte[]> response = this.client.send(
+            buildRequest(url, crop.getContent()),
+            HttpResponse.BodyHandlers.ofByteArray()
+        );
 
-        HttpClient client = HttpClient
-            .newBuilder()
-            .version(HttpClient.Version.HTTP_1_1)
-            .build();
-
-        HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
-
-        log.info(request.toString());
         log.info(String.valueOf(response.statusCode()));
 
         return "";
     }
 
-    public List<Long> retrieveSimilarImages(Long id) throws IOException {
+    public List<Long> retrieveSimilarImages(AnnotationDomain annotation, CropParameter parameters, String etag) throws IOException {
         String url = applicationProperties.getRetrievalServerURL() + "/images/retrieve";
         String response = getContentFromUrl(url);
 
