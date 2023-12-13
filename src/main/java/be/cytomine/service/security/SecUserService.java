@@ -1033,7 +1033,7 @@ public class SecUserService extends ModelService {
             securityACLService.checkUser(currentUser);
             if (!json.containsKey("user")) {
                 json.put("user", currentUser.getId());
-                json.put("origin", "ADMINISTRATOR");
+                json.put("origin", UserOrigin.ADMINISTRATOR.toString());
             }
             CommandResponse response = executeCommand(new AddCommand(currentUser), null, json);
 
@@ -1056,7 +1056,17 @@ public class SecUserService extends ModelService {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkCurrentUserIsNotPublic();
         securityACLService.checkIsCreator((SecUser) domain, currentUser);
-        if (!jsonNewData.isMissing("password")) {
+
+        User user = ((User) domain);
+        if (user.isIdPDelegated()) {
+            // Cannot update these fields if user data stability is delegated to an idP.
+            jsonNewData.withChange("username", user.getUsername());
+            jsonNewData.withChange("firstname", user.getFirstname());
+            jsonNewData.withChange("lastname", user.getLastname());
+            jsonNewData.withChange("email", user.getEmail());
+            jsonNewData.remove("password");
+        }
+        else if (!jsonNewData.isMissing("password")) {
             changeUserPassword((User)domain, jsonNewData.getJSONAttrStr("password"));
         }
         return executeCommand(new EditCommand(currentUser, null), domain, jsonNewData);
@@ -1124,6 +1134,7 @@ public class SecUserService extends ModelService {
 
     public void changeUserPassword(User user, String newPassword) {
         securityACLService.checkIsCreator(user,currentUserService.getCurrentUser());
+        securityACLService.checkCurrentUserIsNotIdPDelegated();
         user.setPassword(newPassword);
         user.encodePassword(passwordEncoder);
         user.setPasswordExpired(false);
@@ -1133,6 +1144,7 @@ public class SecUserService extends ModelService {
 
     public boolean isUserPassword(User user, String password) {
         securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
+        securityACLService.checkCurrentUserIsNotIdPDelegated();
         return passwordEncoder.matches(password, user.getPassword());
     }
 

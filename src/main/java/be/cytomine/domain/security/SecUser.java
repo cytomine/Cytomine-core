@@ -145,4 +145,9 @@ public class SecUser extends CytomineDomain {
     public JsonObject toJsonObject() {
         return getDataFromDomain(this);
     }
+
+    public boolean isIdPDelegated() {
+        UserOrigin userOrigin = UserOrigin.findByName(origin);
+        return userOrigin != null && userOrigin.isIdPDelegated();
+    }
 }

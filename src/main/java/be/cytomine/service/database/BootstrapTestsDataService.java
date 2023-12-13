@@ -113,7 +113,7 @@ public class BootstrapTestsDataService {
         user.setPublicKey(UUID.randomUUID().toString());
         user.setPrivateKey(UUID.randomUUID().toString());
         user.setPassword(UUID.randomUUID().toString());
-        user.setOrigin("unkown");
+        user.setOrigin(UserOrigin.BOOTSTRAP.toString());
 
         user = userRepository.save(user);
         userRepository.findById(user.getId()); // flush

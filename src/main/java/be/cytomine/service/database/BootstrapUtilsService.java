@@ -142,7 +142,7 @@ public class BootstrapUtilsService {
             user.setLanguage(Language.valueOf(applicationProperties.getDefaultLanguage()));
             user.setEnabled(true);
             user.setIsDeveloper(false);
-            user.setOrigin("BOOTSTRAP");
+            user.setOrigin(UserOrigin.BOOTSTRAP.toString());
             if(privateKey==null||publicKey==null) {
                 user.generateKeys();
             }else{
@@ -176,7 +176,7 @@ public class BootstrapUtilsService {
             user.setUsername(username);
             user.setPassword(password);
             user.setEnabled(true);
-            user.setOrigin("BOOTSTRAP");
+            user.setOrigin(UserOrigin.BOOTSTRAP.toString());
             user.setUser(creator);
             user.generateKeys();
             log.info("Saving {}...", user.getUsername());

@@ -202,7 +202,7 @@ public class LtiService {
         user.setEmail(email);
         user.setEnabled(true);
         user.setPassword(UUID.randomUUID().toString());
-        user.setOrigin("LTI");
+        user.setOrigin(UserOrigin.LTI.toString());
         user.setLanguage(Language.valueOf(applicationProperties.getDefaultLanguage()));
         user.generateKeys();
 
