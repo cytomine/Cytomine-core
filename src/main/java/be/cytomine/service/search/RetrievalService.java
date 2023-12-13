@@ -37,6 +37,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -68,12 +69,13 @@ public class RetrievalService extends ModelService {
         return new RetrievalServer().buildDomainFromJson(json, getEntityManager());
     }
 
-    private HttpRequest buildRequest(String url, byte[] image) throws IOException {
-        return buildRequest(url, image, "".getBytes());
+    private HttpRequest buildRequest(String url, String filename, byte[] image) throws IOException {
+        return buildRequest(url, filename, image, "".getBytes());
     }
 
-    private HttpRequest buildRequest(String url, byte[] image, byte[] parameters) throws IOException {
-        byte[] prefix = "--data\r\nContent-Disposition: form-data; name=\"image\"; filename=\"patch.png\"\r\n\r\n".getBytes();
+    private HttpRequest buildRequest(String url, String filename, byte[] image, byte[] parameters) throws IOException {
+        String header = "--data\r\nContent-Disposition: form-data; name=\"image\"; filename=\"" + filename + ".png\"\r\n\r\n";
+        byte[] prefix = header.getBytes();
         byte[] suffix = "\r\n--data--\r\n".getBytes();
 
         ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
@@ -97,7 +99,7 @@ public class RetrievalService extends ModelService {
         PimsResponse crop = imageServerService.crop(annotation.getSlice().getBaseSlice(), parameters, etag);
 
         HttpResponse<byte[]> response = this.client.send(
-            buildRequest(url, crop.getContent()),
+            buildRequest(url, annotation.getId().toString(), crop.getContent()),
             HttpResponse.BodyHandlers.ofByteArray()
         );
 
@@ -119,11 +121,14 @@ public class RetrievalService extends ModelService {
         ).getBytes();
 
         HttpResponse<byte[]> response = this.client.send(
-            buildRequest(url, crop.getContent(), requestParameters),
+            buildRequest(url, annotation.getId().toString(), crop.getContent(), requestParameters),
             HttpResponse.BodyHandlers.ofByteArray()
         );
 
         log.info(String.valueOf(response.statusCode()));
+
+        // Map filename to annotation ID
+        Map<String, Object> data = JsonObject.toMap(new String(response.body()));
 
         return new ArrayList<>();
     }
