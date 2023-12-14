@@ -7,7 +7,7 @@ spring:
     type: com.zaxxer.hikari.HikariDataSource
     url: jdbc:postgresql://localhost:5432/docker
     username: docker
-    password: docker
+    password: password
     hikari:
       poolName: Hikari
       auto-commit: false
@@ -37,7 +37,7 @@ spring:
     mongodb:
       authentication-database: admin
       username: mongoadmin
-      password: secret
+      password: password
       database: cytomine
       port: 27017
       host: localhost
@@ -90,7 +90,7 @@ application:
 
 
   defaultLanguage: ENGLISH
-  imageServerURL: [http://ims.cytomine.local]
+  internalImageServerURL: http://localhost:8888
   messageBrokerServerURL: messageBrokerServerURL
   annotation:
     maxNumberOfPoint: 200

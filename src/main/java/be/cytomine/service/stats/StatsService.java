@@ -16,7 +16,6 @@ package be.cytomine.service.stats;
 * limitations under the License.
 */
 
-import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.AnnotationTerm;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
@@ -26,7 +25,6 @@ import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.AnnotationAction;
 import be.cytomine.domain.social.PersistentImageConsultation;
 import be.cytomine.domain.social.PersistentProjectConnection;
-import be.cytomine.exceptions.ServerException;
 import be.cytomine.repository.ontology.RelationRepository;
 import be.cytomine.repository.ontology.TermRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
@@ -52,7 +50,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.Tuple;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -469,24 +466,19 @@ public class StatsService {
 
     public JsonObject statUsedStorage() {
         securityACLService.checkAdmin(secUserService.getCurrentUser());
-        List<ImageServer> spaces = imageServerService.list();
-        if(spaces.isEmpty()) {
-            throw new ServerException("No Image Server found!");
-        }
 
         Long used = 0L;
         Long available = 0L;
 
-        for (ImageServer space : spaces) {
-            StorageStats stats = null;
-            try {
-                stats = imageServerService.storageSpace(space);
-                used += stats.getUsed();
-                available += stats.getAvailable();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        StorageStats stats = null;
+        try {
+            stats = imageServerService.storageSpace();
+            used += stats.getUsed();
+            available += stats.getAvailable();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
         Long total = used + available;
         double percentage = 0.0;
         if (total > 0) {

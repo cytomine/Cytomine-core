@@ -23,4 +23,6 @@
     <include file="/config/liquibase/changelog/00000000_8_remove_raw_metadata_from_image_properties.xml" relativeToChangelogFile="false"/>
 
     <include file="/config/liquibase/changelog/00000000_9_delete_postgres_user.xml" relativeToChangelogFile="false"/>
+
+    <include file="/config/liquibase/changelog/00000000_10_delete_image_server.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

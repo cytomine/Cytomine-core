@@ -18,24 +18,18 @@ package be.cytomine.service.database;
 
 import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.image.Mime;
-import be.cytomine.domain.image.server.MimeImageServer;
 import be.cytomine.domain.meta.Configuration;
 import be.cytomine.domain.meta.ConfigurationReadingRole;
-import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.processing.ImageFilter;
-import be.cytomine.domain.processing.ImagingServer;
 import be.cytomine.domain.processing.ParameterConstraint;
 import be.cytomine.domain.processing.SoftwareUserRepository;
 import be.cytomine.domain.security.*;
-import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.MimeRepository;
 import be.cytomine.repository.meta.ConfigurationRepository;
 import be.cytomine.repository.middleware.AmqpQueueRepository;
-import be.cytomine.repository.middleware.ImageServerRepository;
 import be.cytomine.repository.middleware.MessageBrokerServerRepository;
 import be.cytomine.repository.ontology.RelationRepository;
 import be.cytomine.repository.processing.ImageFilterRepository;
-import be.cytomine.repository.processing.ImagingServerRepository;
 import be.cytomine.repository.processing.ParameterConstraintRepository;
 import be.cytomine.repository.processing.ProcessingServerRepository;
 import be.cytomine.repository.security.SecRoleRepository;
@@ -90,9 +84,6 @@ public class BootstrapUtilsService {
     MimeRepository mimeRepository;
     
     @Autowired
-    ImageServerRepository imageServerRepository;
-    
-    @Autowired
     ConfigurationRepository configurationRepository;
 
     @Autowired
@@ -100,9 +91,6 @@ public class BootstrapUtilsService {
 
     @Autowired
     ProcessingServerRepository processingServerRepository;
-
-    @Autowired
-    ImagingServerRepository imagingServerRepository;
 
     @Autowired
     MessageBrokerServerRepository messageBrokerServerRepository;
@@ -194,12 +182,11 @@ public class BootstrapUtilsService {
         relationRepository.createIfNotExist(name);
     }
 
-    public void createFilter(String name, String method, ImagingServer imagingServer, Boolean available) {
+    public void createFilter(String name, String method, Boolean available) {
         ImageFilter filter = imageFilterRepository.findByName(name)
                 .orElseGet(ImageFilter::new);
         filter.setName(name);
         filter.setMethod(method);
-        filter.setImagingServer(imagingServer);
         filter.setAvailable(available);
         imageFilterRepository.save(filter);
     }
@@ -233,57 +220,6 @@ public class BootstrapUtilsService {
 //        configs << new Configuration(key: "notification_smtp_host", value: grailsApplication.config.grails.notification.smtp.host, readingRole: adminRole)
 //        configs << new Configuration(key: "notification_smtp_port", value: grailsApplication.config.grails.notification.smtp.port, readingRole: adminRole)
     }
-
-
-    public void createMultipleImageServer() {
-        for (ImageServer imageServer : imageServerRepository.findAll()) {
-            log.info("imageServer '" + imageServer.getUrl() + "'");
-            if(!applicationProperties.getImageServerURL().contains(imageServer.getUrl())) {
-                log.info("ImageServer not in config, disable it");
-                imageServer.setAvailable(false);
-                imageServerRepository.save(imageServer);
-            } else {
-                log.info("ImageServer in config");
-            }
-        }
-
-        for (int i = 0; i< applicationProperties.getImageServerURL().size(); i++) {
-            createImageServer("IMS " + i, applicationProperties.getImageServerURL().get(i), applicationProperties.getStoragePath());
-        }
-    }
-    
-   public void createImageServer(String name, String url, String basePath) {
-       log.info("Check if '" + url + "' is in database " + imageServerRepository.findAll().stream().map(ImageServer::getUrl).toList());
-       if (!imageServerRepository.findAll().stream().anyMatch(x -> x.getUrl().equals(url))) {
-           log.info("ImageServer '" + url + "'  not in database " + imageServerRepository.findAll().stream().map(ImageServer::getUrl).toList());
-           ImageServer imageServer = new ImageServer();
-           imageServer.setName(name);
-           imageServer.setUrl(url);
-           imageServer.setBasePath(basePath);
-           imageServer.setAvailable(true);
-           entityManager.persist(imageServer);
-           for (Mime mime : mimeRepository.findAll()) {
-               MimeImageServer mimeImageServer = new MimeImageServer();
-               mimeImageServer.setImageServer(imageServer);
-               mimeImageServer.setMime(mime);
-               entityManager.persist(mimeImageServer);
-           }
-
-       }
-   }
-
-    public ImagingServer returnOrCreateImagingServer() {
-        String imageServerURL = applicationProperties.getImageServerURL().stream().findFirst()
-                .orElseThrow(() -> new ObjectNotFoundException("No image server defined in configuration"));
-        if (imagingServerRepository.findByUrl(imageServerURL).isEmpty()) {
-            ImagingServer imagingServer = new ImagingServer();
-            imagingServer.setUrl(imageServerURL);
-            return imagingServerRepository.save(imagingServer);
-        } else {
-            return imagingServerRepository.findByUrl(imageServerURL).get();
-        }
-    }
-
 
     public void updateProcessingServerRabbitQueues() {
         // TODO: TRANSLATION DONE, BUT amqpQueueService HAS TO BE IMPLEMENTED
