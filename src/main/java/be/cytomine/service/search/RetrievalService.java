@@ -35,8 +35,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 @Service
@@ -74,7 +72,7 @@ public class RetrievalService extends ModelService {
     }
 
     private HttpRequest buildRequest(String url, String filename, byte[] image, byte[] parameters) throws IOException {
-        String header = "--data\r\nContent-Disposition: form-data; name=\"image\"; filename=\"" + filename + ".png\"\r\n\r\n";
+        String header = "--data\r\nContent-Disposition: form-data; name=\"image\"; filename=\"" + filename + "\"\r\n\r\n";
         byte[] prefix = header.getBytes();
         byte[] suffix = "\r\n--data--\r\n".getBytes();
 
@@ -92,7 +90,11 @@ public class RetrievalService extends ModelService {
             .build();
     }
 
-    public String indexAnnotation(AnnotationDomain annotation, CropParameter parameters, String etag) throws IOException, ParseException, InterruptedException {
+    public String indexAnnotation(
+        AnnotationDomain annotation,
+        CropParameter parameters,
+        String etag
+    ) throws IOException, ParseException, InterruptedException {
         String url = applicationProperties.getRetrievalServerURL() + "/api/images/index";
 
         // Request annotation crop from PIMS
@@ -108,7 +110,12 @@ public class RetrievalService extends ModelService {
         return "";
     }
 
-    public List<Long> retrieveSimilarImages(AnnotationDomain annotation, CropParameter parameters, String etag, Long nrt_neigh) throws IOException, ParseException, InterruptedException {
+    public Map<String, Object> retrieveSimilarImages(
+        AnnotationDomain annotation,
+        CropParameter parameters,
+        String etag,
+        Long nrt_neigh
+    ) throws IOException, ParseException, InterruptedException {
         String url = applicationProperties.getRetrievalServerURL() + "/api/images/retrieve";
 
         // Request annotation crop from PIMS
@@ -127,9 +134,6 @@ public class RetrievalService extends ModelService {
 
         log.info(String.valueOf(response.statusCode()));
 
-        // Map filename to annotation ID
-        Map<String, Object> data = JsonObject.toMap(new String(response.body()));
-
-        return new ArrayList<>();
+        return JsonObject.toMap(new String(response.body()));
     }
 }
