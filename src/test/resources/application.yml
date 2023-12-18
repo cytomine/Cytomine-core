@@ -8,7 +8,7 @@ spring:
     type: com.zaxxer.hikari.HikariDataSource
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGIS_DB_NAME:docker}
     username: ${POSTGRES_USER:docker}
-    password: ${POSTGRES_PASSWORD:docker}
+    password: ${POSTGRES_PASSWORD:password}
     hikari:
       poolName: Hikari
       auto-commit: false

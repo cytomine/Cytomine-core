@@ -156,7 +156,7 @@ public class CASLdapUserDetailsService implements UserDetailsService {
         user.setEmail(mail);
         user.setEnabled(true);
         user.setPassword(UUID.randomUUID().toString());
-        user.setOrigin("LDAP");
+        user.setOrigin(UserOrigin.LDAP.toString());
         user.setLanguage(Language.valueOf(applicationProperties.getDefaultLanguage()));
         user.generateKeys();
 

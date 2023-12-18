@@ -29,6 +29,7 @@ import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.project.ProjectDefaultLayer;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
+import be.cytomine.domain.security.Language;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.UserJob;
@@ -1206,6 +1207,25 @@ public class SecUserServiceTests {
         Optional<SecUser> edited = secUserService.findByUsername(user.getUsername());
 
         assertThat(passwordEncoder.matches("NEWPASSWORD", edited.get().getPassword())).isTrue();
+    }
+
+    @Test
+    void edit_valid_idp_user_with_success() {
+        User user = builder.given_an_idp_user();
+        String originalLastname = user.getLastname();
+        String originalPasswordHash = user.getPassword();
+
+        CommandResponse commandResponse = secUserService.update(user, user.toJsonObject()
+                .withChange("password", "NEWPASSWORD")
+                .withChange("lastname", "NEWLASTNAME")
+                .withChange("language", "FR"));
+
+        assertThat(commandResponse).isNotNull();
+        assertThat(commandResponse.getStatus()).isEqualTo(200);
+        Optional<SecUser> edited = secUserService.findByUsername(user.getUsername());
+        assertThat(((User)edited.get()).getLastname()).isEqualTo(originalLastname);
+        assertThat(((User)edited.get()).getPassword()).isEqualTo(originalPasswordHash);
+        assertThat(((User)edited.get()).getLanguage()).isEqualTo(Language.FRENCH);
     }
 
 

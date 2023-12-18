@@ -157,6 +157,10 @@ public class BasicInstanceBuilder {
         return given_a_admin(randomString());
     }
 
+    public User given_an_idp_user() {
+        return given_an_idp_user(randomString(), UserOrigin.SAML.toString());
+    }
+
     public User given_a_user(String username) {
         User user = persistAndReturn(given_a_not_persisted_user());
         user.setUsername(username);
@@ -187,6 +191,15 @@ public class BasicInstanceBuilder {
         user.setUsername(username);
         user = persistAndReturn(user);
         addRole(user, ROLE_ADMIN);
+        return user;
+    }
+
+    public User given_an_idp_user(String username, String origin) {
+        User user = persistAndReturn(given_a_not_persisted_user());
+        user.setUsername(username);
+        user.setOrigin(origin);
+        user = persistAndReturn(user);
+        addRole(user, ROLE_USER);
         return user;
     }
 
