@@ -134,8 +134,6 @@ public class ImageInstanceResourceTests {
         image.setWidth(109240);
         image.setHeight(220696);
         image.setOriginalFilename("CMU-2.mrxs");
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setOriginalFilename("CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");

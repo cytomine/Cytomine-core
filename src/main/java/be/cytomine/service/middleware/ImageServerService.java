@@ -17,20 +17,12 @@ package be.cytomine.service.middleware;
 */
 
 import be.cytomine.config.properties.ApplicationProperties;
-import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.image.*;
-import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.dto.PimsResponse;
 import be.cytomine.exceptions.*;
-import be.cytomine.repository.middleware.ImageServerRepository;
-import be.cytomine.service.CurrentUserService;
-import be.cytomine.service.ModelService;
-import be.cytomine.service.UrlApi;
 import be.cytomine.service.dto.*;
 import be.cytomine.service.image.ImageInstanceService;
-import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.utils.*;
 
@@ -39,6 +31,7 @@ import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -58,21 +51,16 @@ import static be.cytomine.utils.HttpUtils.getContentFromUrl;
 @Slf4j
 @Service
 @Transactional
-public class ImageServerService extends ModelService {
+public class ImageServerService {
 
     private static final int GET_URL_MAX_LENGTH = 512;
 
+    @Value("${application.internalImageServerURL}")
+    String internalImageServerURL;
+
+
     @Autowired
     private ImageInstanceService imageInstanceService;
-
-    @Autowired
-    private SecurityACLService securityACLService;
-
-    @Autowired
-    private ImageServerRepository imageServerRepository;
-
-    @Autowired
-    private CurrentUserService currentUserService;
 
     @Autowired
     private SimplifyGeometryService simplifyGeometryService;
@@ -85,28 +73,12 @@ public class ImageServerService extends ModelService {
         this.imageInstanceService = imageInstanceService;
     }
 
-    public ImageServer get(Long id) {
-        securityACLService.checkGuest();
-        return find(id).orElse(null);
+    public StorageStats storageSpace() throws IOException {
+        return JsonObject.toObject(getContentFromUrl(internalImageServerURL + "/storage/size.json"), StorageStats.class);
     }
 
-    public Optional<ImageServer> find(Long id) {
-        securityACLService.checkGuest();
-        return imageServerRepository.findById(id);
-    }
-
-    public List<ImageServer> list() {
-        securityACLService.checkGuest();
-        return imageServerRepository.findAll();
-    }
-
-    public StorageStats storageSpace(ImageServer imageServer) throws IOException {
-        return JsonObject.toObject(getContentFromUrl(imageServer.getInternalUrl() + "/storage/size.json"), StorageStats.class);
-    }
-
-    public List<Map<String, Object>> formats(ImageServer imageServer) throws IOException {
-        log.debug(imageServer.getInternalUrl() + "/formats");
-        String response = getContentFromUrl(imageServer.getInternalUrl() + "/formats");
+    public List<Map<String, Object>> formats() throws IOException {
+        String response = getContentFromUrl(internalImageServerURL + "/formats");
         JsonObject jsonObject = JsonObject.toJsonObject(response);
         return ((List<Map<String,Object>>)jsonObject.get("items")).stream().map(x -> StringUtils.keysToCamelCase(x)).toList();
     }
@@ -152,51 +124,27 @@ public class ImageServerService extends ModelService {
     }
 
     public String buildImageServerFullUrl(UploadedFile uploadedFile, String targetResource, String pathSuffix) {
-        String serverUrl = uploadedFile.getImageServerUrl();
-        if (serverUrl == null) {
-            throw new InvalidRequestException("No image server URL registered");
-        }
-        return serverUrl + this.buildEncodedUri(targetResource, uploadedFile, pathSuffix);
+        return this.internalImageServerURL + this.buildEncodedUri(targetResource, uploadedFile, pathSuffix);
     }
 
     public String buildImageServerFullUrl(AbstractImage abstractImage, String targetResource, String pathSuffix) {
-        String serverUrl = abstractImage.getImageServerUrl();
-        if (serverUrl == null) {
-            throw new InvalidRequestException("No image server URL registered");
-        }
-        return serverUrl + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
+        return this.internalImageServerURL + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
     }
 
     public String buildImageServerFullUrl(AbstractSlice abstractSlice, String targetResource, String pathSuffix) {
-        String serverUrl = abstractSlice.getImageServerUrl();
-        if (serverUrl == null) {
-            throw new InvalidRequestException("No image server URL registered");
-        }
-        return serverUrl + this.buildEncodedUri(targetResource, abstractSlice, pathSuffix);
+        return this.internalImageServerURL + this.buildEncodedUri(targetResource, abstractSlice, pathSuffix);
     }
 
     public String buildImageServerInternalFullUrl(UploadedFile uploadedFile, String targetResource, String pathSuffix) {
-        String serverUrl = uploadedFile.getImageServerInternalUrl();
-        if (serverUrl == null) {
-            throw new InvalidRequestException("No image server URL registered");
-        }
-        return serverUrl + this.buildEncodedUri(targetResource, uploadedFile, pathSuffix);
+        return this.internalImageServerURL + this.buildEncodedUri(targetResource, uploadedFile, pathSuffix);
     }
 
     public String buildImageServerInternalFullUrl(AbstractImage abstractImage, String targetResource, String pathSuffix) {
-        String serverUrl = abstractImage.getImageServerInternalUrl();
-        if (serverUrl == null) {
-            throw new InvalidRequestException("No image server URL registered");
-        }
-        return serverUrl + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
+        return this.internalImageServerURL + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
     }
     
     public String buildImageServerInternalFullUrl(AbstractSlice abstractSlice, String targetResource, String pathSuffix) {
-        String serverUrl = abstractSlice.getImageServerInternalUrl();
-        if (serverUrl == null) {
-            throw new InvalidRequestException("No image server URL registered");
-        }
-        return serverUrl + this.buildEncodedUri(targetResource, abstractSlice, pathSuffix);
+        return this.internalImageServerURL + this.buildEncodedUri(targetResource, abstractSlice, pathSuffix);
     }
 
     // [EEx ONLY]
@@ -239,7 +187,7 @@ public class ImageServerService extends ModelService {
     }
 
     public Map<String, Object> imageHistogram(AbstractImage image, int nBins) {
-        String server = image.getImageServerInternalUrl();
+        String server = this.internalImageServerURL;
         String uri = this.buildEncodedUri("image", image, "/histogram/per-image");
         LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
         PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
@@ -252,7 +200,7 @@ public class ImageServerService extends ModelService {
     }
 
     public Map<String, Object> imageHistogramBounds(AbstractImage image, int nBins) {
-        String server = image.getImageServerInternalUrl();
+        String server = this.internalImageServerURL;
         String uri = this.buildEncodedUri("image", image, "/histogram/per-image/bounds");
         LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
         PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
@@ -261,7 +209,7 @@ public class ImageServerService extends ModelService {
     }
 
     public List<Map<String, Object>> channelHistograms(AbstractImage image, int nBins) {
-        String server = image.getImageServerInternalUrl();
+        String server = this.internalImageServerURL;
         String uri = this.buildEncodedUri("image", image, "/histogram/per-channels");
         LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
         PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
@@ -272,7 +220,7 @@ public class ImageServerService extends ModelService {
 
 
     public List<Map<String, Object>> channelHistogramBounds(AbstractImage image) {
-        String server = image.getImageServerInternalUrl();
+        String server = this.internalImageServerURL;
         String uri = this.buildEncodedUri("image", image, "/histogram/per-channels/bounds");
         PimsResponse pimsResponse = makeRequest("GET", server, uri, new LinkedHashMap<>(), "json", Map.of());
         Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
@@ -282,7 +230,7 @@ public class ImageServerService extends ModelService {
 
 
     public List<Map<String, Object>> planeHistograms(AbstractSlice slice, int nBins, boolean allChannels) {
-        String server = slice.getImageServerInternalUrl();
+        String server = this.internalImageServerURL;
         String uri = this.buildEncodedUri("image", slice, "/histogram/per-plane/z/" + slice.getZStack() + "/t/" + slice.getTime());
         LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
         if (!allChannels) {
@@ -296,7 +244,7 @@ public class ImageServerService extends ModelService {
 
 
     public List<Map<String, Object>> planeHistogramBounds(AbstractSlice slice, boolean allChannels) {
-        String server = slice.getImageServerInternalUrl();
+        String server = this.internalImageServerURL;
         String uri = this.buildEncodedUri("image", slice, "/histogram/per-plane/z/" + slice.getZStack() + "/t/" + slice.getTime() + "/bounds");
         LinkedHashMap<String, Object> params = new LinkedHashMap<>();
         if (!allChannels) {
@@ -306,85 +254,6 @@ public class ImageServerService extends ModelService {
         Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
         List<Map<String, Object>> items = (List<Map<String, Object>>) json.get("items");
         return items.stream().map(x -> renameChannelHistogramKeys(StringUtils.keysToCamelCase(x))).toList();
-    }
-
-    private String hmsInternalUrl() {
-        String url = applicationProperties.getHyperspectralServerURL();
-        return (applicationProperties.getUseHTTPInternally()) ? url.replace("https", "http") : url;
-    }
-
-    //TODO
-    private LinkedHashMap<String, Object> hmsParametersFromCompanionFile(CompanionFile cf) {
-        if (cf.getPath()==null) {
-            throw new InvalidRequestException("Companion file has no valid path.");
-        }
-        LinkedHashMap parameters = new LinkedHashMap();
-        parameters.put("fif", applicationProperties.getStoragePath() + "/" + cf.getPath());
-        return parameters;
-    }
-
-
-    public void makeHDF5(Long imageId, Long companionFileId, Long uploadedFileId) {
-        String server = hmsInternalUrl();
-        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-        parameters.put("image", imageId);
-        parameters.put("uploadedFile", uploadedFileId);
-        parameters.put("companionFile", companionFileId);
-        parameters.put("core", UrlApi.getServerUrl());
-        makeRequest("POST", server, "/hdf5.json", parameters, "json", Map.of(), true);
-    }
-
-    //TODO
-    public Map<String, Object> profile(CompanionFile profileCf, AnnotationDomain annotation, Map<String, String> params) {
-        return profile(profileCf, annotation.getLocation(), params);
-    }
-
-    //TODO
-    public Map<String, Object> profile(CompanionFile profile, Geometry geometry, Map<String, String> params) {
-        String server = hmsInternalUrl();
-        LinkedHashMap<String, Object> parameters = hmsParametersFromCompanionFile(profile);
-        parameters.put("location", geometry.toString());
-        parameters.put("minSlice", params.get("minSlice"));
-        parameters.put("maxSlice", params.get("maxSlice"));
-        PimsResponse response = makeRequest(null, server, "/profile.json", parameters, "json", Map.of(), true);
-        return JsonObject.toMap(new String(response.getContent()));
-    }
-
-    //TODO
-    public Map<String, Object> profileProjections(CompanionFile profile, AnnotationDomain annotation, LinkedHashMap<String, String> params) {
-        return profileProjections(profile, annotation.getLocation(), params);
-    }
-
-    //TODO
-    public Map<String, Object> profileProjections(CompanionFile profile, Geometry geometry, LinkedHashMap<String, String> params) {
-        String server = hmsInternalUrl();
-        LinkedHashMap<String, Object> parameters = hmsParametersFromCompanionFile(profile);
-        parameters.put("location", geometry.toString());
-        parameters.put("minSlice", params.get("minSlice"));
-        parameters.put("maxSlice", params.get("maxSlice"));
-        parameters.put("axis", params.get("axis"));
-        parameters.put("dimension", params.get("dimension"));
-        PimsResponse response = makeRequest(null, server, "/profile/projections.json", parameters, "json", Map.of(), true);
-        return JsonObject.toMap(new String(response.getContent()));
-    }
-
-    //TODO
-    public Map<String, Object> profileImageProjection(CompanionFile profile, AnnotationDomain annotation, LinkedHashMap<String, String> params) {
-        return profileImageProjection(profile, annotation.getLocation(), params);
-    }
-
-    //TODO
-    public Map<String, Object> profileImageProjection(CompanionFile profile, Geometry geometry, LinkedHashMap<String, String> params) {
-        String server = hmsInternalUrl();
-        String format = checkFormat((String) params.get("format"), List.of("jpg", "png"));
-
-        LinkedHashMap<String, Object> parameters = hmsParametersFromCompanionFile(profile);
-        parameters.put("location", geometry.toString());
-        parameters.put("minSlice", params.get("minSlice"));
-        parameters.put("maxSlice", params.get("maxSlice"));
-
-        PimsResponse response = makeRequest(null, server, "/profile/" + params.get("projection") + "-projection." +format, parameters, format, Map.of(), true);
-        return JsonObject.toMap(new String(response.getContent()));
     }
 
     public List<String> associated(AbstractImage image) throws IOException {
@@ -401,7 +270,7 @@ public class ImageServerService extends ModelService {
     }
 
     public PimsResponse label(AbstractImage image, LabelParameter params, String etag) {
-        String server = image.getImageServerInternalUrl();
+        String server = this.internalImageServerURL;
         String uri = buildEncodedUri("image", image, "/associated/" + params.getLabel().toLowerCase());
         String format = checkFormat(params.getFormat(), List.of("jpg", "png", "webp"));
 
@@ -424,7 +293,7 @@ public class ImageServerService extends ModelService {
     }
 
     public PimsResponse thumb(AbstractSlice slice, ImageParameter params, String etag) {
-        String server = slice.getImageServerInternalUrl();
+        String server = this.internalImageServerURL;
         String uri = this.buildEncodedUri("image", slice, "/thumb");
         String format = checkFormat(params.getFormat(), List.of("jpg", "png", "webp"));
         
@@ -506,7 +375,7 @@ public class ImageServerService extends ModelService {
 
     public PimsResponse crop(AbstractSlice slice, CropParameter cropParameter, String etag) throws UnsupportedEncodingException, ParseException {
 
-        String server = slice.getImageServerInternalUrl();
+        String server = this.internalImageServerURL;
         String uri = cropUri(slice.getPath(), cropParameter);
         LinkedHashMap<String,Object> parameters = cropParameters(cropParameter);
 
@@ -667,7 +536,7 @@ public class ImageServerService extends ModelService {
 //    }
 
     public PimsResponse window(AbstractSlice slice, WindowParameter windowParameter, String etag) throws UnsupportedEncodingException, ParseException {
-        String server = slice.getImageServerInternalUrl();
+        String server = this.internalImageServerURL;
         String uri = this.buildEncodedUri("image", slice, "/window");
 
         LinkedHashMap<String, Object> parameters = windowParameters(windowParameter);
@@ -1013,32 +882,5 @@ public class ImageServerService extends ModelService {
         }
         return '!' + colormap;
     }
-
-    @Override
-    public CommandResponse add(JsonObject jsonObject) {
-        throw new CytomineMethodNotYetImplementedException("");
-    }
-
-    @Override
-    public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        throw new CytomineMethodNotYetImplementedException("");
-    }
-
-    @Override
-    public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        throw new CytomineMethodNotYetImplementedException("");
-    }
-
-    @Override
-    public CytomineDomain createFromJSON(JsonObject json) {
-        throw new CytomineMethodNotYetImplementedException("");
-    }
-
-    @Override
-    public Class currentDomain() {
-        return ImageServer.class;
-    }
-
-
 
 }

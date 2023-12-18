@@ -184,14 +184,6 @@ public class AbstractImage extends CytomineDomain {
         return this.getUploadedFile()!=null ? this.getUploadedFile().getPath() : null;
     }
 
-    public String getImageServerUrl() {
-        return this.getUploadedFile()!=null ? this.getUploadedFile().getImageServerUrl() : null;
-    }
-
-    public String getImageServerInternalUrl() {
-        return this.getUploadedFile()!=null ? this.getUploadedFile().getImageServerInternalUrl() : null;
-    }
-
     public Integer getZoomLevels() {
         if (width==null || height==null) {
             return 1;
