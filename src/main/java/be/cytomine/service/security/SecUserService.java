@@ -1064,6 +1064,7 @@ public class SecUserService extends ModelService {
             jsonNewData.withChange("firstname", user.getFirstname());
             jsonNewData.withChange("lastname", user.getLastname());
             jsonNewData.withChange("email", user.getEmail());
+            jsonNewData.withChange("origin", user.getOrigin()); // Origin cannot be changed otherwise the idP delegation can be easily bypassed
             jsonNewData.remove("password");
         }
         else if (!jsonNewData.isMissing("password")) {
