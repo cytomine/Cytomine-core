@@ -197,7 +197,6 @@ class ApplicationBootstrap {
         bootstrapUtilDataService.initRabbitMq();
 
         log.info("create multiple IS and Retrieval...");
-        bootstrapUtilDataService.createMultipleImageServer();
         bootstrapUtilDataService.updateProcessingServerRabbitQueues();
 
         log.info("Check image filters...");

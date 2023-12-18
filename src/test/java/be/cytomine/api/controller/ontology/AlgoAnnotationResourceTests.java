@@ -415,8 +415,6 @@ public class AlgoAnnotationResourceTests {
         AbstractImage image = builder.given_an_abstract_image();
         image.setWidth(109240);
         image.setHeight(220696);
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         ImageInstance imageInstance = builder.given_an_image_instance(image, builder.given_a_project());

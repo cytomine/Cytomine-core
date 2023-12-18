@@ -366,8 +366,6 @@ public class AbstractSliceResourceTests {
         image.setMime(builder.given_a_mime("openslide/mrxs"));
         image.getImage().setWidth(109240);
         image.getImage().setHeight(220696);
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         return image;
