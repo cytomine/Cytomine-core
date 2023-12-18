@@ -149,7 +149,7 @@ public class ImageServerService {
 
     // [EEx ONLY]
     public void deleteFile(UploadedFile uploadedFile) throws IOException {
-        String server = uploadedFile.getImageServerInternalUrl();
+        String server = this.internalImageServerURL;
         String uri = this.buildEncodedUri("image", uploadedFile, null);
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
         makeRequest("DELETE", server, uri, parameters, "json", Map.of());
