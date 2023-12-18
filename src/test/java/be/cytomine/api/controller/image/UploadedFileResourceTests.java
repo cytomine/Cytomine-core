@@ -413,7 +413,6 @@ public class UploadedFileResourceTests {
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.image.UploadedFile"))
                 .andExpect(jsonPath("$.created").exists())
                 .andExpect(jsonPath("$.projects").hasJsonPath())
-                .andExpect(jsonPath("$.imageServer").hasJsonPath())
                 .andExpect(jsonPath("$.storage").hasJsonPath())
                 .andExpect(jsonPath("$.path").hasJsonPath())
                 .andExpect(jsonPath("$.filename").hasJsonPath())
@@ -523,8 +522,6 @@ public class UploadedFileResourceTests {
     @Test
     public void download_abstract_image() throws Exception {
         UploadedFile uploadedFile = builder.given_a_uploaded_file();
-        uploadedFile.getImageServer().setBasePath("/data/images");
-        uploadedFile.getImageServer().setUrl("http://localhost:8888");
         uploadedFile.setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         uploadedFile.setOriginalFilename("CMU-2.mrxs");
         uploadedFile.setContentType("MRXS");

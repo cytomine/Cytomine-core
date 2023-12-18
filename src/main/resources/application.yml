@@ -9,7 +9,6 @@ spring:
   thymeleaf:
     prefix: 'classpath:/templates/'
 
-
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     url: jdbc:postgresql://${POSTGIS_HOST:localhost}:${POSTGIS_PORT:5432}/${POSTGIS_DB_NAME:docker}
@@ -52,14 +51,11 @@ spring:
 server:
   port: ${PORT:8080}
 
-
 javamelody:
   enabled: ${JAVAMELODY_ENABLED:false}
   init-parameters:
     authorized-users: ${JAVAMELODY_USER:admin}:${JAVAMELODY_PASS:password}
     storage-directory: ${JAVAMELODY_PATH:/tmp/javamelody-core}
-
-
 
 application:
   version: 0.0.0 # do not modify this, it will be replace during build (ci)
@@ -103,8 +99,7 @@ application:
     lti:
       enabled: true
 
-  imageServerURL:
-    - ${IMAGE_SERVER_URL:http://ims.cytomine.local}
-  
+  internalImageServerURL: ${INTERNAL_IMAGE_SERVER_URL:http://localhost:5000}
+
   annotation:
     maxNumberOfPoint: ${ANNOTATION_MAX_POINTS:200}
