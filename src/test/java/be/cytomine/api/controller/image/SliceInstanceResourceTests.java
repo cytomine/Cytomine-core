@@ -18,17 +18,14 @@ package be.cytomine.api.controller.image;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
-import org.assertj.core.api.Assertions;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -43,11 +40,9 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -118,7 +113,6 @@ public class SliceInstanceResourceTests {
                 .andExpect(jsonPath("$.created").exists())
                 .andExpect(jsonPath("$.image").value(image.getImage().getId()))
                 .andExpect(jsonPath("$.mime").hasJsonPath())
-                .andExpect(jsonPath("$.imageServerUrl").value("http://localhost:8888"))
                 .andExpect(jsonPath("$.baseSlice").hasJsonPath())
                 .andExpect(jsonPath("$.path").hasJsonPath())
                 .andExpect(jsonPath("$.zStack").hasJsonPath())
@@ -507,8 +501,6 @@ public class SliceInstanceResourceTests {
         image.setMime(builder.given_a_mime("openslide/mrxs"));
         image.getImage().setWidth(109240);
         image.getImage().setHeight(220696);
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         SliceInstance sliceInstance = builder.given_a_slice_instance(builder.given_an_image_instance(image.getImage(), builder.given_a_project()),image);

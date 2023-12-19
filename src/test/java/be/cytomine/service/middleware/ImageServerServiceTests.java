@@ -18,28 +18,16 @@ package be.cytomine.service.middleware;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.authorization.AbstractAuthorizationTest;
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.UploadedFile;
-import be.cytomine.domain.image.server.Storage;
-import be.cytomine.domain.middleware.ImageServer;
-import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.repository.image.server.StorageRepository;
-import be.cytomine.service.CommandService;
-import be.cytomine.service.PermissionService;
-import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.dto.*;
-import be.cytomine.service.image.server.StorageService;
-import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.utils.CommandResponse;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import com.vividsolutions.jts.io.ParseException;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +39,6 @@ import javax.transaction.Transactional;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -61,7 +48,6 @@ import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.acls.domain.BasePermission.*;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
@@ -74,6 +60,9 @@ public class ImageServerServiceTests {
 
     @Autowired
     ImageServerService imageServerService;
+
+    @Autowired
+    ApplicationProperties applicationProperties;
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
 
@@ -91,42 +80,7 @@ public class ImageServerServiceTests {
     }
 
     @Test
-    void get_imageServer_with_success() {
-        ImageServer imageServer = builder.given_an_image_server();
-        assertThat(imageServer).isEqualTo(imageServerService.get(imageServer.getId()));
-    }
-
-    @Test
-    void get_unexisting_imageServer_return_null() {
-        assertThat(imageServerService.get(0L)).isNull();
-    }
-
-    @Test
-    void find_imageServer_with_success() {
-        ImageServer imageServer = builder.given_an_image_server();
-        assertThat(imageServerService.find(imageServer.getId()).isPresent());
-        assertThat(imageServer).isEqualTo(imageServerService.find(imageServer.getId()).get());
-    }
-
-    @Test
-    void find_unexisting_imageServer_return_empty() {
-        assertThat(imageServerService.find(0L)).isEmpty();
-    }
-
-
-    @Test
-    void list_light_imageServer() {
-        ImageServer imageServer = builder.given_an_image_server();
-        assertThat(imageServerService.list().stream().anyMatch(item -> item.getId().equals(imageServer.getId()))).isTrue();
-    }
-
-    @Test
     void retrieve_storage_spaces() throws IOException {
-        ImageServer imageServer = builder.given_an_image_server();
-        imageServer.setUrl("http://localhost:8888");
-        imageServer = builder.persistAndReturn(imageServer);
-
-
         configureFor("localhost", 8888);
         stubFor(get(urlEqualTo("/storage/size.json"))
                 .willReturn(
@@ -134,7 +88,7 @@ public class ImageServerServiceTests {
                 )
         );
 
-        StorageStats response = imageServerService.storageSpace(imageServer);
+        StorageStats response = imageServerService.storageSpace();
         assertThat(response).isNotNull();
         assertThat(response.getUsed()).isEqualTo(193396892);
         assertThat(response.getHostname()).isEqualTo("b52416f53249");
@@ -144,11 +98,6 @@ public class ImageServerServiceTests {
 
     @Test
     void retrieve_formats() throws IOException {
-        ImageServer imageServer = builder.given_an_image_server();
-        imageServer.setUrl("http://localhost:8888");
-        imageServer = builder.persistAndReturn(imageServer);
-
-
         configureFor("localhost", 8888);
         stubFor(get(urlEqualTo("/formats"))
                 .willReturn(
@@ -187,7 +136,7 @@ public class ImageServerServiceTests {
                 )
         );
 
-        List<Map<String, Object>> formats = imageServerService.formats(imageServer);
+        List<Map<String, Object>> formats = imageServerService.formats();
         printLastRequest();
         System.out.println(formats.stream().map(x -> x.get("id")).collect(Collectors.toList()));
 
@@ -203,8 +152,6 @@ public class ImageServerServiceTests {
     @Test
     void retrieve_abstract_image_download_uri() throws IOException {
         AbstractImage image = builder.given_an_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setOriginalFilename("CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
@@ -221,8 +168,6 @@ public class ImageServerServiceTests {
     @Test
     void retrieve_uploaded_file_download_uri() throws IOException {
         UploadedFile uploadedFile = builder.given_a_not_persisted_uploaded_file();
-        uploadedFile.getImageServer().setBasePath("/data/images");
-        uploadedFile.getImageServer().setUrl("http://localhost:8888");
         uploadedFile.setFilename("1636379100999/CMU-2.zip");
         uploadedFile.setOriginalFilename("CMU-2.zip");
         uploadedFile.setContentType("ZIP");
@@ -235,8 +180,6 @@ public class ImageServerServiceTests {
     @Test
     void extract_properties_from_abstract_image() throws IOException {
         AbstractImage image = builder.given_an_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
 
@@ -305,8 +248,6 @@ public class ImageServerServiceTests {
     @Test
     void get_associated_abstract_image() throws IOException {
         AbstractImage image = builder.given_an_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         configureFor("localhost", 8888);
@@ -324,8 +265,6 @@ public class ImageServerServiceTests {
     @Test
     void get_label_abstract_image_macro() throws IOException {
         AbstractImage image = builder.given_an_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         configureFor("localhost", 8888);
@@ -351,8 +290,6 @@ public class ImageServerServiceTests {
     @Test
     void get_thumb_for_abstract_image() throws IOException {
         AbstractImage image = builder.given_an_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
 
@@ -399,8 +336,6 @@ public class ImageServerServiceTests {
         AbstractImage image = builder.given_an_abstract_image();
         image.setWidth(109240);
         image.setHeight(220696);
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
 
@@ -449,8 +384,6 @@ public class ImageServerServiceTests {
         AbstractImage image = builder.given_an_abstract_image();
         image.setWidth(109240);
         image.setHeight(220696);
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
 
@@ -485,15 +418,9 @@ public class ImageServerServiceTests {
 
     @Test
     void image_histograms() throws IOException {
-        ImageServer imageServer = builder.given_an_image_server();
-        imageServer.setUrl("http://localhost:8888");
-        imageServer = builder.persistAndReturn(imageServer);
-
         AbstractImage image = builder.given_an_abstract_image();
         image.setWidth(109240);
         image.setHeight(220696);
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
@@ -541,15 +468,9 @@ public class ImageServerServiceTests {
 
     @Test
     void image_histograms_bounds() throws IOException {
-        ImageServer imageServer = builder.given_an_image_server();
-        imageServer.setUrl("http://localhost:8888");
-        imageServer = builder.persistAndReturn(imageServer);
-
         AbstractImage image = builder.given_an_abstract_image();
         image.setWidth(109240);
         image.setHeight(220696);
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
@@ -577,15 +498,9 @@ public class ImageServerServiceTests {
 
     @Test
     void plane_histograms() throws IOException {
-        ImageServer imageServer = builder.given_an_image_server();
-        imageServer.setUrl("http://localhost:8888");
-        imageServer = builder.persistAndReturn(imageServer);
-
         AbstractImage image = builder.given_an_abstract_image();
         image.setWidth(109240);
         image.setHeight(220696);
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
@@ -638,15 +553,9 @@ public class ImageServerServiceTests {
 
     @Test
     void plane_histograms_bounds() throws IOException {
-        ImageServer imageServer = builder.given_an_image_server();
-        imageServer.setUrl("http://localhost:8888");
-        imageServer = builder.persistAndReturn(imageServer);
-
         AbstractImage image = builder.given_an_abstract_image();
         image.setWidth(109240);
         image.setHeight(220696);
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
@@ -675,15 +584,9 @@ public class ImageServerServiceTests {
 
     @Test
     void channel_histograms() throws IOException {
-        ImageServer imageServer = builder.given_an_image_server();
-        imageServer.setUrl("http://localhost:8888");
-        imageServer = builder.persistAndReturn(imageServer);
-
         AbstractImage image = builder.given_an_abstract_image();
         image.setWidth(109240);
         image.setHeight(220696);
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
@@ -731,15 +634,9 @@ public class ImageServerServiceTests {
 
     @Test
     void chanel_histograms_bounds() throws IOException {
-        ImageServer imageServer = builder.given_an_image_server();
-        imageServer.setUrl("http://localhost:8888");
-        imageServer = builder.persistAndReturn(imageServer);
-
         AbstractImage image = builder.given_an_abstract_image();
         image.setWidth(109240);
         image.setHeight(220696);
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
@@ -790,7 +687,7 @@ public class ImageServerServiceTests {
     @Test
     void test_build_image_server_url_functions() {
         UploadedFile uploadedFile = builder.given_a_uploaded_file();
-        String serverUrl1 = uploadedFile.getImageServerUrl();
+        String serverUrl1 = applicationProperties.getInternalImageServerURL();
 
         uploadedFile.setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG");
         assertThat(imageServerService.buildImageServerFullUrl(uploadedFile, "file", "/upload"))
@@ -802,22 +699,15 @@ public class ImageServerServiceTests {
                 .isEqualTo(serverUrl1 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file%3F%3F.JPG/upload");
 
         AbstractImage abstractImage = builder.given_an_abstract_image();
-        String serverUrl2 = abstractImage.getImageServerUrl(),
-                internalServerUrl2 = abstractImage.getImageServerInternalUrl();
+        String serverUrl2 = applicationProperties.getInternalImageServerURL();
 
         abstractImage.getUploadedFile().setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG");
         assertThat(imageServerService.buildImageServerFullUrl(abstractImage, "file", "/upload"))
                 .isEqualTo(serverUrl2 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG/upload");
-        assertThat(imageServerService.buildImageServerInternalFullUrl(abstractImage, "file", "/upload"))
-                .isEqualTo(internalServerUrl2 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG/upload");
-
 
         abstractImage.getUploadedFile().setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file??.JPG");
         assertThat(imageServerService.buildImageServerFullUrl(abstractImage, "file", "/upload"))
                 .isEqualTo(serverUrl2 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file%3F%3F.JPG/upload");
-        assertThat(imageServerService.buildImageServerInternalFullUrl(abstractImage, "file", "/upload"))
-                .isEqualTo(internalServerUrl2 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file%3F%3F.JPG/upload");
-
     }
 
 }

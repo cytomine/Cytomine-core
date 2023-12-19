@@ -92,7 +92,7 @@ public class ApplicationProperties {
 
     private String defaultLanguage;
 
-    private List<String> imageServerURL;
+    private String internalImageServerURL;
 
     private String messageBrokerServerURL;
 

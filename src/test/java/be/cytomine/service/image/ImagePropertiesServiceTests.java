@@ -19,14 +19,9 @@ package be.cytomine.service.image;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.AbstractSlice;
-import be.cytomine.domain.meta.Property;
-import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.repository.meta.PropertyRepository;
-import be.cytomine.service.dto.*;
 import be.cytomine.service.middleware.ImageServerService;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.vividsolutions.jts.io.ParseException;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -35,7 +30,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import javax.transaction.Transactional;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
@@ -78,8 +72,6 @@ public class ImagePropertiesServiceTests {
     @Test
     void extract_populated_properties_to_abstract_image() throws IOException, IllegalAccessException {
         AbstractImage image = builder.given_an_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
 

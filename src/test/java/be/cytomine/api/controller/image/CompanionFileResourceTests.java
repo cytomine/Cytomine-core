@@ -229,8 +229,6 @@ public class CompanionFileResourceTests {
     @Test
     public void download_companion_file() throws Exception {
         CompanionFile companionFile = builder.given_a_companion_file(builder.given_an_abstract_image());
-        companionFile.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
-        companionFile.getUploadedFile().getImageServer().setBasePath("/data/images");
         companionFile.setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         companionFile.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         companionFile.getUploadedFile().setContentType("MRXS");

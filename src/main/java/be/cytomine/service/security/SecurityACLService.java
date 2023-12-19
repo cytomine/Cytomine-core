@@ -313,6 +313,12 @@ public class SecurityACLService {
         }
     }
 
+    public void checkCurrentUserIsNotIdPDelegated() {
+        if (currentUserService.getCurrentUser() instanceof User user && user.isIdPDelegated()) {
+            throw new ForbiddenException("A user coming from an IdP cannot perform this action!");
+        }
+    }
+
     public void checkGuest() {
         checkGuest(currentUserService.getCurrentUser());
     }

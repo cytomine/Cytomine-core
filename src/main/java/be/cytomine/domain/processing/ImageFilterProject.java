@@ -69,7 +69,6 @@ public class ImageFilterProject extends CytomineDomain {
         returnArray.put("imageFilter", Optional.ofNullable(processingServer.getImageFilter()).map(CytomineDomain::getId).orElse(null));
         returnArray.put("project", Optional.ofNullable(processingServer.getProject()).map(CytomineDomain::getId).orElse(null));
 
-        returnArray.put("imagingServer", Optional.ofNullable(processingServer.getImageFilter()).map(ImageFilter::getImagingServer).map(ImagingServer::getUrl).orElse(null));
         returnArray.put("baseUrl", Optional.ofNullable(processingServer.getImageFilter()).map(ImageFilter::getBaseUrl).orElse(null));
         returnArray.put("name", Optional.ofNullable(processingServer.getImageFilter()).map(ImageFilter::getName).orElse(null));
         returnArray.put("method", Optional.ofNullable(processingServer.getImageFilter()).map(ImageFilter::getMethod).orElse(null));
