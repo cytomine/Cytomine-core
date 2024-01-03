@@ -278,30 +278,6 @@ public class RestAbstractImageController extends RestCytomineController {
         responseImage(imageServerService.crop(sliceCoordinatesService.getReferenceSlice(abstractImage), cropParameter, etag));
     }
 
-    @RequestMapping(value = "/abstractimage/{id}/window_url-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> windowUrl(
-            @PathVariable Long id,
-            @PathVariable String format,
-            @PathVariable Integer x,
-            @PathVariable Integer y,
-            @PathVariable Integer w,
-            @PathVariable Integer h,
-            @RequestParam(defaultValue = "false", required = false) Boolean withExterior
-    ) throws UnsupportedEncodingException, ParseException {
-        log.debug("REST request get abstractimage {} window url {}", id, format);
-        WindowParameter windowParameter = new WindowParameter();
-        windowParameter.setX(x);
-        windowParameter.setY(y);
-        windowParameter.setW(w);
-        windowParameter.setH(h);
-        windowParameter.setWithExterior(withExterior);
-        windowParameter.setFormat(format);
-        AbstractImage abstractImage = abstractImageService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
-        String url = imageServerService.windowUrl(sliceCoordinatesService.getReferenceSlice(abstractImage), windowParameter);
-        return responseSuccess(JsonObject.of("url", url));
-    }
-
     @RequestMapping(value = "/abstractimage/{id}/window-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public void window(
             @PathVariable Long id,
@@ -324,29 +300,6 @@ public class RestAbstractImageController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
         String etag = getRequestETag();
         responseImage(imageServerService.window(sliceCoordinatesService.getReferenceSlice(abstractImage), windowParameter, etag));
-    }
-
-    @RequestMapping(value = "/abstractimage/{id}/camera_url-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> cameraUrl(
-            @PathVariable Long id,
-            @PathVariable String format,
-            @PathVariable Integer x,
-            @PathVariable Integer y,
-            @PathVariable Integer w,
-            @PathVariable Integer h
-    ) throws UnsupportedEncodingException, ParseException {
-        log.debug("REST request get abstractimage {} camera url {}", id, format);
-        WindowParameter windowParameter = new WindowParameter();
-        windowParameter.setX(x);
-        windowParameter.setY(y);
-        windowParameter.setW(w);
-        windowParameter.setH(h);
-        windowParameter.setWithExterior(false);
-        windowParameter.setFormat(format);
-        AbstractImage abstractImage = abstractImageService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
-        String url = imageServerService.windowUrl(sliceCoordinatesService.getReferenceSlice(abstractImage), windowParameter);
-        return responseSuccess(JsonObject.of("url", url));
     }
 
     @RequestMapping(value = "/abstractimage/{id}/camera-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
@@ -415,35 +368,5 @@ public class RestAbstractImageController extends RestCytomineController {
         String url = imageServerService.downloadUri(abstractImage);
         return new RedirectView(url);
     }
-
-//
-//    // TODO: imageserver by abstract image is deprecated in server
-//    @GetMapping("/abstractimage/{id}/imageServers.json")
-//    public ResponseEntity<String> imageServers(@PathVariable Long id) {
-//        log.debug("REST request to list abstractimage {id} imageservers");
-//        throw new RuntimeException("DEPRECATED?");
-////        return responseSuccess(abstractImageService.imageServers());
-//    }
-
-
-//    /**
-//     * Get all image servers URL for an image
-//     */
-//    @RestApiMethod(description="Get all image servers URL for an image")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The image id"),
-//            ])
-//    @RestApiResponseObject(objectIdentifier = "URL list")
-//    @Deprecated
-//    def imageServers() {
-//        try {
-//            def id = params.long('id')
-//            responseSuccess(abstractImageService.imageServers(id))
-//        } catch (CytomineException e) {
-//            log.error(e)
-//            response([success: false, errors: e.msg], e.code)
-//        }
-//    }
-//
 
 }

@@ -376,30 +376,6 @@ public class RestImageInstanceController extends RestCytomineController {
         responseImage(imageServerService.crop(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), cropParameter, etag));
     }
 
-    @RequestMapping(value = "/imageinstance/{id}/window_url-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> windowUrl(
-            @PathVariable Long id,
-            @PathVariable String format,
-            @PathVariable Integer x,
-            @PathVariable Integer y,
-            @PathVariable Integer w,
-            @PathVariable Integer h,
-            @RequestParam(defaultValue = "false", required = false) Boolean withExterior
-    ) throws UnsupportedEncodingException, ParseException {
-        log.debug("REST request get imageInstance {} window url {}", id, format);
-        WindowParameter windowParameter = new WindowParameter();
-        windowParameter.setX(x);
-        windowParameter.setY(y);
-        windowParameter.setW(w);
-        windowParameter.setH(h);
-        windowParameter.setWithExterior(withExterior);
-        windowParameter.setFormat(format);
-        ImageInstance imageInstance = imageInstanceService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
-        String url = imageServerService.windowUrl(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), windowParameter);
-        return responseSuccess(JsonObject.of("url", url));
-    }
-
     @RequestMapping(value = "/imageinstance/{id}/window-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public void window(
             @PathVariable Long id,
@@ -424,30 +400,6 @@ public class RestImageInstanceController extends RestCytomineController {
 
         String etag = getRequestETag();
         responseImage(imageServerService.window(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), windowParameter, etag));
-    }
-
-    @RequestMapping(value = "/imageinstance/{id}/camera_url-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> cameraUrl(
-            @PathVariable Long id,
-            @PathVariable String format,
-            @PathVariable Integer x,
-            @PathVariable Integer y,
-            @PathVariable Integer w,
-            @PathVariable Integer h
-    ) throws UnsupportedEncodingException, ParseException {
-        log.debug("REST request get imageInstance {} camera url {}", id, format);
-        WindowParameter windowParameter = new WindowParameter();
-        windowParameter.setX(x);
-        windowParameter.setY(y);
-        windowParameter.setW(w);
-        windowParameter.setH(h);
-        windowParameter.setWithExterior(false);
-        windowParameter.setFormat(format);
-        // TODO : should we handle other window parameters?
-        ImageInstance imageInstance = imageInstanceService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
-        String url = imageServerService.windowUrl(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), windowParameter);
-        return responseSuccess(JsonObject.of("url", url));
     }
 
     @RequestMapping(value = "/imageinstance/{id}/camera-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})

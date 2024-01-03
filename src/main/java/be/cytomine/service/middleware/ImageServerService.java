@@ -557,11 +557,6 @@ public class ImageServerService {
         return makeRequest("POST", server, uri, parameters, format, headers);
     }
 
-    public String windowUrl(AbstractSlice slice, WindowParameter windowParameter) throws UnsupportedEncodingException, ParseException {
-        LinkedHashMap<String, Object> parameters = windowParameters(windowParameter);
-        return this.buildImageServerInternalFullUrl(slice, "image", "/window") + "?" + makeParameterUrl(parameters);
-    }
-
     public LinkedHashMap<String,Object> windowParameters(WindowParameter windowParameter) throws ParseException {
 
 

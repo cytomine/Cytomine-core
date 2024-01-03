@@ -233,30 +233,6 @@ public class RestAbstractSliceController extends RestCytomineController {
         responseImage(imageServerService.crop(abstractSlice, cropParameter, etag));
     }
 
-    @RequestMapping(value = "/abstractslice/{id}/window_url-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> windowUrl(
-            @PathVariable Long id,
-            @PathVariable String format,
-            @PathVariable Integer x,
-            @PathVariable Integer y,
-            @PathVariable Integer w,
-            @PathVariable Integer h,
-            @RequestParam(defaultValue = "false", required = false) Boolean withExterior
-    ) throws UnsupportedEncodingException, ParseException {
-        log.debug("REST request get abstractslice {} window url {}", id, format);
-        WindowParameter windowParameter = new WindowParameter();
-        windowParameter.setX(x);
-        windowParameter.setY(y);
-        windowParameter.setW(w);
-        windowParameter.setH(h);
-        windowParameter.setWithExterior(withExterior);
-        windowParameter.setFormat(format);
-        AbstractSlice abstractSlice = abstractSliceService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", id));
-        String url = imageServerService.windowUrl(abstractSlice, windowParameter);
-        return responseSuccess(JsonObject.of("url", url));
-    }
-
     @RequestMapping(value = "/abstractslice/{id}/window-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public void window(
             @PathVariable Long id,
@@ -279,29 +255,6 @@ public class RestAbstractSliceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", id));
         String etag = getRequestETag();
         responseImage(imageServerService.window(abstractSlice, windowParameter, etag));
-    }
-
-    @RequestMapping(value = "/abstractslice/{id}/camera_url-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> cameraUrl(
-            @PathVariable Long id,
-            @PathVariable String format,
-            @PathVariable Integer x,
-            @PathVariable Integer y,
-            @PathVariable Integer w,
-            @PathVariable Integer h
-    ) throws UnsupportedEncodingException, ParseException {
-        log.debug("REST request get abstractslice {} camera url {}", id, format);
-        WindowParameter windowParameter = new WindowParameter();
-        windowParameter.setX(x);
-        windowParameter.setY(y);
-        windowParameter.setW(w);
-        windowParameter.setH(h);
-        windowParameter.setWithExterior(false);
-        windowParameter.setFormat(format);
-        AbstractSlice abstractSlice = abstractSliceService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", id));
-        String url = imageServerService.windowUrl(abstractSlice, windowParameter);
-        return responseSuccess(JsonObject.of("url", url));
     }
 
     @RequestMapping(value = "/abstractslice/{id}/camera-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
