@@ -63,8 +63,7 @@ application:
   serverId: ${SERVER_ID:default}
   serverURL: ${SERVER_URL:#{'http://cytomine.local'}}
   storagePath: ${STORAGE_PATH:/data/images}
-  useHTTPInternally: ${USE_HTTP_INTERNALLY:false}
-  
+
   adminPassword: ${ADMIN_PASSWORD:adminPassword}
   adminEmail: ${ADMIN_EMAIL:dev@cytomine.com}
   adminPublicKey: ${ADMIN_PUBLIC_KEY:adminPublicKey}

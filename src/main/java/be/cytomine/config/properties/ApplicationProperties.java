@@ -87,9 +87,6 @@ public class ApplicationProperties {
 
     private String softwareSources;
 
-    private Boolean useHTTPInternally;
-
-
     private String defaultLanguage;
 
     private String internalImageServerURL;
