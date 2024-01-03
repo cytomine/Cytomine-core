@@ -18,7 +18,6 @@ package be.cytomine.api.controller.image;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -37,10 +36,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
 @RestController
 @RequestMapping("/api")
@@ -356,17 +353,12 @@ public class RestAbstractImageController extends RestCytomineController {
         return responseSuccess(new JsonObject());
     }
 
-
-
-
     @GetMapping("/abstractimage/{id}/download")
-    public RedirectView download(@PathVariable Long id) throws IOException {
+    public void download(@PathVariable Long id) throws IOException {
         log.debug("REST request to download image instance");
         AbstractImage abstractImage = abstractImageService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
         // TODO: in abstract image, there is no check fos download auth!?
-        String url = imageServerService.downloadUri(abstractImage);
-        return new RedirectView(url);
+        responseImage(imageServerService.download(abstractImage));
     }
-
 }

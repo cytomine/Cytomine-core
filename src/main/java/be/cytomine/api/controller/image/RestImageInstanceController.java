@@ -24,7 +24,6 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ForbiddenException;
-import be.cytomine.exceptions.InvalidRequestException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.dto.*;
@@ -44,7 +43,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
 @RestController
@@ -427,7 +425,7 @@ public class RestImageInstanceController extends RestCytomineController {
     }
 
     @GetMapping("/imageinstance/{id}/download")
-    public RedirectView download(@PathVariable Long id) throws IOException {
+    public void download(@PathVariable Long id) throws IOException {
         log.debug("REST request to download image instance");
         ImageInstance imageinstance = imageInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
@@ -437,10 +435,7 @@ public class RestImageInstanceController extends RestCytomineController {
             // TODO: in abstract image, there is no check for that ?!?
             securityACLService.checkIsAdminContainer(imageinstance.getProject());
         }
-
-
-        String url = imageServerService.downloadUri(imageinstance.getBaseImage());
-        return new RedirectView(url);
+        responseImage(imageServerService.download(imageinstance.getBaseImage()));
     }
 
     @GetMapping("/imageinstance/{id}/sliceinstance/reference.json")

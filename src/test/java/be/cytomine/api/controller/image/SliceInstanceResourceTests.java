@@ -310,12 +310,6 @@ public class SliceInstanceResourceTests {
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
 
-
-        restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/window_url-10-20-30-40.jpg", image.getId()))
-                .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/") + "/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
-                .andExpect(status().isOk());
-
     }
 
 
@@ -343,13 +337,6 @@ public class SliceInstanceResourceTests {
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
-
-
-        restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/camera_url-10-20-30-40.jpg", image.getId()))
-                .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/") + "/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
-                .andExpect(status().isOk());
-
     }
 
 

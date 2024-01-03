@@ -101,13 +101,12 @@ public class RestCompanionFileController extends RestCytomineController {
 
 
     @GetMapping("/companionfile/{id}/download")
-    public RedirectView download(@PathVariable Long id) throws IOException {
+    public void download(@PathVariable Long id) throws IOException {
         log.debug("REST request to download companionfile");
         CompanionFile companionFile = companionFileService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("CompanionFile", id));
         // TODO: in abstract image, there is no check fos download auth!?
-        String url = imageServerService.downloadUri(companionFile);
-        return new RedirectView(url);
+        responseImage(imageServerService.download(companionFile));
     }
 
 

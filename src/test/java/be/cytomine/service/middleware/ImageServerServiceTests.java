@@ -149,6 +149,7 @@ public class ImageServerServiceTests {
 
     //http://localhost-ims/image/download?fif=%2Fdata%2Fimages%2F58%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs
 
+    // TODO
     @Test
     void retrieve_abstract_image_download_uri() throws IOException {
         AbstractImage image = builder.given_an_abstract_image();
@@ -156,13 +157,32 @@ public class ImageServerServiceTests {
         image.getUploadedFile().setOriginalFilename("CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
 
-        assertThat(imageServerService.downloadUri(image))
-                .isEqualTo("http://localhost:8888/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
-                        + "/export?filename=" + URLEncoder.encode(image.getOriginalFilename(), StandardCharsets.UTF_8));
+        configureFor("localhost", 8888);
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes();
+        String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
+                + "/export?filename=" + URLEncoder.encode(image.getOriginalFilename(), StandardCharsets.UTF_8);
 
-        assertThat(imageServerService.downloadUri(image.getUploadedFile()))
-                .isEqualTo("http://localhost:8888/file/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
-                        + "/export?filename=" + URLEncoder.encode(image.getUploadedFile().getOriginalFilename(), StandardCharsets.UTF_8));
+        stubFor(get(urlEqualTo(url))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+
+        byte[] data = imageServerService.download(image).getContent();
+        printLastRequest();
+        assertThat(data).isEqualTo(mockResponse);
+
+        url = "/file/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
+            + "/export?filename=" + URLEncoder.encode(image.getUploadedFile().getOriginalFilename(), StandardCharsets.UTF_8);
+
+        stubFor(get(urlEqualTo(url))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+        data = imageServerService.download(image.getUploadedFile()).getContent();
+        printLastRequest();
+        assertThat(data).isEqualTo(mockResponse);
     }
 
     @Test
@@ -172,9 +192,20 @@ public class ImageServerServiceTests {
         uploadedFile.setOriginalFilename("CMU-2.zip");
         uploadedFile.setContentType("ZIP");
 
-        assertThat(imageServerService.downloadUri(uploadedFile))
-                .isEqualTo("http://localhost:8888/file/" + URLEncoder.encode(uploadedFile.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
-                        + "/export?filename=" + URLEncoder.encode(uploadedFile.getOriginalFilename(), StandardCharsets.UTF_8));
+        configureFor("localhost", 8888);
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes();
+        String url = "/file/" + URLEncoder.encode(uploadedFile.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
+                + "/export?filename=" + URLEncoder.encode(uploadedFile.getOriginalFilename(), StandardCharsets.UTF_8);
+
+        stubFor(get(urlEqualTo(url))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+
+        byte[] data = imageServerService.download(uploadedFile).getContent();
+        printLastRequest();
+        assertThat(data).isEqualTo(mockResponse);
     }
 
     @Test

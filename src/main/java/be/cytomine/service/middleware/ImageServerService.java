@@ -145,20 +145,24 @@ public class ImageServerService {
         return this.internalImageServerURL + this.buildEncodedUri(targetResource, abstractSlice, pathSuffix);
     }
 
-    public String downloadUri(UploadedFile uploadedFile) throws IOException {
+    public PimsResponse download(UploadedFile uploadedFile) throws IOException {
+        String server = this.internalImageServerURL;
+        String uri = this.buildEncodedUri("file", uploadedFile, "/export");
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
         parameters.put("filename", uploadedFile.getOriginalFilename());
-        return this.buildImageServerInternalFullUrl(uploadedFile, "file", "/export") + "?" + makeParameterUrl(parameters);
+        return makeRequest("GET", server, uri, parameters, "json", Map.of());
     }
 
-    public String downloadUri(AbstractImage abstractImage) throws IOException {
+    public PimsResponse download(AbstractImage abstractImage) throws IOException {
+        String server = this.internalImageServerURL;
+        String uri = this.buildEncodedUri("image", abstractImage, "/export");
         LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
         parameters.put("filename", abstractImage.getOriginalFilename());
-        return this.buildImageServerFullUrl(abstractImage, "image", "/export") + "?" + makeParameterUrl(parameters);
+        return makeRequest("GET", server, uri, parameters, "json", Map.of());
     }
 
-    public String downloadUri(CompanionFile companionFile) throws IOException {
-        return downloadUri(companionFile.getUploadedFile());
+    public PimsResponse download(CompanionFile companionFile) throws IOException {
+        return download(companionFile.getUploadedFile());
     }
 
     public Map<String, Object> properties(AbstractImage image) throws IOException {
@@ -670,7 +674,7 @@ public class ImageServerService {
 
 
     private static Map<String, String> extractPIMSHeaders(HttpHeaders headers) {
-        List<String> names = List.of("Cache-Control", "ETag", "X-Annotation-Origin", "X-Image-Size-Limit", "Content-Type");
+        List<String> names = List.of("Cache-Control", "ETag", "X-Annotation-Origin", "X-Image-Size-Limit", "Content-Type", "Content-Disposition", "Last-Modified");
         Map<String, String> extractedHeaders = new LinkedHashMap<>();
         for (String name : names) {
             String value = headers.firstValue(name).isEmpty() ? headers.firstValue(name.toLowerCase()).orElse(null) : headers.firstValue(name).get();

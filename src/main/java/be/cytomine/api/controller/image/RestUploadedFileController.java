@@ -33,8 +33,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -104,12 +102,10 @@ public class RestUploadedFileController extends RestCytomineController {
 
 
     @GetMapping("/uploadedfile/{id}/download")
-    public RedirectView download(@PathVariable Long id) throws IOException {
+    public void download(@PathVariable Long id) throws IOException {
         log.debug("REST request to download uploadedFile");
         UploadedFile uploadedFile = uploadedFileService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("UploadedFile", id));
-        // TODO: DO NOT USE REDIRECTION
-        String url = imageServerService.downloadUri(uploadedFile);
-        return new RedirectView(url);
+        responseImage(imageServerService.download(uploadedFile));
     }
 }

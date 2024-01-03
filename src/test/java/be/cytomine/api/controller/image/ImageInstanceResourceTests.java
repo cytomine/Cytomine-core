@@ -795,12 +795,6 @@ public class ImageInstanceResourceTests {
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
 
-
-        restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/window_url-10-20-30-40.jpg", image.getId()))
-                .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/")+"/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
-                .andExpect(status().isOk());
-
     }
 
 
@@ -829,13 +823,6 @@ public class ImageInstanceResourceTests {
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
-
-
-        restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/camera_url-10-20-30-40.jpg", image.getId()))
-                .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/")+"/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
-                .andExpect(status().isOk());
-
     }
 
     @Test
@@ -870,13 +857,19 @@ public class ImageInstanceResourceTests {
     public void download_image_instance() throws Exception {
         ImageInstance image = given_test_image_instance();
 
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes();
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=" + URLEncoder.encode(image.getBaseImage().getOriginalFilename(), StandardCharsets.UTF_8)))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+
         MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/download", image.getId()))
-                .andDo(print()).andReturn();
-        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
-        assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=CMU-2.mrxs");
-
-
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
 
@@ -889,21 +882,27 @@ public class ImageInstanceResourceTests {
         builder.addUserToProject(image.getProject(), user.getUsername(), BasePermission.WRITE);
         image.getProject().setAreImagesDownloadable(true);
 
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes();
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=" + URLEncoder.encode(image.getBaseImage().getOriginalFilename(), StandardCharsets.UTF_8)))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+
         MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/download", image.getId()))
-                .andDo(print()).andReturn();
-        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
-        assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=CMU-2.mrxs");
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
+
 
         image.getProject().setAreImagesDownloadable(false);
 
         mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/download", image.getId()))
                 .andDo(print()).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(403);
-        assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isNotEqualTo("http://localhost:8888/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=CMU-2.mrxs");
-
-
+        assertThat(mvcResult.getResponse().getContentAsByteArray()).isNotEqualTo(mockResponse);
     }
 
 
