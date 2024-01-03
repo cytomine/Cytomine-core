@@ -9,7 +9,6 @@ logging:
 application:
   serverURL: http://cytomine.local
   adminPassword: password
-  useHTTPInternally: true
 
   authentication:
     jwt:

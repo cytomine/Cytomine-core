@@ -29,27 +29,20 @@ public class UrlApi {
 
     private static String serverUrl = "http://localhost:8090";
 
-    private static boolean httpInternally = false;
-
     private static final Map<String, Set<String>> ASSOCIATED_PER_FORMAT_HINTS = Map.of(
             "macro", Set.of("SVS", "NDPI", "VMS", "SCN", "MRXS", "BIF", "VENTANA", "PHILIPS"),
             "label", Set.of("SVS", "MRXS", "PHILIPS"),
             "thumb", Set.of("SVS", "MRXS", "BIF", "VENTANA")
     );
 
-    public static void setServerURL(String url, Boolean useHTTPInternally) {
-        serverUrl = useHTTPInternally ? url.replace("https", "http") : url;
-        httpInternally = useHTTPInternally;
+    public static void setServerURL(String url) {
+        serverUrl = url;
     }
 
     public static String getServerUrl() {
         return serverUrl;
     }
 
-
-    public static boolean isUsingHttpInternally() {
-        return httpInternally;
-    }
 
     public static String getAbstractImageThumbUrl(Long idImage, String format) {
         return  serverUrl + "/api/abstractimage/" + idImage + "/thumb." + format;

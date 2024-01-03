@@ -141,8 +141,7 @@ class ApplicationBootstrap {
         log.info ("#############################################################################");
 
         UrlApi.setServerURL(
-                applicationProperties.getServerURL(),
-                applicationProperties.getUseHTTPInternally()
+                applicationProperties.getServerURL()
         );
 
         if (EnvironmentUtils.isTest(environment) && secUserRepository.count() == 0) {
