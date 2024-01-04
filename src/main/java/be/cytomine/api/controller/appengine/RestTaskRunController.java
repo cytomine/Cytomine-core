@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 @RestController
@@ -41,11 +42,11 @@ public class RestTaskRunController extends RestCytomineController {
 
     @PutMapping("/project/{project}/task-runs/{task}/input-provisions")
     public ResponseEntity<String> batchProvision(
-            @RequestBody JsonObject json,
+            @RequestBody ArrayList<JsonObject> body,
             @PathVariable String project,
             @PathVariable String task
     ) {
-        return taskRunService.batchProvisionTaskRun(json, Long.parseLong(project), UUID.fromString(task));
+        return taskRunService.batchProvisionTaskRun(body, Long.parseLong(project), UUID.fromString(task));
     }
 
     @PutMapping("/project/{project}/task-runs/{task}/input-provisions/{param_name}")

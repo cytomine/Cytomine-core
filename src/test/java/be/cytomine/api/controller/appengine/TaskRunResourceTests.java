@@ -144,7 +144,7 @@ public class TaskRunResourceTests {
          * error and it should have no consequence unless we start sniffing the json object in the core endpoint
          * for provisioning.
          **/
-        String queryBody = "{\"value\": 0, \"param_name\": \"" + paramName + "\"}";
+        String queryBody = "[{\"value\": 0, \"param_name\": \"" + paramName + "\"}]";
         String mockResponse = "[{\"value\": 0, \"param_name\": \"" + paramName + "\", \"task_run_id\": \"" + taskRunId + "\"}]";
         String appEngineUriSection = "task-runs/" + taskRunId + "/input-provisions";
         configureFor("localhost", 8889);

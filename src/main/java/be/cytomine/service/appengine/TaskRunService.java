@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.Objects;
@@ -80,7 +81,7 @@ public class TaskRunService {
         securityACLService.checkIsNotReadOnly(project);
     }
 
-    public ResponseEntity<String> batchProvisionTaskRun(JsonObject json, Long projectId, UUID taskRunId) {
+    public ResponseEntity<String> batchProvisionTaskRun(ArrayList<JsonObject> json, Long projectId, UUID taskRunId) {
         checkTaskRun(projectId, taskRunId);
         return appEngineService.put("task-runs/" + taskRunId.toString() + "/input-provisions", json, MediaType.APPLICATION_JSON);
     }

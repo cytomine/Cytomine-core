@@ -48,10 +48,8 @@ public class AppEngineService {
             } else {
                 throw new NotImplementedException("sendWithBody not implemented with method than {POST, PUT}");
             }
-        } catch (HttpClientErrorException e) {
+        } catch (HttpClientErrorException | HttpServerErrorException.InternalServerError e) {
             return JsonResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
-        } catch (HttpServerErrorException.InternalServerError e) {
-            throw new MiddlewareException("App engine returned a 500 HTTP error.");
         }
     }
 
