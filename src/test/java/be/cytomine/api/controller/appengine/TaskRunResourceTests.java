@@ -23,6 +23,7 @@ import java.util.UUID;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -45,7 +46,7 @@ public class TaskRunResourceTests {
     @Autowired
     private MockMvc restTaskRunControllerMockMvc;
 
-    private static WireMockServer wireMockServer = new WireMockServer(8889);
+    private final static WireMockServer wireMockServer = new WireMockServer(8889);
 
     @BeforeAll
     public static void beforeAll() {
@@ -66,25 +67,26 @@ public class TaskRunResourceTests {
 
         String taskId = UUID.randomUUID().toString();
 
-        String mockResponse = "{\n" +
-                "  \"task\": {\n" +
-                "    \"name\": \"string\",\n" +
-                "    \"namespace\": \"string\",\n" +
-                "    \"version\": \"string\",\n" +
-                "    \"description\": \"string\",\n" +
-                "    \"authors\": [\n" +
-                "      {\n" +
-                "        \"first_name\": \"string\",\n" +
-                "        \"last_name\": \"string\",\n" +
-                "        \"organization\": \"string\",\n" +
-                "        \"email\": \"string\",\n" +
-                "        \"is_contact\": true\n" +
-                "      }\n" +
-                "    ]\n" +
-                "  },\n" +
-                "  \"id\": \"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\n" +
-                "  \"state\": \"created\"\n" +
-                "}";
+        String mockResponse = """
+                {
+                  "task": {
+                    "name": "string",
+                    "namespace": "string",
+                    "version": "string",
+                    "description": "string",
+                    "authors": [
+                      {
+                        "first_name": "string",
+                        "last_name": "string",
+                        "organization": "string",
+                        "email": "string",
+                        "is_contact": true
+                      }
+                    ]
+                  },
+                  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                  "state": "created"
+                }""";
 
         configureFor("localhost", 8889);
         stubFor(WireMock.post(urlEqualTo("/api/v1/tasks/" + taskId + "/runs"))
@@ -137,7 +139,7 @@ public class TaskRunResourceTests {
         UUID taskRunId = taskRun.getTaskRunId();
 
         String paramName = "my_param";
-        /**
+        /*
          * The queryBody should be an array but it appears that the mock mvc class does not support haveing
          * an array at the root of the json string. Because object is just forwarded to the App Engine
          * and we mock the response to be what it should be, I will just pass a single object here to avoid the
@@ -163,4 +165,81 @@ public class TaskRunResourceTests {
                 .andExpect(jsonPath("[0].param_name").exists())
                 .andExpect(jsonPath("[0].value").exists());
     }
+
+    @Test
+    @Transactional
+    public void get_task_run() throws Exception {
+        TaskRun taskRun = builder.given_a_not_persisted_task_run();
+        taskRunRepository.saveAndFlush(taskRun);
+        UUID taskRunId = taskRun.getTaskRunId();
+        String mockResponse = getTaskRunBody(taskRunId);
+        String appEngineUriSection = "task-runs/" + taskRunId;
+        configureFor("localhost", 8889);
+        stubFor(WireMock.get(urlEqualTo("/api/v1/" + appEngineUriSection))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+
+        restTaskRunControllerMockMvc.perform(get("/api/app-engine/project/" + taskRun.getProject().getId() + "/" + appEngineUriSection)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("id").value(taskRunId.toString()))
+                .andExpect(jsonPath("task").exists())
+                .andExpect(jsonPath("state").exists());
+    }
+
+    @Test
+    @Transactional
+    public void post_state_action() throws Exception {
+        TaskRun taskRun = builder.given_a_not_persisted_task_run();
+        taskRunRepository.saveAndFlush(taskRun);
+        UUID taskRunId = taskRun.getTaskRunId();
+        String queryBody = "{\"desired\": \"running\"}";
+        String mockResponse = getTaskRunBody(taskRunId);
+        String appEngineUriSection = "task-runs/" + taskRunId + "/state-actions";
+        configureFor("localhost", 8889);
+        stubFor(WireMock.post(urlEqualTo("/api/v1/" + appEngineUriSection))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+
+        restTaskRunControllerMockMvc.perform(post("/api/app-engine/project/" + taskRun.getProject().getId() + "/" + appEngineUriSection)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(queryBody))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("id").value(taskRunId.toString()))
+                .andExpect(jsonPath("task").exists())
+                .andExpect(jsonPath("state").exists());
+    }
+
+    protected String getTaskRunBody(UUID taskRunId) {
+        return "{\n" +
+            "  \"task\": {\n" +
+            "    \"name\": \"string\",\n" +
+            "    \"namespace\": \"string\",\n" +
+            "    \"version\": \"string\",\n" +
+            "    \"description\": \"string\",\n" +
+            "    \"authors\": [\n" +
+            "      {\n" +
+            "        \"first_name\": \"string\",\n" +
+            "        \"last_name\": \"string\",\n" +
+            "        \"organization\": \"string\",\n" +
+            "        \"email\": \"string\",\n" +
+            "        \"is_contact\": true\n" +
+            "      }\n" +
+            "    ]\n" +
+            "  },\n" +
+            "  \"id\": \"" + taskRunId.toString() + "\",\n" +
+            "  \"state\": \"CREATED\",\n" +
+            "  \"created_at\": \"2023-12-20T10:49:21.272Z\",\n" +
+            "  \"updated_at\": \"2023-12-20T10:49:21.272Z\",\n" +
+            "  \"last_state_transition_at\": \"2023-12-20T10:49:21.272Z\"\n" +
+            "}";
+    }
 }
+
+

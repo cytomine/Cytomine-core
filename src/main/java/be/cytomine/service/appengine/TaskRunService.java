@@ -90,4 +90,24 @@ public class TaskRunService {
         checkTaskRun(projectId, taskRunId);
         return appEngineService.put("task-runs/" + taskRunId.toString() + "/input-provisions/" + paramName, json, MediaType.APPLICATION_JSON);
     }
+
+    public ResponseEntity<?> getTask(long projectId, UUID taskRunId) {
+        checkTaskRun(projectId, taskRunId);
+        return appEngineService.get("task-runs/" + taskRunId.toString());
+    }
+
+    public ResponseEntity<?> postStateAction(JsonObject json, long projectId, UUID taskRunId) {
+        checkTaskRun(projectId, taskRunId);
+        return appEngineService.post("task-runs/" + taskRunId.toString() + "/state-actions", json, MediaType.APPLICATION_JSON);
+    }
+
+    public ResponseEntity<?> getOutputs(long projectId, UUID taskRunId) {
+        checkTaskRun(projectId, taskRunId);
+        return appEngineService.get("task-runs/" + taskRunId.toString() + "/outputs");
+    }
+
+    public ResponseEntity<?> getInputs(long projectId, UUID taskRunId) {
+        checkTaskRun(projectId, taskRunId);
+        return appEngineService.get("task-runs/" + taskRunId.toString() + "/outputs");
+    }
 }

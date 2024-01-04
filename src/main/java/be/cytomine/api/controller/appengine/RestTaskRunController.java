@@ -40,6 +40,14 @@ public class RestTaskRunController extends RestCytomineController {
         return taskRunService.addTaskRun(Long.parseLong(project), "tasks/" + namespace + "/" + version + "/runs");
     }
 
+    @GetMapping("/project/{project}/task-runs/{task}")
+    public ResponseEntity<?> get(
+            @PathVariable String project,
+            @PathVariable String task
+    ) {
+        return taskRunService.getTask(Long.parseLong(project), UUID.fromString(task));
+    }
+
     @PutMapping("/project/{project}/task-runs/{task}/input-provisions")
     public ResponseEntity<String> batchProvision(
             @RequestBody ArrayList<JsonObject> body,
@@ -57,5 +65,30 @@ public class RestTaskRunController extends RestCytomineController {
             @PathVariable("param_name") String paramName
     ) {
         return taskRunService.provisionTaskRun(json, Long.parseLong(project), UUID.fromString(task), paramName);
+    }
+
+    @PostMapping("/project/{project}/task-runs/{task}/state-actions")
+    public ResponseEntity<?> stateAction(
+            @RequestBody JsonObject json,
+            @PathVariable String project,
+            @PathVariable String task
+    ) {
+        return taskRunService.postStateAction(json, Long.parseLong(project), UUID.fromString(task));
+    }
+
+    @GetMapping("/project/{project}/task-runs/{task}/outputs")
+    public ResponseEntity<?> getOutputs(
+            @PathVariable String project,
+            @PathVariable String task
+    ) {
+        return taskRunService.getOutputs(Long.parseLong(project), UUID.fromString(task));
+    }
+
+    @GetMapping("/project/{project}/task-runs/{task}/inputs")
+    public ResponseEntity<?> getInputs(
+            @PathVariable String project,
+            @PathVariable String task
+    ) {
+        return taskRunService.getInputs(Long.parseLong(project), UUID.fromString(task));
     }
 }
