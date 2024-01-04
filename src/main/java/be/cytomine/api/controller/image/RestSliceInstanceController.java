@@ -22,6 +22,7 @@ import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.dto.ImageParameter;
+import be.cytomine.service.dto.TileParameters;
 import be.cytomine.service.dto.WindowParameter;
 import be.cytomine.service.image.*;
 import be.cytomine.service.middleware.ImageServerService;
@@ -111,6 +112,51 @@ public class RestSliceInstanceController extends RestCytomineController {
     public ResponseEntity<String> delete(@PathVariable String id) {
         log.debug("REST request to delete sliceinstance : " + id);
         return delete(sliceInstanceService, JsonObject.of("id", id), null);
+    }
+
+    @GetMapping("/sliceinstance/{id}/normalized-tile/zoom/{z}/tx/{tx}/ty/{ty}.{format}")
+    public void tile(
+            @PathVariable Long id,
+            @PathVariable Long z,
+            @PathVariable Long tx,
+            @PathVariable Long ty,
+
+            @PathVariable String format,
+            @RequestParam(required = false) String channels,
+            @RequestParam(required = false) String zSlices,
+            @RequestParam(required = false) String timepoints,
+            @RequestParam(required = false) String filters,
+            @RequestParam(required = false) String minIntensities,
+            @RequestParam(required = false) String maxIntensities,
+            @RequestParam(required = false) String gammas,
+            @RequestParam(required = false) String colormaps
+
+    ) throws IOException {
+        /* Request parameter validation is delegated to PIMS to avoid double validation. Moreover, these parameter
+        validation is complex as they can accept multiple types: e.g. 'gammas' accept a Double or List<Double> whose
+        length is defined by the number of selected channels in 'channels' parameter.
+         */
+//        log.debug("REST request get sliceinstance {} normalized tile, zoom: {} / tx: {} / ty: {}", id, z, tx, ty);
+
+        SliceInstance sliceInstance = sliceInstanceService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", id));
+
+        TileParameters tileParameters = new TileParameters();
+        tileParameters.setFormat(format);
+        tileParameters.setZoom(z);
+        tileParameters.setTx(tx);
+        tileParameters.setTy(ty);
+        tileParameters.setChannels(channels);
+        tileParameters.setZSlices(zSlices);
+        tileParameters.setTimepoints(timepoints);
+        tileParameters.setFilters(filters);
+        tileParameters.setMinIntensities(minIntensities);
+        tileParameters.setMaxIntensities(maxIntensities);
+        tileParameters.setGammas(gammas);
+        tileParameters.setColormaps(colormaps);
+
+        String etag = getRequestETag();
+        responseImage(imageServerService.normalizedTile(sliceInstance, tileParameters, etag));
     }
 
 //

@@ -327,10 +327,41 @@ public class ImageServerService {
         return makeRequest("GET", server, uri, parameters, format, headers);
     }
 
-//    public PimsResponse thumb(String server, String path, ImageParameter params, String etag) {
-//
-//    }
+    public PimsResponse normalizedTile(ImageInstance image, TileParameters params, String etag)  {
+        return normalizedTile(imageInstanceService.getReferenceSlice(image), params, etag);
+    }
 
+    public PimsResponse normalizedTile(SliceInstance slice, TileParameters params, String etag)  {
+        return normalizedTile(slice.getBaseSlice(), params, etag);
+    }
+
+    public PimsResponse normalizedTile(AbstractSlice slice, TileParameters params, String etag) {
+        String server = this.internalImageServerURL;
+        String uri = this.buildEncodedUri("image", slice, "/normalized-tile/zoom/" + params.getZoom() + "/tx/" + params.getTx() + "/ty/" + params.getTy());
+        String format = checkFormat(params.getFormat(), List.of("jpg", "png", "webp"));
+
+        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+
+//        if (slice.getImage().getChannels()!=null && slice.getImage().getChannels() > 1) {
+//            parameters.put("channels", slice.getChannel());
+//            // Ensure that if the slice is RGB, the 3 intrinsic channels are used
+//        }
+        parameters.put("channels", params.getChannels() != null ? params.getChannels() : slice.getChannel());
+        parameters.put("z_slices", params.getZSlices() != null ? params.getZSlices() : slice.getZStack());
+        parameters.put("timepoints", params.getTimepoints() != null ? params.getTimepoints() : slice.getTime());
+
+        parameters.put("gammas", params.getGammas());
+        parameters.put("colormaps", params.getColormaps());
+        parameters.put("min_intensities", params.getMinIntensities());
+        parameters.put("max_intensities", params.getMaxIntensities());
+        parameters.put("filters", params.getFilters());
+
+        Map<String, Object> headers = new LinkedHashMap<>();
+        if (etag!=null) {
+            headers.put("If-None-Match", etag);
+        }
+        return makeRequest("GET", server, uri, parameters, format, headers);
+    }
 
 
     public PimsResponse crop(AnnotationDomain annotation, CropParameter params, String etag) throws UnsupportedEncodingException, ParseException {
