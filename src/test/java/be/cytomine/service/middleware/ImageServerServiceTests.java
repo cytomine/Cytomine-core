@@ -361,6 +361,53 @@ public class ImageServerServiceTests {
         assertThat(data).isEqualTo(mockResponse2);
     }
 
+    @Test
+    void get_normalized_tile_for_abstract_image() throws IOException {
+        AbstractImage image = builder.given_an_abstract_image();
+        image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        image.getUploadedFile().setContentType("MRXS");
+
+        AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
+        slice.setUploadedFile(image.getUploadedFile());
+
+        configureFor("localhost", 8888);
+
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+
+
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?channels=0&z_slices=0&timepoints=0&filters=binary"))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+        TileParameters tileParameters = new TileParameters();
+        tileParameters.setZoom(2L);
+        tileParameters.setTx(4L);
+        tileParameters.setTy(6L);
+        tileParameters.setFormat("webp");
+        tileParameters.setFilters("binary");
+
+        byte[] data = imageServerService.normalizedTile(slice, tileParameters, null).getContent();
+        printLastRequest();
+        assertThat(data).isEqualTo(mockResponse);
+
+
+        byte[] mockResponse2 = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?channels=0&z_slices=0&timepoints=3&filters=otsu"))
+                .willReturn(
+                        aResponse().withBody(mockResponse2)
+                )
+        );
+
+        tileParameters.setFormat("webp");
+        tileParameters.setFilters("otsu");
+        tileParameters.setTimepoints("3");
+        data = imageServerService.normalizedTile(slice, tileParameters, null).getContent();
+        printLastRequest();
+        assertThat(data).isEqualTo(mockResponse2);
+    }
+
 
     @Test
     void get_crop_for_abstract_image() throws IOException, ParseException {

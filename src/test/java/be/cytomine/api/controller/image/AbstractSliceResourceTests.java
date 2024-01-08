@@ -265,6 +265,35 @@ public class AbstractSliceResourceTests {
 
     @Test
     @Transactional
+    public void get_abstract_slice_tile() throws Exception {
+        AbstractSlice image = given_test_abstract_slice();
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?channels=0&z_slices=0&timepoints=0&filters=binary"))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+
+        MvcResult mvcResult = restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/normalized-tile/zoom/{z}/tx/{tx}/ty/{ty}.jpg?filters=binary", image.getId(), 2, 4, 6))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+        List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
+        assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
+    }
+
+    @Test
+    @Transactional
+    public void get_abstract_slice_tile_if_image_not_exist() throws Exception {
+        restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/normalized-tile/zoom/{z}/tx/{tx}/ty/{ty}.jpg?filters=binary", 0, 2, 4, 6))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errors").exists());
+    }
+
+    @Test
+    @Transactional
     public void get_abstract_slice_crop() throws Exception {
         AbstractSlice image = given_test_abstract_slice();
 
