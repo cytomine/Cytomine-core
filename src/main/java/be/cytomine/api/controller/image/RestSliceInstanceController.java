@@ -31,6 +31,7 @@ import be.cytomine.utils.JsonObject;
 import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -115,7 +116,7 @@ public class RestSliceInstanceController extends RestCytomineController {
     }
 
     @GetMapping("/sliceinstance/{id}/normalized-tile/zoom/{z}/tx/{tx}/ty/{ty}.{format}")
-    public void tile(
+    public ResponseEntity<byte[]> tile(
             @PathVariable Long id,
             @PathVariable Long z,
             @PathVariable Long tx,
@@ -129,8 +130,9 @@ public class RestSliceInstanceController extends RestCytomineController {
             @RequestParam(required = false) String minIntensities,
             @RequestParam(required = false) String maxIntensities,
             @RequestParam(required = false) String gammas,
-            @RequestParam(required = false) String colormaps
+            @RequestParam(required = false) String colormaps,
 
+            ProxyExchange<byte[]> proxy
     ) throws IOException {
         /* Request parameter validation is delegated to PIMS to avoid double validation. Moreover, these parameter
         validation is complex as they can accept multiple types: e.g. 'gammas' accept a Double or List<Double> whose
@@ -156,7 +158,7 @@ public class RestSliceInstanceController extends RestCytomineController {
         tileParameters.setColormaps(colormaps);
 
         String etag = getRequestETag();
-        responseImage(imageServerService.normalizedTile(sliceInstance, tileParameters, etag));
+        return imageServerService.normalizedTile(sliceInstance, tileParameters, etag, proxy);
     }
 
 //

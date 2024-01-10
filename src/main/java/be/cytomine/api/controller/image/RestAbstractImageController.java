@@ -34,6 +34,7 @@ import be.cytomine.utils.JsonObject;
 import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -354,11 +355,11 @@ public class RestAbstractImageController extends RestCytomineController {
     }
 
     @GetMapping("/abstractimage/{id}/download")
-    public void download(@PathVariable Long id) throws IOException {
+    public ResponseEntity<byte[]> download(@PathVariable Long id, ProxyExchange<byte[]> proxy) throws IOException {
         log.debug("REST request to download image instance");
         AbstractImage abstractImage = abstractImageService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
         // TODO: in abstract image, there is no check fos download auth!?
-        responseImage(imageServerService.download(abstractImage));
+        return imageServerService.download(abstractImage, proxy);
     }
 }

@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
 
 import java.io.IOException;
 import java.util.Map;
@@ -425,7 +426,7 @@ public class RestImageInstanceController extends RestCytomineController {
     }
 
     @GetMapping("/imageinstance/{id}/download")
-    public void download(@PathVariable Long id) throws IOException {
+    public ResponseEntity<byte[]> download(@PathVariable Long id, ProxyExchange<byte[]> proxy) throws IOException {
         log.debug("REST request to download image instance");
         ImageInstance imageinstance = imageInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
@@ -435,7 +436,7 @@ public class RestImageInstanceController extends RestCytomineController {
             // TODO: in abstract image, there is no check for that ?!?
             securityACLService.checkIsAdminContainer(imageinstance.getProject());
         }
-        responseImage(imageServerService.download(imageinstance.getBaseImage()));
+        return imageServerService.download(imageinstance.getBaseImage(), proxy);
     }
 
     @GetMapping("/imageinstance/{id}/sliceinstance/reference.json")

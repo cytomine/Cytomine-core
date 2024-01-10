@@ -168,7 +168,7 @@ public class ImageServerServiceTests {
                 )
         );
 
-        byte[] data = imageServerService.download(image).getContent();
+        byte[] data = imageServerService.download(image, null).getBody();
         printLastRequest();
         assertThat(data).isEqualTo(mockResponse);
 
@@ -180,7 +180,7 @@ public class ImageServerServiceTests {
                         aResponse().withBody(mockResponse)
                 )
         );
-        data = imageServerService.download(image.getUploadedFile()).getContent();
+        data = imageServerService.download(image.getUploadedFile(), null).getBody();
         printLastRequest();
         assertThat(data).isEqualTo(mockResponse);
     }
@@ -203,7 +203,7 @@ public class ImageServerServiceTests {
                 )
         );
 
-        byte[] data = imageServerService.download(uploadedFile).getContent();
+        byte[] data = imageServerService.download(uploadedFile, null).getBody();
         printLastRequest();
         assertThat(data).isEqualTo(mockResponse);
     }
@@ -387,7 +387,7 @@ public class ImageServerServiceTests {
         tileParameters.setFormat("webp");
         tileParameters.setFilters("binary");
 
-        byte[] data = imageServerService.normalizedTile(slice, tileParameters, null).getContent();
+        byte[] data = imageServerService.normalizedTile(slice, tileParameters, null, null).getBody();
         printLastRequest();
         assertThat(data).isEqualTo(mockResponse);
 
@@ -403,7 +403,7 @@ public class ImageServerServiceTests {
         tileParameters.setFormat("webp");
         tileParameters.setFilters("otsu");
         tileParameters.setTimepoints("3");
-        data = imageServerService.normalizedTile(slice, tileParameters, null).getContent();
+        data = imageServerService.normalizedTile(slice, tileParameters, null, null).getBody();
         printLastRequest();
         assertThat(data).isEqualTo(mockResponse2);
     }

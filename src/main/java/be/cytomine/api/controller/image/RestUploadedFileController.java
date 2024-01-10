@@ -28,6 +28,7 @@ import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
@@ -102,10 +103,10 @@ public class RestUploadedFileController extends RestCytomineController {
 
 
     @GetMapping("/uploadedfile/{id}/download")
-    public void download(@PathVariable Long id) throws IOException {
+    public ResponseEntity<byte[]> download(@PathVariable Long id, ProxyExchange<byte[]> proxy) throws IOException {
         log.debug("REST request to download uploadedFile");
         UploadedFile uploadedFile = uploadedFileService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("UploadedFile", id));
-        responseImage(imageServerService.download(uploadedFile));
+        return imageServerService.download(uploadedFile, proxy);
     }
 }

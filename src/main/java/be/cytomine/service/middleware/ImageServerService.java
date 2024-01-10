@@ -32,6 +32,10 @@ import com.vividsolutions.jts.io.WKTReader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -129,40 +133,39 @@ public class ImageServerService {
         return this.internalImageServerURL + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
     }
 
-    public String buildImageServerFullUrl(AbstractSlice abstractSlice, String targetResource, String pathSuffix) {
-        return this.internalImageServerURL + this.buildEncodedUri(targetResource, abstractSlice, pathSuffix);
-    }
-
-    public String buildImageServerInternalFullUrl(UploadedFile uploadedFile, String targetResource, String pathSuffix) {
-        return this.internalImageServerURL + this.buildEncodedUri(targetResource, uploadedFile, pathSuffix);
-    }
 
     public String buildImageServerInternalFullUrl(AbstractImage abstractImage, String targetResource, String pathSuffix) {
         return this.internalImageServerURL + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
     }
-    
-    public String buildImageServerInternalFullUrl(AbstractSlice abstractSlice, String targetResource, String pathSuffix) {
-        return this.internalImageServerURL + this.buildEncodedUri(targetResource, abstractSlice, pathSuffix);
+
+    public ResponseEntity<byte[]> download(UploadedFile uploadedFile, ProxyExchange<byte[]> proxy) throws IOException {
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL);
+        request.addPathFragment("file");
+        request.addPathFragment(uploadedFile.getPath(), true);
+        request.addPathFragment("export");
+        request.addQueryParameter("filename", uploadedFile.getOriginalFilename());
+        request.getHeaders().add(org.springframework.http.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+        return request.toResponseEntity(proxy, byte[].class);
     }
 
-    public PimsResponse download(UploadedFile uploadedFile) throws IOException {
-        String server = this.internalImageServerURL;
-        String uri = this.buildEncodedUri("file", uploadedFile, "/export");
-        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-        parameters.put("filename", uploadedFile.getOriginalFilename());
-        return makeRequest("GET", server, uri, parameters, "json", Map.of());
+    public ResponseEntity<byte[]> download(AbstractImage abstractImage, ProxyExchange<byte[]> proxy) throws IOException {
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL);
+        request.addPathFragment("image");
+        request.addPathFragment(abstractImage.getPath(), true);
+        request.addPathFragment("export");
+        request.addQueryParameter("filename", abstractImage.getOriginalFilename());
+        request.getHeaders().add(org.springframework.http.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+
+        return request.toResponseEntity(proxy, byte[].class);
     }
 
-    public PimsResponse download(AbstractImage abstractImage) throws IOException {
-        String server = this.internalImageServerURL;
-        String uri = this.buildEncodedUri("image", abstractImage, "/export");
-        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
-        parameters.put("filename", abstractImage.getOriginalFilename());
-        return makeRequest("GET", server, uri, parameters, "json", Map.of());
-    }
-
-    public PimsResponse download(CompanionFile companionFile) throws IOException {
-        return download(companionFile.getUploadedFile());
+    public ResponseEntity<byte[]> download(CompanionFile companionFile, ProxyExchange<byte[]> proxy) throws IOException {
+        return download(companionFile.getUploadedFile(), proxy);
     }
 
     public Map<String, Object> properties(AbstractImage image) throws IOException {
@@ -327,40 +330,42 @@ public class ImageServerService {
         return makeRequest("GET", server, uri, parameters, format, headers);
     }
 
-    public PimsResponse normalizedTile(ImageInstance image, TileParameters params, String etag)  {
-        return normalizedTile(imageInstanceService.getReferenceSlice(image), params, etag);
+    public ResponseEntity<byte[]> normalizedTile(SliceInstance slice, TileParameters params, String etag, ProxyExchange<byte[]> proxy)  {
+        return normalizedTile(slice.getBaseSlice(), params, etag, proxy);
     }
 
-    public PimsResponse normalizedTile(SliceInstance slice, TileParameters params, String etag)  {
-        return normalizedTile(slice.getBaseSlice(), params, etag);
-    }
+    public ResponseEntity<byte[]> normalizedTile(AbstractSlice slice, TileParameters params, String etag, ProxyExchange<byte[]> proxy) {
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL);
 
-    public PimsResponse normalizedTile(AbstractSlice slice, TileParameters params, String etag) {
-        String server = this.internalImageServerURL;
-        String uri = this.buildEncodedUri("image", slice, "/normalized-tile/zoom/" + params.getZoom() + "/tx/" + params.getTx() + "/ty/" + params.getTy());
-        String format = checkFormat(params.getFormat(), List.of("jpg", "png", "webp"));
+        request.addPathFragment("image");
+        request.addPathFragment(slice.getPath(), true);
+        request.addPathFragment("normalized-tile");
+        request.addPathFragment("zoom");
+        request.addPathFragment(params.getZoom().toString());
+        request.addPathFragment("tx");
+        request.addPathFragment(params.getTx().toString());
+        request.addPathFragment("ty");
+        request.addPathFragment(params.getTy().toString());
 
-        LinkedHashMap<String, Object> parameters = new LinkedHashMap<>();
+        request.addQueryParameter("channels", params.getChannels() != null ? params.getChannels() : slice.getChannel());
+        request.addQueryParameter("z_slices", params.getZSlices() != null ? params.getZSlices() : slice.getZStack());
+        request.addQueryParameter("timepoints", params.getTimepoints() != null ? params.getTimepoints() : slice.getTime());
 
-//        if (slice.getImage().getChannels()!=null && slice.getImage().getChannels() > 1) {
-//            parameters.put("channels", slice.getChannel());
-//            // Ensure that if the slice is RGB, the 3 intrinsic channels are used
-//        }
-        parameters.put("channels", params.getChannels() != null ? params.getChannels() : slice.getChannel());
-        parameters.put("z_slices", params.getZSlices() != null ? params.getZSlices() : slice.getZStack());
-        parameters.put("timepoints", params.getTimepoints() != null ? params.getTimepoints() : slice.getTime());
+        request.addQueryParameter("gammas", params.getGammas());
+        request.addQueryParameter("colormaps", params.getColormaps());
+        request.addQueryParameter("min_intensities", params.getMinIntensities());
+        request.addQueryParameter("max_intensities", params.getMaxIntensities());
+        request.addQueryParameter("filters", params.getFilters());
 
-        parameters.put("gammas", params.getGammas());
-        parameters.put("colormaps", params.getColormaps());
-        parameters.put("min_intensities", params.getMinIntensities());
-        parameters.put("max_intensities", params.getMaxIntensities());
-        parameters.put("filters", params.getFilters());
-
-        Map<String, Object> headers = new LinkedHashMap<>();
-        if (etag!=null) {
-            headers.put("If-None-Match", etag);
+        request.getHeaders().add(org.springframework.http.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        request.getHeaders().add(org.springframework.http.HttpHeaders.ACCEPT, formatToMediaType(params.getFormat()));
+        if (etag != null) {
+            request.getHeaders().add(org.springframework.http.HttpHeaders.IF_NONE_MATCH, etag);
         }
-        return makeRequest("GET", server, uri, parameters, format, headers);
+
+        return request.toResponseEntity(proxy, byte[].class);
     }
 
 
@@ -726,7 +731,7 @@ public class ImageServerService {
         String parameterUrl = "";
         String fullUrl = "";
 
-        String responseContentType = formatToContentType(format);
+        String responseContentType = formatToMediaType(format);
 
         try {
             parameterUrl = makeParameterUrl(parameters);
@@ -823,12 +828,12 @@ public class ImageServerService {
         return processed;
     }
 
-    private static String formatToContentType(String format) {
+    private static String formatToMediaType(String format) {
         return switch (format) {
-            case "png"->"image/png";
-            case "webp"->"image/webp";
-            case "jpg"->"image/jpeg";
-            default -> "application/json";
+            case "png" -> MediaType.IMAGE_PNG_VALUE;
+            case "webp" -> "image/webp";
+            case "jpg" -> MediaType.IMAGE_JPEG_VALUE;
+            default -> MediaType.APPLICATION_JSON_VALUE;
         };
     }
 
