@@ -189,7 +189,7 @@ public class RestAbstractSliceController extends RestCytomineController {
     //
 //    // TODO:MIGRATION GET params vs POST params!
     @RequestMapping(value = "/abstractslice/{id}/thumb.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void thumb(
+    public ResponseEntity<byte[]>thumb(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(required = false) Boolean refresh,
@@ -198,8 +198,9 @@ public class RestAbstractSliceController extends RestCytomineController {
             @RequestParam(required = false) Boolean inverse,
             @RequestParam(required = false) Double contrast,
             @RequestParam(required = false) Double gamma,
-            @RequestParam(required = false) String bits
+            @RequestParam(required = false) String bits,
 
+            ProxyExchange<byte[]> proxy
     ) throws IOException {
         log.debug("REST request get abstractslice {} thumb {}", id, format);
         ImageParameter thumbParameter = new ImageParameter();
@@ -216,11 +217,11 @@ public class RestAbstractSliceController extends RestCytomineController {
         AbstractSlice abstractSlice = abstractSliceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", id));
         String etag = getRequestETag();
-        responseImage(imageServerService.thumb(abstractSlice, thumbParameter, etag));
+        return imageServerService.thumb(abstractSlice, thumbParameter, etag, proxy);
     }
 
     @RequestMapping(value = "/abstractslice/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void crop(
+    public ResponseEntity<byte[]> crop(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(defaultValue = "256") Integer maxSize,
@@ -247,7 +248,9 @@ public class RestAbstractSliceController extends RestCytomineController {
             @RequestParam(required = false) Integer alpha,
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
-            @RequestParam(required = false) Integer jpegQuality
+            @RequestParam(required = false) Integer jpegQuality,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract slice");
         AbstractSlice abstractSlice = abstractSliceService.find(id)
@@ -281,7 +284,7 @@ public class RestAbstractSliceController extends RestCytomineController {
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
         String etag = getRequestETag();
-        responseImage(imageServerService.crop(abstractSlice, cropParameter, etag));
+        return imageServerService.crop(abstractSlice, cropParameter, etag, proxy);
     }
 
     @RequestMapping(value = "/abstractslice/{id}/window-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})

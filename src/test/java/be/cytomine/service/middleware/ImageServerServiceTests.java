@@ -313,7 +313,7 @@ public class ImageServerServiceTests {
         labelParameter.setMaxSize(512);
         labelParameter.setLabel("macro");
         labelParameter.setFormat("png");
-        byte[] data = imageServerService.label(image, labelParameter, null).getContent();
+        byte[] data = imageServerService.label(image, labelParameter, null, null).getBody();
         printLastRequest();
         assertThat(data).isEqualTo(mockResponse);
     }
@@ -341,7 +341,7 @@ public class ImageServerServiceTests {
         imageParameter.setMaxSize(256);
         imageParameter.setFormat("png");
 
-        byte[] data = imageServerService.thumb(slice, imageParameter, null).getContent();
+        byte[] data = imageServerService.thumb(slice, imageParameter, null, null).getBody();
         printLastRequest();
         assertThat(data).isEqualTo(mockResponse);
 
@@ -356,7 +356,7 @@ public class ImageServerServiceTests {
 
         imageParameter.setMaxSize(512);
         imageParameter.setFormat("png");
-        data = imageServerService.thumb(slice, imageParameter, null).getContent();
+        data = imageServerService.thumb(slice, imageParameter, null, null).getBody();
         printLastRequest();
         assertThat(data).isEqualTo(mockResponse2);
     }
@@ -446,7 +446,7 @@ public class ImageServerServiceTests {
 
         byte[] crop = null;
         try {
-            crop = imageServerService.crop(slice, cropParameter, null).getContent();
+            crop = imageServerService.crop(slice, cropParameter, null, null).getBody();
         } catch (Exception exception) {
             exception.printStackTrace();
         }

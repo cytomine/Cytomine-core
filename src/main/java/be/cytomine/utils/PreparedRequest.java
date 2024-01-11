@@ -37,6 +37,8 @@ public class PreparedRequest {
 
     private HttpMethod method;
 
+    private Object body;
+
     public PreparedRequest() {
         queryParameters = new LinkedHashMap<>();
         headers = new HttpHeaders();
@@ -95,11 +97,24 @@ public class PreparedRequest {
         }
     }
 
+    public void setJsonBody(JsonObject body) {
+        this.body = JsonObject.toJsonString(
+                body.entrySet()
+                .stream()
+                .filter(e -> e.getValue() != null && !e.getValue().toString().isEmpty())
+                .collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue()))
+        );
+    }
+
     public <T> ResponseEntity<T> toResponseEntity(ProxyExchange<T> proxy, Class<T> returnType) {
         if (proxy == null) {
             switch (method) {
                 case GET -> {
                     HttpEntity<?> request = new HttpEntity<>(this.headers);
+                    return new RestTemplate().exchange(this.getURI(), this.method, request, returnType);
+                }
+                case POST -> {
+                    HttpEntity<?> request = new HttpEntity<>(this.body, this.headers);
                     return new RestTemplate().exchange(this.getURI(), this.method, request, returnType);
                 }
             }
@@ -110,6 +125,12 @@ public class PreparedRequest {
                     return proxy.headers(this.headers)
                             .uri(this.getURI())
                             .get();
+                }
+                case POST -> {
+                    return proxy.headers(this.headers)
+                            .uri(this.getURI())
+                            .body(this.body)
+                            .post();
                 }
             }
         }
