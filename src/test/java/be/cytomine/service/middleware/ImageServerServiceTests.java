@@ -488,7 +488,7 @@ public class ImageServerServiceTests {
         windowParameter.setW(30);
         windowParameter.setH(40);
         windowParameter.setFormat("png");
-        byte[] crop = imageServerService.window(slice, windowParameter, null).getContent();
+        byte[] crop = imageServerService.window(slice, windowParameter, null, null).getBody();
         printLastRequest();
         assertThat(crop).isEqualTo(mockResponse);
     }

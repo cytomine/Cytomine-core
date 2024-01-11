@@ -288,14 +288,16 @@ public class RestAbstractSliceController extends RestCytomineController {
     }
 
     @RequestMapping(value = "/abstractslice/{id}/window-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void window(
+    public ResponseEntity<byte[]> window(
             @PathVariable Long id,
             @PathVariable String format,
             @PathVariable Integer x,
             @PathVariable Integer y,
             @PathVariable Integer w,
             @PathVariable Integer h,
-            @RequestParam(defaultValue = "false", required = false) Boolean withExterior
+            @RequestParam(defaultValue = "false", required = false) Boolean withExterior,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request get abstractslice {} window {}", id, format);
         WindowParameter windowParameter = new WindowParameter();
@@ -308,17 +310,19 @@ public class RestAbstractSliceController extends RestCytomineController {
         AbstractSlice abstractSlice = abstractSliceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", id));
         String etag = getRequestETag();
-        responseImage(imageServerService.window(abstractSlice, windowParameter, etag));
+        return  imageServerService.window(abstractSlice, windowParameter, etag, proxy);
     }
 
     @RequestMapping(value = "/abstractslice/{id}/camera-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void camera(
+    public ResponseEntity<byte[]> camera(
             @PathVariable Long id,
             @PathVariable String format,
             @PathVariable Integer x,
             @PathVariable Integer y,
             @PathVariable Integer w,
-            @PathVariable Integer h
+            @PathVariable Integer h,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request get abstractslice {} camera {}", id, format);
         WindowParameter windowParameter = new WindowParameter();
@@ -331,7 +335,7 @@ public class RestAbstractSliceController extends RestCytomineController {
         AbstractSlice abstractSlice = abstractSliceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", id));
         String etag = getRequestETag();
-        responseImage(imageServerService.window(abstractSlice, windowParameter, etag));
+        return imageServerService.window(abstractSlice, windowParameter, etag, proxy);
     }
 
 }

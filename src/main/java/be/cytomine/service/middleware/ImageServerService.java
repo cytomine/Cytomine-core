@@ -509,86 +509,69 @@ public class ImageServerService {
     }
 
 
-    public PimsResponse window(AbstractSlice slice, WindowParameter windowParameter, String etag) throws UnsupportedEncodingException, ParseException {
-        String server = this.internalImageServerURL;
-        String uri = this.buildEncodedUri("image", slice, "/window");
+    public ResponseEntity<byte[]> window(AbstractSlice slice, WindowParameter params, String etag, ProxyExchange<byte[]> proxy) throws UnsupportedEncodingException, ParseException {
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.POST);
+        request.setUrl(this.internalImageServerURL);
+        request.addPathFragment("image");
+        request.addPathFragment(slice.getPath(), true);
+        request.addPathFragment("window");
 
-        LinkedHashMap<String, Object> parameters = windowParameters(windowParameter);
-
-        if (slice.getImage().getChannels()!=null && slice.getImage().getChannels() > 1) {
-            parameters.put("channels", slice.getChannel());
-            // Ensure that if the slice is RGB, the 3 intrinsic channels are used
-        }
-        parameters.put("z_slices", slice.getZStack());
-        parameters.put("timepoints", slice.getTime());
-
-        String format;
-
-        if (checkType(windowParameter).equals("alphamask")) {
-            format = checkFormat(windowParameter.getFormat(), List.of("png", "webp"));
-        } else {
-            format = checkFormat(windowParameter.getFormat(), List.of("png", "jpg", "webp"));
-        }
-
-        LinkedHashMap<String, Object> headers = new LinkedHashMap<>(Map.of("X-Annotation-Origin", "LEFT_BOTTOM"));
-        if (windowParameter.getSafe()!=null && windowParameter.getSafe()) {
-            headers.put("X-Image-Size-Safety", "SAFE_RESIZE");
-        }
-        if (etag!=null) {
-            headers.put("If-None-Match", etag);
-        }
-
-        return makeRequest("POST", server, uri, parameters, format, headers);
-    }
-
-    public LinkedHashMap<String,Object> windowParameters(WindowParameter windowParameter) throws ParseException {
-
-
-        LinkedHashMap<String, Object> pimsParameter = new LinkedHashMap<>();
+        JsonObject body = new JsonObject();
 
         LinkedHashMap<String, Object> region = new LinkedHashMap<>();
-        region.put("left", windowParameter.getX());
-        region.put("top", windowParameter.getY());
-        region.put("width", windowParameter.getW());
-        region.put("height", windowParameter.getH());
+        region.put("left", params.getX());
+        region.put("top", params.getY());
+        region.put("width", params.getW());
+        region.put("height", params.getH());
+        body.put("region", region);
 
-        pimsParameter.put("region", region);
-        pimsParameter.put("length", windowParameter.getMaxSize());
-        pimsParameter.put("gammas", windowParameter.getGamma());
-
-        if (windowParameter.getColormap()!=null) {
-            pimsParameter.put("colormaps", Arrays.stream(windowParameter.getColormap().split(",")).toList());
+        // CZT
+        if (slice.getImage().getChannels()!=null && slice.getImage().getChannels() > 1) {
+            body.put("channels", slice.getChannel());
+            // Ensure that if the slice is RGB, the 3 intrinsic channels are used
         }
+        body.put("z_slices", slice.getZStack());
+        body.put("timepoints", slice.getTime());
 
-        if (windowParameter.getMaxSize()==null) {
-            pimsParameter.put("level", windowParameter.getZoom()!=null ? windowParameter.getZoom() : 0);
+        // Image processing
+        body.put("length", params.getMaxSize());
+        body.put("gammas", params.getGamma());
+        if (params.getColormap() != null) {
+            body.put("colormaps", Arrays.stream(params.getColormap().split(",")).toList());
         }
-
-        if (windowParameter.getBits()!=null) {
-            pimsParameter.put("bits", windowParameter.getMaxBits() ? "AUTO" : windowParameter.getBits());
+        if (params.getBits() != null) {
+            body.put("bits", params.getMaxBits() ? "AUTO" : params.getBits());
         }
-
-
-        if (windowParameter.getInverse()!=null && windowParameter.getInverse()) {
-            if (pimsParameter.containsKey("colormaps")) {
-                pimsParameter.put("colormaps", ((List<String>)pimsParameter.get("colormaps")).stream().map(x -> invertColormap(x)).toList());
+        if (params.getInverse() != null && params.getInverse()) {
+            if (params.getColormap() != null) {
+                body.put("colormaps", Arrays.stream(params.getColormap().split(","))
+                        .map(ImageServerService::invertColormap)
+                        .toList()
+                );
             }
             else {
-                pimsParameter.put("colormaps", "!DEFAULT");
+                body.put("colormaps", "!DEFAULT");
             }
         }
+        if (params.getMaxSize() == null) {
+            body.put("level", params.getZoom() != null ? params.getZoom() : 0);
+        }
+        if (params.getBits() != null) {
+            body.put("bits", params.getMaxBits() ? "AUTO" : params.getBits());
+        }
 
-        if (windowParameter.getGeometries()!=null) {
-            String strokeColor = windowParameter.getColor()!=null? windowParameter.getColor().replace("0x", "#") : "black";
-            Integer strokeWidth = windowParameter.getThickness()!=null? windowParameter.getThickness() : 1; // TODO: check scale
-            String annotationType = checkType(windowParameter);
+        if (params.getGeometries() != null) {
+            String strokeColor = params.getColor() != null ? params.getColor().replace("0x", "#") : "black";
+            Integer strokeWidth = params.getThickness() != null ? params.getThickness() : 1; // TODO: check scale
+            String annotationType = checkType(params);
 
 
-            List<Map<String, Object>> annotations = (List<Map<String, Object>>) pimsParameter.get("annotations");
-            List<Map<String, Object>> annotationsResults = new ArrayList<>();
-            for (Map<String, Object> geometry : annotations) {
+            List<Map<String, Object>> geometries =  params.getGeometries();
+            List<Map<String, Object>> annotations = new ArrayList<>();
+            for (Map<String, Object> geometry : geometries) {
                 String wkt = null;
-                if (windowParameter.getComplete()!=null && windowParameter.getComplete() && geometry!=null) {
+                if (params.getComplete()!=null && params.getComplete() && geometry!=null) {
                     wkt = simplifyGeometryService.reduceGeometryPrecision((Geometry)geometry).toText();
                 } else if (geometry!=null) {
                     wkt = simplifyGeometryService.simplifyPolygonForCrop((Geometry)geometry).toText();
@@ -601,30 +584,62 @@ public class ImageServerService {
                 } else if (annotationType.equals("mask")) {
                     annot.put("fill_color", "#fff");
                 }
-                annotationsResults.add(annot);
+                annotations.add(annot);
             }
 
             Map<String, Object> annotationStyle = new HashMap<>();
             switch (annotationType) {
-                case "draw":
-                    annotationStyle.put("mode","DRAWING");
-                    break;
-                case "mask":
-                    annotationStyle.put("mode","MASK");
-                    break;
-                case "alphaMask":
-                case "alphamask":
-                    annotationStyle.put("mode","CROP");
-                    annotationStyle.put("background_transparency", windowParameter.getAlpha() != null ? windowParameter.getAlpha() : 100);
-                    break;
-                default:
-                    annotationStyle.put("mode","CROP");
+                case "draw" -> annotationStyle.put("mode", "DRAWING");
+                case "mask" -> annotationStyle.put("mode", "MASK");
+                case "alphaMask", "alphamask" -> {
+                    annotationStyle.put("mode", "CROP");
+                    annotationStyle.put("background_transparency", params.getAlpha() != null ? params.getAlpha() : 100);
+                }
+                default -> {
+                    annotationStyle.put("mode", "CROP");
                     annotationStyle.put("background_transparency", 0);
+                }
             }
-            pimsParameter.put("annotation_style", annotationStyle);
-
+            body.put("annotation_style", annotationStyle);
+            body.put("annotations", annotations);
         }
-        return pimsParameter;
+
+        request.setJsonBody(body);
+
+        request.getHeaders().add("X-Annotation-Origin", "LEFT_BOTTOM");
+        request.getHeaders().add(org.springframework.http.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
+        String format = retrieveWindowFormat(params);
+        request.getHeaders().add(org.springframework.http.HttpHeaders.ACCEPT, formatToMediaType(format));
+        if (etag != null) {
+            request.getHeaders().add(org.springframework.http.HttpHeaders.IF_NONE_MATCH, etag);
+        }
+        if (params.getSafe() != null && params.getSafe()) {
+            request.getHeaders().add("X-Image-Size-Safety", "SAFE_RESIZE");
+        }
+
+        return request.toResponseEntity(proxy, byte[].class);
+    }
+
+    private static String retrieveWindowFormat(WindowParameter params) {
+        String format;
+        if (checkType(params).equals("alphamask")) {
+            format = checkFormat(params.getFormat(), List.of("png", "webp"));
+        } else {
+            format = checkFormat(params.getFormat(), List.of("png", "jpg", "webp"));
+        }
+        return format;
+    }
+
+    private static String checkType(WindowParameter params) {
+        if ((params.getDraw()!=null && params.getDraw()) || (params.getType()!=null && params.getType().equals("draw")))
+            return "draw";
+        else if ((params.getMask()!=null && params.getMask()) || (params.getType()!=null && params.getType().equals("mask")))
+            return "mask";
+        else if ((params.getAlphaMask()!=null && params.getAlphaMask()) || (params.getType()!=null && (params.getType().equals("alphaMask") || params.getType().equals("alphamask")))) {
+            return "alphaMask";
+        } else {
+            return "crop";
+        }
     }
 
     private static Map<String, String> extractPIMSHeaders(HttpHeaders headers) {
@@ -769,17 +784,7 @@ public class ImageServerService {
         return (!accepted.contains(format)) ? accepted.get(0) : format;
     }
 
-    String checkType(WindowParameter params) {
-        if ((params.getDraw()!=null && params.getDraw()) || (params.getType()!=null && params.getType().equals("draw")))
-            return "draw";
-        else if ((params.getMask()!=null && params.getMask()) || (params.getType()!=null && params.getType().equals("mask")))
-            return "mask";
-        else if ((params.getAlphaMask()!=null && params.getAlphaMask()) || (params.getType()!=null && (params.getType().equals("alphaMask") || params.getType().equals("alphamask")))) {
-            return "alphaMask";
-        } else {
-            return "crop";
-        }
-    }
+
 
     private static Map<String, Object> renameChannelHistogramKeys(Map<String, Object> hist) {
         Object channel = hist.get("concreteChannel");

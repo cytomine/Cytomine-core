@@ -382,14 +382,16 @@ public class RestImageInstanceController extends RestCytomineController {
     }
 
     @RequestMapping(value = "/imageinstance/{id}/window-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void window(
+    public ResponseEntity<byte[]> window(
             @PathVariable Long id,
             @PathVariable String format,
             @PathVariable Integer x,
             @PathVariable Integer y,
             @PathVariable Integer w,
             @PathVariable Integer h,
-            @RequestParam(defaultValue = "false", required = false) Boolean withExterior
+            @RequestParam(defaultValue = "false", required = false) Boolean withExterior,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request get imageInstance {} window {}", id, format);
         WindowParameter windowParameter = new WindowParameter();
@@ -404,17 +406,19 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
 
         String etag = getRequestETag();
-        responseImage(imageServerService.window(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), windowParameter, etag));
+        return imageServerService.window(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), windowParameter, etag, proxy);
     }
 
     @RequestMapping(value = "/imageinstance/{id}/camera-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void camera(
+    public ResponseEntity<byte[]> camera(
             @PathVariable Long id,
             @PathVariable String format,
             @PathVariable Integer x,
             @PathVariable Integer y,
             @PathVariable Integer w,
-            @PathVariable Integer h
+            @PathVariable Integer h,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request get imageInstance {} camera {}", id, format);
         WindowParameter windowParameter = new WindowParameter();
@@ -428,7 +432,7 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
         // TODO : should we handle other window parameters?
         String etag = getRequestETag();
-        responseImage(imageServerService.window(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), windowParameter, etag));
+        return imageServerService.window(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), windowParameter, etag, proxy);
     }
 
     @GetMapping("/imageinstance/{id}/download")

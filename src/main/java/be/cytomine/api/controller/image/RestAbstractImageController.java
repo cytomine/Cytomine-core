@@ -283,14 +283,16 @@ public class RestAbstractImageController extends RestCytomineController {
     }
 
     @RequestMapping(value = "/abstractimage/{id}/window-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void window(
+    public ResponseEntity<byte[]> window(
             @PathVariable Long id,
             @PathVariable String format,
             @PathVariable Integer x,
             @PathVariable Integer y,
             @PathVariable Integer w,
             @PathVariable Integer h,
-            @RequestParam(defaultValue = "false", required = false) Boolean withExterior
+            @RequestParam(defaultValue = "false", required = false) Boolean withExterior,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request get abstractimage {} window {}", id, format);
         WindowParameter windowParameter = new WindowParameter();
@@ -303,17 +305,19 @@ public class RestAbstractImageController extends RestCytomineController {
         AbstractImage abstractImage = abstractImageService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
         String etag = getRequestETag();
-        responseImage(imageServerService.window(sliceCoordinatesService.getReferenceSlice(abstractImage), windowParameter, etag));
+        return imageServerService.window(sliceCoordinatesService.getReferenceSlice(abstractImage), windowParameter, etag, proxy);
     }
 
     @RequestMapping(value = "/abstractimage/{id}/camera-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void camera(
+    public ResponseEntity<byte[]> camera(
             @PathVariable Long id,
             @PathVariable String format,
             @PathVariable Integer x,
             @PathVariable Integer y,
             @PathVariable Integer w,
-            @PathVariable Integer h
+            @PathVariable Integer h,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request get abstractimage {} camera {}", id, format);
         WindowParameter windowParameter = new WindowParameter();
@@ -326,7 +330,7 @@ public class RestAbstractImageController extends RestCytomineController {
         AbstractImage abstractImage = abstractImageService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
         String etag = getRequestETag();
-        responseImage(imageServerService.window(sliceCoordinatesService.getReferenceSlice(abstractImage), windowParameter, etag));
+        return imageServerService.window(sliceCoordinatesService.getReferenceSlice(abstractImage), windowParameter, etag, proxy);
     }
 
     @GetMapping("/abstractimage/{id}/metadata.json")
