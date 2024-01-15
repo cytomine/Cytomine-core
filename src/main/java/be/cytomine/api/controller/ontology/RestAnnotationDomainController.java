@@ -47,6 +47,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -144,7 +145,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
     }
 
     @RequestMapping(value = "/annotation/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void crop(
+    public ResponseEntity<byte[]> crop(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(required = false) Integer maxSize,
@@ -171,7 +172,9 @@ public class RestAnnotationDomainController extends RestCytomineController {
             @RequestParam(required = false) Integer alpha,
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
-            @RequestParam(required = false) Integer jpegQuality
+            @RequestParam(required = false) Integer jpegQuality,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request to get crop for annotation domain");
         AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
@@ -204,72 +207,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
         String etag = getRequestETag();
-        responseImage(imageServerService.crop(annotation, cropParameter, etag));
-    }
-
-    @GetMapping(value = {"/annotation/{id}/cropParameters.{format}"})
-    public ResponseEntity<String> cropParameters(
-            @PathVariable Long id,
-            @PathVariable String format,
-            @RequestParam(required = false) Integer maxSize,
-            @RequestParam(required = false) String geometry,
-            @RequestParam(required = false) String location,
-            @RequestParam(required = false) String boundaries,
-            @RequestParam(defaultValue = "false") Boolean complete,
-            @RequestParam(required = false) Integer zoom,
-            @RequestParam(required = false) Double increaseArea,
-            @RequestParam(required = false) Boolean safe,
-            @RequestParam(required = false) Boolean square,
-            @RequestParam(required = false) String type,
-            @RequestParam(required = false) Boolean draw,
-            @RequestParam(required = false) Boolean mask,
-            @RequestParam(required = false) Boolean alphaMask,
-            @RequestParam(required = false) Boolean drawScaleBar,
-            @RequestParam(required = false) Double resolution,
-            @RequestParam(required = false) Double magnification,
-            @RequestParam(required = false) String colormap,
-            @RequestParam(required = false) Boolean inverse,
-            @RequestParam(required = false) Double contrast,
-            @RequestParam(required = false) Double gamma,
-            @RequestParam(required = false) String bits,
-            @RequestParam(required = false) Integer alpha,
-            @RequestParam(required = false) Integer thickness,
-            @RequestParam(required = false) String color,
-            @RequestParam(required = false) Integer jpegQuality
-    ) throws IOException, ParseException {
-        AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
-
-        CropParameter cropParameter = new CropParameter();
-        cropParameter.setGeometry(geometry);
-        cropParameter.setLocation(location);
-        cropParameter.setComplete(complete);
-        cropParameter.setZoom(zoom);
-        cropParameter.setMaxSize(maxSize);
-        cropParameter.setIncreaseArea(increaseArea);
-        cropParameter.setSafe(safe);
-        cropParameter.setSquare(square);
-        cropParameter.setType(type);
-        cropParameter.setDraw(draw);
-        cropParameter.setMask(mask);
-        cropParameter.setAlphaMask(alphaMask);
-        cropParameter.setDrawScaleBar(drawScaleBar);
-        cropParameter.setResolution(resolution);
-        cropParameter.setMagnification(magnification);
-        cropParameter.setColormap(colormap);
-        cropParameter.setInverse(inverse);
-        cropParameter.setGamma(gamma);
-        cropParameter.setAlpha(alpha);
-        cropParameter.setContrast(contrast);
-        cropParameter.setThickness(thickness);
-        cropParameter.setColor(color);
-        cropParameter.setJpegQuality(jpegQuality);
-        cropParameter.setMaxBits(bits!=null && bits.equals("max"));
-        cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
-        cropParameter.setFormat(format);
-
-
-        LinkedHashMap<String, Object> result = imageServerService.cropParameters(annotation, cropParameter);
-        return responseSuccess(JsonObject.toJsonString(result));
+        return imageServerService.crop(annotation, cropParameter, etag, proxy);
     }
 
 

@@ -149,6 +149,7 @@ public class ImageServerServiceTests {
 
     //http://localhost-ims/image/download?fif=%2Fdata%2Fimages%2F58%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs
 
+    // TODO
     @Test
     void retrieve_abstract_image_download_uri() throws IOException {
         AbstractImage image = builder.given_an_abstract_image();
@@ -156,13 +157,32 @@ public class ImageServerServiceTests {
         image.getUploadedFile().setOriginalFilename("CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
 
-        assertThat(imageServerService.downloadUri(image))
-                .isEqualTo("http://localhost:8888/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
-                        + "/export?filename=" + URLEncoder.encode(image.getOriginalFilename(), StandardCharsets.UTF_8));
+        configureFor("localhost", 8888);
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes();
+        String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
+                + "/export?filename=" + URLEncoder.encode(image.getOriginalFilename(), StandardCharsets.UTF_8);
 
-        assertThat(imageServerService.downloadUri(image.getUploadedFile()))
-                .isEqualTo("http://localhost:8888/file/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
-                        + "/export?filename=" + URLEncoder.encode(image.getUploadedFile().getOriginalFilename(), StandardCharsets.UTF_8));
+        stubFor(get(urlEqualTo(url))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+
+        byte[] data = imageServerService.download(image, null).getBody();
+        printLastRequest();
+        assertThat(data).isEqualTo(mockResponse);
+
+        url = "/file/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
+            + "/export?filename=" + URLEncoder.encode(image.getUploadedFile().getOriginalFilename(), StandardCharsets.UTF_8);
+
+        stubFor(get(urlEqualTo(url))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+        data = imageServerService.download(image.getUploadedFile(), null).getBody();
+        printLastRequest();
+        assertThat(data).isEqualTo(mockResponse);
     }
 
     @Test
@@ -172,9 +192,20 @@ public class ImageServerServiceTests {
         uploadedFile.setOriginalFilename("CMU-2.zip");
         uploadedFile.setContentType("ZIP");
 
-        assertThat(imageServerService.downloadUri(uploadedFile))
-                .isEqualTo("http://localhost:8888/file/" + URLEncoder.encode(uploadedFile.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
-                        + "/export?filename=" + URLEncoder.encode(uploadedFile.getOriginalFilename(), StandardCharsets.UTF_8));
+        configureFor("localhost", 8888);
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes();
+        String url = "/file/" + URLEncoder.encode(uploadedFile.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
+                + "/export?filename=" + URLEncoder.encode(uploadedFile.getOriginalFilename(), StandardCharsets.UTF_8);
+
+        stubFor(get(urlEqualTo(url))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+
+        byte[] data = imageServerService.download(uploadedFile, null).getBody();
+        printLastRequest();
+        assertThat(data).isEqualTo(mockResponse);
     }
 
     @Test
@@ -282,7 +313,7 @@ public class ImageServerServiceTests {
         labelParameter.setMaxSize(512);
         labelParameter.setLabel("macro");
         labelParameter.setFormat("png");
-        byte[] data = imageServerService.label(image, labelParameter, null).getContent();
+        byte[] data = imageServerService.label(image, labelParameter, null, null).getBody();
         printLastRequest();
         assertThat(data).isEqualTo(mockResponse);
     }
@@ -310,7 +341,7 @@ public class ImageServerServiceTests {
         imageParameter.setMaxSize(256);
         imageParameter.setFormat("png");
 
-        byte[] data = imageServerService.thumb(slice, imageParameter, null).getContent();
+        byte[] data = imageServerService.thumb(slice, imageParameter, null, null).getBody();
         printLastRequest();
         assertThat(data).isEqualTo(mockResponse);
 
@@ -325,7 +356,54 @@ public class ImageServerServiceTests {
 
         imageParameter.setMaxSize(512);
         imageParameter.setFormat("png");
-        data = imageServerService.thumb(slice, imageParameter, null).getContent();
+        data = imageServerService.thumb(slice, imageParameter, null, null).getBody();
+        printLastRequest();
+        assertThat(data).isEqualTo(mockResponse2);
+    }
+
+    @Test
+    void get_normalized_tile_for_abstract_image() throws IOException {
+        AbstractImage image = builder.given_an_abstract_image();
+        image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        image.getUploadedFile().setContentType("MRXS");
+
+        AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
+        slice.setUploadedFile(image.getUploadedFile());
+
+        configureFor("localhost", 8888);
+
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+
+
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?channels=0&z_slices=0&timepoints=0&filters=binary"))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+        TileParameters tileParameters = new TileParameters();
+        tileParameters.setZoom(2L);
+        tileParameters.setTx(4L);
+        tileParameters.setTy(6L);
+        tileParameters.setFormat("webp");
+        tileParameters.setFilters("binary");
+
+        byte[] data = imageServerService.normalizedTile(slice, tileParameters, null, null).getBody();
+        printLastRequest();
+        assertThat(data).isEqualTo(mockResponse);
+
+
+        byte[] mockResponse2 = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
+
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?channels=0&z_slices=0&timepoints=3&filters=otsu"))
+                .willReturn(
+                        aResponse().withBody(mockResponse2)
+                )
+        );
+
+        tileParameters.setFormat("webp");
+        tileParameters.setFilters("otsu");
+        tileParameters.setTimepoints("3");
+        data = imageServerService.normalizedTile(slice, tileParameters, null, null).getBody();
         printLastRequest();
         assertThat(data).isEqualTo(mockResponse2);
     }
@@ -347,7 +425,7 @@ public class ImageServerServiceTests {
 
         //String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/annotation/drawing?context_factor=1.25&annotations=%7B%22geometry%22%3A%22POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29%22%2C%22stroke_color%22%3Anull%2C%22stroke_width%22%3Anull%7D&level=0&z_slices=0&timepoints=0";
         String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/annotation/drawing";
-        String body = "{\"context_factor\":1.25,\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\",\"stroke_color\":null,\"stroke_width\":null},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
+        String body = "{\"level\":0,\"z_slices\":0,\"annotations\":[{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\",\"stroke_color\":null,\"stroke_width\":null}],\"timepoints\":0,\"context_factor\":1.25}";
         System.out.println(url);
         System.out.println(body);
         stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(
@@ -368,7 +446,7 @@ public class ImageServerServiceTests {
 
         byte[] crop = null;
         try {
-            crop = imageServerService.crop(slice, cropParameter, null).getContent();
+            crop = imageServerService.crop(slice, cropParameter, null, null).getBody();
         } catch (Exception exception) {
             exception.printStackTrace();
         }
@@ -395,7 +473,7 @@ public class ImageServerServiceTests {
 
         configureFor("localhost", 8888);
         String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/window";
-        String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
+        String body = "{\"level\":0,\"z_slices\":0,\"timepoints\":0,\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40}}";
         System.out.println(url);
         System.out.println(body);
         stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(body))
@@ -410,7 +488,7 @@ public class ImageServerServiceTests {
         windowParameter.setW(30);
         windowParameter.setH(40);
         windowParameter.setFormat("png");
-        byte[] crop = imageServerService.window(slice, windowParameter, null).getContent();
+        byte[] crop = imageServerService.window(slice, windowParameter, null, null).getBody();
         printLastRequest();
         assertThat(crop).isEqualTo(mockResponse);
     }

@@ -28,13 +28,12 @@ import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.IOException;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -81,7 +80,7 @@ public class RestUploadedFileController extends RestCytomineController {
         log.debug("REST request to get uploadedFile {}", id);
         return uploadedFileService.find(id)
                 .map(this::responseSuccess)
-                .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
+                .orElseThrow(() -> new ObjectNotFoundException("UploadedFile", id));
     }
 
     @PostMapping(value = "/uploadedfile.json")
@@ -89,20 +88,6 @@ public class RestUploadedFileController extends RestCytomineController {
         log.debug("REST request to save uploadedFile : " + json);
         return add(uploadedFileService, json);
     }
-
-//    //TODO: hack, as IMS request body type seems to be "application/octet-stream"
-//    @PostMapping(value = "/uploadedfile.json", consumes = {"application/octet-stream"})
-//    public ResponseEntity<String> addBis() throws IOException {
-//        log.debug("REST request to save uploadedFile from octet-stream");
-//        String bodyData = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
-//        JsonObject json = new JsonObject();
-//        if (!bodyData.isEmpty()) {
-//            Map<String, Object> bodyMap = JsonObject.toMap(bodyData);
-//            json.putAll(bodyMap);
-//        }
-//        log.debug("REST request to save uploadedFile : " + json);
-//        return add(uploadedFileService, json);
-//    }
 
     @PutMapping("/uploadedfile/{id}.json")
     public ResponseEntity<String> edit(@PathVariable String id, @RequestBody JsonObject json) {
@@ -118,12 +103,10 @@ public class RestUploadedFileController extends RestCytomineController {
 
 
     @GetMapping("/uploadedfile/{id}/download")
-    public RedirectView download(@PathVariable Long id) throws IOException {
+    public ResponseEntity<byte[]> download(@PathVariable Long id, ProxyExchange<byte[]> proxy) throws IOException {
         log.debug("REST request to download uploadedFile");
         UploadedFile uploadedFile = uploadedFileService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("UploadedFile", id));
-        // TODO: in abstract image, there is no check fos download auth!?
-        String url = imageServerService.downloadUri(uploadedFile);
-        return new RedirectView(url);
+        return imageServerService.download(uploadedFile, proxy);
     }
 }

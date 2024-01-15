@@ -24,7 +24,6 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ForbiddenException;
-import be.cytomine.exceptions.InvalidRequestException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.dto.*;
@@ -42,9 +41,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.Map;
 
 @RestController
@@ -178,7 +177,7 @@ public class RestImageInstanceController extends RestCytomineController {
 
     //    // TODO:MIGRATION GET params vs POST params!
     @RequestMapping(value = "/imageinstance/{id}/thumb.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void thumb(
+    public ResponseEntity<byte[]> thumb(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(defaultValue = "512", required = false) Integer maxSize,
@@ -186,8 +185,9 @@ public class RestImageInstanceController extends RestCytomineController {
             @RequestParam(required = false) Boolean inverse,
             @RequestParam(required = false) Double contrast,
             @RequestParam(required = false) Double gamma,
-            @RequestParam(required = false) String bits
+            @RequestParam(required = false) String bits,
 
+            ProxyExchange<byte[]> proxy
     ) throws IOException {
         log.debug("REST request get imageinstance {} thumb {}", id, format);
         ImageParameter thumbParameter = new ImageParameter();
@@ -203,12 +203,12 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
 
         String etag = getRequestETag();
-        responseImage(imageServerService.thumb(imageInstance, thumbParameter, etag));
+        return imageServerService.thumb(imageInstance, thumbParameter, etag, proxy);
     }
 
 
     @RequestMapping(value = "/imageinstance/{id}/preview.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void preview(
+    public ResponseEntity<byte[]> preview(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(defaultValue = "1024", required = false) Integer maxSize,
@@ -216,8 +216,9 @@ public class RestImageInstanceController extends RestCytomineController {
             @RequestParam(required = false) Boolean inverse,
             @RequestParam(required = false) Double contrast,
             @RequestParam(required = false) Double gamma,
-            @RequestParam(required = false) String bits
+            @RequestParam(required = false) String bits,
 
+            ProxyExchange<byte[]> proxy
     ) throws IOException {
         log.debug("REST request get imageInstance {} preview {}", id, format);
         ImageParameter previewParameter = new ImageParameter();
@@ -234,7 +235,7 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
 
         String etag = getRequestETag();
-        responseImage(imageServerService.thumb(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), previewParameter, etag));
+        return imageServerService.thumb(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), previewParameter, etag, proxy);
     }
 
 
@@ -291,11 +292,13 @@ public class RestImageInstanceController extends RestCytomineController {
 
 
     @RequestMapping(value = "/imageinstance/{id}/associated/{label}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void label(
+    public ResponseEntity<byte[]> label(
             @PathVariable Long id,
             @PathVariable String label,
             @PathVariable String format,
-            @RequestParam(defaultValue = "256") Integer maxSize) throws IOException {
+            @RequestParam(defaultValue = "256") Integer maxSize,
+
+            ProxyExchange<byte[]> proxy) throws IOException {
         log.debug("REST request to get associated image of an imageInstance image");
         ImageInstance imageInstance = imageInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
@@ -307,11 +310,11 @@ public class RestImageInstanceController extends RestCytomineController {
         labelParameter.setLabel(label);
         labelParameter.setMaxSize(maxSize);
         String etag = getRequestETag();
-        responseImage(imageServerService.label(imageInstance, labelParameter, etag));
+        return imageServerService.label(imageInstance, labelParameter, etag, proxy);
     }
     //
     @RequestMapping(value = "/imageinstance/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void crop(
+    public ResponseEntity<byte[]> crop(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(defaultValue = "256") Integer maxSize,
@@ -338,7 +341,9 @@ public class RestImageInstanceController extends RestCytomineController {
             @RequestParam(required = false) Integer alpha,
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
-            @RequestParam(required = false) Integer jpegQuality
+            @RequestParam(required = false) Integer jpegQuality,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
         ImageInstance imageInstance = imageInstanceService.find(id)
@@ -373,42 +378,20 @@ public class RestImageInstanceController extends RestCytomineController {
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
         String etag = getRequestETag();
-        responseImage(imageServerService.crop(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), cropParameter, etag));
-    }
-
-    @RequestMapping(value = "/imageinstance/{id}/window_url-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> windowUrl(
-            @PathVariable Long id,
-            @PathVariable String format,
-            @PathVariable Integer x,
-            @PathVariable Integer y,
-            @PathVariable Integer w,
-            @PathVariable Integer h,
-            @RequestParam(defaultValue = "false", required = false) Boolean withExterior
-    ) throws UnsupportedEncodingException, ParseException {
-        log.debug("REST request get imageInstance {} window url {}", id, format);
-        WindowParameter windowParameter = new WindowParameter();
-        windowParameter.setX(x);
-        windowParameter.setY(y);
-        windowParameter.setW(w);
-        windowParameter.setH(h);
-        windowParameter.setWithExterior(withExterior);
-        windowParameter.setFormat(format);
-        ImageInstance imageInstance = imageInstanceService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
-        String url = imageServerService.windowUrl(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), windowParameter);
-        return responseSuccess(JsonObject.of("url", url));
+        return imageServerService.crop(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), cropParameter, etag, proxy);
     }
 
     @RequestMapping(value = "/imageinstance/{id}/window-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void window(
+    public ResponseEntity<byte[]> window(
             @PathVariable Long id,
             @PathVariable String format,
             @PathVariable Integer x,
             @PathVariable Integer y,
             @PathVariable Integer w,
             @PathVariable Integer h,
-            @RequestParam(defaultValue = "false", required = false) Boolean withExterior
+            @RequestParam(defaultValue = "false", required = false) Boolean withExterior,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request get imageInstance {} window {}", id, format);
         WindowParameter windowParameter = new WindowParameter();
@@ -423,41 +406,19 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
 
         String etag = getRequestETag();
-        responseImage(imageServerService.window(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), windowParameter, etag));
-    }
-
-    @RequestMapping(value = "/imageinstance/{id}/camera_url-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> cameraUrl(
-            @PathVariable Long id,
-            @PathVariable String format,
-            @PathVariable Integer x,
-            @PathVariable Integer y,
-            @PathVariable Integer w,
-            @PathVariable Integer h
-    ) throws UnsupportedEncodingException, ParseException {
-        log.debug("REST request get imageInstance {} camera url {}", id, format);
-        WindowParameter windowParameter = new WindowParameter();
-        windowParameter.setX(x);
-        windowParameter.setY(y);
-        windowParameter.setW(w);
-        windowParameter.setH(h);
-        windowParameter.setWithExterior(false);
-        windowParameter.setFormat(format);
-        // TODO : should we handle other window parameters?
-        ImageInstance imageInstance = imageInstanceService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
-        String url = imageServerService.windowUrl(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), windowParameter);
-        return responseSuccess(JsonObject.of("url", url));
+        return imageServerService.window(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), windowParameter, etag, proxy);
     }
 
     @RequestMapping(value = "/imageinstance/{id}/camera-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void camera(
+    public ResponseEntity<byte[]> camera(
             @PathVariable Long id,
             @PathVariable String format,
             @PathVariable Integer x,
             @PathVariable Integer y,
             @PathVariable Integer w,
-            @PathVariable Integer h
+            @PathVariable Integer h,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request get imageInstance {} camera {}", id, format);
         WindowParameter windowParameter = new WindowParameter();
@@ -471,11 +432,11 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
         // TODO : should we handle other window parameters?
         String etag = getRequestETag();
-        responseImage(imageServerService.window(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), windowParameter, etag));
+        return imageServerService.window(sliceCoordinatesService.getReferenceSlice(imageInstance.getBaseImage()), windowParameter, etag, proxy);
     }
 
     @GetMapping("/imageinstance/{id}/download")
-    public RedirectView download(@PathVariable Long id) throws IOException {
+    public ResponseEntity<byte[]> download(@PathVariable Long id, ProxyExchange<byte[]> proxy) throws IOException {
         log.debug("REST request to download image instance");
         ImageInstance imageinstance = imageInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
@@ -485,10 +446,7 @@ public class RestImageInstanceController extends RestCytomineController {
             // TODO: in abstract image, there is no check for that ?!?
             securityACLService.checkIsAdminContainer(imageinstance.getProject());
         }
-
-
-        String url = imageServerService.downloadUri(imageinstance.getBaseImage());
-        return new RedirectView(url);
+        return imageServerService.download(imageinstance.getBaseImage(), proxy);
     }
 
     @GetMapping("/imageinstance/{id}/sliceinstance/reference.json")

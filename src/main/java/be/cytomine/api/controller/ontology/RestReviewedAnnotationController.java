@@ -40,6 +40,7 @@ import be.cytomine.utils.Task;
 import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -293,7 +294,7 @@ public class RestReviewedAnnotationController extends RestCytomineController {
     }
 
     @RequestMapping(value = "/reviewedannotation/{id}/crop.{format}", method = {GET, POST})
-    public void crop(
+    public ResponseEntity<byte[]> crop(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(required = false) Integer maxSize,
@@ -320,7 +321,9 @@ public class RestReviewedAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer alpha,
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
-            @RequestParam(required = false) Integer jpegQuality
+            @RequestParam(required = false) Integer jpegQuality,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
         ReviewedAnnotation reviewedannotation = reviewedAnnotationService.find(id)
@@ -354,11 +357,11 @@ public class RestReviewedAnnotationController extends RestCytomineController {
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
         String etag = getRequestETag();
-        responseImage(imageServerService.crop(reviewedannotation, cropParameter, etag));
+        return imageServerService.crop(reviewedannotation, cropParameter, etag, proxy);
     }
 
     @RequestMapping(value = "/reviewedannotation/{id}/mask.{format}", method = {GET, POST})
-    public void cropMask(
+    public ResponseEntity<byte[]> cropMask(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(required = false) Integer maxSize,
@@ -383,7 +386,9 @@ public class RestReviewedAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer alpha,
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
-            @RequestParam(required = false) Integer jpegQuality
+            @RequestParam(required = false) Integer jpegQuality,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
         ReviewedAnnotation reviewedannotation = reviewedAnnotationService.find(id)
@@ -417,11 +422,11 @@ public class RestReviewedAnnotationController extends RestCytomineController {
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
         String etag = getRequestETag();
-        responseImage(imageServerService.crop(reviewedannotation, cropParameter, etag));
+        return imageServerService.crop(reviewedannotation, cropParameter, etag, proxy);
     }
 
     @RequestMapping(value = "/reviewedannotation/{id}/alphamask.{format}", method = {GET, POST})
-    public void cropAlphaMask(
+    public ResponseEntity<byte[]> cropAlphaMask(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(required = false) Integer maxSize,
@@ -446,7 +451,9 @@ public class RestReviewedAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer alpha,
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
-            @RequestParam(required = false) Integer jpegQuality
+            @RequestParam(required = false) Integer jpegQuality,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
         ReviewedAnnotation reviewedannotation = reviewedAnnotationService.find(id)
@@ -479,6 +486,6 @@ public class RestReviewedAnnotationController extends RestCytomineController {
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
         String etag = getRequestETag();
-        responseImage(imageServerService.crop(reviewedannotation, cropParameter, etag));
+        return imageServerService.crop(reviewedannotation, cropParameter, etag, proxy);
     }
 }
