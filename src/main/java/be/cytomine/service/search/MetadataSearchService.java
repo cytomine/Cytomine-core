@@ -87,7 +87,7 @@ public class MetadataSearchService {
     }
 
     public List<Long> search(JsonObject body) {
-        List<FieldValue> imageIDs = ((List<Long>) body.get("imageIds"))
+        List<FieldValue> imageIDs = ((List<Integer>) body.get("imageIds"))
             .stream()
             .map(FieldValue::of)
             .collect(Collectors.toList());
