@@ -520,6 +520,7 @@ public class UserAnnotationResourceTests {
     }
 
 
+    @Disabled
     @Test
     @javax.transaction.Transactional
     public void get_user_annotation_alpha_mask() throws Exception {

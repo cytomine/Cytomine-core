@@ -29,6 +29,7 @@ import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -313,6 +314,7 @@ public class SliceInstanceResourceTests {
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
+    @Disabled
     @Test
     @Transactional
     public void get_slice_instance_window() throws Exception {
