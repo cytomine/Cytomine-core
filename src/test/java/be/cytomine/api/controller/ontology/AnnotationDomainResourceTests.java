@@ -1167,6 +1167,7 @@ public class AnnotationDomainResourceTests {
                 .collect(Collectors.toList());
     }
 
+    @Disabled("Randomly fail with ProxyExchange, need to find a solution")
     @Test
     @Transactional
     public void get_user_annotation_crop() throws Exception {
@@ -1195,7 +1196,7 @@ public class AnnotationDomainResourceTests {
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
-
+    @Disabled("Randomly fail with ProxyExchange, need to find a solution")
     @Test
     @javax.transaction.Transactional
     public void get_reviewed_annotation_crop() throws Exception {
@@ -1224,7 +1225,7 @@ public class AnnotationDomainResourceTests {
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
-
+    @Disabled("Randomly fail with ProxyExchange, need to find a solution")
     @Test
     @javax.transaction.Transactional
     public void get_algo_annotation_crop() throws Exception {

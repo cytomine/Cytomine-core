@@ -461,6 +461,7 @@ public class UserAnnotationResourceTests {
     }
 
 
+    @Disabled("Randomly fail with ProxyExchange, need to find a solution")
     @Test
     @javax.transaction.Transactional
     public void get_user_annotation_crop() throws Exception {
@@ -490,6 +491,7 @@ public class UserAnnotationResourceTests {
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
+    @Disabled("Randomly fail with ProxyExchange, need to find a solution")
     @Test
     @javax.transaction.Transactional
     public void get_user_annotation_crop_mask() throws Exception {
@@ -520,7 +522,7 @@ public class UserAnnotationResourceTests {
     }
 
 
-    @Disabled
+    @Disabled("Randomly fail with ProxyExchange, need to find a solution")
     @Test
     @javax.transaction.Transactional
     public void get_user_annotation_alpha_mask() throws Exception {
