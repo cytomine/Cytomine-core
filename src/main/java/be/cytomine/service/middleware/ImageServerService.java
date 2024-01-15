@@ -351,7 +351,14 @@ public class ImageServerService {
         request.addPathFragment("ty");
         request.addPathFragment(params.getTy().toString());
 
-        request.addQueryParameter("channels", params.getChannels() != null ? params.getChannels() : slice.getChannel());
+        if (params.getChannels() != null) {
+            request.addQueryParameter("channels", params.getChannels());
+        }
+        else if (slice.getImage().getChannels() != null && slice.getImage().getChannels() > 1) {
+            request.addQueryParameter("channels", slice.getChannel());
+            // Ensure that if the slice is RGB, the 3 intrinsic channels are used
+        }
+
         request.addQueryParameter("z_slices", params.getZSlices() != null ? params.getZSlices() : slice.getZStack());
         request.addQueryParameter("timepoints", params.getTimepoints() != null ? params.getTimepoints() : slice.getTime());
 
