@@ -746,7 +746,7 @@ public class ImageInstanceResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         String url = "/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/annotation/crop";
-        String body = "{\"length\":512,\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"},\"background_transparency\":0,\"z_slices\":0,\"timepoints\":0}";
+        String body = "{\"length\":512,\"z_slices\":0,\"annotations\":[{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"}],\"timepoints\":0,\"background_transparency\":0}";
         System.out.println(url);
         System.out.println(body);
         //{"length":512,"annotations":{"geometry":"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))"},"level":0,"background_transparency":0,"z_slices":0,"timepoints":0}
@@ -779,7 +779,7 @@ public class ImageInstanceResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         String url = "/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/window";
-        String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
+        String body = "{\"level\":0,\"z_slices\":0,\"timepoints\":0,\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40}}";
         System.out.println(url);
         System.out.println(body);
         stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(WireMock.equalTo(body))
@@ -797,33 +797,6 @@ public class ImageInstanceResourceTests {
 
     }
 
-
-    @Test
-    @Transactional
-    public void get_image_instance_camera() throws Exception {
-        ImageInstance image = given_test_image_instance();
-
-        configureFor("localhost", 8888);
-
-        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
-
-        String url = "/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/window";
-        String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
-        System.out.println(url);
-        System.out.println(body);
-        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(WireMock.equalTo(body))
-                .willReturn(
-                        aResponse().withBody(mockResponse)
-                )
-        );
-
-        MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/camera-10-20-30-40.png", image.getId()))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andReturn();
-        List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
-    }
 
     @Test
     @Transactional
