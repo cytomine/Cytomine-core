@@ -767,6 +767,7 @@ public class ImageServerService {
 
     private static String formatToMediaType(String format, String defaultMediaType) {
         return switch (format) {
+            case "json" -> MediaType.APPLICATION_JSON_VALUE;
             case "png" -> MediaType.IMAGE_PNG_VALUE;
             case "webp" -> "image/webp";
             case "jpg" -> MediaType.IMAGE_JPEG_VALUE;
