@@ -375,7 +375,7 @@ public class ImageServerServiceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
 
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?channels=0&z_slices=0&timepoints=0&filters=binary"))
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?z_slices=0&timepoints=0&filters=binary"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -394,7 +394,7 @@ public class ImageServerServiceTests {
 
         byte[] mockResponse2 = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?channels=0&z_slices=0&timepoints=3&filters=otsu"))
+        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?channels=1&z_slices=0&timepoints=3&filters=otsu"))
                 .willReturn(
                         aResponse().withBody(mockResponse2)
                 )
@@ -403,6 +403,7 @@ public class ImageServerServiceTests {
         tileParameters.setFormat("webp");
         tileParameters.setFilters("otsu");
         tileParameters.setTimepoints("3");
+        tileParameters.setChannels("1");
         data = imageServerService.normalizedTile(slice, tileParameters, null, null).getBody();
         printLastRequest();
         assertThat(data).isEqualTo(mockResponse2);

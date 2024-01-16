@@ -276,7 +276,7 @@ public class AbstractSliceResourceTests {
                 )
         );
 
-        MvcResult mvcResult = restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/normalized-tile/zoom/{z}/tx/{tx}/ty/{ty}.jpg?filters=binary", image.getId(), 2, 4, 6))
+        MvcResult mvcResult = restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/normalized-tile/zoom/{z}/tx/{tx}/ty/{ty}.jpg?filters=binary&channels=0", image.getId(), 2, 4, 6))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
