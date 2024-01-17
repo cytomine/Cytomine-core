@@ -78,7 +78,7 @@ public class MetadataSearchServiceTests {
         query.put("key1", "val");
 
         HashMap<String, Object> parameters = new HashMap<>();
-        parameters.put("imageIds", Arrays.asList(ai1.getId(), ai2.getId()));
+        parameters.put("imageIds", Arrays.asList(ai1.getId().intValue(), ai2.getId().intValue()));
         parameters.put("filters", query);
 
         JsonObject filters = new JsonObject(parameters);
@@ -106,7 +106,7 @@ public class MetadataSearchServiceTests {
         query.put("key2", Arrays.asList(1000, 2000));
 
         HashMap<String, Object> parameters = new HashMap<>();
-        parameters.put("imageIds", Arrays.asList(ai1.getId(), ai2.getId()));
+        parameters.put("imageIds", Arrays.asList(ai1.getId().intValue(), ai2.getId().intValue()));
         parameters.put("filters", query);
 
         JsonObject filters = new JsonObject(parameters);
@@ -135,7 +135,7 @@ public class MetadataSearchServiceTests {
         query.put("key2", Arrays.asList(1000, 2000));
 
         HashMap<String, Object> parameters = new HashMap<>();
-        parameters.put("imageIds", Arrays.asList(ai1.getId(), ai2.getId()));
+        parameters.put("imageIds", Arrays.asList(ai1.getId().intValue(), ai2.getId().intValue()));
         parameters.put("filters", query);
 
         JsonObject filters = new JsonObject(parameters);
