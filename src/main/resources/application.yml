@@ -92,6 +92,8 @@ application:
 
   imageServerURL:
     - ${IMAGE_SERVER_URL:#{'http://ims.cytomine.local'}}
-  
+
+  retrievalServerURL: ${IMAGE_SERVER_CBIR:#{'http://cbir.cytomine.local'}}
+
   annotation:
     maxNumberOfPoint: ${ANNOTATION_MAX_POINTS:200}
