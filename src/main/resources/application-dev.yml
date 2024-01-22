@@ -18,4 +18,4 @@ application:
   elasticsearchServerURL: ${ELASTICSEARCH_HOST:localhost}:${ELASTICSEARCH_PORT:9200}
 
   imageServerURL: [http://ims.cytomine.local]
-
+  retrievalServerURL: http://cbir.cytomine.local

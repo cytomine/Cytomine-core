@@ -98,6 +98,8 @@ public class ApplicationProperties {
 
     private String elasticsearchServerURL;
 
+    private String retrievalServerURL;
+
     private Software software;
 
     private Annotation annotation;
