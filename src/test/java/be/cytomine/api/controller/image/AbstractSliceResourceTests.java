@@ -45,6 +45,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -240,7 +241,7 @@ public class AbstractSliceResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=512"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=512"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -270,7 +271,7 @@ public class AbstractSliceResourceTests {
         AbstractSlice image = given_test_abstract_slice();
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?channels=0&z_slices=0&timepoints=0&filters=binary"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?channels=0&z_slices=0&timepoints=0&filters=binary"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -308,7 +309,7 @@ public class AbstractSliceResourceTests {
         System.out.println(url);
         System.out.println(body);
 
-        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(equalTo(
+        stubFor(WireMock.post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(
                                 body
                         ))
                         .willReturn(
@@ -338,7 +339,7 @@ public class AbstractSliceResourceTests {
         String body = "{\"level\":0,\"z_slices\":0,\"timepoints\":0,\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40}}";
         System.out.println(url);
         System.out.println(body);
-        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(equalTo(body))
+        stubFor(WireMock.post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(body))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )

@@ -58,9 +58,11 @@ public class ImageServerService {
 
     private static final int GET_URL_MAX_LENGTH = 512;
 
-    @Value("${application.internalProxyURL}")
-    String internalImageServerURL;
+    // Internal communication to image server must use this base path as a convention.
+    public static final String IMS_API_BASE_PATH = "/ims";
 
+    @Value("${application.internalProxyURL}")
+    String internalProxyURL;
 
     @Autowired
     private ImageInstanceService imageInstanceService;
@@ -73,8 +75,12 @@ public class ImageServerService {
         this.imageInstanceService = imageInstanceService;
     }
 
+    public String internalImageServerURL() {
+        return this.internalProxyURL + IMS_API_BASE_PATH;
+    }
+
     public StorageStats storageSpace() throws IOException {
-        return JsonObject.toObject(getContentFromUrl(internalImageServerURL + "/storage/size.json"), StorageStats.class);
+        return JsonObject.toObject(getContentFromUrl(internalImageServerURL() + "/storage/size.json"), StorageStats.class);
     }
 
     public List<Map<String, Object>> formats() throws IOException {
@@ -122,22 +128,22 @@ public class ImageServerService {
     }
 
     public String buildImageServerFullUrl(UploadedFile uploadedFile, String targetResource, String pathSuffix) {
-        return this.internalImageServerURL + this.buildEncodedUri(targetResource, uploadedFile, pathSuffix);
+        return this.internalImageServerURL() + this.buildEncodedUri(targetResource, uploadedFile, pathSuffix);
     }
 
     public String buildImageServerFullUrl(AbstractImage abstractImage, String targetResource, String pathSuffix) {
-        return this.internalImageServerURL + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
+        return this.internalImageServerURL() + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
     }
 
 
     public String buildImageServerInternalFullUrl(AbstractImage abstractImage, String targetResource, String pathSuffix) {
-        return this.internalImageServerURL + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
+        return this.internalImageServerURL() + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
     }
 
     public ResponseEntity<byte[]> download(UploadedFile uploadedFile, ProxyExchange<byte[]> proxy) throws IOException {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.GET);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
         request.addPathFragment("file");
         request.addPathFragment(uploadedFile.getPath(), true);
         request.addPathFragment("export");
@@ -150,7 +156,7 @@ public class ImageServerService {
     public ResponseEntity<byte[]> download(AbstractImage abstractImage, ProxyExchange<byte[]> proxy) throws IOException {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.GET);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
         request.addPathFragment("image");
         request.addPathFragment(abstractImage.getPath(), true);
         request.addPathFragment("export");
@@ -180,7 +186,7 @@ public class ImageServerService {
     }
 
     public Map<String, Object> imageHistogram(AbstractImage image, int nBins) {
-        String server = this.internalImageServerURL;
+        String server = this.internalImageServerURL();
         String uri = this.buildEncodedUri("image", image, "/histogram/per-image");
         LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
         PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
@@ -193,7 +199,7 @@ public class ImageServerService {
     }
 
     public Map<String, Object> imageHistogramBounds(AbstractImage image, int nBins) {
-        String server = this.internalImageServerURL;
+        String server = this.internalImageServerURL();
         String uri = this.buildEncodedUri("image", image, "/histogram/per-image/bounds");
         LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
         PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
@@ -202,7 +208,7 @@ public class ImageServerService {
     }
 
     public List<Map<String, Object>> channelHistograms(AbstractImage image, int nBins) {
-        String server = this.internalImageServerURL;
+        String server = this.internalImageServerURL();
         String uri = this.buildEncodedUri("image", image, "/histogram/per-channels");
         LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
         PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
@@ -213,7 +219,7 @@ public class ImageServerService {
 
 
     public List<Map<String, Object>> channelHistogramBounds(AbstractImage image) {
-        String server = this.internalImageServerURL;
+        String server = this.internalImageServerURL();
         String uri = this.buildEncodedUri("image", image, "/histogram/per-channels/bounds");
         PimsResponse pimsResponse = makeRequest("GET", server, uri, new LinkedHashMap<>(), "json", Map.of());
         Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
@@ -223,7 +229,7 @@ public class ImageServerService {
 
 
     public List<Map<String, Object>> planeHistograms(AbstractSlice slice, int nBins, boolean allChannels) {
-        String server = this.internalImageServerURL;
+        String server = this.internalImageServerURL();
         String uri = this.buildEncodedUri("image", slice, "/histogram/per-plane/z/" + slice.getZStack() + "/t/" + slice.getTime());
         LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
         if (!allChannels) {
@@ -237,7 +243,7 @@ public class ImageServerService {
 
 
     public List<Map<String, Object>> planeHistogramBounds(AbstractSlice slice, boolean allChannels) {
-        String server = this.internalImageServerURL;
+        String server = this.internalImageServerURL();
         String uri = this.buildEncodedUri("image", slice, "/histogram/per-plane/z/" + slice.getZStack() + "/t/" + slice.getTime() + "/bounds");
         LinkedHashMap<String, Object> params = new LinkedHashMap<>();
         if (!allChannels) {
@@ -265,7 +271,7 @@ public class ImageServerService {
     public ResponseEntity<byte[]> label(AbstractImage image, LabelParameter params, String etag, ProxyExchange<byte[]> proxy) {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.GET);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
         request.addPathFragment("image");
         request.addPathFragment(image.getPath(), true);
         request.addPathFragment("associated");
@@ -292,7 +298,7 @@ public class ImageServerService {
     public ResponseEntity<byte[]> thumb(AbstractSlice slice, ImageParameter params, String etag, ProxyExchange<byte[]> proxy) {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.GET);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
         request.addPathFragment("image");
         request.addPathFragment(slice.getPath(), true);
         request.addPathFragment((params.getBits() != null) ? "resized" : "thumb");
@@ -339,7 +345,7 @@ public class ImageServerService {
     public ResponseEntity<byte[]> normalizedTile(AbstractSlice slice, TileParameters params, String etag, ProxyExchange<byte[]> proxy) {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.GET);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
 
         request.addPathFragment("image");
         request.addPathFragment(slice.getPath(), true);
@@ -390,7 +396,7 @@ public class ImageServerService {
     public ResponseEntity<byte[]> crop(AbstractSlice slice, CropParameter params, String etag, ProxyExchange<byte[]> proxy) throws UnsupportedEncodingException, ParseException {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.POST);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
         request.addPathFragment("image");
         request.addPathFragment(slice.getPath(), true);
         request.addPathFragment(getCropUri(params));
@@ -519,7 +525,7 @@ public class ImageServerService {
     public ResponseEntity<byte[]> window(AbstractSlice slice, WindowParameter params, String etag, ProxyExchange<byte[]> proxy) throws UnsupportedEncodingException, ParseException {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.POST);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
         request.addPathFragment("image");
         request.addPathFragment(slice.getPath(), true);
         request.addPathFragment("window");

@@ -54,6 +54,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -645,7 +646,7 @@ public class ImageInstanceResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=512"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=512"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -677,7 +678,7 @@ public class ImageInstanceResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=1024"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=1024"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -697,7 +698,7 @@ public class ImageInstanceResourceTests {
     public void get_image_instance_associeted_label() throws Exception {
         ImageInstance image = given_test_image_instance();
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/")+ "/info/associated"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/")+ "/info/associated"))
                 .willReturn(
                         aResponse().withBody("{\"items\": [{\"name\":\"macro\"},{\"name\":\"thumbnail\"},{\"name\":\"label\"}], \"size\": 0}")
                 )
@@ -721,7 +722,7 @@ public class ImageInstanceResourceTests {
         String url = "/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/associated/macro?length=512";
 
         System.out.println(url);
-        stubFor(get(urlEqualTo(url))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -754,7 +755,7 @@ public class ImageInstanceResourceTests {
         //{"length":512,"annotations":{"geometry":"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))"},"level":0,"background_transparency":0,"z_slices":0,"timepoints":0}
         //{"length":512,"annotations":{"geometry":"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))"},"background_transparency":0,"z_slices":0,"timepoints":0}
 
-        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(WireMock.equalTo(
+        stubFor(WireMock.post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(WireMock.equalTo(
                                 body
                         ))
                         .willReturn(
@@ -785,7 +786,7 @@ public class ImageInstanceResourceTests {
         String body = "{\"level\":0,\"z_slices\":0,\"timepoints\":0,\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40}}";
         System.out.println(url);
         System.out.println(body);
-        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(WireMock.equalTo(body))
+        stubFor(WireMock.post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(WireMock.equalTo(body))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -806,7 +807,7 @@ public class ImageInstanceResourceTests {
     public void get_image_instance_metadata() throws Exception {
         ImageInstance image = given_test_image_instance();
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/metadata"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/metadata"))
                 .willReturn(
                         aResponse().withBody("{\"size\":11,\"items\":[{\"key\":\"JFIFVersion\",\"value\":1.01,\"type\":\"DECIMAL\",\"namespace\":\"JFIF\"}," +
                                 "{\"key\":\"ResolutionUnit\",\"value\":\"inches\",\"type\":\"STRING\",\"namespace\":\"JFIF\"},{\"key\":\"XResolution\"," +
@@ -835,7 +836,7 @@ public class ImageInstanceResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes();
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=" + URLEncoder.encode(image.getBaseImage().getOriginalFilename(), StandardCharsets.UTF_8)))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=" + URLEncoder.encode(image.getBaseImage().getOriginalFilename(), StandardCharsets.UTF_8)))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -860,7 +861,7 @@ public class ImageInstanceResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes();
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=" + URLEncoder.encode(image.getBaseImage().getOriginalFilename(), StandardCharsets.UTF_8)))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=" + URLEncoder.encode(image.getBaseImage().getOriginalFilename(), StandardCharsets.UTF_8)))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -895,7 +896,7 @@ public class ImageInstanceResourceTests {
 
         configureFor("localhost", 8888);
         System.out.println("/image/"+ URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0?n_bins=256&channels=0");
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-image?n_bins=256"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-image?n_bins=256"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -937,7 +938,7 @@ public class ImageInstanceResourceTests {
 
         configureFor("localhost", 8888);
 
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-image/bounds?n_bins=256"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-image/bounds?n_bins=256"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -961,7 +962,7 @@ public class ImageInstanceResourceTests {
 
         configureFor("localhost", 8888);
         System.out.println("/image/"+ URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-channels?n_bins=256");
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-channels?n_bins=256"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-channels?n_bins=256"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -987,7 +988,7 @@ public class ImageInstanceResourceTests {
 
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-channels/bounds"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-channels/bounds"))
                 .willReturn(
                         aResponse().withBody(
                                 """

@@ -46,6 +46,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -231,7 +232,7 @@ public class SliceInstanceResourceTests {
         SliceInstance image = given_test_slice_instance();
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=512"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=512"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -260,7 +261,7 @@ public class SliceInstanceResourceTests {
         SliceInstance image = given_test_slice_instance();
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?z_slices=0&timepoints=0&filters=binary"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?z_slices=0&timepoints=0&filters=binary"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -297,7 +298,7 @@ public class SliceInstanceResourceTests {
         System.out.println(url);
         System.out.println(body);
 
-        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(equalTo(
+        stubFor(WireMock.post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(
                                 body
                         ))
                         .willReturn(
@@ -327,7 +328,7 @@ public class SliceInstanceResourceTests {
         String body = "{\"level\":0,\"z_slices\":0,\"annotations\":[{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"}],\"timepoints\":0,\"background_transparency\":0}";
         System.out.println(url);
         System.out.println(body);
-        stubFor(WireMock.post(urlEqualTo(url)).withRequestBody(equalTo(body))
+        stubFor(WireMock.post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(body))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -352,7 +353,7 @@ public class SliceInstanceResourceTests {
 
         configureFor("localhost", 8888);
         System.out.println("/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0?n_bins=256&channels=0");
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0?n_bins=256&channels=0"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0?n_bins=256&channels=0"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -401,7 +402,7 @@ public class SliceInstanceResourceTests {
 
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0/bounds?channels=0"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0/bounds?channels=0"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -426,7 +427,7 @@ public class SliceInstanceResourceTests {
 
         configureFor("localhost", 8888);
         System.out.println("/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0?n_bins=256");
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0?n_bins=256"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0?n_bins=256"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -468,7 +469,7 @@ public class SliceInstanceResourceTests {
 
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0/bounds"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0/bounds"))
                 .willReturn(
                         aResponse().withBody(
                                 """

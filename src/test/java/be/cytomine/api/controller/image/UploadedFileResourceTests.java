@@ -49,6 +49,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -532,7 +533,7 @@ public class UploadedFileResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes();
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/file/" + URLEncoder.encode(uploadedFile.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=" + URLEncoder.encode(uploadedFile.getOriginalFilename(), StandardCharsets.UTF_8)))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/file/" + URLEncoder.encode(uploadedFile.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=" + URLEncoder.encode(uploadedFile.getOriginalFilename(), StandardCharsets.UTF_8)))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )

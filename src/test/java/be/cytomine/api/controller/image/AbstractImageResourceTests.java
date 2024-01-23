@@ -60,6 +60,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -562,7 +563,7 @@ public class AbstractImageResourceTests {
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0,0,0);
         slice.setUploadedFile(image.getUploadedFile());
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=512"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=512"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -597,7 +598,7 @@ public class AbstractImageResourceTests {
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0,0,0);
         slice.setUploadedFile(image.getUploadedFile());
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=1024"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=1024"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -617,7 +618,7 @@ public class AbstractImageResourceTests {
     public void get_abstract_image_associeted_label() throws Exception {
         AbstractImage image = given_test_abstract_image();
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info/associated"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info/associated"))
                 .willReturn(
                         aResponse().withBody("{\"items\": [{\"name\":\"macro\"},{\"name\":\"thumbnail\"},{\"name\":\"label\"}], \"size\": 0}")
                 )
@@ -643,7 +644,7 @@ public class AbstractImageResourceTests {
         String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/associated/macro?length=512";
 
         System.out.println(url);
-        stubFor(get(urlEqualTo(url))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -677,7 +678,7 @@ public class AbstractImageResourceTests {
         System.out.println(url);
         System.out.println(body);
 
-        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(
+        stubFor(post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(
                                 body
                         ))
                         .willReturn(
@@ -712,7 +713,7 @@ public class AbstractImageResourceTests {
         String body = "{\"level\":0,\"z_slices\":0,\"timepoints\":0,\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40}}";
         System.out.println(url);
         System.out.println(body);
-        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(body))
+        stubFor(post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(body))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -743,7 +744,7 @@ public class AbstractImageResourceTests {
 
         byte[] mockResponse = UUID.randomUUID().toString().getBytes();
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=" + URLEncoder.encode(image.getOriginalFilename(), StandardCharsets.UTF_8)))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=" + URLEncoder.encode(image.getOriginalFilename(), StandardCharsets.UTF_8)))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -761,7 +762,7 @@ public class AbstractImageResourceTests {
     public void get_abstract_image_metadata() throws Exception {
         AbstractImage image = given_test_abstract_image();
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/metadata"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/metadata"))
                 .willReturn(
                         aResponse().withBody("{\"size\":11,\"items\":[{\"key\":\"JFIFVersion\",\"value\":1.01,\"type\":\"DECIMAL\",\"namespace\":\"JFIF\"}," +
                                 "{\"key\":\"ResolutionUnit\",\"value\":\"inches\",\"type\":\"STRING\",\"namespace\":\"JFIF\"},{\"key\":\"XResolution\"," +
@@ -795,7 +796,7 @@ public class AbstractImageResourceTests {
         image.setColorspace("empty");
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info"))
                 .willReturn(
                         aResponse().withBody(
                                 """

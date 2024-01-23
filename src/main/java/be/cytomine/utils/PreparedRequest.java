@@ -55,6 +55,7 @@ public class PreparedRequest {
         this.scheme = uri.getScheme();
         this.host = uri.getHost();
         this.port = uri.getPort();
+        this.path = uri.getPath();
     }
 
     public void addQueryParameter(String key, Object value) {

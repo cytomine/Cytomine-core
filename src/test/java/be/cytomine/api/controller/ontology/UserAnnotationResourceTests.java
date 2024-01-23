@@ -67,6 +67,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -475,7 +476,7 @@ public class UserAnnotationResourceTests {
         String body =  "{\"length\":512,\"z_slices\":0,\"annotations\":[{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"}],\"timepoints\":0,\"background_transparency\":0}";
         System.out.println(url);
         System.out.println(body);
-        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(
+        stubFor(post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(
                                 body
                         ))
                         .willReturn(
@@ -505,7 +506,7 @@ public class UserAnnotationResourceTests {
         String body = "{\"length\":512,\"z_slices\":0,\"annotations\":[{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\",\"fill_color\":\"#fff\"}],\"timepoints\":0}";
         System.out.println(url);
         System.out.println(body);
-        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(
+        stubFor(post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(
                                 body
                         ))
                         .willReturn(
@@ -536,7 +537,7 @@ public class UserAnnotationResourceTests {
         String body = "{\"level\":0,\"z_slices\":0,\"annotations\":[{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"}],\"timepoints\":0,\"background_transparency\":100}";
         System.out.println(url);
         System.out.println(body);
-        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(
+        stubFor(post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(
                                 body
                         ))
                         .willReturn(
