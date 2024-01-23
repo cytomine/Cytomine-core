@@ -107,6 +107,18 @@ public class PreparedRequest {
         );
     }
 
+    public <T> T toObject(Class<T> returnType) {
+        switch (method) {
+            case GET -> {
+                return new RestTemplate().getForObject(this.getURI(), returnType);
+            }
+            case POST -> {
+                return new RestTemplate().postForObject(this.getURI(), this.body, returnType);
+            }
+        }
+        throw new NotImplementedException("toObject is not implemented for method: " + method);
+    }
+
     public <T> ResponseEntity<T> toResponseEntity(ProxyExchange<T> proxy, Class<T> returnType) {
         if (proxy == null) {
             switch (method) {
