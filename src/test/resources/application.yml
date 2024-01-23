@@ -89,7 +89,7 @@ application:
 
 
   defaultLanguage: ENGLISH
-  internalImageServerURL: http://localhost:8888
+  internalProxyURL: http://localhost:8888
   messageBrokerServerURL: messageBrokerServerURL
   annotation:
     maxNumberOfPoint: 200

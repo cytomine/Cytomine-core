@@ -766,7 +766,7 @@ public class ImageServerServiceTests {
     @Test
     void test_build_image_server_url_functions() {
         UploadedFile uploadedFile = builder.given_a_uploaded_file();
-        String serverUrl1 = applicationProperties.getInternalImageServerURL();
+        String serverUrl1 = applicationProperties.getInternalProxyURL();
 
         uploadedFile.setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG");
         assertThat(imageServerService.buildImageServerFullUrl(uploadedFile, "file", "/upload"))
@@ -778,7 +778,7 @@ public class ImageServerServiceTests {
                 .isEqualTo(serverUrl1 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file%3F%3F.JPG/upload");
 
         AbstractImage abstractImage = builder.given_an_abstract_image();
-        String serverUrl2 = applicationProperties.getInternalImageServerURL();
+        String serverUrl2 = applicationProperties.getInternalProxyURL();
 
         abstractImage.getUploadedFile().setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG");
         assertThat(imageServerService.buildImageServerFullUrl(abstractImage, "file", "/upload"))

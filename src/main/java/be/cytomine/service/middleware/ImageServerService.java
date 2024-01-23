@@ -58,7 +58,7 @@ public class ImageServerService {
 
     private static final int GET_URL_MAX_LENGTH = 512;
 
-    @Value("${application.internalImageServerURL}")
+    @Value("${application.internalProxyURL}")
     String internalImageServerURL;
 
 
