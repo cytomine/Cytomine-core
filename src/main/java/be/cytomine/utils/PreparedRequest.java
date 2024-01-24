@@ -68,11 +68,11 @@ public class PreparedRequest {
         addPathFragment(fragment, false);
     }
 
-    public void addPathFragment(String fragment, boolean apacheEncoding) {
+    public void addPathFragment(String fragment, boolean encode) {
         if (fragment == null || fragment.isEmpty()) {
             return;
         }
-        if (apacheEncoding) {
+        if (encode) {
             // Apache reverse proxy does not support '%2F' encoding inside a path
             // whereas pims supports both '/' and '%2F'. Therefore, we revert the
             // encoding of the `/` to support routing through an Apache proxy.
