@@ -55,6 +55,8 @@ public class PreparedRequest {
         this.scheme = uri.getScheme();
         this.host = uri.getHost();
         this.port = uri.getPort();
+        this.path = uri.getPath();
+        this.headers.add(HttpHeaders.HOST, this.host);
     }
 
     public void addQueryParameter(String key, Object value) {
@@ -66,11 +68,11 @@ public class PreparedRequest {
         addPathFragment(fragment, false);
     }
 
-    public void addPathFragment(String fragment, boolean apacheEncoding) {
+    public void addPathFragment(String fragment, boolean encode) {
         if (fragment == null || fragment.isEmpty()) {
             return;
         }
-        if (apacheEncoding) {
+        if (encode) {
             // Apache reverse proxy does not support '%2F' encoding inside a path
             // whereas pims supports both '/' and '%2F'. Therefore, we revert the
             // encoding of the `/` to support routing through an Apache proxy.
@@ -104,6 +106,18 @@ public class PreparedRequest {
                 .filter(e -> e.getValue() != null && !e.getValue().toString().isEmpty())
                 .collect(Collectors.toMap(x -> x.getKey(), x -> x.getValue()))
         );
+    }
+
+    public <T> T toObject(Class<T> returnType) {
+        switch (method) {
+            case GET -> {
+                return new RestTemplate().getForObject(this.getURI(), returnType);
+            }
+            case POST -> {
+                return new RestTemplate().postForObject(this.getURI(), this.body, returnType);
+            }
+        }
+        throw new NotImplementedException("toObject is not implemented for method: " + method);
     }
 
     public <T> ResponseEntity<T> toResponseEntity(ProxyExchange<T> proxy, Class<T> returnType) {

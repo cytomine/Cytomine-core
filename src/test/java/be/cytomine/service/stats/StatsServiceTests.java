@@ -49,6 +49,7 @@ import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -479,7 +480,7 @@ public class StatsServiceTests {
     @Test
     void retrieve_storage_spaces() {
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/storage/size.json"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/storage/size.json"))
                 .willReturn(
                         aResponse().withBody("" + "{\"used\":193396892,\"available\":445132860,\"usedP\":0.302878435,\"hostname\":\"b52416f53249\",\"mount\":\"/data/images\",\"ip\":null}")
                 )

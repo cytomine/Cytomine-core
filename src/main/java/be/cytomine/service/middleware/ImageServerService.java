@@ -18,13 +18,13 @@ package be.cytomine.service.middleware;
 
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.dto.PimsResponse;
-import be.cytomine.exceptions.*;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.dto.*;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.utils.SimplifyGeometryService;
-import be.cytomine.utils.*;
-
+import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.PreparedRequest;
+import be.cytomine.utils.StringUtils;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
@@ -40,27 +40,17 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpHeaders;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
-
-import static be.cytomine.utils.HttpUtils.getContentFromUrl;
 
 @Slf4j
 @Service
 @Transactional
 public class ImageServerService {
+    // Internal communication to image server must use this base path as a convention.
+    public static final String IMS_API_BASE_PATH = "/ims";
 
-    private static final int GET_URL_MAX_LENGTH = 512;
-
-    @Value("${application.internalImageServerURL}")
-    String internalImageServerURL;
-
+    @Value("${application.internalProxyURL}")
+    String internalProxyURL;
 
     @Autowired
     private ImageInstanceService imageInstanceService;
@@ -73,71 +63,33 @@ public class ImageServerService {
         this.imageInstanceService = imageInstanceService;
     }
 
+    public String internalImageServerURL() {
+        return this.internalProxyURL + IMS_API_BASE_PATH;
+    }
+
     public StorageStats storageSpace() throws IOException {
-        return JsonObject.toObject(getContentFromUrl(internalImageServerURL + "/storage/size.json"), StorageStats.class);
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL());
+        request.addPathFragment("storage/size.json");
+
+        return JsonObject.toObject(request.toObject(String.class), StorageStats.class);
     }
 
-    public List<Map<String, Object>> formats() throws IOException {
-        String response = getContentFromUrl(internalImageServerURL + "/formats");
-        JsonObject jsonObject = JsonObject.toJsonObject(response);
-        return ((List<Map<String,Object>>)jsonObject.get("items")).stream().map(x -> StringUtils.keysToCamelCase(x)).toList();
-    }
+    public List<Map<String, Object>> formats() {
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL());
+        request.addPathFragment("formats");
 
-    /**
-     * Build a pims url path with valid escaping
-     * @param targetResource The prefix resource prepend to the URI path (e.g. 'file', 'image')
-     * @param imsPath The pims path of the resource (a relative file path to the pims file)
-     * @param pathSuffix The suffix resource to append to the URI path  
-     * @return '/{targetResource}/{path}/{pathSuffix}' but done smartly to avoid encoding issues and 
-     */
-    protected String buildEncodedUri(String targetResource, String imsPath, String pathSuffix) {
-        if (imsPath == null || imsPath.trim().equals("")) {
-            throw new InvalidRequestException("Uploaded file has no valid path.");
-        }
-        
-        // strip "/" (to avoid double slash) and encode 
-        targetResource = org.apache.commons.lang3.StringUtils.strip(targetResource, "/");
-        pathSuffix = org.apache.commons.lang3.StringUtils.strip(pathSuffix, "/");
-        
-        // Apache reverse proxy does not support '%2F' encoding inside a path
-        // whereas pims supports both '/' and '%2F'. Therefore, we revert the 
-        // encoding of the `/` to support routing through an Apache proxy.
-        // see issue cm/rnd/cytomine/core/core-ce#84
-        String encodedPath = URLEncoder.encode(imsPath ,StandardCharsets.UTF_8).replace("%2F", "/");
-        encodedPath = org.apache.commons.lang3.StringUtils.strip(encodedPath, "/");
-
-        return "/" + targetResource + "/" + encodedPath + "/" + pathSuffix;
-    }
-
-    protected String buildEncodedUri(String targetResource, UploadedFile uploadedFile, String pathSuffix) {
-        return this.buildEncodedUri(targetResource, uploadedFile.getPath(), pathSuffix);
-    }
-
-    protected String buildEncodedUri(String targetResource, AbstractImage abstractImage, String pathSuffix) {
-        return this.buildEncodedUri(targetResource, abstractImage.getPath(), pathSuffix);
-    }
-
-    protected String buildEncodedUri(String targetResource, AbstractSlice abstractSlice, String pathSuffix) {
-        return this.buildEncodedUri(targetResource, abstractSlice.getPath(), pathSuffix);
-    }
-
-    public String buildImageServerFullUrl(UploadedFile uploadedFile, String targetResource, String pathSuffix) {
-        return this.internalImageServerURL + this.buildEncodedUri(targetResource, uploadedFile, pathSuffix);
-    }
-
-    public String buildImageServerFullUrl(AbstractImage abstractImage, String targetResource, String pathSuffix) {
-        return this.internalImageServerURL + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
-    }
-
-
-    public String buildImageServerInternalFullUrl(AbstractImage abstractImage, String targetResource, String pathSuffix) {
-        return this.internalImageServerURL + this.buildEncodedUri(targetResource, abstractImage, pathSuffix);
+        JsonObject jsonObject = JsonObject.toJsonObject(request.toObject(String.class));
+        return ((List<Map<String,Object>>)jsonObject.get("items")).stream().map(StringUtils::keysToCamelCase).toList();
     }
 
     public ResponseEntity<byte[]> download(UploadedFile uploadedFile, ProxyExchange<byte[]> proxy) throws IOException {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.GET);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
         request.addPathFragment("file");
         request.addPathFragment(uploadedFile.getPath(), true);
         request.addPathFragment("export");
@@ -150,7 +102,7 @@ public class ImageServerService {
     public ResponseEntity<byte[]> download(AbstractImage abstractImage, ProxyExchange<byte[]> proxy) throws IOException {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.GET);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
         request.addPathFragment("image");
         request.addPathFragment(abstractImage.getPath(), true);
         request.addPathFragment("export");
@@ -165,13 +117,25 @@ public class ImageServerService {
     }
 
     public Map<String, Object> properties(AbstractImage image) throws IOException {
-        String fullUrl = this.buildImageServerInternalFullUrl(image, "image", "/info");
-        return JsonObject.toMap(getContentFromUrl(fullUrl));
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL());
+        request.addPathFragment("image");
+        request.addPathFragment(image.getPath(), true);
+        request.addPathFragment("info");
+
+        return JsonObject.toMap(request.toObject(String.class));
     }
 
     public List<Map<String, Object>> rawProperties(AbstractImage image) throws IOException {
-        String fullUrl = this.buildImageServerInternalFullUrl(image, "image", "/metadata");
-        return JsonObject.toJsonObject(getContentFromUrl(fullUrl))
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL());
+        request.addPathFragment("image");
+        request.addPathFragment(image.getPath(), true);
+        request.addPathFragment("metadata");
+
+        return JsonObject.toJsonObject(request.toObject(String.class))
                 .getJSONAttrListMap("items").stream().map(StringUtils::keysToCamelCase).toList();
     }
 
@@ -180,11 +144,16 @@ public class ImageServerService {
     }
 
     public Map<String, Object> imageHistogram(AbstractImage image, int nBins) {
-        String server = this.internalImageServerURL;
-        String uri = this.buildEncodedUri("image", image, "/histogram/per-image");
-        LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
-        PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
-        Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL());
+        request.addPathFragment("image");
+        request.addPathFragment(image.getPath(), true);
+        request.addPathFragment("histogram");
+        request.addPathFragment("per-image");
+        request.addQueryParameter("n_bins", nBins);
+
+        Map<String, Object> json = JsonObject.toMap(request.toObject(String.class));
         return StringUtils.keysToCamelCase(json);
     }
 
@@ -193,65 +162,108 @@ public class ImageServerService {
     }
 
     public Map<String, Object> imageHistogramBounds(AbstractImage image, int nBins) {
-        String server = this.internalImageServerURL;
-        String uri = this.buildEncodedUri("image", image, "/histogram/per-image/bounds");
-        LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
-        PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
-        Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL());
+        request.addPathFragment("image");
+        request.addPathFragment(image.getPath(), true);
+        request.addPathFragment("histogram");
+        request.addPathFragment("per-image");
+        request.addPathFragment("bounds");
+        request.addQueryParameter("n_bins", nBins);
+
+        Map<String, Object> json = JsonObject.toMap(request.toObject(String.class));
         return StringUtils.keysToCamelCase(json);
     }
 
     public List<Map<String, Object>> channelHistograms(AbstractImage image, int nBins) {
-        String server = this.internalImageServerURL;
-        String uri = this.buildEncodedUri("image", image, "/histogram/per-channels");
-        LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
-        PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
-        Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL());
+        request.addPathFragment("image");
+        request.addPathFragment(image.getPath(), true);
+        request.addPathFragment("histogram");
+        request.addPathFragment("per-channels");
+        request.addQueryParameter("n_bins", nBins);
+
+        Map<String, Object> json = JsonObject.toMap(request.toObject(String.class));
         List<Map<String, Object>> items = (List<Map<String, Object>>) json.get("items");
         return items.stream().map(x -> renameChannelHistogramKeys(StringUtils.keysToCamelCase(x))).toList();
     }
 
 
     public List<Map<String, Object>> channelHistogramBounds(AbstractImage image) {
-        String server = this.internalImageServerURL;
-        String uri = this.buildEncodedUri("image", image, "/histogram/per-channels/bounds");
-        PimsResponse pimsResponse = makeRequest("GET", server, uri, new LinkedHashMap<>(), "json", Map.of());
-        Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL());
+        request.addPathFragment("image");
+        request.addPathFragment(image.getPath(), true);
+        request.addPathFragment("histogram");
+        request.addPathFragment("per-channels");
+        request.addPathFragment("bounds");
+
+        Map<String, Object> json = JsonObject.toMap(request.toObject(String.class));
         List<Map<String, Object>> items = (List<Map<String, Object>>) json.get("items");
         return items.stream().map(x -> renameChannelHistogramKeys(StringUtils.keysToCamelCase(x))).toList();
     }
 
 
     public List<Map<String, Object>> planeHistograms(AbstractSlice slice, int nBins, boolean allChannels) {
-        String server = this.internalImageServerURL;
-        String uri = this.buildEncodedUri("image", slice, "/histogram/per-plane/z/" + slice.getZStack() + "/t/" + slice.getTime());
-        LinkedHashMap<String, Object> params = new LinkedHashMap<>(Map.of("n_bins", nBins));
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL());
+        request.addPathFragment("image");
+        request.addPathFragment(slice.getPath(), true);
+        request.addPathFragment("histogram");
+        request.addPathFragment("per-plane");
+        request.addPathFragment("z");
+        request.addPathFragment(slice.getZStack().toString());
+        request.addPathFragment("t");
+        request.addPathFragment(slice.getTime().toString());
+        request.addQueryParameter("n_bins", nBins);
         if (!allChannels) {
-            params.put("channels", slice.getChannel());
+            request.addQueryParameter("channels", slice.getChannel());
         }
-        PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
-        Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
+
+        Map<String, Object> json = JsonObject.toMap(request.toObject(String.class));
         List<Map<String, Object>> items = (List<Map<String, Object>>) json.get("items");
         return items.stream().map(x -> renameChannelHistogramKeys(StringUtils.keysToCamelCase(x))).toList();
     }
 
 
     public List<Map<String, Object>> planeHistogramBounds(AbstractSlice slice, boolean allChannels) {
-        String server = this.internalImageServerURL;
-        String uri = this.buildEncodedUri("image", slice, "/histogram/per-plane/z/" + slice.getZStack() + "/t/" + slice.getTime() + "/bounds");
-        LinkedHashMap<String, Object> params = new LinkedHashMap<>();
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL());
+        request.addPathFragment("image");
+        request.addPathFragment(slice.getPath(), true);
+        request.addPathFragment("histogram");
+        request.addPathFragment("per-plane");
+        request.addPathFragment("z");
+        request.addPathFragment(slice.getZStack().toString());
+        request.addPathFragment("t");
+        request.addPathFragment(slice.getTime().toString());
+        request.addPathFragment("bounds");
         if (!allChannels) {
-            params.put("channels", slice.getChannel());
+            request.addQueryParameter("channels", slice.getChannel());
         }
-        PimsResponse pimsResponse = makeRequest("GET", server, uri, params, "json", Map.of());
-        Map<String, Object> json = JsonObject.toMap(new String(pimsResponse.getContent()));
+
+        Map<String, Object> json = JsonObject.toMap(request.toObject(String.class));
         List<Map<String, Object>> items = (List<Map<String, Object>>) json.get("items");
         return items.stream().map(x -> renameChannelHistogramKeys(StringUtils.keysToCamelCase(x))).toList();
     }
 
     public List<String> associated(AbstractImage image) throws IOException {
-        String fullUrl = this.buildImageServerInternalFullUrl(image, "image", "/info/associated");
-        return JsonObject.toJsonObject(getContentFromUrl(fullUrl)).getJSONAttrListMap("items").stream().map(x -> (String)x.get("name")).toList();
+        PreparedRequest request = new PreparedRequest();
+        request.setMethod(HttpMethod.GET);
+        request.setUrl(this.internalImageServerURL());
+        request.addPathFragment("image");
+        request.addPathFragment(image.getPath(), true);
+        request.addPathFragment("info");
+        request.addPathFragment("associated");
+
+        return JsonObject.toJsonObject(request.toObject(String.class))
+                .getJSONAttrListMap("items").stream().map(x -> (String)x.get("name")).toList();
     }
 
     public List<String> associated(ImageInstance image) throws IOException {
@@ -265,7 +277,7 @@ public class ImageServerService {
     public ResponseEntity<byte[]> label(AbstractImage image, LabelParameter params, String etag, ProxyExchange<byte[]> proxy) {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.GET);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
         request.addPathFragment("image");
         request.addPathFragment(image.getPath(), true);
         request.addPathFragment("associated");
@@ -292,7 +304,7 @@ public class ImageServerService {
     public ResponseEntity<byte[]> thumb(AbstractSlice slice, ImageParameter params, String etag, ProxyExchange<byte[]> proxy) {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.GET);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
         request.addPathFragment("image");
         request.addPathFragment(slice.getPath(), true);
         request.addPathFragment((params.getBits() != null) ? "resized" : "thumb");
@@ -339,7 +351,7 @@ public class ImageServerService {
     public ResponseEntity<byte[]> normalizedTile(AbstractSlice slice, TileParameters params, String etag, ProxyExchange<byte[]> proxy) {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.GET);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
 
         request.addPathFragment("image");
         request.addPathFragment(slice.getPath(), true);
@@ -390,7 +402,7 @@ public class ImageServerService {
     public ResponseEntity<byte[]> crop(AbstractSlice slice, CropParameter params, String etag, ProxyExchange<byte[]> proxy) throws UnsupportedEncodingException, ParseException {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.POST);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
         request.addPathFragment("image");
         request.addPathFragment(slice.getPath(), true);
         request.addPathFragment(getCropUri(params));
@@ -519,7 +531,7 @@ public class ImageServerService {
     public ResponseEntity<byte[]> window(AbstractSlice slice, WindowParameter params, String etag, ProxyExchange<byte[]> proxy) throws UnsupportedEncodingException, ParseException {
         PreparedRequest request = new PreparedRequest();
         request.setMethod(HttpMethod.POST);
-        request.setUrl(this.internalImageServerURL);
+        request.setUrl(this.internalImageServerURL());
         request.addPathFragment("image");
         request.addPathFragment(slice.getPath(), true);
         request.addPathFragment("window");
@@ -648,125 +660,6 @@ public class ImageServerService {
             return "crop";
         }
     }
-
-    private static Map<String, String> extractPIMSHeaders(HttpHeaders headers) {
-        List<String> names = List.of("Cache-Control", "ETag", "X-Annotation-Origin", "X-Image-Size-Limit", "Content-Type", "Content-Disposition", "Last-Modified");
-        Map<String, String> extractedHeaders = new LinkedHashMap<>();
-        for (String name : names) {
-            String value = headers.firstValue(name).isEmpty() ? headers.firstValue(name.toLowerCase()).orElse(null) : headers.firstValue(name).get();
-            if (value!=null) {
-                extractedHeaders.put(name, value); //h.getValue()?)
-            }
-        }
-        return extractedHeaders;
-    }
-
-    private PimsResponse makeRequest(String httpMethod, String imageServerInternalUrl, String path, LinkedHashMap<String, Object> parameters, String format, Map<String, Object> headers) {
-        return makeRequest(httpMethod, imageServerInternalUrl, path, parameters, format, headers, false);
-    }
-
-    private PimsResponse makeRequest(String httpMethod, String imageServerInternalUrl, String path, LinkedHashMap<String, Object> parameters, String format, Map<String, Object> headers, boolean hms)  {
-
-        parameters = filterParameters(parameters);
-        String parameterUrl = "";
-        String fullUrl = "";
-
-        String responseContentType = formatToMediaType(format);
-
-        try {
-            parameterUrl = makeParameterUrl(parameters);
-            fullUrl = imageServerInternalUrl + path + "?" + parameterUrl;
-            log.debug(fullUrl);
-            HttpClient httpClient = HttpClient.newBuilder()
-                    .version(HttpClient.Version.HTTP_1_1)
-                    .build();
-
-            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder();
-            if ((fullUrl).length() < GET_URL_MAX_LENGTH && (httpMethod==null || httpMethod.equals("GET"))) {
-                log.debug("GET " + fullUrl);
-                requestBuilder.GET()
-                        .uri(URI.create(fullUrl));
-            } else {
-                log.debug("POST " + imageServerInternalUrl + path);
-                log.debug(JsonObject.toJsonString(parameters));
-                String requestContentType = "application/json";
-                if (hms) {
-                    requestContentType = "application/x-www-form-urlencoded";
-                }
-
-                HttpRequest.BodyPublisher bodyPublisher;
-                if(hms) {
-                    bodyPublisher = HttpRequest.BodyPublishers.ofString(StringUtils.urlEncodeUTF8(parameters));
-                } else {
-                    bodyPublisher = HttpRequest.BodyPublishers.ofString(JsonObject.toJsonString(parameters));
-                }
-
-                requestBuilder.POST(bodyPublisher)
-                        .uri(URI.create(imageServerInternalUrl + path))
-                        .setHeader("content-type", requestContentType);
-            }
-            requestBuilder.setHeader("Accept", responseContentType);
-            for (Map.Entry<String, Object> entry : headers.entrySet()) {
-                requestBuilder.setHeader(entry.getKey(), (String) entry.getValue());
-            }
-            HttpRequest request = requestBuilder.build();
-            HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
-            return processResponse(fullUrl, responseContentType, response);
-        } catch(NotModifiedException e){
-            throw e;
-        } catch(Exception e){
-            log.error("Error for url : " + fullUrl + " with parameters " + parameterUrl, e);
-            throw new InvalidRequestException("Cannot generate thumb for " + fullUrl + " with " + parameterUrl);
-        }
-    }
-
-    private PimsResponse processResponse(String fullUrl, String responseContentType, HttpResponse<byte[]> response) {
-        if (response.statusCode()==200) {
-            return new PimsResponse(response.body(), extractPIMSHeaders(response.headers()));
-        } else  if (response.statusCode()==304) {
-            throw new NotModifiedException(extractPIMSHeaders(response.headers()));
-        } else  if (response.statusCode()==400) {
-            throw new InvalidRequestException(fullUrl + " returned a 400 bad request");
-        } else  if (response.statusCode()==404) {
-            throw new ObjectNotFoundException(fullUrl + " returned a 404 not found");
-        } else  if (response.statusCode()==422) {
-            throw new InvalidRequestException(fullUrl + " returned a 422");
-        } else  if (response.statusCode()==422) {
-            throw new ServerException(fullUrl + " returned a 500");
-        }
-        throw new ServerException(fullUrl + " returned a " + response.statusCode() + ". Cannot catch this.");
-    }
-
-
-    private static String makeParameterUrl(LinkedHashMap<String, Object> parameters) throws UnsupportedEncodingException {
-        parameters = filterParameters(parameters);
-        StringJoiner joiner = new StringJoiner("&");
-        for (Map.Entry<String, Object> entry : parameters.entrySet()) {
-            Object value = entry.getValue();
-            //TODO!!!
-//            if (it.getValue() instanceof Geometry) {
-//                value = it.getValue().toText();
-//            }
-            if (entry.getValue() instanceof String) {
-                value = URLEncoder.encode((String)entry.getValue(), StandardCharsets.UTF_8);
-            } else if (entry.getValue() instanceof Map<?,?>) {
-                value = URLEncoder.encode(JsonObject.toJsonString(entry.getValue()), StandardCharsets.UTF_8);
-            }
-            joiner.add(entry.getKey()+"="+value);
-        }
-        return joiner.toString();
-    }
-
-
-    private static LinkedHashMap<String, Object> filterParameters(LinkedHashMap<String, Object> parameters) {
-        LinkedHashMap<String, Object> processed = new LinkedHashMap<>();
-        for (Map.Entry<String, Object> entry : parameters.entrySet()) {
-            if (entry.getValue()!=null && !entry.getValue().toString().equals("")) {
-                processed.put(entry.getKey(), entry.getValue());
-            }
-        }
-        return processed;
-    }
     
     private static String formatToMediaType(String format) {
         return formatToMediaType(format, MediaType.IMAGE_JPEG_VALUE);
@@ -793,7 +686,6 @@ public class ImageServerService {
     }
 
 
-
     private static Map<String, Object> renameChannelHistogramKeys(Map<String, Object> hist) {
         Object channel = hist.get("concreteChannel");
         Object apparentChannel = hist.get("channel");
@@ -809,5 +701,4 @@ public class ImageServerService {
         }
         return '!' + colormap;
     }
-
 }

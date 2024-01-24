@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -82,7 +83,7 @@ public class ImageServerServiceTests {
     @Test
     void retrieve_storage_spaces() throws IOException {
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/storage/size.json"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/storage/size.json"))
                 .willReturn(
                         aResponse().withBody("" + "{\"used\":193396892,\"available\":445132860,\"usedP\":0.302878435,\"hostname\":\"b52416f53249\",\"mount\":\"/data/images\",\"ip\":null}")
                 )
@@ -99,7 +100,7 @@ public class ImageServerServiceTests {
     @Test
     void retrieve_formats() throws IOException {
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/formats"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/formats"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -162,7 +163,7 @@ public class ImageServerServiceTests {
         String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
                 + "/export?filename=" + URLEncoder.encode(image.getOriginalFilename(), StandardCharsets.UTF_8);
 
-        stubFor(get(urlEqualTo(url))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -175,7 +176,7 @@ public class ImageServerServiceTests {
         url = "/file/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
             + "/export?filename=" + URLEncoder.encode(image.getUploadedFile().getOriginalFilename(), StandardCharsets.UTF_8);
 
-        stubFor(get(urlEqualTo(url))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -197,7 +198,7 @@ public class ImageServerServiceTests {
         String url = "/file/" + URLEncoder.encode(uploadedFile.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")
                 + "/export?filename=" + URLEncoder.encode(uploadedFile.getOriginalFilename(), StandardCharsets.UTF_8);
 
-        stubFor(get(urlEqualTo(url))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -216,7 +217,7 @@ public class ImageServerServiceTests {
 
 
         configureFor("localhost", 8888); //       /image/upload1644425985928451/LUNG1_pyr.tif/info
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -282,7 +283,7 @@ public class ImageServerServiceTests {
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info/associated"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info/associated"))
                 .willReturn(
                         aResponse().withBody("{\"items\": [{\"name\":\"macro\"},{\"name\":\"thumbnail\"},{\"name\":\"label\"}], \"size\": 0}")
                 )
@@ -304,7 +305,7 @@ public class ImageServerServiceTests {
         String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/associated/macro?length=512";
 
         System.out.println(url);
-        stubFor(get(urlEqualTo(url))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -332,7 +333,7 @@ public class ImageServerServiceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
 
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=256"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=256"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -348,7 +349,7 @@ public class ImageServerServiceTests {
 
         byte[] mockResponse2 = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=512"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=512"))
                 .willReturn(
                         aResponse().withBody(mockResponse2)
                 )
@@ -375,7 +376,7 @@ public class ImageServerServiceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
 
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?z_slices=0&timepoints=0&filters=binary"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?z_slices=0&timepoints=0&filters=binary"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -394,7 +395,7 @@ public class ImageServerServiceTests {
 
         byte[] mockResponse2 = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?channels=1&z_slices=0&timepoints=3&filters=otsu"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/normalized-tile/zoom/2/tx/4/ty/6?channels=1&z_slices=0&timepoints=3&filters=otsu"))
                 .willReturn(
                         aResponse().withBody(mockResponse2)
                 )
@@ -429,7 +430,7 @@ public class ImageServerServiceTests {
         String body = "{\"level\":0,\"z_slices\":0,\"annotations\":[{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\",\"stroke_color\":null,\"stroke_width\":null}],\"timepoints\":0,\"context_factor\":1.25}";
         System.out.println(url);
         System.out.println(body);
-        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(
+        stubFor(post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(
                 body
                         ))
                 .willReturn(
@@ -477,7 +478,7 @@ public class ImageServerServiceTests {
         String body = "{\"level\":0,\"z_slices\":0,\"timepoints\":0,\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40}}";
         System.out.println(url);
         System.out.println(body);
-        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(body))
+        stubFor(post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(body))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -507,7 +508,7 @@ public class ImageServerServiceTests {
 
         configureFor("localhost", 8888);
         System.out.println("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-image?n_bins=256");
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-image?n_bins=256"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-image?n_bins=256"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -556,7 +557,7 @@ public class ImageServerServiceTests {
 
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-image/bounds?n_bins=256"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-image/bounds?n_bins=256"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -587,7 +588,7 @@ public class ImageServerServiceTests {
 
         configureFor("localhost", 8888);
         System.out.println("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0?n_bins=256&channels=0");
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0?n_bins=256&channels=0"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0?n_bins=256&channels=0"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -641,7 +642,7 @@ public class ImageServerServiceTests {
 
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0/bounds?channels=0"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0/bounds?channels=0"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -673,7 +674,7 @@ public class ImageServerServiceTests {
 
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0?n_bins=256"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0?n_bins=256"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -722,7 +723,7 @@ public class ImageServerServiceTests {
 
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0/bounds"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/"+ URLEncoder.encode(slice.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") +"/histogram/per-plane/z/0/t/0/bounds"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -762,31 +763,6 @@ public class ImageServerServiceTests {
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
         all.subList(Math.max(all.size() - 3, 0), all.size()).forEach(x -> System.out.println(x.getMethod() + " " + x.getAbsoluteUrl() + " " + x.getBodyAsString()));
     }
-    
-    @Test
-    void test_build_image_server_url_functions() {
-        UploadedFile uploadedFile = builder.given_a_uploaded_file();
-        String serverUrl1 = applicationProperties.getInternalImageServerURL();
 
-        uploadedFile.setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG");
-        assertThat(imageServerService.buildImageServerFullUrl(uploadedFile, "file", "/upload"))
-                .isEqualTo(serverUrl1 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG/upload");
-
-
-        uploadedFile.setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file??.JPG");
-        assertThat(imageServerService.buildImageServerFullUrl(uploadedFile, "file", "/upload"))
-                .isEqualTo(serverUrl1 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file%3F%3F.JPG/upload");
-
-        AbstractImage abstractImage = builder.given_an_abstract_image();
-        String serverUrl2 = applicationProperties.getInternalImageServerURL();
-
-        abstractImage.getUploadedFile().setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG");
-        assertThat(imageServerService.buildImageServerFullUrl(abstractImage, "file", "/upload"))
-                .isEqualTo(serverUrl2 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file.JPG/upload");
-
-        abstractImage.getUploadedFile().setFilename("upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file??.JPG");
-        assertThat(imageServerService.buildImageServerFullUrl(abstractImage, "file", "/upload"))
-                .isEqualTo(serverUrl2 + "/file/upload-f60ec797-7eed-4976-8d0d-20ae7e1ad046/file%3F%3F.JPG/upload");
-    }
 
 }

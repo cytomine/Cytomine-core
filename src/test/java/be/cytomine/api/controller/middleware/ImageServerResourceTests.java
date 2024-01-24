@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.hamcrest.Matchers.greaterThan;
@@ -76,7 +77,7 @@ public class ImageServerResourceTests {
     @Transactional
     public void get_a_imageserver_format() throws Exception {
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/formats"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/formats"))
                 .willReturn(
                         aResponse().withBody(
                                 """
