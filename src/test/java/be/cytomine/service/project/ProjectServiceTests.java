@@ -315,6 +315,9 @@ public class ProjectServiceTests {
         assertThat(projectService.findCommandHistory(List.of(project1), builder.given_superadmin().getId(), 0L, 0L, true, DateUtils.addSeconds(new Date(), -10).getTime(), DateUtils.addSeconds(new Date(), +10).getTime()))
                 .hasSize(1);
 
+        assertThat(projectService.findCommandHistory(List.of(), builder.given_superadmin().getId(), 0L, 0L, true, null, null))
+                .hasSize(0);
+
     }
 
 
