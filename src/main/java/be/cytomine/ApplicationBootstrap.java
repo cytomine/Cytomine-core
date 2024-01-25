@@ -188,16 +188,6 @@ class ApplicationBootstrap {
                     });
         }
 
-        File softwareSourceDirectory = new File(applicationProperties.getSoftwareSources());
-        if (!softwareSourceDirectory.exists() && !softwareSourceDirectory.mkdirs()) {
-            log.error("Software Sources folder doesn't exist");
-        }
-
-        bootstrapUtilDataService.initRabbitMq();
-
-        log.info("create multiple IS and Retrieval...");
-        bootstrapUtilDataService.updateProcessingServerRabbitQueues();
-
         log.info("Check image filters...");
         bootstrapDataService.updateImageFilters();
         log.info ("#############################################################################");
