@@ -90,19 +90,7 @@ public class ApplicationProperties {
 
     private String internalProxyURL;
 
-    private String messageBrokerServerURL;
-
-    private Software software;
-
     private Annotation annotation;
-
-    public Software getSoftware() {
-        return software;
-    }
-
-    public void setSoftware(Software software) {
-        this.software = software;
-    }
 
     public Annotation getAnnotation() {
         return annotation;
@@ -110,34 +98,6 @@ public class ApplicationProperties {
 
     public void setAnnotation(Annotation annotation) {
         this.annotation = annotation;
-    }
-
-
-
-
-}
-@ToString
-class Software {
-    public Path path;
-
-    public Path getPath() {
-        return path;
-    }
-
-    public void setPath(Path path) {
-        this.path = path;
-    }
-}
-@ToString
-class Path {
-    private String softwareImages;
-
-    public String getSoftwareImages() {
-        return softwareImages;
-    }
-
-    public void setSoftwareImages(String softwareImages) {
-        this.softwareImages = softwareImages;
     }
 }
 @ToString

@@ -83,7 +83,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
 
     @Autowired
     PermissionService permissionService;
-    
+
     @Autowired
     SecUserService secUserService;
 
@@ -92,19 +92,19 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
 
     @Autowired
     ProjectRepresentativeUserRepository projectRepresentativeUserRepository;
-    
+
     @Autowired
     DescriptionService descriptionService;
-    
+
     @Autowired
     AttachedFileService attachedFileService;
-    
+
     @Autowired
     PropertyService propertyService;
 
     @Autowired
     ImageInstanceService imageInstanceService;
-    
+
     @Autowired
     TagDomainAssociationService tagDomainAssociationService;
 
@@ -113,7 +113,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
 
     @Autowired
     UserAnnotationRepository userAnnotationRepository;
-    
+
     @BeforeEach
     public void before() throws Exception {
         if (project == null) {
@@ -898,15 +898,6 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         expectOK(() -> { imageInstanceService.delete(image, null, null, false); });
     }
 
-    @Disabled("wait for software package")
-    @Test
-    @WithMockUser(username = SUPERADMIN)
-    public void testRestrictedProjectWithJobData() {
-        Assertions.fail("todo");
-    }
-
-
-
     @Test
     @WithMockUser(username = USER_ACL_ADMIN)
     public void readonly_project_scenario_for_admin(){
@@ -1368,7 +1359,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
 
         return result;
     }
-    
+
 
 
 

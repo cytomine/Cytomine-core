@@ -71,7 +71,6 @@ application:
   ImageServerPublicKey: imageServerPublicKey
   rabbitMQPrivateKey: rabbitMQPrivateKey
   rabbitMQPublicKey: rabbitMQPublicKey
-  softwareSources: softwareSources/
 
   instanceHostWebsite: instanceHostWebsite.com
   instanceHostSupportMail: instanceHostSupportMail@email.com
@@ -90,12 +89,8 @@ application:
 
   defaultLanguage: ENGLISH
   internalProxyURL: http://localhost:8888
-  messageBrokerServerURL: messageBrokerServerURL
   annotation:
     maxNumberOfPoint: 200
-  software:
-    path:
-      softwareImages: softwareImages/
 
   notification:
     email: email@email.com
@@ -107,7 +102,6 @@ application:
       project: [ "ALL" ]
       ontology: [ "ROLE_ADMIN" ]
       storage: [ "ROLE_USER","ROLE_ADMIN" ]
-      software: [ "ROLE_USER", "ROLE_ADMIN" ]
       activity: [ "ALL" ]
       admin: [ "ROLE_ADMIN" ]
       help: [ "ALL" ]
