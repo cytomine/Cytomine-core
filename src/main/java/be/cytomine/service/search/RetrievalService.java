@@ -110,6 +110,22 @@ public class RetrievalService extends ModelService {
         return "";
     }
 
+    public void deleteIndex(AnnotationDomain annotation) throws IOException, InterruptedException {
+        String url = applicationProperties.getRetrievalServerURL() + "/api/images/remove?filename=" + annotation.getId();
+        HttpRequest request = HttpRequest
+            .newBuilder()
+            .uri(URI.create(url))
+            .DELETE()
+            .build();
+
+        HttpResponse<byte[]> response = this.client.send(
+            request,
+            HttpResponse.BodyHandlers.ofByteArray()
+        );
+
+        log.info(String.valueOf(response.statusCode()));
+    }
+
     public Map<String, Object> retrieveSimilarImages(
         AnnotationDomain annotation,
         CropParameter parameters,

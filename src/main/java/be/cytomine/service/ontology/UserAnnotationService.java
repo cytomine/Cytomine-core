@@ -589,6 +589,13 @@ public class UserAnnotationService extends ModelService {
     protected void afterDelete(CytomineDomain domain, CommandResponse response) {
         response.getData().put("annotation", response.getData().get("userannotation"));
         response.getData().remove("userannotation");
+
+        /* Delete the annotation from the CBIR database */
+        try {
+            retrievalService.deleteIndex((AnnotationDomain) domain);
+        } catch (IOException | InterruptedException exception) {
+            log.error(exception.getMessage());
+        }
     }
 
     public List<CommandResponse> repeat(UserAnnotation userAnnotation, Long baseSliceId, int repeat) {
