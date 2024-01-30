@@ -28,10 +28,8 @@ public class AppEngineService {
     public ResponseEntity<String> get(String uri) {
         try {
             return new RestTemplate().getForEntity(buildFullUrl(uri), String.class);
-        } catch (HttpClientErrorException e) {
+        } catch (HttpClientErrorException | HttpServerErrorException.InternalServerError e) {
             return JsonResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
-        } catch (HttpServerErrorException.InternalServerError e) {
-            throw new MiddlewareException("App engine returned a 500 HTTP error.");
         }
     }
 
