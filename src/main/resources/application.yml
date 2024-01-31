@@ -103,6 +103,5 @@ application:
     maxNumberOfPoint: ${ANNOTATION_MAX_POINTS:200}
 
   appEngine:
-    enabled: ${APP_ENGINE_ENABLED:true}
-    url: ${APP_ENGINE_URL:http://localhost:8082} # TODO
-    apiBasePath: ${APP_ENGINE_API_BASE_PATH:/api/v1/}
+    enabled: ${APPENGINE_ENABLED:true}
+    apiBasePath: ${APPENGINE_API_BASE_PATH:/appengine/v1/}

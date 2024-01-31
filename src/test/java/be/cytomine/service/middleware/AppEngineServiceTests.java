@@ -7,6 +7,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.ResponseEntity;
@@ -26,12 +27,16 @@ public class AppEngineServiceTests {
     @Autowired
     AppEngineService appEngineService;
 
-    private static WireMockServer wireMockServer = new WireMockServer(8889);
+    private static WireMockServer wireMockServer = new WireMockServer(8888);
+
+    @Value("${application.appEngine.apiBasePath}")
+    private String apiBasePath;
 
     @BeforeAll
     public static void beforeAll() {
         wireMockServer.start();
     }
+
 
     @AfterAll
     public static void afterAll() {
@@ -42,9 +47,9 @@ public class AppEngineServiceTests {
     }
 
     @Test
-    void get_() {
-        configureFor("localhost", 8889);
-        stubFor(get(urlEqualTo("/api/v1/task"))
+    void get_task() {
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo(apiBasePath + "task"))
                 .willReturn(
                         aResponse().withBody(
                                 """

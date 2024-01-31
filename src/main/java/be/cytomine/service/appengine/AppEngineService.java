@@ -1,9 +1,8 @@
 package be.cytomine.service.appengine;
 
 import be.cytomine.api.JsonResponseEntity;
-import be.cytomine.exceptions.MiddlewareException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -14,15 +13,14 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 @Service
 public class AppEngineService {
-
-    @Value("${application.appEngine.url}")
-    private String url;
+    @Value("${application.internalProxyURL}")
+    private String internalProxyUrl;
 
     @Value("${application.appEngine.apiBasePath}")
     private String apiBasePath;
 
     private String buildFullUrl(String uri) {
-        return url + apiBasePath + uri;
+        return internalProxyUrl + apiBasePath + uri;
     }
 
     public ResponseEntity<String> get(String uri) {

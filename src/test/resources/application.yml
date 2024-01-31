@@ -75,10 +75,8 @@ application:
   instanceHostPhoneNumber: 0999999999
 
   appEngine:
-    enabled: true
-    url: http://localhost:8889
-    apiBasePath: /api/v1/
-
+    enabled: ${APPENGINE_ENABLED:true}
+    apiBasePath: ${APPENGINE_API_BASE_PATH:/appengine/v1/}
 
   authentication:
     jwt:

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -46,7 +47,10 @@ public class TaskRunResourceTests {
     @Autowired
     private MockMvc restTaskRunControllerMockMvc;
 
-    private final static WireMockServer wireMockServer = new WireMockServer(8889);
+    @Value("${application.appEngine.apiBasePath}")
+    private String apiBasePath;
+
+    private final static WireMockServer wireMockServer = new WireMockServer(8888);
 
     @BeforeAll
     public static void beforeAll() {
@@ -88,8 +92,8 @@ public class TaskRunResourceTests {
                   "state": "created"
                 }""";
 
-        configureFor("localhost", 8889);
-        stubFor(WireMock.post(urlEqualTo("/api/v1/tasks/" + taskId + "/runs"))
+        configureFor("localhost", 8888);
+        stubFor(WireMock.post(urlEqualTo(apiBasePath + "tasks/" + taskId + "/runs"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -114,8 +118,8 @@ public class TaskRunResourceTests {
         String queryBody = "{\"value\": 0, \"param_name\": \"" + paramName + "\"}";
         String mockResponse = "{\"value\": 0, \"param_name\": \"" + paramName + "\", \"task_run_id\": \"" + taskRunId + "\"}";
         String appEngineUriSection = "task-runs/" + taskRunId + "/input-provisions/" + paramName;
-        configureFor("localhost", 8889);
-        stubFor(WireMock.put(urlEqualTo("/api/v1/" + appEngineUriSection))
+        configureFor("localhost", 8888);
+        stubFor(WireMock.put(urlEqualTo(apiBasePath + appEngineUriSection))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -149,8 +153,8 @@ public class TaskRunResourceTests {
         String queryBody = "[{\"value\": 0, \"param_name\": \"" + paramName + "\"}]";
         String mockResponse = "[{\"value\": 0, \"param_name\": \"" + paramName + "\", \"task_run_id\": \"" + taskRunId + "\"}]";
         String appEngineUriSection = "task-runs/" + taskRunId + "/input-provisions";
-        configureFor("localhost", 8889);
-        stubFor(WireMock.put(urlEqualTo("/api/v1/" + appEngineUriSection))
+        configureFor("localhost", 8888);
+        stubFor(WireMock.put(urlEqualTo(apiBasePath + appEngineUriSection))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -174,8 +178,8 @@ public class TaskRunResourceTests {
         UUID taskRunId = taskRun.getTaskRunId();
         String mockResponse = getTaskRunBody(taskRunId);
         String appEngineUriSection = "task-runs/" + taskRunId;
-        configureFor("localhost", 8889);
-        stubFor(WireMock.get(urlEqualTo("/api/v1/" + appEngineUriSection))
+        configureFor("localhost", 8888);
+        stubFor(WireMock.get(urlEqualTo(apiBasePath + appEngineUriSection))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -199,8 +203,8 @@ public class TaskRunResourceTests {
         String queryBody = "{\"desired\": \"running\"}";
         String mockResponse = getTaskRunBody(taskRunId);
         String appEngineUriSection = "task-runs/" + taskRunId + "/state-actions";
-        configureFor("localhost", 8889);
-        stubFor(WireMock.post(urlEqualTo("/api/v1/" + appEngineUriSection))
+        configureFor("localhost", 8888);
+        stubFor(WireMock.post(urlEqualTo(apiBasePath + appEngineUriSection))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )

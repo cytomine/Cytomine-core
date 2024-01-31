@@ -50,7 +50,7 @@ public class TaskRunAuthorizationTest extends CRDAuthorizationTest {
     @Autowired
     PermissionService permissionService;
 
-    private static WireMockServer wireMockServer = new WireMockServer(8889);
+    private static WireMockServer wireMockServer = new WireMockServer(8888);
 
     @BeforeAll
     public static void beforeAll() {
@@ -137,7 +137,7 @@ public class TaskRunAuthorizationTest extends CRDAuthorizationTest {
                 "  \"state\": \"created\"\n" +
                 "}";
 
-        configureFor("localhost", 8889);
+        configureFor("localhost", 8888);
         stubFor(WireMock.post(urlEqualTo("/api/v1/tasks/" + taskId + "/runs"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
