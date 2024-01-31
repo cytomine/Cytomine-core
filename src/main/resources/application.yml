@@ -104,4 +104,4 @@ application:
 
   appEngine:
     enabled: ${APPENGINE_ENABLED:true}
-    apiBasePath: ${APPENGINE_API_BASE_PATH:/appengine/v1/}
+    apiBasePath: ${APPENGINE_API_BASE_PATH:/app-engine/v1/}
