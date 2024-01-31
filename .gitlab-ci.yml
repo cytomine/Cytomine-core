@@ -107,8 +107,24 @@ run-junit:
       name: cytomine/postgis:${POSTGIS_VERSION}
     - alias: mongodb
       name: mongo:4.4.18-focal
-    - alias: rabbitmq
-      name: rabbitmq:3.10
+  variables:
+    # postgres config
+    POSTGRES_DB: docker
+    POSTGRES_USER: docker
+    POSTGRES_PASSWORD: password
+    # mongo config
+    MONGO_INITDB_ROOT_USERNAME: mongoadmin
+    MONGO_INITDB_ROOT_PASSWORD: secret
+    MONGO_INIT_DATABASE: cytomine
+    # core configuration
+    POSTGIS_HOST: postgres
+    POSTGIS_DB_NAME: docker
+    POSTGIS_USER: docker
+    POSTGIS_PASSWORD: password
+    MONGO_HOST: mongodb
+    MONGO_USER: mongoadmin
+    MONGO_PASS: secret
+    MONGO_DB_NAME: cytomine
   script:
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
     - sed -i -- "s/localhost:5432/postgres:5432/g" src/test/resources/application.yml
