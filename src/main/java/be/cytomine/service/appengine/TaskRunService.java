@@ -108,6 +108,6 @@ public class TaskRunService {
 
     public ResponseEntity<?> getInputs(long projectId, UUID taskRunId) {
         checkTaskRun(projectId, taskRunId);
-        return appEngineService.get("task-runs/" + taskRunId.toString() + "/outputs");
+        return appEngineService.get("task-runs/" + taskRunId.toString() + "/inputs");
     }
 }
