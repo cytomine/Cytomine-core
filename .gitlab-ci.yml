@@ -3,6 +3,7 @@ stages:
   - test
   - build
 
+
 variables:
   DOCKER_IMAGE_NAME: 'cytomine/core'
   ENTRYPOINT_SCRIPTS_VERSION: '1.3.0'
@@ -13,14 +14,6 @@ variables:
 default:
   tags:
     - docker
-
-
-workflow:
-  rules:
-    # Avoid the pipeline to be triggered for merge request event, because it would be a duplicated event when
-    #  a push is made on a branch that has an open merge request linked (as suggested in the default GitLab workflow)
-    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
-      when: never
 
 
 make-version-name:
