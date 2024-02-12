@@ -165,7 +165,7 @@ public class SharedAnnotationService extends ModelService {
 
             BufferedImage bufferedImage;
             try {
-                InputStream is = new ByteArrayInputStream(imageServerService.crop(annotation, cropParameter, null).getContent());
+                InputStream is = new ByteArrayInputStream(imageServerService.crop(annotation, cropParameter, null, null).getBody());
                 bufferedImage = ImageIO.read(is);
             } catch(Exception e) {
                 bufferedImage = null;

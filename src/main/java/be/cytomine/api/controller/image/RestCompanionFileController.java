@@ -29,6 +29,7 @@ import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
@@ -101,13 +102,12 @@ public class RestCompanionFileController extends RestCytomineController {
 
 
     @GetMapping("/companionfile/{id}/download")
-    public RedirectView download(@PathVariable Long id) throws IOException {
+    public ResponseEntity<byte[]> download(@PathVariable Long id, ProxyExchange<byte[]> proxy) throws IOException {
         log.debug("REST request to download companionfile");
         CompanionFile companionFile = companionFileService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("CompanionFile", id));
         // TODO: in abstract image, there is no check fos download auth!?
-        String url = imageServerService.downloadUri(companionFile);
-        return new RedirectView(url);
+        return imageServerService.download(companionFile, proxy);
     }
 
 

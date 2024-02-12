@@ -46,8 +46,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -82,6 +84,20 @@ public class UploadedFileResourceTests {
 
     @Autowired
     private UploadedFileRepository uploadedFileRepository;
+
+    private static WireMockServer wireMockServer = new WireMockServer(8888);
+
+    @BeforeAll
+    public static void beforeAll() {
+        wireMockServer.start();
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        try {
+            wireMockServer.stop();
+        } catch (Exception e) {}
+    }
     
     @Test
     @Transactional
@@ -401,7 +417,6 @@ public class UploadedFileResourceTests {
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.image.UploadedFile"))
                 .andExpect(jsonPath("$.created").exists())
                 .andExpect(jsonPath("$.projects").hasJsonPath())
-                .andExpect(jsonPath("$.imageServer").hasJsonPath())
                 .andExpect(jsonPath("$.storage").hasJsonPath())
                 .andExpect(jsonPath("$.path").hasJsonPath())
                 .andExpect(jsonPath("$.filename").hasJsonPath())
@@ -509,18 +524,25 @@ public class UploadedFileResourceTests {
     }
 
     @Test
-    public void download_abstract_image() throws Exception {
+    public void download_uploaded_file() throws Exception {
         UploadedFile uploadedFile = builder.given_a_uploaded_file();
-        uploadedFile.getImageServer().setBasePath("/data/images");
-        uploadedFile.getImageServer().setUrl("http://localhost:8888");
         uploadedFile.setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        uploadedFile.setOriginalFilename("CMU-2.mrxs");
         uploadedFile.setContentType("MRXS");
+
+
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes();
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/file/" + URLEncoder.encode(uploadedFile.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=" + URLEncoder.encode(uploadedFile.getOriginalFilename(), StandardCharsets.UTF_8)))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
+
         MvcResult mvcResult = restUploadedFileControllerMockMvc.perform(get("/api/uploadedfile/{id}/download", uploadedFile.getId()))
-                .andDo(print()).andReturn();
-        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
-        assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/file/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/")+"/export");
-
-
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 }

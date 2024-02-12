@@ -72,7 +72,6 @@ application:
   rabbitMQPrivateKey: rabbitMQPrivateKey
   rabbitMQPublicKey: rabbitMQPublicKey
   softwareSources: softwareSources/
-  useHTTPInternally: true
 
   instanceHostWebsite: instanceHostWebsite.com
   instanceHostSupportMail: instanceHostSupportMail@email.com
@@ -90,7 +89,7 @@ application:
 
 
   defaultLanguage: ENGLISH
-  imageServerURL: [http://ims.cytomine.local]
+  internalProxyURL: http://localhost:8888
   messageBrokerServerURL: messageBrokerServerURL
   annotation:
     maxNumberOfPoint: 200

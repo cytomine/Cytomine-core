@@ -63,8 +63,7 @@ application:
   serverId: ${SERVER_ID:default}
   serverURL: ${SERVER_URL:#{'http://cytomine.local'}}
   storagePath: ${STORAGE_PATH:/data/images}
-  useHTTPInternally: ${USE_HTTP_INTERNALLY:false}
-  
+
   adminPassword: ${ADMIN_PASSWORD:adminPassword}
   adminEmail: ${ADMIN_EMAIL:dev@cytomine.com}
   adminPublicKey: ${ADMIN_PUBLIC_KEY:adminPublicKey}
@@ -93,8 +92,7 @@ application:
       token-validity-in-seconds-for-remember-me: ${TOKEN_VALIDITY_IN_SECONDS_REMEMBER_ME:2592000} 
       token-validity-in-seconds-for-short-term: ${TOKEN_VALIDITY_IN_SECONDS_SHORT_TERM:240}
 
-  imageServerURL:
-    - ${IMAGE_SERVER_URL:#{'http://ims.cytomine.local'}}
+  internalProxyURL: ${INTERNAL_PROXY_URL:http://localhost}
   
   annotation:
     maxNumberOfPoint: ${ANNOTATION_MAX_POINTS:200}

@@ -141,8 +141,7 @@ class ApplicationBootstrap {
         log.info ("#############################################################################");
 
         UrlApi.setServerURL(
-                applicationProperties.getServerURL(),
-                applicationProperties.getUseHTTPInternally()
+                applicationProperties.getServerURL()
         );
 
         if (EnvironmentUtils.isTest(environment) && secUserRepository.count() == 0) {
@@ -197,7 +196,6 @@ class ApplicationBootstrap {
         bootstrapUtilDataService.initRabbitMq();
 
         log.info("create multiple IS and Retrieval...");
-        bootstrapUtilDataService.createMultipleImageServer();
         bootstrapUtilDataService.updateProcessingServerRabbitQueues();
 
         log.info("Check image filters...");

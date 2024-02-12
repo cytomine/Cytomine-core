@@ -23,7 +23,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import java.util.List;
 
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
 @Getter
@@ -87,12 +86,9 @@ public class ApplicationProperties {
 
     private String softwareSources;
 
-    private Boolean useHTTPInternally;
-
-
     private String defaultLanguage;
 
-    private List<String> imageServerURL;
+    private String internalProxyURL;
 
     private String messageBrokerServerURL;
 

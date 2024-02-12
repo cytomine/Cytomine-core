@@ -22,6 +22,7 @@ import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.dto.ImageParameter;
+import be.cytomine.service.dto.TileParameters;
 import be.cytomine.service.dto.WindowParameter;
 import be.cytomine.service.image.*;
 import be.cytomine.service.middleware.ImageServerService;
@@ -30,6 +31,7 @@ import be.cytomine.utils.JsonObject;
 import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -113,10 +115,56 @@ public class RestSliceInstanceController extends RestCytomineController {
         return delete(sliceInstanceService, JsonObject.of("id", id), null);
     }
 
+    @GetMapping("/sliceinstance/{id}/normalized-tile/zoom/{z}/tx/{tx}/ty/{ty}.{format}")
+    public ResponseEntity<byte[]> tile(
+            @PathVariable Long id,
+            @PathVariable Long z,
+            @PathVariable Long tx,
+            @PathVariable Long ty,
+
+            @PathVariable String format,
+            @RequestParam(required = false) String channels,
+            @RequestParam(required = false) String zSlices,
+            @RequestParam(required = false) String timepoints,
+            @RequestParam(required = false) String filters,
+            @RequestParam(required = false) String minIntensities,
+            @RequestParam(required = false) String maxIntensities,
+            @RequestParam(required = false) String gammas,
+            @RequestParam(required = false) String colormaps,
+
+            ProxyExchange<byte[]> proxy
+    ) throws IOException {
+        /* Request parameter validation is delegated to PIMS to avoid double validation. Moreover, these parameter
+        validation is complex as they can accept multiple types: e.g. 'gammas' accept a Double or List<Double> whose
+        length is defined by the number of selected channels in 'channels' parameter.
+         */
+//        log.debug("REST request get sliceinstance {} normalized tile, zoom: {} / tx: {} / ty: {}", id, z, tx, ty);
+
+        SliceInstance sliceInstance = sliceInstanceService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", id));
+
+        TileParameters tileParameters = new TileParameters();
+        tileParameters.setFormat(format);
+        tileParameters.setZoom(z);
+        tileParameters.setTx(tx);
+        tileParameters.setTy(ty);
+        tileParameters.setChannels(channels);
+        tileParameters.setZSlices(zSlices);
+        tileParameters.setTimepoints(timepoints);
+        tileParameters.setFilters(filters);
+        tileParameters.setMinIntensities(minIntensities);
+        tileParameters.setMaxIntensities(maxIntensities);
+        tileParameters.setGammas(gammas);
+        tileParameters.setColormaps(colormaps);
+
+        String etag = getRequestETag();
+        return imageServerService.normalizedTile(sliceInstance, tileParameters, etag, proxy);
+    }
+
 //
 //    // TODO:MIGRATION GET params vs POST params!
     @RequestMapping(value = "/sliceinstance/{id}/thumb.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void thumb(
+    public ResponseEntity<byte[]> thumb(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(required = false) Boolean refresh,
@@ -125,8 +173,9 @@ public class RestSliceInstanceController extends RestCytomineController {
             @RequestParam(required = false) Boolean inverse,
             @RequestParam(required = false) Double contrast,
             @RequestParam(required = false) Double gamma,
-            @RequestParam(required = false) String bits
+            @RequestParam(required = false) String bits,
 
+            ProxyExchange<byte[]> proxy
     ) throws IOException {
         log.debug("REST request get sliceinstance {} thumb {}", id, format);
         ImageParameter thumbParameter = new ImageParameter();
@@ -144,11 +193,11 @@ public class RestSliceInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", id));
 
         String etag = getRequestETag();
-        responseImage(imageServerService.thumb(sliceInstance, thumbParameter, etag));
+        return imageServerService.thumb(sliceInstance, thumbParameter, etag, proxy);
     }
 
     @RequestMapping(value = "/sliceinstance/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void crop(
+    public ResponseEntity<byte[]> crop(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(defaultValue = "256") Integer maxSize,
@@ -175,7 +224,9 @@ public class RestSliceInstanceController extends RestCytomineController {
             @RequestParam(required = false) Integer alpha,
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
-            @RequestParam(required = false) Integer jpegQuality
+            @RequestParam(required = false) Integer jpegQuality,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a slice instance");
         SliceInstance sliceInstance = sliceInstanceService.find(id)
@@ -211,42 +262,20 @@ public class RestSliceInstanceController extends RestCytomineController {
 
         String etag = getRequestETag();
 
-        responseImage(imageServerService.crop(sliceInstance.getBaseSlice(), cropParameter,etag));
-    }
-
-    @RequestMapping(value = "/sliceinstance/{id}/window_url-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> windowUrl(
-            @PathVariable Long id,
-            @PathVariable String format,
-            @PathVariable Integer x,
-            @PathVariable Integer y,
-            @PathVariable Integer w,
-            @PathVariable Integer h,
-            @RequestParam(defaultValue = "false", required = false) Boolean withExterior
-    ) throws UnsupportedEncodingException, ParseException {
-        log.debug("REST request get sliceinstance {} window url {}", id, format);
-        WindowParameter windowParameter = new WindowParameter();
-        windowParameter.setX(x);
-        windowParameter.setY(y);
-        windowParameter.setW(w);
-        windowParameter.setH(h);
-        windowParameter.setWithExterior(withExterior);
-        windowParameter.setFormat(format);
-        SliceInstance sliceInstance = sliceInstanceService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", id));
-        String url = imageServerService.windowUrl(sliceInstance.getBaseSlice(), windowParameter);
-        return responseSuccess(JsonObject.of("url", url));
+        return imageServerService.crop(sliceInstance.getBaseSlice(), cropParameter,etag, proxy);
     }
 
     @RequestMapping(value = "/sliceinstance/{id}/window-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void window(
+    public ResponseEntity<byte[]> window(
             @PathVariable Long id,
             @PathVariable String format,
             @PathVariable Integer x,
             @PathVariable Integer y,
             @PathVariable Integer w,
             @PathVariable Integer h,
-            @RequestParam(defaultValue = "false", required = false) Boolean withExterior
+            @RequestParam(defaultValue = "false", required = false) Boolean withExterior,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request get sliceinstance {} window {}", id, format);
         WindowParameter windowParameter = new WindowParameter();
@@ -264,40 +293,19 @@ public class RestSliceInstanceController extends RestCytomineController {
 //            params.location = getWKTGeometry(sliceInstance, params)
 
         String etag = getRequestETag();
-        responseImage(imageServerService.window(sliceInstance.getBaseSlice(), windowParameter, etag));
-    }
-
-    @RequestMapping(value = "/sliceinstance/{id}/camera_url-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> cameraUrl(
-            @PathVariable Long id,
-            @PathVariable String format,
-            @PathVariable Integer x,
-            @PathVariable Integer y,
-            @PathVariable Integer w,
-            @PathVariable Integer h
-    ) throws UnsupportedEncodingException, ParseException {
-        log.debug("REST request get sliceinstance {} camera url {}", id, format);
-        WindowParameter windowParameter = new WindowParameter();
-        windowParameter.setX(x);
-        windowParameter.setY(y);
-        windowParameter.setW(w);
-        windowParameter.setH(h);
-        windowParameter.setWithExterior(false);
-        windowParameter.setFormat(format);
-        SliceInstance sliceInstance = sliceInstanceService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", id));
-        String url = imageServerService.windowUrl(sliceInstance.getBaseSlice(), windowParameter);
-        return responseSuccess(JsonObject.of("url", url));
+        return  imageServerService.window(sliceInstance.getBaseSlice(), windowParameter, etag, proxy);
     }
 
     @RequestMapping(value = "/sliceinstance/{id}/camera-{x}-{y}-{w}-{h}.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void camera(
+    public ResponseEntity<byte[]> camera(
             @PathVariable Long id,
             @PathVariable String format,
             @PathVariable Integer x,
             @PathVariable Integer y,
             @PathVariable Integer w,
-            @PathVariable Integer h
+            @PathVariable Integer h,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request get sliceinstance {} camera {}", id, format);
         WindowParameter windowParameter = new WindowParameter();
@@ -311,7 +319,7 @@ public class RestSliceInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", id));
 
         String etag = getRequestETag();
-        responseImage(imageServerService.window(sliceInstance.getBaseSlice(), windowParameter, etag));
+        return  imageServerService.window(sliceInstance.getBaseSlice(), windowParameter, etag, proxy);
     }
 
 

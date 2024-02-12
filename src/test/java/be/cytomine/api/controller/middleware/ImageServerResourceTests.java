@@ -18,8 +18,6 @@ package be.cytomine.api.controller.middleware;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.middleware.ImageServer;
-import be.cytomine.domain.project.Project;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -27,13 +25,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.hamcrest.Matchers.greaterThan;
@@ -74,40 +72,12 @@ public class ImageServerResourceTests {
     }
 
 
-    @Test
-    @Transactional
-    public void list_all_imageservers() throws Exception {
-        ImageServer imageserver = builder.given_an_image_server();
-        restImageserverControllerMockMvc.perform(get("/api/imageserver.json"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.name=='"+imageserver.getName()+"')]").exists());
-    }
-
-
-    @Test
-    @Transactional
-    public void get_a_imageserver() throws Exception {
-        ImageServer imageserver = builder.given_an_image_server();
-        restImageserverControllerMockMvc.perform(get("/api/imageserver/{id}.json", imageserver.getId()))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(imageserver.getId().intValue()));
-    }
-
 
     @Test
     @Transactional
     public void get_a_imageserver_format() throws Exception {
-
-        ImageServer imageServer = builder.given_an_image_server();
-        imageServer.setUrl("http://localhost:8888");
-        imageServer = builder.persistAndReturn(imageServer);
-
-
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/formats"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/formats"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -143,7 +113,7 @@ public class ImageServerResourceTests {
                         )
                 )
         );
-        restImageserverControllerMockMvc.perform(get("/api/imageserver/{id}/format.json", imageServer.getId()))
+        restImageserverControllerMockMvc.perform(get("/api/imageserver/format.json"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
