@@ -795,7 +795,8 @@ public class SecUserService extends ModelService {
         }
 
         if (image != null) {
-            layersFormatted.addAll(secUserRepository.findAllUserJob(image.getId(), image.getProject().getId()).stream().map(JobLayerDTO::getDataFromDomain).collect(Collectors.toList()));
+            //TODO: refactor as job & software table are deleted
+//            layersFormatted.addAll(secUserRepository.findAllUserJob(image.getId(), image.getProject().getId()).stream().map(JobLayerDTO::getDataFromDomain).collect(Collectors.toList()));
         }
         return layersFormatted;
     }

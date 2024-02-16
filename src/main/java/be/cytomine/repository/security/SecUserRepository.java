@@ -72,19 +72,19 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
     List<SecUser> findAllUsersByContainer(Long containerId);
 
 
-    @Query(value = "SELECT DISTINCT u.id as id, u.username as username, " +
-            "s.name as softwareName, s.software_version as softwareVersion, " +
-            "j.created as created, u.job_id as job " +
-            "FROM annotation_index ai " +
-            "RIGHT JOIN slice_instance si ON ai.slice_id = si.id " +
-            "RIGHT JOIN sec_user u ON ai.user_id = u.id " +
-            "RIGHT JOIN job j ON j.id = u.job_id " +
-            "RIGHT JOIN software_project sp ON sp.software_id = j.software_id " +
-            "RIGHT JOIN software s ON s.id = sp.software_id " +
-            "WHERE si.image_id = :imageInstanceId " +
-            "AND sp.project_id = :projectInstanceId " +
-            "ORDER BY j.created", nativeQuery = true)
-    List<JobLayerDTO> findAllUserJob(Long imageInstanceId, Long projectInstanceId);
+//     @Query(value = "SELECT DISTINCT u.id as id, u.username as username, " +
+//             "s.name as softwareName, s.software_version as softwareVersion, " +
+//             "j.created as created, u.job_id as job " +
+//             "FROM annotation_index ai " +
+//             "RIGHT JOIN slice_instance si ON ai.slice_id = si.id " +
+//             "RIGHT JOIN sec_user u ON ai.user_id = u.id " +
+//             "RIGHT JOIN job j ON j.id = u.job_id " +
+//             "RIGHT JOIN software_project sp ON sp.software_id = j.software_id " +
+//             "RIGHT JOIN software s ON s.id = sp.software_id " +
+//             "WHERE si.image_id = :imageInstanceId " +
+//             "AND sp.project_id = :projectInstanceId " +
+//             "ORDER BY j.created", nativeQuery = true)
+//     List<JobLayerDTO> findAllUserJob(Long imageInstanceId, Long projectInstanceId);
 
 
 

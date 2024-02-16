@@ -21,22 +21,15 @@ import be.cytomine.domain.image.Mime;
 import be.cytomine.domain.meta.Configuration;
 import be.cytomine.domain.meta.ConfigurationReadingRole;
 import be.cytomine.domain.processing.ImageFilter;
-import be.cytomine.domain.processing.ParameterConstraint;
-import be.cytomine.domain.processing.SoftwareUserRepository;
 import be.cytomine.domain.security.*;
 import be.cytomine.repository.image.MimeRepository;
 import be.cytomine.repository.meta.ConfigurationRepository;
-import be.cytomine.repository.middleware.AmqpQueueRepository;
-import be.cytomine.repository.middleware.MessageBrokerServerRepository;
 import be.cytomine.repository.ontology.RelationRepository;
 import be.cytomine.repository.processing.ImageFilterRepository;
-import be.cytomine.repository.processing.ParameterConstraintRepository;
-import be.cytomine.repository.processing.ProcessingServerRepository;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
-import be.cytomine.service.amqp.AmqpQueueConfigService;
 import be.cytomine.service.image.server.StorageService;
 import be.cytomine.utils.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -82,24 +75,12 @@ public class BootstrapUtilsService {
 
     @Autowired
     MimeRepository mimeRepository;
-    
+
     @Autowired
     ConfigurationRepository configurationRepository;
 
     @Autowired
     EntityManager entityManager;
-
-    @Autowired
-    ProcessingServerRepository processingServerRepository;
-
-    @Autowired
-    MessageBrokerServerRepository messageBrokerServerRepository;
-
-    @Autowired
-    AmqpQueueRepository amqpQueueRepository;
-
-    @Autowired
-    AmqpQueueConfigService amqpQueueConfigService;
 
     @Autowired
     SecUserRepository secUserRepository;
@@ -109,9 +90,6 @@ public class BootstrapUtilsService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private ParameterConstraintRepository parameterConstraintRepository;
 
     public void createRole(String role) {
         secRoleRepository.createIfNotExist(role);
@@ -221,75 +199,6 @@ public class BootstrapUtilsService {
 //        configs << new Configuration(key: "notification_smtp_port", value: grailsApplication.config.grails.notification.smtp.port, readingRole: adminRole)
     }
 
-    public void updateProcessingServerRabbitQueues() {
-        // TODO: TRANSLATION DONE, BUT amqpQueueService HAS TO BE IMPLEMENTED
-//        for (ProcessingServer processingServer : processingServerRepository.findAll()) {
-//            String processingServerName = StringUtils.capitalize(processingServer.getName());
-//            String queueName = AmqpQueueService.queuePrefixProcessingServer + processingServerName;
-//            // TODO: in grails version we use processingServer.queueName (bug?)
-//            amqpQueueService.createAmqpQueueDefault(queueName);
-//        }
-    }
-
-    public void initRabbitMq() {
-        // TODO: TRANSLATION DONE, BUT amqpQueueService HAS TO BE IMPLEMENTED
-//        log.info("init RabbitMQ connection...");
-//        String messageBrokerURL = applicationConfiguration.getCytomine().getMessageBrokerServerURL();
-//        log.info("messageBrokerURL = " + messageBrokerURL);
-//        Optional<MessageBrokerServer> firstMessageBrokerServer = messageBrokerServerRepository.findAll().stream().findFirst();
-//        boolean toUpdate = false;
-//
-//        for (MessageBrokerServer messageBroker : messageBrokerServerRepository.findAll()) {
-//            if(!messageBrokerURL.equals(messageBroker.getHost()+":"+messageBroker.getPort())) {
-//                toUpdate = true;
-//                log.info(messageBroker.getHost() + "is not in config, drop it");
-//                log.info("delete Message Broker Server " + messageBroker);
-//                messageBrokerServerRepository.delete(messageBroker);
-//            }
-//        }
-//
-//        MessageBrokerServer messageBrokerServer = firstMessageBrokerServer.orElse(null);
-//        String[] splittedURL = messageBrokerURL.split(":");
-//        if (toUpdate || firstMessageBrokerServer.isEmpty()) {
-//            messageBrokerServer = new MessageBrokerServer();
-//            messageBrokerServer.setName("MessageBrokerServer");
-//            messageBrokerServer.setHost(splittedURL[0]);
-//            messageBrokerServer.setPort(Integer.parseInt(splittedURL[1]));
-//            messageBrokerServerRepository.save(messageBrokerServer);
-//
-//            for (AmqpQueue amqpQueue : amqpQueueRepository.findAll()) {
-//                amqpQueue.setHost(messageBrokerServer.getHost());
-//                amqpQueueRepository.save(amqpQueue);
-//                if(!amqpQueueService.checkRabbitQueueExists("queueCommunication", messageBrokerServer)) {
-//                    AmqpQueue queueCommunication = amqpQueueService.read("queueCommunication");
-//                    amqpQueueService.createAmqpQueueDefault(queueCommunication);
-//                }
-//            }
-//
-//        }
-//        // Initialize default configurations for amqp queues
-//        amqpQueueConfigService.initAmqpQueueConfigDefaultValues();
-//
-//        // Initialize RabbitMQ queue to communicate software added
-//        if(amqpQueueRepository.findByName("queueCommunication").isEmpty()) {
-//            AmqpQueue queueCommunication = new AmqpQueue();
-//            queueCommunication.setName("queueCommunication");
-//            queueCommunication.setHost(messageBrokerServer.getHost());
-//            queueCommunication.setExchange("exchangeCommunication");
-//            amqpQueueRepository.save(queueCommunication);
-//            amqpQueueService.createAmqpQueueDefault(queueCommunication);
-//        } else if(!amqpQueueService.checkRabbitQueueExists("queueCommunication", messageBrokerServer)) {
-//            AmqpQueue queueCommunication = amqpQueueService.read("queueCommunication");
-//            amqpQueueService.createAmqpQueueDefault(queueCommunication);
-//        }
-//        updateProcessingServerRabbitQueues();
-//
-//        if (EnvironmentUtils.isTest(environment)) {
-//            rabbitConnectionService.getRabbitConnection(messageBrokerServer);
-//        }
-
-
-    }
 
     // TODO: required?
 
@@ -399,105 +308,6 @@ public class BootstrapUtilsService {
 //        sql.close()
 //        });
 //    }
-
-
-
-    public void addDefaultProcessingServer() {
-//        log.info("Add the default processing server");
-//        // TODO: SpringSecurityUtils.doWithAuth { !!! ????!!!
-//
-//        if (processingServerRepository.findByName("local-server").isEmpty()) {
-//            ProcessingServer processingServer = new ProcessingServer();
-//            processingServer.setName("local-server");
-//            processingServer.setHost("slurm");
-//            processingServer.setUsername("cytomine");
-//            processingServer.setPort(22);
-//            processingServer.setType("cpu");
-//            processingServer.setProcessingMethodName("SlurmProcessingMethod");
-//            processingServer.setPersistentDirectory(applicationConfiguration.getCytomine().getSoftware().getPath().getSoftwareImages());
-//            processingServer.setIndex(1);
-//            String processingServerName = StringUtils.capitalize(processingServer.getName());
-//            String queueName = amqpQueueService.queuePrefixProcessingServer + processingServerName;
-//
-//            if (!amqpQueueService.checkAmqpQueueDomainExists(queueName)) {
-//                // Creation of the default processing server queue
-//                String exchangeName = AmqpQueueService.exchangePrefixProcessingServer + processingServerName;
-//                String brokerServerURL = (messageBrokerServerRepository.findByName("MessageBrokerServer"))
-//                        .orElseThrow(() -> new ObjectNotFoundException("No message broker server found")).getHost();
-//
-//                AmqpQueue amqpQueue = new AmqpQueue();
-//                amqpQueue.setName(queueName);
-//                amqpQueue.setHost(brokerServerURL);
-//                amqpQueue.setExchange(exchangeName);
-//                amqpQueueRepository.save(amqpQueue);
-//
-//                amqpQueueService.createAmqpQueueDefault(amqpQueue);
-//
-//                // Associates the processing server to an amqp queue
-//                processingServer.setAmqpQueue(amqpQueue);
-//                processingServerRepository.save(processingServer);
-//
-//                // Sends a message on the communication queue to warn the software router a new queue has been created
-//                JsonObject jsonObject = new JsonObject();
-//                jsonObject.put("requestType", "addProcessingServer");
-//                jsonObject.put("name", amqpQueue.getName());
-//                jsonObject.put("host", amqpQueue.getHost());
-//                jsonObject.put("exchange", amqpQueue.getExchange());
-//                jsonObject.put("processingServerId", processingServer.getId());
-//
-//                amqpQueueService.publishMessage(amqpQueueRepository.findByName("queueCommunication")
-//                        .orElseThrow(() -> new ObjectNotFoundException("amqpQueue queueCommunication not found")), jsonObject.toJsonString());
-//
-//            }
-//        }
-    }
-
-
-    public void addDefaultConstraints() {
-        log.info("Add the default constraints");
-        // SpringSecurityUtils.doWithAuth {
-        List<ParameterConstraint> parameterConstraints = new ArrayList<>();
-
-        //TODO: check if expression can work with java
-
-        log.info("Add Number constraints");
-        parameterConstraints.add(new ParameterConstraint("integer", "(\"[value]\".isInteger()", "Number"));
-        parameterConstraints.add(new ParameterConstraint("minimum", "(Double.valueOf(\"[parameterValue]\") as Number) <= (Double.valueOf(\"[value]\") as Number)", "Number"));
-        parameterConstraints.add(new ParameterConstraint("maximum", "(Double.valueOf(\"[parameterValue]\") as Number) >= (Double.valueOf(\"[value]\") as Number)", "Number"));
-        parameterConstraints.add(new ParameterConstraint("equals", "(Double.valueOf(\"[parameterValue]\") as Number) == (Double.valueOf(\"[value]\") as Number)", "Number"));
-        parameterConstraints.add(new ParameterConstraint("in", "\"[value]\".tokenize(\"[separator]\").find { elem -> (Double.valueOf(elem) as Number) == (Double.valueOf(\"[parameterValue]\") as Number) } != null", "Number"));
-
-        log.info("Add String constraints");
-        parameterConstraints.add(new ParameterConstraint("minimum", "\"[parameterValue]\".length() < [value]", "String"));
-        parameterConstraints.add(new ParameterConstraint("maximum", "\"[parameterValue]\".length() > [value]", "String"));
-        parameterConstraints.add(new ParameterConstraint("equals", "\"[parameterValue]\" == \"[value]\"", "String"));
-        parameterConstraints.add(new ParameterConstraint("in", "\"[value]\".tokenize(\"[separator]\").contains(\"[parameterValue]\")", "String"));
-
-        log.info("Add Boolean constraints");
-        parameterConstraints.add(new ParameterConstraint("equals", "Boolean.parseBoolean(\"[value]\") == Boolean.parseBoolean(\"[parameterValue]\")", "Boolean"));
-
-        log.info("Add Date constraints");
-        parameterConstraints.add(new ParameterConstraint("minimum", "new Date().parse(\"HH:mm:ss\", \"[parameterValue]\").format(\"HH:mm:ss\") < new Date().parse(\"HH:mm:ss\", \"[value]\").format(\"HH:mm:ss\")", "Date"));
-        parameterConstraints.add(new ParameterConstraint("maximum", "new Date().parse(\"HH:mm:ss\", \"[parameterValue]\").format(\"HH:mm:ss\") > new Date().parse(\"HH:mm:ss\", \"[value]\").format(\"HH:mm:ss\")", "Date"));
-        parameterConstraints.add(new ParameterConstraint("equals", "new Date().parse(\"HH:mm:ss\", \"[parameterValue]\").format(\"HH:mm:ss\") == new Date().parse(\"HH:mm:ss\", \"[value]\").format(\"HH:mm:ss\")", "Date"));
-        parameterConstraints.add(new ParameterConstraint("in", "\"[value]\".tokenize(\"[separator]\").contains(\"[parameterValue]\")", "Date"));
-
-// TODO:; SpringSecurityUtils.doWithAuth { ????
-        for (ParameterConstraint parameterConstraint : parameterConstraints) {
-            if (parameterConstraintRepository.findByNameAndDataType(parameterConstraint.getName(), parameterConstraint.getDataType()).isEmpty()) {
-                parameterConstraintRepository.save(parameterConstraint);
-            }
-        }
-    }
-
-    public void createSoftwareUserRepository(String provider, String username, String dockerUsername, String prefix) {
-        SoftwareUserRepository softwareUserRepository = new SoftwareUserRepository();
-        softwareUserRepository.setProvider(provider);
-        softwareUserRepository.setUsername(username);
-        softwareUserRepository.setDockerUsername(dockerUsername);
-        softwareUserRepository.setPrefix(prefix);
-        entityManager.persist(softwareUserRepository);
-    }
 
 
 }

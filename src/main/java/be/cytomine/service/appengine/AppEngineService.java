@@ -1,0 +1,59 @@
+package be.cytomine.service.appengine;
+
+import be.cytomine.api.JsonResponseEntity;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
+
+@Slf4j
+@Service
+public class AppEngineService {
+    @Value("${application.internalProxyURL}")
+    private String internalProxyUrl;
+
+    @Value("${application.appEngine.apiBasePath}")
+    private String apiBasePath;
+
+    private String buildFullUrl(String uri) {
+        return internalProxyUrl + apiBasePath + uri;
+    }
+
+    public ResponseEntity<String> get(String uri) {
+        try {
+            return new RestTemplate().getForEntity(buildFullUrl(uri), String.class);
+        } catch (HttpClientErrorException | HttpServerErrorException.InternalServerError e) {
+            return JsonResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        }
+    }
+
+    public <B> ResponseEntity<String> sendWithBody(HttpMethod method, String uri, B body, MediaType contentType) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(contentType);
+        HttpEntity<B> request = new HttpEntity<>(body, headers);
+
+        try {
+            if (method.matches("POST")) {
+                return new RestTemplate().postForEntity(buildFullUrl(uri), request, String.class);
+            } else if (method.matches("PUT")) {
+                return new RestTemplate().exchange(buildFullUrl(uri), HttpMethod.PUT, request, String.class);
+            } else {
+                throw new NotImplementedException("sendWithBody not implemented with method than {POST, PUT}");
+            }
+        } catch (HttpClientErrorException | HttpServerErrorException.InternalServerError e) {
+            return JsonResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsString());
+        }
+    }
+
+    public <B> ResponseEntity<String> post(String uri, B body, MediaType contentType) {
+        return sendWithBody(HttpMethod.POST, uri, body, contentType);
+    }
+
+    public <B> ResponseEntity<String> put(String uri, B body, MediaType contentType) {
+        return sendWithBody(HttpMethod.PUT, uri, body, contentType);
+    }
+}

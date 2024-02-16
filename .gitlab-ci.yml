@@ -57,24 +57,29 @@ run-junit:
   image: gradle:7.4.2-jdk17-alpine
   services:
     - alias: postgres
-      name: cytomine/postgis:${POSTGIS_VERSION}
+      name: cytomine/postgis:1.5.1
     - alias: mongodb
-      name: mongo:4.4.18-focal
-    - alias: rabbitmq
-      name: rabbitmq:3.10
+      name: cytomine/mongo:1.0.0
   variables:
-    GRADLE_USER_HOME: /cache/.gradle
-    POSTGRES_USER: docker
-    POSTGRES_PASSWORD: docker
-    POSTGRES_DB: docker
-    POSTGIS_VERSION: "15-3.3-alpine-1.2.0"
+    MONGO_INIT_DATABASE: cytomine
     MONGO_INITDB_ROOT_USERNAME: mongoadmin
-    MONGO_INITDB_ROOT_PASSWORD: secret
-    MONGO_INITDB_DATABASE: cytomine
+    MONGO_INITDB_ROOT_PASSWORD: password
+    MONGO_HOST: mongodb
+    MONGO_PORT: 27017
+    MONGO_DB_NAME: ${MONGO_INIT_DATABASE}
+    MONGO_USER: ${MONGO_INITDB_ROOT_USERNAME}
+    MONGO_PASS: ${MONGO_INITDB_ROOT_PASSWORD}
+    POSTGRES_DB: docker
+    POSTGRES_USER: docker
+    POSTGRES_PASSWORD: password
+    POSTGRES_HOST_AUTH_METHOD: trust
+    POSTGIS_HOST: postgres
+    POSTGIS_PORT: 5432
+    POSTGIS_DB_NAME: ${POSTGRES_DB}
+    POSTGIS_USER: ${POSTGRES_USER}
+    POSTGIS_PASS: ${POSTGRES_PASSWORD}
   script:
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
-    - sed -i -- "s/localhost:5432/postgres:5432/g" src/test/resources/application.yml
-    - "sed -i -- 's/host: localhost/host: mongodb/g' src/test/resources/application.yml"
     # test log too large for gitlab if executed at 'debug' log level
     - sed -i -- "s/name=\"be.cytomine\" level=\"debug\"/name=\"be.cytomine\" level=\"info\"/g" src/test/resources/logback-test.xml
     - gradle :test --no-daemon
@@ -82,6 +87,7 @@ run-junit:
     reports:
       junit: build/test-results/test/**/TEST-*.xml
       # TODO integrate code coverage
+
 
 
 build-push-docker-image:

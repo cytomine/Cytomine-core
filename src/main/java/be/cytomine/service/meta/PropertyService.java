@@ -58,7 +58,7 @@ public class PropertyService extends ModelService {
 
     @Autowired
     private PropertyRepository propertyRepository;
-    
+
     @Autowired
     private AnnotationDomainRepository annotationDomainRepository;
 
@@ -81,7 +81,7 @@ public class PropertyService extends ModelService {
     public Optional<Property> findById(Long id) {
 
         Optional<Property> property = propertyRepository.findById(id);
-        if (property.isPresent()  && !property.get().getDomainClassName().contains("Software")) {
+        if (property.isPresent()) {
             securityACLService.check(property.get().container(),READ);
         }
         return property;
@@ -89,7 +89,7 @@ public class PropertyService extends ModelService {
 
     public Optional<Property> findByDomainAndKey(CytomineDomain domain, String key) {
         Optional<Property> property = propertyRepository.findByDomainIdentAndKey(domain.getId(), key);
-        if (property.isPresent()  && !property.get().getDomainClassName().contains("Software")) {
+        if (property.isPresent()) {
             securityACLService.check(property.get().container(),READ);
         }
         return property;

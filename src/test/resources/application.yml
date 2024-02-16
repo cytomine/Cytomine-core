@@ -5,9 +5,9 @@ spring:
 
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:postgresql://localhost:5432/docker
-    username: docker
-    password: docker
+    url: jdbc:postgresql://${POSTGIS_HOST:localhost}:${POSTGIS_PORT:5432}/${POSTGIS_DB_NAME:docker}
+    username: ${POSTGIS_USER:docker}
+    password: ${POSTGIS_PASS:password}
     hikari:
       poolName: Hikari
       auto-commit: false
@@ -36,14 +36,12 @@ spring:
   data:
     mongodb:
       authentication-database: admin
-      username: mongoadmin
-      password: secret
-      database: cytomine
-      port: 27017
-      host: localhost
+      username: ${MONGO_USER:mongoadmin}
+      password: ${MONGO_PASS:secret}
+      database: ${MONGO_DB_NAME:cytomine}
+      port: ${MONGO_PORT:27017}
+      host: ${MONGO_HOST:localhost}
 
-      #uri: 'mongodb://mongoadmin:secret@localhost:27018/cytomine?authSource=admin&retryWrites=false' #?retryWrites=false&authSource=admin'
-      #auto-index-creation: true
 mongock:
   migration-scan-package:
     be.cytomine.config.nosqlmigration
@@ -71,31 +69,29 @@ application:
   ImageServerPublicKey: imageServerPublicKey
   rabbitMQPrivateKey: rabbitMQPrivateKey
   rabbitMQPublicKey: rabbitMQPublicKey
-  softwareSources: softwareSources/
 
   instanceHostWebsite: instanceHostWebsite.com
   instanceHostSupportMail: instanceHostSupportMail@email.com
   instanceHostPhoneNumber: 0999999999
+
+  appEngine:
+    enabled: ${APPENGINE_ENABLED:true}
+    apiBasePath: ${APPENGINE_API_BASE_PATH:/appengine/v1/}
 
   authentication:
     jwt:
       # This token must be encoded using Base64 and be at least 256 bits long (you can type `openssl rand -base64 64` on your command line to generate a 512 bits one)
       secret: +MbQeThWmZq4t6w9z$C&F)J@NcRfUjXn2r5u8x!A%D*G-KaPdSgVkYp3s6v9y$B?
       # Token is valid 24 hours
-      token-validity-in-seconds: 86400
-      token-validity-in-seconds-for-remember-me: 2592000
-      token-validity-in-seconds-for-short-term: 300
-
+      token-validity-in-seconds: ${TOKEN_VALIDITY_IN_SECONDS:86400}
+      token-validity-in-seconds-for-remember-me: ${TOKEN_VALIDITY_IN_SECONDS_REMEMBER_ME:2592000}
+      token-validity-in-seconds-for-short-term: ${TOKEN_VALIDITY_IN_SECONDS_SHORT_TERM:300}
 
 
   defaultLanguage: ENGLISH
-  internalProxyURL: http://localhost:8888
-  messageBrokerServerURL: messageBrokerServerURL
+  internalProxyURL: ${INTERNAL_PROXY_URL:http://localhost:8888}
   annotation:
     maxNumberOfPoint: 200
-  software:
-    path:
-      softwareImages: softwareImages/
 
   notification:
     email: email@email.com
@@ -107,7 +103,6 @@ application:
       project: [ "ALL" ]
       ontology: [ "ROLE_ADMIN" ]
       storage: [ "ROLE_USER","ROLE_ADMIN" ]
-      software: [ "ROLE_USER", "ROLE_ADMIN" ]
       activity: [ "ALL" ]
       admin: [ "ROLE_ADMIN" ]
       help: [ "ALL" ]
