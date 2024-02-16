@@ -61,23 +61,14 @@ run-junit:
     - alias: mongodb
       name: cytomine/mongo:1.0.0
   variables:
-    # postgres config
-    POSTGRES_DB: docker
+    GRADLE_USER_HOME: /cache/.gradle
     POSTGRES_USER: docker
-    POSTGRES_PASSWORD: password
-    # mongo config
+    POSTGRES_PASSWORD: docker
+    POSTGRES_DB: docker
+    POSTGIS_VERSION: "15-3.3-alpine-1.2.0"
     MONGO_INITDB_ROOT_USERNAME: mongoadmin
     MONGO_INITDB_ROOT_PASSWORD: secret
-    MONGO_INIT_DATABASE: cytomine
-    # core configuration
-    POSTGIS_HOST: postgres
-    POSTGIS_DB_NAME: docker
-    POSTGIS_USER: docker
-    POSTGIS_PASSWORD: password
-    MONGO_HOST: mongodb
-    MONGO_USER: mongoadmin
-    MONGO_PASS: secret
-    MONGO_DB_NAME: cytomine
+    MONGO_INITDB_DATABASE: cytomine
   script:
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
     - sed -i -- "s/localhost:5432/postgres:5432/g" src/test/resources/application.yml
@@ -89,6 +80,7 @@ run-junit:
     reports:
       junit: build/test-results/test/**/TEST-*.xml
       # TODO integrate code coverage
+
 
 
 build-push-docker-image:
