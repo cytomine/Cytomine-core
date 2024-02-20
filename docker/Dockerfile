@@ -48,8 +48,11 @@ FROM cytomine/entrypoint-scripts:${ENTRYPOINT_SCRIPTS_VERSION} as entrypoint-scr
 ## Stage: Cytomine core development image
 FROM gradle:${GRADLE_DEV_VERSION} AS dev-server
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gettext=0.21-4ubuntu4 openssh-server rsync
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      gettext=0.21* \
+      openssh-server=8.9* \
+      rsync=3.2*
 
 ENV GRADLE_USER_HOME=/opt/gradle/.gradle
 
