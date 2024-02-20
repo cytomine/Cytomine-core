@@ -1,6 +1,7 @@
+# List ARGs here for better readability.
 ARG CORE_VERSION
 ARG CORE_REVISION
-ARG ENTRYPOINT_SCRIPTS_VERSION=1.3.0
+ARG ENTRYPOINT_SCRIPTS_VERSION=1.4.0
 ARG GRADLE_VERSION=7.2-jdk17-alpine
 ARG GRADLE_DEV_VERSION=8.5-jdk17-jammy
 ARG OPENJDK_VERSION=17-slim-bullseye
@@ -48,7 +49,7 @@ FROM cytomine/entrypoint-scripts:${ENTRYPOINT_SCRIPTS_VERSION} as entrypoint-scr
 FROM gradle:${GRADLE_DEV_VERSION} AS dev-server
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gettext=0.21-4ubuntu4
+    apt-get install -y --no-install-recommends gettext=0.21-4ubuntu4 openssh-server rsync
 
 ENV GRADLE_USER_HOME=/opt/gradle/.gradle
 
@@ -56,6 +57,7 @@ ENV GRADLE_USER_HOME=/opt/gradle/.gradle
 RUN mkdir /docker-entrypoint-cytomine.d/
 COPY --from=entrypoint-scripts --chmod=774 /cytomine-entrypoint.sh /usr/local/bin/
 COPY --from=entrypoint-scripts --chmod=774 /envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
+COPY --from=entrypoint-scripts --chmod=774 /setup-ssh-dev-env.sh /docker-entrypoint-cytomine.d/1-start-ssh-dev-env.sh
 
 WORKDIR /app
 ENTRYPOINT ["cytomine-entrypoint.sh"]
@@ -98,7 +100,6 @@ COPY --from=jar-builder /app/build/libs/cytomine.jar /app/cytomine.jar
 RUN mkdir /docker-entrypoint-cytomine.d/
 COPY --from=entrypoint-scripts --chmod=774 /cytomine-entrypoint.sh /usr/local/bin/
 COPY --from=entrypoint-scripts --chmod=774 /envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
-COPY --from=entrypoint-scripts --chmod=774 /configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
 
 WORKDIR /app
 ENTRYPOINT ["cytomine-entrypoint.sh"]
