@@ -7,7 +7,7 @@
                 , mark the changelog has 'ran' without running changes.
                 This happens when running on a GRAILS cytomine-core database.
              -->
-            <sqlCheck expectedResult="0">
+            <sqlCheck expectedResult="99">
                 SELECT count(pg_user.usename) FROM pg_user where pg_user.usename = 'root' OR pg_user.usename = 'sudo';
             </sqlCheck>
         </preConditions>

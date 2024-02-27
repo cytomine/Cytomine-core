@@ -82,8 +82,6 @@ public class AbstractSlice extends CytomineDomain {
         returnArray.put("image", abstractSlice.getImageId());
         returnArray.put("mime", abstractSlice.getMimeType());
 
-        returnArray.put("imageServerUrl", abstractSlice.getImageServerUrl());
-
         returnArray.put("channel", abstractSlice.getChannel());
         returnArray.put("zStack", abstractSlice.getZStack());
         returnArray.put("time", abstractSlice.getTime());
@@ -110,15 +108,6 @@ public class AbstractSlice extends CytomineDomain {
     public String getPath() {
         UploadedFile referenceUploadedFile = this.getReferenceUploadedFile();
         return referenceUploadedFile!=null ? referenceUploadedFile.getPath() : null;
-    }
-    public String getImageServerUrl() {
-        UploadedFile referenceUploadedFile = this.getReferenceUploadedFile();
-        return referenceUploadedFile!=null ? referenceUploadedFile.getImageServerUrl() : null;
-    }
-
-    public String getImageServerInternalUrl() {
-        UploadedFile referenceUploadedFile = this.getReferenceUploadedFile();
-        return referenceUploadedFile!=null ? referenceUploadedFile.getImageServerInternalUrl() : null;
     }
 
     public Integer getRank() {

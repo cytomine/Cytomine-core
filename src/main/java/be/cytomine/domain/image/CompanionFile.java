@@ -119,14 +119,4 @@ public class CompanionFile extends CytomineDomain{
         return getDataFromDomain(this);
     }
 
-    public String getImageServerUrl() {
-        return this.getUploadedFile()!=null ? this.getUploadedFile().getImageServerUrl() : null;
-    }
-
-    public String getImageServerInternalUrl() {
-        return this.getUploadedFile()!=null ? this.getUploadedFile().getImageServerInternalUrl() : null;
-    }
-    
-    
-    
 }

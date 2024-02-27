@@ -23,36 +23,4 @@ public class ResourcesUtils {
         this.resourceLoader = resourceLoader;
         this.environment = environment;
     }
-
-    /** Loads the key values properties from resources file in a Map
-     *
-     * @return
-     */
-    public static Map<String, String> getPropertiesMap()  {
-
-        Map<String, String> resourcePropertiesMap = new HashMap<String, String>();
-        String propertiesFileUri = Optional.ofNullable(environment.getProperty("METADATA_PREFIXES_FILE_URI"))
-                .orElse("classpath:metaPrefix.properties");
-        try {
-            Resource resourceProperties=resourceLoader.getResource(propertiesFileUri);
-            Properties properties = new Properties();
-            properties.load(resourceProperties.getInputStream());
-            for (String key : properties.stringPropertyNames()) {
-                resourcePropertiesMap.put(key, properties.get(key).toString());
-            }
-        }catch (IOException e){
-            log.error("Failed to load resources from path "+ propertiesFileUri, e);
-        }
-        return resourcePropertiesMap;
-
-    }
-
-    /** Loads the values of properties from resources file in a List
-     *
-     * @return
-     */
-    public static List<String> getPropertiesValuesList( )  {
-        return new ArrayList<String>(getPropertiesMap().values());
-    }
-
 }

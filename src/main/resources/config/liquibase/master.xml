@@ -4,11 +4,21 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
 
+    <!--
+    Change sets are executed in the order defined in this change log.
+
+    The id tag, author tag, search path location, and name of the changelog file create a unique identifier for the changeset
+    (from https://docs.liquibase.com/concepts/changelogs/home.html).
+
+    Please use unique id tags for your change sets, such as a random uuid.
+    -->
+
     <include file="config/liquibase/changelog/00000000_0_init.xml" relativeToChangelogFile="false"/>
 
     <include file="config/liquibase/changelog/00000000_1_domain.xml" relativeToChangelogFile="false"/>
 
-    <include file="config/liquibase/changelog/00000000_2_grant.xml" relativeToChangelogFile="false"/>
+    <!-- Fails with postgis > 1.5.0 -->
+    <!--<include file="config/liquibase/changelog/00000000_2_grant.xml" relativeToChangelogFile="false"/> -->
 
     <include file="config/liquibase/changelog/00000000_3_trigger.sql" relativeToChangelogFile="false"/>
 
@@ -17,4 +27,16 @@
     <include file="config/liquibase/changelog/00000000_5_convergence.xml" relativeToChangelogFile="false"/>
 
     <include file="config/liquibase/changelog/00000000_6_image_filters.xml" relativeToChangelogFile="false"/>
+
+    <include file="config/liquibase/changelog/00000000_7_delete_useless_pg_users.xml" relativeToChangelogFile="false"/>
+
+    <include file="/config/liquibase/changelog/00000000_8_remove_raw_metadata_from_image_properties.xml" relativeToChangelogFile="false"/>
+
+    <include file="/config/liquibase/changelog/00000000_9_delete_postgres_user.xml" relativeToChangelogFile="false"/>
+
+    <include file="/config/liquibase/changelog/00000000_10_delete_image_server.xml" relativeToChangelogFile="false"/>
+
+    <include file="/config/liquibase/changelog/00000000_11_cleanup_software_router.xml" relativeToChangelogFile="false"/>
+
+    <include file="/config/liquibase/changelog/00000000_12_taskrun.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

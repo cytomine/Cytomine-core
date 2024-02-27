@@ -19,7 +19,6 @@ package be.cytomine.service.stats;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.middleware.ImageServer;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
@@ -52,6 +51,7 @@ import jakarta.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -118,9 +118,6 @@ public class StatsServiceTests {
 
     @Autowired
     AnnotationActionService annotationActionService;
-
-    @Autowired
-    ImageServerRepository imageServerRepository;
 
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
@@ -484,14 +481,8 @@ public class StatsServiceTests {
 
     @Test
     void retrieve_storage_spaces() {
-
-        ImageServer imageServer = builder.given_an_image_server();
-        imageServer.setUrl("http://localhost:8888");
-        imageServer = builder.persistAndReturn(imageServer);
-
-
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/storage/size.json"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/storage/size.json"))
                 .willReturn(
                         aResponse().withBody("" + "{\"used\":193396892,\"available\":445132860,\"usedP\":0.302878435,\"hostname\":\"b52416f53249\",\"mount\":\"/data/images\",\"ip\":null}")
                 )

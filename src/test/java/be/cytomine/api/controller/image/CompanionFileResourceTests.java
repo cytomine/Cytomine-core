@@ -34,7 +34,15 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -62,6 +70,20 @@ public class CompanionFileResourceTests {
 
     @Autowired
     private PropertyRepository propertyRepository;
+
+    private static WireMockServer wireMockServer = new WireMockServer(8888);
+
+    @BeforeAll
+    public static void beforeAll() {
+        wireMockServer.start();
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        try {
+            wireMockServer.stop();
+        } catch (Exception e) {}
+    }
 
 
     @Test
@@ -214,19 +236,24 @@ public class CompanionFileResourceTests {
     @Test
     public void download_companion_file() throws Exception {
         CompanionFile companionFile = builder.given_a_companion_file(builder.given_an_abstract_image());
-        companionFile.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
-        companionFile.getUploadedFile().getImageServer().setBasePath("/data/images");
         companionFile.setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         companionFile.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         companionFile.getUploadedFile().setContentType("MRXS");
+        companionFile.getUploadedFile().setOriginalFilename("CMU-2.mrxs");
+
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes();
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/file/" + URLEncoder.encode(companionFile.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=CMU-2.mrxs"))
+                .willReturn(
+                        aResponse().withBody(mockResponse)
+                )
+        );
 
         MvcResult mvcResult = restCompanionFileControllerMockMvc.perform(get("/api/companionfile/{id}/download", companionFile.getId()))
-                .andDo(print()).andReturn();
-        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
-        assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/file/" + URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/") + "/export");
-
-
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
 

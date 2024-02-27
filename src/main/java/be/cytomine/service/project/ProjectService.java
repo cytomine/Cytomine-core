@@ -516,6 +516,10 @@ public class ProjectService extends ModelService {
             max = Long.MAX_VALUE;
         }
 
+        if (projects != null && projects.isEmpty()) {
+            return new ArrayList<>();
+        }
+
         String select = "SELECT ch.id as id, ch.created as created, ch.message as message, " +
                 "ch.prefix_action as prefixAction, ch.user_id as user, ch.project_id as project ";
         String from = "FROM command_history ch ";

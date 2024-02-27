@@ -61,7 +61,6 @@ public class SliceInstance extends CytomineDomain implements Serializable {
         SliceInstance sliceInstance = (SliceInstance) domain;
         returnArray.put("uploadedFile", Optional.ofNullable(sliceInstance.baseSlice).map(AbstractSlice::getUploadedFileId).orElse(null));
 
-        returnArray.put("imageServerUrl", sliceInstance.getImageServerUrl());
         returnArray.put("project", Optional.ofNullable(sliceInstance.project).map(CytomineDomain::getId).orElse(null));
         returnArray.put("baseSlice", Optional.ofNullable(sliceInstance.baseSlice).map(CytomineDomain::getId).orElse(null));
         returnArray.put("image", Optional.ofNullable(sliceInstance.image).map(CytomineDomain::getId).orElse(null));
@@ -82,10 +81,6 @@ public class SliceInstance extends CytomineDomain implements Serializable {
 
     public String getPath() {
         return Optional.ofNullable(this.baseSlice).map(AbstractSlice::getPath).orElse(null);
-    }
-
-    public String getImageServerUrl() {
-        return Optional.ofNullable(this.baseSlice).map(AbstractSlice::getImageServerUrl).orElse(null);
     }
 
     public String getMimeType(){

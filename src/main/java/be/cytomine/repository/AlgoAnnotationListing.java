@@ -157,6 +157,7 @@ public class AlgoAnnotationListing extends AnnotationListing {
         }
 
         if (columnsToPrint.contains("user")) {
+            // TODO: to refactor if job table is deleted
             from += "INNER JOIN sec_user u ON a.user_id = u.id INNER JOIN job j ON u.job_id = j.id INNER JOIN software s ON j.software_id = s.id ";
         }
 

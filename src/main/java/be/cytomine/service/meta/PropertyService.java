@@ -58,7 +58,7 @@ public class PropertyService extends ModelService {
 
     @Autowired
     private PropertyRepository propertyRepository;
-    
+
     @Autowired
     private AnnotationDomainRepository annotationDomainRepository;
 
@@ -74,21 +74,14 @@ public class PropertyService extends ModelService {
     }
 
     public List<Property> list(CytomineDomain cytomineDomain) {
-        // This is to filter out image metadata properties for users in case project is in blind mode
-        if(cytomineDomain.getClass().getName().contains("ImageInstance")&&securityACLService.isFilterRequired((Project) cytomineDomain.container())) {
-            List<String> prefixesToFilter= ResourcesUtils.getPropertiesValuesList();
-            List<Property> values = propertyRepository.findByDomainIdentAndExcludedKeys(cytomineDomain.getId(), String.join(";", prefixesToFilter));
-            return values;
-        }else{
-            securityACLService.check(cytomineDomain.container(),READ);
-            return propertyRepository.findAllByDomainIdent(cytomineDomain.getId());
-        }
+        securityACLService.check(cytomineDomain.container(),READ);
+        return propertyRepository.findAllByDomainIdent(cytomineDomain.getId());
     }
 
     public Optional<Property> findById(Long id) {
 
         Optional<Property> property = propertyRepository.findById(id);
-        if (property.isPresent()  && !property.get().getDomainClassName().contains("Software")) {
+        if (property.isPresent()) {
             securityACLService.check(property.get().container(),READ);
         }
         return property;
@@ -96,7 +89,7 @@ public class PropertyService extends ModelService {
 
     public Optional<Property> findByDomainAndKey(CytomineDomain domain, String key) {
         Optional<Property> property = propertyRepository.findByDomainIdentAndKey(domain.getId(), key);
-        if (property.isPresent()  && !property.get().getDomainClassName().contains("Software")) {
+        if (property.isPresent()) {
             securityACLService.check(property.get().container(),READ);
         }
         return property;

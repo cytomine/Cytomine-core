@@ -1,7 +1,9 @@
+# List ARGs here for better readability.
 ARG CORE_VERSION
 ARG CORE_REVISION
-ARG ENTRYPOINT_SCRIPTS_VERSION=1.3.0
+ARG ENTRYPOINT_SCRIPTS_VERSION=1.4.0
 ARG GRADLE_VERSION=7.2-jdk17-alpine
+ARG GRADLE_DEV_VERSION=8.5-jdk17-jammy
 ARG OPENJDK_VERSION=17-slim-bullseye
 
 
@@ -11,7 +13,7 @@ FROM gradle:${GRADLE_VERSION} AS deps-downloader
 
 # We first copy the build.gradle file and the binaries stored in the source repository.
 # This way, we retrieve all gradle dependencies at the beginning. All these steps will be
-# cached by Docker unless build.gradle. This means that we only retrieve all dependencies 
+# cached by Docker unless build.gradle. This means that we only retrieve all dependencies
 # if we modify the dependencies definition.
 RUN mkdir -p /opt/gradle/.gradle
 ENV GRADLE_USER_HOME=/opt/gradle/.gradle
@@ -44,27 +46,24 @@ FROM cytomine/entrypoint-scripts:${ENTRYPOINT_SCRIPTS_VERSION} as entrypoint-scr
 
 #######################################################################################
 ## Stage: Cytomine core development image
-FROM gradle:${GRADLE_VERSION} AS development
+FROM gradle:${GRADLE_DEV_VERSION} AS dev-server
 
-RUN apk update && \
-    apk add --no-cache \
-    gettext~=0.21
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+      gettext=0.21-4ubuntu4 \
+      openssh-server=1:8.9p1-3ubuntu0.6 \
+      rsync=3.2.7-0ubuntu0.22.04.2
 
 ENV GRADLE_USER_HOME=/opt/gradle/.gradle
-COPY --from=deps-downloader /opt/gradle/.gradle /opt/gradle/.gradle
 
 # startup scripts
 RUN mkdir /docker-entrypoint-cytomine.d/
 COPY --from=entrypoint-scripts --chmod=774 /cytomine-entrypoint.sh /usr/local/bin/
 COPY --from=entrypoint-scripts --chmod=774 /envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
-COPY --from=entrypoint-scripts --chmod=774 /configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
-
-# core base folder must be mounted in run command or compose file
-EXPOSE 5005
+COPY --from=entrypoint-scripts --chmod=774 /setup-ssh-dev-env.sh /docker-entrypoint-cytomine.d/1-start-ssh-dev-env.sh
 
 WORKDIR /app
 ENTRYPOINT ["cytomine-entrypoint.sh"]
-CMD ["gradle", ":bootRun", "--debug-jvm"]
 
 #######################################################################################
 ## Stage: Cytomine core image
@@ -104,8 +103,6 @@ COPY --from=jar-builder /app/build/libs/cytomine.jar /app/cytomine.jar
 RUN mkdir /docker-entrypoint-cytomine.d/
 COPY --from=entrypoint-scripts --chmod=774 /cytomine-entrypoint.sh /usr/local/bin/
 COPY --from=entrypoint-scripts --chmod=774 /envsubst-on-templates-and-move.sh /docker-entrypoint-cytomine.d/500-envsubst-on-templates-and-move.sh
-COPY --from=entrypoint-scripts --chmod=774 /configure-etc-hosts-reverse-proxy.sh /docker-entrypoint-cytomine.d/750-configure-etc-hosts-reverse-proxy.sh
-COPY --chmod=774 ./scripts/generate-meta-prefix-file.sh /docker-entrypoint-cytomine.d/875-generate-meta-prefix-file.sh
 
 WORKDIR /app
 ENTRYPOINT ["cytomine-entrypoint.sh"]

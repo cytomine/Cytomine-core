@@ -43,6 +43,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -213,7 +214,7 @@ public class RestAlgoAnnotationController extends RestCytomineController {
 
 
     @RequestMapping(value = "/algoannotation/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void crop(
+    public ResponseEntity<byte[]> crop(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(required = false) Integer maxSize,
@@ -240,7 +241,9 @@ public class RestAlgoAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer alpha,
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
-            @RequestParam(required = false) Integer jpegQuality
+            @RequestParam(required = false) Integer jpegQuality,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
         AlgoAnnotation algoAnnotation = algoAnnotationService.find(id)
@@ -276,11 +279,11 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         cropParameter.setFormat(format);
 
         String etag = getRequestETag();
-        responseImage(imageServerService.crop(algoAnnotation, cropParameter, etag));
+        return  imageServerService.crop(algoAnnotation, cropParameter, etag, proxy);
     }
 
     @RequestMapping(value = "/algoannotation/{id}/mask.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void cropMask(
+    public ResponseEntity<byte[]> cropMask(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(required = false) Integer maxSize,
@@ -305,7 +308,9 @@ public class RestAlgoAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer alpha,
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
-            @RequestParam(required = false) Integer jpegQuality
+            @RequestParam(required = false) Integer jpegQuality,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
         AlgoAnnotation algoAnnotation = algoAnnotationService.find(id)
@@ -339,11 +344,11 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
         String etag = getRequestETag();
-        responseImage(imageServerService.crop(algoAnnotation, cropParameter, etag));
+        return imageServerService.crop(algoAnnotation, cropParameter, etag, proxy);
     }
 
     @RequestMapping(value = "/algoannotation/{id}/alphamask.{format}", method = {RequestMethod.GET, RequestMethod.POST})
-    public void cropAlphaMask(
+    public ResponseEntity<byte[]> cropAlphaMask(
             @PathVariable Long id,
             @PathVariable String format,
             @RequestParam(required = false) Integer maxSize,
@@ -368,7 +373,9 @@ public class RestAlgoAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer alpha,
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
-            @RequestParam(required = false) Integer jpegQuality
+            @RequestParam(required = false) Integer jpegQuality,
+
+            ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
         AlgoAnnotation algoAnnotation = algoAnnotationService.find(id)
@@ -401,7 +408,7 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         cropParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         cropParameter.setFormat(format);
         String etag = getRequestETag();
-        responseImage(imageServerService.crop(algoAnnotation, cropParameter, etag));
+        return imageServerService.crop(algoAnnotation, cropParameter, etag, proxy);
     }
 
 

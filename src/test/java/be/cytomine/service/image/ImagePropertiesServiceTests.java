@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -71,30 +72,8 @@ public class ImagePropertiesServiceTests {
     }
 
     @Test
-    void clear_properties_from_abstract_image() throws IOException {
-        AbstractImage image = builder.given_an_abstract_image();
-        Property property = builder.given_a_property(image, "cytomine.width", "value1");
-        assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "cytomine.width")).isPresent();
-        imagePropertiesService.clear(image);
-        assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "cytomine.width")).isEmpty();
-
-    }
-
-    @Test
-    @Disabled("the grails core with PIMS implementation remove all properties")
-    void clear_properties_from_abstract_image_does_not_affect_other_property() throws IOException {
-        AbstractImage image = builder.given_an_abstract_image();
-        Property property = builder.given_a_property(image, "special", "value1");
-        assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "special")).isPresent();
-        imagePropertiesService.clear(image);
-        assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "special")).isPresent();
-
-    }
-    @Test
     void extract_populated_properties_to_abstract_image() throws IOException, IllegalAccessException {
         AbstractImage image = builder.given_an_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
 
@@ -104,7 +83,7 @@ public class ImagePropertiesServiceTests {
         image.setColorspace("empty");
 
         configureFor("localhost", 8888); //       /image/upload1644425985928451/LUNG1_pyr.tif/info
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info"))
                 .willReturn(
                         aResponse().withBody(
                             """
@@ -160,7 +139,7 @@ public class ImagePropertiesServiceTests {
         );
 
 
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/metadata"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/metadata"))
                 .willReturn(
                         aResponse().withBody(
                                 """
@@ -184,11 +163,6 @@ public class ImagePropertiesServiceTests {
                         )
                 )
         );
-
-        imagePropertiesService.populate(image);
-
-        assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "TIFF.ImageWidth")).isPresent();
-        assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "TIFF.ImageWidth").get().getValue()).isEqualTo("30720");
 
         imagePropertiesService.extractUseful(image);
 

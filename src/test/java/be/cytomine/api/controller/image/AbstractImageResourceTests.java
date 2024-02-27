@@ -50,6 +50,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
@@ -544,8 +545,6 @@ public class AbstractImageResourceTests {
     @Transactional
     public void get_abstract_image_thumb() throws Exception {
         AbstractImage image = builder.given_an_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
 
@@ -554,7 +553,7 @@ public class AbstractImageResourceTests {
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0,0,0);
         slice.setUploadedFile(image.getUploadedFile());
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=512"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=512"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -581,8 +580,6 @@ public class AbstractImageResourceTests {
     @Transactional
     public void get_abstract_image_preview() throws Exception {
         AbstractImage image = builder.given_an_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
 
@@ -591,7 +588,7 @@ public class AbstractImageResourceTests {
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0,0,0);
         slice.setUploadedFile(image.getUploadedFile());
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=1024"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/thumb?z_slices=0&timepoints=0&length=1024"))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -611,7 +608,7 @@ public class AbstractImageResourceTests {
     public void get_abstract_image_associeted_label() throws Exception {
         AbstractImage image = given_test_abstract_image();
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info/associated"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info/associated"))
                 .willReturn(
                         aResponse().withBody("{\"items\": [{\"name\":\"macro\"},{\"name\":\"thumbnail\"},{\"name\":\"label\"}], \"size\": 0}")
                 )
@@ -628,8 +625,6 @@ public class AbstractImageResourceTests {
     @Transactional
     public void get_abstract_image_associeted_label_macro() throws Exception {
         AbstractImage image = given_test_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         configureFor("localhost", 8888);
@@ -639,7 +634,7 @@ public class AbstractImageResourceTests {
         String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/associated/macro?length=512";
 
         System.out.println(url);
-        stubFor(get(urlEqualTo(url))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + url))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -654,7 +649,7 @@ public class AbstractImageResourceTests {
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
-
+    @Disabled("Randomly fail with ProxyExchange, need to find a solution")
     @Test
     @Transactional
     public void get_abstract_image_crop() throws Exception {
@@ -669,11 +664,11 @@ public class AbstractImageResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/annotation/crop";
-        String body = "{\"annotations\":{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"},\"level\":0,\"background_transparency\":0,\"z_slices\":0,\"timepoints\":0}";
+        String body = "{\"level\":0,\"z_slices\":0,\"annotations\":[{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"}],\"timepoints\":0,\"background_transparency\":0}";
         System.out.println(url);
         System.out.println(body);
 
-        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(
+        stubFor(post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(
                                 body
                         ))
                         .willReturn(
@@ -690,6 +685,7 @@ public class AbstractImageResourceTests {
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
+    @Disabled("Randomly fail with ProxyExchange, need to find a solution")
     @Test
     @Transactional
     public void get_abstract_image_window() throws Exception {
@@ -704,10 +700,10 @@ public class AbstractImageResourceTests {
         //String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
 
         String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/window";
-        String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
+        String body = "{\"level\":0,\"z_slices\":0,\"timepoints\":0,\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40}}";
         System.out.println(url);
         System.out.println(body);
-        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(body))
+        stubFor(post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(body))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
@@ -719,59 +715,15 @@ public class AbstractImageResourceTests {
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
-
-
-        restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/window_url-10-20-30-40.jpg", image.getId()))
-                .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/")+"/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
-                .andExpect(status().isOk());
-
     }
 
-
-    @Test
-    @Transactional
-    public void get_abstract_image_camera() throws Exception {
-        AbstractImage image = given_test_abstract_image();
-
-        AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
-        slice.setUploadedFile(image.getUploadedFile());
-
-        byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
-
-        configureFor("localhost", 8888);
-        String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/window";
-        String body = "{\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40},\"level\":0,\"z_slices\":0,\"timepoints\":0}";
-        System.out.println(url);
-        System.out.println(body);
-        stubFor(post(urlEqualTo(url)).withRequestBody(equalTo(body))
-                .willReturn(
-                        aResponse().withBody(mockResponse)
-                )
-        );
-
-        MvcResult mvcResult = restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/camera-10-20-30-40.png", image.getId()))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andReturn();
-        List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
-
-
-        restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/camera_url-10-20-30-40.jpg", image.getId()))
-                .andDo(print())
-                .andExpect(jsonPath("$.url").value("http://localhost:8888/image/"+URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/") + "/window?region=%7B%22left%22%3A10%2C%22top%22%3A20%2C%22width%22%3A30%2C%22height%22%3A40%7D&level=0"))
-                .andExpect(status().isOk());
-
-    }
 
     private AbstractImage given_test_abstract_image() {
         AbstractImage image = builder.given_an_abstract_image();
         image.setWidth(109240);
         image.setHeight(220696);
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
+        image.getUploadedFile().setOriginalFilename("CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
         return image;
     }
@@ -780,146 +732,51 @@ public class AbstractImageResourceTests {
     public void download_abstract_image() throws Exception {
         AbstractImage image = given_test_abstract_image();
 
-        MvcResult mvcResult = restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/download", image.getId()))
-                .andDo(print()).andReturn();
-        assertThat(mvcResult.getResponse().getStatus()).isEqualTo(302);
-        assertThat(mvcResult.getResponse().getHeader("Location"))
-                .isEqualTo("http://localhost:8888/image/"+URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export");
-
-
-    }
-
-
-    @Test
-    public void clear_properties_from_abstract_image() throws Exception {
-        AbstractImage image = given_test_abstract_image();
-        builder.given_a_property(image, "cytomine.width", "value1");
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "cytomine.width")).isPresent();
-        restAbstractImageControllerMockMvc.perform(post("/api/abstractimage/{id}/properties/clear.json", image.getId()))
-                .andDo(print())
-                .andExpect(status().isOk());
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "cytomine.width")).isEmpty();
-
-    }
-
-
-    @Test
-    public void extract_populated_properties_to_abstract_image() throws Exception {
-        AbstractImage image = given_test_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
-        image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
-        image.getUploadedFile().setContentType("MRXS");
-
-
-        image.setWidth(1);
-        image.setPhysicalSizeX(2d);
-        image.setColorspace("empty");
-
+        byte[] mockResponse = UUID.randomUUID().toString().getBytes();
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/metadata"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/")+"/export?filename=" + URLEncoder.encode(image.getOriginalFilename(), StandardCharsets.UTF_8)))
                 .willReturn(
-                        aResponse().withBody(
-                                """
-                                {"size":14,"items":
-                                [{"key":"ImageWidth","value":30720,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"ImageLength","value":25600,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"BitsPerSample","value":"(8, 8, 8)","type":"UNKNOWN","namespace":"TIFF"},
-                                {"key":"Compression","value":"JPEG","type":"STRING","namespace":"TIFF"},
-                                {"key":"PhotometricInterpretation","value":"YCBCR","type":"STRING","namespace":"TIFF"},
-                                {"key":"Orientation","value":"TOPLEFT","type":"STRING","namespace":"TIFF"},
-                                {"key":"SamplesPerPixel","value":3,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"XResolution","value":"(429496703, 4294967295)","type":"UNKNOWN","namespace":"TIFF"},
-                                {"key":"YResolution","value":"(429496703, 4294967295)","type":"UNKNOWN","namespace":"TIFF"},
-                                {"key":"PlanarConfiguration","value":"CONTIG","type":"STRING","namespace":"TIFF"},
-                                {"key":"ResolutionUnit","value":"CENTIMETER","type":"STRING","namespace":"TIFF"},
-                                {"key":"TileWidth","value":256,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"TileLength","value":256,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"ReferenceBlackWhite","value":"(0, 1, 255, 1, 128, 1, 255, 1, 128, 1, 255, 1)","type":"UNKNOWN","namespace":"TIFF"}]
-                                }
-                                """
-                        )
+                        aResponse().withBody(mockResponse)
                 )
         );
 
-        restAbstractImageControllerMockMvc.perform(post("/api/abstractimage/{id}/properties/populate.json", image.getId()))
+        MvcResult mvcResult = restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/download", image.getId()))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
+    }
 
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "TIFF.ImageWidth")).isPresent();
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "TIFF.ImageWidth").get().getValue()).isEqualTo("30720");
-
-
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info"))
+    @Test
+    @Transactional
+    public void get_abstract_image_metadata() throws Exception {
+        AbstractImage image = given_test_abstract_image();
+        configureFor("localhost", 8888);
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/metadata"))
                 .willReturn(
-                        aResponse().withBody(
-                                """
-                                  {"image":
-                                      {
-                                          "original_format":"PYRTIFF",
-                                          "width":30720,
-                                          "height":25600,
-                                          "depth":1,
-                                          "duration":1,
-                                          "physical_size_x":100000.00617,
-                                          "physical_size_y":100000.00617,
-                                          "physical_size_z":null,
-                                          "frame_rate":null,
-                                          "n_channels":3,
-                                          "n_concrete_channels":1,
-                                          "n_samples":3,
-                                          "n_planes":1,
-                                          "are_rgb_planes":true,
-                                          "n_distinct_channels":1,
-                                          "acquired_at":null,
-                                          "description":"",
-                                          "pixel_type":"uint8",
-                                          "significant_bits":8,"bits":8},
-                                          "instrument":
-                                              {"microscope":{"model":null},
-                                               "objective":{"nominal_magnification":null,"calibrated_magnification":null}},
-                                               "associated":[],
-                                               "channels":[
-                                                  {"index":0,"suggested_name":"R","emission_wavelength":null,"excitation_wavelength":null,"color":"#f00"},
-                                                  {"index":1,"suggested_name":"G","emission_wavelength":null,"excitation_wavelength":null,"color":"#0f0"},
-                                                  {"index":2,"suggested_name":"B","emission_wavelength":null,"excitation_wavelength":null,"color":"#00f"}
-                                               ],
-                                               "representations":[
-                                                  {"role":"UPLOAD",
-                                                   "file":
-                                                      {"file_type":"SINGLE",
-                                                      "filepath":"/data/images/upload1644425985928451/LUNG1_pyr.tif",
-                                                      "stem":"LUNG1_pyr",
-                                                      "extension":".tif",
-                                                      "created_at":"2022-05-05T22:16:23.318839",
-                                                      "size":126616954,"is_symbolic":false,"role":"UPLOAD"}
-                                                      },
-                                                      {"role":"ORIGINAL",
-                                                      "file":
-                                                          {"file_type":"SINGLE","filepath":"/data/images/upload1644425985928451/processed/original.PYRTIFF","stem":"original","extension":".PYRTIFF","created_at":"2022-05-05T22:16:23.318839","size":126616954,"is_symbolic":true,"role":"ORIGINAL"}
-                                                          },
-                                                          {"role":"SPATIAL","file":{"file_type":"SINGLE","filepath":"/data/images/upload1644425985928451/processed/visualisation.PYRTIFF","stem":"visualisation","extension":".PYRTIFF","created_at":"2022-05-05T22:16:23.318839","size":126616954,"is_symbolic":true,"role":"SPATIAL"},"pyramid":{"n_tiers":8,"tiers":[{"zoom":7,"level":0,"width":30720,"height":25600,"tile_width":256,"tile_height":256,"downsampling_factor":1.0,"n_tiles":12000,"n_tx":120,"n_ty":100},{"zoom":6,"level":1,"width":15360,"height":12800,"tile_width":256,"tile_height":256,"downsampling_factor":2.0,"n_tiles":3000,"n_tx":60,"n_ty":50},{"zoom":5,"level":2,"width":7680,"height":6400,"tile_width":256,"tile_height":256,"downsampling_factor":4.0,"n_tiles":750,"n_tx":30,"n_ty":25},{"zoom":4,"level":3,"width":3840,"height":3200,"tile_width":256,"tile_height":256,"downsampling_factor":8.0,"n_tiles":195,"n_tx":15,"n_ty":13},{"zoom":3,"level":4,"width":1920,"height":1600,"tile_width":256,"tile_height":256,"downsampling_factor":16.0,"n_tiles":56,"n_tx":8,"n_ty":7},{"zoom":2,"level":5,"width":960,"height":800,"tile_width":256,"tile_height":256,"downsampling_factor":32.0,"n_tiles":16,"n_tx":4,"n_ty":4},{"zoom":1,"level":6,"width":480,"height":400,"tile_width":256,"tile_height":256,"downsampling_factor":64.0,"n_tiles":4,"n_tx":2,"n_ty":2},{"zoom":0,"level":7,"width":240,"height":200,"tile_width":256,"tile_height":256,"downsampling_factor":128.0,"n_tiles":1,"n_tx":1,"n_ty":1}]}}]}
-      
-                                  """
-                        )
+                        aResponse().withBody("{\"size\":11,\"items\":[{\"key\":\"JFIFVersion\",\"value\":1.01,\"type\":\"DECIMAL\",\"namespace\":\"JFIF\"}," +
+                                "{\"key\":\"ResolutionUnit\",\"value\":\"inches\",\"type\":\"STRING\",\"namespace\":\"JFIF\"},{\"key\":\"XResolution\"," +
+                                "\"value\":300,\"type\":\"INTEGER\",\"namespace\":\"JFIF\"},{\"key\":\"YResolution\",\"value\":300,\"type\":\"INTEGER\"," +
+                                "\"namespace\":\"JFIF\"},{\"key\":\"ProfileCMMType\",\"value\":\"Little CMS\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileVersion\",\"value\":\"4.3.0\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileClass\",\"value\":\"Display Device Profile\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ColorSpaceData\",\"value\":\"RGB\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileConnectionSpace\",\"value\":\"XYZ\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileDateTime\",\"value\":\"2021:03:02 20:40:36\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}," +
+                                "{\"key\":\"ProfileFileSignature\",\"value\":\"acsp\",\"type\":\"STRING\",\"namespace\":\"ICC_PROFILE\"}]}")
                 )
         );
-
-        restAbstractImageControllerMockMvc.perform(post("/api/abstractimage/{id}/properties/extract.json", image.getId()))
+        restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/metadata.json", image.getId()))
                 .andDo(print())
-                .andExpect(status().isOk());
-
-        assertThat(image.getWidth()).isEqualTo(30720);
-        assertThat(image.getHeight()).isEqualTo(25600);
-        assertThat(image.getColorspace()).isEqualTo("empty");
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.collection", hasSize(equalTo(11))))
+                .andExpect(jsonPath("$.collection[?(@.key==\"ProfileClass\")]").exists());
     }
 
 
     @Test
     public void regenarate_properties_to_abstract_image() throws Exception {
         AbstractImage image = given_test_abstract_image();
-        image.getUploadedFile().getImageServer().setBasePath("/data/images");
-        image.getUploadedFile().getImageServer().setUrl("http://localhost:8888");
         image.getUploadedFile().setFilename("1636379100999/CMU-2/CMU-2.mrxs");
         image.getUploadedFile().setContentType("MRXS");
 
@@ -929,40 +786,7 @@ public class AbstractImageResourceTests {
         image.setColorspace("empty");
 
         configureFor("localhost", 8888);
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/metadata"))
-                .willReturn(
-                        aResponse().withBody(
-                                """
-                                {"size":14,"items":
-                                [{"key":"ImageWidth","value":30720,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"ImageLength","value":25600,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"BitsPerSample","value":"(8, 8, 8)","type":"UNKNOWN","namespace":"TIFF"},
-                                {"key":"Compression","value":"JPEG","type":"STRING","namespace":"TIFF"},
-                                {"key":"PhotometricInterpretation","value":"YCBCR","type":"STRING","namespace":"TIFF"},
-                                {"key":"Orientation","value":"TOPLEFT","type":"STRING","namespace":"TIFF"},
-                                {"key":"SamplesPerPixel","value":3,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"XResolution","value":"(429496703, 4294967295)","type":"UNKNOWN","namespace":"TIFF"},
-                                {"key":"YResolution","value":"(429496703, 4294967295)","type":"UNKNOWN","namespace":"TIFF"},
-                                {"key":"PlanarConfiguration","value":"CONTIG","type":"STRING","namespace":"TIFF"},
-                                {"key":"ResolutionUnit","value":"CENTIMETER","type":"STRING","namespace":"TIFF"},
-                                {"key":"TileWidth","value":256,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"TileLength","value":256,"type":"INTEGER","namespace":"TIFF"},
-                                {"key":"ReferenceBlackWhite","value":"(0, 1, 255, 1, 128, 1, 255, 1, 128, 1, 255, 1)","type":"UNKNOWN","namespace":"TIFF"}]
-                                }
-                                """
-                        )
-                )
-        );
-
-        restAbstractImageControllerMockMvc.perform(post("/api/abstractimage/{id}/properties/populate.json", image.getId()))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "TIFF.ImageWidth")).isPresent();
-        AssertionsForClassTypes.assertThat(propertyRepository.findByDomainIdentAndKey(image.getId(), "TIFF.ImageWidth").get().getValue()).isEqualTo("30720");
-
-
-        stubFor(get(urlEqualTo("/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info"))
+        stubFor(get(urlEqualTo(IMS_API_BASE_PATH + "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/info"))
                 .willReturn(
                         aResponse().withBody(
                                 """

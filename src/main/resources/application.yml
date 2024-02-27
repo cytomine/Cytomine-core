@@ -5,9 +5,15 @@ spring:
 
   main:
     allow-circular-references: true
- 
+
   thymeleaf:
     prefix: 'classpath:/templates/'
+
+  servlet:
+    multipart:
+      max-file-size: 15GB
+      max-request-size: 15GB
+      location: /tmp/multipart
 
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
@@ -59,12 +65,11 @@ javamelody:
 
 application:
   version: 0.0.0 # do not modify this, it will be replace during build (ci)
-  
+
   serverId: ${SERVER_ID:default}
   serverURL: ${SERVER_URL:#{'http://cytomine.local'}}
   storagePath: ${STORAGE_PATH:/data/images}
-  useHTTPInternally: ${USE_HTTP_INTERNALLY:false}
-  
+
   adminPassword: ${ADMIN_PASSWORD:adminPassword}
   adminEmail: ${ADMIN_EMAIL:dev@cytomine.com}
   adminPublicKey: ${ADMIN_PUBLIC_KEY:adminPublicKey}
@@ -75,7 +80,6 @@ application:
   ImageServerPrivateKey: ${IMAGE_SERVER_PRIVATE_KEY:imageServerPrivateKey}
   rabbitMQPublicKey: ${RABBITMQ_PUBLIC_KEY:rabbitMQPublicKey}
   rabbitMQPrivateKey: ${RABBITMQ_PRIVATE_KEY:rabbitMQPrivateKey}
-  softwareSources: ${SOFTWARE_SOURCES:/tmp/softwareSources/}
   instanceHostWebsite: ${INSTANCE_HOST_WEBSITE_URL:#{'https://www.cytomine.com'}}
   instanceHostSupportMail: ${INSTANCE_HOST_SUPPORT_MAIL:support@cytomine.com}
   instanceHostPhoneNumber: ${INSTANCE_HOST_PHONE_NUMBER:+320/000.00.00}
@@ -90,11 +94,14 @@ application:
       secret: ${JWT_SECRET}
       # Token is valid 24 hours
       token-validity-in-seconds: ${TOKEN_VALIDITY_IN_SECONDS:86400}
-      token-validity-in-seconds-for-remember-me: ${TOKEN_VALIDITY_IN_SECONDS_REMEMBER_ME:2592000} 
-      token-validity-in-seconds-for-short-term: ${TOKEN_VALIDITY_IN_SECONDS_SHORT_TERM:240}
+      token-validity-in-seconds-for-remember-me: ${TOKEN_VALIDITY_IN_SECONDS_REMEMBER_ME:2592000}
+      token-validity-in-seconds-for-short-term: ${TOKEN_VALIDITY_IN_SECONDS_SHORT_TERM:300}
 
-  imageServerURL:
-    - ${IMAGE_SERVER_URL:#{'http://ims.cytomine.local'}}
-  
+  internalProxyURL: ${INTERNAL_PROXY_URL:http://localhost}
+
   annotation:
     maxNumberOfPoint: ${ANNOTATION_MAX_POINTS:200}
+
+  appEngine:
+    enabled: ${APPENGINE_ENABLED:true}
+    apiBasePath: ${APPENGINE_API_BASE_PATH:/app-engine/v1/}

@@ -19,12 +19,10 @@ package be.cytomine.service.database;
 import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.meta.ConfigurationReadingRole;
 import be.cytomine.domain.processing.ImageFilter;
-import be.cytomine.domain.processing.ImagingServer;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.processing.ImageFilterRepository;
 import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.service.amqp.AmqpQueueConfigService;
 import be.cytomine.service.utils.Dataset;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,9 +38,6 @@ import static be.cytomine.domain.ontology.RelationTerm.PARENT;
 @Transactional
 public class BootstrapDataService {
 
-    @Autowired
-    AmqpQueueConfigService amqpQueueConfigService;
-    
     @Autowired
     BootstrapUtilsService bootstrapUtilsService;
 
@@ -60,13 +55,7 @@ public class BootstrapDataService {
 
     public void initData() {
 
-        amqpQueueConfigService.initAmqpQueueConfigDefaultValues();
-
-        bootstrapUtilsService.initRabbitMq();
-
-        ImagingServer imagingServer = bootstrapUtilsService.returnOrCreateImagingServer();
-
-        initImageFilters(imagingServer);
+        initImageFilters();
 
 
         bootstrapUtilsService.createMime("tif", "image/pyrtiff");
@@ -109,50 +98,44 @@ public class BootstrapDataService {
         changeUserKeys("admin", applicationProperties.getAdminPrivateKey(), applicationProperties.getAdminPublicKey());
         changeUserKeys("superadmin", applicationProperties.getSuperAdminPrivateKey(), applicationProperties.getSuperAdminPublicKey());
 
-        bootstrapUtilsService.addDefaultProcessingServer();
-        bootstrapUtilsService.addDefaultConstraints();
 
-        changeUserKeys("rabbitmq", applicationProperties.getRabbitMQPrivateKey(), applicationProperties.getRabbitMQPublicKey());
-
-        bootstrapUtilsService.createSoftwareUserRepository("GitHub", "cytomine", "cytomine","S_");
-//        sur.save(failOnError: true))
     }
 
-    public void initImageFilters(ImagingServer imagingServer) {
+    public void initImageFilters() {
 
         List<Map<String, Object>> filters = List.of(
-                Map.of("name", "Binary", "method","binary", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "Huang Threshold", "method","huang", "imagingServer", imagingServer, "available", false),
-                Map.of("name", "Intermodes Threshold", "method","intermodes", "imagingServer", imagingServer, "available", false),
-                Map.of("name", "IsoData Threshold", "method","isodata", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "Li Threshold", "method","li", "imagingServer", imagingServer, "available", false),
-                Map.of("name", "Max Entropy Threshold", "method","maxentropy", "imagingServer", imagingServer, "available", false),
-                Map.of("name", "Mean Threshold", "method","mean", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "Minimum Threshold", "method","minimum", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "MinError(I) Threshold", "method","minerror", "imagingServer", imagingServer, "available", false),
-                Map.of("name", "Moments Threshold", "method","moments", "imagingServer", imagingServer, "available", false),
-                Map.of("name", "Otsu Threshold", "method","otsu", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "Renyi Entropy Threshold", "method","renyientropy", "imagingServer", imagingServer, "available", false),
-                Map.of("name", "Shanbhag Threshold", "method","shanbhag", "imagingServer", imagingServer, "available", false),
-                Map.of("name", "Triangle Threshold", "method","triangle", "imagingServer", imagingServer, "available", false),
-                Map.of("name", "Yen Threshold", "method","yen", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "Percentile Threshold", "method","percentile", "imagingServer", imagingServer, "available", false),
-                Map.of("name", "H&E Haematoxylin", "method","he-haematoxylin", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "H&E Eosin", "method","he-eosin", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "HDAB Haematoxylin", "method","hdab-haematoxylin", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "HDAB DAB", "method","hdab-dab", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "Haematoxylin", "method","haematoxylin", "imagingServer", imagingServer, "available", false), //To be removed: does not exist
-                Map.of("name", "Eosin", "method","eosin", "imagingServer", imagingServer, "available", false), //To be removed: does not exist
-                Map.of("name", "Red (RGB)", "method","r_rgb", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "Green (RGB)", "method","g_rgb", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "Blue (RGB)", "method","b_rgb", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "Cyan (CMY)", "method","c_cmy", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "Magenta (CMY)", "method","m_cmy", "imagingServer", imagingServer, "available", true),
-                Map.of("name", "Yellow (CMY)", "method","y_cmy", "imagingServer", imagingServer, "available", true)
+                Map.of("name", "Binary", "method","binary", "available", true),
+                Map.of("name", "Huang Threshold", "method","huang", "available", false),
+                Map.of("name", "Intermodes Threshold", "method","intermodes", "available", false),
+                Map.of("name", "IsoData Threshold", "method","isodata", "available", true),
+                Map.of("name", "Li Threshold", "method","li", "available", false),
+                Map.of("name", "Max Entropy Threshold", "method","maxentropy", "available", false),
+                Map.of("name", "Mean Threshold", "method","mean", "available", true),
+                Map.of("name", "Minimum Threshold", "method","minimum", "available", true),
+                Map.of("name", "MinError(I) Threshold", "method","minerror", "available", false),
+                Map.of("name", "Moments Threshold", "method","moments", "available", false),
+                Map.of("name", "Otsu Threshold", "method","otsu", "available", true),
+                Map.of("name", "Renyi Entropy Threshold", "method","renyientropy", "available", false),
+                Map.of("name", "Shanbhag Threshold", "method","shanbhag", "available", false),
+                Map.of("name", "Triangle Threshold", "method","triangle", "available", false),
+                Map.of("name", "Yen Threshold", "method","yen", "available", true),
+                Map.of("name", "Percentile Threshold", "method","percentile", "available", false),
+                Map.of("name", "H&E Haematoxylin", "method","he-haematoxylin", "available", true),
+                Map.of("name", "H&E Eosin", "method","he-eosin", "available", true),
+                Map.of("name", "HDAB Haematoxylin", "method","hdab-haematoxylin", "available", true),
+                Map.of("name", "HDAB DAB", "method","hdab-dab", "available", true),
+                Map.of("name", "Haematoxylin", "method","haematoxylin", "available", false), //To be removed: does not exist
+                Map.of("name", "Eosin", "method","eosin", "available", false), //To be removed: does not exist
+                Map.of("name", "Red (RGB)", "method","r_rgb", "available", true),
+                Map.of("name", "Green (RGB)", "method","g_rgb", "available", true),
+                Map.of("name", "Blue (RGB)", "method","b_rgb", "available", true),
+                Map.of("name", "Cyan (CMY)", "method","c_cmy", "available", true),
+                Map.of("name", "Magenta (CMY)", "method","m_cmy", "available", true),
+                Map.of("name", "Yellow (CMY)", "method","y_cmy", "available", true)
         );
 
         for (Map<String, Object> filter : filters) {
-            bootstrapUtilsService.createFilter((String)filter.get("name"), (String)filter.get("method"), (ImagingServer)filter.get("imagingServer"), (Boolean)filter.get("available"));
+            bootstrapUtilsService.createFilter((String)filter.get("name"), (String)filter.get("method"), (Boolean)filter.get("available"));
         }
     }
 
@@ -169,7 +152,7 @@ public class BootstrapDataService {
         if (imageFilter!=null) {
             if (imageFilter.getMethod()==null) {
                 // still old image filter data
-                initImageFilters(bootstrapUtilsService.returnOrCreateImagingServer());
+                initImageFilters();
             }
         }
     }
