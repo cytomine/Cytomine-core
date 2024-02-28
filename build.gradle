@@ -45,7 +45,7 @@ dependencies {
 
 	annotationProcessor 'org.hibernate:hibernate-jpamodelgen'
 	implementation 'org.hibernate:hibernate-core'
-	implementation 'org.hibernate:hibernate-spatial'
+	implementation 'org.hibernate:hibernate-spatial:5.3.10.Final' //TODO: upgrade breaks annotation add
 	implementation 'org.hibernate.validator:hibernate-validator'
 	implementation 'org.postgresql:postgresql'
 	implementation 'com.zaxxer:HikariCP'
