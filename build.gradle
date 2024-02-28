@@ -79,7 +79,7 @@ dependencies {
 			// Uncomment the next line if you want to use RSASSA-PSS (PS256, PS384, PS512) algorithms:
 			//'org.bouncycastle:bcprov-jdk15on:1.60',
 			'io.jsonwebtoken:jjwt-jackson:0.11.2' // or 'io.jsonwebtoken:jjwt-gson:0.11.2' for gson
-	implementation 'com.vladmihalcea:hibernate-types-55:2.14.0'
+	implementation 'io.hypersistence:hypersistence-utils-hibernate-55:3.7.3'
 	implementation 'org.apache.commons:commons-text:1.9'
 	implementation 'com.vividsolutions:jts:1.13'
 	implementation "org.apache.pdfbox:pdfbox:2.0.25"
