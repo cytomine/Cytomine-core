@@ -74,18 +74,18 @@ dependencies {
 	// Dependencies not managed by Spring dependency-management
 
 	implementation 'org.springframework.cloud:spring-cloud-gateway-mvc:3.1.8'
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
-	implementation 'io.jsonwebtoken:jjwt-impl:0.11.2',
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5',
 			// Uncomment the next line if you want to use RSASSA-PSS (PS256, PS384, PS512) algorithms:
 			//'org.bouncycastle:bcprov-jdk15on:1.60',
-			'io.jsonwebtoken:jjwt-jackson:0.11.2' // or 'io.jsonwebtoken:jjwt-gson:0.11.2' for gson
+			'io.jsonwebtoken:jjwt-jackson:0.11.5' // or 'io.jsonwebtoken:jjwt-gson:0.11.2' for gson
 	implementation 'io.hypersistence:hypersistence-utils-hibernate-55:3.7.3'
-	implementation 'org.apache.commons:commons-text:1.9'
+	implementation 'org.apache.commons:commons-text:1.11.0'
 	implementation 'com.vividsolutions:jts:1.13'
-	implementation "org.apache.pdfbox:pdfbox:2.0.25"
-	implementation "org.apache.commons:commons-csv:1.5"
+	implementation 'org.apache.pdfbox:pdfbox:2.0.25'
+	implementation 'org.apache.commons:commons-csv:1.5'
 	implementation 'com.github.dhorions:boxable:1.6'
-	implementation "net.bull.javamelody:javamelody-spring-boot-starter:1.91.0"
+	implementation 'net.bull.javamelody:javamelody-spring-boot-starter:1.91.0'
 	// https://mvnrepository.com/artifact/org.apache.poi/poi
 	implementation 'org.apache.poi:poi:5.2.3'
 	// https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml
