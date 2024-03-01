@@ -26,8 +26,8 @@ import be.cytomine.domain.security.UserJob;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.UrlApi;
 import be.cytomine.utils.JsonObject;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.WKTReader;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.WKTReader;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -153,7 +153,7 @@ public class AlgoAnnotation extends AnnotationDomain implements Serializable {
             try {
                 annotation.location = new WKTReader().read(json.getJSONAttrStr("location"));
             }
-            catch (com.vividsolutions.jts.io.ParseException ex) {
+            catch (org.locationtech.jts.io.ParseException ex) {
                 throw new WrongArgumentException(ex.toString());
             }
         }

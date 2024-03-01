@@ -25,7 +25,7 @@ import be.cytomine.domain.security.User;
 import be.cytomine.service.dto.Point;
 import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.JsonObject;
-import com.vividsolutions.jts.geom.*;
+import org.locationtech.jts.geom.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;

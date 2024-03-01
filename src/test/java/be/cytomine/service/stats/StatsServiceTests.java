@@ -36,7 +36,7 @@ import be.cytomine.service.social.ProjectConnectionService;
 import be.cytomine.service.social.UserPositionService;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
-import com.vividsolutions.jts.io.ParseException;
+import org.locationtech.jts.io.ParseException;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;

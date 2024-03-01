@@ -21,11 +21,11 @@ import be.cytomine.CytomineCoreApplication;
 import be.cytomine.TestUtils;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.dto.SimplifiedAnnotation;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.MultiPolygon;
-import com.vividsolutions.jts.geom.Polygon;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -140,14 +140,14 @@ public class SimplifyGeometryServiceTests {
     @Test
     public void simplify_annotation_with_rate() throws ParseException {
 
-        String expected = "POLYGON ((120 120, 140 199, 160 200, 180 199, 220 120, 120 120))";
+        Geometry expected = new WKTReader().read("POLYGON ((120 120, 140 199, 160 200, 180 199, 220 120, 120 120))").norm();
         Double geometryCompression = 10.0;
 
         String location = "POLYGON ((120 120, 121 121, 122 122, 220 120, 180 199, 160 200, 140 199, 120 120))";
 
         SimplifiedAnnotation simplifiedAnnotation = simplifyGeometryService.simplifyPolygon(location, geometryCompression);
 
-        assertThat(simplifiedAnnotation.getNewAnnotation().toText()).isEqualTo(expected);
+        assertThat(simplifiedAnnotation.getNewAnnotation().norm().toText()).isEqualTo(expected.toText());
 
     }
 
