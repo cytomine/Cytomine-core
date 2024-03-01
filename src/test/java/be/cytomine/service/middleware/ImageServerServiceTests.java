@@ -26,10 +26,11 @@ import be.cytomine.service.dto.*;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
-import com.vividsolutions.jts.io.ParseException;
+import org.locationtech.jts.io.ParseException;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.io.WKTReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -427,7 +428,8 @@ public class ImageServerServiceTests {
 
         //String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/annotation/drawing?context_factor=1.25&annotations=%7B%22geometry%22%3A%22POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29%22%2C%22stroke_color%22%3Anull%2C%22stroke_width%22%3Anull%7D&level=0&z_slices=0&timepoints=0";
         String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/annotation/drawing";
-        String body = "{\"level\":0,\"z_slices\":0,\"annotations\":[{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\",\"stroke_color\":null,\"stroke_width\":null}],\"timepoints\":0,\"context_factor\":1.25}";
+        String geometry = new WKTReader().read("POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))").norm().toString();
+        String body = "{\"level\":0,\"z_slices\":0,\"annotations\":[{\"geometry\":\"" + geometry +"\",\"stroke_color\":null,\"stroke_width\":null}],\"timepoints\":0,\"context_factor\":1.25}";
         System.out.println(url);
         System.out.println(body);
         stubFor(post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(equalTo(

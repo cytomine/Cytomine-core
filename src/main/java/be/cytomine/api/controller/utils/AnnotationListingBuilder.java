@@ -32,7 +32,7 @@ import be.cytomine.service.utils.ParamsService;
 import be.cytomine.utils.GeometryUtils;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.StringUtils;
-import com.vividsolutions.jts.io.ParseException;
+import org.locationtech.jts.io.ParseException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 

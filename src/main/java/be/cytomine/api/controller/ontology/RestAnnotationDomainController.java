@@ -42,7 +42,7 @@ import be.cytomine.service.utils.ParamsService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.utils.GeometryUtils;
 import be.cytomine.utils.JsonObject;
-import com.vividsolutions.jts.io.ParseException;
+import org.locationtech.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

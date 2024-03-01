@@ -17,8 +17,8 @@ package be.cytomine.config;
 */
 
 import be.cytomine.utils.LTreeType;
-import com.vladmihalcea.hibernate.type.array.IntArrayType;
-import com.vladmihalcea.hibernate.type.array.LongArrayType;
+import io.hypersistence.utils.hibernate.type.array.IntArrayType;
+import io.hypersistence.utils.hibernate.type.array.LongArrayType;
 import org.hibernate.spatial.dialect.postgis.PostgisDialect;
 
 import java.sql.Types;

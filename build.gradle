@@ -1,6 +1,6 @@
 plugins {
-	id 'org.springframework.boot' version '2.6.6'
-	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+	id 'org.springframework.boot' version '2.7.18'
+	id 'io.spring.dependency-management' version '1.1.0'
 	id 'java'
 	id 'jacoco'
 }
@@ -30,73 +30,81 @@ springBoot {
 
 
 dependencies {
-	implementation "org.springframework.boot:spring-boot-starter-logging"
+	// Thanks to Spring dependency-management plugin, all following dependencies automatically get the right version
+	// See https://docs.spring.io/spring-boot/docs/2.7.18/reference/html/dependency-versions.html
+	implementation 'org.springframework.boot:spring-boot-starter-logging'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
-	implementation ('org.springframework.boot:spring-boot-starter-data-jpa') {
-		exclude group: "org.hibernate:hibernate-core"
-	}
-
-	implementation 'org.hibernate:hibernate-core:5.6.5.Final'
-
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-	implementation "org.springframework.boot:spring-boot-starter-mail"
-	implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation ("org.springframework.boot:spring-boot-starter-web")
-//	implementation ("org.springframework.boot:spring-boot-starter-web") {
-//		exclude module: "spring-boot-starter-tomcat"
-//	}
-//	implementation "org.springframework.boot:spring-boot-starter-undertow"
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+
+	// Hibernate
+	annotationProcessor 'org.hibernate:hibernate-jpamodelgen'
+	implementation 'org.hibernate:hibernate-core'
+	implementation 'org.hibernate:hibernate-spatial'
+	implementation 'org.hibernate.validator:hibernate-validator'
+
+	// Postgresql
+	implementation 'org.postgresql:postgresql'
+	implementation 'com.zaxxer:HikariCP'
+	implementation 'org.liquibase:liquibase-core'
+
+	// Spring security
+	implementation 'org.springframework.security:spring-security-acl'
+
+	// Utils
+	implementation 'org.apache.commons:commons-lang3'
+	implementation 'commons-codec:commons-codec'
+
+	// Jackson
+	implementation 'com.fasterxml.jackson.core:jackson-annotations'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hppc'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	implementation 'com.fasterxml.jackson.module:jackson-module-jaxb-annotations'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate5'
+
+	// Lombok
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// Tests
+	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
-	implementation 'org.springframework.security:spring-security-acl'
+	testImplementation 'org.assertj:assertj-core:3.4.1' //Should upgrade to 3.22
 
+	// -----------------------------------------------------------------------------------------------------------------
+	// Dependencies not managed by Spring dependency-management
+
+	// Gateway
 	implementation 'org.springframework.cloud:spring-cloud-gateway-mvc:3.1.8'
 
-	implementation (group: 'org.liquibase', name: 'liquibase-core', version: "4.6.1")
-	compileOnly 'org.projectlombok:lombok:1.18.20'
-	annotationProcessor 'org.projectlombok:lombok:1.18.20'
-	implementation "com.zaxxer:HikariCP:4.0.3"
-	implementation "org.postgresql:postgresql:42.2.23"
-	implementation 'com.vladmihalcea:hibernate-types-55:2.14.0'
-	implementation "org.hibernate.validator:hibernate-validator:6.1.6.Final"
-	implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.10.4"
-	implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.4"
-	implementation "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.10.4"
-	implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.10.4"
-	implementation "com.fasterxml.jackson.core:jackson-annotations:2.10.4"
-	implementation "com.fasterxml.jackson.core:jackson-databind:2.10.4"
-	implementation 'org.hibernate:hibernate-spatial:5.3.10.Final'
-	implementation "commons-codec:commons-codec:1.6"
+	// JSON tokens
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
-	implementation 'org.springframework.security:spring-security-acl'
+	// Hibernate
+	implementation 'io.hypersistence:hypersistence-utils-hibernate-55:3.7.3'
+	implementation 'org.locationtech.jts:jts-core:1.19.0'
 
-	annotationProcessor('org.hibernate:hibernate-jpamodelgen')
-
-	testImplementation 'org.assertj:assertj-core:3.4.1'
-	implementation 'org.apache.commons:commons-text:1.9'
-	testImplementation 'com.github.tomakehurst:wiremock:1.58'
-	implementation 'com.vividsolutions:jts:1.13'
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
-	implementation 'io.jsonwebtoken:jjwt-impl:0.11.2',
-			// Uncomment the next line if you want to use RSASSA-PSS (PS256, PS384, PS512) algorithms:
-			//'org.bouncycastle:bcprov-jdk15on:1.60',
-			'io.jsonwebtoken:jjwt-jackson:0.11.2' // or 'io.jsonwebtoken:jjwt-gson:0.11.2' for gson
-
-	implementation "org.apache.pdfbox:pdfbox:2.0.25"
-	implementation "org.apache.commons:commons-csv:1.5"
+	// Reports (PDF, CSV, Excel, ...)
+	implementation 'org.apache.pdfbox:pdfbox:2.0.25'
 	implementation 'com.github.dhorions:boxable:1.6'
-
-	implementation "net.bull.javamelody:javamelody-spring-boot-starter:1.91.0"
-	// https://mvnrepository.com/artifact/org.apache.poi/poi
+	implementation 'org.apache.commons:commons-csv:1.5'
 	implementation 'org.apache.poi:poi:5.2.3'
-	// https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml
 	implementation 'org.apache.poi:poi-ooxml:5.2.3'
 
-
+	// Utils
+	implementation 'org.apache.commons:commons-text:1.11.0'
+	implementation 'net.bull.javamelody:javamelody-spring-boot-starter:1.91.0'
+	testImplementation 'com.github.tomakehurst:wiremock:1.58'
 }
 
 test {
@@ -114,7 +122,7 @@ jacocoTestReport {
 
 jacoco {
 	toolVersion = "0.8.7"
-	reportsDir = file("$buildDir/jacoco")
+	reportsDirectory = file("$buildDir/jacoco")
 }
 
 jacocoTestCoverageVerification {
@@ -126,15 +134,3 @@ jacocoTestCoverageVerification {
 		}
 	}
 }
-
-////create a single Jar with all dependencies
-//task fatJar(type: Jar) {
-//	manifest {
-//		attributes 'Implementation-Title': 'Gradle Jar File Example',
-//				'Implementation-Version': version,
-//				'Main-Class': 'com.mkyong.DateUtils'
-//	}
-//	baseName = project.name + '-all'
-//	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-//	with jar
-//}
