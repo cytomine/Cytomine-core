@@ -43,18 +43,25 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
+	// Hibernate
 	annotationProcessor 'org.hibernate:hibernate-jpamodelgen'
 	implementation 'org.hibernate:hibernate-core'
 	implementation 'org.hibernate:hibernate-spatial'
 	implementation 'org.hibernate.validator:hibernate-validator'
+
+	// Postgresql
 	implementation 'org.postgresql:postgresql'
 	implementation 'com.zaxxer:HikariCP'
 	implementation 'org.liquibase:liquibase-core'
 
+	// Spring security
 	implementation 'org.springframework.security:spring-security-acl'
 
+	// Utils
+	implementation 'org.apache.commons:commons-lang3'
 	implementation 'commons-codec:commons-codec'
 
+	// Jackson
 	implementation 'com.fasterxml.jackson.core:jackson-annotations'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hppc'
@@ -62,9 +69,11 @@ dependencies {
 	implementation 'com.fasterxml.jackson.module:jackson-module-jaxb-annotations'
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-hibernate5'
 
+	// Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 
+	// Tests
 	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
@@ -73,24 +82,28 @@ dependencies {
 	// -----------------------------------------------------------------------------------------------------------------
 	// Dependencies not managed by Spring dependency-management
 
+	// Gateway
 	implementation 'org.springframework.cloud:spring-cloud-gateway-mvc:3.1.8'
+
+	// JSON tokens
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5',
-			// Uncomment the next line if you want to use RSASSA-PSS (PS256, PS384, PS512) algorithms:
-			//'org.bouncycastle:bcprov-jdk15on:1.60',
-			'io.jsonwebtoken:jjwt-jackson:0.11.5' // or 'io.jsonwebtoken:jjwt-gson:0.11.2' for gson
+	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+	// Hibernate
 	implementation 'io.hypersistence:hypersistence-utils-hibernate-55:3.7.3'
 	implementation 'org.locationtech.jts:jts-core:1.19.0'
-	implementation 'org.apache.commons:commons-text:1.11.0'
+
+	// Reports (PDF, CSV, Excel, ...)
 	implementation 'org.apache.pdfbox:pdfbox:2.0.25'
-	implementation 'org.apache.commons:commons-csv:1.5'
 	implementation 'com.github.dhorions:boxable:1.6'
-	implementation 'net.bull.javamelody:javamelody-spring-boot-starter:1.91.0'
-	// https://mvnrepository.com/artifact/org.apache.poi/poi
+	implementation 'org.apache.commons:commons-csv:1.5'
 	implementation 'org.apache.poi:poi:5.2.3'
-	// https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml
 	implementation 'org.apache.poi:poi-ooxml:5.2.3'
 
+	// Utils
+	implementation 'org.apache.commons:commons-text:1.11.0'
+	implementation 'net.bull.javamelody:javamelody-spring-boot-starter:1.91.0'
 	testImplementation 'com.github.tomakehurst:wiremock:1.58'
 }
 
