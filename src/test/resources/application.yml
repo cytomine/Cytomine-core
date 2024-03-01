@@ -37,7 +37,7 @@ spring:
     mongodb:
       authentication-database: admin
       username: ${MONGO_USER:mongoadmin}
-      password: ${MONGO_PASS:secret}
+      password: ${MONGO_PASS:password}
       database: ${MONGO_DB_NAME:cytomine}
       port: ${MONGO_PORT:27017}
       host: ${MONGO_HOST:localhost}
