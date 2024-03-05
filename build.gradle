@@ -44,9 +44,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
 	// Hibernate
-	annotationProcessor 'org.hibernate:hibernate-jpamodelgen'
-	implementation 'org.hibernate:hibernate-core'
-	implementation 'org.hibernate:hibernate-spatial'
+	annotationProcessor 'org.hibernate.orm:hibernate-jpamodelgen'
+	implementation 'org.hibernate.orm:hibernate-core'
+	implementation 'org.hibernate.orm:hibernate-spatial'
 	implementation 'org.hibernate.validator:hibernate-validator'
 
 	// Postgresql
@@ -94,7 +94,7 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	// Hibernate
-	implementation 'io.hypersistence:hypersistence-utils-hibernate-55:3.7.3'
+	implementation 'io.hypersistence:hypersistence-utils-hibernate-60:3.7.3'
 	implementation 'org.locationtech.jts:jts-core:1.19.0'
 
 	// Reports (PDF, CSV, Excel, ...)
