@@ -18,12 +18,14 @@ package be.cytomine.dto;
 
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.mapping.Array;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@EqualsAndHashCode(callSuper=false)
 public class JsonMultipleObject extends ArrayList<JsonObject> implements JsonInput {
 
 }

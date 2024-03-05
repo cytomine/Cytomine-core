@@ -18,11 +18,12 @@ package be.cytomine.repository;
 
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.exceptions.WrongArgumentException;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
 
 import jakarta.persistence.EntityManager;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;

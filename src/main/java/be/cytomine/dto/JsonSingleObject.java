@@ -18,8 +18,10 @@ package be.cytomine.dto;
 
 import be.cytomine.utils.JsonObject;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
+@EqualsAndHashCode(callSuper=false)
 public class JsonSingleObject extends JsonObject implements JsonInput {
 
 }

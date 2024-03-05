@@ -625,7 +625,7 @@ public class ImageInstanceService extends ModelService {
         for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
             query.setParameter(entry.getKey(), entry.getValue());
         }
-        long count = ((BigInteger)query.getResultList().get(0)).longValue();
+        long count = ((Long)query.getResultList().get(0));
 
         if(light) {
             List<Map<String,Object>> lightResult = new ArrayList<>();

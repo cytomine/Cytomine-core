@@ -58,7 +58,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long>  {
     List<Tuple> listByCreator(Long userId);
 
     default List<NamedCytomineDomain> listByCreator(User user) {
-        return listByCreator(user.getId()).stream().map(x -> new NamedCytomineDomain(((BigInteger)x.get(0)).longValue(), (String)x.get(1)))
+        return listByCreator(user.getId()).stream().map(x -> new NamedCytomineDomain(((Long)x.get(0)), (String)x.get(1)))
                 .collect(Collectors.toList());
     }
 
@@ -66,7 +66,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long>  {
     List<Tuple> listByAdmin(Long userId);
 
     default List<NamedCytomineDomain> listByAdmin(User user) {
-        return listByAdmin(user.getId()).stream().map(x -> new NamedCytomineDomain(((BigInteger)x.get(0)).longValue(), (String)x.get(1)))
+        return listByAdmin(user.getId()).stream().map(x -> new NamedCytomineDomain(((Long)x.get(0)), (String)x.get(1)))
                 .collect(Collectors.toList());
     }
 
@@ -74,7 +74,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long>  {
     List<Tuple> listByUser(Long userId);
 
     default List<NamedCytomineDomain> listByUser(User user) {
-        return listByUser(user.getId()).stream().map(x -> new NamedCytomineDomain(((BigInteger)x.get(0)).longValue(), (String)x.get(1)))
+        return listByUser(user.getId()).stream().map(x -> new NamedCytomineDomain(((Long)x.get(0)), (String)x.get(1)))
                 .collect(Collectors.toList());
     }
 
@@ -86,12 +86,12 @@ public interface ProjectRepository extends JpaRepository<Project, Long>  {
     List<Tuple> listLastCreatedTuple();
 
     default List<DatedCytomineDomain> listLastCreated(List<Long> ignoredProjectIds) {
-        return listLastCreatedTuple(ignoredProjectIds).stream().map(x -> new DatedCytomineDomain(((BigInteger)x.get(0)).longValue(), (Date)x.get(1)))
+        return listLastCreatedTuple(ignoredProjectIds).stream().map(x -> new DatedCytomineDomain(((Long)x.get(0)), (Date)x.get(1)))
                 .collect(Collectors.toList());
     }
 
     default List<DatedCytomineDomain> listLastCreated() {
-        return listLastCreatedTuple().stream().map(x -> new DatedCytomineDomain(((BigInteger)x.get(0)).longValue(), (Date)x.get(1)))
+        return listLastCreatedTuple().stream().map(x -> new DatedCytomineDomain(((Long)x.get(0)), (Date)x.get(1)))
                 .collect(Collectors.toList());
     }
 

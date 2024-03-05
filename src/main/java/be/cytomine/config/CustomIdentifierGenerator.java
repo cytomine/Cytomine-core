@@ -29,8 +29,8 @@ public class CustomIdentifierGenerator extends SequenceStyleGenerator {
     public Serializable generate(SharedSessionContractImplementor session, Object object)
             throws HibernateException {
         // TODO Auto-generated method stub
-        Serializable id = session.getEntityPersister(null, object)
+        Serializable id = (Serializable) session.getEntityPersister(null, object)
                 .getClassMetadata().getIdentifier(object, session);
-        return id != null ? id : super.generate(session, object);
+        return id != null ? id : (Serializable) super.generate(session, object);
     }
 }

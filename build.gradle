@@ -1,6 +1,6 @@
 plugins {
 //	id 'org.springframework.boot' version '2.7.17'
-	id 'org.springframework.boot' version '3.1.5'
+	id 'org.springframework.boot' version '3.0.0'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
 	id 'jacoco'
@@ -29,7 +29,7 @@ springBoot {
 	mainClass = "be.cytomine.CytomineCoreApplication"
 }
 
-ext['spring-security.version']='6.2.0'
+ext['spring-security.version']='6.0.8'
 
 dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-logging"
@@ -38,7 +38,7 @@ dependencies {
 		exclude group: "org.hibernate:hibernate-core"
 	}
 
-	implementation 'org.hibernate:hibernate-core:5.6.5.Final'
+	implementation 'org.hibernate.orm:hibernate-core:6.1.7.Final'
 
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 	implementation "org.springframework.boot:spring-boot-starter-mail"
@@ -50,7 +50,7 @@ dependencies {
 //	}
 //	implementation "org.springframework.boot:spring-boot-starter-undertow"
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
-	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.3'
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
@@ -58,30 +58,30 @@ dependencies {
 
 	implementation 'org.springframework.cloud:spring-cloud-gateway-mvc:3.1.8'
 
-	implementation (group: 'org.liquibase', name: 'liquibase-core', version: "4.6.1")
-	compileOnly 'org.projectlombok:lombok:1.18.20'
-	annotationProcessor 'org.projectlombok:lombok:1.18.20'
-	implementation "com.zaxxer:HikariCP:4.0.3"
-	implementation "org.postgresql:postgresql:42.2.23"
-	implementation 'com.vladmihalcea:hibernate-types-55:2.14.0'
-	implementation "org.hibernate.validator:hibernate-validator:6.1.6.Final"
-	implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.10.4"
-	implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.4"
-	implementation "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.10.4"
-	implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.10.4"
-	implementation "com.fasterxml.jackson.core:jackson-annotations:2.10.4"
-	implementation "com.fasterxml.jackson.core:jackson-databind:2.10.4"
-	implementation 'org.hibernate:hibernate-spatial:5.3.10.Final'
+	implementation (group: 'org.liquibase', name: 'liquibase-core', version: "4.17.2")
+	compileOnly 'org.projectlombok:lombok:1.18.30'
+	annotationProcessor 'org.projectlombok:lombok:1.18.30'
+	implementation "com.zaxxer:HikariCP:5.0.1"
+	implementation "org.postgresql:postgresql:42.5.4"
+//	implementation 'com.vladmihalcea:hibernate-types-55:2.14.0'
+	implementation "org.hibernate.validator:hibernate-validator:8.0.1.Final"
+	implementation "com.fasterxml.jackson.datatype:jackson-datatype-hppc:2.14.3"
+	implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.14.3"
+	implementation "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.14.3"
+	implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5:2.14.3"
+	implementation "com.fasterxml.jackson.core:jackson-annotations:2.14.3"
+	implementation "com.fasterxml.jackson.core:jackson-databind:2.14.3"
+	implementation 'org.hibernate:hibernate-spatial:6.1.7.Final'
 	implementation "commons-codec:commons-codec:1.6"
 
 	implementation 'org.springframework.security:spring-security-acl'
 
-	annotationProcessor('org.hibernate:hibernate-jpamodelgen')
+	annotationProcessor('org.hibernate:hibernate-jpamodelgen:6.4.4.Final')
 
 	testImplementation 'org.assertj:assertj-core:3.4.1'
 	implementation 'org.apache.commons:commons-text:1.9'
 	testImplementation 'com.github.tomakehurst:wiremock:1.58'
-	implementation 'com.vividsolutions:jts:1.13'
+	implementation 'org.locationtech.jts:jts-core:1.19.0'
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
 	implementation 'io.jsonwebtoken:jjwt-impl:0.11.2',
 			// Uncomment the next line if you want to use RSASSA-PSS (PS256, PS384, PS512) algorithms:
@@ -119,7 +119,7 @@ jacocoTestReport {
 
 jacoco {
 	toolVersion = "0.8.7"
-	reportsDir = file("$buildDir/jacoco")
+	reportsDirectory = file("$buildDir/jacoco")
 }
 
 jacocoTestCoverageVerification {

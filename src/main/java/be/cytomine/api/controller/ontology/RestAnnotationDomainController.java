@@ -40,11 +40,9 @@ import be.cytomine.service.utils.ParamsService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.utils.GeometryUtils;
 import be.cytomine.utils.JsonObject;
-import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import org.locationtech.jts.io.ParseException;
 import org.springframework.cloud.gateway.mvc.ProxyExchange;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

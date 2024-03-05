@@ -8,12 +8,12 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.util.Optional;
 
 import java.util.UUID;
@@ -31,7 +31,6 @@ public class TaskRun extends CytomineDomain {
 
     @NotNull
     @Column(nullable = false)
-    @Type(type="org.hibernate.type.UUIDCharType")
     private UUID taskRunId;
 
     public static JsonObject getDataFromDomain(CytomineDomain domain) {

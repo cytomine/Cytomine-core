@@ -23,9 +23,9 @@ import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.SliceInstanceRepository;
 import be.cytomine.service.dto.Kmeans;
 import be.cytomine.service.ontology.AnnotationIndexService;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 

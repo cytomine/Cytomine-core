@@ -34,7 +34,7 @@ import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.dto.AnnotationResult;
 import be.cytomine.service.dto.Kmeans;
 import be.cytomine.service.utils.KmeansGeometryService;
-import com.vividsolutions.jts.io.ParseException;
+import org.locationtech.jts.io.ParseException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -17,11 +17,11 @@ package be.cytomine.service.utils;
 */
 
 import be.cytomine.exceptions.WrongArgumentException;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.io.ParseException;
-import com.vividsolutions.jts.io.WKTReader;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityManager;

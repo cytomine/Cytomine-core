@@ -22,6 +22,8 @@ import be.cytomine.domain.image.*;
 import be.cytomine.repository.image.UploadedFileRepository;
 import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.utils.JsonObject;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

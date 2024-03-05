@@ -104,7 +104,7 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
 
     @Query(value = "select distinct secUser " +
             "from AclSid as aclSid, AclEntry as aclEntry, SecUser as secUser "+
-            "where aclEntry.aclObjectIdentity in (select  aclEntry.aclObjectIdentity from aclEntry where sid.id = :sidId) " +
+            "where aclEntry.aclObjectIdentity in (select  aclEntry.aclObjectIdentity from AclEntry as aclEntry where aclEntry.sid.id = :sidId) " +
             "and aclEntry.sid = aclSid and aclSid.sid = secUser.username and aclSid.id <> :sidId")
     List<SecUser> findAllSecUsersSharingAccesToSameProject(Long sidId);
 

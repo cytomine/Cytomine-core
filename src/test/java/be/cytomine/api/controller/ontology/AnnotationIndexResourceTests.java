@@ -28,7 +28,7 @@ import be.cytomine.domain.security.User;
 import be.cytomine.repository.ontology.AnnotationIndexRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.dto.AnnotationIndexLightDTO;
-import com.vividsolutions.jts.io.ParseException;
+import org.locationtech.jts.io.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

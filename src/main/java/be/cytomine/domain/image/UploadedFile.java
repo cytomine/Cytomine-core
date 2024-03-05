@@ -21,12 +21,14 @@ import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.UserJob;
 import be.cytomine.utils.JsonObject;
+import be.cytomine.utils.LTreeType;
 import be.cytomine.utils.LongArrayToBytesConverter;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Type;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Type;
+
 import java.io.Serializable;
 import java.util.Set;
 
@@ -66,8 +68,7 @@ public class UploadedFile extends CytomineDomain implements Serializable {
 
     private int status = 0;
 
-    @Column(columnDefinition = "ltree")
-    @Type(type = "be.cytomine.utils.LTreeType")
+    @Type(LTreeType.class)
     private String lTree;
 
     @Override

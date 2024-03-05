@@ -27,7 +27,6 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.dto.Point;
 import be.cytomine.utils.GisUtils;
 import be.cytomine.utils.JsonObject;
-import com.vividsolutions.jts.geom.Geometry;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.locationtech.jts.geom.Geometry;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Optional;
@@ -189,7 +190,7 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
     }
 
     public Point getCentroid() {
-        com.vividsolutions.jts.geom.Point centroid = location.getCentroid();
+        org.locationtech.jts.geom.Point centroid = location.getCentroid();
         return new Point(centroid.getX(), centroid.getY());
     }
 
