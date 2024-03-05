@@ -174,7 +174,7 @@ public class SimplifyGeometryService {
 
     public Geometry reduceGeometryPrecision(Geometry geometry, int scale) {
         GeometryPrecisionReducer reducer = new GeometryPrecisionReducer(new PrecisionModel(scale));
-        return reducer.reduce(geometry);
+        return reducer.reduce(geometry).norm();
     }
 
 

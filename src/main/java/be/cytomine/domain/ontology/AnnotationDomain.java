@@ -27,6 +27,7 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.dto.Point;
 import be.cytomine.utils.GisUtils;
 import be.cytomine.utils.JsonObject;
+import org.locationtech.jts.geom.Geometry;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.locationtech.jts.geom.Geometry;
 
 import java.io.Serializable;
 import java.util.List;
