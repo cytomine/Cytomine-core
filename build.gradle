@@ -77,7 +77,7 @@ dependencies {
 	testImplementation 'org.junit.jupiter:junit-jupiter'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
-	testImplementation 'org.assertj:assertj-core:3.4.1' //Should upgrade to 3.22
+	testImplementation 'org.assertj:assertj-core:3.4.1' // TODO: upgrade to 3.23.1
 
 	// -----------------------------------------------------------------------------------------------------------------
 	// Dependencies not managed by Spring dependency-management
@@ -95,6 +95,7 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	// Hibernate
+	// See https://github.com/vladmihalcea/hypersistence-utils for related Hibernate version package
 	implementation 'io.hypersistence:hypersistence-utils-hibernate-60:3.7.3'
 	implementation 'org.locationtech.jts:jts-core:1.19.0'
 
