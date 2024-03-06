@@ -60,6 +60,7 @@ dependencies {
 	// Utils
 	implementation 'org.apache.commons:commons-lang3'
 	implementation 'commons-codec:commons-codec'
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
 
 	// Jackson
 	implementation 'com.fasterxml.jackson.core:jackson-annotations'
