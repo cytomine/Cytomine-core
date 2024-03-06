@@ -43,6 +43,7 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -144,12 +145,12 @@ public class SecurityConfiguration {
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
         return (web) -> web.ignoring()
-                .requestMatchers(HttpMethod.OPTIONS, "/**")
-                .requestMatchers("/app/**/*.{js,html}")
-                .requestMatchers("/i18n/**")
-                .requestMatchers("/content/**")
-                .requestMatchers("/h2-console/**")
-                .requestMatchers("/test/**");
+                .requestMatchers(new AntPathRequestMatcher("/**", "OPTIONS"))
+                .requestMatchers(new AntPathRequestMatcher("/app/**/*.{js,html}"))
+                .requestMatchers(new AntPathRequestMatcher("/i18n/**"))
+                .requestMatchers(new AntPathRequestMatcher("/content/**"))
+                .requestMatchers(new AntPathRequestMatcher("/h2-console/**"))
+                .requestMatchers(new AntPathRequestMatcher("/test/**"));
     }
 
     private JWTConfigurer securityConfigurerAdapter() {
@@ -185,14 +186,18 @@ public class SecurityConfiguration {
                 .requestMatchers("/api/account/resetPassword/init").permitAll()
                 .requestMatchers("/api/account/resetPassword/finish").permitAll()
                 .requestMatchers("/api/login/impersonate*").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/**").authenticated()
-                .requestMatchers("/session/admin/**").authenticated()
-                .requestMatchers(HttpMethod.GET, "/server/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/server/**").permitAll()
-                .requestMatchers("/**").permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
+                .requestMatchers("/session/admin/info.json").authenticated()
+                .requestMatchers("/session/admin/open.json").authenticated()
+                .requestMatchers("/session/admin/close.json").authenticated()
+                .requestMatchers(HttpMethod.GET, "/server/ping").permitAll()
+                .requestMatchers(HttpMethod.GET, "/server/ping.json").permitAll()
+                .requestMatchers(HttpMethod.POST, "/server/ping").permitAll()
+                .requestMatchers(HttpMethod.POST, "/server/ping.json").permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/**")).permitAll()
                 // For spring 6 (this is default behaviour this line was added to simulate that) [It’s recommended that Spring Security secure all dispatch types]
-                .shouldFilterAllDispatcherTypes(true)
-                .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
+//                .shouldFilterAllDispatcherTypes(true)
+//                .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
 
 //        .and()
 //            .httpBasic()
@@ -204,12 +209,13 @@ public class SecurityConfiguration {
                     .cacheControl().disable()
             // For Spring 6, opting into it within 5.8 as far as it doesn't break my app we can safely migrate
             // Remove me once we migrated as these are the defaults behaviors in Spring Sec 6
-            .and()
-                .securityContext((securityContext) -> securityContext
-                        .requireExplicitSave(true))
-                .sessionManagement((sessions) -> sessions
-                        .requireExplicitAuthenticationStrategy(true)
-                );
+//            .and()
+//                .securityContext((securityContext) -> securityContext
+//                        .requireExplicitSave(true))
+//                .sessionManagement((sessions) -> sessions
+//                        .requireExplicitAuthenticationStrategy(true)
+//                )
+        ;
 
         return http.build();
         // @formatter:on
