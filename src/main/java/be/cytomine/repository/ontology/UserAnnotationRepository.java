@@ -27,7 +27,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import jakarta.persistence.Tuple;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -61,9 +60,9 @@ public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, 
         List<AnnotationLight> annotationLights = new ArrayList<>();
         for (Tuple tuple : listTuplesLight()) {
             annotationLights.add(new AnnotationLight(
-                    ((BigInteger)tuple.get("id")).longValue(),
-                    ((BigInteger)tuple.get("container")).longValue(),
-                    UrlApi.getUserAnnotationCropWithAnnotationIdWithMaxSize(((BigInteger)tuple.get("id")).longValue(), 256, "png"))
+                    (Long)tuple.get("id"),
+                    (Long)tuple.get("container"),
+                    UrlApi.getUserAnnotationCropWithAnnotationIdWithMaxSize((Long)tuple.get("id"), 256, "png"))
             );
         }
         return annotationLights;

@@ -33,7 +33,6 @@ import org.springframework.stereotype.Service;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Tuple;
 import jakarta.transaction.Transactional;
-import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -89,8 +88,8 @@ public class GenericAnnotationService {
         List<Long> ids = new ArrayList<>();
         Set<Long> users = new HashSet<>();
         for (Tuple result : results) {
-            ids.add(((BigInteger)result.get("annotation")).longValue());
-            users.add(((BigInteger)result.get("user")).longValue());
+            ids.add((Long)result.get("annotation"));
+            users.add((Long)result.get("user"));
         }
 
         if(users.size()>1 && !table.equals("reviewed_annotation")) { //if more annotation from more than 1 user NOT IN REVIEW MODE!

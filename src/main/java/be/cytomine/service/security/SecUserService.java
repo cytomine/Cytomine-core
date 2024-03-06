@@ -75,7 +75,6 @@ import org.springframework.util.ReflectionUtils;
 import jakarta.persistence.Query;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.TupleElement;
-import java.math.BigInteger;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -358,9 +357,6 @@ public class SecUserService extends ModelService {
             JsonObject result = new JsonObject();
             for (TupleElement<?> element : rowResult.getElements()) {
                 Object value = rowResult.get(element.getAlias());
-//                if (value instanceof BigInteger) {
-                    value = ((Long) value);
-//                }
                 String alias = SQLUtils.toCamelCase(element.getAlias());
                 result.put(alias, value);
             }
@@ -400,7 +396,7 @@ public class SecUserService extends ModelService {
         for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
             query.setParameter(entry.getKey(), entry.getValue());
         }
-        long count = ((BigInteger) query.getResultList().get(0)).longValue();
+        long count = (Long) query.getResultList().get(0);
 
         Page<Map<String, Object>> page = PageUtils.buildPageFromPageResults(results, max, offset, count);
         return page;

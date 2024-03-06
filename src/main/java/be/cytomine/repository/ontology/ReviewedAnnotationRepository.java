@@ -27,7 +27,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import jakarta.persistence.Tuple;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -74,9 +73,9 @@ public interface ReviewedAnnotationRepository extends JpaRepository<ReviewedAnno
         List<ReviewedAnnotationStatsEntry> reviewedAnnotationStatsEntries = new ArrayList<>();
         for (Tuple tuple : stats(imageInstance.getId())) {
             reviewedAnnotationStatsEntries.add(new ReviewedAnnotationStatsEntry(
-                    ((BigInteger)tuple.get(0)).longValue(),
-                    ((BigInteger)tuple.get(1)).longValue(),
-                    ((BigInteger)tuple.get(2)).longValue())
+                    (Long)tuple.get(0),
+                    (Long)tuple.get(1),
+                    (Long)tuple.get(2))
             );
         }
         return reviewedAnnotationStatsEntries;

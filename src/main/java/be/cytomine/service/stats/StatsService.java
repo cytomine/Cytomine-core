@@ -290,9 +290,9 @@ public class StatsService {
         List<Tuple> rows = entityManager.createNativeQuery(request, Tuple.class).getResultList();
 
         for (Tuple row : rows) {
-            JsonObject value = result.get(row.get(0) == null ? 0L : ((BigInteger) row.get(0)).longValue());
+            JsonObject value = result.get(row.get(0) == null ? 0L : (Long) row.get(0));
             if (value != null) {
-                value.put("value", ((BigInteger) row.get(1)).longValue());
+                value.put("value", (Long) row.get(1));
             }
         }
         return new ArrayList<>(result.values());
@@ -365,11 +365,11 @@ public class StatsService {
         List<Tuple> rows = entityManager.createNativeQuery(request, Tuple.class).getResultList();
         for (Tuple row : rows) {
             if (row.get(0) == null) {
-                stats.put("0", ((BigInteger) row.get(1)).longValue());
+                stats.put("0", (Long) row.get(1));
             } else {
                 String name = (String) idsRevert.get(String.valueOf(row.get(0)));
                 if (name != null) {
-                    stats.put(name, (row.get(1) instanceof BigInteger ? ((BigInteger) row.get(1)).longValue() : row.get(1)));
+                    stats.put(name, (row.get(1) instanceof BigInteger ? (Long) row.get(1) : row.get(1)));
                 }
             }
         }

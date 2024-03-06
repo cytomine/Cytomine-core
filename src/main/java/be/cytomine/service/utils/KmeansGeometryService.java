@@ -32,7 +32,6 @@ import org.springframework.stereotype.Service;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import jakarta.persistence.Tuple;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -95,7 +94,7 @@ public class KmeansGeometryService {
         for (Tuple tuple : resultList) {
             Kmeans kmeans = new Kmeans();
             kmeans.setId(((Integer)tuple.get(0)).longValue());
-            kmeans.setCount(((BigInteger)tuple.get(1)).longValue());
+            kmeans.setCount((Long)tuple.get(1));
             kmeans.setLocation((String) tuple.get(2));
             if(kmeans.getCount()>max) {
                 max = kmeans.getCount();

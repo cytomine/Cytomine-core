@@ -28,10 +28,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.Tuple;
 import jakarta.transaction.Transactional;
 
-import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -190,10 +188,10 @@ public class TaskService {
         }
 
         Task task = new Task();
-        task.setId(((BigInteger)row[0]).longValue());
-        task.setProgress(((BigInteger)row[1]).intValue());
-        task.setProjectIdent(row[2]!=null ? ((BigInteger)row[2]).longValue() : null);
-        task.setUserIdent(((BigInteger)row[3]).longValue());
+        task.setId((Long)row[0]);
+        task.setProgress(((Long)row[1]).intValue());
+        task.setProjectIdent(row[2]!=null ? (Long)row[2] : null);
+        task.setUserIdent((Long)row[3]);
         return task;
     }
 
@@ -204,7 +202,7 @@ public class TaskService {
         return rows.stream().map(x -> {
             TaskComment comment = new TaskComment();
             comment.setComment((String)x[0]);
-            comment.setTimestamp(((BigInteger)x[1]).longValue());
+            comment.setTimestamp((Long)x[1]);
             return comment;
         }).collect(Collectors.toList());
     }

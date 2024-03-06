@@ -23,7 +23,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import jakarta.transaction.Transactional;
 
-import java.math.BigInteger;
 import java.sql.Statement;
 
 @Service
