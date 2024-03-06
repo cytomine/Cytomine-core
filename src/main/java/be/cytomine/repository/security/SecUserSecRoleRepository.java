@@ -34,8 +34,6 @@ import java.util.Set;
 @Repository
 public interface SecUserSecRoleRepository extends JpaRepository<SecUserSecRole, Long>, JpaSpecificationExecutor<SecUserSecRole> {
 
-    Optional<SecUser> findById(String id);
-
     @Query("select distinct s.secRole from SecUserSecRole s where s.secUser = ?1")
     Set<SecRole> findAllRoleBySecUser(SecUser user);
 

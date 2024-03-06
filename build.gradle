@@ -34,7 +34,7 @@ dependencies {
 	// See https://docs.spring.io/spring-boot/docs/3.0.13/reference/html/dependency-versions.html
 	implementation 'org.springframework.boot:spring-boot-starter-logging'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation ('org.springframework.boot:spring-boot-starter-data-jpa')
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'

@@ -358,9 +358,9 @@ public class SecUserService extends ModelService {
             JsonObject result = new JsonObject();
             for (TupleElement<?> element : rowResult.getElements()) {
                 Object value = rowResult.get(element.getAlias());
-                if (value instanceof BigInteger) {
-                    value = ((BigInteger) value).longValue();
-                }
+//                if (value instanceof BigInteger) {
+                    value = ((Long) value);
+//                }
                 String alias = SQLUtils.toCamelCase(element.getAlias());
                 result.put(alias, value);
             }
