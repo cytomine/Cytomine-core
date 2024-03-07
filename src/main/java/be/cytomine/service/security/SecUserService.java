@@ -329,6 +329,7 @@ public class SecUserService extends ModelService {
             groupBy = "GROUP BY u.id ";
         }
 
+
         if (sortColumn.equals("role")) {
             sort = "ORDER BY " + sortColumn + " " + sortDirection + ", u.id ASC ";
         } else if (sortColumn.equals("fullName")) {
@@ -512,8 +513,8 @@ public class SecUserService extends ModelService {
         String from = "from ProjectRepresentativeUser r right outer join r.user secUser ON (r.project.id = " + project.getId() + "), " +
                 "AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid ";
         String where = "where aclObjectId.objectId = " + project.getId() + " " +
-                "and aclEntry.aclObjectIdentity = aclObjectId.id " +
-                "and aclEntry.sid = aclSid.id " +
+                "and aclEntry.aclObjectIdentity = aclObjectId " +
+                "and aclEntry.sid = aclSid " +
                 "and aclSid.sid = secUser.username " +
                 "and secUser.class = 'be.cytomine.domain.security.User' ";
         String groupBy = "";
