@@ -1,20 +1,20 @@
 package be.cytomine.config;
 
 /*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2009-2022. Authors: see NOTICE file.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import be.cytomine.config.security.ApiKeyFilter;
 import be.cytomine.repository.security.SecUserRepository;
@@ -31,6 +31,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
@@ -98,6 +99,7 @@ public class SecurityConfiguration {
      * Argon2 is intentionally slow: slow-hashing functions are good for storing passwords, because it is time/resource consuming to crack them.
      * SHA-512 is not designed for storing passwords. so insecure and deprecated so in future check if sha256 use it if not use argon2 or bcrypt.
      * recommended way is to use DelegatingPasswordEncoder()
+     *
      * @return
      */
     @Bean
@@ -121,8 +123,8 @@ public class SecurityConfiguration {
 //        return new DelegatingPasswordEncoder(idForEncode, encoders);
     }
 
-      // TODO: we are trying to migrate this to exposing a Bean is it really working? NOT sure more testing is needed
-     // Check out: authManager(UserDetailsService detailsService) for how we migrated
+    // TODO: we are trying to migrate this to exposing a Bean is it really working? NOT sure more testing is needed
+    // Check out: authManager(UserDetailsService detailsService) for how we migrated
 //    @Override
 //    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
 //        auth.userDetailsService(domainUserDetailsService).passwordEncoder(passwordEncoder());
@@ -131,11 +133,12 @@ public class SecurityConfiguration {
     /**
      * configures Spring Security to use your DomainUserDetailsService to fetch user details from a custom source (DB which's SecUserRepository)
      * and to use the provided PasswordEncoder to encode and verify passwords.
+     *
      * @return
      * @throws Exception
      */
     @Bean
-    public AuthenticationManager authManager(UserDetailsService detailsService){
+    public AuthenticationManager authManager(UserDetailsService detailsService) {
         DaoAuthenticationProvider daoProvider = new DaoAuthenticationProvider();
         daoProvider.setUserDetailsService(detailsService);
         daoProvider.setPasswordEncoder(passwordEncoder());
@@ -168,48 +171,53 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 // @formatter:off
         http
-            .csrf()
-            .disable()
-            .addFilterBefore(new ApiKeyFilter(domainUserDetailsService, secUserRepository), BasicAuthenticationFilter.class)
-            .exceptionHandling().authenticationEntryPoint(
-                    (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
-//        .and()
+                .csrf(AbstractHttpConfigurer::disable)
+                .addFilterBefore(new ApiKeyFilter(domainUserDetailsService, secUserRepository), BasicAuthenticationFilter.class)
+                .exceptionHandling((exceptionHandling) ->
+                        exceptionHandling
+                                .authenticationEntryPoint(
+                                        (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                )
+
 //            .logout()
 //            .logoutUrl("/api/logout")
 //            .logoutSuccessHandler(ajaxLogoutSuccessHandler())
 //            .permitAll()
-            .and()
-                .authorizeHttpRequests()
-                .requestMatchers("/api/authenticate").permitAll()
-                .requestMatchers("/api/register").permitAll()
-                .requestMatchers("/api/activate").permitAll()
-                .requestMatchers("/api/account/resetPassword/init").permitAll()
-                .requestMatchers("/api/account/resetPassword/finish").permitAll()
-                .requestMatchers("/api/login/impersonate*").hasAuthority("ROLE_ADMIN")
-                .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
-                .requestMatchers("/session/admin/info.json").authenticated()
-                .requestMatchers("/session/admin/open.json").authenticated()
-                .requestMatchers("/session/admin/close.json").authenticated()
-                .requestMatchers(HttpMethod.GET, "/server/ping").permitAll()
-                .requestMatchers(HttpMethod.GET, "/server/ping.json").permitAll()
-                .requestMatchers(HttpMethod.POST, "/server/ping").permitAll()
-                .requestMatchers(HttpMethod.POST, "/server/ping.json").permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/**")).permitAll()
+
+                .authorizeHttpRequests((authorizeHttpRequests) ->
+                                authorizeHttpRequests
+                                        .requestMatchers("/api/authenticate").permitAll()
+                                        .requestMatchers("/api/register").permitAll()
+                                        .requestMatchers("/api/activate").permitAll()
+                                        .requestMatchers("/api/account/resetPassword/init").permitAll()
+                                        .requestMatchers("/api/account/resetPassword/finish").permitAll()
+                                        .requestMatchers("/api/login/impersonate*").hasAuthority("ROLE_ADMIN")
+                                        .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
+                                        .requestMatchers("/session/admin/info.json").authenticated()
+                                        .requestMatchers("/session/admin/open.json").authenticated()
+                                        .requestMatchers("/session/admin/close.json").authenticated()
+                                        .requestMatchers(HttpMethod.GET, "/server/ping").permitAll()
+                                        .requestMatchers(HttpMethod.GET, "/server/ping.json").permitAll()
+                                        .requestMatchers(HttpMethod.POST, "/server/ping").permitAll()
+                                        .requestMatchers(HttpMethod.POST, "/server/ping.json").permitAll()
+                                        .requestMatchers(new AntPathRequestMatcher("/**")).permitAll()
+                )
                 // For spring 6 (this is default behaviour this line was added to simulate that) [It’s recommended that Spring Security secure all dispatch types]
 //                .shouldFilterAllDispatcherTypes(true)
 //                .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
 
-//        .and()
+
 //            .httpBasic()
-            .and()
                 .apply(securityConfigurerAdapter())
             .and()
                 .addFilter(switchUserFilter())
-                    .headers()
-                    .cacheControl().disable()
+                .headers((headers) ->
+                        headers
+                                .cacheControl(cache -> cache.disable())
+                )
+
             // For Spring 6, opting into it within 5.8 as far as it doesn't break my app we can safely migrate
             // Remove me once we migrated as these are the defaults behaviors in Spring Sec 6
-//            .and()
 //                .securityContext((securityContext) -> securityContext
 //                        .requireExplicitSave(true))
 //                .sessionManagement((sessions) -> sessions
