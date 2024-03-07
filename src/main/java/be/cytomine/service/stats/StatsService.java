@@ -53,6 +53,7 @@ import jakarta.persistence.Tuple;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -140,7 +141,6 @@ public class StatsService {
 
     public List<JsonObject> statAnnotationEvolution(Project project, Term term, int daysRange, Date startDate, Date endDate, boolean reverseOrder, boolean accumulate) {
         securityACLService.check(project, READ);
-
         String request = "SELECT created " +
                 "FROM UserAnnotation " +
                 "WHERE project.id = " + project.getId() + " " +
@@ -463,17 +463,21 @@ public class StatsService {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Tuple> cq = cb.createQuery(Tuple.class);
         Root<UserAnnotation> userAnnotationRoot = cq.from(UserAnnotation.class);
-        Predicate[] predicates = new Predicate[3];
-        predicates[0] = cb.equal(userAnnotationRoot.get("project"), project);
+        List<Predicate> predicatesList = new ArrayList<>();
+        Predicate projectPredicate = cb.equal(userAnnotationRoot.get("project"), project);
+        predicatesList.add(projectPredicate);
         if (startDate != null) {
-            predicates[1] = cb.greaterThan(userAnnotationRoot.get("created"), startDate);
+            Predicate startDatePredicate = cb.greaterThan(userAnnotationRoot.get("created"), startDate);
+            predicatesList.add(startDatePredicate);
         }
         if (endDate != null) {
-            predicates[2] = cb.lessThan(userAnnotationRoot.get("created"), endDate);
+            Predicate endDatePredicate = cb.lessThan(userAnnotationRoot.get("created"), endDate);
+            predicatesList.add(endDatePredicate);
         }
-        cq.multiselect(userAnnotationRoot.get("user.id"), cb.countDistinct(userAnnotationRoot.get("id")))
-                .where(predicates)
-                .groupBy(userAnnotationRoot.get("user.id"));
+        cq.multiselect(userAnnotationRoot.get("user"), cb.countDistinct(userAnnotationRoot.get("user")))
+                .where(predicatesList.toArray(Predicate[]::new))
+                .groupBy(userAnnotationRoot.get("user"));
+
 
         TypedQuery<Tuple> q = entityManager.createQuery(cq);
         List<Tuple> userAnnotations = q.getResultList();
