@@ -63,7 +63,7 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
     }
 
     @Query("select distinct secUser " +
-            "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, User as secUser "+
+            "from  User as secUser, AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid "+
             "where aclObjectId.objectId = :containerId " +
             "and aclEntry.aclObjectIdentity = aclObjectId " +
             "and aclEntry.sid = aclSid " +

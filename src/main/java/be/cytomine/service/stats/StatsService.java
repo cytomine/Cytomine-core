@@ -165,7 +165,7 @@ public class StatsService {
 
         String request = "SELECT created " +
                 "FROM AlgoAnnotation " +
-                "WHERE project.id = " + project.getId() + " " +
+                "WHERE project = " + project + " " +
                 (term != null ? "AND id IN (SELECT annotationIdent FROM AlgoAnnotationTerm WHERE term = " + term.getId() + ") " : "") +
                 (startDate != null ? "AND created > '" + startDate + "'" : "") +
                 (endDate != null ? "AND created < '" + endDate + "'" : "") +
@@ -208,17 +208,20 @@ public class StatsService {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Tuple> cq = cb.createQuery(Tuple.class);
         Root<UserAnnotation> userAnnotationRoot = cq.from(UserAnnotation.class);
-        Predicate[] predicates = new Predicate[3];
-        predicates[0] = cb.equal(userAnnotationRoot.get("project"), project);
+        List<Predicate> predicatesList = new ArrayList<>();
+        Predicate projectPredicate = cb.equal(userAnnotationRoot.get("project"), project);
+        predicatesList.add(projectPredicate);
         if (startDate != null) {
-            predicates[1] = cb.greaterThan(userAnnotationRoot.get("created"), startDate);
+            Predicate startDatePredicate = cb.greaterThan(userAnnotationRoot.get("created"), startDate);
+            predicatesList.add(startDatePredicate);
         }
         if (endDate != null) {
-            predicates[2] = cb.lessThan(userAnnotationRoot.get("created"), endDate);
+            Predicate endDatePredicate = cb.lessThan(userAnnotationRoot.get("created"), endDate);
+            predicatesList.add(endDatePredicate);
         }
-        cq.multiselect(userAnnotationRoot.get("user.id"), cb.countDistinct(userAnnotationRoot.get("image.id")))
-                .where(predicates)
-                .groupBy(userAnnotationRoot.get("user.id"));
+        cq.multiselect(userAnnotationRoot.get("user").get("id"), cb.countDistinct(userAnnotationRoot.get("image").get("id")))
+                .where(predicatesList.toArray(Predicate[]::new))
+                .groupBy(userAnnotationRoot.get("user").get("id"));
 
         TypedQuery<Tuple> q = entityManager.createQuery(cq);
         // this is a new implementation using JakartaEE Criteria API instead of Hibernate Criteria API
@@ -247,7 +250,7 @@ public class StatsService {
         }
 
         for (Tuple entry : numberOfAnnotatedImagesByUser) {
-            JsonObject user = result.get((Long) entry.get(0));
+            JsonObject user = result.get(entry.get(0));
             if (user != null) {
                 user.put("value", entry.get(1));
             }
@@ -394,13 +397,14 @@ public class StatsService {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Tuple> cq = cb.createQuery(Tuple.class);
         Root<AnnotationTerm> userAnnotationTermRoot = cq.from(AnnotationTerm.class);
-        Predicate[] predicates = new Predicate[3];
+        Predicate[] predicates = new Predicate[2];
         predicates[0] = userAnnotationTermRoot.get("term").in(terms);
-        predicates[1] = cb.equal(userAnnotationTermRoot.get("userAnnotation.project"), project);
-        cq.multiselect(userAnnotationTermRoot.get("user.id"),
-                 cb.count(userAnnotationTermRoot.get("term")))
+        Path<Project> expression = userAnnotationTermRoot.get("userAnnotation").get("project");
+        predicates[1] = cb.equal(expression, project);
+        cq.multiselect(userAnnotationTermRoot.get("user").get("id"),
+                        cb.count(userAnnotationTermRoot.get("term").get("id")))
                 .where(predicates)
-                .groupBy(userAnnotationTermRoot.get("user.id") , userAnnotationTermRoot.get("term.id"));
+                .groupBy(userAnnotationTermRoot.get("user").get("id"), userAnnotationTermRoot.get("term").get("id"));
         TypedQuery<Tuple> q = entityManager.createQuery(cq);
         List<Tuple> nbAnnotationsByUserAndTerms = q.getResultList();
         // use Jakarta JPA Criteria API instead of Hibernate Criteria API
@@ -422,7 +426,7 @@ public class StatsService {
             JsonObject item = new JsonObject();
             item.put("id", user.getId());
             item.put("key", ((User) user).getFirstname() + " " + ((User) user).getLastname());
-            item.put("terms", new ArrayList<>());
+            item.put("terms", new ArrayList<JsonObject>());
 
             for (Term term : terms) {
                 JsonObject t = new JsonObject();
@@ -437,12 +441,13 @@ public class StatsService {
         }
 
         for (Tuple row : nbAnnotationsByUserAndTerms) {
-            JsonObject user = result.get((Long)row.get(0));
+            JsonObject user = result.get(row.get(0));
             if (user != null) {
-                for (JsonObject jsonObject : ((List<JsonObject>) user.get("terms"))) {
-                    if (Objects.equals(jsonObject.getJSONAttrLong("id"), row.get(1))) {
-                        jsonObject.put("value", row.get(0));
-                    }
+                List<JsonObject> termsJsonObjects = (List<JsonObject>) user.get("terms");
+                for (JsonObject jsonObject : termsJsonObjects) {
+//                    if (Objects.equals(jsonObject.getJSONAttrLong("id"),row.get(1))) {
+                    jsonObject.put("value", row.get(1));
+//                    }
                 }
 
             }
