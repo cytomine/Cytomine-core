@@ -469,7 +469,9 @@ public class StatsService {
         CriteriaQuery<Tuple> cq = cb.createQuery(Tuple.class);
         Root<UserAnnotation> userAnnotationRoot = cq.from(UserAnnotation.class);
         List<Predicate> predicatesList = new ArrayList<>();
-        Predicate projectPredicate = cb.equal(userAnnotationRoot.get("project"), project);
+        Path<Project> expression = userAnnotationRoot.get("project").get("id");
+        Predicate projectPredicate  = cb.equal(expression, project.getId());
+//        Predicate projectPredicate = cb.equal(userAnnotationRoot.get("project"), project);
         predicatesList.add(projectPredicate);
         if (startDate != null) {
             Predicate startDatePredicate = cb.greaterThan(userAnnotationRoot.get("created"), startDate);
@@ -479,9 +481,10 @@ public class StatsService {
             Predicate endDatePredicate = cb.lessThan(userAnnotationRoot.get("created"), endDate);
             predicatesList.add(endDatePredicate);
         }
-        cq.multiselect(userAnnotationRoot.get("user"), cb.countDistinct(userAnnotationRoot.get("user")))
+        userAnnotationRoot.join("user");
+        cq.multiselect(userAnnotationRoot.get("user").get("id"), cb.countDistinct(userAnnotationRoot.get("id")))
                 .where(predicatesList.toArray(Predicate[]::new))
-                .groupBy(userAnnotationRoot.get("user"));
+                .groupBy(userAnnotationRoot.get("user").get("id"));
 
 
         TypedQuery<Tuple> q = entityManager.createQuery(cq);
@@ -516,9 +519,9 @@ public class StatsService {
 
         //fill result table with number of annotation
         for (Tuple row : userAnnotations) {
-            JsonObject user = result.get(row.get(1));
+            JsonObject user = result.get((Long)row.get(0));
             if (user != null) {
-                user.put("value", row.get(0));
+                user.put("value", row.get(1));
 
             }
         }
