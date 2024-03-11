@@ -144,9 +144,9 @@ public class StatsService {
         String request = "SELECT created " +
                 "FROM UserAnnotation " +
                 "WHERE project.id = " + project.getId() + " " +
-                (term != null ? "AND id IN (SELECT userAnnotation.id FROM AnnotationTerm WHERE term = " + term.getId() + ") " : "") +
-                (startDate != null ? " AND created > '" + startDate + "'" : "") +
-                (endDate != null ? " AND created < '" + endDate + "'" : "") +
+                (term != null ? "AND id IN (SELECT userAnnotation.id FROM AnnotationTerm WHERE term.id = " + term.getId() + ") " : "") +
+                (startDate != null ? " AND created > date('" + startDate + "')" : "") +
+                (endDate != null ? " AND created < date('" + endDate + "')" : "") +
                 " ORDER BY created ASC";
 
 
