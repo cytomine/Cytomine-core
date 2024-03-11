@@ -165,12 +165,11 @@ public class StatsService {
 
         String request = "SELECT created " +
                 "FROM AlgoAnnotation " +
-                "WHERE project = " + project + " " +
-                (term != null ? "AND id IN (SELECT annotationIdent FROM AlgoAnnotationTerm WHERE term = " + term.getId() + ") " : "") +
-                (startDate != null ? "AND created > '" + startDate + "'" : "") +
-                (endDate != null ? "AND created < '" + endDate + "'" : "") +
+                "WHERE project.id = " + project.getId() + " " +
+                (term != null ? "AND id IN (SELECT annotationIdent FROM AlgoAnnotationTerm WHERE term.id = " + term.getId() + ") " : "") +
+                (startDate != null ? "AND created > date('" + startDate + "') " : "") +
+                (endDate != null ? "AND created < date('" + endDate + "') " : "") +
                 "ORDER BY created ASC";
-
         List<Date> annotationsDates = entityManager.createQuery(request, Date.class).getResultList();
 
         List<JsonObject> data = aggregateByPeriods(annotationsDates, daysRange, (startDate == null ? project.getCreated() : startDate), (endDate == null ? new Date() : endDate), accumulate);
