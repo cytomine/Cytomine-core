@@ -47,8 +47,6 @@ public class UploadedFile extends CytomineDomain implements Serializable {
     @JoinColumn(name = "storage_id", nullable = true)
     private Storage storage;
 
-    //@Lob
-    //@Type(type="org.hibernate.type.BinaryType")
     @Convert(converter = LongArrayToBytesConverter.class)
     private Long[] projects;
 

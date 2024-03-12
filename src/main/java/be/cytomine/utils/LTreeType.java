@@ -29,7 +29,7 @@ import java.sql.Types;
 public class LTreeType implements UserType<String> {
     @Override
     public int getSqlType() {
-        return 0;
+        return Types.OTHER;
     }
 
     @Override
