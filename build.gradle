@@ -102,7 +102,7 @@ dependencies {
 
 	// Reports (PDF, CSV, Excel, ...)
 	implementation 'org.apache.pdfbox:pdfbox:2.0.25'
-	implementation 'com.github.dhorions:boxable:1.6'
+	implementation 'com.github.dhorions:boxable:1.7.0'
 	implementation 'org.apache.commons:commons-csv:1.5'
 	implementation 'org.apache.poi:poi:5.2.3'
 

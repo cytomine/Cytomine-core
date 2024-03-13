@@ -30,8 +30,6 @@ import be.quodlibet.boxable.Cell;
 import be.quodlibet.boxable.HorizontalAlignment;
 import be.quodlibet.boxable.Row;
 import be.quodlibet.boxable.datatable.DataTable;
-import com.google.common.primitives.Doubles;
-import com.google.common.primitives.Floats;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -289,9 +287,15 @@ public class PDFReportService {
 
         float totalTextLength = cells.stream().mapToInt(c -> c.getText().length()).sum();
         // For each cell, get the percent of text it has compared to total text
-        float[] cellsSizePercent = Floats.toArray(Doubles.asList(
-                cells.stream().mapToDouble(c -> (c.getText().length() / totalTextLength)).toArray()
-        ));
+        double[] cellsSizePercentDoubles = cells
+                .stream()
+                .mapToDouble(c -> (c.getText().length() / totalTextLength))
+                .toArray();
+
+        float[] cellsSizePercent = new float[cellsSizePercentDoubles.length];
+        for (int i = 0; i < cellsSizePercentDoubles.length; i++) {
+            cellsSizePercent[i] = (float) cellsSizePercentDoubles[i];
+        }
 
         int[] maxPercentIndexes = updateCellsSize(cellsSizePercent, nbOfCellPerRow);
         dispatchUnusedWidth(cellsSizePercent, nbOfCellPerRow, maxPercentIndexes);
