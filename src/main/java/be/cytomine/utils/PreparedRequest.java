@@ -19,6 +19,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.stream.Collectors;
 
+import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpMethod.POST;
+
+
 @Getter
 @Setter
 public class PreparedRequest {
@@ -109,43 +113,34 @@ public class PreparedRequest {
     }
 
     public <T> T toObject(Class<T> returnType) {
-        switch (method) {
-            case GET -> {
-                return new RestTemplate().getForObject(this.getURI(), returnType);
-            }
-            case POST -> {
-                return new RestTemplate().postForObject(this.getURI(), this.body, returnType);
-            }
+        if (method.equals(GET)) {
+            return new RestTemplate().getForObject(this.getURI(), returnType);
+        } else if (method.equals(POST)) {
+            return new RestTemplate().postForObject(this.getURI(), this.body, returnType);
         }
         throw new NotImplementedException("toObject is not implemented for method: " + method);
     }
 
     public <T> ResponseEntity<T> toResponseEntity(ProxyExchange<T> proxy, Class<T> returnType) {
         if (proxy == null) {
-            switch (method) {
-                case GET -> {
-                    HttpEntity<?> request = new HttpEntity<>(this.headers);
-                    return new RestTemplate().exchange(this.getURI(), this.method, request, returnType);
-                }
-                case POST -> {
-                    HttpEntity<?> request = new HttpEntity<>(this.body, this.headers);
-                    return new RestTemplate().exchange(this.getURI(), this.method, request, returnType);
-                }
+            if (method.equals(GET)) {
+                HttpEntity<?> request = new HttpEntity<>(this.headers);
+                return new RestTemplate().exchange(this.getURI(), this.method, request, returnType);
+            } else if (method.equals(POST)) {
+                HttpEntity<?> request = new HttpEntity<>(this.body, this.headers);
+                return new RestTemplate().exchange(this.getURI(), this.method, request, returnType);
             }
         }
         else {
-            switch (method) {
-                case GET -> {
-                    return proxy.headers(this.headers)
-                            .uri(this.getURI())
-                            .get();
-                }
-                case POST -> {
-                    return proxy.headers(this.headers)
-                            .uri(this.getURI())
-                            .body(this.body)
-                            .post();
-                }
+            if (method.equals(GET)) {
+                return proxy.headers(this.headers)
+                        .uri(this.getURI())
+                        .get();
+            } else if (method.equals(POST)) {
+                return proxy.headers(this.headers)
+                        .uri(this.getURI())
+                        .body(this.body)
+                        .post();
             }
         }
         throw new NotImplementedException("toResponseEntity is not implemented for method: " + method);

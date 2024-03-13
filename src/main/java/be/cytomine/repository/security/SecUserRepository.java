@@ -35,7 +35,7 @@ import java.util.Optional;
 public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpecificationExecutor<User> {
 
     @EntityGraph(attributePaths = "roles")
-    Optional<SecUser> findById(String id);
+    Optional<SecUser> findById(Long id);
 
     @EntityGraph(attributePaths = "roles")
     Optional<SecUser> findByUsernameLikeIgnoreCase(String username);
@@ -46,9 +46,9 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
     @Query("select distinct secUser " +
             "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, SecUser as secUser "+
             "where aclObjectId.objectId = :projectId " +
-            "and aclEntry.aclObjectIdentity = aclObjectId.id " +
+            "and aclEntry.aclObjectIdentity = aclObjectId " +
             "and aclEntry.mask = 16 " +
-            "and aclEntry.sid = aclSid.id " +
+            "and aclEntry.sid = aclSid " +
             "and aclSid.sid = secUser.username " +
             "and secUser.class = 'be.cytomine.domain.security.User'")
     List<SecUser> findAllAdminsByProjectId(Long projectId);
@@ -63,10 +63,10 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
     }
 
     @Query("select distinct secUser " +
-            "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, User as secUser "+
+            "from  User as secUser, AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid "+
             "where aclObjectId.objectId = :containerId " +
-            "and aclEntry.aclObjectIdentity = aclObjectId.id " +
-            "and aclEntry.sid = aclSid.id " +
+            "and aclEntry.aclObjectIdentity = aclObjectId " +
+            "and aclEntry.sid = aclSid " +
             "and aclSid.sid = secUser.username " +
             "and secUser.class = 'be.cytomine.domain.security.User'")
     List<SecUser> findAllUsersByContainer(Long containerId);
@@ -104,7 +104,7 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
 
     @Query(value = "select distinct secUser " +
             "from AclSid as aclSid, AclEntry as aclEntry, SecUser as secUser "+
-            "where aclEntry.aclObjectIdentity in (select  aclEntry.aclObjectIdentity from aclEntry where sid.id = :sidId) " +
+            "where aclEntry.aclObjectIdentity in (select  aclEntry.aclObjectIdentity from AclEntry as aclEntry where aclEntry.sid.id = :sidId) " +
             "and aclEntry.sid = aclSid and aclSid.sid = secUser.username and aclSid.id <> :sidId")
     List<SecUser> findAllSecUsersSharingAccesToSameProject(Long sidId);
 

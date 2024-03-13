@@ -1,19 +1,19 @@
 package be.cytomine.domain.appengine;
 
+import be.cytomine.converter.UUIDConverter;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.utils.JsonObject;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Type;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import org.hibernate.type.descriptor.jdbc.UUIDJdbcType;
+
 import java.util.Optional;
 
 import java.util.UUID;
@@ -31,7 +31,7 @@ public class TaskRun extends CytomineDomain {
 
     @NotNull
     @Column(nullable = false)
-    @Type(type="org.hibernate.type.UUIDCharType")
+    @Convert(converter = UUIDConverter.class)
     private UUID taskRunId;
 
     public static JsonObject getDataFromDomain(CytomineDomain domain) {

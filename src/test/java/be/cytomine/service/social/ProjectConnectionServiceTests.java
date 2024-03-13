@@ -32,8 +32,6 @@ import be.cytomine.service.database.SequenceService;
 import be.cytomine.utils.JsonObject;
 import com.mongodb.client.MongoClient;
 import org.apache.commons.lang3.time.DateUtils;
-import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,13 +42,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import static be.cytomine.service.social.ProjectConnectionService.DATABASE_NAME;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 

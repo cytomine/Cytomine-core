@@ -16,7 +16,6 @@ package be.cytomine.utils;
 * limitations under the License.
 */
 
-import liquibase.pro.packaged.T;
 import org.springframework.data.domain.*;
 
 import java.util.List;

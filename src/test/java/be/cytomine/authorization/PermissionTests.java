@@ -18,24 +18,18 @@ package be.cytomine.authorization;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.ontology.Ontology;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.security.AclRepository;
 import be.cytomine.service.PermissionService;
-import be.cytomine.service.ontology.TermService;
-import be.cytomine.service.security.SecurityACLService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.acls.domain.BasePermission;
-import org.springframework.security.acls.model.Permission;
 import org.springframework.security.test.context.support.WithMockUser;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc

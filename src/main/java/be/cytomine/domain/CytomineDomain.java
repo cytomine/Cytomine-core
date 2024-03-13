@@ -26,11 +26,11 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.*;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
+import jakarta.persistence.*;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -48,10 +48,12 @@ public abstract class CytomineDomain {
             name = "myGenerator",
             strategy = "be.cytomine.config.CustomIdentifierGenerator",
             parameters = {
-                    @org.hibernate.annotations.Parameter(name = "sequence_name", value = "hibernate_sequence")
+                    @org.hibernate.annotations.Parameter(name = "sequence_name", value = "hibernate_sequence"),
+                    @org.hibernate.annotations.Parameter(name = "increment_size", value = "1")
+
             }
     )
-    @GeneratedValue(generator = "myGenerator")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE,generator = "myGenerator")
     @Id
     protected Long id;
 

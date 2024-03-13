@@ -19,18 +19,17 @@ package be.cytomine.domain.ontology;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.UrlApi;
 import be.cytomine.utils.JsonObject;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -176,7 +175,7 @@ public class ReviewedAnnotation extends AnnotationDomain implements Serializable
             try {
                 annotation.location = new WKTReader().read(json.getJSONAttrStr("location"));
             }
-            catch (org.locationtech.jts.io.ParseException ex) {
+            catch (ParseException ex) {
                 throw new WrongArgumentException(ex.toString());
             }
         }

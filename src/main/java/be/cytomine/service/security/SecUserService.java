@@ -26,7 +26,6 @@ import be.cytomine.domain.project.ProjectDefaultLayer;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.*;
 import be.cytomine.domain.social.LastConnection;
-import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.dto.AuthInformation;
 import be.cytomine.dto.NamedCytomineDomain;
 import be.cytomine.exceptions.*;
@@ -73,10 +72,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ReflectionUtils;
 
-import javax.persistence.Query;
-import javax.persistence.Tuple;
-import javax.persistence.TupleElement;
-import java.math.BigInteger;
+import jakarta.persistence.Query;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.TupleElement;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -331,6 +329,7 @@ public class SecUserService extends ModelService {
             groupBy = "GROUP BY u.id ";
         }
 
+
         if (sortColumn.equals("role")) {
             sort = "ORDER BY " + sortColumn + " " + sortDirection + ", u.id ASC ";
         } else if (sortColumn.equals("fullName")) {
@@ -359,9 +358,6 @@ public class SecUserService extends ModelService {
             JsonObject result = new JsonObject();
             for (TupleElement<?> element : rowResult.getElements()) {
                 Object value = rowResult.get(element.getAlias());
-                if (value instanceof BigInteger) {
-                    value = ((BigInteger) value).longValue();
-                }
                 String alias = SQLUtils.toCamelCase(element.getAlias());
                 result.put(alias, value);
             }
@@ -401,7 +397,7 @@ public class SecUserService extends ModelService {
         for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
             query.setParameter(entry.getKey(), entry.getValue());
         }
-        long count = ((BigInteger) query.getResultList().get(0)).longValue();
+        long count = (Long) query.getResultList().get(0);
 
         Page<Map<String, Object>> page = PageUtils.buildPageFromPageResults(results, max, offset, count);
         return page;
@@ -517,8 +513,8 @@ public class SecUserService extends ModelService {
         String from = "from ProjectRepresentativeUser r right outer join r.user secUser ON (r.project.id = " + project.getId() + "), " +
                 "AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid ";
         String where = "where aclObjectId.objectId = " + project.getId() + " " +
-                "and aclEntry.aclObjectIdentity = aclObjectId.id " +
-                "and aclEntry.sid = aclSid.id " +
+                "and aclEntry.aclObjectIdentity = aclObjectId " +
+                "and aclEntry.sid = aclSid " +
                 "and aclSid.sid = secUser.username " +
                 "and secUser.class = 'be.cytomine.domain.security.User' ";
         String groupBy = "";

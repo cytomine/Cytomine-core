@@ -29,10 +29,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
 
@@ -80,6 +80,8 @@ public class ApiKeyFilter extends OncePerRequestFilter {
 //            SecurityContext context = SecurityContextHolder.createEmptyContext();
 //            context.setAuthentication(domainUserDetailsService.getAuthentication(apiKey));
 //            SecurityContextHolder.setContext(context);
+              // due to how Spring Sec 6 is we must also do this
+              // securityContextRepository.saveContext(context, request, response);
 //
 //            filterChain.doFilter(request, response);
 //        } catch (AuthenticationException failed) {

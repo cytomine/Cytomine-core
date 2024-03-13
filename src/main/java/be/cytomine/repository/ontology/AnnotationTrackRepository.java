@@ -16,11 +16,9 @@ package be.cytomine.repository.ontology;
 * limitations under the License.
 */
 
-import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.AnnotationTrack;
 import be.cytomine.domain.ontology.Track;
-import liquibase.repackaged.com.opencsv.bean.CsvToBean;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

@@ -19,7 +19,6 @@ package be.cytomine.repository.ontology;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.AnnotationLight;
 import be.cytomine.service.UrlApi;
@@ -27,8 +26,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
-import javax.persistence.Tuple;
-import java.math.BigInteger;
+import jakarta.persistence.Tuple;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -62,9 +60,9 @@ public interface UserAnnotationRepository extends JpaRepository<UserAnnotation, 
         List<AnnotationLight> annotationLights = new ArrayList<>();
         for (Tuple tuple : listTuplesLight()) {
             annotationLights.add(new AnnotationLight(
-                    ((BigInteger)tuple.get("id")).longValue(),
-                    ((BigInteger)tuple.get("container")).longValue(),
-                    UrlApi.getUserAnnotationCropWithAnnotationIdWithMaxSize(((BigInteger)tuple.get("id")).longValue(), 256, "png"))
+                    (Long)tuple.get("id"),
+                    (Long)tuple.get("container"),
+                    UrlApi.getUserAnnotationCropWithAnnotationIdWithMaxSize((Long)tuple.get("id"), 256, "png"))
             );
         }
         return annotationLights;

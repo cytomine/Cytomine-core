@@ -17,20 +17,14 @@ package be.cytomine.domain.ontology;
 */
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.GenericCytomineDomainContainer;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Entity
 @Getter

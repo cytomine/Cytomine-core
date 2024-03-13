@@ -23,9 +23,6 @@ import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.*;
-import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.User;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.ontology.AlgoAnnotationService;
 import be.cytomine.utils.JsonObject;
@@ -46,7 +43,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -325,7 +322,7 @@ public class AlgoAnnotationResourceTests {
 
     @Disabled("Randomly fail with ProxyExchange, need to find a solution")
     @Test
-    @javax.transaction.Transactional
+    @jakarta.transaction.Transactional
     public void get_algo_annotation_crop() throws Exception {
         AlgoAnnotation annotation = given_a_algo_annotation_with_valid_image_server(builder);
 
@@ -356,7 +353,7 @@ public class AlgoAnnotationResourceTests {
 
     @Disabled("Randomly fail with ProxyExchange, need to find a solution")
     @Test
-    @javax.transaction.Transactional
+    @jakarta.transaction.Transactional
     public void get_algo_annotation_crop_mask() throws Exception {
         AlgoAnnotation annotation = given_a_algo_annotation_with_valid_image_server(builder);
 
@@ -386,7 +383,7 @@ public class AlgoAnnotationResourceTests {
 
     @Disabled("Randomly fail with ProxyExchange, need to find a solution")
     @Test
-    @javax.transaction.Transactional
+    @jakarta.transaction.Transactional
     public void get_algo_annotation_alpha_mask() throws Exception {
         AlgoAnnotation annotation = given_a_algo_annotation_with_valid_image_server(builder);
 

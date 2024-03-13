@@ -21,13 +21,11 @@ import be.cytomine.CytomineCoreApplication;
 import be.cytomine.TestUtils;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
-import be.cytomine.service.CommandService;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
@@ -39,9 +37,6 @@ import org.locationtech.jts.io.WKTReader;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,9 +46,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
-import javax.persistence.EntityManager;
-import javax.persistence.Tuple;
-import javax.transaction.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Tuple;
+import jakarta.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -62,7 +57,6 @@ import java.util.stream.Collectors;
 
 import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static be.cytomine.service.utils.SimplifyGeometryServiceTests.getPointMultiplyByGeometriesOrInteriorRings;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -1199,7 +1193,7 @@ public class AnnotationDomainResourceTests {
 
     @Disabled("Randomly fail with ProxyExchange, need to find a solution")
     @Test
-    @javax.transaction.Transactional
+    @jakarta.transaction.Transactional
     public void get_reviewed_annotation_crop() throws Exception {
         ReviewedAnnotation annotation = ReviewedAnnotationResourceTests.given_a_reviewed_annotation_with_valid_image_server(builder);
 
@@ -1228,7 +1222,7 @@ public class AnnotationDomainResourceTests {
 
     @Disabled("Randomly fail with ProxyExchange, need to find a solution")
     @Test
-    @javax.transaction.Transactional
+    @jakarta.transaction.Transactional
     public void get_algo_annotation_crop() throws Exception {
 
         AlgoAnnotation annotation = AlgoAnnotationResourceTests.given_a_algo_annotation_with_valid_image_server(builder);

@@ -23,7 +23,6 @@ import be.cytomine.domain.image.CompanionFile;
 import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.AlreadyExistException;
-import be.cytomine.exceptions.InvalidRequestException;
 import be.cytomine.repository.image.CompanionFileRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
@@ -32,21 +31,16 @@ import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.transaction.Transactional;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import jakarta.transaction.Transactional;
+
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-import static be.cytomine.domain.image.UploadedFileStatus.ERROR_CONVERSION;
-import static be.cytomine.domain.image.UploadedFileStatus.UPLOADED;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 import static org.springframework.security.acls.domain.BasePermission.WRITE;
 

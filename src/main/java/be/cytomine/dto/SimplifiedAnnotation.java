@@ -16,11 +16,11 @@ package be.cytomine.dto;
 * limitations under the License.
 */
 
-import org.locationtech.jts.geom.Geometry;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import org.locationtech.jts.geom.Geometry;
 
 @Getter
 @Setter

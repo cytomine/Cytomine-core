@@ -24,7 +24,6 @@ import be.cytomine.domain.image.UploadedFile;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.repository.command.CommandRepository;
 import be.cytomine.repository.ontology.OntologyRepository;
-import be.cytomine.service.ModelService;
 import be.cytomine.service.image.UploadedFileService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +35,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.EntityManager;
+import jakarta.persistence.EntityManager;
 import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;

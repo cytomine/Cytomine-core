@@ -16,7 +16,6 @@ package be.cytomine.service;
 * limitations under the License.
 */
 
-import be.cytomine.domain.ValidationError;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.exceptions.CytomineException;
@@ -32,8 +31,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

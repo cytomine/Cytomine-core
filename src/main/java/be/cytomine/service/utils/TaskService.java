@@ -22,17 +22,14 @@ import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.Task;
 import be.cytomine.utils.TaskComment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import javax.persistence.Tuple;
-import javax.transaction.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 
-import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -186,15 +183,15 @@ public class TaskService {
             row = (Object[])entityManager.createNativeQuery(
                             "SELECT id,progress,project_id,user_id FROM task where id = ?")
                     .setParameter(1, id.longValue()).getSingleResult();
-        }catch (javax.persistence.NoResultException ex) {
+        }catch (jakarta.persistence.NoResultException ex) {
             return null;
         }
 
         Task task = new Task();
-        task.setId(((BigInteger)row[0]).longValue());
-        task.setProgress(((BigInteger)row[1]).intValue());
-        task.setProjectIdent(row[2]!=null ? ((BigInteger)row[2]).longValue() : null);
-        task.setUserIdent(((BigInteger)row[3]).longValue());
+        task.setId((Long)row[0]);
+        task.setProgress(((Long)row[1]).intValue());
+        task.setProjectIdent(row[2]!=null ? (Long)row[2] : null);
+        task.setUserIdent((Long)row[3]);
         return task;
     }
 
@@ -205,7 +202,7 @@ public class TaskService {
         return rows.stream().map(x -> {
             TaskComment comment = new TaskComment();
             comment.setComment((String)x[0]);
-            comment.setTimestamp(((BigInteger)x[1]).longValue());
+            comment.setTimestamp((Long)x[1]);
             return comment;
         }).collect(Collectors.toList());
     }
