@@ -34,13 +34,9 @@ import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
-//import org.hibernate.Criteria;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
-import org.hibernate.FetchMode;
-import org.hibernate.Session;
-//import org.hibernate.criterion.Projections;
-//import org.hibernate.criterion.Restrictions;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -53,7 +49,7 @@ import jakarta.persistence.Tuple;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.text.SimpleDateFormat;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -145,8 +141,8 @@ public class StatsService {
                 "FROM UserAnnotation " +
                 "WHERE project.id = " + project.getId() + " " +
                 (term != null ? "AND id IN (SELECT userAnnotation.id FROM AnnotationTerm WHERE term.id = " + term.getId() + ") " : "") +
-                (startDate != null ? " AND created > date('" + startDate + "')" : "") +
-                (endDate != null ? " AND created < date('" + endDate + "')" : "") +
+                (startDate != null ? " AND created > cast(date('" + startDate + "') as timestamp)" : "") +
+                (endDate != null ? " AND created < cast(date('" + endDate + "') as timestamp)" : "") +
                 " ORDER BY created ASC";
 
 
@@ -167,8 +163,8 @@ public class StatsService {
                 "FROM AlgoAnnotation " +
                 "WHERE project.id = " + project.getId() + " " +
                 (term != null ? "AND id IN (SELECT annotationIdent FROM AlgoAnnotationTerm WHERE term.id = " + term.getId() + ") " : "") +
-                (startDate != null ? "AND created > date('" + startDate + "') " : "") +
-                (endDate != null ? "AND created < date('" + endDate + "') " : "") +
+                (startDate != null ? "AND created > cast(date('" + startDate + "') as timestamp) " : "") +
+                (endDate != null ? "AND created < cast(date('" + endDate + "') as timestamp) " : "") +
                 "ORDER BY created ASC";
         List<Date> annotationsDates = entityManager.createQuery(request, Date.class).getResultList();
 
