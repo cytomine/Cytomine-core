@@ -546,7 +546,7 @@ public class SecUserService extends ModelService {
                 "     WHEN aclEntry.mask = 16 THEN 'manager'\n" +
                 "     ELSE 'contributor'\n" +
                 " END) as role ";
-        groupBy = "GROUP BY secUser.id ";
+        groupBy = "GROUP BY secUser.id , secUser.accountExpired , secUser.accountLocked, secUser.created, secUser.enabled, secUser.origin, secUser.password, secUser.passwordExpired, secUser.privateKey, secUser.publicKey, secUser.updated, secUser.username, secUser.version,secUser.email,secUser.firstname,secUser.isDeveloper,secUser.language,secUser.lastname,secUser.creator";
 
         if (sortColumn.equals("projectRole")) {
             sortColumn = "role";

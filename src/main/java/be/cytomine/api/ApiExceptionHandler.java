@@ -18,7 +18,6 @@ package be.cytomine.api;
 
 import be.cytomine.exceptions.*;
 import be.cytomine.utils.JsonObject;
-import com.sun.mail.smtp.SMTPSendFailedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.http.converter.HttpMessageNotReadableException;
