@@ -191,14 +191,6 @@ public class AlgoAnnotationResourceTests {
                 .andExpect(jsonPath("$.total").value(0));
     }
 
-
-    @Disabled("Disabled until ReportService is up!")
-    @Test
-    @Transactional
-    public void download_algo_annotation_document() throws Exception {
-        Assertions.fail("todo...");
-    }
-
     @Test
     @Transactional
     public void add_valid_algo_annotation() throws Exception {

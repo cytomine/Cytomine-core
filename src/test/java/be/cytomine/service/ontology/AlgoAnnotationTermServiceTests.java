@@ -79,12 +79,6 @@ public class AlgoAnnotationTermServiceTests {
         assertThat(algoAnnotationTermService.count(algoAnnotationTerm.getProject())).isEqualTo(1);
     }
 
-    @Disabled("wait software package")
-    @Test
-    void list_algo_annotation_term_by_job() {
-        Assertions.fail("TODO: 'job' has to be implemented");
-    }
-
     @Test
     void find_algo_annotation_term_with_success() {
         AlgoAnnotationTerm algoAnnotationTerm = builder.given_an_algo_annotation_term();

@@ -102,12 +102,6 @@ public class AlgoAnnotationServiceTests {
     }
 
 
-    @Disabled("wait report package")
-    @Test
-    void download_algo_annotation_document() {
-
-    }
-
     @Test
     void count_by_project() {
         AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();

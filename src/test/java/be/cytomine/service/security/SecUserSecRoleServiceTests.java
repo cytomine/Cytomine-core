@@ -198,16 +198,6 @@ public class SecUserSecRoleServiceTests {
     }
 
 
-
-
-    @Disabled("wait for software package")
-    @Test
-    void delete_secUserSecRole_with_success_for_user_algo() {
-
-    }
-
-
-
     @Test
     void re_define_role() {
         User user = builder.given_a_guest();
