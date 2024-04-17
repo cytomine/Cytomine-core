@@ -28,6 +28,7 @@ import java.util.Optional;
 /**
  * Spring Data JPA repository for the user entity.
  */
+//TODO IAM: remove
 @Repository
 public interface AuthWithTokenRepository extends JpaRepository<AuthWithToken, Long>, JpaSpecificationExecutor<AuthWithToken> {
 

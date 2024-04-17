@@ -95,6 +95,7 @@ public class BootstrapUtilsService {
         secRoleRepository.createIfNotExist(role);
     }
 
+    //TODO IAM: refactor
     public void createUser(String username, String firstname, String lastname, String email, String password, List<String> roles) {
         if (userRepository.findByUsernameLikeIgnoreCase(username).isEmpty()) {
             log.info("Creating {}...", username);

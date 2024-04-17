@@ -36,7 +36,7 @@ public class CurrentUserService {
     @Autowired
     private SecUserRepository secUserRepository;
 
-
+    // TODO IAM: get data from IAM
     public String getCurrentUsername() {
         CurrentUser currentUser = SecurityUtils.getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
         if (currentUser.isFullObjectProvided() || currentUser.isUsernameProvided()) {
@@ -46,6 +46,7 @@ public class CurrentUserService {
         }
     }
 
+    // TODO IAM: get data from IAM
     public SecUser getCurrentUser() {
         CurrentUser currentUser = SecurityUtils.getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
         SecUser secUser;

@@ -871,7 +871,7 @@ public class ProjectService extends ModelService {
         return executeCommand(c,domain, null);
     }
 
-    //TODO
+    //TODO IAM
     /**
      * Invite an user (not yet existing) in project user
      * @param sender User who send the invitation

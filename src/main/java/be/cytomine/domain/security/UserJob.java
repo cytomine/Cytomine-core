@@ -21,6 +21,7 @@ import lombok.Setter;
 
 import jakarta.persistence.*;
 
+// TODO IAM: remove
 @Entity
 @Getter
 @Setter

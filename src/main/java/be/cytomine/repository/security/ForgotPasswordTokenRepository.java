@@ -28,6 +28,7 @@ import java.util.Optional;
 /**
  * Spring Data JPA repository for the user entity.
  */
+//TODO IAM: remove
 @Repository
 public interface ForgotPasswordTokenRepository extends JpaRepository<ForgotPasswordToken, Long>, JpaSpecificationExecutor<ForgotPasswordToken> {
 

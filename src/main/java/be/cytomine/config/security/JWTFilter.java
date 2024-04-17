@@ -45,6 +45,7 @@ import static org.springframework.jmx.export.naming.IdentityNamingStrategy.TYPE_
  * Filters incoming requests and installs a Spring Security principal if a header corresponding to a valid user is
  * found.
  */
+// TODO IAM: remove
 public class JWTFilter extends GenericFilterBean {
 
     public static final String AUTHORIZATION_HEADER = "Authorization";

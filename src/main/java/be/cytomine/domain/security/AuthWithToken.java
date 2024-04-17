@@ -23,6 +23,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.util.Date;
 
+//TODO IAM: remove
 @Entity
 @Getter
 @Setter

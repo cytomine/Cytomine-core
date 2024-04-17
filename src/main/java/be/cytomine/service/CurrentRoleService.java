@@ -33,6 +33,7 @@ import jakarta.persistence.EntityManager;
 import java.util.*;
 import java.util.stream.Collectors;
 
+// TODO IAM: refactor
 @Service
 public class CurrentRoleService {
 

@@ -100,12 +100,14 @@ public class NotificationService {
     }
 
 
+    // TODO IAM: remove
     public void notifyForgotUsername (User user) throws MessagingException {
         String message = buildNotifyForgotUsername(user.getUsername());
         String subject = "Cytomine : your username is " + user.getUsername();
         cytomineMailService.send(CytomineMailService.NO_REPLY_EMAIL, new String[] {user.getEmail()},  new String[] {}, new String[]{}, subject, message);
     }
 
+    // TODO IAM: remove
     public String buildNotifyForgotUsername(String username) {
         Context context = new Context();
         context.setVariable("username", username);
@@ -117,12 +119,14 @@ public class NotificationService {
         return templateEngine.process("mail/forgot_username.html", context);
     }
 
+    // TODO IAM: remove
     public void notifyForgotPassword (User user, ForgotPasswordToken forgotPasswordToken) throws MessagingException {
         String message = buildNotifyForgotPassword(user.getUsername(), forgotPasswordToken);
         String subject = "Cytomine : reset your password";
         cytomineMailService.send(CytomineMailService.NO_REPLY_EMAIL, new String[] {user.getEmail()},  new String[] {}, new String[]{}, subject, message);
     }
 
+    // TODO IAM: remove
     public String buildNotifyForgotPassword(String username, ForgotPasswordToken forgotPasswordToken) {
         Context context = new Context();
         context.setVariable("username", username);

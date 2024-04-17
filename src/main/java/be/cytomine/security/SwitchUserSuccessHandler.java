@@ -31,6 +31,7 @@ import java.util.Date;
 /**
  * Spring Security success handler, specialized for Ajax requests.
  */
+//TODO IAM: adapt
 public class SwitchUserSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     TokenProvider tokenProvider;

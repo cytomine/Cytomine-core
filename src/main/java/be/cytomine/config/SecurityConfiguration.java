@@ -67,6 +67,8 @@ public class SecurityConfiguration {
         this.secUserRepository = secUserRepository;
     }
 
+    // ------  [IMPERSONATION]-------
+    // TODO IAM: see how to link with IAM
     @Bean
     public SwitchUserFilter switchUserFilter() {
         SwitchUserFilter filter = new SwitchUserFilter();
@@ -75,8 +77,6 @@ public class SecurityConfiguration {
         filter.setFailureHandler(switchUserFailureHandler());
         filter.setUsernameParameter("username");
         filter.setSwitchUserUrl("/api/login/impersonate");
-        //filter.setSwitchFailureUrl("/api/login/switchUser");
-        //filter.setTargetUrl("/admin/user-management");
         return filter;
     }
 
@@ -89,11 +89,7 @@ public class SecurityConfiguration {
     public SwitchUserFailureHandler switchUserFailureHandler() {
         return new SwitchUserFailureHandler();
     }
-
-    @Bean
-    public AjaxLogoutSuccessHandler ajaxLogoutSuccessHandler() {
-        return new AjaxLogoutSuccessHandler();
-    }
+    // --------------------------------------
 
     /**
      * Argon2 is intentionally slow: slow-hashing functions are good for storing passwords, because it is time/resource consuming to crack them.
@@ -103,7 +99,7 @@ public class SecurityConfiguration {
      * @return
      */
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    public PasswordEncoder passwordEncoder() { //TODO IAM: delete
 //        Digest based password encoding is not considered secure.
 //        Have to keep it for old Clients
         return new MessageDigestPasswordEncoder("SHA-256");
@@ -123,13 +119,6 @@ public class SecurityConfiguration {
 //        return new DelegatingPasswordEncoder(idForEncode, encoders);
     }
 
-    // TODO: we are trying to migrate this to exposing a Bean is it really working? NOT sure more testing is needed
-    // Check out: authManager(UserDetailsService detailsService) for how we migrated
-//    @Override
-//    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-//        auth.userDetailsService(domainUserDetailsService).passwordEncoder(passwordEncoder());
-//    }
-
     /**
      * configures Spring Security to use your DomainUserDetailsService to fetch user details from a custom source (DB which's SecUserRepository)
      * and to use the provided PasswordEncoder to encode and verify passwords.
@@ -139,21 +128,11 @@ public class SecurityConfiguration {
      */
     @Bean
     public AuthenticationManager authManager(UserDetailsService detailsService) {
+        // TODO IAM: adapt
         DaoAuthenticationProvider daoProvider = new DaoAuthenticationProvider();
         daoProvider.setUserDetailsService(detailsService);
         daoProvider.setPasswordEncoder(passwordEncoder());
         return new ProviderManager(daoProvider);
-    }
-
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring()
-                .requestMatchers(new AntPathRequestMatcher("/**", "OPTIONS"))
-                .requestMatchers(new AntPathRequestMatcher("/app/**/*.{js,html}"))
-                .requestMatchers(new AntPathRequestMatcher("/i18n/**"))
-                .requestMatchers(new AntPathRequestMatcher("/content/**"))
-                .requestMatchers(new AntPathRequestMatcher("/h2-console/**"))
-                .requestMatchers(new AntPathRequestMatcher("/test/**"));
     }
 
     private JWTConfigurer securityConfigurerAdapter() {
@@ -169,79 +148,35 @@ public class SecurityConfiguration {
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-// @formatter:off
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .addFilterBefore(new ApiKeyFilter(domainUserDetailsService, secUserRepository), BasicAuthenticationFilter.class)
+                .addFilterBefore(new ApiKeyFilter(domainUserDetailsService, secUserRepository), BasicAuthenticationFilter.class) //TODO IAM: move to IAM
                 .exceptionHandling((exceptionHandling) ->
                         exceptionHandling
                                 .authenticationEntryPoint(
                                         (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
                 )
-
-//            .logout()
-//            .logoutUrl("/api/logout")
-//            .logoutSuccessHandler(ajaxLogoutSuccessHandler())
-//            .permitAll()
-
                 .authorizeHttpRequests((authorizeHttpRequests) ->
                                 authorizeHttpRequests
-                                        .requestMatchers("/api/authenticate").permitAll()
-                                        .requestMatchers("/api/register").permitAll()
-                                        .requestMatchers("/api/activate").permitAll()
-                                        .requestMatchers("/api/account/resetPassword/init").permitAll()
-                                        .requestMatchers("/api/account/resetPassword/finish").permitAll()
-                                        .requestMatchers("/api/login/impersonate*").hasAuthority("ROLE_ADMIN")
+                                        .requestMatchers("/api/authenticate").permitAll() //TODO IAM: move to IAM
+                                        .requestMatchers("/api/register").permitAll() //TODO IAM: move to IAM
+                                        .requestMatchers("/api/activate").permitAll() //TODO IAM: move to IAM
+                                        .requestMatchers("/api/account/resetPassword/init").permitAll() //TODO IAM: move to IAM
+                                        .requestMatchers("/api/account/resetPassword/finish").permitAll() //TODO IAM: move to IAM
+                                        .requestMatchers("/api/login/impersonate*").hasAuthority("ROLE_ADMIN") //TODO IAM: move to IAM
                                         .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
-                                        .requestMatchers("/session/admin/info.json").authenticated()
-                                        .requestMatchers("/session/admin/open.json").authenticated()
-                                        .requestMatchers("/session/admin/close.json").authenticated()
+                                        .requestMatchers("/session/admin/info.json").authenticated() //TODO IAM: move to IAM
+                                        .requestMatchers("/session/admin/open.json").authenticated() //TODO IAM: move to IAM
+                                        .requestMatchers("/session/admin/close.json").authenticated() //TODO IAM: move to IAM
                                         .requestMatchers(HttpMethod.GET, "/server/ping").permitAll()
                                         .requestMatchers(HttpMethod.GET, "/server/ping.json").permitAll()
                                         .requestMatchers(HttpMethod.POST, "/server/ping").permitAll()
                                         .requestMatchers(HttpMethod.POST, "/server/ping.json").permitAll()
-                                        .requestMatchers(new AntPathRequestMatcher("/**")).permitAll()
+                                        .requestMatchers(new AntPathRequestMatcher("/**")).permitAll() // TODO IAM: remove ?
                 )
-                // For spring 6 (this is default behaviour this line was added to simulate that) [It’s recommended that Spring Security secure all dispatch types]
-//                .shouldFilterAllDispatcherTypes(true)
-//                .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
-
-
-//            .httpBasic()
                 .apply(securityConfigurerAdapter())
-            .and()
-                .addFilter(switchUserFilter())
-                .headers((headers) ->
-                        headers
-                                .cacheControl(cache -> cache.disable())
-                )
-
-            // For Spring 6, opting into it within 5.8 as far as it doesn't break my app we can safely migrate
-            // Remove me once we migrated as these are the defaults behaviors in Spring Sec 6
-//                .securityContext((securityContext) -> securityContext
-//                        .requireExplicitSave(true))
-//                .sessionManagement((sessions) -> sessions
-//                        .requireExplicitAuthenticationStrategy(true)
-//                )
-        ;
-
+                .and()
+                .addFilter(switchUserFilter());
         return http.build();
-        // @formatter:on
     }
-
-//    grails.plugin.springsecurity.interceptUrlMap = [
-//        '/admin/**':    ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/admincyto/**':    ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/monitoring/**':    ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/j_spring_security_switch_user': ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/securityInfo/**': ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/api/**':      ['IS_AUTHENTICATED_REMEMBERED'],
-//        '/lib/**':      ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/css/**':      ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/images/**':   ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/*':           ['IS_AUTHENTICATED_REMEMBERED'], //if cas authentication, active this      //beta comment
-//        '/login/**':    ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/logout/**':   ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/status/**':   ['IS_AUTHENTICATED_ANONYMOUSLY']
-//        ]
 }

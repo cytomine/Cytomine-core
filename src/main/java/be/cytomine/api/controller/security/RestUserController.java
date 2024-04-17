@@ -59,6 +59,7 @@ import java.util.stream.Collectors;
 
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
+// TODO IAM: adapt
 @RestController
 @RequestMapping("/api")
 @Slf4j
@@ -86,6 +87,7 @@ public class RestUserController extends RestCytomineController {
     private final ReportService reportService;
 
 
+    // TODO IAM: only return display name
     @GetMapping("/project/{id}/admin.json")
     public ResponseEntity<String> showAdminByProject(
             @PathVariable Long id
@@ -96,6 +98,7 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(secUserService.listAdmins(project), isFilterRequired());
     }
 
+    // TODO IAM: only return display name
     @GetMapping("/project/{id}/users/representative.json")
     public ResponseEntity<String> showRepresentativeByProject(
             @PathVariable Long id
@@ -107,6 +110,7 @@ public class RestUserController extends RestCytomineController {
                 .collect(Collectors.toList()), isFilterRequired());
     }
 
+    // TODO IAM: only return display name
     @GetMapping("/project/{id}/creator.json")
     public ResponseEntity<String> showCreatorByProject(
             @PathVariable Long id
@@ -118,6 +122,7 @@ public class RestUserController extends RestCytomineController {
     }
 
 
+    // TODO IAM: only return display name
     @GetMapping("/ontology/{id}/user.json")
     public ResponseEntity<String> showUserByOntology(
             @PathVariable Long id
@@ -128,6 +133,7 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(secUserService.listUsers(ontology), isFilterRequired());
     }
 
+    // TODO IAM: only return display name
     @GetMapping("/project/{id}/userlayer.json")
     public ResponseEntity<String> showLayerByProject(
             @PathVariable Long id,
@@ -142,6 +148,7 @@ public class RestUserController extends RestCytomineController {
 
     }
 
+    // TODO IAM: only return display name
     @GetMapping("/storage/{id}/user.json")
     public ResponseEntity<String> showUserByStorage(
             @PathVariable Long id
@@ -152,10 +159,10 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(secUserService.listUsers(storage), isFilterRequired());
     }
 
-
+    // TODO IAM: only return display name + new endpoint for account
     @GetMapping("/user.json")
     public ResponseEntity<String> list(
-            @RequestParam(value = "publicKey", required = false) String publicKey,
+            @RequestParam(value = "publicKey", required = false) String publicKey, //TODO IAM: remove
             @RequestParam(value = "withRoles", defaultValue = "false", required = false) Boolean withRoles,
             @RequestParam(value = "withLastConsultation", defaultValue = "false", required = false) Boolean withLastConsultation,
             @RequestParam(value = "withNumberConsultations", defaultValue = "false", required = false) Boolean withNumberConsultations,
@@ -178,6 +185,7 @@ public class RestUserController extends RestCytomineController {
         );
     }
 
+    // TODO IAM: only return display name
     @GetMapping("/user/{id}.json")
     public ResponseEntity<String> getUser(
             @PathVariable String id
@@ -199,6 +207,7 @@ public class RestUserController extends RestCytomineController {
         }).orElseGet(() -> responseNotFound("User", id));
     }
 
+    //TODO IAM: still needed ?
     @GetMapping("/userkey/{publicKey}/keys.json")
     public ResponseEntity<String> keys(@PathVariable String publicKey) {
         SecUser user = secUserService.findByPublicKey(publicKey)
@@ -207,6 +216,7 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(JsonObject.of("privateKey", user.getPrivateKey(), "publicKey", user.getPublicKey()));
     }
 
+    //TODO IAM: still needed ?
     @GetMapping("/user/{id}/keys.json")
     public ResponseEntity<String> keysById(@PathVariable String id) {
         SecUser user = secUserService.find(id)
@@ -215,6 +225,7 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(JsonObject.of("privateKey", user.getPrivateKey(), "publicKey", user.getPublicKey()));
     }
 
+    // TODO IAM: still needed ?
     @GetMapping("/signature.json")
     public ResponseEntity<String> signature(
             @RequestParam(defaultValue = "GET") String method,
@@ -235,7 +246,7 @@ public class RestUserController extends RestCytomineController {
     }
 
 
-
+    // TODO IAM: endpoint for my account
     @GetMapping("/user/current.json")
     public ResponseEntity<String> getCurrentUser(
     ) {
@@ -260,26 +271,28 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(object);
     }
 
-
+    //TODO IAM: delegate to IAM
     @PostMapping("/user.json")
     public ResponseEntity<String> createUser(@RequestBody String json) {
         log.debug("REST request to save User : " + json);
         return add(secUserService, json);
     }
 
+    //TODO IAM: delegate to IAM
     @PutMapping("/user/{id}.json")
     public ResponseEntity<String> updateUser(@PathVariable String id, @RequestBody JsonObject json) {
         log.debug("REST request to update User : {}", id);
         return update(secUserService, json);
     }
 
+    //TODO IAM: delegate to IAM
     @DeleteMapping("/user/{id}.json")
     public ResponseEntity<String> deleteUser(@PathVariable String id) {
         log.debug("REST request to delete User: {}", id);
         return delete(secUserService, JsonObject.of("id", Long.parseLong(id)), null);
     }
 
-
+    //TODO IAM: delegate to IAM
     @PostMapping("/user/{id}/lock.json")
     public ResponseEntity<String> lock(@PathVariable Long id) {
         log.debug("REST request to lock User : {}", id);
@@ -288,6 +301,7 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(secUserService.lock(user));
     }
 
+    //TODO IAM: delegate to IAM
     @DeleteMapping("/user/{id}/lock.json")
     public ResponseEntity<String> unlock(@PathVariable Long id) {
         log.debug("REST request to lock User : {}", id);
@@ -297,7 +311,7 @@ public class RestUserController extends RestCytomineController {
     }
 
 
-
+    // TODO IAM: only return display name
     @GetMapping("/project/{id}/user.json")
     public ResponseEntity<String> showByProject(
             @PathVariable Long id,
@@ -505,6 +519,7 @@ public class RestUserController extends RestCytomineController {
     }
 
 
+    // TODO IAM: delegated to IAM
     @PutMapping("/user/{user}/password.json")
     public ResponseEntity<String> resetPassword(@PathVariable("user") Long userId,
                                                 @RequestBody JsonObject json) {
@@ -521,6 +536,7 @@ public class RestUserController extends RestCytomineController {
 
     }
 
+    // TODO IAM: delegated to IAM
     @RequestMapping(path = {"/user/security_check.json"}, method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<String> checkPassword(@RequestBody JsonObject json) {
         log.debug("REST request to check password for current user");
@@ -533,6 +549,7 @@ public class RestUserController extends RestCytomineController {
         }
     }
 
+    // TODO IAM: only return display name
     @GetMapping("/user/{id}/friends.json")
     public ResponseEntity<String> listFriends(
             @PathVariable Long id,
@@ -570,7 +587,7 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(friends, isFilterRequired());
     }
 
-
+    // TODO IAM: only return display name
     @GetMapping("/project/{project}/online/user.json")
     public ResponseEntity<String> listOnlineFriendsWithPosition(
             @PathVariable(value = "project") Long projectId
@@ -582,6 +599,7 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(secUserService.getAllOnlineUserWithTheirPositions(project), isFilterRequired());
     }
 
+    //TODO IAM: only return display name
     @GetMapping("/project/{project}/usersActivity.json")
     public ResponseEntity<String> usersActivity(
             @PathVariable(value = "project") Long projectId
@@ -593,7 +611,7 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(secUserService.getUsersWithLastActivities(project), isFilterRequired());
     }
 
-
+    // TODO IAM: only return display name + new endpoint for account
     @GetMapping("/project/{project}/user/download")
     public void download(
             @PathVariable(value = "project") Long projectId,

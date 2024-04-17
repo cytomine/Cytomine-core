@@ -132,6 +132,7 @@ public class ProjectRepresentativeUserService extends ModelService {
     }
 
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
+        //TODO IAM: use display name
         return List.of(domain.getId(), ((ProjectRepresentativeUser)domain).getUser().getFirstname() + " " +
                 ((ProjectRepresentativeUser)domain).getUser().getLastname());
     }

@@ -72,6 +72,7 @@ public class ServerController extends RestCytomineController {
         response.put("serverURL", applicationProperties.getServerURL());
         response.put("serverID", applicationProperties.getServerId());
 
+        // TODO IAM: refactor
         if (SecurityUtils.isAuthenticated()) {
             SecUser user = currentUserService.getCurrentUser();
             response.put("user", user.getId());

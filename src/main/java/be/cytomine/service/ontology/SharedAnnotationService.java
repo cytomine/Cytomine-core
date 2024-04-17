@@ -200,6 +200,7 @@ public class SharedAnnotationService extends ModelService {
             receiversEmail = Arrays.stream(jsonObject.getJSONAttrStr("emails").split(",")).collect(Collectors.toList());
 
             for (String email : receiversEmail) {
+                //TODO IAM: refactor / delete ?
                 if (secUserService.findByEmail(email).isEmpty()) {
                     JsonObject guestUser = JsonObject.of(
                             "username", email,

@@ -267,6 +267,7 @@ public class RestProjectController extends RestCytomineController {
 //            @RestApiParam(name="json", type="string", paramType = RestApiParamType.QUERY,description = "The user name and email of the invited user"),
 //    ])
 //
+    //TODO IAM: refactor / remove ?
     @PostMapping("/project/{id}/invitation.json")
     public ResponseEntity<String> inviteNewUser(
             @PathVariable Long id,

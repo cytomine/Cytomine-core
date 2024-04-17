@@ -42,6 +42,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Stream;
 
+// TODO IAM: refactor/remove
 public class SecurityUtils {
     public static String generateKeys(String method, String content_md5, String content_type, String date, String queryString, String path, SecUser user) throws NoSuchAlgorithmException, InvalidKeyException, UnsupportedEncodingException {
         String canonicalHeaders = method + "\n" + content_md5 + "\n" + content_type + "\n" + date + "\n";

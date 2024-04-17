@@ -239,7 +239,7 @@ public class StatsService {
         for (JsonObject user : secUserService.listLayers(project, null)) {
             JsonObject item = new JsonObject();
             item.put("id", user.get("id"));
-            item.put("key", user.get("firstname") + " " + user.get("lastname"));
+            item.put("key", user.get("firstname") + " " + user.get("lastname")); //TODO IAM: display name
             item.put("value", 0);
             result.put(item.getId(), item);
         }
@@ -420,7 +420,7 @@ public class StatsService {
         for (SecUser user : secUserService.listUsers(project)) {
             JsonObject item = new JsonObject();
             item.put("id", user.getId());
-            item.put("key", ((User) user).getFirstname() + " " + ((User) user).getLastname());
+            item.put("key", ((User) user).getFirstname() + " " + ((User) user).getLastname()); //TODO IAM: display name
             item.put("terms", new ArrayList<JsonObject>());
 
             for (Term term : terms) {
@@ -506,7 +506,7 @@ public class StatsService {
         for (JsonObject user : secUserService.listLayers(project, null)) {
             JsonObject item = new JsonObject();
             item.put("id", user.get("id"));
-            item.put("key", user.get("firstname") + " " + user.get("lastname"));
+            item.put("key", user.get("firstname") + " " + user.get("lastname")); //TODO IAM: display name
             item.put("username", user.get("username"));
             item.put("value", 0);
             result.put(item.getId(), item);

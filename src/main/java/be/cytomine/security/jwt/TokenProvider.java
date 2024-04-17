@@ -39,7 +39,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-public class TokenProvider {
+public class TokenProvider { // TODO IAM: remove
 
     private static final String ORIGINAL_USER = "original";
     private final Logger log = LoggerFactory.getLogger(TokenProvider.class);

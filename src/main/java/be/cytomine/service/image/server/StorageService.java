@@ -136,6 +136,7 @@ public class StorageService extends ModelService {
     public void initUserStorage(final SecUser user) {
         log.info ("create storage for " + user.getUsername());
         final SecUser finalUser = user;
+        // TODO IAM: refactor. I think it was done like this to create a command with the finalUser as "actor" (?)
         SecurityUtils.doWithAuth(applicationContext, user.getUsername(), () -> createStorage(finalUser));
     }
 

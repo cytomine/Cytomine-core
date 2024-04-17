@@ -103,7 +103,7 @@ public class UserAnnotationListing extends AnnotationListing {
         map.put("algo", algo);
 
 
-        AvailableColumns user = new AvailableColumns();
+        AvailableColumns user = new AvailableColumns(); //TODO IAM: display name
         user.put("creator", "u.username");
         user.put("lastname", "u.lastname");
         user.put("firstname", "u.firstname");

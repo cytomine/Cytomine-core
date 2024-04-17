@@ -172,6 +172,7 @@ class ApplicationBootstrap {
             bootstrapDataService.initData();
         }
 
+        // TODO IAM: done by IAM
         if (applicationProperties.getImageServerPrivateKey()!=null && applicationProperties.getImageServerPublicKey()!=null) {
             SecUser imageServerUser = secUserRepository.findByUsernameLikeIgnoreCase("ImageServer1")
                     .orElseThrow(() -> new ObjectNotFoundException("No user imageserver1, cannot assign keys"));

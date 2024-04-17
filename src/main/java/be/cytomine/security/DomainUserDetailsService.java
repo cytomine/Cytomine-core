@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 /**
  * Authenticate a user from the database.
  */
+//TODO IAM: adapt
 @Component("userDetailsService")
 @RequiredArgsConstructor
 public class DomainUserDetailsService implements UserDetailsService {
