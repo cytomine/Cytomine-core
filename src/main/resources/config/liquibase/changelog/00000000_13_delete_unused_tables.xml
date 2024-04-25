@@ -35,4 +35,106 @@
             -- ?? DROP TABLE IF EXISTS sec_role;
         </sql>
     </changeSet>
+    <changeSet id="b742415f-dbdb-4956-b7c7-2e31f87f9fc4" author="urubens">
+        <createView fullDefinition="false" viewName="user_project">
+            SELECT DISTINCT project.id,
+            project.version,
+            project.are_images_downloadable,
+            project.blind_mode,
+            project.count_annotations,
+            project.count_images,
+            project.count_job_annotations,
+            project.count_reviewed_annotations,
+            project.created,
+            project.deleted,
+            project.discipline_id,
+            project.hide_admins_layers,
+            project.hide_users_layers,
+            project.is_closed,
+            project.mode,
+            project.name,
+            project.ontology_id,
+            project.updated,
+            sec_user.id AS user_id
+            FROM project,
+            acl_object_identity,
+            sec_user,
+            acl_sid,
+            acl_entry
+            WHERE ((project.id = acl_object_identity.object_id_identity)
+                AND ((acl_sid.sid)::text = (sec_user.username)::text)
+                AND (acl_entry.sid = acl_sid.id)
+                AND (acl_entry.acl_object_identity = acl_object_identity.id)
+                AND (sec_user.user_id IS NULL)
+                AND (acl_entry.mask &gt;= 1)
+                AND (project.deleted IS NULL)
+            );
+        </createView>
+        <createView fullDefinition="false" viewName="admin_project">
+            SELECT DISTINCT project.id,
+                    project.version,
+                    project.are_images_downloadable,
+                    project.blind_mode,
+                    project.count_annotations,
+                    project.count_images,
+                    project.count_job_annotations,
+                    project.count_reviewed_annotations,
+                    project.created,
+                    project.deleted,
+                    project.discipline_id,
+                    project.hide_admins_layers,
+                    project.hide_users_layers,
+                    project.is_closed,
+                    project.mode,
+                    project.name,
+                    project.ontology_id,
+                    project.updated,
+                    sec_user.id AS user_id
+            FROM project,
+                 acl_object_identity,
+                 sec_user,
+                 acl_sid,
+                 acl_entry
+            WHERE ((project.id = acl_object_identity.object_id_identity)
+                       AND ((acl_sid.sid)::text = (sec_user.username)::text)
+            AND (acl_entry.sid = acl_sid.id)
+            AND (acl_entry.acl_object_identity = acl_object_identity.id)
+            AND (sec_user.user_id IS NULL)
+            AND (acl_entry.mask &gt;= 16)
+            AND (project.deleted IS NULL)
+            );
+        </createView>
+        <createView fullDefinition="false" viewName="creator_project">
+            SELECT DISTINCT project.id,
+                project.version,
+                project.are_images_downloadable,
+                project.blind_mode,
+                project.count_annotations,
+                project.count_images,
+                project.count_job_annotations,
+                project.count_reviewed_annotations,
+                project.created,
+                project.deleted,
+                project.discipline_id,
+                project.hide_admins_layers,
+                project.hide_users_layers,
+                project.is_closed,
+                project.mode,
+                project.name,
+                project.ontology_id,
+                project.updated,
+                sec_user.id AS user_id
+            FROM project,
+               acl_object_identity,
+               sec_user,
+               acl_sid
+            WHERE ((project.id = acl_object_identity.object_id_identity)
+                     AND ((acl_sid.sid)::text = (sec_user.username)::text)
+            AND (acl_object_identity.owner_sid = acl_sid.id)
+            AND (sec_user.user_id IS NULL)
+            AND (project.deleted IS NULL)
+            )
+    ;</createView>
+
+    </changeSet>
 </databaseChangeLog>
