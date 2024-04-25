@@ -79,7 +79,6 @@ public class UserAuthorizationTest extends AbstractAuthorizationTest {
         assertThat(secUserService.find(userNoAcl.getId())).isPresent();
         assertThat(secUserService.get(userNoAcl.getId())).isNotNull();
         assertThat(secUserService.findByUsername(userNoAcl.getUsername())).isPresent();
-        assertThat(secUserService.findByEmail(((User)userNoAcl).getEmail())).isPresent();
         assertThat(secUserService.findByPublicKey(((User)userNoAcl).getPublicKey())).isPresent();
         assertThat(secUserService.getAuthenticationRoles(userNoAcl)).isNotNull();
     }

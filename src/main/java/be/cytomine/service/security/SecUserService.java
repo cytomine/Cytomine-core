@@ -50,7 +50,6 @@ import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
-import be.cytomine.service.dto.JobLayerDTO;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.server.StorageService;
 import be.cytomine.service.ontology.*;
@@ -246,10 +245,6 @@ public class SecUserService extends ModelService {
         return userRepository.findById(id);
     }
 
-    public boolean isUserJob(Long id) {
-        return find(id).map(SecUser::isAlgo).orElse(false);
-    }
-
     public SecUser get(Long id) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
         return find(id).orElse(null);
@@ -258,11 +253,6 @@ public class SecUserService extends ModelService {
     public Optional<SecUser> findByUsername(String username) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
         return secUserRepository.findByUsernameLikeIgnoreCase(username);
-    }
-
-    public Optional<User> findByEmail(String email) {
-        securityACLService.checkGuest(currentUserService.getCurrentUser());
-        return userRepository.findByEmailLikeIgnoreCase(email);
     }
 
     public Optional<SecUser> findByPublicKey(String publicKey) {
@@ -628,29 +618,14 @@ public class SecUserService extends ModelService {
     }
 
     public List<SecUser> listUsers(Project project) {
-        return listUsers(project, false, true);
+        return listUsers(project, true);
     }
 
-    public List<SecUser> listUsers(Project project, boolean showUserJob, boolean checkPermission) {
+    public List<SecUser> listUsers(Project project, boolean checkPermission) {
         if (checkPermission) {
             securityACLService.check(project, READ);
         }
-        List<SecUser> users = secUserRepository.findAllUsersByProjectId(project.getId());
-
-        if (showUserJob) {
-            //TODO:: should be optim (see method head comment)
-//            List<Job> allJobs = Job.findAllByProject(project, [sort: 'created', order: 'desc'])
-//
-//            allJobs.each { job ->
-//                   public void userJob = UserJob.findByJob(job);
-//                if (userJob) {
-//                    userJob.username = job.software.name + " " + job.created
-//                    users << userJob
-//                }
-//            }
-            throw new RuntimeException("Not yet implemented (showUserJob)");
-        }
-        return users;
+        return secUserRepository.findAllUsersByProjectId(project.getId());
     }
 
     public List<SecUser> list(List<Long> ids) {
@@ -673,71 +648,8 @@ public class SecUserService extends ModelService {
         return secUserRepository.findAllUsersByStorageId(storage.getId());
     }
 
-    //TODO: software migration
-//    /**
-//     * Get all allowed user id for a specific domain instance
-//     * E.g; get all user id for a project
-//     */
-//    List<Long> getAllowedUserIdList(CytomineDomain domain) {
-//        String request = "SELECT DISTINCT sec_user.id \n" +
-//                " FROM acl_object_identity, acl_entry,acl_sid, sec_user \n" +
-//                " WHERE acl_object_identity.object_id_identity = $domain.id\n" +
-//                " AND acl_entry.acl_object_identity=acl_object_identity.id\n" +
-//                " AND acl_entry.sid = acl_sid.id " +
-//                " AND acl_sid.sid = sec_user.username " +
-//                " AND sec_user.class = 'be.cytomine.domain.security.User' "
-//       public void data = []
-//       public void sql = new Sql(dataSource)
-//        sql.eachRow(request) {
-//            data << it[0]
-//        }
-//        try {
-//            sql.close()
-//        }catch (Exception e) {}
-//        return data
-//    }
-//
-//
-//    privatepublic void getUserJobImage(ImageInstance image) {
-//
-//        String request = "SELECT DISTINCT u.id as id, u.username as username, " +
-//                "s.name as softwareName, s.software_version as softwareVersion, " +
-//                "j.created as created, u.job_id as job " +
-//                "FROM annotation_index ai " +
-//                "RIGHT JOIN slice_instance si ON ai.slice_id = si.id " +
-//                "RIGHT JOIN sec_user u ON ai.user_id = u.id " +
-//                "RIGHT JOIN job j ON j.id = u.job_id " +
-//                "RIGHT JOIN software_project sp ON sp.software_id = j.software_id " +
-//                "RIGHT JOIN software s ON s.id = sp.software_id " +
-//                "WHERE si.image_id = ${image.id} " +
-//                "AND sp.project_id = ${image.project.id} " +
-//                "ORDER BY j.created"
-//       public void data = []
-//       public void sql = new Sql(dataSource)
-//        sql.eachRow(request) {
-//           public void item = [:]
-//            item.id = it.id
-//            item.username = it.username
-//            item.softwareName = (it.softwareVersion?.trim()) ? "${it.softwareName} (${it.softwareVersion})" : it.softwareName
-//
-//            item.created = it.created
-//            item.algo = true
-//            item.job = it.job
-//            data << item
-//        }
-//        try {
-//            sql.close()
-//        }catch (Exception e) {}
-//        data
-//    }
-
     public List<SecUser> listAll(Project project) {
-        List<SecUser> data = new ArrayList<>();
-        data.addAll(listUsers(project));
-        //TODO: could be optim!!!
-        // TODO: after software package
-        //data.addAll(UserJob.findAllByJobInList(Job.findAllByProject(project)))
-        return data;
+        return new ArrayList<>(listUsers(project));
     }
     /**
      * List all layers from a project
@@ -751,7 +663,7 @@ public class SecUserService extends ModelService {
         List<SecUser> humanAdmins = listAdmins(project);
         List<SecUser> humanUsers = listUsers(project);
 
-        List<JsonObject> humanUsersFormatted = humanUsers.stream().map(SecUser::toJsonObject).collect(Collectors.toList());
+        List<JsonObject> humanUsersFormatted = humanUsers.stream().map(SecUser::toJsonObject).toList();
 
         List<JsonObject> layersFormatted = new ArrayList<>();
 
@@ -761,18 +673,13 @@ public class SecUserService extends ModelService {
         } else if (project.isHideAdminsLayers() && !project.isHideUsersLayers()) {
             Set<Long> humanAdminsIds = humanAdmins.stream().map(CytomineDomain::getId).collect(Collectors.toSet());
             layersFormatted.addAll(humanUsersFormatted.stream()
-                    .filter(x -> !humanAdminsIds.contains(x.getJSONAttrLong("id"))).collect(Collectors.toList()));
-        } else if (!project.isHideAdminsLayers() && project.isHideUsersLayers()) {
-            layersFormatted.addAll(humanAdmins.stream().map(SecUser::toJsonObject).collect(Collectors.toList()));
+                    .filter(x -> !humanAdminsIds.contains(x.getJSONAttrLong("id"))).toList());
+        } else if (!project.isHideAdminsLayers()) {
+            layersFormatted.addAll(humanAdmins.stream().map(SecUser::toJsonObject).toList());
         }
 
         if (humanUsers.contains(currentUser) && layersFormatted.stream().noneMatch(x -> x.getJSONAttrLong("id").equals(currentUser.getId()))) {
             layersFormatted.add(currentUser.toJsonObject());
-        }
-
-        if (image != null) {
-            //TODO: refactor as job & software table are deleted
-//            layersFormatted.addAll(secUserRepository.findAllUserJob(image.getId(), image.getProject().getId()).stream().map(JobLayerDTO::getDataFromDomain).collect(Collectors.toList()));
         }
         return layersFormatted;
     }
@@ -782,7 +689,7 @@ public class SecUserService extends ModelService {
         List<Long> usersId = this.getAllFriendsUsersOnline(currentUserService.getCurrentUser(), project).stream().map(CytomineDomain::getId)
                     .collect(Collectors.toList());
         List<JsonObject> usersWithPosition = userPositionService.findUsersPositions(project);
-        usersId.removeAll(usersWithPosition.stream().map(JsonObject::getId).collect(Collectors.toList()));
+        usersId.removeAll(usersWithPosition.stream().map(JsonObject::getId).toList());
 
         for (Long userId : usersId) {
             usersWithPosition.add(JsonObject.of("id", userId, "position", new ArrayList<>()));
@@ -811,7 +718,7 @@ public class SecUserService extends ModelService {
     }
 
     public String fillEmptyUserIds(String users, Long project){
-        if (users == null || users.equals("")) {
+        if (users == null || users.isEmpty()) {
             users = getUsersIdsFromProject(project);
         }
         return users;
@@ -827,7 +734,7 @@ public class SecUserService extends ModelService {
 
     public List<JsonObject> getUsersWithLastActivities(Project project) {
         List<JsonObject> results = new ArrayList<>();
-        List<SecUser> users = listUsers(project).stream().sorted(Comparator.comparing(CytomineDomain::getId)).collect(Collectors.toList());
+        List<SecUser> users = listUsers(project).stream().sorted(Comparator.comparing(CytomineDomain::getId)).toList();
 
 
         Map<Long, JsonObject> connections = projectConnectionService.lastConnectionInProject(project, null, "user", "asc", 0L, 0L)
@@ -927,18 +834,13 @@ public class SecUserService extends ModelService {
     }
 
 
-    public Optional<UserJob> findByJobId(Long job) {
-        // TODO:
-        throw new CytomineMethodNotYetImplementedException("not yet implemented");
-    }
-
-
     /**
      * Add the new domain with JSON data
      *
      * @param json New domain data
      * @return Response structure (created domain data,..)
      */
+    // TODO IAM: refactor
     public CommandResponse add(JsonObject json) {
         synchronized (this.getClass()) {
             SecUser currentUser = currentUserService.getCurrentUser();
@@ -964,6 +866,7 @@ public class SecUserService extends ModelService {
      * @param jsonNewData New domain datas
      * @return Response structure (new domain data, old domain data..)
      */
+    // TODO IAM: refactor
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkIsCreator((SecUser) domain, currentUser);
@@ -979,18 +882,11 @@ public class SecUserService extends ModelService {
      * @param printMessage Flag if client will print or not confirm message
      * @return Response structure (code, old domain,..)
      */
+    // TODO IAM: refactor
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        if (((SecUser) domain).isAlgo()) {
-//            Job job = ((UserJob)domain).job
-//            securityACLService.check(job?.container(),READ)
-//            securityACLService.checkFullOrRestrictedForOwner(job, ((UserJob)domain).user)
-            // TODO: software package
-            throw new CytomineMethodNotYetImplementedException("software package not yet implemented");
-        } else {
-            securityACLService.checkAdmin(currentUser);
-            securityACLService.checkIsSameUser((User) domain, currentUser);
-        }
+        securityACLService.checkAdmin(currentUser);
+        securityACLService.checkIsSameUser((User) domain, currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c, domain, null);
     }
@@ -1011,6 +907,7 @@ public class SecUserService extends ModelService {
         return Arrays.asList(String.valueOf(secUser.getId()), secUser.getUsername());
     }
 
+    // TODO IAM: refactor
     public void checkDoNotAlreadyExist(CytomineDomain domain) {
         SecUser user = (SecUser) domain;
         if (user.getUsername()==null) {
@@ -1120,8 +1017,8 @@ public class SecUserService extends ModelService {
             permissionService.deletePermission(project.getOntology(), user.getUsername(), READ);
             permissionService.deletePermission(project.getOntology(), user.getUsername(), ADMINISTRATION);
         } else if (admin) {
-            List<Long> managedProjectList = projectService.listByAdmin(user).stream().map(NamedCytomineDomain::getId).collect(Collectors.toList());
-            List<Long> otherProjectsIds = otherProjects.stream().map(CytomineDomain::getId).collect(Collectors.toList());
+            List<Long> managedProjectList = projectService.listByAdmin(user).stream().map(NamedCytomineDomain::getId).toList();
+            List<Long> otherProjectsIds = otherProjects.stream().map(CytomineDomain::getId).toList();
             if (managedProjectList.stream().noneMatch(otherProjectsIds::contains)) {
                 permissionService.deletePermission(project.getOntology(), user.getUsername(), ADMINISTRATION);
             }
@@ -1181,17 +1078,13 @@ public class SecUserService extends ModelService {
 
 
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
-        deleteDependentAlgoAnnotation((SecUser) domain, transaction, task);
-        deleteDependentAlgoAnnotationTerm((SecUser) domain, transaction, task);
         deleteDependentAnnotationTerm((SecUser) domain, transaction, task);
         deleteDependentImageInstance((SecUser) domain, transaction, task);
         deleteDependentOntology((SecUser) domain, transaction, task);
-        //deleteDependentForgotPasswordToken((SecUser) domain, transaction, task);
         deleteDependentReviewedAnnotation((SecUser) domain, transaction, task);
         deleteDependentSecUserSecRole((SecUser) domain, transaction, task);
         deleteDependentAbstractImage((SecUser) domain, transaction, task);
         deleteDependentUserAnnotation((SecUser) domain, transaction, task);
-        //deleteDependentUserJob((SecUser) domain, transaction, task);
         deleteDependentUploadedFile((SecUser) domain, transaction, task);
         deleteDependentStorage((SecUser) domain, transaction, task);
         //deleteDependentSharedAnnotation((SecUser) domain, transaction, task);
@@ -1200,25 +1093,8 @@ public class SecUserService extends ModelService {
         deleteDependentNestedImageInstance((SecUser) domain, transaction, task);
         deleteDependentProjectDefaultLayer((SecUser) domain, transaction, task);
         deleteDependentProjectRepresentativeUser((SecUser) domain, transaction, task);
-        deleteDependentMessageBrokerServer((SecUser) domain, transaction, task);
     }
 
-
-    public void deleteDependentAlgoAnnotation(SecUser user, Transaction transaction, Task task) {
-        if (user instanceof UserJob) {
-            for (AlgoAnnotation algoAnnotation : algoAnnotationRepository.findAllByUser((UserJob) user)) {
-                algoAnnotationService.delete(algoAnnotation, transaction, task, false);
-            }
-        }
-    }
-
-    public void deleteDependentAlgoAnnotationTerm(SecUser user, Transaction transaction, Task task) {
-        if (user instanceof UserJob) {
-            for (AlgoAnnotationTerm algoAnnotationTerm : algoAnnotationTermRepository.findAllByUserJob((UserJob) user)) {
-                algoAnnotationTermService.delete(algoAnnotationTerm, transaction, task, false);
-            }
-        }
-    }
 
     public void deleteDependentAnnotationTerm(SecUser user, Transaction transaction, Task task) {
         if (user instanceof User) {
@@ -1270,22 +1146,11 @@ public class SecUserService extends ModelService {
         }
     }
 
-    public void deleteDependentUserJob(SecUser user, Transaction transaction, Task task) {
-        if (user instanceof User) {
-//            UserJob.findAllByUser((User)user).each {
-//                delete(it,transaction,null,false)
-//            }
-            throw new CytomineMethodNotYetImplementedException("todo");
-        }
-    }
-
-
     public void deleteDependentUploadedFile(SecUser user, Transaction transaction, Task task) {
         if (user instanceof User) {
             uploadedFileRepository.deleteAllByUser((User) user);
         }
     }
-
 
     public void deleteDependentStorage(SecUser user, Transaction transaction, Task task) {
         for (Storage storage : storageRepository.findAllByUser(user)) {
@@ -1347,11 +1212,4 @@ public class SecUserService extends ModelService {
             }
         }
     }
-
-    public void deleteDependentMessageBrokerServer(SecUser user, Transaction transaction, Task task) {
-
-    }
-
-
-
 }

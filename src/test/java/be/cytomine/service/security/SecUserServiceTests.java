@@ -200,14 +200,6 @@ public class SecUserServiceTests {
     }
 
     @Test
-    void find_user_by_email() {
-        User user = builder.given_a_user();
-        assertThat(secUserService.findByEmail(user.getEmail())).isPresent().contains(user);
-        assertThat(secUserService.findByEmail(user.getEmail().toUpperCase(Locale.ROOT))).isPresent().contains(user);
-        assertThat(secUserService.findByEmail(user.getEmail().toLowerCase(Locale.ROOT))).isPresent().contains(user);
-    }
-
-    @Test
     void find_user_by_public_key() {
         User user = builder.given_a_user();
         assertThat(secUserService.findByPublicKey(user.getPublicKey())).isPresent().contains(user);

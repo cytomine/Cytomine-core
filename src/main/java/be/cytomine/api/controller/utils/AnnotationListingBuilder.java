@@ -144,16 +144,6 @@ public class AnnotationListingBuilder {
         al.setUserForTermAlgo(params.getJSONAttrLong("userForTermAlgo"));
         al.setUsersForTermAlgo(StringUtils.extractListFromParameter(params.getJSONAttrStr("usersForTermAlgo")));
 
-        // Jobs
-        if(params.getJSONAttrLong("job")!=null) {
-            al.setUser(secUserService.findByJobId(params.getJSONAttrLong("job")).map(SecUser::getId).orElse(null));
-        }
-
-        // Jobs for term algo
-        if(params.getJSONAttrLong("jobForTermAlgo")!=null) {
-            al.setUserForTermAlgo(secUserService.findByJobId(params.getJSONAttrLong("jobjobForTermAlgo")).map(SecUser::getId).orElse(null));
-        }
-
         // Tags
         al.setTag(params.getJSONAttrLong("tag"));
         al.setTags(StringUtils.extractListFromParameter(params.getJSONAttrStr("tags")));
@@ -244,14 +234,14 @@ public class AnnotationListingBuilder {
         } else if(idJob!=null) {
             // TODO: check if Job exists => return job != null
             throw new CytomineMethodNotYetImplementedException("Software package must be implemented");
-        } else {
+        } /*else {
             String idUsers = params.getJSONAttrStr("users");
             if(idUsers!=null && !idUsers.isEmpty()) {
                 List<Long> collect = Arrays.stream(idUsers.replaceAll("_", ",")
                         .split(",")).map(Long::parseLong).collect(Collectors.toList());
                 return collect.stream().anyMatch(secUserService::isUserJob);
             }
-        }
+        }*/
         //if no other filter, just take user annotation
         return false;
     }
