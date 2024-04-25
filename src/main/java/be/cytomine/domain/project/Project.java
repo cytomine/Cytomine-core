@@ -59,10 +59,6 @@ public class Project extends CytomineDomain {
 
     private long countReviewedAnnotations;
 
-    private boolean retrievalDisable = false;
-
-    private boolean retrievalAllOntology = true;
-
     private boolean isClosed = false;
 
     private boolean hideUsersLayers = false;
