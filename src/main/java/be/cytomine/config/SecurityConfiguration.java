@@ -30,19 +30,15 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 
-import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -66,30 +62,6 @@ public class SecurityConfiguration {
         this.domainUserDetailsService = domainUserDetailsService;
         this.secUserRepository = secUserRepository;
     }
-
-    // ------  [IMPERSONATION]-------
-    // TODO IAM: see how to link with IAM
-    @Bean
-    public SwitchUserFilter switchUserFilter() {
-        SwitchUserFilter filter = new SwitchUserFilter();
-        filter.setUserDetailsService(domainUserDetailsService);
-        filter.setSuccessHandler(switchUserSuccessHandler());
-        filter.setFailureHandler(switchUserFailureHandler());
-        filter.setUsernameParameter("username");
-        filter.setSwitchUserUrl("/api/login/impersonate");
-        return filter;
-    }
-
-    @Bean
-    public SwitchUserSuccessHandler switchUserSuccessHandler() {
-        return new SwitchUserSuccessHandler(tokenProvider, tokenValidityInSeconds);
-    }
-
-    @Bean
-    public SwitchUserFailureHandler switchUserFailureHandler() {
-        return new SwitchUserFailureHandler();
-    }
-    // --------------------------------------
 
     /**
      * Argon2 is intentionally slow: slow-hashing functions are good for storing passwords, because it is time/resource consuming to crack them.
@@ -158,7 +130,6 @@ public class SecurityConfiguration {
                 )
                 .authorizeHttpRequests((authorizeHttpRequests) ->
                                 authorizeHttpRequests
-                                        .requestMatchers("/api/login/impersonate*").hasAuthority("ROLE_ADMIN") //TODO IAM: move to IAM
                                         .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
                                         .requestMatchers("/session/admin/info.json").authenticated() //TODO IAM: move to IAM
                                         .requestMatchers("/session/admin/open.json").authenticated() //TODO IAM: move to IAM
@@ -169,9 +140,7 @@ public class SecurityConfiguration {
                                         .requestMatchers(HttpMethod.POST, "/server/ping.json").permitAll()
                                         .requestMatchers(new AntPathRequestMatcher("/**")).permitAll() // TODO IAM: remove ?
                 )
-                .apply(securityConfigurerAdapter())
-                .and()
-                .addFilter(switchUserFilter());
+                .apply(securityConfigurerAdapter());
         return http.build();
     }
 }

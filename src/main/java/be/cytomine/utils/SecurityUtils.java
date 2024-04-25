@@ -31,8 +31,6 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.switchuser.SwitchUserFilter;
-import org.springframework.security.web.authentication.switchuser.SwitchUserGrantedAuthority;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -197,35 +195,6 @@ public class SecurityUtils {
         return (T)applicationContext.getBean(name);
     }
 
-
-    public static boolean isSwitched(ApplicationContext applicationContext) {
-        Collection<? extends GrantedAuthority> inferred = getPrincipalAuthorities(); //findInferredAuthorities(applicationContext, getPrincipalAuthorities());
-        for (GrantedAuthority authority : inferred) {
-            if (authority instanceof SwitchUserGrantedAuthority) {
-                return true;
-            }
-            if (SwitchUserFilter.ROLE_PREVIOUS_ADMINISTRATOR.equals(authority.getAuthority())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Get the username of the original user before switching to another.
-     * @return the original login name
-     */
-    public static String getSwitchedUserOriginalUsername(ApplicationContext applicationContext) {
-        if (isSwitched(applicationContext)) {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            for (GrantedAuthority auth : authentication.getAuthorities()) {
-                if (auth instanceof SwitchUserGrantedAuthority) {
-                    return ((SwitchUserGrantedAuthority)auth).getSource().getName();
-                }
-            }
-        }
-        return null;
-    }
 
     private static Collection<? extends GrantedAuthority> findInferredAuthorities(ApplicationContext applicationContext,
             final Collection<GrantedAuthority> granted) {

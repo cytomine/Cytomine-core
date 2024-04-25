@@ -67,9 +67,6 @@ class ApplicationBootstrap {
 
     private final Environment environment;
 
-    private boolean initAlreadyDone;
-
-
     @Autowired
     BootstrapDataService bootstrapDataService;
 
@@ -93,16 +90,6 @@ class ApplicationBootstrap {
 
     @Autowired
     BootstrapTestsDataService bootstrapTestsDataService;
-
-//    @Override
-//    public void onApplicationEvent(ApplicationReadyEvent event) {
-//        log.info("ApplicationListener#onApplicationEvent()");
-//        if (!initAlreadyDone) {
-//            // onApplicationEvent can be called multiple times (if cyclcic dependencies)
-//            init();
-//        }
-//        this.initAlreadyDone = true;
-//    }
 
     @PostConstruct
     public void init() {

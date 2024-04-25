@@ -26,10 +26,8 @@ import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.AuthInformation;
-import be.cytomine.exceptions.AuthenticationException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.server.StorageService;
@@ -42,10 +40,8 @@ import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.SecurityUtils;
-import be.cytomine.utils.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -81,8 +77,6 @@ public class RestUserController extends RestCytomineController {
     private final OntologyService ontologyService;
 
     private final StorageService storageService;
-
-    private final ApplicationContext applicationContext;
 
     private final ReportService reportService;
 
@@ -263,10 +257,6 @@ public class RestUserController extends RestCytomineController {
             object.put("adminByNow", authMaps.getAdminByNow());
             object.put("userByNow", authMaps.getUserByNow());
             object.put("guestByNow", authMaps.getGuestByNow());
-            object.put("isSwitched", SecurityUtils.isSwitched(applicationContext));
-            if(object.getJSONAttrBoolean("isSwitched", false)) {
-                object.put("realUser", SecurityUtils.getSwitchedUserOriginalUsername(applicationContext));
-            }
         }
         return responseSuccess(object);
     }
