@@ -23,8 +23,6 @@ import be.cytomine.domain.ontology.AnnotationTerm;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
-import be.cytomine.domain.security.ForgotPasswordToken;
-import be.cytomine.domain.security.SecRole;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.DatedCytomineDomain;
@@ -869,46 +867,6 @@ public class ProjectService extends ModelService {
         securityACLService.checkIsNotReadOnly(domain.container());
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
-    }
-
-    //TODO IAM
-    /**
-     * Invite an user (not yet existing) in project user
-     * @param sender User who send the invitation
-     * @param project Project that will be accessed by user
-     * @param json the name and the mail of the User to add in project
-     * @return Response structure
-     */
-    public User inviteUser(Project project, String username, String firstname, String lastname, String email) throws MessagingException {
-
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.put("username", username);
-        jsonObject.put("firstname", firstname);
-        jsonObject.put("lastname", lastname);
-        jsonObject.put("email", email);
-        jsonObject.put("password", "passwordExpired");
-
-        secUserService.add(jsonObject);
-        User user = (User) secUserService.findByUsername(jsonObject.getJSONAttrStr("username")).get();
-        SecRole secRole = secRoleRepository.getGuest();
-        secUserSecRoleService.add(JsonObject.of("user", user.getId(), "role", secRole.getId()));
-        if (project!=null) {
-            secUserService.addUserToProject(user, project, false);
-        }
-
-        user.setPasswordExpired(true);
-        userRepository.save(user);
-
-        ForgotPasswordToken forgotPasswordToken = new ForgotPasswordToken();
-        forgotPasswordToken.setUser(user);
-        forgotPasswordToken.setTokenKey(UUID.randomUUID().toString());
-        forgotPasswordToken.setExpiryDate(DateUtils.addDays(new Date(), 1));
-        getEntityManager().persist(forgotPasswordToken);
-
-        SecUser sender = currentUserService.getCurrentUser();
-        notificationService.notifyWelcome((User) sender, user, forgotPasswordToken);
-        return user;
-
     }
 
     protected void afterAdd(CytomineDomain domain, CommandResponse response) {

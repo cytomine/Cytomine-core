@@ -62,7 +62,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.context.request.RequestContextHolder;
 
@@ -631,30 +630,6 @@ public class SecUserServiceTests {
         assertThat(secUserService.listUsers(projectWithTwoUsers)).contains(user, anotherUser);
     }
 
-    @Autowired
-    PasswordEncoder passwordEncoder;
-
-    @Test
-    void change_password() {
-        User user = builder.given_a_user();
-        user.setPassword(passwordEncoder.encode("oldPassword"));
-        builder.persistAndReturn(user);
-
-        secUserService.changeUserPassword(user, "newPassword");
-
-        assertThat(passwordEncoder.matches("newPassword", user.getPassword())).isTrue();
-    }
-
-    @Test
-    void check_password() {
-        User user = builder.given_a_user();
-        user.setPassword(passwordEncoder.encode("newPassword"));
-        builder.persistAndReturn(user);
-
-        assertThat(secUserService.isUserPassword(user, "newPassword")).isTrue();
-        assertThat(secUserService.isUserPassword(user, "badPassword")).isFalse();
-    }
-
     @Test
     void find_project_creator() {
         User user = builder.given_superadmin();
@@ -702,46 +677,6 @@ public class SecUserServiceTests {
         assertThat(secUserService.listAll(project))
                 .contains(user);
     }
-
-    @Test
-    void lock_user() {
-       User user = builder.given_a_user();
-
-       assertThat(user.getEnabled()).isTrue();
-       secUserService.lock(user);
-        assertThat(user.getEnabled()).isFalse();
-    }
-
-    @Test
-    void lock_user_already_locked() {
-        User user = builder.given_a_user();
-        user.setEnabled(false);
-
-        Assertions.assertThrows(WrongArgumentException.class, () -> {
-            secUserService.lock(user);
-        });
-    }
-
-    @Test
-    void unlock_user() {
-        User user = builder.given_a_user();
-        user.setEnabled(false);
-
-        assertThat(user.getEnabled()).isFalse();
-        secUserService.unlock(user);
-        assertThat(user.getEnabled()).isTrue();
-    }
-
-    @Test
-    void unlock_user_already_unlocked() {
-        User user = builder.given_a_user();
-        user.setEnabled(true);
-
-        Assertions.assertThrows(WrongArgumentException.class, () -> {
-            secUserService.unlock(user);
-        });
-    }
-
 
     @Test
     void list_layers() {
@@ -1082,19 +1017,6 @@ public class SecUserServiceTests {
         assertThat(((User)edited.get()).getPassword()).isEqualTo(originalPasswordHash);
     }
 
-
-    @Test
-    void edit_valid_user_with_password() {
-        User user = builder.given_a_user();
-
-        CommandResponse commandResponse = secUserService.update(user, user.toJsonObject().withChange("password", "NEWPASSWORD"));
-
-        assertThat(commandResponse).isNotNull();
-        assertThat(commandResponse.getStatus()).isEqualTo(200);
-        Optional<SecUser> edited = secUserService.findByUsername(user.getUsername());
-
-        assertThat(passwordEncoder.matches("NEWPASSWORD", edited.get().getPassword())).isTrue();
-    }
 
 
     @Test

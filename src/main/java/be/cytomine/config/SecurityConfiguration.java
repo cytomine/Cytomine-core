@@ -158,11 +158,6 @@ public class SecurityConfiguration {
                 )
                 .authorizeHttpRequests((authorizeHttpRequests) ->
                                 authorizeHttpRequests
-                                        .requestMatchers("/api/authenticate").permitAll() //TODO IAM: move to IAM
-                                        .requestMatchers("/api/register").permitAll() //TODO IAM: move to IAM
-                                        .requestMatchers("/api/activate").permitAll() //TODO IAM: move to IAM
-                                        .requestMatchers("/api/account/resetPassword/init").permitAll() //TODO IAM: move to IAM
-                                        .requestMatchers("/api/account/resetPassword/finish").permitAll() //TODO IAM: move to IAM
                                         .requestMatchers("/api/login/impersonate*").hasAuthority("ROLE_ADMIN") //TODO IAM: move to IAM
                                         .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
                                         .requestMatchers("/session/admin/info.json").authenticated() //TODO IAM: move to IAM

@@ -28,7 +28,6 @@ import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.AclRepository;
-import be.cytomine.repository.security.ForgotPasswordTokenRepository;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
@@ -36,10 +35,8 @@ import be.cytomine.service.PermissionService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.social.ProjectConnectionService;
 import be.cytomine.utils.CommandResponse;
-import be.cytomine.utils.JsonObject;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -49,7 +46,6 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.mail.MessagingException;
 import jakarta.persistence.EntityManager;
 
 import java.util.Date;
@@ -93,9 +89,6 @@ public class ProjectResourceTests {
 
     @Autowired
     private PersistentProjectConnectionRepository persistentProjectConnectionRepository;
-
-    @Autowired
-    ForgotPasswordTokenRepository forgotPasswordTokenRepository;
 
     @Autowired
     SecRoleRepository secRoleRepository;
@@ -1066,39 +1059,6 @@ public class ProjectResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.project=="+project.getId()+")]").doesNotExist());
-
-    }
-
-
-    @Test
-    public void invite_user_in_project() throws Exception {
-
-        Project project = builder.given_a_project();
-        forgotPasswordTokenRepository.deleteAll();
-        String username = "invitedUser"+System.currentTimeMillis();
-        // invite user
-        restProjectControllerMockMvc.perform(post("/api/project/{id}/invitation.json", project.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(JsonObject.of(
-                                "name", username,
-                                "firstname", "firstname",
-                                "lastname", "lastname",
-                                "mail", username+"@example.com").toJsonString()))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value(username));
-
-
-        assertThat(forgotPasswordTokenRepository.findAll()).hasSize(1);
-
-        assertThat(secUserRepository.findByUsernameLikeIgnoreCase(username)).isPresent();
-
-        assertThat(secUserRepository.findByUsernameLikeIgnoreCase(username).get().getPasswordExpired()).isTrue();
-
-        assertThat(permissionService.hasACLPermission(project, username, READ)).isTrue();
-
-
-
 
     }
 

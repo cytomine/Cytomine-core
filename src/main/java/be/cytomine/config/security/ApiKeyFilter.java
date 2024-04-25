@@ -62,34 +62,6 @@ public class ApiKeyFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
-
-
-
-        //
-//        String apiKey = extractApiKey(request);
-//
-//        if (apiKey == null) {
-//            log.debug("Not authenticating the request because no api key was found");
-//            filterChain.doFilter(request, response);
-//            return;
-//        }
-//
-//        //ApiKeyAuthenticationToken authenticationToken = new ApiKeyAuthenticationToken(apiKey);
-//
-//        try {
-//            log.info("Authenticating the request with api key {}", partialApiKey(apiKey));
-//            SecurityContext context = SecurityContextHolder.createEmptyContext();
-//            context.setAuthentication(domainUserDetailsService.getAuthentication(apiKey));
-//            SecurityContextHolder.setContext(context);
-              // due to how Spring Sec 6 is we must also do this
-              // securityContextRepository.saveContext(context, request, response);
-//
-//            filterChain.doFilter(request, response);
-//        } catch (AuthenticationException failed) {
-//            SecurityContextHolder.clearContext();
-//            response.sendError(HttpStatus.UNAUTHORIZED.value(), "Invalid Authorization code");
-//            this.logger.debug("Authentication request for failed: " + failed);
-//        }
     }
 
     /**
@@ -159,25 +131,7 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             return false;
         }
     }
-//
-//    private boolean tryAPIAUhtentificationWithToken(ServletRequest request, ServletResponse response) {
-//        String tokenKey = request.getParameter("tokenKey");
-//
-//        if(tokenKey!=null) {
-//            String username = request.getParameter("username");
-//            SecUser user = secUserRepository.findByUsernameLikeIgnoreCase(username).get(); //we are not logged, we bypass the service
-//            AuthWithToken authToken = AuthWithToken.findByTokenKeyAndUser(tokenKey, user)
-//            //check first if a entry is made for this token
-//            if (authToken && authToken.isValid())  {
-//                this.reauthenticate(user.getUsername(), null);
-//                return true;
-//            } else {
-//                return false;
-//            }
-//        } else {
-//            return false;
-//        }
-//    }
+
 
     /**
      * Rebuild an Authentication for the given username and register it in the security context.

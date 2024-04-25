@@ -731,27 +731,6 @@ public class SecUserService extends ModelService {
 //        data
 //    }
 
-    public CommandResponse lock(SecUser user) {
-        SecUser currentUser = currentUserService.getCurrentUser();
-        securityACLService.checkAdmin(currentUser);
-        if (!user.getEnabled()) {
-            throw new WrongArgumentException("User already locked !");
-        }
-
-        return executeCommand(new EditCommand(currentUser, null), user, user.toJsonObject().withChange("enabled", false));
-    }
-
-    public CommandResponse unlock(SecUser user) {
-        SecUser currentUser = currentUserService.getCurrentUser();
-        log.info("unlock user " + user.getUsername() + " triggered by " + currentUser.getUsername());
-        securityACLService.checkAdmin(currentUser);
-        if (user.getEnabled()) {
-            throw new WrongArgumentException("User already unlocked !");
-        }
-
-        return executeCommand(new EditCommand(currentUser, null), user, user.toJsonObject().withChange("enabled", true));
-    }
-
     public List<SecUser> listAll(Project project) {
         List<SecUser> data = new ArrayList<>();
         data.addAll(listUsers(project));
@@ -988,9 +967,6 @@ public class SecUserService extends ModelService {
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         SecUser currentUser = currentUserService.getCurrentUser();
         securityACLService.checkIsCreator((SecUser) domain, currentUser);
-        if (!jsonNewData.isMissing("password")) {
-            changeUserPassword((User)domain, jsonNewData.getJSONAttrStr("password"));
-        }
         return executeCommand(new EditCommand(currentUser, null), domain, jsonNewData);
     }
 
@@ -1051,20 +1027,6 @@ public class SecUserService extends ModelService {
 //                throw new AlreadyExistException("User with email " + ((User)user).getEmail() + " already exist!");
 //            }
 //        }
-    }
-
-    public void changeUserPassword(User user, String newPassword) {
-        securityACLService.checkIsCreator(user,currentUserService.getCurrentUser());
-        user.setPassword(newPassword);
-        user.encodePassword(passwordEncoder);
-        user.setPasswordExpired(false);
-        user.setNewPassword(null);
-        this.saveDomain(user);
-    }
-
-    public boolean isUserPassword(User user, String password) {
-        securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
-        return passwordEncoder.matches(password, user.getPassword());
     }
 
 
@@ -1279,18 +1241,6 @@ public class SecUserService extends ModelService {
             for (Ontology ontology : ontologyRepository.findAllByUser((User) user)) {
                 ontologyService.delete(ontology, transaction, task, false);
             }
-        }
-    }
-
-
-    public void deleteDependentForgotPasswordToken(SecUser secUser, Transaction transaction, Task task) {
-        if (secUser instanceof User) {
-            User user = (User) secUser;
-//              ForgotPasswordToken.findAllByUser(user).each {
-//                  it.delete()
-//              }
-            //TODO
-            throw new CytomineMethodNotYetImplementedException("todo");
         }
     }
 

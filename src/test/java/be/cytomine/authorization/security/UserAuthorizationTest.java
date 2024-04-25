@@ -109,24 +109,6 @@ public class UserAuthorizationTest extends AbstractAuthorizationTest {
         expectOK(() -> secUserService.listUsers(project));
     }
 
-
-    @Test
-    @WithMockUser(username = SUPERADMIN)
-    public void admin_can_lock_user() {
-        User user = builder.given_a_user();
-        expectOK(() -> secUserService.lock(user));
-        expectOK(() -> secUserService.unlock(user));
-    }
-
-    @Test
-    @WithMockUser(username = USER_ACL_READ)
-    public void user_cannot_lock_user() {
-        User user = builder.given_a_user();
-        expectForbidden(() -> secUserService.lock(user));
-        user.setEnabled(false);
-        expectForbidden(() -> secUserService.unlock(user));
-    }
-
     @Test
     @WithMockUser(username = USER_NO_ACL)
     public void user_can_add_user() {

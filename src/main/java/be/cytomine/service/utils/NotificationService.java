@@ -17,7 +17,6 @@ package be.cytomine.service.utils;
 */
 
 import be.cytomine.config.properties.ApplicationProperties;
-import be.cytomine.domain.security.ForgotPasswordToken;
 import be.cytomine.domain.security.User;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,29 +39,6 @@ public class NotificationService {
     SpringTemplateEngine templateEngine;
 
     ApplicationProperties applicationProperties;
-
-    public void notifyWelcome(User sender, User guestUser, ForgotPasswordToken forgotPasswordToken) throws MessagingException {
-        String mailTitle = sender.getFirstname() + " " + sender.getLastname() + " invited you to join Cytomine";
-        String welcomeMessage = buildNotifyWelcomeMessage(sender,forgotPasswordToken);
-        cytomineMailService.send(null, new String[] {guestUser.getEmail()},  new String[] {},  new String[] {}, mailTitle, welcomeMessage);
-    }
-
-    public String buildNotifyWelcomeMessage(User sender, ForgotPasswordToken forgotPasswordToken) {
-
-        Context context = new Context();
-        context.setVariable("senderFirstname", sender.getFirstname());
-        context.setVariable("senderLastname", sender.getLastname());
-        context.setVariable("senderEmail", sender.getEmail());
-        context.setVariable("username", sender.getUsername());
-        context.setVariable("tokenKey", forgotPasswordToken.getTokenKey());
-        context.setVariable("expiryDate", forgotPasswordToken.getExpiryDate());
-        context.setVariable("by", applicationProperties.getServerURL());
-        context.setVariable("website", applicationProperties.getInstanceHostWebsite());
-        context.setVariable("mailFrom", applicationProperties.getInstanceHostSupportMail());
-        context.setVariable("phoneNumber", applicationProperties.getInstanceHostPhoneNumber());
-
-        return templateEngine.process("mail/welcome.html", context);
-    }
 
     public void notifyShareAnnotationMessage (
             User sender,
@@ -97,46 +73,5 @@ public class NotificationService {
         context.setVariable("phoneNumber", applicationProperties.getInstanceHostPhoneNumber());
 
         return templateEngine.process("mail/share.html", context);
-    }
-
-
-    // TODO IAM: remove
-    public void notifyForgotUsername (User user) throws MessagingException {
-        String message = buildNotifyForgotUsername(user.getUsername());
-        String subject = "Cytomine : your username is " + user.getUsername();
-        cytomineMailService.send(CytomineMailService.NO_REPLY_EMAIL, new String[] {user.getEmail()},  new String[] {}, new String[]{}, subject, message);
-    }
-
-    // TODO IAM: remove
-    public String buildNotifyForgotUsername(String username) {
-        Context context = new Context();
-        context.setVariable("username", username);
-        context.setVariable("by", applicationProperties.getServerURL());
-        context.setVariable("website", applicationProperties.getInstanceHostWebsite());
-        context.setVariable("mailFrom", applicationProperties.getInstanceHostSupportMail());
-        context.setVariable("phoneNumber", applicationProperties.getInstanceHostPhoneNumber());
-
-        return templateEngine.process("mail/forgot_username.html", context);
-    }
-
-    // TODO IAM: remove
-    public void notifyForgotPassword (User user, ForgotPasswordToken forgotPasswordToken) throws MessagingException {
-        String message = buildNotifyForgotPassword(user.getUsername(), forgotPasswordToken);
-        String subject = "Cytomine : reset your password";
-        cytomineMailService.send(CytomineMailService.NO_REPLY_EMAIL, new String[] {user.getEmail()},  new String[] {}, new String[]{}, subject, message);
-    }
-
-    // TODO IAM: remove
-    public String buildNotifyForgotPassword(String username, ForgotPasswordToken forgotPasswordToken) {
-        Context context = new Context();
-        context.setVariable("username", username);
-        context.setVariable("tokenKey", forgotPasswordToken.getTokenKey());
-        context.setVariable("expiryDate", forgotPasswordToken.getExpiryDate());
-        context.setVariable("by", applicationProperties.getServerURL());
-        context.setVariable("website", applicationProperties.getInstanceHostWebsite());
-        context.setVariable("mailFrom", applicationProperties.getInstanceHostSupportMail());
-        context.setVariable("phoneNumber", applicationProperties.getInstanceHostPhoneNumber());
-
-        return templateEngine.process("mail/forgot_password.html", context);
     }
 }

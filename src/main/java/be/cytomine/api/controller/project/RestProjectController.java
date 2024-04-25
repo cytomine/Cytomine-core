@@ -257,28 +257,4 @@ public class RestProjectController extends RestCytomineController {
 
         return responseSuccess(JsonObject.toJsonString(projectService.findCommandHistory(projects, user, max, offset, fullData, startDate, endDate)));
     }
-
-
-
-
-//    @RestApiMethod(description="Invite a not yer existing user to the project")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The project id"),
-//            @RestApiParam(name="json", type="string", paramType = RestApiParamType.QUERY,description = "The user name and email of the invited user"),
-//    ])
-//
-    //TODO IAM: refactor / remove ?
-    @PostMapping("/project/{id}/invitation.json")
-    public ResponseEntity<String> inviteNewUser(
-            @PathVariable Long id,
-            @RequestBody JsonObject json
-    ) throws MessagingException {
-        Project project = projectService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("Project", id));
-        User user = projectService.inviteUser(project, json.getJSONAttrStr("name"),
-                json.getJSONAttrStr("firstname", "firstname"),
-                json.getJSONAttrStr("lastname", "lastname"),
-                json.getJSONAttrStr("mail"));
-        return responseSuccess(user);
-    }
 }

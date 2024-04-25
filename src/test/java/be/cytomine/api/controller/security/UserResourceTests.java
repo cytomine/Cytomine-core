@@ -688,29 +688,6 @@ public class UserResourceTests {
 
     @Test
     @Transactional
-    public void edit_valid_user_may_alter_password() throws Exception {
-
-        User user = builder.given_a_user();
-        user.setPassword("secretPassword");
-        user.encodePassword(passwordEncoder);
-        builder.persistAndReturn(user);
-
-        restUserControllerMockMvc.perform(put("/api/user/{id}.json", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(user.toJsonObject().withChange("password", "mustBeChanged").toJsonString()))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.printMessage").value(true))
-                .andExpect(jsonPath("$.callback").exists())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.command").exists())
-                .andExpect(jsonPath("$.user.id").exists());
-
-        assertThat(passwordEncoder.matches("mustBeChanged", user.getPassword())).isTrue();
-    }
-
-    @Test
-    @Transactional
     public void delete_user() throws Exception {
         User user = builder.given_a_user();
         restUserControllerMockMvc.perform(delete("/api/user/{id}.json", user.getId())
@@ -727,40 +704,6 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.user.id").exists());
     }
 
-
-    @Test
-    @Transactional
-    public void lock_user() throws Exception {
-
-        User user = builder.given_a_user();
-
-        assertThat(user.getEnabled()).isTrue();
-
-        restUserControllerMockMvc.perform(post("/api/user/{id}/lock.json", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-        assertThat(user.getEnabled()).isFalse();
-    }
-
-    @Test
-    @Transactional
-    public void unlock_user() throws Exception {
-
-        User user = builder.given_a_user();
-        user.setEnabled(false);
-
-        assertThat(user.getEnabled()).isFalse();
-
-        restUserControllerMockMvc.perform(delete("/api/user/{id}/lock.json", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-        assertThat(user.getEnabled()).isTrue();
-
-    }
 
 //max=25&offset=0&projectRole[in]=contributor,manager,representative&sort=&order=
 
@@ -1064,50 +1007,6 @@ public class UserResourceTests {
         assertThat(permissionService.hasACLPermission(storage, user.getUsername(), READ)).isFalse();
         assertThat(permissionService.hasACLPermission(storage, user.getUsername(), ADMINISTRATION)).isFalse();
 
-    }
-
-    @Test
-    @Transactional
-    public void change_password() throws Exception {
-        User user = builder.given_a_user();
-
-        restUserControllerMockMvc.perform(put("/api/user/{user}/password.json", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON).content(user.toJsonObject().withChange("password", "newPassword").toJsonString()))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-        assertThat(user.getPassword()).isNotEqualTo("newPassword");
-        assertThat(passwordEncoder.matches("newPassword", user.getPassword())).isTrue();
-    }
-
-    @Test
-    @Transactional
-    public void check_valid_password() throws Exception {
-        User user = builder.given_a_user();
-        user.setPassword("newPassword");
-        user.encodePassword(passwordEncoder);
-        builder.persistAndReturn(user);
-
-        restUserControllerMockMvc.perform(post("/api/user/security_check.json")
-                        .with(user(user.getUsername()))
-                        .contentType(MediaType.APPLICATION_JSON).content(JsonObject.of("password", "newPassword").toJsonString()))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-    }
-
-    @Test
-    @Transactional
-    public void check_bad_password() throws Exception {
-        User user = builder.given_a_user();
-        user.setPassword("newPassword");
-        user.encodePassword(passwordEncoder);
-        builder.persistAndReturn(user);
-
-        restUserControllerMockMvc.perform(post("/api/user/security_check.json")
-                        .contentType(MediaType.APPLICATION_JSON).content(JsonObject.of("username", user.getUsername(), "password", "xxxxxxxxxx").toJsonString()))
-                .andDo(print())
-                .andExpect(status().isUnauthorized());
     }
 
 

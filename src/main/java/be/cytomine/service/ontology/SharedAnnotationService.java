@@ -22,27 +22,21 @@ import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.security.*;
 import be.cytomine.exceptions.*;
 import be.cytomine.repository.ontology.*;
-import be.cytomine.repository.security.ForgotPasswordTokenRepository;
-import be.cytomine.repository.security.SecRoleRepository;
-import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.middleware.ImageServerService;
-import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.NotificationService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
-import jakarta.mail.MessagingException;
 import jakarta.transaction.Transactional;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -69,17 +63,6 @@ public class SharedAnnotationService extends ModelService {
     private AnnotationDomainRepository annotationDomainRepository;
 
 
-    @Autowired
-    private SecUserService secUserService;
-
-    @Autowired
-    private SecRoleRepository secRoleRepository;
-
-    @Autowired
-    private SecUserSecRoleRepository secUserSecRoleRepository;
-
-    @Autowired
-    private ForgotPasswordTokenRepository forgotPasswordTokenRepository;
 
     @Autowired
     private NotificationService notificationService;
@@ -196,49 +179,6 @@ public class SharedAnnotationService extends ModelService {
                     .map(x -> getEntityManager().find(User.class, x))
                     .map(User::getEmail)
                     .collect(Collectors.toList());
-        } else if (jsonObject.containsKey("emails")) {
-            receiversEmail = Arrays.stream(jsonObject.getJSONAttrStr("emails").split(",")).collect(Collectors.toList());
-
-            for (String email : receiversEmail) {
-                //TODO IAM: refactor / delete ?
-                if (secUserService.findByEmail(email).isEmpty()) {
-                    JsonObject guestUser = JsonObject.of(
-                            "username", email,
-                            "firstname", "firstname",
-                            "lastname", "lastname",
-                            "email", email,
-                            "password", "passwordExpired"
-                    );
-
-                    secUserService.add(guestUser);
-                    User user = (User) secUserService.findByUsername(email).get();
-                    SecRole secRole = secRoleRepository.findByAuthority("ROLE_GUEST").get();
-
-                    SecUserSecRole secUserSecRole = new SecUserSecRole();
-                    secUserSecRole.setSecUser(user);
-                    secUserSecRole.setSecRole(secRole);
-                    secUserSecRole = secUserSecRoleRepository.save(secUserSecRole);
-
-                    secUserService.addUserToProject(user, annotation.getProject(), false);
-
-                    user.setPasswordExpired(true);
-                    getEntityManager().persist(user);
-
-                    ForgotPasswordToken forgotPasswordToken = new ForgotPasswordToken();
-                    forgotPasswordToken.setUser(user);
-                    forgotPasswordToken.setTokenKey(UUID.randomUUID().toString());
-                    forgotPasswordToken.setExpiryDate(DateUtils.addDays(new Date(), 1));
-                    forgotPasswordTokenRepository.save(forgotPasswordToken);
-
-                    try {
-                        notificationService.notifyWelcome(sender, user, forgotPasswordToken);
-                    } catch (Exception e) {
-                        log.error("Cannot send welcome message to user " + user.getEmail(), e);
-                    }
-                }
-                receivers.add((User)secUserService.findByUsername(email).get());
-            }
-            jsonObject.put("receivers", receivers.stream().map(x -> x.getId()).collect(Collectors.toList()));
         }
 
         securityACLService.checkFullOrRestrictedForOwner(annotation, annotation.user());

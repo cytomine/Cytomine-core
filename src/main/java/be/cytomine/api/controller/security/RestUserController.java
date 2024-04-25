@@ -292,24 +292,6 @@ public class RestUserController extends RestCytomineController {
         return delete(secUserService, JsonObject.of("id", Long.parseLong(id)), null);
     }
 
-    //TODO IAM: delegate to IAM
-    @PostMapping("/user/{id}/lock.json")
-    public ResponseEntity<String> lock(@PathVariable Long id) {
-        log.debug("REST request to lock User : {}", id);
-        SecUser user = secUserService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("User", id));
-        return responseSuccess(secUserService.lock(user));
-    }
-
-    //TODO IAM: delegate to IAM
-    @DeleteMapping("/user/{id}/lock.json")
-    public ResponseEntity<String> unlock(@PathVariable Long id) {
-        log.debug("REST request to lock User : {}", id);
-        SecUser user = secUserService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("User", id));
-        return responseSuccess(secUserService.unlock(user));
-    }
-
 
     // TODO IAM: only return display name
     @GetMapping("/project/{id}/user.json")
@@ -516,37 +498,6 @@ public class RestUserController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("Storage", storageId));
         secUserService.deleteUserFromStorage(user, storage);
         return responseSuccess(JsonObject.of("data", JsonObject.of("message", "OK")).toJsonString());
-    }
-
-
-    // TODO IAM: delegated to IAM
-    @PutMapping("/user/{user}/password.json")
-    public ResponseEntity<String> resetPassword(@PathVariable("user") Long userId,
-                                                @RequestBody JsonObject json) {
-        log.debug("REST request to resetpassword for User {}", userId);
-        SecUser user = secUserService.find(userId)
-                .orElseThrow(() -> new ObjectNotFoundException("User", userId));
-        String newPassword = json.getJSONAttrStr("password");
-        if (StringUtils.isNotBlank(newPassword)) {
-            secUserService.changeUserPassword((User) user,newPassword);
-            return responseSuccess(user, isFilterRequired());
-        } else {
-            throw new WrongArgumentException("Password is missing in JSON");
-        }
-
-    }
-
-    // TODO IAM: delegated to IAM
-    @RequestMapping(path = {"/user/security_check.json"}, method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<String> checkPassword(@RequestBody JsonObject json) {
-        log.debug("REST request to check password for current user");
-        User user = (User)secUserService.getCurrentUser();
-        String newPassword = json.getJSONAttrStr("password");
-        if(secUserService.isUserPassword(user, newPassword)) {
-            return responseSuccess(JsonObject.of(), isFilterRequired());
-        } else {
-            throw new AuthenticationException("No matching password");
-        }
     }
 
     // TODO IAM: only return display name
