@@ -36,18 +36,9 @@ import java.util.*;
 @DiscriminatorColumn(name="class",
         discriminatorType = DiscriminatorType.STRING)
 public class SecUser extends CytomineDomain {
-
-
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGen")
-//    @SequenceGenerator(name = "myGen", sequenceName = "hibernate_sequence", allocationSize=1)
-//    protected Long id;
-
-
     @NotNull
     @NotBlank
     @Column(nullable = false)
-//    @Pattern(regexp = "^[^\\ ].*[^\\ ]\\$") TODO
     protected String username;
 
     @NotNull

@@ -81,7 +81,6 @@ public class RestUserController extends RestCytomineController {
     private final ReportService reportService;
 
 
-    // TODO IAM: only return display name
     @GetMapping("/project/{id}/admin.json")
     public ResponseEntity<String> showAdminByProject(
             @PathVariable Long id
@@ -92,7 +91,6 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(secUserService.listAdmins(project), isFilterRequired());
     }
 
-    // TODO IAM: only return display name
     @GetMapping("/project/{id}/users/representative.json")
     public ResponseEntity<String> showRepresentativeByProject(
             @PathVariable Long id
@@ -104,7 +102,6 @@ public class RestUserController extends RestCytomineController {
                 .collect(Collectors.toList()), isFilterRequired());
     }
 
-    // TODO IAM: only return display name
     @GetMapping("/project/{id}/creator.json")
     public ResponseEntity<String> showCreatorByProject(
             @PathVariable Long id
@@ -116,7 +113,6 @@ public class RestUserController extends RestCytomineController {
     }
 
 
-    // TODO IAM: only return display name
     @GetMapping("/ontology/{id}/user.json")
     public ResponseEntity<String> showUserByOntology(
             @PathVariable Long id
@@ -127,7 +123,6 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(secUserService.listUsers(ontology), isFilterRequired());
     }
 
-    // TODO IAM: only return display name
     @GetMapping("/project/{id}/userlayer.json")
     public ResponseEntity<String> showLayerByProject(
             @PathVariable Long id,
@@ -142,7 +137,6 @@ public class RestUserController extends RestCytomineController {
 
     }
 
-    // TODO IAM: only return display name
     @GetMapping("/storage/{id}/user.json")
     public ResponseEntity<String> showUserByStorage(
             @PathVariable Long id
@@ -179,7 +173,6 @@ public class RestUserController extends RestCytomineController {
         );
     }
 
-    // TODO IAM: only return display name
     @GetMapping("/user/{id}.json")
     public ResponseEntity<String> getUser(
             @PathVariable String id
@@ -191,14 +184,7 @@ public class RestUserController extends RestCytomineController {
             user = secUserService.findByUsername(id);
         }
 
-        return user.map( secUser -> {
-            JsonObject object = User.getDataFromDomain(secUser);
-            AuthInformation authMaps = secUserService.getAuthenticationRoles(secUser);
-            object.put("admin", authMaps.getAdmin());
-            object.put("user", authMaps.getUser());
-            object.put("guest", authMaps.getGuest());
-            return responseSuccess(object, isFilterRequired());
-        }).orElseGet(() -> responseNotFound("User", id));
+        return user.map(secUser -> responseSuccess(secUser, isFilterRequired())).orElseGet(() -> responseNotFound("User", id));
     }
 
     //TODO IAM: still needed ?
@@ -245,20 +231,7 @@ public class RestUserController extends RestCytomineController {
     public ResponseEntity<String> getCurrentUser(
     ) {
         log.debug("REST request to get current User");
-
-        SecUser secUser = secUserService.getCurrentUser();
-
-        JsonObject object = User.getDataFromDomain(secUser);
-        if(!secUser.isAlgo()){
-            AuthInformation authMaps = secUserService.getAuthenticationRoles(secUser);
-            object.put("admin", authMaps.getAdmin());
-            object.put("user", authMaps.getUser());
-            object.put("guest", authMaps.getGuest());
-            object.put("adminByNow", authMaps.getAdminByNow());
-            object.put("userByNow", authMaps.getUserByNow());
-            object.put("guestByNow", authMaps.getGuestByNow());
-        }
-        return responseSuccess(object);
+        return responseSuccess(secUserService.getCurrentUser());
     }
 
     //TODO IAM: delegate to IAM

@@ -132,9 +132,8 @@ public class ProjectDefaultLayerService extends ModelService {
     }
 
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
-        //TODO IAM: use display name
-        return List.of(domain.getId(), ((ProjectDefaultLayer)domain).getUser().getFirstname() + " " +
-                ((ProjectDefaultLayer)domain).getUser().getLastname());
+        User user = ((ProjectDefaultLayer)domain).getUser();
+        return List.of(domain.getId(), user.getFullName());
     }
 
 

@@ -35,11 +35,6 @@ import jakarta.validation.constraints.Size;
 @DiscriminatorValue("be.cytomine.domain.security.User")
 public class User extends SecUser {
 
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGen")
-//    @SequenceGenerator(name = "myGen", sequenceName = "hibernate_sequence", allocationSize=1)
-//    protected Long id;
-
     @NotNull
     @NotBlank
     @Column(nullable = false)
@@ -82,31 +77,6 @@ public class User extends SecUser {
 
     }
 
-    /**
-     * Username of the human user back to this user
-     * If User => humanUsername is username
-     * If Algo => humanUsername is user that launch algo username
-     */
-    public String humanUsername() {
-        return username;
-    }
-
-    public String toString() {
-        return firstname + " " + lastname;
-    }
-
-    /**
-     * Check if user is a job
-     */
-    public Boolean isAlgo() {
-        return false;
-    }
-
-//    public static CytomineDomain buildDomainFromJson(JsonObject json) {
-//        return buildDomainFromJson(json, new User());
-//    }
-//
-//    public static CytomineDomain buildDomainFromJson(JsonObject json, CytomineDomain domain) {
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         User user = (User)this;
         user.id = json.getJSONAttrLong("id",null);
@@ -135,35 +105,36 @@ public class User extends SecUser {
         return user;
     }
 
-    /**
-     * Define fields available for JSON response
-     * @param domain Domain source for json value
-     * @return Map with fields (keys) and their values
-     */
-    public static JsonObject getDataFromDomain(CytomineDomain domain) {
-        JsonObject returnArray = SecUser.getDataFromDomain(domain);
-        User user = (User)domain;
-        returnArray.put("firstname", user.firstname);
-        returnArray.put("lastname", user.lastname);
-        returnArray.put("email", user.email);
-        returnArray.put("language", (user.language!=null? user.language.toString() : null));
-        if (SecurityUtils.getCurrentUserLogin().isPresent() && SecurityUtils.getCurrentUserLogin().get().equals(user.getUsername())) {
-            returnArray.put("publicKey", ((User)domain).getPublicKey());
-            returnArray.put("privateKey", ((User)domain).getPrivateKey());
-            returnArray.put("passwordExpired", ((User)domain).getPasswordExpired());
-        }
-        returnArray.put("isDeveloper", user.isDeveloper);
-        returnArray.put("enabled", user.enabled);
-        returnArray.put("user", user.creator);
-        return returnArray;
+    // ---------- NEW IAM ---------------------------------------
+    public String getPreferredUsername() {
+        return username; // TODO
     }
 
+    public String getName() {
+        return firstname + " " + lastname; // TODO
+    }
 
-//    public static JsonObject getDataFromDomainWithPersonnalData(CytomineDomain domain) {
-//        JsonObject json = User.getDataFromDomain(domain);
-//
-//        return json;
-//    }
+    public String getFullName() {
+        if (getName().equals(getPreferredUsername())) {
+            return getPreferredUsername();
+        }
+        return getName() + " (" + getPreferredUsername() + ")";
+    }
+
+    public String toString() {
+        return getFullName();
+    }
+
+    public static JsonObject getDataFromDomain(CytomineDomain domain) {
+        User user = (User) domain;
+
+        JsonObject json = new JsonObject();
+        json.put("id", user.getId());
+        json.put("preferredUsername", user.getPreferredUsername());
+        json.put("name", user.getName());
+        json.put("fullName", user.getFullName());
+        return json;
+    }
 
     @Override
     public String toJSON() {

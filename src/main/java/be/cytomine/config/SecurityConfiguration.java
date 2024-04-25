@@ -131,13 +131,13 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests((authorizeHttpRequests) ->
                                 authorizeHttpRequests
                                         .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
-                                        .requestMatchers("/session/admin/info.json").authenticated() //TODO IAM: move to IAM
-                                        .requestMatchers("/session/admin/open.json").authenticated() //TODO IAM: move to IAM
-                                        .requestMatchers("/session/admin/close.json").authenticated() //TODO IAM: move to IAM
-                                        .requestMatchers(HttpMethod.GET, "/server/ping").permitAll()
-                                        .requestMatchers(HttpMethod.GET, "/server/ping.json").permitAll()
-                                        .requestMatchers(HttpMethod.POST, "/server/ping").permitAll()
-                                        .requestMatchers(HttpMethod.POST, "/server/ping.json").permitAll()
+                                        .requestMatchers("/session/admin/info.json").authenticated()
+                                        .requestMatchers("/session/admin/open.json").authenticated()
+                                        .requestMatchers("/session/admin/close.json").authenticated()
+                                        .requestMatchers(HttpMethod.GET, "/server/ping").permitAll() // TODO IAM: remove
+                                        .requestMatchers(HttpMethod.GET, "/server/ping.json").permitAll() // TODO IAM: remove
+                                        .requestMatchers(HttpMethod.POST, "/server/ping").permitAll() // TODO IAM: remove
+                                        .requestMatchers(HttpMethod.POST, "/server/ping.json").permitAll() // TODO IAM: remove
                                         .requestMatchers(new AntPathRequestMatcher("/**")).permitAll() // TODO IAM: remove ?
                 )
                 .apply(securityConfigurerAdapter());
