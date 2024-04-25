@@ -83,12 +83,6 @@ public class ApplicationProperties {
 
     private String ImageServerPublicKey;
 
-    private String rabbitMQPrivateKey;
-
-    private String rabbitMQPublicKey;
-
-    private String softwareSources;
-
     private String defaultLanguage;
 
     private String internalProxyURL;

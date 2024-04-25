@@ -180,14 +180,6 @@ class ApplicationBootstrap {
             imageServerUser.setPublicKey(applicationProperties.getImageServerPublicKey());
             secUserRepository.save(imageServerUser);
         }
-        if (applicationProperties.getRabbitMQPrivateKey()!=null && applicationProperties.getRabbitMQPrivateKey()!=null) {
-            secUserRepository.findByUsernameLikeIgnoreCase("rabbitmq")
-                    .ifPresent(user -> {
-                        user.setPrivateKey(applicationProperties.getRabbitMQPrivateKey());
-                        user.setPublicKey(applicationProperties.getRabbitMQPublicKey());
-                            secUserRepository.save(user);
-                    });
-        }
 
         log.info("Check image filters...");
         bootstrapDataService.updateImageFilters();
