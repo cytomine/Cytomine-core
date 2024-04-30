@@ -542,9 +542,8 @@ public class RestUserController extends RestCytomineController {
         for (SecUser user : projectUsers) {
             if (user instanceof User) {
                 users.add(Map.of(
-                        "username", user.getUsername(),
-                        "firstname", (((User) user).getFirstname()),
-                        "lastname", (((User) user).getLastname())
+                        "username", ((User) user).getPreferredUsername(),
+                        "name", (((User) user).getName())
                 ));
             }
 

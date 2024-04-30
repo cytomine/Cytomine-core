@@ -242,19 +242,19 @@ public class ReportFormatServiceTests {
         User user1 = builder.given_a_user();
         User user2 = builder.given_a_user();
         expectedDataObject = new Object[][]{
-                {"User Name", "First Name", "Last Name"},
-                {user1.getUsername(), user1.getUsername(), user1.humanUsername()},
-                {user2.getUsername(), user2.getUsername(), user2.humanUsername()},
+                {"Username", "Name"},
+                {user1.getPreferredUsername(), user1.getName()},
+                {user2.getPreferredUsername(), user2.getName()},
         };
         if(!isComplete){
             expectedDataObject[1][1] = "";
             return new ArrayList<>(List.of(
-                    Map.of("username", user1.getUsername(), "lastname", user1.humanUsername()),
-                    Map.of("username", user2.getUsername(), "firstname", user2.humanUsername(), "lastname", user2.humanUsername())));
+                    Map.of("username", user1.getPreferredUsername()),
+                    Map.of("username", user2.getPreferredUsername(), "name", user2.getName())));
         }else{
             return new ArrayList<>(List.of(
-                    Map.of("username", user1.getUsername(), "firstname", user1.humanUsername(), "lastname", user1.humanUsername()),
-                    Map.of("username", user2.getUsername(), "firstname", user2.humanUsername(), "lastname", user2.humanUsername())));
+                    Map.of("username", user1.getPreferredUsername(), "name", user1.getName()),
+                    Map.of("username", user2.getPreferredUsername(), "name", user2.getName())));
         }
     }
 }

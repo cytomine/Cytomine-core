@@ -1128,11 +1128,10 @@ public class UserResourceTests {
     }
 
     private void checkResult(String delimiter, MvcResult result, User user) throws UnsupportedEncodingException {
-        String[] rows = result.getResponse().getContentAsString().split("\n");
+        String[] rows = result.getResponse().getContentAsString().split("\r\n|\r|\n");
         String[] userAnnotationResult = rows[1].split(delimiter);
-        AssertionsForClassTypes.assertThat(userAnnotationResult[0]).isEqualTo(user.getUsername());
-        AssertionsForClassTypes.assertThat(userAnnotationResult[1]).isEqualTo(user.getFirstname());
-        AssertionsForClassTypes.assertThat(userAnnotationResult[2].replace("\r", "")).isEqualTo(user.getLastname());
+        AssertionsForClassTypes.assertThat(userAnnotationResult[0]).isEqualTo(user.getPreferredUsername());
+        AssertionsForClassTypes.assertThat(userAnnotationResult[1]).isEqualTo(user.getName());
     }
 
     private void checkXLSResult(MvcResult result, User user) throws IOException {
@@ -1150,9 +1149,8 @@ public class UserResourceTests {
             cells[i] = row.getCell(i);
         }
 
-        AssertionsForClassTypes.assertThat(cells[0].getStringCellValue()).isEqualTo(user.getUsername());
-        AssertionsForClassTypes.assertThat(cells[1].getStringCellValue()).isEqualTo(user.getFirstname());
-        AssertionsForClassTypes.assertThat(cells[2].getStringCellValue().replace("\r", "")).isEqualTo(user.getLastname());
+        AssertionsForClassTypes.assertThat(cells[0].getStringCellValue()).isEqualTo(user.getPreferredUsername());
+        AssertionsForClassTypes.assertThat(cells[1].getStringCellValue()).isEqualTo(user.getName());
 
 
         workbook.close();
