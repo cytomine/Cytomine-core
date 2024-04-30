@@ -618,13 +618,7 @@ public class SecUserService extends ModelService {
     }
 
     public List<SecUser> listUsers(Project project) {
-        return listUsers(project, true);
-    }
-
-    public List<SecUser> listUsers(Project project, boolean checkPermission) {
-        if (checkPermission) {
-            securityACLService.check(project, READ);
-        }
+        securityACLService.check(project, READ);
         return secUserRepository.findAllUsersByProjectId(project.getId());
     }
 
@@ -754,10 +748,9 @@ public class SecUserService extends ModelService {
 
                 JsonObject jsonObject = new JsonObject();
                 jsonObject.put("id", user.getId());
-                jsonObject.put("username", user.getUsername());
-                jsonObject.put("firstname", user.getFirstname());
-                jsonObject.put("lastname", user.getLastname());
-                jsonObject.put("email", user.getEmail());
+                jsonObject.put("preferredUsername", user.getPreferredUsername());
+                jsonObject.put("name", user.getName());
+                jsonObject.put("fullName", user.getFullName());
                 jsonObject.put("lastImageId", (image!=null? image.get("image") : null));
                 jsonObject.put("lastImageName", (image!=null? image.get("imageName") : null));
                 jsonObject.put("lastConnection", (connection!=null? connection.get("created") : null));

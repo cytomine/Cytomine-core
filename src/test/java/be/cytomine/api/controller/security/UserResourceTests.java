@@ -1054,28 +1054,13 @@ public class UserResourceTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(1)))
                 .andExpect(jsonPath("$.collection[0].id").value(userOnline.getId()))
-                .andExpect(jsonPath("$.collection[0].firstname").value(userOnline.getFirstname()))
-                .andExpect(jsonPath("$.collection[0].lastname").value(userOnline.getLastname()))
-                .andExpect(jsonPath("$.collection[0].email").value(userOnline.getEmail()))
+                .andExpect(jsonPath("$.collection[0].preferredUsername").value(userOnline.getPreferredUsername()))
+                .andExpect(jsonPath("$.collection[0].name").value(userOnline.getName()))
+                .andExpect(jsonPath("$.collection[0].fullName").value(userOnline.getFullName()))
                 .andExpect(jsonPath("$.collection[0].lastImageId").value(consultation.getImage()))
                 .andExpect(jsonPath("$.collection[0].lastImageName").hasJsonPath())
                 .andExpect(jsonPath("$.collection[0].lastConnection").value(lastConnection.getCreated().getTime()))
                 .andExpect(jsonPath("$.collection[0].frequency").value(1));
-
-
-//        {
-//            "collection": [
-//            {
-//                "id": 4819,
-//                    "username": "rhoyoux",
-//                    "firstname": "Renaud",
-//                    "lastname": "Hoyoux",
-//                    "email": "renaud.hoyoux@cytomine.coop",
-//                    "lastImageId": 7353123,
-//                    "lastImageName": "CMU-1-Small-Region (1).svs",
-//                    "lastConnection": "1645697846414",
-//                    "frequency": 4
-//            },
     }
 
     @Test
