@@ -41,7 +41,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -96,8 +96,7 @@ public class BootstrapUtilsService {
         secRoleRepository.createIfNotExist(role);
     }
 
-    //TODO IAM: refactor
-    public void createUser(String username, String firstname, String lastname, String email, String password, List<String> roles) {
+    public void createUser(String username, String firstname, String lastname, List<String> roles) {
         if (userRepository.findByUsernameLikeIgnoreCase(username).isEmpty()) {
             log.info("Creating {}...", username);
             User user = new User();
@@ -115,15 +114,12 @@ public class BootstrapUtilsService {
                 secUserSecRoleRepository.save(secUserSecRole);
             }
 
-            //SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("admin", "admin"));
-            SecurityUtils.reauthenticate(applicationContext, "admin", "admin");
-
             storageService.initUserStorage(user);
         }
     }
 
 
-    public void createUserJob(String username, String password, User creator, List<String> roles) {
+    public void createUserJob(String username, List<String> roles) {
         if (secUserRepository.findByUsernameLikeIgnoreCase(username).isEmpty()) {
             log.info("Creating {}...", username);
             UserJob user = new UserJob();

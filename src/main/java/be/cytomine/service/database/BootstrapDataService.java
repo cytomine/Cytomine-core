@@ -24,7 +24,6 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.processing.ImageFilterRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.service.utils.Dataset;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -75,9 +74,9 @@ public class BootstrapDataService {
         bootstrapUtilsService.createRole("ROLE_GUEST");
 
         // TODO IAM: Can be removed if user are automatically created the first time one of his token is seen
-        bootstrapUtilsService.createUser("admin", "Just an", "Admin", dataset.ADMINEMAIL, dataset.ADMINPASSWORD,  List.of("ROLE_USER", "ROLE_ADMIN"));
-        bootstrapUtilsService.createUser("ImageServer1", "Image", "Server", dataset.ADMINEMAIL, RandomStringUtils.random(32).toUpperCase(), List.of("ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN"));
-        bootstrapUtilsService.createUser("superadmin", "Super", "Admin", dataset.ADMINEMAIL, dataset.ADMINPASSWORD,  List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
+        bootstrapUtilsService.createUser("admin", "Just an", "Admin", List.of("ROLE_USER", "ROLE_ADMIN"));
+        bootstrapUtilsService.createUser("ImageServer1", "Image", "Server", List.of("ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN"));
+        bootstrapUtilsService.createUser("superadmin", "Super", "Admin", List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
 
         bootstrapUtilsService.createRelation(PARENT);
 

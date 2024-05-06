@@ -17,27 +17,22 @@ package be.cytomine.utils;
 */
 
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.security.current.CurrentUser;
 import be.cytomine.security.current.FullCurrentUser;
 import be.cytomine.security.current.PartialCurrentUser;
 import org.apache.commons.codec.binary.Base64;
-import org.springframework.context.ApplicationContext;
-import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 // TODO IAM: refactor/remove
@@ -97,37 +92,5 @@ public class SecurityUtils {
     private static Stream<String> getAuthorities(Authentication authentication) {
         return authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority);
-    }
-
-
-    public static void doWithAuth(ApplicationContext applicationContext, final String username, @SuppressWarnings("rawtypes") final Runnable executable) {
-        Authentication previousAuth = SecurityContextHolder.getContext().getAuthentication();
-        reauthenticate(applicationContext, username, null);
-
-        try {
-            executable.run();
-        }
-        finally {
-            if (previousAuth == null) {
-                SecurityContextHolder.clearContext();
-            }
-            else {
-                SecurityContextHolder.getContext().setAuthentication(previousAuth);
-            }
-        }
-    }
-
-    public static void reauthenticate(ApplicationContext applicationContext, final String username, final String password) {
-        UserDetailsService userDetailsService = getBean(applicationContext,"userDetailsService");
-        //UserCache userCache = getBean(applicationContext,"userCache");
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
-                userDetails, password == null ? userDetails.getPassword() : password, userDetails.getAuthorities()));
-        //userCache.removeUserFromCache(username);
-    }
-
-    private static <T> T getBean(ApplicationContext applicationContext, final String name) {
-        return (T)applicationContext.getBean(name);
     }
 }

@@ -20,6 +20,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.repository.image.server.StorageRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
@@ -134,14 +135,23 @@ public class StorageService extends ModelService {
     }
 
     public void initUserStorage(final SecUser user) {
-        log.info ("create storage for " + user.getUsername());
-        final SecUser finalUser = user;
-        // TODO IAM: refactor. I think it was done like this to create a command with the finalUser as "actor" (?)
-        SecurityUtils.doWithAuth(applicationContext, user.getUsername(), () -> createStorage(finalUser));
-    }
+        log.info("Initialize storage for {}", user.getUsername());
 
-    public CommandResponse createStorage(SecUser user) {
-        return executeCommand(new AddCommand(user),null, JsonObject.of("name", user.getUsername() + " storage", "user", user.getId()));
+        Storage storage = new Storage();
+        storage.setUser((User) user);
+        storage.setName(user.getUsername() + " storage");
+        storage = storageRepository.save(storage);
+
+        String username = user.getUsername();
+        if(!permissionService.hasACLPermission(storage, username, READ)) {
+            permissionService.addPermission(storage, storage.getUser().getUsername(), READ, user);
+        }
+        if(!permissionService.hasACLPermission(storage, username, WRITE)) {
+            permissionService.addPermission(storage, storage.getUser().getUsername(), WRITE, user);
+        }
+        if(!permissionService.hasACLPermission(storage, username, ADMINISTRATION)) {
+            permissionService.addPermission(storage, storage.getUser().getUsername(), ADMINISTRATION, user);
+        }
     }
 
 

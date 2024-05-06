@@ -19,7 +19,6 @@ package be.cytomine;
 import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.config.nosqlmigration.InitialMongodbSetupMigration;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.SecUserRepository;
@@ -134,11 +133,10 @@ class ApplicationBootstrap {
         if (EnvironmentUtils.isTest(environment) && secUserRepository.count() == 0) {
             bootstrapDataService.initData();
             //noSQLCollectionService.cleanActivityDB() TODO:
-            bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", dataset.ADMINEMAIL, dataset.ADMINPASSWORD, List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
+            bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
 
             // same as superadmin, but a userjob
-            bootstrapUtilDataService.createUserJob("superadminjob", dataset.ADMINPASSWORD,
-                    (User)secUserRepository.findByUsernameLikeIgnoreCase("superadmin").orElseThrow(() -> new ObjectNotFoundException("User", "superadmin")),
+            bootstrapUtilDataService.createUserJob("superadminjob",
                     List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
 
             // We need these users for all authorization tests
