@@ -40,7 +40,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.mail.MessagingException;
 import java.util.ArrayList;
 import java.util.List;
 

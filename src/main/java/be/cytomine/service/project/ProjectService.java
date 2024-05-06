@@ -27,7 +27,9 @@ import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.DatedCytomineDomain;
 import be.cytomine.dto.NamedCytomineDomain;
-import be.cytomine.exceptions.*;
+import be.cytomine.exceptions.AlreadyExistException;
+import be.cytomine.exceptions.ForbiddenException;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.command.CommandHistoryRepository;
 import be.cytomine.repository.command.CommandRepository;
 import be.cytomine.repository.command.RedoStackItemRepository;
@@ -36,7 +38,6 @@ import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.project.ProjectRepresentativeUserRepository;
-import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
@@ -49,10 +50,8 @@ import be.cytomine.service.ontology.AnnotationTermService;
 import be.cytomine.service.ontology.OntologyService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.search.ProjectSearchExtension;
-import be.cytomine.service.security.SecUserSecRoleService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.service.utils.NotificationService;
 import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SQLSearchParameter;
@@ -61,30 +60,29 @@ import be.cytomine.utils.filters.SearchParameterProcessed;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Accumulators;
+import jakarta.persistence.Query;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.TupleElement;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.stereotype.Service;
 
-import jakarta.mail.MessagingException;
-import jakarta.persistence.Query;
-import jakarta.persistence.Tuple;
-import jakarta.persistence.TupleElement;
-import jakarta.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static be.cytomine.service.social.ImageConsultationService.DATABASE_NAME;
 import static com.mongodb.client.model.Aggregates.*;
-import static com.mongodb.client.model.Aggregates.sort;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
-import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.descending;
 import static org.springframework.security.acls.domain.BasePermission.*;
 
@@ -151,19 +149,10 @@ public class ProjectService extends ModelService {
     private RedoStackItemRepository redoStackItemRepository;
 
     @Autowired
-    private SecUserSecRoleService secUserSecRoleService;
-
-    @Autowired
     MongoClient mongoClient;
 
     @Autowired
     private CurrentRoleService currentRoleService;
-
-    @Autowired
-    private SecRoleRepository secRoleRepository;
-
-    @Autowired
-    private NotificationService notificationService;
 
     @Autowired
     private ProjectRepresentativeUserRepository projectRepresentativeUserRepository;
