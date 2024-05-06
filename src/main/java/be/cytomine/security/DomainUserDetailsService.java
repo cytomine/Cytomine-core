@@ -57,16 +57,12 @@ public class DomainUserDetailsService implements UserDetailsService {
 
     }
     private org.springframework.security.core.userdetails.User createSpringSecurityUser(String lowercaseLogin, SecUser user) {
-        if (!user.getEnabled()) {
-            throw new ForbiddenException("User " + lowercaseLogin + " was not permitted");
-        }
+//        if (!user.getEnabled()) {
+//            throw new ForbiddenException("User " + lowercaseLogin + " was not permitted");
+//        }
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
-                user.getPassword(),
-                user.getEnabled(),
-                !user.getAccountExpired(),
-                !user.getPasswordExpired(),
-                !user.getAccountLocked(),
+                "null",
                 user.getRoles().stream().map(x -> new SimpleGrantedAuthority(x.getAuthority())).collect(Collectors.toList())
         );
     }

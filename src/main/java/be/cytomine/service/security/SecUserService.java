@@ -255,6 +255,7 @@ public class SecUserService extends ModelService {
         return secUserRepository.findByUsernameLikeIgnoreCase(username);
     }
 
+    // TODO IAM: remove
     public Optional<SecUser> findByPublicKey(String publicKey) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
         return secUserRepository.findByPublicKey(publicKey);
@@ -277,7 +278,8 @@ public class SecUserService extends ModelService {
         return currentUserService.getCurrentUser();
     }
 
-    public Page<Map<String, Object>> list(UserSearchExtension userSearchExtension, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
+    // TODO IAM: simplify
+    public Page<Map<String, Object>> list(List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
 
         securityACLService.checkGuest(currentUserService.getCurrentUser());
 
@@ -287,11 +289,8 @@ public class SecUserService extends ModelService {
         if (sortDirection == null) {
             sortDirection = "asc";
         }
-        if (sortColumn.equals("role") && !userSearchExtension.isWithRoles()) {
-            throw new WrongArgumentException("Cannot sort on user role without argument withRoles");
-        }
 
-        if (ReflectionUtils.findField(User.class, sortColumn) == null && !(List.of("role", "fullName").contains(sortColumn))) {
+        if (ReflectionUtils.findField(User.class, sortColumn) == null && !(List.of("fullName").contains(sortColumn))) {
             throw new CytomineMethodNotYetImplementedException("User list sorted by " + sortColumn + "is not implemented");
         }
 
@@ -309,22 +308,12 @@ public class SecUserService extends ModelService {
         if (multiSearch.isPresent()) {
             String value = ((String) multiSearch.get().getValue()).toLowerCase();
             value = "%"+value+"%";
-            where += " and (u.firstname ILIKE :name OR u.lastname ILIKE :name OR u.email ILIKE :name OR u.username ILIKE :name) ";
+            where += " and (u.name ILIKE :name OR u.username ILIKE :name) ";
             mapParams.put("name", value);
         }
-        if (userSearchExtension.isWithRoles()) {
-            select += ", MAX(x.order_number) as role ";
-            from += ", sec_user_sec_role sur, sec_role r " +
-                    "JOIN (VALUES ('ROLE_GUEST', 1), ('ROLE_USER' ,2), ('ROLE_ADMIN', 3), ('ROLE_SUPER_ADMIN', 4)) as x(value, order_number) ON r.authority = x.value ";
-            where += "and u.id = sur.sec_user_id and sur.sec_role_id = r.id ";
-            groupBy = "GROUP BY u.id ";
-        }
 
-
-        if (sortColumn.equals("role")) {
-            sort = "ORDER BY " + sortColumn + " " + sortDirection + ", u.id ASC ";
-        } else if (sortColumn.equals("fullName")) {
-            sort = "ORDER BY u.firstname " + sortDirection + ", u.id ";
+        if (sortColumn.equals("fullName")) {
+            sort = "ORDER BY u.name " + sortDirection + ", u.id ";
         } else if (!sortColumn.equals("id")) { //avoid random sort when multiple values of the
             sort = "ORDER BY u." + sortColumn + " " + sortDirection + ", u.id ";
         } else sort = "ORDER BY u." + sortColumn + " " + sortDirection + " ";
@@ -353,34 +342,8 @@ public class SecUserService extends ModelService {
                 result.put(alias, value);
             }
 
-            // TODO?????
-            // I mock methods and fields to pass through getDataFromDomain of SecUser
-//            map["class"] = User.class
-//            map.getMetaClass().algo = { return false }
-//            map["language"] = User.Language.valueOf(map["language"])
-
-            result.put("language", Language.valueOf(result.getJSONAttrStr("language")));
             JsonObject object = User.getDataFromDomain(new User().buildDomainFromJson(result, getEntityManager()));
             object.put("algo", false);
-
-            if (userSearchExtension.isWithRoles()) {
-                String role = "UNDEFINED";
-                switch ((Integer) result.get("role")) {
-                    case 1:
-                        role = "ROLE_GUEST";
-                        break;
-                    case 2:
-                        role = "ROLE_USER";
-                        break;
-                    case 3:
-                        role = "ROLE_ADMIN";
-                        break;
-                    case 4:
-                        role = "ROLE_SUPER_ADMIN";
-                        break;
-                }
-                object.put("role", role);
-            }
             results.add(object);
         }
         request = "SELECT COUNT(DISTINCT U.id) " + from + where + search;
@@ -390,8 +353,7 @@ public class SecUserService extends ModelService {
         }
         long count = (Long) query.getResultList().get(0);
 
-        Page<Map<String, Object>> page = PageUtils.buildPageFromPageResults(results, max, offset, count);
-        return page;
+        return PageUtils.buildPageFromPageResults(results, max, offset, count);
     }
 
     public Page<JsonObject> listUsersExtendedByProject(Project project, UserSearchExtension userSearchExtension, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
@@ -514,7 +476,7 @@ public class SecUserService extends ModelService {
 
         if (multiSearch.isPresent()) {
             String value = ((String) multiSearch.get().getValue()).toLowerCase();
-            where += " and (lower(secUser.firstname) like '%$value%' or lower(secUser.lastname) like '%" + value + "%' or lower(secUser.email) like '%" + value + "%') ";
+            where += " and (lower(secUser.username) like '%$value%' or lower(secUser.name) like '%" + value + "%') ";
         }
         if (onlineUserSearch.isPresent()) {
             List<Long> onlineUsers = getAllOnlineUserIds(project);
@@ -537,12 +499,12 @@ public class SecUserService extends ModelService {
                 "     WHEN aclEntry.mask = 16 THEN 'manager'\n" +
                 "     ELSE 'contributor'\n" +
                 " END) as role ";
-        groupBy = "GROUP BY secUser.id , secUser.accountExpired , secUser.accountLocked, secUser.created, secUser.enabled, secUser.origin, secUser.password, secUser.passwordExpired, secUser.privateKey, secUser.publicKey, secUser.updated, secUser.username, secUser.version,secUser.email,secUser.firstname,secUser.isDeveloper,secUser.language,secUser.lastname,secUser.creator";
+        groupBy = "GROUP BY secUser.id , secUser.accountExpired , secUser.accountLocked, secUser.created, secUser.enabled, secUser.origin, secUser.password, secUser.passwordExpired, secUser.privateKey, secUser.publicKey, secUser.updated, secUser.username, secUser.version,secUser.email,secUser.firstname,secUser.isDeveloper,secUser.language,secUser.lastname,secUser.creator,secUser.name,secUser.reference";
 
         if (sortColumn.equals("projectRole")) {
             sortColumn = "role";
         } else if (sortColumn.equals("fullName")) {
-            sortColumn = "secUser.firstname";
+            sortColumn = "secUser.name";
         } else {
             sortColumn = "secUser." + sortColumn;
         }
@@ -748,7 +710,7 @@ public class SecUserService extends ModelService {
 
                 JsonObject jsonObject = new JsonObject();
                 jsonObject.put("id", user.getId());
-                jsonObject.put("preferredUsername", user.getPreferredUsername());
+                jsonObject.put("username", user.getUsername());
                 jsonObject.put("name", user.getName());
                 jsonObject.put("fullName", user.getFullName());
                 jsonObject.put("lastImageId", (image!=null? image.get("image") : null));
@@ -801,7 +763,7 @@ public class SecUserService extends ModelService {
      */
     public List<SecUser> getAllFriendsUsers(SecUser user) {
         securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
-        return secUserRepository.findAllSecUsersSharingAccesToSameProject(user.getUsername());
+        return secUserRepository.findAllSecUsersSharingAccessToSameProject(user.getUsername());
     }
 
     /**
@@ -844,10 +806,6 @@ public class SecUserService extends ModelService {
             }
             CommandResponse response = executeCommand(new AddCommand(currentUser), null, json);
 
-            User user = (User)response.getObject();
-            user.setPassword(json.getJSONAttrStr("password", true));
-            user.encodePassword(passwordEncoder);
-            user.setNewPassword(null);
             return response;
         }
     }

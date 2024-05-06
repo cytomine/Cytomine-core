@@ -88,39 +88,10 @@ public class SecurityUtils {
         return null;
     }
 
-    public static Optional<String> getCurrentUserLogin() {
-        SecurityContext securityContext = SecurityContextHolder.getContext();
-        return Optional.ofNullable(extractPrincipal(securityContext.getAuthentication()));
-    }
-
-    private static String extractPrincipal(Authentication authentication) {
-        if (authentication == null) {
-            return null;
-        } else if (authentication.getPrincipal() instanceof UserDetails) {
-            UserDetails springSecurityUser = (UserDetails) authentication.getPrincipal();
-            return springSecurityUser.getUsername();
-        } else if (authentication.getPrincipal() instanceof String) {
-            return (String) authentication.getPrincipal();
-        }
-        return null;
-    }
-
-
     public static boolean isAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null &&
                 getAuthorities(authentication).noneMatch("ROLE_ANONYMOUS"::equals);
-    }
-
-    /**
-     * If the current user has a specific authority (security role).
-     * @param authority the authority to check.
-     * @return true if the current user has the authority, false otherwise.
-     */
-    public static boolean isCurrentUserInRole(String authority) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null &&
-                getAuthorities(authentication).anyMatch(authority::equals);
     }
 
     private static Stream<String> getAuthorities(Authentication authentication) {
@@ -128,41 +99,6 @@ public class SecurityUtils {
                 .map(GrantedAuthority::getAuthority);
     }
 
-//    /**
-//     * Execute a closure with the current authentication. Assumes that there's an authentication in the
-//     * http session and that the closure is running in a separate thread from the web request, so the
-//     * context and authentication aren't available to the standard ThreadLocal.
-//     *
-//     * @param closure the code to run
-//     * @return the closure's return value
-//     */
-//    public static Object doWithAuth(@SuppressWarnings("rawtypes") final Closure closure) {
-//        boolean set = false;
-//        if (SecurityContextHolder.getContext().getAuthentication() == null && SecurityRequestHolder.getRequest() != null) {
-//            HttpSession httpSession = SecurityRequestHolder.getRequest().getSession(false);
-//            SecurityContext securityContext = null;
-//            if (httpSession != null) {
-//                securityContext = (SecurityContext)httpSession.getAttribute(
-                          // replaced by DelegatingSecurityContextRepository in Spring Security 6
-//                        HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
-//                if (securityContext != null) {
-//                    SecurityContextHolder.setContext(securityContext);
-                    // due to how Spring Sec 6 is we must also do this
-                    // securityContextRepository.saveContext(context, request, response);
-//                    set = true;
-//                }
-//            }
-//        }
-//
-//        try {
-//            return closure.call();
-//        }
-//        finally {
-//            if (set) {
-//                SecurityContextHolder.clearContext();
-//            }
-//        }
-//    }
 
     public static void doWithAuth(ApplicationContext applicationContext, final String username, @SuppressWarnings("rawtypes") final Runnable executable) {
         Authentication previousAuth = SecurityContextHolder.getContext().getAuthentication();
@@ -194,42 +130,4 @@ public class SecurityUtils {
     private static <T> T getBean(ApplicationContext applicationContext, final String name) {
         return (T)applicationContext.getBean(name);
     }
-
-
-    private static Collection<? extends GrantedAuthority> findInferredAuthorities(ApplicationContext applicationContext,
-            final Collection<GrantedAuthority> granted) {
-        RoleHierarchy roleHierarchy = getBean(applicationContext, "roleHierarchy");
-        Collection<? extends GrantedAuthority> reachable = roleHierarchy.getReachableGrantedAuthorities(granted);
-        if (reachable == null) {
-            return Collections.emptyList();
-        }
-        return reachable;
-    }
-
-    /**
-     * Get the current user's authorities.
-     * @return a list of authorities (empty if not authenticated).
-     */
-    public static Collection<GrantedAuthority> getPrincipalAuthorities() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null) {
-            return Collections.emptyList();
-        }
-
-        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        if (authorities == null) {
-            return Collections.emptyList();
-        }
-
-        // remove the fake role if it's there
-        Collection<GrantedAuthority> copy = new ArrayList<GrantedAuthority>(authorities);
-        for (Iterator<GrantedAuthority> iter = copy.iterator(); iter.hasNext();) {
-            if (iter.next().getAuthority().equals("ROLE_NO_ROLES")) {
-                iter.remove();
-            }
-        }
-
-        return copy;
-    }
-
 }

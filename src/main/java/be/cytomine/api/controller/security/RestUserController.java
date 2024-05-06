@@ -25,7 +25,6 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.dto.AuthInformation;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
@@ -150,25 +149,16 @@ public class RestUserController extends RestCytomineController {
     // TODO IAM: only return display name + new endpoint for account
     @GetMapping("/user.json")
     public ResponseEntity<String> list(
-            @RequestParam(value = "publicKey", required = false) String publicKey, //TODO IAM: remove
-            @RequestParam(value = "withRoles", defaultValue = "false", required = false) Boolean withRoles,
-            @RequestParam(value = "withLastConsultation", defaultValue = "false", required = false) Boolean withLastConsultation,
-            @RequestParam(value = "withNumberConsultations", defaultValue = "false", required = false) Boolean withNumberConsultations,
+//            @RequestParam(value = "publicKey", required = false) String publicKey, //TODO IAM: remove
+//            @RequestParam(value = "withRoles", defaultValue = "false", required = false) Boolean withRoles, //TODO IAM: only for admin
             @RequestParam(value = "sort", defaultValue = "username", required = false) String sortColumn,
             @RequestParam(value = "order", defaultValue = "asc", required = false) String sortDirection,
             @RequestParam(value = "offset", defaultValue = "0", required = false) Long offset,
             @RequestParam(value = "max", defaultValue = "0", required = false) Long max
     ) {
         log.debug("REST request to list user");
-        if (publicKey != null) {
-            return responseSuccess(secUserService.findByPublicKey(publicKey)
-                    .orElseThrow(() -> new ObjectNotFoundException("User", JsonObject.of("publicKey", publicKey).toJsonString())));
-        }
-
-        UserSearchExtension userSearchExtension = new UserSearchExtension();
-        userSearchExtension.setWithRoles(withRoles);
         return responseSuccess(
-                secUserService.list(userSearchExtension, retrieveSearchParameters(), sortColumn, sortDirection, max, offset)
+                secUserService.list(retrieveSearchParameters(), sortColumn, sortDirection, max, offset)
                 , isFilterRequired()
         );
     }
@@ -463,7 +453,7 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(JsonObject.of("data", JsonObject.of("message", "OK")).toJsonString());
     }
 
-    // TODO IAM: only return display name
+    // TODO IAM: what about online
     @GetMapping("/user/{id}/friends.json")
     public ResponseEntity<String> listFriends(
             @PathVariable Long id,
@@ -501,7 +491,6 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(friends, isFilterRequired());
     }
 
-    // TODO IAM: only return display name
     @GetMapping("/project/{project}/online/user.json")
     public ResponseEntity<String> listOnlineFriendsWithPosition(
             @PathVariable(value = "project") Long projectId
@@ -513,7 +502,6 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(secUserService.getAllOnlineUserWithTheirPositions(project), isFilterRequired());
     }
 
-    //TODO IAM: only return display name
     @GetMapping("/project/{project}/usersActivity.json")
     public ResponseEntity<String> usersActivity(
             @PathVariable(value = "project") Long projectId
@@ -525,7 +513,6 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(secUserService.getUsersWithLastActivities(project), isFilterRequired());
     }
 
-    // TODO IAM: only return display name + new endpoint for account
     @GetMapping("/project/{project}/user/download")
     public void download(
             @PathVariable(value = "project") Long projectId,
@@ -542,7 +529,7 @@ public class RestUserController extends RestCytomineController {
         for (SecUser user : projectUsers) {
             if (user instanceof User) {
                 users.add(Map.of(
-                        "username", ((User) user).getPreferredUsername(),
+                        "username", ((User) user).getUsername(),
                         "name", (((User) user).getName())
                 ));
             }
@@ -574,12 +561,5 @@ public class RestUserController extends RestCytomineController {
             return false;
         } catch(ForbiddenException e){}
         return true;
-    }
-
-    @Override
-    protected void filterOneElement(Map<String, Object> element) {
-        if (element.get("id")!=null && !element.get("id").equals(currentUserService.getCurrentUser().getId())) {
-            element.remove("email");
-        }
     }
 }

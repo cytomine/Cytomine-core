@@ -57,19 +57,7 @@ public class CurrentUserService {
         } else {
             throw new ObjectNotFoundException("User", "Cannot read current user. Object " + currentUser + " is not supported");
         }
-        checkAccountStatus(secUser);
         return secUser;
-    }
-
-    private void checkAccountStatus(SecUser secUser) {
-        if (secUser.getAccountExpired()) {
-            throw new ForbiddenException("Account expired");
-        } else if (secUser.getAccountLocked()) {
-            throw new ForbiddenException("Account locked");
-        } else if (!secUser.getEnabled()) {
-            throw new ForbiddenException("Account disabled");
-        }
-
     }
 
 }

@@ -37,10 +37,10 @@ public interface AclRepository extends JpaRepository<SecUser, Long> {
 
     @Query(value = "SELECT mask FROM acl_object_identity aoi, acl_sid sid, acl_entry ae " +
             "WHERE aoi.object_id_identity = :domainId " +
-            "AND sid.sid = :humanUsername "  +
+            "AND sid.sid = :username "  +
             "AND ae.acl_object_identity = aoi.id "+
             "AND ae.sid = sid.id ", nativeQuery = true)
-    List<Integer> listMaskForUsers(Long domainId, String humanUsername);
+    List<Integer> listMaskForUsers(Long domainId, String username);
 
     @Query(value = "SELECT mask FROM acl_object_identity aoi, acl_sid sid, acl_entry ae " +
             "WHERE aoi.object_id_identity = :domainId " +

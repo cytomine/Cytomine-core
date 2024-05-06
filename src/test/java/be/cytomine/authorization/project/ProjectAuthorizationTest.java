@@ -55,14 +55,11 @@ import org.springframework.security.acls.model.Permission;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.swing.plaf.BorderUIResource;
 import java.util.*;
 
 import static be.cytomine.domain.project.EditingMode.*;
-import static be.cytomine.domain.security.SecUser_.password;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
-import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @AutoConfigureMockMvc
 @SpringBootTest(classes = CytomineCoreApplication.class)

@@ -18,7 +18,6 @@ package be.cytomine.repository.security;
 
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.service.dto.JobLayerDTO;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -40,8 +39,13 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
     @EntityGraph(attributePaths = "roles")
     Optional<SecUser> findByUsernameLikeIgnoreCase(String username);
 
+    // TODO IAM: PUB/PRIV KEYS
     @EntityGraph(attributePaths = "roles")
     Optional<SecUser> findByPublicKey(String publicKey);
+
+    // TODO IAM: PUB/PRIV KEYS
+    @EntityGraph(attributePaths = "roles")
+    Optional<SecUser> findByPublicKeyAndEnabled(String accessKey, boolean enabled);
 
     @Query("select distinct secUser " +
             "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, SecUser as secUser "+
@@ -72,22 +76,6 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
     List<SecUser> findAllUsersByContainer(Long containerId);
 
 
-//     @Query(value = "SELECT DISTINCT u.id as id, u.username as username, " +
-//             "s.name as softwareName, s.software_version as softwareVersion, " +
-//             "j.created as created, u.job_id as job " +
-//             "FROM annotation_index ai " +
-//             "RIGHT JOIN slice_instance si ON ai.slice_id = si.id " +
-//             "RIGHT JOIN sec_user u ON ai.user_id = u.id " +
-//             "RIGHT JOIN job j ON j.id = u.job_id " +
-//             "RIGHT JOIN software_project sp ON sp.software_id = j.software_id " +
-//             "RIGHT JOIN software s ON s.id = sp.software_id " +
-//             "WHERE si.image_id = :imageInstanceId " +
-//             "AND sp.project_id = :projectInstanceId " +
-//             "ORDER BY j.created", nativeQuery = true)
-//     List<JobLayerDTO> findAllUserJob(Long imageInstanceId, Long projectInstanceId);
-
-
-
     @Query(value = "SELECT DISTINCT sec_user.id \n" +
                 " FROM acl_object_identity, acl_entry,acl_sid, sec_user \n" +
                 " WHERE acl_object_identity.object_id_identity = :domainId\n" +
@@ -99,21 +87,18 @@ public interface SecUserRepository extends JpaRepository<SecUser, Long>, JpaSpec
 
     List<SecUser> findAllByIdIn(List<Long> ids);
 
-    @EntityGraph(attributePaths = "roles")
-    Optional<SecUser> findByPublicKeyAndEnabled(String accessKey, boolean enabled);
-
     @Query(value = "select distinct secUser " +
             "from AclSid as aclSid, AclEntry as aclEntry, SecUser as secUser "+
             "where aclEntry.aclObjectIdentity in (select  aclEntry.aclObjectIdentity from AclEntry as aclEntry where aclEntry.sid.id = :sidId) " +
             "and aclEntry.sid = aclSid and aclSid.sid = secUser.username and aclSid.id <> :sidId")
-    List<SecUser> findAllSecUsersSharingAccesToSameProject(Long sidId);
+    List<SecUser> findAllSecUsersSharingAccessToSameProject(Long sidId);
 
     @Query(value = "SELECT id FROM acl_sid WHERE sid = :username", nativeQuery = true)
     Long getAclSidFromUsername(String username);
 
-    default List<SecUser> findAllSecUsersSharingAccesToSameProject(String username) {
+    default List<SecUser> findAllSecUsersSharingAccessToSameProject(String username) {
         Long aclId = getAclSidFromUsername(username);
-        return findAllSecUsersSharingAccesToSameProject(aclId);
+        return findAllSecUsersSharingAccessToSameProject(aclId);
     }
 
 

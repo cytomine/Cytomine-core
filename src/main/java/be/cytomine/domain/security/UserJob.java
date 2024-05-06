@@ -22,29 +22,17 @@ import lombok.Setter;
 import jakarta.persistence.*;
 
 // TODO IAM: remove
+@Deprecated
 @Entity
 @Getter
 @Setter
 @DiscriminatorValue("be.cytomine.domain.security.UserJob")
 public class UserJob extends SecUser {
 
+    @Deprecated
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = true)
     protected User user;
-
-    public UserJob() {
-        super();
-    }
-
-//    @PrePersist
-//    public void beforeCreate() {
-//        super.beforeInsert();
-//    }
-//
-//    @PreUpdate
-//    public void beforeUpdate() {
-//        super.beforeUpdate();
-//    }
 
     @Override
     public String toJSON() {

@@ -62,7 +62,7 @@ public class PermissionService {
     }
 
     List<Integer> getPermissionInACL(CytomineDomain domain, User user) {
-        return aclRepository.listMaskForUsers(domain.getId(), user.humanUsername());
+        return aclRepository.listMaskForUsers(domain.getId(), user.getUsername());
     }
 
     List<Integer> getPermissionInACL(CytomineDomain domain, String username) {

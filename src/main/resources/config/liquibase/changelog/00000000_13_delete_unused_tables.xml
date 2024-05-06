@@ -33,6 +33,17 @@
             DROP TABLE IF EXISTS "group";
             -- ?? DROP TABLE IF EXISTS sec_user_sec_role;
             -- ?? DROP TABLE IF EXISTS sec_role;
+
+            ALTER TABLE sec_user ALTER COLUMN password DROP NOT NULL;
+            ALTER TABLE sec_user ALTER COLUMN account_expired  DROP NOT NULL;
+            ALTER TABLE sec_user ALTER COLUMN account_locked DROP NOT NULL;
+            ALTER TABLE sec_user ALTER COLUMN enabled  DROP NOT NULL;
+            ALTER TABLE sec_user ALTER COLUMN password_expired DROP NOT NULL;
+            ALTER TABLE sec_user ALTER COLUMN language DROP NOT NULL;
+            ALTER TABLE sec_user DROP COLUMN IF EXISTS rate;
+            ALTER TABLE sec_user DROP COLUMN IF EXISTS color;
+            ALTER TABLE sec_user ADD COLUMN IF NOT EXISTS reference VARCHAR(255); -- not null
+            ALTER TABLE sec_user ADD COLUMN IF NOT EXISTS name VARCHAR(255); -- not null
         </sql>
     </changeSet>
     <changeSet id="b742415f-dbdb-4956-b7c7-2e31f87f9fc4" author="urubens">

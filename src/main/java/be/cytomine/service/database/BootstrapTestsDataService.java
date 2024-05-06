@@ -101,14 +101,8 @@ public class BootstrapTestsDataService {
 
         User user = new User();
         user.setUsername(login);
-        user.setEmail(login + "@test.com");
-        user.setFirstname("firstname");
-        user.setLastname("lastname");
-        user.setPublicKey(UUID.randomUUID().toString());
-        user.setPrivateKey(UUID.randomUUID().toString());
-        user.setPassword(UUID.randomUUID().toString());
-        user.setOrigin("unkown");
-
+        user.setName("firstname lastname");
+        user.setReference(UUID.randomUUID().toString());
         user = userRepository.save(user);
         userRepository.findById(user.getId()); // flush
 

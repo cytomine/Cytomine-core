@@ -34,7 +34,6 @@ import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.*;
 import be.cytomine.dto.AuthInformation;
 import be.cytomine.exceptions.AlreadyExistException;
-import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repositorynosql.social.*;
 import be.cytomine.service.CommandService;
@@ -261,10 +260,7 @@ public class SecUserServiceTests {
 
     @Test
     void list_users_with_no_filters_no_extension() {
-
-        UserSearchExtension userSearchExtension = new UserSearchExtension();
-
-        Page<Map<String, Object>> list = secUserService.list(userSearchExtension, new ArrayList<>(), "created", "desc", 0L, 0L);
+        Page<Map<String, Object>> list = secUserService.list(new ArrayList<>(), "created", "desc", 0L, 0L);
 
         assertThat(list.getTotalElements()).isGreaterThanOrEqualTo(1);
         assertThat(list.getContent().stream()
@@ -275,22 +271,19 @@ public class SecUserServiceTests {
 
     @Test
     void list_users_with_with_multisearch_filters() {
-
-        UserSearchExtension userSearchExtension = new UserSearchExtension();
-
-        Page<Map<String, Object>> list = secUserService.list(userSearchExtension,
+        Page<Map<String, Object>> list = secUserService.list(
                 new ArrayList<>(List.of(new SearchParameterEntry("fullName", SearchOperation.like, "superad"))), "created", "desc", 0L, 0L);
 
         assertThat(list.getContent().stream()
                 .map(x -> x.get("id"))).contains(builder.given_superadmin().getId());
 
-        list = secUserService.list(userSearchExtension,
-                new ArrayList<>(List.of(new SearchParameterEntry("fullName", SearchOperation.like, builder.given_superadmin().getEmail()))), "created", "desc", 0L, 0L);
+        list = secUserService.list(
+                new ArrayList<>(List.of(new SearchParameterEntry("fullName", SearchOperation.like, builder.given_superadmin().getName()))), "created", "desc", 0L, 0L);
 
         assertThat(list.getContent().stream()
                 .map(x -> x.get("id"))).contains(builder.given_superadmin().getId());
 
-        list = secUserService.list(userSearchExtension,
+        list = secUserService.list(
                 new ArrayList<>(List.of(new SearchParameterEntry("fullName", SearchOperation.like, "johndoe@example.com"))), "created", "desc", 0L, 0L);
 
         assertThat(list.getContent().stream()
@@ -298,34 +291,18 @@ public class SecUserServiceTests {
     }
 
     @Test
-    void list_users_with_roles() {
-
-        UserSearchExtension userSearchExtension = new UserSearchExtension();
-
-        userSearchExtension.setWithRoles(true);
-        Page<Map<String, Object>> list = secUserService.list(userSearchExtension,
-                new ArrayList<>(List.of(new SearchParameterEntry("fullName", SearchOperation.like, "superadmin"))), "role", "asc", 0L, 0L);
-        assertThat(list.getContent()).hasSize(1);
-        assertThat(list.getContent().get(0).get("id")).isEqualTo(builder.given_superadmin().getId());
-        assertThat(list.getContent().get(0).get("role")).isEqualTo("ROLE_SUPER_ADMIN");
-        assertThat(list.getContent().get(0).get("algo")).isEqualTo(false);
-        // FAIL because we get superadminjob too. It should not be return as we don't return result with job_id
-    }
-
-
-    @Test
     void list_users_with_sort_username() {
 
         User user1 = builder.given_a_user("list_users_with_sort_username1");
         User user2 = builder.given_a_user("list_users_with_sort_username2");
 
-        Page<Map<String, Object>> list = secUserService.list(new UserSearchExtension(),
+        Page<Map<String, Object>> list = secUserService.list(
                 new ArrayList<>(List.of(new SearchParameterEntry("fullName", SearchOperation.like, "list_users_with_sort_username"))), "username", "asc", 0L, 0L);
         assertThat(list.getContent()).hasSize(2);
         assertThat(list.getContent().get(0).get("username")).isEqualTo(user1.getUsername());
         assertThat(list.getContent().get(1).get("username")).isEqualTo(user2.getUsername());
 
-        list = secUserService.list(new UserSearchExtension(),
+        list = secUserService.list(
                 new ArrayList<>(List.of(new SearchParameterEntry("fullName", SearchOperation.like, "list_users_with_sort_username"))), "username", "desc", 0L, 0L);
         assertThat(list.getContent()).hasSize(2);
         assertThat(list.getContent().get(0).get("username")).isEqualTo(user2.getUsername());
@@ -342,7 +319,7 @@ public class SecUserServiceTests {
         User user5 = builder.given_a_user("list_users_with_page5");
 
 
-        Page<Map<String, Object>> list = secUserService.list(new UserSearchExtension(),
+        Page<Map<String, Object>> list = secUserService.list(
                 new ArrayList<>(List.of(new SearchParameterEntry("fullName", SearchOperation.like, "list_users_with_page"))), "username", "asc", 0L, 0L);
         assertThat(list.getContent()).hasSize(5);
         assertThat(list.getTotalElements()).isEqualTo(5);
@@ -352,7 +329,7 @@ public class SecUserServiceTests {
         assertThat(list.getContent().get(3).get("username")).isEqualTo(user4.getUsername());
         assertThat(list.getContent().get(4).get("username")).isEqualTo(user5.getUsername());
 
-        list = secUserService.list(new UserSearchExtension(),
+        list = secUserService.list(
                 new ArrayList<>(List.of(new SearchParameterEntry("fullName", SearchOperation.like, "list_users_with_page"))), "username", "asc", 3L, 0L);
         assertThat(list.getContent()).hasSize(3);
         assertThat(list.getTotalElements()).isEqualTo(5);
@@ -360,7 +337,7 @@ public class SecUserServiceTests {
         assertThat(list.getContent().get(1).get("username")).isEqualTo(user2.getUsername());
         assertThat(list.getContent().get(2).get("username")).isEqualTo(user3.getUsername());
 
-        list = secUserService.list(new UserSearchExtension(),
+        list = secUserService.list(
                 new ArrayList<>(List.of(new SearchParameterEntry("fullName", SearchOperation.like, "list_users_with_page"))), "username", "asc", 4L, 2L);
         assertThat(list.getContent()).hasSize(3);
         assertThat(list.getTotalElements()).isEqualTo(5);
@@ -368,13 +345,13 @@ public class SecUserServiceTests {
         assertThat(list.getContent().get(1).get("username")).isEqualTo(user4.getUsername());
         assertThat(list.getContent().get(2).get("username")).isEqualTo(user5.getUsername());
 
-        list = secUserService.list(new UserSearchExtension(),
+        list = secUserService.list(
                 new ArrayList<>(List.of(new SearchParameterEntry("fullName", SearchOperation.like, "list_users_with_page"))), "username", "asc", 4L, 4L);
         assertThat(list.getContent()).hasSize(1);
         assertThat(list.getTotalElements()).isEqualTo(5);
         assertThat(list.getContent().get(0).get("username")).isEqualTo(user5.getUsername());
 
-        list = secUserService.list(new UserSearchExtension(),
+        list = secUserService.list(
                 new ArrayList<>(List.of(new SearchParameterEntry("fullName", SearchOperation.like, "list_users_with_page"))), "username", "asc", 5L, 6L);
         assertThat(list.getContent()).hasSize(0);
         assertThat(list.getTotalElements()).isEqualTo(5);
@@ -998,15 +975,13 @@ public class SecUserServiceTests {
     @Test
     void edit_valid_user_with_success() {
         User user = builder.given_a_user();
-        String originalPasswordHash = user.getPassword();
 
-        CommandResponse commandResponse = secUserService.update(user, user.toJsonObject().withChange("lastname", "NEW LASTNAME"));
+        CommandResponse commandResponse = secUserService.update(user, user.toJsonObject().withChange("name", "NEW NAME"));
 
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);
         Optional<SecUser> edited = secUserService.findByUsername(user.getUsername());
-        assertThat(((User)edited.get()).getLastname()).isEqualTo("NEW LASTNAME");
-        assertThat(((User)edited.get()).getPassword()).isEqualTo(originalPasswordHash);
+        assertThat(((User)edited.get()).getName()).isEqualTo("NEW NAME");
     }
 
 

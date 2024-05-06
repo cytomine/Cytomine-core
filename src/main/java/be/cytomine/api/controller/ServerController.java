@@ -78,10 +78,10 @@ public class ServerController extends RestCytomineController {
             response.put("user", user.getId());
             response.put("shortTermToken", tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM));
 
-            if (!user.getEnabled()) {
-                log.info("Disabled user. Invalidation of its sessions");
-                session.invalidate();
-            }
+//            if (!user.getEnabled()) {
+//                log.info("Disabled user. Invalidation of its sessions");
+//                session.invalidate();
+//            }
             Long idProject = null;
             if(!json.getJSONAttrStr("project", "null").equals("null")) {
                 idProject = json.getJSONAttrLong("project");

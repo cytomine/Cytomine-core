@@ -17,16 +17,16 @@ package be.cytomine.domain.security;
 */
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.utils.JsonObject;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.util.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 // TODO IAM: refactor
 @Entity
@@ -36,35 +36,11 @@ import java.util.*;
 @DiscriminatorColumn(name="class",
         discriminatorType = DiscriminatorType.STRING)
 public class SecUser extends CytomineDomain {
+
     @NotNull
     @NotBlank
     @Column(nullable = false)
     protected String username;
-
-    @NotNull
-    @NotBlank
-    @Column(name = "`password`", nullable = false)
-    protected String password;
-
-    @Transient
-    String newPassword = null;
-
-    @NotBlank
-    @Column(nullable = true)
-    protected String publicKey;
-
-    @NotBlank
-    @Column(nullable = true)
-    protected String privateKey;
-
-    protected Boolean enabled = true;
-
-    protected Boolean accountExpired = false;
-
-    protected Boolean accountLocked = false;
-
-    protected Boolean passwordExpired = false;
-
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -74,18 +50,33 @@ public class SecUser extends CytomineDomain {
     )
     private Set<SecRole> roles = new HashSet<>();
 
-    @NotBlank
-    @Column(nullable = true)
+
+    /** Deprecated attributes. Kept here for migration **/
+    @Deprecated
+    protected String password;
+
+    @Deprecated
+    protected String publicKey;
+
+    @Deprecated
+    protected String privateKey;
+
+    @Deprecated
+    protected Boolean enabled = true;
+
+    @Deprecated
+    protected Boolean accountExpired = false;
+
+    @Deprecated
+    protected Boolean accountLocked = false;
+
+    @Deprecated
+    protected Boolean passwordExpired = false;
+
+    @Deprecated
     protected String origin;
 
-    public SecUser() {
-    }
-
-
-    public String humanUsername() {
-        return username;
-    }
-
+    @Deprecated
     public void generateKeys() {
         String privateKey = UUID.randomUUID().toString();
         String publicKey = UUID.randomUUID().toString();
@@ -93,6 +84,7 @@ public class SecUser extends CytomineDomain {
         this.setPublicKey(publicKey);
     }
 
+    @Deprecated
     public Boolean isAlgo() {
         return false;
     }
@@ -101,26 +93,11 @@ public class SecUser extends CytomineDomain {
         return username;
     }
 
-    public void encodePassword(PasswordEncoder passwordEncoder) {
-        byte minLength = 8;
-        if(password.length() < minLength) {
-            throw new WrongArgumentException("Your password must have at least $minLength characters!");
-        }
-        password = passwordEncoder.encode(password);
-    }
-
-    /**
-     * Define fields available for JSON response
-     * @param domain Domain source for json value
-     * @return Map with fields (keys) and their values
-     */
     public static JsonObject getDataFromDomain(CytomineDomain domain) {
-        JsonObject returnArray = CytomineDomain.getDataFromDomain(domain);
-        SecUser user = (SecUser)domain;
-        returnArray.put("username", user.username);
-        returnArray.put("origin", user.origin);
-        returnArray.put("algo", user.isAlgo());
-        return returnArray;
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.put("class", domain.getClass());
+        jsonObject.put("id", domain.getId());
+        return jsonObject;
     }
 
     @Override

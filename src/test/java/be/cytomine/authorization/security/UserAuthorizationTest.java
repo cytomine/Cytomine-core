@@ -19,12 +19,9 @@ package be.cytomine.authorization.security;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.authorization.AbstractAuthorizationTest;
-import be.cytomine.domain.meta.Configuration;
-import be.cytomine.domain.meta.ConfigurationReadingRole;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.service.PermissionService;
-import be.cytomine.service.meta.ConfigurationService;
 import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.service.security.SecUserSecRoleService;
 import be.cytomine.service.security.SecUserService;
@@ -86,7 +83,7 @@ public class UserAuthorizationTest extends AbstractAuthorizationTest {
     @Test
     @WithMockUser(username = GUEST)
     public void every_body_list_user() {
-        secUserService.list(new UserSearchExtension(), new ArrayList<>(), "created", "desc", 0L, 0L);
+        secUserService.list(new ArrayList<>(), "created", "desc", 0L, 0L);
     }
 
     @Test
@@ -119,16 +116,16 @@ public class UserAuthorizationTest extends AbstractAuthorizationTest {
     @WithMockUser(username = USER_NO_ACL)
     public void user_can_modify_himself() {
         User user = userRepository.findByUsernameLikeIgnoreCase(USER_NO_ACL).get();
-        expectOK(() -> secUserService.update(user, user.toJsonObject().withChange("lastname", "user_can_modify_himself")));
-        assertThat(user.getLastname()).isEqualTo("user_can_modify_himself");
+        expectOK(() -> secUserService.update(user, user.toJsonObject().withChange("name", "user_can_modify_himself")));
+        assertThat(user.getName()).isEqualTo("user_can_modify_himself");
     }
 
     @Test
     @WithMockUser(username = SUPERADMIN)
     public void admin_can_modify_a_user() {
         User user = userRepository.findByUsernameLikeIgnoreCase(USER_NO_ACL).get();
-        expectOK(() -> secUserService.update(user, user.toJsonObject().withChange("lastname", "admin_can_modify_a_user")));
-        assertThat(user.getLastname()).isEqualTo("admin_can_modify_a_user");
+        expectOK(() -> secUserService.update(user, user.toJsonObject().withChange("name", "admin_can_modify_a_user")));
+        assertThat(user.getName()).isEqualTo("admin_can_modify_a_user");
     }
 
 
@@ -136,7 +133,7 @@ public class UserAuthorizationTest extends AbstractAuthorizationTest {
     @WithMockUser(username = USER_NO_ACL)
     public void user_cannot_modify_another_user() {
         User user =userRepository.findByUsernameLikeIgnoreCase(GUEST).get();
-        expectForbidden(() -> secUserService.update(user, user.toJsonObject().withChange("lastname", "user_can_modify_himself")));
+        expectForbidden(() -> secUserService.update(user, user.toJsonObject().withChange("name", "user_can_modify_himself")));
     }
 
     @Test

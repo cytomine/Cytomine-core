@@ -169,17 +169,17 @@ public class SharedAnnotationService extends ModelService {
             attachments.put(cid, annotationCrop);
         }
 
-        //do receivers email list
-        List<String> receiversEmail = new ArrayList<>();
-        List<User> receivers = new ArrayList<>();
-
+        List<String> receiversReferences = new ArrayList<>();
         if (jsonObject.containsKey("receivers")) {
-            receiversEmail = jsonObject.getJSONAttrListLong("receivers")
+            receiversReferences = jsonObject.getJSONAttrListLong("receivers")
                     .stream()
                     .map(x -> getEntityManager().find(User.class, x))
-                    .map(User::getEmail)
-                    .collect(Collectors.toList());
+                    .map(User::getReference)
+                    .toList();
         }
+
+        //TODO IAM/EMAILS: get emails from IAM references
+        List<String> receiversEmail = new ArrayList<>();
 
         securityACLService.checkFullOrRestrictedForOwner(annotation, annotation.user());
         CommandResponse result =  executeCommand(new AddCommand(sender), null, jsonObject);

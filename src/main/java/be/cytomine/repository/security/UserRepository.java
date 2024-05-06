@@ -32,11 +32,4 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Optional<User> findById(Long id);
 
     Optional<User> findByUsernameLikeIgnoreCase(String username);
-
-    Optional<User> findByUsernameLikeIgnoreCaseAndEnabledIsTrue(String username);
-
-    Optional<User> findByEmailLikeIgnoreCase(String email);
-
-    Optional<User> findByPublicKeyAndEnabled(String publicKey, Boolean enabled);
-
 }

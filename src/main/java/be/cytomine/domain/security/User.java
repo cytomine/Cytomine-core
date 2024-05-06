@@ -18,17 +18,12 @@ package be.cytomine.domain.security;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.SecurityUtils;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-
-// TODO IAM: refactor
 @Entity
 @Getter
 @Setter
@@ -38,91 +33,58 @@ public class User extends SecUser {
     @NotNull
     @NotBlank
     @Column(nullable = false)
+    protected String reference; //TODO IAM: should be UUID type
+
+    @NotNull
+    @NotBlank
+    @Column(nullable = false)
+    protected String name;
+
+
+    /** Deprecated attributes. Kept here for migration **/
+    @Deprecated
     protected String firstname;
 
-    @NotNull
-    @NotBlank
-    @Column(nullable = false)
+    @Deprecated
     protected String lastname;
 
-    @NotNull
-    @NotBlank
-    @Column(nullable = false)
-    @Email
-    @Size(min = 5, max = 254)
+    @Deprecated
     protected String email;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = true)
+    @Deprecated
     protected Language language;
 
-    @Column(nullable = true)
+    @Deprecated
     protected Boolean isDeveloper = false;
 
+    @Deprecated
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = true)
     protected User creator;
+    /****************************************************/
 
-    public User() {
-        super();
+    public String getFullName() {
+        if (name.equals(getUsername())) {
+            return getUsername();
+        }
+        return name + " (" + getUsername() + ")";
     }
 
-    @PrePersist
-    public void beforeCreate() {
-        language = Language.ENGLISH;
+    @Override
+    public String toString() {
+        return getFullName();
     }
 
-    @PreUpdate
-    public void beforeUpdate() {
-
+    public String getReference() {
+        return reference.toString();
     }
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
-        User user = (User)this;
+        User user = (User) this;
         user.id = json.getJSONAttrLong("id",null);
         user.username = json.getJSONAttrStr("username");
-        user.firstname = json.getJSONAttrStr("firstname");
-        user.lastname = json.getJSONAttrStr("lastname");
-        user.email = json.getJSONAttrStr("email");
-        user.language = Language.findByCode(json.getJSONAttrStr("language", "ENGLISH"));
-        if(user.language == null) {
-            user.language = Language.valueOf(json.getJSONAttrStr("language", "ENGLISH"));
-        }
-        user.origin = json.getJSONAttrStr("origin");
-        user.isDeveloper = json.getJSONAttrBoolean("isDeveloper", false);
-        if (json.containsKey("password") && user.password != null) {
-            user.newPassword = json.getJSONAttrStr("password"); //user is updated
-        } else if (json.containsKey("password")) {
-            user.password = json.getJSONAttrStr("password"); //user is created
-        }
-        user.created = json.getJSONAttrDate("created");
-        user.updated = json.getJSONAttrDate("updated");
-        user.enabled = json.getJSONAttrBoolean("enabled", true);
-
-        if (user.getPublicKey() == null || user.getPrivateKey() == null || "".equals(json.get("publicKey")) || "".equals(json.get("privateKey"))) {
-            user.generateKeys();
-        }
+        user.name = json.getJSONAttrStr("name");
         return user;
-    }
-
-    // ---------- NEW IAM ---------------------------------------
-    public String getPreferredUsername() {
-        return username; // TODO
-    }
-
-    public String getName() {
-        return firstname + " " + lastname; // TODO
-    }
-
-    public String getFullName() {
-        if (getName().equals(getPreferredUsername())) {
-            return getPreferredUsername();
-        }
-        return getName() + " (" + getPreferredUsername() + ")";
-    }
-
-    public String toString() {
-        return getFullName();
     }
 
     public static JsonObject getDataFromDomain(CytomineDomain domain) {
@@ -130,7 +92,7 @@ public class User extends SecUser {
 
         JsonObject json = new JsonObject();
         json.put("id", user.getId());
-        json.put("preferredUsername", user.getPreferredUsername());
+        json.put("username", user.getUsername());
         json.put("name", user.getName());
         json.put("fullName", user.getFullName());
         return json;

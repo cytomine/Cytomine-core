@@ -43,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -101,16 +102,8 @@ public class BootstrapUtilsService {
             log.info("Creating {}...", username);
             User user = new User();
             user.setUsername(username);
-            user.setFirstname(firstname);
-            user.setLastname(lastname);
-            user.setEmail(email);
-            user.setPassword(password);
-            user.encodePassword(passwordEncoder);
-            user.setLanguage(Language.valueOf(applicationProperties.getDefaultLanguage()));
-            user.setEnabled(true);
-            user.setIsDeveloper(false);
-            user.setOrigin("BOOTSTRAP");
-            user.generateKeys();
+            user.setName(firstname + " " + lastname);
+            user.setReference(UUID.randomUUID().toString());
 
             log.info("Saving {}...", user.getUsername());
             user = userRepository.save(user);
@@ -135,11 +128,6 @@ public class BootstrapUtilsService {
             log.info("Creating {}...", username);
             UserJob user = new UserJob();
             user.setUsername(username);
-            user.setPassword(password);
-            user.setEnabled(true);
-            user.setOrigin("BOOTSTRAP");
-            user.setUser(creator);
-            user.generateKeys();
             log.info("Saving {}...", user.getUsername());
             user = secUserRepository.save(user);
 
@@ -149,11 +137,6 @@ public class BootstrapUtilsService {
                 secUserSecRole.setSecUser(user);
                 secUserSecRoleRepository.save(secUserSecRole);
             }
-//
-//            //SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("admin", "admin"));
-//            SecurityUtils.reauthenticate(applicationContext, "admin", "admin");
-//
-//            storageService.initUserStorage(user);
         }
     }
 
@@ -187,17 +170,6 @@ public class BootstrapUtilsService {
         configuration.setValue(value);
         configuration.setReadingRole(readingRole);
         configurationRepository.save(configuration);
-
-
-//        if(!update) configs << new Configuration(key: "WELCOME", value: "<p>Welcome to the Cytomine software.</p><p>This software is supported by the <a href='https://cytomine.coop'>Cytomine company</a></p>", readingRole: allUsers)
-//
-//        configs << new Configuration(key: "admin_email", value: grailsApplication.config.grails.admin.email, readingRole: adminRole)
-//
-//        //SMTP values
-//        configs << new Configuration(key: "notification_email", value: grailsApplication.config.grails.notification.email, readingRole: adminRole)
-//        configs << new Configuration(key: "notification_password", value: grailsApplication.config.grails.notification.password, readingRole: adminRole)
-//        configs << new Configuration(key: "notification_smtp_host", value: grailsApplication.config.grails.notification.smtp.host, readingRole: adminRole)
-//        configs << new Configuration(key: "notification_smtp_port", value: grailsApplication.config.grails.notification.smtp.port, readingRole: adminRole)
     }
 
 

@@ -201,14 +201,9 @@ public class BasicInstanceBuilder {
     public static User given_a_not_persisted_user() {
         //User user2 = new User();
         User user = new User();
-        user.setFirstname("firstname");
-        user.setLastname("lastname");
+        user.setName("firstname lastname");
+        user.setReference(UUID.randomUUID().toString());
         user.setUsername(randomString());
-        user.setEmail(UUID.randomUUID() + "@example.com");
-        user.setPublicKey(randomString());
-        user.setPrivateKey(randomString());
-        user.setPassword(randomString());
-        user.setOrigin("unkown");
         return user;
     }
 
@@ -217,11 +212,6 @@ public class BasicInstanceBuilder {
         //User user2 = new User();
         UserJob user = new UserJob();
         user.setUsername(randomString());
-        user.setUser(creator);
-        user.setPublicKey(randomString());
-        user.setPrivateKey(randomString());
-        user.setPassword(randomString());
-        user.setOrigin("unkown");
         return user;
     }
 
