@@ -27,6 +27,7 @@ import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.repository.ontology.RelationRepository;
 import be.cytomine.repository.ontology.TermRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
+import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.dto.StorageStats;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.project.ProjectService;
@@ -84,6 +85,9 @@ public class StatsService {
 
     @Autowired
     SecurityACLService securityACLService;
+
+    @Autowired
+    private CurrentUserService currentUserService;
 
     public Long total(Class domain) {
         return entityManager.createQuery("SELECT COUNT(*) FROM " + domain.getName(), Long.class).getSingleResult();
@@ -502,7 +506,7 @@ public class StatsService {
     }
 
     public JsonObject statUsedStorage() {
-        securityACLService.checkAdmin(userService.getCurrentUser());
+        securityACLService.checkAdmin(currentUserService.getCurrentUser());
 
         Long used = 0L;
         Long available = 0L;

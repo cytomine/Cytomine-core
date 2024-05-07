@@ -22,6 +22,7 @@ import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.repository.ontology.TermRepository;
+import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ontology.*;
 import be.cytomine.service.security.UserService;
 import be.cytomine.service.security.SecurityACLService;
@@ -57,6 +58,8 @@ public class RestAnnotationTermController extends RestCytomineController {
     private final SecurityACLService securityACLService;
 
     private final ReviewedAnnotationService reviewedAnnotationService;
+
+    private final CurrentUserService currentUserService;
 
 
     @GetMapping("/annotation/{idAnnotation}/term.json")
@@ -164,7 +167,7 @@ public class RestAnnotationTermController extends RestCytomineController {
         Term term = termService.find(idTerm)
                 .orElseThrow(() -> new ObjectNotFoundException("Term", idTerm));
         User user = userService.find(idUser!=null? idUser: -1L)
-                .orElseGet(userService::getCurrentUser);
+                .orElseGet(currentUserService::getCurrentUser);
         return delete(annotationTermService, JsonObject.of("userannotation", annotation.getId(), "term", term.getId(), "user", user.getId()), null);
     }
 

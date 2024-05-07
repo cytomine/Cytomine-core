@@ -195,7 +195,7 @@ public class RestUserController extends RestCytomineController {
     public ResponseEntity<String> getCurrentUser(
     ) {
         log.debug("REST request to get current User");
-        return responseSuccess(userService.getCurrentUser());
+        return responseSuccess(currentUserService.getCurrentUser());
     }
 
     //TODO IAM: delegate to IAM

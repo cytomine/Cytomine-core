@@ -259,10 +259,6 @@ public class UserService extends ModelService {
         return authInformation;
     }
 
-    public User getCurrentUser() {
-        return currentUserService.getCurrentUser();
-    }
-
     // TODO IAM: simplify
     public Page<Map<String, Object>> list(List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
 
