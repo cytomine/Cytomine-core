@@ -16,12 +16,6 @@ package be.cytomine.config;
  * limitations under the License.
  */
 
-import be.cytomine.config.security.ApiKeyFilter;
-import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.security.*;
-import be.cytomine.config.security.JWTConfigurer;
-import be.cytomine.security.jwt.TokenProvider;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -35,7 +29,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 
@@ -46,23 +39,6 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfiguration {
-
-    private final TokenProvider tokenProvider;
-
-    private final DomainUserDetailsService domainUserDetailsService;
-
-    private final SecUserRepository secUserRepository;
-
-    @Value("${application.authentication.jwt.token-validity-in-seconds}")
-    Long tokenValidityInSeconds;
-
-
-    public SecurityConfiguration(TokenProvider tokenProvider, DomainUserDetailsService domainUserDetailsService, SecUserRepository secUserRepository) {
-        this.tokenProvider = tokenProvider;
-        this.domainUserDetailsService = domainUserDetailsService;
-        this.secUserRepository = secUserRepository;
-    }
-
     /**
      * Argon2 is intentionally slow: slow-hashing functions are good for storing passwords, because it is time/resource consuming to crack them.
      * SHA-512 is not designed for storing passwords. so insecure and deprecated so in future check if sha256 use it if not use argon2 or bcrypt.
@@ -107,10 +83,6 @@ public class SecurityConfiguration {
         return new ProviderManager(daoProvider);
     }
 
-    private JWTConfigurer securityConfigurerAdapter() {
-        return new JWTConfigurer(tokenProvider);
-    }
-
     /**
      * HTTP SECURITY CONFIG
      * Spring Security 6 Require Explicit Saving of SecurityContextRepository
@@ -122,7 +94,6 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .addFilterBefore(new ApiKeyFilter(domainUserDetailsService, secUserRepository), BasicAuthenticationFilter.class) //TODO IAM: move to IAM
                 .exceptionHandling((exceptionHandling) ->
                         exceptionHandling
                                 .authenticationEntryPoint(
@@ -139,8 +110,7 @@ public class SecurityConfiguration {
                                         .requestMatchers(HttpMethod.POST, "/server/ping").permitAll() // TODO IAM: remove
                                         .requestMatchers(HttpMethod.POST, "/server/ping.json").permitAll() // TODO IAM: remove
                                         .requestMatchers(new AntPathRequestMatcher("/**")).permitAll() // TODO IAM: remove ?
-                )
-                .apply(securityConfigurerAdapter());
+                );
         return http.build();
     }
 }

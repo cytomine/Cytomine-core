@@ -17,17 +17,21 @@ package be.cytomine.service;
 */
 
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.ServerException;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.security.current.CurrentUser;
-import be.cytomine.utils.SecurityUtils;
+import be.cytomine.security.current.FullCurrentUser;
+import be.cytomine.security.current.PartialCurrentUser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import jakarta.persistence.EntityManager;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -38,7 +42,7 @@ public class CurrentUserService {
 
     // TODO IAM: get data from IAM
     public String getCurrentUsername() {
-        CurrentUser currentUser = SecurityUtils.getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
+        CurrentUser currentUser = getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
         if (currentUser.isFullObjectProvided() || currentUser.isUsernameProvided()) {
             return currentUser.getUser().getUsername();
         } else {
@@ -48,7 +52,7 @@ public class CurrentUserService {
 
     // TODO IAM: get data from IAM
     public SecUser getCurrentUser() {
-        CurrentUser currentUser = SecurityUtils.getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
+        CurrentUser currentUser = getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
         SecUser secUser;
         if (currentUser.isFullObjectProvided()) {
             secUser = currentUser.getUser();
@@ -58,6 +62,31 @@ public class CurrentUserService {
             throw new ObjectNotFoundException("User", "Cannot read current user. Object " + currentUser + " is not supported");
         }
         return secUser;
+    }
+
+    public static Optional<CurrentUser> getSecurityCurrentUser() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+
+        return Optional.ofNullable(extractCurrentUser(securityContext.getAuthentication()));
+    }
+
+    private static CurrentUser extractCurrentUser(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        } else if (authentication.getDetails() instanceof SecUser) {
+            FullCurrentUser fullCurrentUser = new FullCurrentUser();
+            fullCurrentUser.setUser((SecUser)authentication.getDetails());
+            return fullCurrentUser;
+        } else if (authentication.getPrincipal() instanceof String) {
+            PartialCurrentUser partialCurrentUser = new PartialCurrentUser();
+            partialCurrentUser.setUsername((String)authentication.getPrincipal());
+            return partialCurrentUser;
+        } else if (authentication.getPrincipal() instanceof UserDetails) {
+            PartialCurrentUser partialCurrentUser = new PartialCurrentUser();
+            partialCurrentUser.setUsername(((UserDetails) authentication.getPrincipal()).getUsername());
+            return partialCurrentUser;
+        }
+        return null;
     }
 
 }

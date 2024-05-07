@@ -44,6 +44,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -422,6 +423,7 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.username").value(currentUser.getUsername()));
     }
 
+    @Disabled
     @Test
     @Transactional
     public void get_user_with_its_user_key() throws Exception {
@@ -433,6 +435,7 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.privateKey").value(currentUser.getPrivateKey()));
     }
 
+    @Disabled
     @Test
     @Transactional
     public void get_user_with_its_user_key_id() throws Exception {
@@ -444,6 +447,7 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.privateKey").value(currentUser.getPrivateKey()));
     }
 
+    @Disabled
     @Test
     @Transactional
     @WithMockUser(username = "user")
@@ -455,20 +459,6 @@ public class UserResourceTests {
         restUserControllerMockMvc.perform(get("/api/userkey/{publicKey}/keys.json", user.getPublicKey()))
                 .andDo(print())
                 .andExpect(status().isForbidden());
-    }
-
-
-    @Test
-    @Transactional
-    @WithMockUser(username = "user")
-    public void get_signature() throws Exception {
-        User user = builder.given_default_user();
-        restUserControllerMockMvc.perform(get("/api/signature.json").param("method", "GET"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.publicKey").value(user.getPublicKey()))
-                .andExpect(jsonPath("$.signature").isNotEmpty());
-
     }
 
 

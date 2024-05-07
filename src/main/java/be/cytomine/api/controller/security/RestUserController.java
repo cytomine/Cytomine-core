@@ -38,7 +38,6 @@ import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -46,9 +45,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -177,44 +173,23 @@ public class RestUserController extends RestCytomineController {
         return user.map(secUser -> responseSuccess(secUser, isFilterRequired())).orElseGet(() -> responseNotFound("User", id));
     }
 
-    //TODO IAM: still needed ?
-    @GetMapping("/userkey/{publicKey}/keys.json")
-    public ResponseEntity<String> keys(@PathVariable String publicKey) {
-        SecUser user = secUserService.findByPublicKey(publicKey)
-                .orElseThrow(() -> new ObjectNotFoundException("User", Map.of("publicKey", publicKey).toString()));
-        securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
-        return responseSuccess(JsonObject.of("privateKey", user.getPrivateKey(), "publicKey", user.getPublicKey()));
-    }
-
-    //TODO IAM: still needed ?
-    @GetMapping("/user/{id}/keys.json")
-    public ResponseEntity<String> keysById(@PathVariable String id) {
-        SecUser user = secUserService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("User", Map.of("id or username", id).toString()));
-        securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
-        return responseSuccess(JsonObject.of("privateKey", user.getPrivateKey(), "publicKey", user.getPublicKey()));
-    }
-
-    // TODO IAM: still needed ?
-    @GetMapping("/signature.json")
-    public ResponseEntity<String> signature(
-            @RequestParam(defaultValue = "GET") String method,
-            @RequestParam(value = "content-MD5", required = false, defaultValue = "") String contentMD5,
-            @RequestParam(value = "content-type", required = false, defaultValue = "") String contenttype,
-            @RequestParam(value = "content-Type", required = false, defaultValue = "") String contentType,
-            @RequestParam(value = "date", required = false, defaultValue = "") String date,
-            @RequestParam(value = "queryString", required = false, defaultValue = "") String queryString,
-            @RequestParam(value = "forwardURI", required = false, defaultValue = "") String forwardURI
-    ) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeyException {
-        SecUser user = currentUserService.getCurrentUser();
-        if (!queryString.isEmpty()) {
-            queryString = "?" + queryString;
-        }
-        String signature = SecurityUtils.generateKeys(method,contentMD5,contenttype.isEmpty()?contentType:contenttype,date,queryString,forwardURI,user);
-
-        return responseSuccess(JsonObject.of("signature", signature, "publicKey", user.getPublicKey()));
-    }
-
+//    //TODO IAM: still needed ?
+//    @GetMapping("/userkey/{publicKey}/keys.json")
+//    public ResponseEntity<String> keys(@PathVariable String publicKey) {
+//        SecUser user = secUserService.findByPublicKey(publicKey)
+//                .orElseThrow(() -> new ObjectNotFoundException("User", Map.of("publicKey", publicKey).toString()));
+//        securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
+//        return responseSuccess(JsonObject.of("privateKey", user.getPrivateKey(), "publicKey", user.getPublicKey()));
+//    }
+//
+//    //TODO IAM: still needed ?
+//    @GetMapping("/user/{id}/keys.json")
+//    public ResponseEntity<String> keysById(@PathVariable String id) {
+//        SecUser user = secUserService.find(id)
+//                .orElseThrow(() -> new ObjectNotFoundException("User", Map.of("id or username", id).toString()));
+//        securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
+//        return responseSuccess(JsonObject.of("privateKey", user.getPrivateKey(), "publicKey", user.getPublicKey()));
+//    }
 
     // TODO IAM: endpoint for my account
     @GetMapping("/user/current.json")

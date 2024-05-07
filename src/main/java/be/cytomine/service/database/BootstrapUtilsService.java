@@ -31,7 +31,6 @@ import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.image.server.StorageService;
-import be.cytomine.utils.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
