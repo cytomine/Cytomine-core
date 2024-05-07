@@ -19,7 +19,7 @@ package be.cytomine.domain.image;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.UserJob;
+import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.LTreeType;
 import be.cytomine.utils.LongArrayToBytesConverter;
@@ -75,12 +75,7 @@ public class UploadedFile extends CytomineDomain implements Serializable {
         uploadedFile.id = json.getJSONAttrLong("id",null);
         uploadedFile.created = json.getJSONAttrDate("created");
         uploadedFile.updated = json.getJSONAttrDate("updated");
-
-        SecUser user = (SecUser)json.getJSONAttrDomain(entityManager, "user", new SecUser(), true);
-        if (user instanceof UserJob) {
-            user = ((UserJob) user).getUser();
-        }
-        uploadedFile.user = user;
+        uploadedFile.user = (User) json.getJSONAttrDomain(entityManager, "user", new User(), true);
 
         uploadedFile.parent = (UploadedFile)json.getJSONAttrDomain(entityManager, "parent", new UploadedFile(), false);
         uploadedFile.storage = (Storage)json.getJSONAttrDomain(entityManager, "storage", new Storage(), true);

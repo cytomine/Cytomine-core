@@ -175,13 +175,6 @@ public class PropertyService extends ModelService {
                 (project!=null? "AND ua.project_id = '"+ project.getId() + "' " : "") +
                 (image!=null? "AND ua.image_id = '"+ image.getId() + "' " : "") +
                 "UNION " +
-                "SELECT DISTINCT p1.key " +
-                (withUser? ", aa.user_id " : "") +
-                "FROM property as p1, algo_annotation as aa " +
-                "WHERE p1.domain_ident = aa.id " +
-                (project!=null? "AND aa.project_id = '"+ project.getId() + "' " : "") +
-                (image!=null? "AND aa.image_id = '"+ image.getId() + "' " : "") +
-                "UNION " +
                 "SELECT DISTINCT p2.key " +
                 (withUser? ", ra.user_id " : "") +
                 "FROM property as p2, reviewed_annotation as ra " +
@@ -213,15 +206,7 @@ public class PropertyService extends ModelService {
                 "AND p.key = :key " +
                 "AND ua.image_id = '"+ image.getId() +"' " +
                 "AND ua.user_id = '"+ user.getId() +"' " +
-                (boundingbox!=null ? "AND ST_Intersects(ua.location,ST_GeometryFromText('" + boundingbox.toString() + "',0)) " :"") +
-                "UNION " +
-                "SELECT DISTINCT aa.id, ST_X(ST_CENTROID(aa.location)) as x,ST_Y(ST_CENTROID(aa.location)) as y, p.value " +
-                "FROM algo_annotation aa, property as p " +
-                "WHERE p.domain_ident = aa.id " +
-                "AND p.key = :key " +
-                "AND aa.image_id = '"+ image.getId() +"' " +
-                "AND aa.user_id = '"+ user.getId() +"' " +
-                (boundingbox!=null ? "AND ST_Intersects(aa.location,ST_GeometryFromText('" + boundingbox.toString() + "',0)) " :"");
+                (boundingbox!=null ? "AND ST_Intersects(ua.location,ST_GeometryFromText('" + boundingbox.toString() + "',0)) " :"");
 
         return selectsql(request, Map.of("key", (Object)key));
     }

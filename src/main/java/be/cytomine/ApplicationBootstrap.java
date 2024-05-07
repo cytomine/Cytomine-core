@@ -135,10 +135,6 @@ class ApplicationBootstrap {
             //noSQLCollectionService.cleanActivityDB() TODO:
             bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
 
-            // same as superadmin, but a userjob
-            bootstrapUtilDataService.createUserJob("superadminjob",
-                    List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
-
             // We need these users for all authorization tests
             // So we create them at the beginning in order to avoid creating them before each authorization tests
             bootstrapTestsDataService.createUserForTests(SUPERADMIN);

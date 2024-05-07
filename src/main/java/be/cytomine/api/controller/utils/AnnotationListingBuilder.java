@@ -100,9 +100,6 @@ public class AnnotationListingBuilder {
         else if(isRoiAnnotationAsked(params)) {
             al = new RoiAnnotationListing(entityManager);
         }
-        else if(isAlgoAnnotationAsked(params)) {
-            al = new AlgoAnnotationListing(entityManager);
-        }
         else {
             al = new UserAnnotationListing(entityManager);
         }
@@ -140,10 +137,6 @@ public class AnnotationListingBuilder {
 
         al.setUsersForTerm(StringUtils.extractListFromParameter(params.getJSONAttrStr("usersForTerm")));
 
-        // Users for term algo
-        al.setUserForTermAlgo(params.getJSONAttrLong("userForTermAlgo"));
-        al.setUsersForTermAlgo(StringUtils.extractListFromParameter(params.getJSONAttrStr("usersForTermAlgo")));
-
         // Tags
         al.setTag(params.getJSONAttrLong("tag"));
         al.setTags(StringUtils.extractListFromParameter(params.getJSONAttrStr("tags")));
@@ -153,13 +146,8 @@ public class AnnotationListingBuilder {
         al.setTerm(params.getJSONAttrLong("term"));
         al.setTerms(StringUtils.extractListFromParameter(params.getJSONAttrStr("terms")));
 
-        // Suggested terms
-        al.setSuggestedTerm(params.getJSONAttrLong("suggestedTerm"));
-        al.setSuggestedTerms(StringUtils.extractListFromParameter(params.getJSONAttrStr("suggestedTerms")));
-
         // Boolean for terms
         al.setNoTerm(params.getJSONAttrBoolean("noTerm", false));
-        al.setNoAlgoTerm(params.getJSONAttrBoolean("noAlgoTerm", false));
         al.setMultipleTerm(params.getJSONAttrBoolean("multipleTerm", false));
         al.setNoTrack(params.getJSONAttrBoolean("noTrack", false));
         al.setMultipleTrack(params.getJSONAttrBoolean("multipleTrack", false));
@@ -215,35 +203,6 @@ public class AnnotationListingBuilder {
      */
     private boolean isRoiAnnotationAsked(JsonObject params) {
         return params.getJSONAttrBoolean("roi", false);
-    }
-
-    /**
-     * Check if we ask algo annotation
-     */
-    private boolean isAlgoAnnotationAsked(JsonObject params) {
-        if(params.getJSONAttrBoolean("includeAlgo", false)) {
-            return true;
-        }
-
-        Long idUser = params.getJSONAttrLong("user");
-        Long idJob = params.getJSONAttrLong("job");
-        if(idUser!=null) {
-            return secUserService.find(idUser)
-                    .orElseThrow(() -> new ObjectNotFoundException("User", idUser))
-                    .isAlgo();
-        } else if(idJob!=null) {
-            // TODO: check if Job exists => return job != null
-            throw new CytomineMethodNotYetImplementedException("Software package must be implemented");
-        } /*else {
-            String idUsers = params.getJSONAttrStr("users");
-            if(idUsers!=null && !idUsers.isEmpty()) {
-                List<Long> collect = Arrays.stream(idUsers.replaceAll("_", ",")
-                        .split(",")).map(Long::parseLong).collect(Collectors.toList());
-                return collect.stream().anyMatch(secUserService::isUserJob);
-            }
-        }*/
-        //if no other filter, just take user annotation
-        return false;
     }
 
     /**

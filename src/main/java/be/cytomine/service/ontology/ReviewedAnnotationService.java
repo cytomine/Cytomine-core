@@ -101,9 +101,6 @@ public class ReviewedAnnotationService extends ModelService {
     private GenericAnnotationService genericAnnotationService;
 
     @Autowired
-    private AlgoAnnotationTermService algoAnnotationTermService;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Override
@@ -432,11 +429,7 @@ public class ReviewedAnnotationService extends ModelService {
         taskService.updateTask(task,5,"Look for all annotations...");
 
         for (SecUser user : users) {
-            if (user.isAlgo()) {
-                throw new CytomineMethodNotYetImplementedException(""); // TODO
-            } else {
-                annotations.addAll(userAnnotationRepository.findAllByUserAndImage((User)user, imageInstance));
-            }
+            annotations.addAll(userAnnotationRepository.findAllByUserAndImage((User)user, imageInstance));
         }
 
         //review each annotation
@@ -484,11 +477,7 @@ public class ReviewedAnnotationService extends ModelService {
         List<AnnotationDomain> annotations = new ArrayList<>();
         taskService.updateTask(task,5,"Look for all annotations...");
         for (SecUser user : users) {
-            if (user.isAlgo()) {
-                throw new CytomineMethodNotYetImplementedException(""); // TODO
-            } else {
-                annotations.addAll(userAnnotationRepository.findAllByUserAndImage((User)user, imageInstance));
-            }
+            annotations.addAll(userAnnotationRepository.findAllByUserAndImage((User)user, imageInstance));
         }
 
         //unreview each one
@@ -568,13 +557,6 @@ public class ReviewedAnnotationService extends ModelService {
 
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         ((ReviewedAnnotation)domain).getTerms().clear();
-        deleteDependentAlgoAnnotationTerm(((ReviewedAnnotation)domain), transaction, task);
-    }
-
-    public void deleteDependentAlgoAnnotationTerm(ReviewedAnnotation annotation, Transaction transaction, Task task) {
-        for (AlgoAnnotationTerm algoAnnotationTerm : algoAnnotationTermService.list(annotation)) {
-            algoAnnotationTermService.delete(algoAnnotationTerm,transaction,task,false);
-        }
     }
 
     /**

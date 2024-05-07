@@ -117,24 +117,6 @@ public class BootstrapUtilsService {
         }
     }
 
-
-    public void createUserJob(String username, List<String> roles) {
-        if (secUserRepository.findByUsernameLikeIgnoreCase(username).isEmpty()) {
-            log.info("Creating {}...", username);
-            UserJob user = new UserJob();
-            user.setUsername(username);
-            log.info("Saving {}...", user.getUsername());
-            user = secUserRepository.save(user);
-
-            for (String role : roles) {
-                SecUserSecRole secUserSecRole = new SecUserSecRole();
-                secUserSecRole.setSecRole(secRoleRepository.getByAuthority(role));
-                secUserSecRole.setSecUser(user);
-                secUserSecRoleRepository.save(secUserSecRole);
-            }
-        }
-    }
-
     public void createRelation(String name) {
         relationRepository.createIfNotExist(name);
     }

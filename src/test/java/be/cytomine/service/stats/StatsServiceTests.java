@@ -171,7 +171,6 @@ public class StatsServiceTests {
         UserAnnotation annotation = builder.given_a_user_annotation();
         assertThat(statsService.total(annotation.getClass())).isGreaterThanOrEqualTo(1);
         assertThat(statsService.total(annotation.getProject().getClass())).isGreaterThanOrEqualTo(1);
-        assertThat(statsService.total(AlgoAnnotation.class)).isEqualTo(0);
     }
 
     @Test
@@ -222,26 +221,6 @@ public class StatsServiceTests {
         assertThat(jsonObjects.stream().filter(x -> x.getJSONAttrLong("size")==1).collect(Collectors.toList())).hasSize(2);
 
         statsService.statAnnotationEvolution(project, builder.given_a_term(project.getOntology()), 7, DateUtils.addDays(new Date(), -30), DateUtils.addDays(new Date(), 0), true, false);
-
-    }
-
-    @Test
-    void stats_algo_annotation_evolution() {
-        Project project = builder.given_a_project();
-        AlgoAnnotation annotation1 = builder.given_a_algo_annotation(project);
-        annotation1.setCreated(DateUtils.addDays(new Date(), -1));
-        builder.persistAndReturn(annotation1);
-        AlgoAnnotation annotation2 = builder.given_a_algo_annotation(project);
-        annotation2.setCreated(DateUtils.addDays(new Date(), -10));
-        builder.persistAndReturn(annotation2);
-
-        List<JsonObject> jsonObjects = statsService.statAlgoAnnotationEvolution(project, null, 7, DateUtils.addDays(new Date(), -30), DateUtils.addDays(new Date(), 0), true, false);
-
-        assertThat(jsonObjects).hasSize(5);
-        assertThat(jsonObjects.stream().filter(x -> x.getJSONAttrLong("size")==1).collect(Collectors.toList())).hasSize(2);
-
-        statsService.statAlgoAnnotationEvolution(project, builder.given_a_term(project.getOntology()), 7, DateUtils.addDays(new Date(), -30), DateUtils.addDays(new Date(), 0), true, false);
-
 
     }
 

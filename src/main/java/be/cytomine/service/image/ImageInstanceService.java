@@ -117,9 +117,6 @@ public class ImageInstanceService extends ModelService {
     private UserAnnotationRepository userAnnotationRepository;
 
     @Autowired
-    private AlgoAnnotationRepository algoAnnotationRepository;
-
-    @Autowired
     private ReviewedAnnotationRepository reviewedAnnotationRepository;
 
     @Autowired
@@ -154,14 +151,6 @@ public class ImageInstanceService extends ModelService {
 
     @Autowired
     MongoClient mongoClient;
-
-    private AlgoAnnotationService algoAnnotationService;
-
-
-    @Autowired
-    public void setAlgoAnnotationService(AlgoAnnotationService algoAnnotationService) {
-        this.algoAnnotationService = algoAnnotationService;
-    }
 
     @Override
     public Class currentDomain() {
@@ -824,9 +813,6 @@ public class ImageInstanceService extends ModelService {
         boolean resolutionUpdated = (!Objects.equals(resolutionX, imageInstance.getPhysicalSizeX())) || (!Objects.equals(resolutionY, imageInstance.getPhysicalSizeY()));
 
         if (resolutionUpdated) {
-            for (AlgoAnnotation algoAnnotation : algoAnnotationRepository.findAllByImage(imageInstance)) {
-                algoAnnotationService.update(algoAnnotation, algoAnnotation.toJsonObject());
-            }
             for (ReviewedAnnotation reviewedAnnotation : reviewedAnnotationRepository.findAllByImage(imageInstance)) {
                 reviewedAnnotationService.update(reviewedAnnotation, reviewedAnnotation.toJsonObject());
             }
@@ -872,7 +858,6 @@ public class ImageInstanceService extends ModelService {
     @Override
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         ImageInstance imageInstance = (ImageInstance)domain;
-        deleteDependentAlgoAnnotation(imageInstance, transaction, task);
         deleteDependentReviewedAnnotation(imageInstance, transaction, task);
         deleteDependentUserAnnotation(imageInstance, transaction, task);
         deleteDependentAnnotationAction(imageInstance, transaction, task);
@@ -888,11 +873,7 @@ public class ImageInstanceService extends ModelService {
         deleteDependentTrack(imageInstance, transaction, task);
     }
 
-    private void deleteDependentAlgoAnnotation(ImageInstance image, Transaction transaction, Task task) {
-        for (AlgoAnnotation algoAnnotation : algoAnnotationRepository.findAllByImage(image)) {
-            algoAnnotationService.delete(algoAnnotation, transaction, task, false);
-        }
-    }
+
 
     private void deleteDependentReviewedAnnotation(ImageInstance image, Transaction transaction, Task task) {
         for (ReviewedAnnotation reviewedAnnotation : reviewedAnnotationRepository.findAllByImage(image)) {
@@ -967,9 +948,6 @@ public class ImageInstanceService extends ModelService {
         securityACLService.checkFullOrRestrictedForOwner(imageInstance,imageInstance.getUser());
         imageInstance.setReviewStart(new Date());
         imageInstance.setReviewUser(currentUserService.getCurrentUser());
-        if (imageInstance.getReviewUser()!=null && imageInstance.getReviewUser().isAlgo()) {
-            throw new WrongArgumentException("The review user " + imageInstance.getReviewUser() + " is not a real user (a userjob)");
-        }
         saveDomain(imageInstance);
     }
 

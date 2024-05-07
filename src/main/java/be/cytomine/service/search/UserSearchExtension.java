@@ -31,9 +31,7 @@ public class UserSearchExtension {
 
     private boolean withNumberConnections;
 
-    private boolean withUserJob;
-
     public boolean noExtension() {
-        return !withLastImage && !withLastConnection && !withNumberConnections && !withUserJob;
+        return !withLastImage && !withLastConnection && !withNumberConnections;
     }
 }

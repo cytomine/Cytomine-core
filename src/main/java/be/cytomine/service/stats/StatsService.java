@@ -156,26 +156,6 @@ public class StatsService {
         return data;
     }
 
-    public List<JsonObject> statAlgoAnnotationEvolution(Project project, Term term, int daysRange, Date startDate, Date endDate, boolean reverseOrder, boolean accumulate) {
-        securityACLService.check(project, READ);
-
-        String request = "SELECT created " +
-                "FROM AlgoAnnotation " +
-                "WHERE project.id = " + project.getId() + " " +
-                (term != null ? "AND id IN (SELECT annotationIdent FROM AlgoAnnotationTerm WHERE term.id = " + term.getId() + ") " : "") +
-                (startDate != null ? "AND created > cast(date('" + startDate + "') as timestamp) " : "") +
-                (endDate != null ? "AND created < cast(date('" + endDate + "') as timestamp) " : "") +
-                "ORDER BY created ASC";
-        List<Date> annotationsDates = entityManager.createQuery(request, Date.class).getResultList();
-
-        List<JsonObject> data = aggregateByPeriods(annotationsDates, daysRange, (startDate == null ? project.getCreated() : startDate), (endDate == null ? new Date() : endDate), accumulate);
-        if (reverseOrder) {
-            Collections.reverse(data);
-        }
-
-        return data;
-    }
-
     public List<JsonObject> statReviewedAnnotationEvolution(Project project, Term term, int daysRange, Date startDate, Date endDate, boolean reverseOrder, boolean accumulate) {
         securityACLService.check(project, READ);
 

@@ -372,30 +372,6 @@ public class StatsResourceTests {
 
 
     @Test
-    void stats_algo_annotation_evolution() throws Exception {
-        Project project = builder.given_a_project();
-        AlgoAnnotation annotation1 = builder.given_a_algo_annotation(project);
-        annotation1.setCreated(DateUtils.addDays(new Date(), -1));
-        builder.persistAndReturn(annotation1);
-        AlgoAnnotation annotation2 = builder.given_a_algo_annotation(project);
-        annotation2.setCreated(DateUtils.addDays(new Date(), -10));
-        builder.persistAndReturn(annotation2);
-
-        restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/algoannotationevolution.json", project.getId())
-                        .param("daysRange", "7"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(equalTo(1))));
-
-        restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/algoannotationevolution.json", project.getId())
-                        .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -20).getTime()))
-                        .param("endDate", String.valueOf(DateUtils.addDays(new Date(), -10).getTime())))
-                .andDo(print())
-                .andExpect(status().isOk());
-    }
-
-
-    @Test
     void stats_reviewed_annotation_evolution() throws Exception {
         Project project = builder.given_a_project();
         ReviewedAnnotation annotation1 = builder.given_a_reviewed_annotation(project);

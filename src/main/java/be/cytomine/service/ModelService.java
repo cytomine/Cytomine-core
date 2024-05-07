@@ -23,7 +23,6 @@ import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.meta.TagDomainAssociation;
-import be.cytomine.domain.ontology.AlgoAnnotation;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.exceptions.*;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
@@ -502,7 +501,7 @@ public abstract class ModelService<T extends CytomineDomain> {
                 CommandResponse commandResponse = addOne(json.get(i));
 
                 String objectName;
-                if (currentDomain() == AlgoAnnotation.class || currentDomain() == UserAnnotation.class) {
+                if (currentDomain() == UserAnnotation.class) {
                     objectName = "annotation";
                 } else {
                     String[] split = currentDomain().toString().toLowerCase().split("\\.");

@@ -144,12 +144,6 @@ public class SecUserService extends ModelService {
     private SecUserSecRoleService secUserSecRoleService;
 
     @Autowired
-    private AlgoAnnotationService algoAnnotationService;
-
-    @Autowired
-    private AlgoAnnotationRepository algoAnnotationRepository;
-
-    @Autowired
     private UserAnnotationService userAnnotationService;
 
     @Autowired
@@ -160,12 +154,6 @@ public class SecUserService extends ModelService {
 
     @Autowired
     private ReviewedAnnotationRepository reviewedAnnotationRepository;
-
-    @Autowired
-    private AlgoAnnotationTermService algoAnnotationTermService;
-
-    @Autowired
-    private AlgoAnnotationTermRepository algoAnnotationTermRepository;
 
     @Autowired
     private AnnotationTermService annotationTermService;
@@ -298,7 +286,7 @@ public class SecUserService extends ModelService {
 
         String select = "SELECT u.* ";
         String from = "FROM sec_user u ";
-        String where = "WHERE job_id IS NULL AND u.class LIKE 'be.cytomine.domain.security.User' " ; //TODO: change for migration
+        String where = "WHERE true " ;
         String search = "";
         String groupBy = "";
         String sort;
@@ -343,7 +331,6 @@ public class SecUserService extends ModelService {
             }
 
             JsonObject object = User.getDataFromDomain(new User().buildDomainFromJson(result, getEntityManager()));
-            object.put("algo", false);
             results.add(object);
         }
         request = "SELECT COUNT(DISTINCT U.id) " + from + where + search;

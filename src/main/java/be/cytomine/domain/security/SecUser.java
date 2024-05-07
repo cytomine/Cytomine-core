@@ -84,11 +84,6 @@ public class SecUser extends CytomineDomain {
         this.setPublicKey(publicKey);
     }
 
-    @Deprecated
-    public Boolean isAlgo() {
-        return false;
-    }
-
     public String toString() {
         return username;
     }

@@ -225,7 +225,6 @@ public class RestUserController extends RestCytomineController {
     @GetMapping("/project/{id}/user.json")
     public ResponseEntity<String> showByProject(
             @PathVariable Long id,
-            @RequestParam(value = "withUserJob", defaultValue = "false", required = false) Boolean withUserJob,
             @RequestParam(value = "withLastImage", defaultValue = "false", required = false) Boolean withLastImage,
             @RequestParam(value = "withLastConsultation", defaultValue = "false", required = false) Boolean withLastConsultation,
             @RequestParam(value = "withNumberConsultations", defaultValue = "false", required = false) Boolean withNumberConsultations,
@@ -242,7 +241,6 @@ public class RestUserController extends RestCytomineController {
         userSearchExtension.setWithLastImage(withLastImage);
         userSearchExtension.setWithLastConnection(withLastConsultation);
         userSearchExtension.setWithNumberConnections(withNumberConsultations);
-        userSearchExtension.setWithUserJob(withUserJob);
 
         return responseSuccess(
                 secUserService.listUsersExtendedByProject(project, userSearchExtension, retrieveSearchParameters(), sortColumn, sortDirection, max, offset)

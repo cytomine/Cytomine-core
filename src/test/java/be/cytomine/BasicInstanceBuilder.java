@@ -169,17 +169,9 @@ public class BasicInstanceBuilder {
     }
 
 
-    public UserJob given_a_user_job() {
-        return given_a_user_job(randomString());
-    }
 
-    public UserJob given_a_user_job(String username) {
-        UserJob user = persistAndReturn(given_a_user_job_not_persisted(given_a_user()));
-        user.setUsername(username);
-        user = persistAndReturn(user);
-        addRole(user, ROLE_USER);
-        return user;
-    }
+
+
 
     public void addRole(SecUser user, String authority) {
         SecUserSecRole secUserSecRole = new SecUserSecRole();
@@ -194,23 +186,11 @@ public class BasicInstanceBuilder {
         return (User)secUserRepository.findByUsernameLikeIgnoreCase("superadmin").orElseThrow(() -> new ObjectNotFoundException("superadmin not in db"));
     }
 
-    public UserJob given_superadmin_job() {
-        return (UserJob)secUserRepository.findByUsernameLikeIgnoreCase("superadminjob").orElseThrow(() -> new ObjectNotFoundException("superadminjob not in db"));
-    }
-
     public static User given_a_not_persisted_user() {
         //User user2 = new User();
         User user = new User();
         user.setName("firstname lastname");
         user.setReference(UUID.randomUUID().toString());
-        user.setUsername(randomString());
-        return user;
-    }
-
-
-    public static UserJob given_a_user_job_not_persisted(User creator) {
-        //User user2 = new User();
-        UserJob user = new UserJob();
         user.setUsername(randomString());
         return user;
     }
@@ -765,81 +745,6 @@ public class BasicInstanceBuilder {
         em.refresh(userAnnotation);
         em.refresh(annotation);
         return annotation;
-    }
-
-
-    public AlgoAnnotation given_a_not_persisted_algo_annotation() {
-        AlgoAnnotation annotation = new AlgoAnnotation();
-        annotation.setUser(given_superadmin_job());
-        try {
-            annotation.setLocation(new WKTReader().read("POLYGON ((1983 2168, 2107 2160, 2047 2074, 1983 2168))"));
-        } catch (ParseException ignored) {
-
-        }
-        annotation.setSlice(given_a_slice_instance());
-        annotation.setImage(annotation.getSlice().getImage());
-        annotation.setProject(annotation.getImage().getProject());
-        return annotation;
-    }
-
-    public AlgoAnnotation given_a_algo_annotation(Project project) {
-        return persistAndReturn(given_a_not_persisted_algo_annotation(project));
-    }
-
-    public AlgoAnnotation given_a_not_persisted_algo_annotation(Project project) {
-        AlgoAnnotation annotation = given_a_not_persisted_algo_annotation();
-        annotation.getSlice().setProject(project);
-        annotation.getImage().setProject(project);
-        annotation.setProject(project);
-        return annotation;
-    }
-
-
-    public AlgoAnnotation given_a_algo_annotation() {
-        return persistAndReturn(given_a_not_persisted_algo_annotation());
-    }
-
-    public AlgoAnnotation given_a_algo_annotation(SliceInstance sliceInstance, String location, UserJob user, Term term) throws ParseException {
-        AlgoAnnotation annotation = given_a_algo_annotation();
-        annotation.setImage(sliceInstance.getImage());
-        annotation.setSlice(sliceInstance);
-        annotation.setLocation(new WKTReader().read(location));
-        annotation.setUser(user);
-        annotation.setProject(sliceInstance.getProject());
-        persistAndReturn(annotation);
-
-        if (term!=null) {
-            AlgoAnnotationTerm annotationTerm = new AlgoAnnotationTerm();
-            annotationTerm.setAnnotation(annotation);
-            annotationTerm.setUserJob(user);
-            annotationTerm.setTerm(term);
-            annotationTerm.setRate(0d);
-            persistAndReturn(annotationTerm);
-            em.refresh(annotation);
-        }
-
-        return annotation;
-    }
-
-    public AlgoAnnotationTerm given_an_algo_annotation_term() {
-        AlgoAnnotation algoAnnotation = given_a_algo_annotation();
-        AlgoAnnotationTerm annotationTerm = new AlgoAnnotationTerm();
-        annotationTerm.setAnnotation(algoAnnotation);
-        annotationTerm.setUserJob(algoAnnotation.getUser());
-        annotationTerm.setTerm(given_a_term(algoAnnotation.getProject().getOntology()));
-        annotationTerm.setRate(0d);
-        persistAndReturn(annotationTerm);
-        em.refresh(algoAnnotation);
-        return annotationTerm;
-    }
-
-    public AlgoAnnotationTerm given_a_not_persisted_algo_annotation_term(AlgoAnnotation algoAnnotation) {
-        AlgoAnnotationTerm annotationTerm = new AlgoAnnotationTerm();
-        annotationTerm.setAnnotation(algoAnnotation);
-        annotationTerm.setUserJob(algoAnnotation.getUser());
-        annotationTerm.setTerm(given_a_term(algoAnnotation.getProject().getOntology()));
-        annotationTerm.setRate(0d);
-        return annotationTerm;
     }
 
     public SharedAnnotation given_a_not_persisted_shared_annotation() {

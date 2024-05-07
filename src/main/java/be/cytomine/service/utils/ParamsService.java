@@ -75,22 +75,6 @@ public class ParamsService {
         }
     }
 
-    /**
-     * Retrieve all user and userjob id from paramsUsers request string (format users=x,y,z or x_y_z)
-     * Just get user and user job  from project
-     */
-    public List<Long> getParamsSecUserList(String paramsUsers, Project project) {
-        if(paramsUsers != null && !paramsUsers.equals("null")) {
-            if (!paramsUsers.equals("")) {
-                List<Long> userIdsFromParams = Arrays.stream(paramsUsers.split(paramsUsers.contains("_") ? "_" : ",")).map(x -> Long.parseLong(x)).collect(Collectors.toList());
-                return userIdsFromParams;
-            } else {
-                return new ArrayList<>();
-            }
-        } else {
-            return secUserRepository.findAllAllowedUserIdList(project.getId());
-        }
-    }
 
     /**
      * Retrieve all images id from paramsImages request string (format images=x,y,z or x_y_z)
@@ -126,22 +110,6 @@ public class ParamsService {
         }
     }
 
-    /**
-     * Retrieve all user and userjob object from paramsUsers request string (format users=x,y,z or x_y_z)
-     * Just get user and user job  from project
-     */
-    public List<SecUser> getParamsSecUserDomainList(String paramsUsers, Project project) {
-        List<SecUser> userList = new ArrayList<>();
-        if (paramsUsers != null && !paramsUsers.equals("null") && !paramsUsers.trim().equals("")) {
-            userList = secUserService.list(Arrays.stream(paramsUsers.split("_")).map(Long::parseLong).collect(Collectors.toList()));
-        }
-        return userList;
-    }
-
-    private List<Long> getUserIdList(List<Long> users) {
-        return secUserRepository.findAllByIdIn(users).stream().map(CytomineDomain::getId).collect(Collectors.toList());
-    }
-
     private static Map<String, String> PARAMETER_ASSOCIATION = Map.of(
             "showBasic","basic",
             "showMeta","meta",
@@ -149,7 +117,6 @@ public class ParamsService {
             "showGIS","gis",
             "showTerm","term",
             "showImage","image",
-            "showAlgo","algo",
             "showUser","user",
             "showSlice","slice",
             "showTrack","track");

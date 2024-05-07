@@ -67,9 +67,6 @@ public class TermService extends ModelService {
     private AnnotationTermRepository annotationTermRepository;
 
     @Autowired
-    private AlgoAnnotationTermRepository algoAnnotationTermRepository;
-
-    @Autowired
     private ReviewedAnnotationRepository reviewedAnnotationRepository;
 
     @Override
@@ -193,7 +190,6 @@ public class TermService extends ModelService {
     @Override
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         deleteDependentRelationTerm((Term)domain, transaction, task);
-        deleteAlgoAnnotationTerm((Term)domain, transaction, task);
         deleteAnnotationTerm((Term)domain, transaction, task);
         deleteReviewedAnnotationTerm((Term)domain, transaction, task);
     }
@@ -201,15 +197,6 @@ public class TermService extends ModelService {
     public void deleteDependentRelationTerm(Term term, Transaction transaction, Task task) {
         for (RelationTerm relationTerm : relationTermService.list(term)) {
             relationTermService.delete(relationTerm, transaction, task, false);
-        }
-    }
-
-    public void deleteAlgoAnnotationTerm(Term term, Transaction transaction, Task task) {
-        long terms = algoAnnotationTermRepository.countByTerm(term);
-        long expectedTerms = algoAnnotationTermRepository.countByExpectedTerm(term);
-
-        if (terms!=0 || expectedTerms!=0) {
-            throw new ConstraintException("Term is still linked with "+(terms+expectedTerms)+" annotations created by job. Cannot delete term!");
         }
     }
 

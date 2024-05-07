@@ -22,7 +22,6 @@ import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.domain.security.UserJob;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.AbstractImageRepository;
@@ -355,9 +354,6 @@ public class UploadedFileService extends ModelService {
      */
     public CommandResponse add(JsonObject json) {
         SecUser currentUser = currentUserService.getCurrentUser();
-        if (currentUser instanceof UserJob) {
-            currentUser = ((UserJob) currentUser).getUser();
-        }
         securityACLService.checkUser(currentUser);
         if (!json.isMissing("storage")) {
             securityACLService.check(json.getJSONAttrLong("storage"), Storage.class, WRITE);

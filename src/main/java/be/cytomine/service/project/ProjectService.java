@@ -45,7 +45,6 @@ import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.dto.ProjectBounds;
 import be.cytomine.service.image.ImageInstanceService;
-import be.cytomine.service.ontology.AlgoAnnotationTermService;
 import be.cytomine.service.ontology.AnnotationTermService;
 import be.cytomine.service.ontology.OntologyService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
@@ -114,9 +113,6 @@ public class ProjectService extends ModelService {
 
     @Autowired
     private AnnotationTermService annotationTermService;
-
-    @Autowired
-    private AlgoAnnotationTermService algoAnnotationTermService;
 
     @Autowired
     private ReviewedAnnotationService reviewedAnnotationService;
@@ -662,7 +658,7 @@ public class ProjectService extends ModelService {
             if(!deleteTerms) {
                 userAssociatedTermsCount += annotationTermService.list(project).size();
             }
-            algoAssociatedTermsCount += algoAnnotationTermService.count(project);
+            algoAssociatedTermsCount += 0; // TODO ALGO ANNOT algoAnnotationTermService.count(project);
             reviewedAssociatedTermsCount += reviewedAnnotationService.countByProjectAndWithTerms(project);
             associatedTermsCount = userAssociatedTermsCount + algoAssociatedTermsCount + reviewedAssociatedTermsCount;
 
@@ -883,7 +879,7 @@ public class ProjectService extends ModelService {
     protected void beforeUpdate(CytomineDomain domain) {
         Project project = (Project)domain;
         project.setCountAnnotations(annotationDomainRepository.countAllUserAnnotationAndProject(domain.getId()));
-        project.setCountJobAnnotations(annotationDomainRepository.countAllAlgoAnnotationAndProject(domain.getId()));
+//        project.setCountJobAnnotations(annotationDomainRepository.countAllAlgoAnnotationAndProject(domain.getId()));
         project.setCountReviewedAnnotations(annotationDomainRepository.countAllReviewedAnnotationAndProject(domain.getId()));
         project.setCountImages(imageInstanceRepository.countAllByProject(project));
     }

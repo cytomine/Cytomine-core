@@ -126,13 +126,6 @@ public class ReviewedAnnotation extends AnnotationDomain implements Serializable
     }
 
     /**
-     * Check if its an algo annotation
-     */
-    public boolean isAlgoAnnotation() {
-        return false;
-    }
-
-    /**
      * Check if its a review annotation
      */
     public boolean isReviewedAnnotation() {

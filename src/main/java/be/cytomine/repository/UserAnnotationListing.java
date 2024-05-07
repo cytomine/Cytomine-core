@@ -95,14 +95,6 @@ public class UserAnnotationListing extends AnnotationListing {
         map.put("slice", slice);
 
 
-        AvailableColumns algo = new AvailableColumns();
-        algo.put("id", "aat.id");
-        algo.put("rate", "aat.rate");
-        algo.put("idTerm", "aat.term_id");
-        algo.put("idExpectedTerm", "aat.expected_term_id");
-        map.put("algo", algo);
-
-
         AvailableColumns user = new AvailableColumns(); //TODO IAM: display name
         user.put("creator", "u.username");
         user.put("lastname", "u.lastname");
@@ -140,9 +132,6 @@ public class UserAnnotationListing extends AnnotationListing {
         } else if (noTerm && !(term != null || terms != null)) {
             from += "LEFT JOIN (SELECT * from annotation_term x " + (users != null ? "where x.deleted IS NULL AND x.user_id IN (" + joinValues(users) + ")" : "") + " ) at ON a.id = at.user_annotation_id ";
             where = where + " AND (at.id IS NULL OR at.deleted IS NOT NULL) \n";
-        } else if (noAlgoTerm) {
-            from = from + " LEFT JOIN (SELECT * from algo_annotation_term x where true " + (users != null ? "and x.user_id IN (" + joinValues(users) + ")" : "") + " and x.deleted IS NULL) aat ON a.id = aat.annotation_ident ";
-            where = where + " AND (aat.id IS NULL OR aat.deleted IS NOT NULL) \n";
         } else if (columnsToPrint.contains("term")) {
             from += "LEFT OUTER JOIN annotation_term at ON a.id = at.user_annotation_id ";
             where += "AND at.deleted IS NULL ";
@@ -167,14 +156,6 @@ public class UserAnnotationListing extends AnnotationListing {
             from += "INNER JOIN image_instance ii ON a.image_id = ii.id INNER JOIN abstract_image ai ON ii.base_image_id = ai.id ";
         }
 
-        if (columnsToPrint.contains("algo")) {
-            from += "INNER JOIN algo_annotation_term aat ON aat.annotation_ident = a.id ";
-            where += "AND aat.deleted IS NULL ";
-            /*from = "$from, algo_annotation_term aat "
-            where = "$where AND aat.annotation_ident = a.id\n"
-            where = "$where AND aat.deleted IS NULL\n"*/
-        }
-
         if (columnsToPrint.contains("slice") || tracks != null || track != null) {
             from += "INNER JOIN slice_instance si ON a.slice_id = si.id INNER JOIN abstract_slice asl ON si.base_slice_id = asl.id ";
         }
@@ -192,10 +173,7 @@ public class UserAnnotationListing extends AnnotationListing {
 
     String createOrderBy() {
         if (kmeansValue < 3) return "";
-        boolean orderByRate = (usersForTermAlgo != null || userForTermAlgo != null || suggestedTerm != null || suggestedTerms != null);
-        if (orderByRate) {
-            return "ORDER BY aat.rate desc";
-        } else if (orderBy == null || orderBy.isEmpty()) {
+        if (orderBy == null || orderBy.isEmpty()) {
             String order = (track != null || tracks != null) ? "rank asc" : "a.id desc ";
             return "ORDER BY " + order + ((term != null || terms != null || columnsToPrint.contains("term")) ? ", at.term_id " : "") + ((track != null || tracks != null || columnsToPrint.contains("track")) ? ", atr.track_id " : "");
         } else {

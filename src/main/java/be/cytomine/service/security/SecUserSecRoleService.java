@@ -147,13 +147,7 @@ public class SecUserSecRoleService extends ModelService {
         if(Objects.equals(secUserSecRole.getSecUser().getId(), currentUser.getId()) && !secUserSecRole.getSecRole().getAuthority().equals("ROLE_SUPER_ADMIN")) {
             throw new ForbiddenException("You cannot remove you a role");
         }
-        if(secUserSecRole.getSecUser().isAlgo()) {
-            //TODO
-//            Job job = ((UserJob)domain.secUser).job
-//            securityACLService.check(job?.container(),READ)
-        } else {
-            securityACLService.checkAdmin(currentUser);
-        }
+        securityACLService.checkAdmin(currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }

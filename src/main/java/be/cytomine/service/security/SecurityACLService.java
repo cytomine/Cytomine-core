@@ -25,7 +25,6 @@ import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.domain.security.UserJob;
 import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -173,9 +172,6 @@ public class SecurityACLService {
         if (adminByPass && currentRoleService.isAdminByNow(user)) {
             query = entityManager.createQuery("select storage from Storage as storage");
         } else {
-            while (user instanceof UserJob) {
-                user = ((UserJob) user).getUser();
-            }
             query = entityManager.createQuery(
                     "select distinct storage "+
                             "from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid,  Storage as storage "+
@@ -207,7 +203,6 @@ public class SecurityACLService {
 
     public List<String> getProjectUsers(Project project) {
         // adminByPass TODO
-        // userjob.user TODO
 
         Query query = entityManager.createQuery(
                 "select distinct aclSid.sid "+
@@ -243,7 +238,6 @@ public class SecurityACLService {
     public void checkIsSameUser(Long userId,SecUser currentUser) {
         boolean sameUser = (Objects.equals(userId, currentUser.getId()));
         sameUser |= currentRoleService.isAdminByNow(currentUser);
-        sameUser |= (currentUser instanceof UserJob && Objects.equals(userId, ((UserJob) currentUser).getUser().getId()));
         if (!sameUser) {
             throw new ForbiddenException("You don't have the right to read this resource! You must be the same user!");
         }

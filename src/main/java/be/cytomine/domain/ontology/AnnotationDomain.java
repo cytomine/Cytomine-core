@@ -135,11 +135,6 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
     public abstract boolean isUserAnnotation();
 
     /**
-     * Check if its an algo annotation
-     */
-    public abstract boolean isAlgoAnnotation();
-
-    /**
      * Check if its a review annotation
      */
     public abstract boolean isReviewedAnnotation();
@@ -232,9 +227,6 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
                 case "be.cytomine.domain.ontology.UserAnnotation":
                     domain = UserAnnotation.class;
                     break;
-                case "be.cytomine.domain.ontology.AlgoAnnotation":
-                    domain = AlgoAnnotation.class;
-                    break;
                 case "be.cytomine.domain.ontology.ReviewedAnnotation":
                     domain = ReviewedAnnotation.class;
                     break;
@@ -251,7 +243,7 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
             annotation = (AnnotationDomain)entityManager.find(domain, id);
         } else {
             annotation = entityManager.find(UserAnnotation.class, id);
-            if (annotation==null) annotation = entityManager.find(AlgoAnnotation.class, id);
+//            if (annotation==null) annotation = entityManager.find(AlgoAnnotation.class, id);
             if (annotation==null) annotation = entityManager.find(ReviewedAnnotation.class, id);
 //            if (annotation==null) annotation = entityManager.find(RoiAnnotation.class, id);
         }
