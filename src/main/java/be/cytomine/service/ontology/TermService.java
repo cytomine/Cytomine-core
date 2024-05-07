@@ -22,7 +22,7 @@ import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.RelationTerm;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.WrongArgumentException;
@@ -129,7 +129,7 @@ public class TermService extends ModelService {
         if (jsonObject.isMissing("ontology")) {
             throw new WrongArgumentException("Ontology is mandatory for term creation");
         }
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkGuest(currentUser);
         securityACLService.check(jsonObject.getJSONAttrLong("ontology"), Ontology.class ,WRITE);
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
@@ -143,7 +143,7 @@ public class TermService extends ModelService {
      */
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(),WRITE);
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
@@ -159,7 +159,7 @@ public class TermService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(),DELETE);
         Command c = new DeleteCommand(currentUser, transaction);

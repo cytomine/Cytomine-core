@@ -21,7 +21,7 @@ import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.NestedImageInstance;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.repository.image.NestedImageInstanceRepository;
 import be.cytomine.service.CurrentUserService;
@@ -92,7 +92,7 @@ public class NestedImageInstanceService extends ModelService {
      * @return Response structure (created domain data,..)
      */
     public CommandResponse add(JsonObject json) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(json.getJSONAttrLong("project"), Project.class, READ);
         securityACLService.checkIsNotReadOnly(json.getJSONAttrLong("project"), Project.class);
@@ -109,7 +109,7 @@ public class NestedImageInstanceService extends ModelService {
      */
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),READ);
         securityACLService.checkUser(currentUser);
         securityACLService.check(jsonNewData.getJSONAttrLong("project"),Project.class,READ);
@@ -128,7 +128,7 @@ public class NestedImageInstanceService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),READ);
         securityACLService.checkUser(currentUser);
         securityACLService.checkIsNotReadOnly(domain.container());

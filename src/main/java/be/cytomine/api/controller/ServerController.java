@@ -18,7 +18,7 @@ package be.cytomine.api.controller;
 
 import be.cytomine.api.JsonResponseEntity;
 import be.cytomine.config.properties.ApplicationProperties;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastConnection;
 import be.cytomine.domain.social.PersistentConnection;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
@@ -72,7 +72,7 @@ public class ServerController extends RestCytomineController {
 
         // TODO IAM: refactor
         if (isAuthenticated()) {
-            SecUser user = currentUserService.getCurrentUser();
+            User user = currentUserService.getCurrentUser();
             response.put("user", user.getId());
 //            response.put("shortTermToken", tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM));
 
@@ -102,7 +102,7 @@ public class ServerController extends RestCytomineController {
                 .map(GrantedAuthority::getAuthority);
     }
 
-    void addLastConnection(SecUser user, Long idProject) {
+    void addLastConnection(User user, Long idProject) {
         try {
             LastConnection connection = new LastConnection();
             connection.setId(sequenceService.generateID());

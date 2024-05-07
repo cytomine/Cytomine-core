@@ -18,10 +18,10 @@ package be.cytomine;
 
 import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.config.nosqlmigration.InitialMongodbSetupMigration;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.project.ProjectRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.UrlApi;
 import be.cytomine.service.database.BootstrapDataService;
@@ -60,7 +60,7 @@ import static be.cytomine.service.database.BootstrapTestsDataService.*;
 @Transactional
 class ApplicationBootstrap {
 
-    private final SecUserRepository secUserRepository;
+    private final UserRepository userRepository;
 
     private final ApplicationProperties applicationProperties;
 
@@ -130,7 +130,7 @@ class ApplicationBootstrap {
                 applicationProperties.getServerURL()
         );
 
-        if (EnvironmentUtils.isTest(environment) && secUserRepository.count() == 0) {
+        if (EnvironmentUtils.isTest(environment) && userRepository.count() == 0) {
             bootstrapDataService.initData();
             //noSQLCollectionService.cleanActivityDB() TODO:
             bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
@@ -148,18 +148,18 @@ class ApplicationBootstrap {
             bootstrapTestsDataService.createUserForTests(CREATOR);
 
 
-        } else if (secUserRepository.count() == 0) {
+        } else if (userRepository.count() == 0) {
             //if database is empty, put minimal data
             bootstrapDataService.initData();
         }
 
         // TODO IAM: done by IAM
         if (applicationProperties.getImageServerPrivateKey()!=null && applicationProperties.getImageServerPublicKey()!=null) {
-            SecUser imageServerUser = secUserRepository.findByUsernameLikeIgnoreCase("ImageServer1")
+            User imageServerUser = userRepository.findByUsernameLikeIgnoreCase("ImageServer1")
                     .orElseThrow(() -> new ObjectNotFoundException("No user imageserver1, cannot assign keys"));
             imageServerUser.setPrivateKey(applicationProperties.getImageServerPrivateKey());
             imageServerUser.setPublicKey(applicationProperties.getImageServerPublicKey());
-            secUserRepository.save(imageServerUser);
+            userRepository.save(imageServerUser);
         }
 
         log.info("Check image filters...");

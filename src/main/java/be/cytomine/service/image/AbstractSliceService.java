@@ -19,7 +19,7 @@ package be.cytomine.service.image;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.*;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.ForbiddenException;
@@ -68,7 +68,7 @@ public class AbstractSliceService extends ModelService {
         return AbstractSlice.class;
     }
 
-    public SecUser findImageUploaded(Long abstractSliceId) {
+    public User findImageUploaded(Long abstractSliceId) {
         AbstractSlice abstractSlice = find(abstractSliceId).orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", abstractSliceId));
         return Optional.ofNullable(abstractSlice.getUploadedFile()).map(UploadedFile::getUser).orElse(null);
     }
@@ -107,7 +107,7 @@ public class AbstractSliceService extends ModelService {
      * @return Response structure (created domain data,..)
      */
     public CommandResponse add(JsonObject json) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
 
         return executeCommand(new AddCommand(currentUser),null, json);
@@ -122,7 +122,7 @@ public class AbstractSliceService extends ModelService {
      */
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),WRITE);
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
     }
@@ -137,7 +137,7 @@ public class AbstractSliceService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(),WRITE);
 

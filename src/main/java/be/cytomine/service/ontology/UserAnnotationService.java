@@ -22,7 +22,6 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.AnnotationLight;
 import be.cytomine.dto.SimplifiedAnnotation;
@@ -142,7 +141,7 @@ public class UserAnnotationService extends ModelService {
         return optionalUserAnnotation;
     }
 
-    public List listIncluded(ImageInstance image, String geometry, SecUser user, List<Long> terms, AnnotationDomain annotation, List<String> propertiesToShow) {
+    public List listIncluded(ImageInstance image, String geometry, User user, List<Long> terms, AnnotationDomain annotation, List<String> propertiesToShow) {
         securityACLService.check(image.container(), READ);
 
         UserAnnotationListing userAnnotationListing = new UserAnnotationListing(entityManager);
@@ -226,7 +225,7 @@ public class UserAnnotationService extends ModelService {
         jsonObject.put("imageObject", image);
         jsonObject.put("projectObject", project);
 
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
 
         //Check if user has at least READ permission for the project
         securityACLService.check(project, READ, currentUser);
@@ -373,7 +372,7 @@ public class UserAnnotationService extends ModelService {
      * @return Response structure (new domain data, old domain data..)
      */
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         //Check if user has a role that allows to update annotations
         securityACLService.checkGuest(currentUser);
         //Check if user has at least READ permission for the project
@@ -451,7 +450,7 @@ public class UserAnnotationService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         //Check if user has a role that allows to delete annotations
         securityACLService.checkGuest(currentUser);
         //Check if user has at least READ permission for the project

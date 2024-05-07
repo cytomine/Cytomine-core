@@ -23,7 +23,6 @@ import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.*;
 import be.cytomine.repository.security.UserRepository;
@@ -129,7 +128,7 @@ public class UserResourceTests {
         return connection;
     }
 
-    PersistentImageConsultation given_a_persistent_image_consultation(SecUser user, ImageInstance imageInstance, Date created) {
+    PersistentImageConsultation given_a_persistent_image_consultation(User user, ImageInstance imageInstance, Date created) {
         return imageConsultationService.add(user, imageInstance.getId(), "xxx", "mode", created);
     }
 
@@ -144,7 +143,7 @@ public class UserResourceTests {
         return connection;
     }
 
-    PersistentConnection given_a_last_connection(SecUser user, Long idProject, Date date) {
+    PersistentConnection given_a_last_connection(User user, Long idProject, Date date) {
         LastConnection connection = new LastConnection();
         connection.setId(sequenceService.generateID());
         connection.setUser(user.getId());

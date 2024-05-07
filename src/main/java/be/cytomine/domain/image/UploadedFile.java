@@ -18,7 +18,6 @@ package be.cytomine.domain.image;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.server.Storage;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.LTreeType;
@@ -41,7 +40,7 @@ public class UploadedFile extends CytomineDomain implements Serializable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = true)
-    private SecUser user;
+    private User user;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "storage_id", nullable = true)

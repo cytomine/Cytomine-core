@@ -31,7 +31,7 @@ import be.cytomine.domain.security.*;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.MimeRepository;
 import be.cytomine.repository.security.SecRoleRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.PermissionService;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
@@ -73,7 +73,7 @@ public class BasicInstanceBuilder {
 
     MimeRepository mimeRepository;
 
-    SecUserRepository secUserRepository;
+    UserRepository userRepository;
 
     ApplicationBootstrap applicationBootstrap;
 
@@ -84,7 +84,7 @@ public class BasicInstanceBuilder {
     public BasicInstanceBuilder(
             EntityManager em,
             TransactionTemplate transactionTemplate,
-            SecUserRepository secUserRepository,
+            UserRepository userRepository,
             PermissionService permissionService,
             SecRoleRepository secRoleRepository,
             MimeRepository mimeRepository,
@@ -93,7 +93,7 @@ public class BasicInstanceBuilder {
             applicationBootstrap.init();
         }
         this.em = em;
-        this.secUserRepository = secUserRepository;
+        this.userRepository = userRepository;
         this.permissionService = permissionService;
         this.secRoleRepository = secRoleRepository;
         this.mimeRepository = mimeRepository;
@@ -102,9 +102,9 @@ public class BasicInstanceBuilder {
         this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
-                aUser = (User) secUserRepository.findByUsernameLikeIgnoreCase("user")
+                aUser = (User) userRepository.findByUsernameLikeIgnoreCase("user")
                         .orElseGet(() -> given_default_user());
-                anAdmin = (User) secUserRepository.findByUsernameLikeIgnoreCase("admin")
+                anAdmin = (User) userRepository.findByUsernameLikeIgnoreCase("admin")
                         .orElseGet(() -> given_default_admin());
             }
         });
@@ -173,17 +173,17 @@ public class BasicInstanceBuilder {
 
 
 
-    public void addRole(SecUser user, String authority) {
-        SecUserSecRole secUserSecRole = new SecUserSecRole();
-        secUserSecRole.setSecUser(user);
-        secUserSecRole.setSecRole(secRoleRepository.findByAuthority(authority).orElseThrow(() -> new ObjectNotFoundException("authority " + authority + " does not exists")));
-        em.persist(secUserSecRole);
+    public void addRole(User user, String authority) {
+        SecUserSecRole secSecUserSecRole = new SecUserSecRole();
+        secSecUserSecRole.setSecUser(user);
+        secSecUserSecRole.setSecRole(secRoleRepository.findByAuthority(authority).orElseThrow(() -> new ObjectNotFoundException("authority " + authority + " does not exists")));
+        em.persist(secSecUserSecRole);
         em.flush();
         em.refresh(user);
     }
 
     public User given_superadmin() {
-        return (User)secUserRepository.findByUsernameLikeIgnoreCase("superadmin").orElseThrow(() -> new ObjectNotFoundException("superadmin not in db"));
+        return (User)userRepository.findByUsernameLikeIgnoreCase("superadmin").orElseThrow(() -> new ObjectNotFoundException("superadmin not in db"));
     }
 
     public static User given_a_not_persisted_user() {
@@ -924,11 +924,11 @@ public class BasicInstanceBuilder {
         return given_a_not_persisted_user_role(user, secRoleRepository.findByAuthority(authority).get());
     }
 
-    public SecUserSecRole given_a_not_persisted_user_role(SecUser secUser, SecRole secRole) {
-        SecUserSecRole secUserSecRole = new SecUserSecRole();
-        secUserSecRole.setSecRole(secRole);
-        secUserSecRole.setSecUser(secUser);
-        return secUserSecRole;
+    public SecUserSecRole given_a_not_persisted_user_role(User secUser, SecRole secRole) {
+        SecUserSecRole secSecUserSecRole = new SecUserSecRole();
+        secSecUserSecRole.setSecRole(secRole);
+        secSecUserSecRole.setSecUser(secUser);
+        return secSecUserSecRole;
     }
 
 

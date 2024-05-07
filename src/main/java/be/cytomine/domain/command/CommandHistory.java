@@ -18,7 +18,7 @@ package be.cytomine.domain.command;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,7 +38,7 @@ public class CommandHistory extends CytomineDomain {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = true)
-    protected SecUser user;
+    protected User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = true)

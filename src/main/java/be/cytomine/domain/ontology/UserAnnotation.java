@@ -19,7 +19,6 @@ package be.cytomine.domain.ontology;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.UrlApi;
@@ -232,7 +231,7 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
     }
 
     @Override
-    public SecUser user() {
+    public User user() {
         return user;
     }
 

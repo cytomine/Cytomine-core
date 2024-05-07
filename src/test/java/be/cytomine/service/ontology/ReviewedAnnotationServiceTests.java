@@ -21,7 +21,6 @@ import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.*;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.AnnotationLight;
 import be.cytomine.dto.ReviewedAnnotationStatsEntry;
@@ -168,8 +167,8 @@ public class ReviewedAnnotationServiceTests {
     @Test
     void stats_group_by_user() {
         ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
-        SecUser reviewer = reviewedAnnotation.getReviewUser();
-        SecUser anotherUser = builder.given_a_user();
+        User reviewer = reviewedAnnotation.getReviewUser();
+        User anotherUser = builder.given_a_user();
 
         List<ReviewedAnnotationStatsEntry> results = reviewedAnnotationService.statsGroupByUser(reviewedAnnotation.getImage());
 

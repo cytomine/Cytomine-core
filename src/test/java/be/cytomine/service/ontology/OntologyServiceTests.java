@@ -22,7 +22,7 @@ import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.RelationTerm;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.OntologyRepository;
@@ -300,9 +300,9 @@ public class OntologyServiceTests {
     void determine_rights_for_users_admin_in_project() {
         Ontology ontology = builder.given_an_ontology();
         Project project = builder.given_a_project_with_ontology(ontology);
-        SecUser userAdminInProject = builder.given_a_user();
-        SecUser userNotAdminInProject = builder.given_a_user();
-        SecUser userNotInProject = builder.given_a_user();
+        User userAdminInProject = builder.given_a_user();
+        User userNotAdminInProject = builder.given_a_user();
+        User userNotInProject = builder.given_a_user();
 
         permissionService.addPermission(project, userAdminInProject.getUsername(), ADMINISTRATION);
         permissionService.addPermission(project, userNotAdminInProject.getUsername(), WRITE);

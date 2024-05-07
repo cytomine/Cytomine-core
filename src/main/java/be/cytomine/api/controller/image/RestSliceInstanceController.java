@@ -369,7 +369,7 @@ public class RestSliceInstanceController extends RestCytomineController {
 //    def userAnnotationService
 //    def reviewedAnnotationService
 //    def termService
-//    def secUserService
+//    def userService
 //    def annotationListingService
 //    public String getWKTGeometry(SliceInstance sliceInstance, params) {
 //        def geometries = []
@@ -402,7 +402,7 @@ public class RestSliceInstanceController extends RestCytomineController {
 //                Long.parseLong(it)
 //            }
 //            if (!userIDS) { //don't filter by users, take everything
-//                userIDS = secUserService.listLayers(project).collect { it.id}
+//                userIDS = userService.listLayers(project).collect { it.id}
 //            }
 //            List<Long> sliceIDS = [sliceInstance.id]
 //

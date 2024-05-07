@@ -16,13 +16,13 @@ package be.cytomine.security.current;
 * limitations under the License.
 */
 
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import lombok.Data;
 
 @Data
 public class FullCurrentUser implements CurrentUser {
 
-    private SecUser user;
+    private User user;
 
     @Override
     public boolean isFullObjectProvided() {

@@ -16,10 +16,10 @@ package be.cytomine.service;
 * limitations under the License.
 */
 
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.ServerException;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.security.current.CurrentUser;
 import be.cytomine.security.current.FullCurrentUser;
 import be.cytomine.security.current.PartialCurrentUser;
@@ -38,7 +38,7 @@ import java.util.Optional;
 public class CurrentUserService {
 
     @Autowired
-    private SecUserRepository secUserRepository;
+    private UserRepository userRepository;
 
     // TODO IAM: get data from IAM
     public String getCurrentUsername() {
@@ -51,17 +51,17 @@ public class CurrentUserService {
     }
 
     // TODO IAM: get data from IAM
-    public SecUser getCurrentUser() {
+    public User getCurrentUser() {
         CurrentUser currentUser = getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
-        SecUser secUser;
+        User user;
         if (currentUser.isFullObjectProvided()) {
-            secUser = currentUser.getUser();
+            user = currentUser.getUser();
         } else if(currentUser.isUsernameProvided()) {
-            secUser = secUserRepository.findByUsernameLikeIgnoreCase(currentUser.getUser().getUsername()).orElseThrow(() -> new ServerException("Cannot find current user with username " + currentUser.getUser().getUsername()));
+            user = userRepository.findByUsernameLikeIgnoreCase(currentUser.getUser().getUsername()).orElseThrow(() -> new ServerException("Cannot find current user with username " + currentUser.getUser().getUsername()));
         } else {
             throw new ObjectNotFoundException("User", "Cannot read current user. Object " + currentUser + " is not supported");
         }
-        return secUser;
+        return user;
     }
 
     public static Optional<CurrentUser> getSecurityCurrentUser() {
@@ -73,9 +73,9 @@ public class CurrentUserService {
     private static CurrentUser extractCurrentUser(Authentication authentication) {
         if (authentication == null) {
             return null;
-        } else if (authentication.getDetails() instanceof SecUser) {
+        } else if (authentication.getDetails() instanceof User) {
             FullCurrentUser fullCurrentUser = new FullCurrentUser();
-            fullCurrentUser.setUser((SecUser)authentication.getDetails());
+            fullCurrentUser.setUser((User)authentication.getDetails());
             return fullCurrentUser;
         } else if (authentication.getPrincipal() instanceof String) {
             PartialCurrentUser partialCurrentUser = new PartialCurrentUser();

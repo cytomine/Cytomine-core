@@ -59,7 +59,7 @@ public class BootstrapTestsDataService {
     SecRoleRepository secRoleRepository;
 
     @Autowired
-    SecUserSecRoleRepository secUserSecRoleRepository;
+    SecUserSecRoleRepository secSecUserSecRoleRepository;
 
     public static final Map<String, List<String>> ROLES = new HashMap<>();
 
@@ -77,7 +77,7 @@ public class BootstrapTestsDataService {
     }
 
 
-    public SecUser createUserForTests(String login) {
+    public User createUserForTests(String login) {
         Optional<User> alreadyExistingUser = userRepository.findByUsernameLikeIgnoreCase(login.toLowerCase());
         if (!ROLES.containsKey(login)) {
             throw new RuntimeException("Cannot execute test because user has not authority defined");
@@ -85,13 +85,13 @@ public class BootstrapTestsDataService {
         List<String> authoritiesConstants = ROLES.get(login);
 
         if (alreadyExistingUser.isPresent()) {
-            Set<SecRole> allRoleBySecUser = secUserSecRoleRepository.findAllRoleBySecUser(alreadyExistingUser.get());
+            Set<SecRole> allRoleByUser = secSecUserSecRoleRepository.findAllRoleByUser(alreadyExistingUser.get());
             for (String authoritiesConstant : authoritiesConstants) {
-                if (!allRoleBySecUser.stream().anyMatch(x -> x.getAuthority().equals(authoritiesConstant))) {
+                if (!allRoleByUser.stream().anyMatch(x -> x.getAuthority().equals(authoritiesConstant))) {
                     throw new RuntimeException("Cannot execute test because already existing user " + login + "  has not same roles: not present - " + authoritiesConstant);
                 }
             }
-            for (SecRole secRole : allRoleBySecUser) {
+            for (SecRole secRole : allRoleByUser) {
                 if (!authoritiesConstants.stream().anyMatch(x -> x.equals(secRole.getAuthority()))) {
                     throw new RuntimeException("Cannot execute test because already existing user " + login + " has not same roles: should not be there - " + secRole.getAuthority());
                 }
@@ -108,10 +108,10 @@ public class BootstrapTestsDataService {
 
         for (String authority : authoritiesConstants) {
             SecRole secRole = secRoleRepository.getByAuthority(authority);
-            SecUserSecRole secUserSecRole = new SecUserSecRole();
-            secUserSecRole.setSecUser(user);
-            secUserSecRole.setSecRole(secRole);
-            secUserSecRoleRepository.save(secUserSecRole);
+            SecUserSecRole secSecUserSecRole = new SecUserSecRole();
+            secSecUserSecRole.setSecUser(user);
+            secSecUserSecRole.setSecRole(secRole);
+            secSecUserSecRoleRepository.save(secSecUserSecRole);
         }
         userRepository.findById(user.getId()); // flush
         return user;

@@ -16,15 +16,14 @@ package be.cytomine.service.utils;
 * limitations under the License.
 */
 
-import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.AnnotationListing;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.ontology.TermService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.utils.JsonObject;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -47,11 +46,11 @@ public class ParamsService {
 
 //    def imageInstanceService
 //    def termService
-//    def secUserService
+//    def userService
 //    def dataSource
-    private final SecUserService secUserService;
+    private final UserService userService;
 
-    private final SecUserRepository secUserRepository;
+    private final UserRepository userRepository;
 
     private final ImageInstanceService imageInstanceService;
 
@@ -66,12 +65,12 @@ public class ParamsService {
         if(paramsUsers != null && !paramsUsers.equals("null")) {
             if (!paramsUsers.equals("")) {
                 List<Long> userIdsFromParams = Arrays.stream(paramsUsers.split(paramsUsers.contains("_") ? "_" : ",")).map(x -> Long.parseLong(x)).collect(Collectors.toList());
-                return secUserRepository.findAllAllowedUserIdList(project.getId()).stream().distinct().filter(userIdsFromParams::contains).collect(Collectors.toList());
+                return userRepository.findAllAllowedUserIdList(project.getId()).stream().distinct().filter(userIdsFromParams::contains).collect(Collectors.toList());
             } else {
                 return new ArrayList<>();
             }
         } else {
-            return secUserRepository.findAllAllowedUserIdList(project.getId());
+            return userRepository.findAllAllowedUserIdList(project.getId());
         }
     }
 

@@ -29,7 +29,7 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.AclRepository;
 import be.cytomine.repository.security.SecRoleRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.ontology.UserAnnotationService;
@@ -94,7 +94,7 @@ public class ProjectResourceTests {
     SecRoleRepository secRoleRepository;
 
     @Autowired
-    SecUserRepository secUserRepository;
+    UserRepository userRepository;
 
     @BeforeEach
     public void cleanActivities() {

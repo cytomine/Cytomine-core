@@ -28,7 +28,7 @@ import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.utils.JsonObject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +65,7 @@ public class ReportFormatServiceTests {
     ReviewedAnnotationService reviewedAnnotationService;
 
     @Autowired
-    SecUserService secUserService;
+    UserService userService;
 
     @Autowired
     ImageInstanceService imageInstanceService;

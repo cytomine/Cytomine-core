@@ -18,7 +18,7 @@ package be.cytomine.domain.command;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.service.ModelService;
 import be.cytomine.utils.CommandResponse;
 
@@ -34,11 +34,11 @@ import jakarta.persistence.Entity;
 @DiscriminatorValue("be.cytomine.domain.command.AddCommand")
 public class AddCommand extends Command {
 
-    public AddCommand(SecUser currentUser) {
+    public AddCommand(User currentUser) {
         this.user = currentUser;
     }
 
-    public AddCommand(SecUser currentUser, Transaction transaction) {
+    public AddCommand(User currentUser, Transaction transaction) {
         this.user = currentUser;
         this.transaction = transaction;
     }

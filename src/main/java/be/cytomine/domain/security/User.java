@@ -24,11 +24,20 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
+@Table(name = "sec_user")
 @Entity
 @Getter
 @Setter
-@DiscriminatorValue("be.cytomine.domain.security.User")
-public class User extends SecUser {
+public class User extends CytomineDomain {
+
+    @NotNull
+    @NotBlank
+    @Column(nullable = false)
+    protected String username;
 
     @NotNull
     @NotBlank
@@ -40,6 +49,13 @@ public class User extends SecUser {
     @Column(nullable = false)
     protected String name;
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "sec_user_sec_role",
+            joinColumns = { @JoinColumn(name = "sec_user_id") },
+            inverseJoinColumns = { @JoinColumn(name = "sec_role_id") }
+    )
+    private Set<SecRole> roles = new HashSet<>();
 
     /** Deprecated attributes. Kept here for migration **/
     @Deprecated
@@ -61,6 +77,38 @@ public class User extends SecUser {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = true)
     protected User creator;
+
+    @Deprecated
+    protected String password;
+
+    @Deprecated
+    protected String publicKey;
+
+    @Deprecated
+    protected String privateKey;
+
+    @Deprecated
+    protected Boolean enabled = true;
+
+    @Deprecated
+    protected Boolean accountExpired = false;
+
+    @Deprecated
+    protected Boolean accountLocked = false;
+
+    @Deprecated
+    protected Boolean passwordExpired = false;
+
+    @Deprecated
+    protected String origin;
+
+    @Deprecated
+    public void generateKeys() {
+        String privateKey = UUID.randomUUID().toString();
+        String publicKey = UUID.randomUUID().toString();
+        this.setPrivateKey(privateKey);
+        this.setPublicKey(publicKey);
+    }
     /****************************************************/
 
     public String getFullName() {
@@ -109,7 +157,7 @@ public class User extends SecUser {
     }
 
     @Override
-    public SecUser userDomainCreator() {
+    public User userDomainCreator() {
         return this;
     }
 }

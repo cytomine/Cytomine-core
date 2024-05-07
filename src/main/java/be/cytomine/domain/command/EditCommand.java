@@ -18,7 +18,7 @@ package be.cytomine.domain.command;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.service.ModelService;
 import be.cytomine.utils.ClassUtils;
 import be.cytomine.utils.CommandResponse;
@@ -32,7 +32,7 @@ import java.util.HashMap;
 @DiscriminatorValue("be.cytomine.domain.command.EditCommand")
 public class EditCommand extends Command {
 
-    public EditCommand(SecUser currentUser, Transaction transaction) {
+    public EditCommand(User currentUser, Transaction transaction) {
         this.user = currentUser;
         this.transaction = transaction;
     }

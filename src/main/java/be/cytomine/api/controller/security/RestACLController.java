@@ -17,7 +17,7 @@ package be.cytomine.api.controller.security;
 */
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.CytomineException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.security.AclAuthService;
@@ -54,8 +54,8 @@ public class RestACLController extends RestCytomineController {
         try {
             if(domainClassName!=null && domainIdent!=null && user!=null) {
                 //CytomineDomain domain = retrieveCytomineDomain(domainClassName,Long.parseLong(domainIdent));
-                SecUser secUser = entityManager.find(SecUser.class, Long.parseLong(user));
-                return responseSuccess(aclAuthService.get(Long.parseLong(domainIdent),secUser));
+                User userEntity = entityManager.find(User.class, Long.parseLong(user));
+                return responseSuccess(aclAuthService.get(Long.parseLong(domainIdent),userEntity));
             } else {
                 throw new ObjectNotFoundException("Request not valid: domainClassName="+ domainClassName + ", domainIdent= " + domainIdent + ", user=" + user);
             }
@@ -89,7 +89,7 @@ public class RestACLController extends RestCytomineController {
 //        try {
 //            if(params.domainClassName && params.domainIdent && params.user) {
 //                def domain = retrieveCytomineDomain(params.domainClassName,params.long('domainIdent'))
-//                responseSuccess(aclAuthService.get(domain,SecUser.read(params.long('user'))) )
+//                responseSuccess(aclAuthService.get(domain,User.read(params.long('user'))) )
 //            } else {
 //                throw new ObjectNotFoundException("Request not valid: domainClassName=${params.domainClassName}, domainIdent=${params.domainIdent} and user=${params.user}")
 //            }

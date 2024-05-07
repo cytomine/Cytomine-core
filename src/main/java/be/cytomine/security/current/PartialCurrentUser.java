@@ -16,7 +16,7 @@ package be.cytomine.security.current;
 * limitations under the License.
 */
 
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import lombok.Data;
 
 @Data
@@ -35,9 +35,9 @@ public class PartialCurrentUser implements CurrentUser{
     }
 
     @Override
-    public SecUser getUser() {
-        SecUser secUser = new SecUser();
-        secUser.setUsername(username);
-        return secUser;
+    public User getUser() {
+        User user = new User();
+        user.setUsername(username);
+        return user;
     }
 }

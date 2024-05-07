@@ -40,6 +40,7 @@
             ALTER TABLE sec_user ALTER COLUMN enabled  DROP NOT NULL;
             ALTER TABLE sec_user ALTER COLUMN password_expired DROP NOT NULL;
             ALTER TABLE sec_user ALTER COLUMN language DROP NOT NULL;
+            ALTER TABLE sec_user ALTER COLUMN class DROP NOT NULL;
             ALTER TABLE sec_user DROP COLUMN IF EXISTS rate;
             ALTER TABLE sec_user DROP COLUMN IF EXISTS color;
             ALTER TABLE sec_user ADD COLUMN IF NOT EXISTS reference VARCHAR(255); -- not null

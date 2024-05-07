@@ -19,10 +19,10 @@ package be.cytomine.service.database;
 import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.meta.ConfigurationReadingRole;
 import be.cytomine.domain.processing.ImageFilter;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.processing.ImageFilterRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.utils.Dataset;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -44,7 +44,7 @@ public class BootstrapDataService {
     Dataset dataset;
 
     @Autowired
-    SecUserRepository secUserRepository;
+    UserRepository userRepository;
 
     @Autowired
     ApplicationProperties applicationProperties;
@@ -128,11 +128,11 @@ public class BootstrapDataService {
     }
 
     private void changeUserKeys(String username, String privateKey, String publicKey) {
-        SecUser user = secUserRepository.findByUsernameLikeIgnoreCase(username)
+        User user = userRepository.findByUsernameLikeIgnoreCase(username)
                 .orElseThrow(() -> new ObjectNotFoundException(username + " user does not exists, cannot set its keys"));
         user.setPrivateKey(privateKey);
         user.setPublicKey(publicKey);
-        secUserRepository.save(user);
+        userRepository.save(user);
     }
 
     public void updateImageFilters() {

@@ -20,7 +20,6 @@ import be.cytomine.domain.ontology.AnnotationTerm;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.AnnotationAction;
 import be.cytomine.domain.social.PersistentImageConsultation;
@@ -31,7 +30,7 @@ import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.dto.StorageStats;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.project.ProjectService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
 import jakarta.persistence.TypedQuery;
@@ -49,7 +48,6 @@ import jakarta.persistence.Tuple;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -64,7 +62,7 @@ public class StatsService {
     EntityManager entityManager;
 
     @Autowired
-    SecUserService secUserService;
+    UserService userService;
 
     @Autowired
     ProjectService projectService;
@@ -92,7 +90,7 @@ public class StatsService {
     }
 
     public Long numberOfCurrentUsers() {
-        return (long) secUserService.getAllOnlineUsers().size();
+        return (long) userService.getAllOnlineUsers().size();
     }
 
     public Long numberOfActiveProjects() {
@@ -116,7 +114,7 @@ public class StatsService {
             counts.put(project.getName(), 0);
             percentage.put(project.getName(), 0);
 
-            List<Long> layers = secUserService.listLayers(project, null).stream().map(x -> x.getJSONAttrLong("id"))
+            List<Long> layers = userService.listLayers(project, null).stream().map(x -> x.getJSONAttrLong("id"))
                     .collect(Collectors.toList());
 
             if (!layers.isEmpty()) {
@@ -216,7 +214,7 @@ public class StatsService {
         List<Tuple> numberOfAnnotatedImagesByUser = q.getResultList();
         // Build empty result table
         Map<Long, JsonObject> result = new HashMap<Long, JsonObject>();
-        for (JsonObject user : secUserService.listLayers(project, null)) {
+        for (JsonObject user : userService.listLayers(project, null)) {
             JsonObject item = new JsonObject();
             item.put("id", user.get("id"));
             item.put("key", user.get("username"));
@@ -397,7 +395,7 @@ public class StatsService {
 //        List<Object[]> nbAnnotationsByUserAndTerms = criteria.list();
 
 
-        for (SecUser user : secUserService.listUsers(project)) {
+        for (User user : userService.listUsers(project)) {
             JsonObject item = new JsonObject();
             item.put("id", user.getId());
             item.put("key", ((User) user).getUsername());
@@ -483,7 +481,7 @@ public class StatsService {
 //        List<Object[]> userAnnotations = criteria.list();
 
         //build empty result table
-        for (JsonObject user : secUserService.listLayers(project, null)) {
+        for (JsonObject user : userService.listLayers(project, null)) {
             JsonObject item = new JsonObject();
             item.put("id", user.get("id"));
             item.put("key", user.get("username"));
@@ -504,7 +502,7 @@ public class StatsService {
     }
 
     public JsonObject statUsedStorage() {
-        securityACLService.checkAdmin(secUserService.getCurrentUser());
+        securityACLService.checkAdmin(userService.getCurrentUser());
 
         Long used = 0L;
         Long available = 0L;

@@ -17,7 +17,7 @@ package be.cytomine.domain.ontology;
 */
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
@@ -46,14 +46,14 @@ public class AnnotationTerm extends CytomineDomain implements Serializable {
     @NotNull
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
-    private SecUser user;
+    private User user;
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         AnnotationTerm relationTerm = this;
         relationTerm.id = json.getJSONAttrLong("id",null);
         relationTerm.userAnnotation = (UserAnnotation)json.getJSONAttrDomain(entityManager, "userannotation", new UserAnnotation(), true);
         relationTerm.term = (Term)json.getJSONAttrDomain(entityManager, "term", new Term(), true);
-        relationTerm.user = (SecUser)json.getJSONAttrDomain(entityManager, "user", new SecUser(), true);
+        relationTerm.user = (User)json.getJSONAttrDomain(entityManager, "user", new User(), true);
         relationTerm.created = json.getJSONAttrDate("created");
         relationTerm.updated = json.getJSONAttrDate("updated");
 
@@ -63,7 +63,7 @@ public class AnnotationTerm extends CytomineDomain implements Serializable {
         return relationTerm;
     }
 
-    public SecUser userDomainCreator() {
+    public User userDomainCreator() {
         return user;
     }
 

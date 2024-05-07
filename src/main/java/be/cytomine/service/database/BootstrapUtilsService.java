@@ -27,7 +27,7 @@ import be.cytomine.repository.meta.ConfigurationRepository;
 import be.cytomine.repository.ontology.RelationRepository;
 import be.cytomine.repository.processing.ImageFilterRepository;
 import be.cytomine.repository.security.SecRoleRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.image.server.StorageService;
@@ -53,7 +53,7 @@ public class BootstrapUtilsService {
     SecRoleRepository secRoleRepository;
 
     @Autowired
-    SecUserSecRoleRepository secUserSecRoleRepository;
+    SecUserSecRoleRepository secSecUserSecRoleRepository;
 
     @Autowired
     UserRepository userRepository;
@@ -82,15 +82,6 @@ public class BootstrapUtilsService {
     @Autowired
     EntityManager entityManager;
 
-    @Autowired
-    SecUserRepository secUserRepository;
-
-    @Autowired
-    private Environment environment;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
     public void createRole(String role) {
         secRoleRepository.createIfNotExist(role);
     }
@@ -107,10 +98,10 @@ public class BootstrapUtilsService {
             user = userRepository.save(user);
 
             for (String role : roles) {
-                SecUserSecRole secUserSecRole = new SecUserSecRole();
-                secUserSecRole.setSecRole(secRoleRepository.getByAuthority(role));
-                secUserSecRole.setSecUser(user);
-                secUserSecRoleRepository.save(secUserSecRole);
+                SecUserSecRole secSecUserSecRole = new SecUserSecRole();
+                secSecUserSecRole.setSecRole(secRoleRepository.getByAuthority(role));
+                secSecUserSecRole.setSecUser(user);
+                secSecUserSecRoleRepository.save(secSecUserSecRole);
             }
 
             storageService.initUserStorage(user);

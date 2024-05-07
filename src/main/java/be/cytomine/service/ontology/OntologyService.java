@@ -21,7 +21,7 @@ import be.cytomine.domain.command.*;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.repository.ontology.OntologyRepository;
@@ -29,7 +29,7 @@ import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -68,7 +68,7 @@ public class OntologyService extends ModelService {
     private PermissionService permissionService;
 
     @Autowired
-    private SecUserService secUserService;
+    private UserService userService;
 
     public Ontology get(Long id) {
         return find(id).orElse(null);
@@ -104,7 +104,7 @@ public class OntologyService extends ModelService {
 
     @Override
     public CommandResponse add(JsonObject jsonObject) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         jsonObject.put("user", currentUser.getId());
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
@@ -112,7 +112,7 @@ public class OntologyService extends ModelService {
 
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain,WRITE);
         securityACLService.checkUser(currentUser);
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
@@ -120,7 +120,7 @@ public class OntologyService extends ModelService {
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain,DELETE);
         securityACLService.checkUser(currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
@@ -141,15 +141,15 @@ public class OntologyService extends ModelService {
         return List.of(domain.getId(), ((Ontology)domain).getName());
     }
 
-    public void determineRightsForUsers(Ontology ontology, List<SecUser> users) {
-        for (SecUser user : users) {
+    public void determineRightsForUsers(Ontology ontology, List<User> users) {
+        for (User user : users) {
             determineRightsForUser(ontology, user);
         }
     }
 
-    public void determineRightsForUser(Ontology ontology, SecUser user) {
+    public void determineRightsForUser(Ontology ontology, User user) {
         List<Project> projects = projectRepository.findAllByOntology(ontology);
-        if(projects.stream().anyMatch(project -> secUserService.listAdmins(project).contains(user))) {
+        if(projects.stream().anyMatch(project -> userService.listAdmins(project).contains(user))) {
             permissionService.addPermission(ontology, user.getUsername(), BasePermission.ADMINISTRATION);
         } else {
             if (ontology.getUser()!=user) {
@@ -157,7 +157,7 @@ public class OntologyService extends ModelService {
                 permissionService.deletePermission(ontology, user.getUsername(), BasePermission.ADMINISTRATION);
             }
         }
-        if(projects.stream().anyMatch(project -> secUserService.listUsers(project).contains(user))) {
+        if(projects.stream().anyMatch(project -> userService.listUsers(project).contains(user))) {
             permissionService.addPermission(ontology, user.getUsername(), BasePermission.READ);
         } else {
             if (ontology.getUser()!=user) {

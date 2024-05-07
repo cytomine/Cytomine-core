@@ -16,9 +16,8 @@ package be.cytomine.security;
 * limitations under the License.
 */
 
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.ForbiddenException;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.domain.security.User;
+import be.cytomine.repository.security.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +28,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
@@ -43,7 +41,7 @@ public class DomainUserDetailsService implements UserDetailsService {
 
     private final Logger log = LoggerFactory.getLogger(DomainUserDetailsService.class);
 
-    private final SecUserRepository secUserRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -51,12 +49,12 @@ public class DomainUserDetailsService implements UserDetailsService {
         log.debug("Authenticating {}", login);
 
         String lowercaseLogin = login.toLowerCase(Locale.ENGLISH);
-        return secUserRepository.findByUsernameLikeIgnoreCase(lowercaseLogin)
+        return userRepository.findByUsernameLikeIgnoreCase(lowercaseLogin)
                 .map(user -> createSpringSecurityUser(lowercaseLogin, user))
                 .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLogin + " was not found in the database"));
 
     }
-    private org.springframework.security.core.userdetails.User createSpringSecurityUser(String lowercaseLogin, SecUser user) {
+    private org.springframework.security.core.userdetails.User createSpringSecurityUser(String lowercaseLogin, User user) {
 //        if (!user.getEnabled()) {
 //            throw new ForbiddenException("User " + lowercaseLogin + " was not permitted");
 //        }

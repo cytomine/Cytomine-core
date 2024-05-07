@@ -17,9 +17,7 @@ package be.cytomine.api.controller.utils;
 */
 
 import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
-import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.*;
 import be.cytomine.service.AnnotationListingService;
@@ -27,7 +25,7 @@ import be.cytomine.service.dto.AnnotationResult;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.utils.GeometryUtils;
 import be.cytomine.utils.JsonObject;
@@ -44,7 +42,7 @@ import java.util.stream.Collectors;
 @Component
 public class AnnotationListingBuilder {
 
-    private final SecUserService secUserService;
+    private final UserService userService;
 
     private final EntityManager entityManager;
 
@@ -225,7 +223,7 @@ public class AnnotationListingBuilder {
         Set<String> userNames = new HashSet<>();
         for (String userId : users.split(",")){
             if(!userId.isEmpty()){
-                userNames.add(secUserService.get(Long.parseLong(userId)).getUsername());
+                userNames.add(userService.get(Long.parseLong(userId)).getUsername());
             }
         }
         return userNames;

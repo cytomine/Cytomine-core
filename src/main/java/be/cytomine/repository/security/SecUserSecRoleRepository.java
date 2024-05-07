@@ -17,7 +17,7 @@ package be.cytomine.repository.security;
 */
 
 import be.cytomine.domain.security.SecRole;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.domain.security.SecUserSecRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -35,9 +35,9 @@ import java.util.Set;
 public interface SecUserSecRoleRepository extends JpaRepository<SecUserSecRole, Long>, JpaSpecificationExecutor<SecUserSecRole> {
 
     @Query("select distinct s.secRole from SecUserSecRole s where s.secUser = ?1")
-    Set<SecRole> findAllRoleBySecUser(SecUser user);
+    Set<SecRole> findAllRoleByUser(User user);
 
-    List<SecUserSecRole> findAllBySecUser(SecUser user);
+    List<SecUserSecRole> findAllBySecUser(User user);
 
-    Optional<SecUserSecRole> findBySecUserAndSecRole(SecUser user, SecRole secRole);
+    Optional<SecUserSecRole> findBySecUserAndSecRole(User user, SecRole secRole);
 }

@@ -20,7 +20,6 @@ import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.command.CommandHistory;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.OntologyRepository;
@@ -29,7 +28,7 @@ import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.search.ProjectSearchExtension;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
@@ -59,7 +58,7 @@ public class RestProjectController extends RestCytomineController {
     private final CurrentRoleService currentRoleService;
     
     private final OntologyRepository ontologyRepository;
-    private final SecUserService secUserService;
+    private final UserService userService;
 
     /**
      * List all ontology visible for the current user
@@ -78,7 +77,7 @@ public class RestProjectController extends RestCytomineController {
 
     ) {
         log.debug("REST request to list projects");
-        SecUser user = currentUserService.getCurrentUser();
+        User user = currentUserService.getCurrentUser();
 
         if(currentRoleService.isAdminByNow(user)) {
             //if user is admin, we print all available project
@@ -193,7 +192,7 @@ public class RestProjectController extends RestCytomineController {
 
     ) {
         log.debug("REST request to list project with user {}", id);
-        User user = secUserService.findUser(id)
+        User user = userService.findUser(id)
                 .orElseThrow(() -> new ObjectNotFoundException("User", id));
         Page<JsonObject> result = projectService.list(user, new ProjectSearchExtension(), new ArrayList<>(), "created", "desc", max, offset);
         return responseSuccess(result);
@@ -211,7 +210,7 @@ public class RestProjectController extends RestCytomineController {
 
     ) {
         log.debug("REST request to list project with user {}", id);
-        User requestedUser = secUserService.findUser(id)
+        User requestedUser = userService.findUser(id)
                 .orElseThrow(() -> new ObjectNotFoundException("User", id));
 
         if(creator) {

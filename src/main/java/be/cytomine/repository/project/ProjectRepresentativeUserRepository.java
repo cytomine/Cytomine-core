@@ -18,7 +18,6 @@ package be.cytomine.repository.project;
 
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -34,5 +33,5 @@ public interface ProjectRepresentativeUserRepository extends JpaRepository<Proje
 
     List<ProjectRepresentativeUser> findAllByProject(Project project);
 
-    List<ProjectRepresentativeUser> findAllByUser(SecUser user);
+    List<ProjectRepresentativeUser> findAllByUser(User user);
 }

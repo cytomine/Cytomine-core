@@ -17,7 +17,6 @@ package be.cytomine.domain.project;
 */
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
@@ -48,7 +47,7 @@ public class ProjectDefaultLayer extends CytomineDomain {
         ProjectDefaultLayer projectDefaultLayer = this;
         projectDefaultLayer.setId(json.getJSONAttrLong("id",null));
         projectDefaultLayer.setProject((Project) json.getJSONAttrDomain(entityManager, "project", new Project(), true));
-        projectDefaultLayer.setUser((User) json.getJSONAttrDomain(entityManager, "user", new SecUser(), true));
+        projectDefaultLayer.setUser((User) json.getJSONAttrDomain(entityManager, "user", new User(), true));
         projectDefaultLayer.setHideByDefault(json.getJSONAttrBoolean("hideByDefault", false));
         return projectDefaultLayer;
     }

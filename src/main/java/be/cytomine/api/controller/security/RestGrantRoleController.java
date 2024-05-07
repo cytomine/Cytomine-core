@@ -17,7 +17,7 @@ package be.cytomine.api.controller.security;
 */
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.AuthInformation;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
@@ -67,7 +67,7 @@ public class RestGrantRoleController extends RestCytomineController {
 
 
     public AuthInformation getCurrentRole() {
-        SecUser user = currentUserService.getCurrentUser();
+        User user = currentUserService.getCurrentUser();
         AuthInformation authInformation = new AuthInformation();
         authInformation.setAdmin(currentRoleService.isAdmin(user));
         authInformation.setUser(!authInformation.getAdmin() && currentRoleService.isUser(user));

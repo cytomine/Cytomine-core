@@ -23,7 +23,6 @@ import be.cytomine.domain.command.DeleteCommand;
 import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.SharedAnnotation;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
@@ -136,7 +135,7 @@ public class SharedAnnotationService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkFullOrRestrictedForOwner(domain.container(),((SharedAnnotation)domain).getSender());
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);

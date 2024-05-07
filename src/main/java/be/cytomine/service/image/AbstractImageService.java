@@ -22,7 +22,7 @@ import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -133,7 +133,7 @@ public class AbstractImageService extends ModelService {
     }
 
 
-    public SecUser getImageUploader(Long abstractImageId) {
+    public User getImageUploader(Long abstractImageId) {
         AbstractImage abstractImage = find(abstractImageId).orElseThrow(() -> new ObjectNotFoundException("AbstractImage", abstractImageId));
         return Optional.ofNullable(abstractImage.getUploadedFile()).map(UploadedFile::getUser).orElse(null);
     }
@@ -198,7 +198,7 @@ public class AbstractImageService extends ModelService {
      */
     public CommandResponse add(JsonObject json) {
         transactionService.start();
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
 
         if (!json.isMissing("uploadedFile")) {
@@ -216,7 +216,7 @@ public class AbstractImageService extends ModelService {
      */
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),WRITE);
 
         JsonObject versionBeforeUpdate = domain.toJsonObject();
@@ -286,7 +286,7 @@ public class AbstractImageService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(),WRITE);
 

@@ -2,7 +2,7 @@ package be.cytomine.service.appengine;
 
 import be.cytomine.domain.appengine.TaskRun;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.appengine.TaskRunRepository;
 import be.cytomine.service.CurrentUserService;
@@ -44,7 +44,7 @@ public class TaskRunService {
 
     public ResponseEntity<String> addTaskRun(Long projectId, String uri) {
         Project project = projectService.get(projectId);
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(project, READ);
         securityACLService.checkIsNotReadOnly(project);
@@ -73,7 +73,7 @@ public class TaskRunService {
             throw new ObjectNotFoundException("TaskRun", taskRunId);
         }
 
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         Project project = projectService.get(projectId);
 
         securityACLService.checkUser(currentUser);

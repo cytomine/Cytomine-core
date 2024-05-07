@@ -21,8 +21,7 @@ import be.cytomine.api.controller.utils.RequestParams;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
@@ -32,7 +31,7 @@ import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.search.ImageSearchExtension;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +39,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.io.ParseException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.cloud.gateway.mvc.ProxyExchange;
 
 import java.io.IOException;
@@ -58,7 +56,7 @@ public class RestImageInstanceController extends RestCytomineController {
 
     private final ImageServerService imageServerService;
 
-    private final SecUserService secUserService;
+    private final UserService userService;
     
     private final SliceCoordinatesService sliceCoordinatesService;
 
@@ -83,10 +81,10 @@ public class RestImageInstanceController extends RestCytomineController {
             @PathVariable Long id
     ) {
         log.debug("REST request to get image instance by user {}", id);
-        SecUser secUser = secUserService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("SecUser", id));
+        User user = userService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("User", id));
         RequestParams requestParams = retrievePageableParameters();
-        return responseSuccess(imageInstanceService.list(secUser, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax()));
+        return responseSuccess(imageInstanceService.list(user, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax()));
     }
 
     @GetMapping("/user/{id}/imageinstance/light.json")
@@ -94,12 +92,12 @@ public class RestImageInstanceController extends RestCytomineController {
             @PathVariable Long id
     ) {
         log.debug("REST request to get image instance light by user {}", id);
-        SecUser secUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         if (id != 0) {
-            secUser = secUserService.find(id)
-                    .orElseThrow(() -> new ObjectNotFoundException("SecUser", id));
+            currentUser = userService.find(id)
+                    .orElseThrow(() -> new ObjectNotFoundException("User", id));
         }
-        return responseSuccess(imageInstanceService.listLight(secUser));
+        return responseSuccess(imageInstanceService.listLight(currentUser));
     }
 
     @GetMapping("/project/{id}/imageinstance.json")

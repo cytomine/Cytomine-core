@@ -21,7 +21,7 @@ import be.cytomine.api.controller.utils.AnnotationListingBuilder;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.*;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.SimplifiedAnnotation;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -34,7 +34,7 @@ import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.GenericAnnotationService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.ontology.UserAnnotationService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.utils.GeometryUtils;
@@ -61,7 +61,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
 
     private final GenericAnnotationService genericAnnotationService;
 
-    private final SecUserService secUserService;
+    private final UserService userService;
 
     private final EntityManager entityManager;
     
@@ -265,9 +265,9 @@ public class RestAnnotationDomainController extends RestCytomineController {
 
         //get user
         Long idUser = params.getJSONAttrLong("user");
-        SecUser user = null;
+        User user = null;
         if (idUser!=0) {
-            user = secUserService.find(params.getJSONAttrLong("user")).orElse(null);
+            user = userService.find(params.getJSONAttrLong("user")).orElse(null);
         }
 
         //get term
@@ -315,7 +315,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
                                       @RequestParam(required = false) Long maxPoint
     ) throws IOException {
         log.debug("REST request to create new annotation(s)");
-        SecUser secUser = secUserService.getCurrentUser();
         if(roi) {
             throw new CytomineMethodNotYetImplementedException("ROI annotation not yet implemented");
         } else {

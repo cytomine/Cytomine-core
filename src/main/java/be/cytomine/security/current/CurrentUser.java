@@ -16,7 +16,7 @@ package be.cytomine.security.current;
 * limitations under the License.
 */
 
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 
 public interface CurrentUser {
 
@@ -24,5 +24,5 @@ public interface CurrentUser {
 
     boolean isUsernameProvided();
 
-    SecUser getUser();
+    User getUser();
 }

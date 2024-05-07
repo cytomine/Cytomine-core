@@ -23,7 +23,7 @@ import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.Track;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import lombok.Getter;
@@ -422,7 +422,7 @@ public abstract class AnnotationListing {
 
     String getUserConst() {
         if (user!=null) {
-            if (entityManager.find(SecUser.class, user)==null) {
+            if (entityManager.find(User.class, user)==null) {
                 throw new ObjectNotFoundException("User "+user+" not exist!");
             }
             return "AND a.user_id = "+user+"\n";
