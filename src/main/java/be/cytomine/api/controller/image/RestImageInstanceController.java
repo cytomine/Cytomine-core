@@ -485,21 +485,6 @@ public class RestImageInstanceController extends RestCytomineController {
     }
 
 
-//    protected void processElementsBeforeRendering(JsonObject jsonObject) {
-//        boolean filterEnabled = false;
-//        RequestParams requestParams = retrieveRequestParam();
-//
-//        if (requestParams.containsKey("project")) {
-//            Project project = projectService.find(Long.parseLong(requestParams.get("id")))
-//                    .orElseThrow(() -> new ObjectNotFoundException("Project",requestParams.get("id" )));
-//            filterEnabled = project.getBlindMode();
-//        } else if(requestParams.containsKey("id")) { //TODO!!! WTF??? && !(["windowUrl", "cameraUrl", "getReferenceSlice"].contains(params.action.GET))
-////            project = ImageInstance.read(params.long("id"))?.project
-////            if(project) filterEnabled = project.blindMode
-//        }
-//    }
-
-
     protected void filterOneElement(Map<String, Object> element) {
         element.put("instanceFilename", null);
         element.put("filename", null);

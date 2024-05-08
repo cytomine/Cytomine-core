@@ -317,9 +317,6 @@ public class RestStatsController extends RestCytomineController {
         result.put("jobAnnotations", 0);
         result.put("terms", statsService.total(Term.class));
         result.put("ontologies", statsService.total(Ontology.class));
-        //TODO
-//        result.put("softwares", statsService.total(Software.class));
-//        result.put("jobs", statsService.total(Job.class));
 
         return responseSuccess(result);
     }

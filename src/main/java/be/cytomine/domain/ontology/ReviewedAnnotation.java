@@ -133,11 +133,6 @@ public class ReviewedAnnotation extends AnnotationDomain implements Serializable
     }
 
     @Override
-    public boolean isRoiAnnotation() {
-        return false;
-    }
-
-    @Override
     public List<Term> termsForReview() {
         return terms;
     }

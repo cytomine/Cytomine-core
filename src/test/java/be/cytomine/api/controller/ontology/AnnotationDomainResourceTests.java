@@ -1035,8 +1035,6 @@ public class AnnotationDomainResourceTests {
         assertThat(rows.length).isEqualTo(2);
     }
 
-    //TODO Download algo annotations
-
     @Test
     @Transactional
     public void download_csv_reports() throws Exception {

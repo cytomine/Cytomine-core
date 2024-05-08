@@ -95,9 +95,6 @@ public class AnnotationListingBuilder {
         if(isReviewedAnnotationAsked(params)) {
             al = new ReviewedAnnotationListing(entityManager);
         }
-        else if(isRoiAnnotationAsked(params)) {
-            al = new RoiAnnotationListing(entityManager);
-        }
         else {
             al = new UserAnnotationListing(entityManager);
         }
@@ -194,13 +191,6 @@ public class AnnotationListingBuilder {
      */
     private boolean isReviewedAnnotationAsked(JsonObject params) {
         return params.getJSONAttrBoolean("reviewed", false);
-    }
-
-    /**
-     * Check if we ask reviewed annotation
-     */
-    private boolean isRoiAnnotationAsked(JsonObject params) {
-        return params.getJSONAttrBoolean("roi", false);
     }
 
     /**

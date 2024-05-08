@@ -144,8 +144,6 @@ public class RestUserController extends RestCytomineController {
     // TODO IAM: only return display name + new endpoint for account
     @GetMapping("/user.json")
     public ResponseEntity<String> list(
-//            @RequestParam(value = "publicKey", required = false) String publicKey, //TODO IAM: remove
-//            @RequestParam(value = "withRoles", defaultValue = "false", required = false) Boolean withRoles, //TODO IAM: only for admin
             @RequestParam(value = "sort", defaultValue = "username", required = false) String sortColumn,
             @RequestParam(value = "order", defaultValue = "asc", required = false) String sortDirection,
             @RequestParam(value = "offset", defaultValue = "0", required = false) Long offset,
@@ -220,7 +218,6 @@ public class RestUserController extends RestCytomineController {
     }
 
 
-    // TODO IAM: only return display name
     @GetMapping("/project/{id}/user.json")
     public ResponseEntity<String> showByProject(
             @PathVariable Long id,
@@ -245,8 +242,6 @@ public class RestUserController extends RestCytomineController {
                 userService.listUsersExtendedByProject(project, userSearchExtension, retrieveSearchParameters(), sortColumn, sortDirection, max, offset)
                 , isFilterRequired()
         );
-
-        //return responseSuccess(projectService.list(user, projectSearchExtension, new ArrayList<>(), "created", "desc", 0L, 0L), allParams);
     }
 
 

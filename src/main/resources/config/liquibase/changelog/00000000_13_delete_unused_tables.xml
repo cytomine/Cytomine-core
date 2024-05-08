@@ -27,12 +27,12 @@
             DROP TABLE IF EXISTS news;
             DROP TABLE IF EXISTS search_engine_filter;
 
+            DROP TABLE IF EXISTS roi_annotation;
+
             DROP TABLE IF EXISTS auth_with_token;
             DROP TABLE IF EXISTS forgot_password_token;
             DROP TABLE IF EXISTS user_group;
             DROP TABLE IF EXISTS "group";
-            -- ?? DROP TABLE IF EXISTS sec_user_sec_role;
-            -- ?? DROP TABLE IF EXISTS sec_role;
 
             ALTER TABLE sec_user ALTER COLUMN password DROP NOT NULL;
             ALTER TABLE sec_user ALTER COLUMN account_expired  DROP NOT NULL;

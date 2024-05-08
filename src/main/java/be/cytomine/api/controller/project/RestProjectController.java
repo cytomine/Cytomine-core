@@ -154,20 +154,6 @@ public class RestProjectController extends RestCytomineController {
         return responseSuccess(projectService.listLastOpened((User) currentUserService.getCurrentUser(), max));
     }
 
-    // TODO:
-//    /**
-//     * List all project available for this user, that can use a software
-//     */
-//    @GetMapping("/software/{id}/project.json")
-//    public ResponseEntity<String> listBySoftware(
-//            @PathVariable Long id
-//    ) {
-//        log.debug("REST request to list last project actions");
-//        Project project = projectRepository.findById(id)
-//                .orElseThrow(() -> new ObjectNotFoundException("Project", id));
-//        return responseSuccess(projectService.listBySoftware(project));
-//    }
-
     /**
      * List all project available for this user, that use a ontology
      */
