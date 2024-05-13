@@ -80,7 +80,6 @@ import java.util.stream.Collectors;
 
 import static org.springframework.security.acls.domain.BasePermission.*;
 
-// TODO IAM: adapt
 @Slf4j
 @Service
 @Transactional

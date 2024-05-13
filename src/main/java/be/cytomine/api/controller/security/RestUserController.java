@@ -49,7 +49,6 @@ import java.util.stream.Collectors;
 
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
-// TODO IAM: adapt
 @RestController
 @RequestMapping("/api")
 @Slf4j
