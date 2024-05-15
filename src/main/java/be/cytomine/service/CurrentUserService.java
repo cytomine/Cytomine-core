@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+// TODO IAM: adapt to get the Cytomine user from IAM reference
 @Slf4j
 @Service
 public class CurrentUserService {
@@ -40,7 +41,6 @@ public class CurrentUserService {
     @Autowired
     private UserRepository userRepository;
 
-    // TODO IAM: get data from IAM
     public String getCurrentUsername() {
         CurrentUser currentUser = getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
         if (currentUser.isFullObjectProvided() || currentUser.isUsernameProvided()) {
@@ -50,7 +50,6 @@ public class CurrentUserService {
         }
     }
 
-    // TODO IAM: get data from IAM
     public User getCurrentUser() {
         CurrentUser currentUser = getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
         User user;

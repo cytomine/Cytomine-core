@@ -144,7 +144,6 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(userService.listUsers(storage), isFilterRequired());
     }
 
-    // TODO IAM: only return display name + new endpoint for account
     @GetMapping("/user.json")
     public ResponseEntity<String> list(
             @RequestParam(value = "sort", defaultValue = "username", required = false) String sortColumn,
@@ -214,7 +213,7 @@ public class RestUserController extends RestCytomineController {
     /******************************************************************************************************************/
 
 
-    // TODO IAM: endpoint for my account
+    // TODO IAM: remove in favor of OIDC userinfo endpoint
     @GetMapping("/user/current.json")
     public ResponseEntity<String> getCurrentUser(
     ) {
@@ -222,21 +221,21 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(currentUserService.getCurrentUser());
     }
 
-    //TODO IAM: delegate to IAM
+    //TODO IAM: refactor so that only ADMIN role can create IAM ACCOUNT
     @PostMapping("/user.json")
     public ResponseEntity<String> createUser(@RequestBody String json) {
         log.debug("REST request to save User : " + json);
         return add(userService, json);
     }
 
-    //TODO IAM: delegate to IAM
+    //TODO IAM: refactor so that only ADMIN role can modify IAM ACCOUNT
     @PutMapping("/user/{id}.json")
     public ResponseEntity<String> updateUser(@PathVariable String id, @RequestBody JsonObject json) {
         log.debug("REST request to update User : {}", id);
         return update(userService, json);
     }
 
-    //TODO IAM: delegate to IAM
+    //TODO IAM: refactor so that only ADMIN role can delete IAM ACCOUNT
     @DeleteMapping("/user/{id}.json")
     public ResponseEntity<String> deleteUser(@PathVariable String id) {
         log.debug("REST request to delete User: {}", id);

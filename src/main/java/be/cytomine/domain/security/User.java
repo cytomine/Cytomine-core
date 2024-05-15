@@ -42,6 +42,7 @@ public class User extends CytomineDomain {
     @NotNull
     @NotBlank
     @Column(nullable = false)
+    // The reference of the linked account in IAM
     protected String reference; //TODO IAM: should be UUID type
 
     @NotNull

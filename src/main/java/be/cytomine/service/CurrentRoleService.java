@@ -32,7 +32,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
-// TODO IAM: refactor
+// TODO IAM - ADMIN SESSION ADAPT IF NEEDED
 @Service
 public class CurrentRoleService {
 

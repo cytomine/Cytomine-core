@@ -58,37 +58,33 @@ public class ServerController extends RestCytomineController {
 
     private final LastConnectionRepository lastConnectionRepository;
 
-    //@Secured("IS_AUTHENTICATED_REMEMBERED") //TODO????
     @RequestMapping(value = {"/server/ping.json", "/server/ping"}, method = {RequestMethod.GET, RequestMethod.POST}) // without.json is deprecated
     public ResponseEntity<String> ping(HttpSession session) throws IOException {
         log.debug("REST request to ping");
         JsonObject json = super.mergeQueryParamsAndBodyParams();
         JsonObject response = new JsonObject();
         response.put("alive", true);
-        response.put("authenticated", isAuthenticated());
         response.put("version", applicationProperties.getVersion());
         response.put("serverURL", applicationProperties.getServerURL());
         response.put("serverID", applicationProperties.getServerId());
 
-        // TODO IAM: refactor
-        if (isAuthenticated()) {
-            User user = currentUserService.getCurrentUser();
-            response.put("user", user.getId());
-//            response.put("shortTermToken", tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM));
-
-//            if (!user.getEnabled()) {
-//                log.info("Disabled user. Invalidation of its sessions");
-//                session.invalidate();
+        // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+//        if (isAuthenticated()) {
+//            User user = currentUserService.getCurrentUser();
+//            response.put("user", user.getId());
+////            response.put("shortTermToken", tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM));
+//
+////            if (!user.getEnabled()) {
+////                log.info("Disabled user. Invalidation of its sessions");
+////                session.invalidate();
+////            }
+//            Long idProject = null;
+//            if(!json.getJSONAttrStr("project", "null").equals("null")) {
+//                idProject = json.getJSONAttrLong("project");
 //            }
-            Long idProject = null;
-            if(!json.getJSONAttrStr("project", "null").equals("null")) {
-                idProject = json.getJSONAttrLong("project");
-            }
-            addLastConnection(user, idProject);
-        }
+//            addLastConnection(user, idProject);
+//        }
         return JsonResponseEntity.status(HttpStatus.OK).body(response.toJsonString());
-
-        //{"alive":true,"authenticated":true,"version":"0.0.0","serverURL":"https://demo.cytomine.com","serverID":"938a336f-d600-48ac-9c3a-aaedc03a9f84","user":6399285}
     }
 
     public static boolean isAuthenticated() {

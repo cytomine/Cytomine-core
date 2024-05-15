@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpSession;
 
-// TODO IAM: refactor
+// TODO IAM - ADMIN SESSION ADAPT IF NEEDED
 @RestController
 @RequestMapping("")
 @Slf4j

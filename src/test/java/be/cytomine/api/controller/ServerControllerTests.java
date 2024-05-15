@@ -72,15 +72,14 @@ public class ServerControllerTests {
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.header().string("Content-type", "application/json"))
                 .andExpect(jsonPath("$.alive").value(true))
-                .andExpect(jsonPath("$.authenticated").value(true))
                 .andExpect(jsonPath("$.version").hasJsonPath())
                 .andExpect(jsonPath("$.serverURL").hasJsonPath())
-                .andExpect(jsonPath("$.serverID").hasJsonPath())
-                .andExpect(jsonPath("$.user").value(builder.given_superadmin().getId()));
+                .andExpect(jsonPath("$.serverID").hasJsonPath());
 
-        List<LastConnection> lastConnection = lastConnectionRepository.findByUserOrderByCreatedDesc(builder.given_superadmin().getId());
-        assertThat(lastConnection).hasSize(1);
-        assertThat(lastConnection.get(0).getProject()).isNull();
+        // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+//        List<LastConnection> lastConnection = lastConnectionRepository.findByUserOrderByCreatedDesc(builder.given_superadmin().getId());
+//        assertThat(lastConnection).hasSize(1);
+//        assertThat(lastConnection.get(0).getProject()).isNull();
     }
 
     @Test
@@ -91,15 +90,14 @@ public class ServerControllerTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alive").value(true))
-                .andExpect(jsonPath("$.authenticated").value(true))
                 .andExpect(jsonPath("$.version").hasJsonPath())
                 .andExpect(jsonPath("$.serverURL").hasJsonPath())
-                .andExpect(jsonPath("$.serverID").hasJsonPath())
-                .andExpect(jsonPath("$.user").value(builder.given_superadmin().getId()));
+                .andExpect(jsonPath("$.serverID").hasJsonPath());
 
-        List<LastConnection> lastConnection = lastConnectionRepository.findByUserOrderByCreatedDesc(builder.given_superadmin().getId());
-        assertThat(lastConnection).hasSize(1);
-        assertThat(lastConnection.get(0).getProject()).isNull();
+        // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+//        List<LastConnection> lastConnection = lastConnectionRepository.findByUserOrderByCreatedDesc(builder.given_superadmin().getId());
+//        assertThat(lastConnection).hasSize(1);
+//        assertThat(lastConnection.get(0).getProject()).isNull();
     }
 
     @Test
@@ -113,15 +111,14 @@ public class ServerControllerTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alive").value(true))
-                .andExpect(jsonPath("$.authenticated").value(true))
                 .andExpect(jsonPath("$.version").hasJsonPath())
                 .andExpect(jsonPath("$.serverURL").hasJsonPath())
-                .andExpect(jsonPath("$.serverID").hasJsonPath())
-                .andExpect(jsonPath("$.user").value(builder.given_superadmin().getId()));
+                .andExpect(jsonPath("$.serverID").hasJsonPath());
 
-        List<LastConnection> lastConnection = lastConnectionRepository.findByUserOrderByCreatedDesc(builder.given_superadmin().getId());
-        assertThat(lastConnection).hasSize(1);
-        assertThat(lastConnection.get(0).getProject()).isEqualTo(project.getId());
+        //TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+//        List<LastConnection> lastConnection = lastConnectionRepository.findByUserOrderByCreatedDesc(builder.given_superadmin().getId());
+//        assertThat(lastConnection).hasSize(1);
+//        assertThat(lastConnection.get(0).getProject()).isEqualTo(project.getId());
 
     }
 
@@ -134,13 +131,13 @@ public class ServerControllerTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alive").value(true))
-                .andExpect(jsonPath("$.authenticated").value(false))
                 .andExpect(jsonPath("$.version").hasJsonPath())
                 .andExpect(jsonPath("$.serverURL").hasJsonPath())
                 .andExpect(jsonPath("$.serverID").hasJsonPath())
                 .andExpect(jsonPath("$.user").doesNotExist());
 
-        assertThat(lastConnectionRepository.count()).isEqualTo(0);
+//         TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+//        assertThat(lastConnectionRepository.count()).isEqualTo(0);
     }
 
     @Test

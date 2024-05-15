@@ -257,7 +257,7 @@ public class UserService extends ModelService {
         return authInformation;
     }
 
-    // TODO IAM: simplify
+    // TODO 2024.2
     public Page<Map<String, Object>> list(List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
 
         securityACLService.checkGuest(currentUserService.getCurrentUser());
@@ -770,7 +770,7 @@ public class UserService extends ModelService {
      * @param json New domain data
      * @return Response structure (created domain data,..)
      */
-    // TODO IAM: refactor
+    // TODO IAM: refactor. ADMIN ROLE can create IAM account (and create the underlying Cytomine user to the cache)
     public CommandResponse add(JsonObject json) {
         synchronized (this.getClass()) {
             User currentUser = currentUserService.getCurrentUser();
@@ -792,7 +792,7 @@ public class UserService extends ModelService {
      * @param jsonNewData New domain datas
      * @return Response structure (new domain data, old domain data..)
      */
-    // TODO IAM: refactor
+    // TODO IAM: refactor. ADMIN ROLE can update an IAM account (and update the underlying Cytomine user to the cache)
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkIsCreator((User) domain, currentUser);
@@ -808,7 +808,7 @@ public class UserService extends ModelService {
      * @param printMessage Flag if client will print or not confirm message
      * @return Response structure (code, old domain,..)
      */
-    // TODO IAM: refactor
+    // TODO IAM: refactor. ADMIN ROLE can delete IAM account (and delete the underlying Cytomine user from the cache)
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
         User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkAdmin(currentUser);
@@ -833,7 +833,7 @@ public class UserService extends ModelService {
         return Arrays.asList(String.valueOf(user.getId()), user.getUsername());
     }
 
-    // TODO IAM: refactor
+    // TODO IAM: refactor: the unique constraint must be on IAM reference
     public void checkDoNotAlreadyExist(CytomineDomain domain) {
         User user = (User) domain;
         if (user.getUsername()==null) {

@@ -70,7 +70,7 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
 
             Map<String, String> params = StringUtils.splitQuery(request.getURI().toURL());
 
-            // TODO IAM
+            // TODO IAM - validate token passed as query parameter
 //            Authentication authentication = tokenProvider.getAuthentication(resolveToken(params.get("Authorization")));
 //            SecurityContextHolder.getContext().setAuthentication(authentication);
 
