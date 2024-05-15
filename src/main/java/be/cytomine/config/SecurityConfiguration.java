@@ -18,7 +18,6 @@ package be.cytomine.config;
 
 import be.cytomine.config.security.ApiKeyFilter;
 import be.cytomine.repository.security.UserRepository;
-import be.cytomine.security.DomainUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -43,13 +42,9 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfiguration {
-
-    private final DomainUserDetailsService domainUserDetailsService;
-
     private final UserRepository userRepository;
 
-    public SecurityConfiguration(DomainUserDetailsService domainUserDetailsService, UserRepository userRepository) {
-        this.domainUserDetailsService = domainUserDetailsService;
+    public SecurityConfiguration(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
     
@@ -88,20 +83,20 @@ public class SecurityConfiguration {
      * @return
      * @throws Exception
      */
-    @Bean
-    public AuthenticationManager authManager(UserDetailsService detailsService) {
-        // TODO IAM: adapt
-        DaoAuthenticationProvider daoProvider = new DaoAuthenticationProvider();
-        daoProvider.setUserDetailsService(detailsService);
-        daoProvider.setPasswordEncoder(passwordEncoder());
-        return new ProviderManager(daoProvider);
-    }
+//    @Bean
+//    public AuthenticationManager authManager(UserDetailsService detailsService) {
+//        // TODO IAM: adapt/remove
+//        DaoAuthenticationProvider daoProvider = new DaoAuthenticationProvider();
+//        daoProvider.setUserDetailsService(detailsService);
+//        daoProvider.setPasswordEncoder(passwordEncoder());
+//        return new ProviderManager(daoProvider);
+//    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .addFilterBefore(new ApiKeyFilter(domainUserDetailsService, userRepository), BasicAuthenticationFilter.class) // Deprecated. Kept as transitional in 2024.2
+                .addFilterBefore(new ApiKeyFilter(userRepository), BasicAuthenticationFilter.class) // Deprecated. Kept as transitional in 2024.2
                 .exceptionHandling((exceptionHandling) ->
                         exceptionHandling
                                 .authenticationEntryPoint(

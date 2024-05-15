@@ -18,21 +18,20 @@ package be.cytomine.config.security;
 
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AuthenticationException;
+import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.repository.security.UserRepository;
-import be.cytomine.security.DomainUserDetailsService;
-import org.apache.commons.codec.binary.Base64;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.web.filter.OncePerRequestFilter;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.commons.codec.binary.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -41,19 +40,17 @@ import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Deprecated
 public class ApiKeyFilter extends OncePerRequestFilter {
 
     private final Logger log = LoggerFactory.getLogger(ApiKeyFilter.class);
 
-    private final DomainUserDetailsService domainUserDetailsService;
-
     private final UserRepository secUserRepository;
 
 
-    public ApiKeyFilter(DomainUserDetailsService domainUserDetailsService, UserRepository secUserRepository) {
-        this.domainUserDetailsService = domainUserDetailsService;
+    public ApiKeyFilter(UserRepository secUserRepository) {
         this.secUserRepository = secUserRepository;
     }
 
@@ -152,13 +149,22 @@ public class ApiKeyFilter extends OncePerRequestFilter {
      * Also removes the user from the user cache to force a refresh at next login.
      */
     private void reauthenticate(final User secUser) {
-        UserDetailsService userDetailsService = this.domainUserDetailsService;
-
-        UserDetails userDetails = userDetailsService.loadUserByUsername(secUser.getUsername());
+        UserDetails userDetails = createSpringSecurityUser(secUser);
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
                 userDetails, userDetails.getPassword(), userDetails.getAuthorities());
         usernamePasswordAuthenticationToken.setDetails(secUser);
 
         SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+    }
+
+    private org.springframework.security.core.userdetails.User createSpringSecurityUser(User user) {
+        if (!user.getEnabled()) {
+            throw new ForbiddenException("User with access key " + user.getPublicKey() + "is not enabled.");
+        }
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                "null",
+                user.getRoles().stream().map(x -> new SimpleGrantedAuthority(x.getAuthority())).collect(Collectors.toList())
+        );
     }
 }

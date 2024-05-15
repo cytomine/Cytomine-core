@@ -153,7 +153,7 @@ class ApplicationBootstrap {
             bootstrapDataService.initData();
         }
 
-        // TODO IAM: done by IAM
+        // Deprecated API keys. Will be removed in a future release.
         if (applicationProperties.getImageServerPrivateKey()!=null && applicationProperties.getImageServerPublicKey()!=null) {
             User imageServerUser = userRepository.findByUsernameLikeIgnoreCase("ImageServer1")
                     .orElseThrow(() -> new ObjectNotFoundException("No user imageserver1, cannot assign keys"));
