@@ -16,6 +16,9 @@ package be.cytomine.config;
  * limitations under the License.
  */
 
+import be.cytomine.config.security.ApiKeyFilter;
+import be.cytomine.repository.security.UserRepository;
+import be.cytomine.security.DomainUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -33,12 +36,23 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfiguration {
+
+    private final DomainUserDetailsService domainUserDetailsService;
+
+    private final UserRepository userRepository;
+
+    public SecurityConfiguration(DomainUserDetailsService domainUserDetailsService, UserRepository userRepository) {
+        this.domainUserDetailsService = domainUserDetailsService;
+        this.userRepository = userRepository;
+    }
+    
     /**
      * Argon2 is intentionally slow: slow-hashing functions are good for storing passwords, because it is time/resource consuming to crack them.
      * SHA-512 is not designed for storing passwords. so insecure and deprecated so in future check if sha256 use it if not use argon2 or bcrypt.
@@ -68,7 +82,7 @@ public class SecurityConfiguration {
     }
 
     /**
-     * configures Spring Security to use your DomainUserDetailsService to fetch user details from a custom source (DB which's SecUserRepository)
+     * configures Spring Security to use your DomainUserDetailsService to fetch user details from a custom source (DB which's UserRepository)
      * and to use the provided PasswordEncoder to encode and verify passwords.
      *
      * @return
@@ -83,17 +97,11 @@ public class SecurityConfiguration {
         return new ProviderManager(daoProvider);
     }
 
-    /**
-     * HTTP SECURITY CONFIG
-     * Spring Security 6 Require Explicit Saving of SecurityContextRepository
-     *
-     * @param http the {@link HttpSecurity} to modify
-     * @throws Exception
-     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .addFilterBefore(new ApiKeyFilter(domainUserDetailsService, userRepository), BasicAuthenticationFilter.class) // Deprecated. Kept as transitional in 2024.2
                 .exceptionHandling((exceptionHandling) ->
                         exceptionHandling
                                 .authenticationEntryPoint(

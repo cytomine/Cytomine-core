@@ -93,6 +93,7 @@ public class BootstrapUtilsService {
             user.setUsername(username);
             user.setName(firstname + " " + lastname);
             user.setReference(UUID.randomUUID().toString());
+            user.generateKeys();
 
             log.info("Saving {}...", user.getUsername());
             user = userRepository.save(user);

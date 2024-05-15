@@ -239,7 +239,6 @@ public class UserService extends ModelService {
         return userRepository.findByUsernameLikeIgnoreCase(username);
     }
 
-    // TODO IAM: remove
     public Optional<User> findByPublicKey(String publicKey) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
         return userRepository.findByPublicKey(publicKey);
@@ -984,17 +983,20 @@ public class UserService extends ModelService {
 
 
     protected void afterAdd(CytomineDomain domain, CommandResponse response) {
+        User user = (User) domain;
+        if (user.getPublicKey() == null || user.getPrivateKey() == null) {
+            user.generateKeys();
+            userRepository.save(user);
+        }
         SecUserSecRole secSecUserSecRole = new SecUserSecRole();
-        secSecUserSecRole.setSecUser((User) domain);
+        secSecUserSecRole.setSecUser(user);
         secSecUserSecRole.setSecRole(secRoleRepository.getUser());
 
         if (secSecUserSecRoleRepository.findBySecUserAndSecRole(secSecUserSecRole.getSecUser(), secSecUserSecRole.getSecRole()).isEmpty()) {
             secSecUserSecRoleRepository.save(secSecUserSecRole);
         }
 
-        if (domain instanceof User) {
-            storageService.initUserStorage((User) domain);
-        }
+        storageService.initUserStorage((User) domain);
     }
 
     @Override

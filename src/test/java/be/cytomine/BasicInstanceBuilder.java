@@ -192,6 +192,7 @@ public class BasicInstanceBuilder {
         user.setName("firstname lastname");
         user.setReference(UUID.randomUUID().toString());
         user.setUsername(randomString());
+        user.generateKeys();
         return user;
     }
 

@@ -127,6 +127,7 @@ public class BootstrapDataService {
         }
     }
 
+    /**  Deprecated API keys. Will be removed in a future release **/
     private void changeUserKeys(String username, String privateKey, String publicKey) {
         User user = userRepository.findByUsernameLikeIgnoreCase(username)
                 .orElseThrow(() -> new ObjectNotFoundException(username + " user does not exists, cannot set its keys"));

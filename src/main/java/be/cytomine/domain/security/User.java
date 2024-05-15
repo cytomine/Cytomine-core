@@ -82,12 +82,6 @@ public class User extends CytomineDomain {
     protected String password;
 
     @Deprecated
-    protected String publicKey;
-
-    @Deprecated
-    protected String privateKey;
-
-    @Deprecated
     protected Boolean enabled = true;
 
     @Deprecated
@@ -101,6 +95,13 @@ public class User extends CytomineDomain {
 
     @Deprecated
     protected String origin;
+
+    /** Deprecated API keys. Will be removed in a future release **/
+    @Deprecated
+    protected String publicKey;
+
+    @Deprecated
+    protected String privateKey;
 
     @Deprecated
     public void generateKeys() {

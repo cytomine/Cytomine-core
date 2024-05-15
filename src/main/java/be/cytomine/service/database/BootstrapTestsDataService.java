@@ -103,6 +103,7 @@ public class BootstrapTestsDataService {
         user.setUsername(login);
         user.setName("firstname lastname");
         user.setReference(UUID.randomUUID().toString());
+        user.generateKeys();
         user = userRepository.save(user);
         userRepository.findById(user.getId()); // flush
 
