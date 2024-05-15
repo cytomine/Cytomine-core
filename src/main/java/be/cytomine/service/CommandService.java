@@ -17,7 +17,7 @@ package be.cytomine.service;
 */
 
 import be.cytomine.domain.command.*;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.CytomineException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.command.CommandRepository;
@@ -142,7 +142,7 @@ public class CommandService {
     }
 
     public List<CommandResponse> undo(Long commandId) {
-        SecUser user = currentUserService.getCurrentUser();
+        User user = currentUserService.getCurrentUser();
         Optional<UndoStackItem> lastUndoStackItem;
         if (commandId!=null) {
             lastUndoStackItem = commandRepository.findLastUndoStackItem(user, commandRepository.getById(commandId));
@@ -181,7 +181,7 @@ public class CommandService {
         throw new RuntimeException("not yet implemented");
     }
 
-    public List<CommandResponse> undo(UndoStackItem undoItem, SecUser user) {
+    public List<CommandResponse> undo(UndoStackItem undoItem, User user) {
         CommandResponse result;
         List<CommandResponse> results = new ArrayList<>();
 
@@ -220,7 +220,7 @@ public class CommandService {
     }
 
     public List<CommandResponse> redo(Long commandId) {
-        SecUser user = currentUserService.getCurrentUser();
+        User user = currentUserService.getCurrentUser();
         Optional<RedoStackItem> lastRedoStackItem;
         if (commandId!=null) {
             lastRedoStackItem = commandRepository.findLastRedoStackItem(user, commandRepository.getById(commandId));
@@ -252,7 +252,7 @@ public class CommandService {
         throw new RuntimeException("not yet implemented");
     }
 
-    public List<CommandResponse> redo(RedoStackItem redoItem, SecUser user) {
+    public List<CommandResponse> redo(RedoStackItem redoItem, User user) {
         CommandResponse result;
         List<CommandResponse> results = new ArrayList<>();
 

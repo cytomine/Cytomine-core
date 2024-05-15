@@ -19,14 +19,6 @@ spring:
         jdbc:
           batch_size: 500
 
-  mail:
-    host: disabled
-    port: 587
-    username: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: postmaster@sandboxdcb41...5909.mailgun.org
-    password: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: 0da253cf5...24-4662f38e
-  # Replace by 'prod, faker' to add the faker context and have sample data loaded in production
-  #liquibase:
-  #  contexts: prod
   liquibase:
     change-log: classpath:config/liquibase/master.xml
   profiles:
@@ -66,12 +58,6 @@ application:
   superAdminPublicKey: superAdminPublicKey
   ImageServerPrivateKey: imageServerPrivateKey
   ImageServerPublicKey: imageServerPublicKey
-  rabbitMQPrivateKey: rabbitMQPrivateKey
-  rabbitMQPublicKey: rabbitMQPublicKey
-
-  instanceHostWebsite: instanceHostWebsite.com
-  instanceHostSupportMail: instanceHostSupportMail@email.com
-  instanceHostPhoneNumber: 0999999999
 
   appEngine:
     enabled: ${APPENGINE_ENABLED:true}
@@ -91,9 +77,6 @@ application:
   internalProxyURL: ${INTERNAL_PROXY_URL:http://localhost:8888}
   annotation:
     maxNumberOfPoint: 200
-
-  notification:
-    email: email@email.com
 
   customUI:
     global:

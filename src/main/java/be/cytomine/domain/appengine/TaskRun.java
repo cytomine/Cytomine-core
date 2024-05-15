@@ -3,16 +3,13 @@ package be.cytomine.domain.appengine;
 import be.cytomine.converter.UUIDConverter;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Type;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.hibernate.type.descriptor.jdbc.UUIDJdbcType;
 
 import java.util.Optional;
 
@@ -27,7 +24,7 @@ public class TaskRun extends CytomineDomain {
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private SecUser user; // launcher
+    private User user; // launcher
 
     @NotNull
     @Column(nullable = false)

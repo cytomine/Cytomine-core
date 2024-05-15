@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 @Getter
 @Setter
 public class PimsResponse {
-    private byte[] content; //TODO: use stream
+    private byte[] content;
     private Map<String, String> headers;
 
     public PimsResponse(byte[] content, Map<String, String> headers) {

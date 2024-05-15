@@ -17,7 +17,6 @@ package be.cytomine.domain.project;
 */
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
@@ -46,7 +45,7 @@ public class ProjectRepresentativeUser extends CytomineDomain {
         ProjectRepresentativeUser projectRepresentativeUser = (ProjectRepresentativeUser)this;
         projectRepresentativeUser.setId(json.getJSONAttrLong("id",null));
         projectRepresentativeUser.setProject((Project) json.getJSONAttrDomain(entityManager, "project", new Project(), true));
-        projectRepresentativeUser.setUser((User) json.getJSONAttrDomain(entityManager, "user", new SecUser(), true));
+        projectRepresentativeUser.setUser((User) json.getJSONAttrDomain(entityManager, "user", new User(), true));
         return projectRepresentativeUser;
     }
 

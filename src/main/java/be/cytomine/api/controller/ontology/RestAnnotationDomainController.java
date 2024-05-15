@@ -21,9 +21,10 @@ import be.cytomine.api.controller.utils.AnnotationListingBuilder;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.*;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.SimplifiedAnnotation;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
+import be.cytomine.exceptions.InvalidRequestException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.*;
@@ -31,11 +32,10 @@ import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.middleware.ImageServerService;
-import be.cytomine.service.ontology.AlgoAnnotationService;
 import be.cytomine.service.ontology.GenericAnnotationService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.ontology.UserAnnotationService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.utils.GeometryUtils;
@@ -62,15 +62,13 @@ public class RestAnnotationDomainController extends RestCytomineController {
 
     private final GenericAnnotationService genericAnnotationService;
 
-    private final SecUserService secUserService;
+    private final UserService userService;
 
     private final EntityManager entityManager;
     
     private final ParamsService paramsService;
 
     private final RestUserAnnotationController restUserAnnotationController;
-
-    private final RestAlgoAnnotationController restAlgoAnnotationController;
 
     private final RestReviewedAnnotationController restReviewedAnnotationController;
 
@@ -81,8 +79,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
     private final ReviewedAnnotationService reviewedAnnotationService;
 
     private final UserAnnotationService userAnnotationService;
-
-    private final AlgoAnnotationService algoAnnotationService;
 
     private final SimplifyGeometryService simplifyGeometryService;
 
@@ -103,14 +99,14 @@ public class RestAnnotationDomainController extends RestCytomineController {
         JsonObject params = mergeQueryParamsAndBodyParams();
         AnnotationListing annotationListing = annotationListingBuilder.buildAnnotationListing(params);
         List annotations = annotationListingService.listGeneric(annotationListing);
-        if (annotationListing instanceof AlgoAnnotationListing) {
-            //if algo, we look for user_annotation JOIN algo_annotation_term  too
-            params.put("suggestedTerm", params.get("term"));
-            params.remove("term");
-            params.remove("usersForTermAlgo");
-            annotationListing = annotationListingBuilder.buildAnnotationListing(new UserAnnotationListing(entityManager), params);
-            annotations.addAll(annotationListingService.listGeneric(annotationListing));
-        }
+//        if (annotationListing instanceof AlgoAnnotationListing) {
+//            //if algo, we look for user_annotation JOIN algo_annotation_term  too
+//            params.put("suggestedTerm", params.get("term"));
+//            params.remove("term");
+//            params.remove("usersForTermAlgo");
+//            annotationListing = annotationListingBuilder.buildAnnotationListing(new UserAnnotationListing(entityManager), params);
+//            annotations.addAll(annotationListingService.listGeneric(annotationListing));
+//        }
 
         return responseSuccess(annotations, params.getJSONAttrLong("offset", 0L),params.getJSONAttrLong("max", 0L));
     }
@@ -131,11 +127,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
             restReviewedAnnotationController.downloadDocumentByProject(project, format, terms, reviewUsers, images, beforeThan, afterThan);
         }
         else {
-            if ((users != null && !users.isEmpty()) && false) { // SecUser.read(users.first()).algo()
-                restAlgoAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
-            } else {
-                restUserAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
-            }
+            restUserAnnotationController.downloadDocumentByProject(project, format, terms, users, images, beforeThan, afterThan);
         }
     }
 
@@ -224,25 +216,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
         ));
     }
 
-//    @Autowired
-//    CompanionFileService companionFileService;
-//
-//    @GetMapping("/annotation/{id}/profile.json")
-//    public ResponseEntity<String> profile(
-//            @PathVariable(name="id") Long annotationId
-//    ) throws IOException {
-//            AnnotationDomain annotation = AnnotationDomain.findAnnotationDomain(entityManager, annotationId)
-//                    .orElseThrow(() -> new ObjectNotFoundException("Annotation "+annotationId+" not found!"));
-//
-//            if (!companionFileService.hasProfile(annotation.getImage().getBaseImage())) {
-//                throw new ObjectNotFoundException("No profile for abstract image " + annotation.getImage().getBaseImage());
-//            }
-//
-//            CompanionFile cf = companionFileService.list(annotation.getImage().getBaseImage()).stream().filter(x -> x.getType()!=null && x.getType().equals("HDF5")).findFirst().get();
-//
-//            return responseSuccess(imageServerService.profile(cf, annotation, retrieveRequestParam()));
-//    }
-
     //TODO
 //    @RestApiMethod(description="Get all annotation that intersect a geometry or another annotation. Unlike the simple list, extra parameter (show/hide) are not available. ")
 //    @RestApiResponseObject(objectIdentifier = "file")
@@ -274,9 +247,9 @@ public class RestAnnotationDomainController extends RestCytomineController {
 
         //get user
         Long idUser = params.getJSONAttrLong("user");
-        SecUser user = null;
+        User user = null;
         if (idUser!=0) {
-            user = secUserService.find(params.getJSONAttrLong("user")).orElse(null);
+            user = userService.find(params.getJSONAttrLong("user")).orElse(null);
         }
 
         //get term
@@ -286,10 +259,7 @@ public class RestAnnotationDomainController extends RestCytomineController {
         if(user==null) {
             //goto reviewed
             response = reviewedAnnotationService.listIncluded(image,geometry,terms,annotation,propertiesToShow);
-        } else if (user.isAlgo()) {
-            //goto algo
-            response = algoAnnotationService.listIncluded(image,geometry,user,terms,annotation,propertiesToShow);
-        }  else {
+        } else {
             //goto user annotation
             response = userAnnotationService.listIncluded(image,geometry,user,terms,annotation,propertiesToShow);
         }
@@ -308,13 +278,10 @@ public class RestAnnotationDomainController extends RestCytomineController {
         AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
         if (annotation.isUserAnnotation()) {
             return restUserAnnotationController.show(id);
-        } else if (annotation.isAlgoAnnotation()) {
-            return restAlgoAnnotationController.show(id);
         } else if (annotation.isReviewedAnnotation()) {
             return restReviewedAnnotationController.show(id);
         } else {
-            throw new CytomineMethodNotYetImplementedException("ROI annotation not yet implemented");
-            // TODO
+            throw new InvalidRequestException("Not supported operation");
         }
     }
 
@@ -324,21 +291,13 @@ public class RestAnnotationDomainController extends RestCytomineController {
      */
     @RequestMapping(value = "/annotation.json", method = {RequestMethod.POST})
     public ResponseEntity<String> add(@RequestBody String json,
-                                      @RequestParam(required = false, defaultValue = "false") Boolean roi,
                                       @RequestParam(required = false) Long minPoint,
                                       @RequestParam(required = false) Long maxPoint
     ) throws IOException {
         log.debug("REST request to create new annotation(s)");
-        SecUser secUser = secUserService.getCurrentUser();
-        if(roi) {
-            throw new CytomineMethodNotYetImplementedException("ROI annotation not yet implemented");
-        } else if (secUser.isAlgo()) {
-            return restAlgoAnnotationController.add(json, minPoint, maxPoint);
-        } else {
-            ResponseEntity<String> response = restUserAnnotationController.add(json, minPoint, maxPoint);
-            log.debug("REST request to create new annotation(s) finished");
-            return response;
-        }
+        ResponseEntity<String> response = restUserAnnotationController.add(json, minPoint, maxPoint);
+        log.debug("REST request to create new annotation(s) finished");
+        return response;
     }
 
     /**
@@ -358,13 +317,10 @@ public class RestAnnotationDomainController extends RestCytomineController {
             AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
             if (annotation.isUserAnnotation()) {
                 return restUserAnnotationController.edit(id.toString(), jsonObject);
-            } else if (annotation.isAlgoAnnotation()) {
-                return restAlgoAnnotationController.edit(id.toString(), jsonObject);
             } else if (annotation.isReviewedAnnotation()) {
                 return restReviewedAnnotationController.edit(id.toString(), jsonObject);
             } else {
-                throw new CytomineMethodNotYetImplementedException("ROI annotation not yet implemented");
-                // TODO
+                throw new InvalidRequestException("Not supported operation");
             }
         }
     }
@@ -381,13 +337,10 @@ public class RestAnnotationDomainController extends RestCytomineController {
         AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
         if (annotation.isUserAnnotation()) {
             return restUserAnnotationController.delete(id.toString());
-        } else if (annotation.isAlgoAnnotation()) {
-            return restAlgoAnnotationController.delete(id.toString());
         } else if (annotation.isReviewedAnnotation()) {
             return restReviewedAnnotationController.delete(id.toString());
         } else {
-            throw new CytomineMethodNotYetImplementedException("ROI annotation not yet implemented");
-            // TODO
+            throw new InvalidRequestException("Not supported operation");
         }
     }
 
@@ -417,34 +370,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
         return responseSuccess(JsonObject.of("wkt", simplifiedAnnotation.getNewAnnotation().toText()));
     }
 
-
-//TODO
-//
-//    @RequestMapping(value = "/annotation/{id}/profile.json", method = {RequestMethod.GET})
-//    public ResponseEntity<String> profile(
-//            @PathVariable Long id
-//
-//    )  {
-//        try {
-//            AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(params.long('id'))
-//            if (!annotation) {
-//                throw new ObjectNotFoundException("Annotation ${params.long('id')} not found!")
-//            }
-//
-//            if (!annotation.image.baseImage.hasProfile()) {
-//                throw new ObjectNotFoundException("No profile for abstract image ${annotation.image.baseImage}")
-//            }
-//
-//            CompanionFile cf = CompanionFile.findByImageAndType(annotation.image.baseImage, "HDF5")
-//
-//            responseSuccess(imageServerService.profile(cf, annotation, params))
-//        }
-//        catch (CytomineException e) {
-//            responseError(e)
-//        }
-//    }
-
-
     /**
      * Fill an annotation.
      * Remove empty space in the polygon
@@ -462,8 +387,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
 
         if (annotation.isUserAnnotation()) {
             return responseSuccess(userAnnotationService.update(annotation, jsonObject));
-        } else if (annotation.isAlgoAnnotation()) {
-            return responseSuccess(algoAnnotationService.update(annotation, jsonObject));
         } else  {
             return responseSuccess(reviewedAnnotationService.update(annotation, jsonObject));
         }

@@ -17,7 +17,7 @@ package be.cytomine.domain.command;
 */
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,7 +37,7 @@ public class RedoStackItem extends CytomineDomain {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    protected SecUser user;
+    protected User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "transaction_id", nullable = true)

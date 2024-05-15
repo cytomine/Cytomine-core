@@ -17,7 +17,7 @@ package be.cytomine.domain.image;
 */
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.UrlApi;
 import be.cytomine.utils.JsonObject;
@@ -79,7 +79,7 @@ public class AbstractImage extends CytomineDomain {
     private String colorspace;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private SecUser user; //owner
+    private User user; //owner
 
     @Transient
     private Boolean inProject = false;

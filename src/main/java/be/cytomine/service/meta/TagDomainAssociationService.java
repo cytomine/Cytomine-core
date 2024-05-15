@@ -21,7 +21,7 @@ import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.meta.Tag;
 import be.cytomine.domain.meta.TagDomainAssociation;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -135,7 +135,7 @@ public class TagDomainAssociationService extends ModelService {
 
     @Override
     public CommandResponse add(JsonObject jsonObject) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         //Get the associated domain
         CytomineDomain domain = getCytomineDomain(jsonObject.getJSONAttrStr("domainClassName"), jsonObject.getJSONAttrLong("domainIdent"));
         if(!domain.getClass().getName().contains("AbstractImage")) {
@@ -152,7 +152,7 @@ public class TagDomainAssociationService extends ModelService {
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         CytomineDomain parentDomain = getCytomineDomain(((TagDomainAssociation) domain).getDomainClassName(), ((TagDomainAssociation) domain).getDomainIdent());
         if(!parentDomain.getClass().getName().contains("AbstractImage")) {
             securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);

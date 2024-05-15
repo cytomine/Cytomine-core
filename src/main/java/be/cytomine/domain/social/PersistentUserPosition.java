@@ -64,7 +64,7 @@ public class PersistentUserPosition extends CytomineSocialDomain {
 
 //    @NotNull
 //    @ManyToOne(fetch = FetchType.LAZY)
-//    protected SecUser user;
+//    protected User user;
 //
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(nullable = true)

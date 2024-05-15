@@ -24,9 +24,8 @@ import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.processing.ImageFilter;
 import be.cytomine.domain.processing.ImageFilterProject;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
-import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.processing.ImageFilterProjectRepository;
 import be.cytomine.repository.processing.ImageFilterRepository;
@@ -109,7 +108,7 @@ public class ImageFilterProjectService extends ModelService {
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(), ADMINISTRATION);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);

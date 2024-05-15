@@ -20,7 +20,6 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.AnnotationAction;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
@@ -36,7 +35,6 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.util.*;
 
@@ -68,7 +66,7 @@ public class AnnotationActionService {
     @Autowired
     MongoTemplate mongoTemplate;
 
-    public AnnotationAction add(AnnotationDomain annotation, SecUser user, String action, Date created) {
+    public AnnotationAction add(AnnotationDomain annotation, User user, String action, Date created) {
         securityACLService.check(annotation,READ);
         AnnotationAction annotationAction = new AnnotationAction();
         annotationAction.setId(sequenceService.generateID());

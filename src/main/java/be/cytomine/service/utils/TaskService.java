@@ -17,8 +17,8 @@ package be.cytomine.service.utils;
 */
 
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.domain.security.User;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.security.SecurityACLService;
@@ -47,7 +47,7 @@ public class TaskService {
     CurrentUserService currentUserService;
 
     @Autowired
-    SecUserRepository secUserRepository;
+    UserRepository userRepository;
 
     @Autowired
     EntityManager entityManager;
@@ -74,7 +74,7 @@ public class TaskService {
      * @param user User that create the task
      * @return Task created
      */
-    public Task createNewTask(Project project, SecUser user, boolean printInActivity) {
+    public Task createNewTask(Project project, User user, boolean printInActivity) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
         Task task = new Task();
         task.setProjectIdent(project!=null?project.getId():null);
@@ -92,8 +92,8 @@ public class TaskService {
      */
     public Task updateTask(Task task, String comment) {
         if (task!=null) {
-            SecUser secUser = secUserRepository.getById(task.getUserIdent());
-            securityACLService.checkIsSameUser(secUser,currentUserService.getCurrentUser());
+            User user = userRepository.getById(task.getUserIdent());
+            securityACLService.checkIsSameUser(user,currentUserService.getCurrentUser());
         }
         return updateTask(task,(task!=null? task.getProgress() : -1),comment);
     }
@@ -108,8 +108,8 @@ public class TaskService {
         if(task==null) {
             return null;
         }
-        SecUser secUser = secUserRepository.getById(task.getUserIdent());
-        securityACLService.checkIsSameUser(secUser,currentUserService.getCurrentUser());
+        User user = userRepository.getById(task.getUserIdent());
+        securityACLService.checkIsSameUser(user,currentUserService.getCurrentUser());
         task.setProgress(progress);
         addComment(task,progress+"%:" + comment);
         task = saveOnDatabase(task);
@@ -125,8 +125,8 @@ public class TaskService {
         if(task==null) {
             return null;
         }
-        SecUser secUser = secUserRepository.getById(task.getUserIdent());
-        securityACLService.checkIsSameUser(secUser,currentUserService.getCurrentUser());
+        User user = userRepository.getById(task.getUserIdent());
+        securityACLService.checkIsSameUser(user,currentUserService.getCurrentUser());
         task.setProgress(100);
         updateTask(task,100,"Task completed...");
         task = get(task.getId());

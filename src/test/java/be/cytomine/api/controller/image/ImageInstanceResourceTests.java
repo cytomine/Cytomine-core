@@ -26,7 +26,7 @@ import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.repository.meta.PropertyRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
@@ -219,7 +219,7 @@ public class ImageInstanceResourceTests {
     }
 
     @Autowired
-    SecUserRepository secUserRepository;
+    UserRepository userRepository;
 
     @WithMockUser(username = "list_image_instance_by_user")
     @Test

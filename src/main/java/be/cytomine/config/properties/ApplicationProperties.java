@@ -36,10 +36,6 @@ public class ApplicationProperties {
 
     private String serverURL;
 
-    private String hyperspectralServerURL;
-
-    private NotificationProperties notification;
-
     private String storagePath;
 
     private CustomUIProperties customUI;
@@ -47,12 +43,6 @@ public class ApplicationProperties {
     private AuthenticationProperties authentication = new AuthenticationProperties();
 
     private AppEngineProperties appEngine;
-
-    private String instanceHostWebsite;
-
-    private String instanceHostSupportMail;
-
-    private String instanceHostPhoneNumber;
 
     @NotNull
     @NotBlank
@@ -82,12 +72,6 @@ public class ApplicationProperties {
     private String ImageServerPrivateKey;
 
     private String ImageServerPublicKey;
-
-    private String rabbitMQPrivateKey;
-
-    private String rabbitMQPublicKey;
-
-    private String softwareSources;
 
     private String defaultLanguage;
 

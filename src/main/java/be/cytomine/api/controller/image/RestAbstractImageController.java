@@ -19,7 +19,7 @@ package be.cytomine.api.controller.image;
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.dto.ImageParameter;
@@ -113,7 +113,7 @@ public class RestAbstractImageController extends RestCytomineController {
     @GetMapping("/abstractimage/{id}/user.json")
     public ResponseEntity<String> showUploaderOfImage(@PathVariable Long id) {
         log.debug("REST request to show image uploader");
-        SecUser user = abstractImageService.getImageUploader(id);
+        User user = abstractImageService.getImageUploader(id);
         if (user !=null) {
             return responseSuccess(abstractImageService.getImageUploader(id));
         } else {

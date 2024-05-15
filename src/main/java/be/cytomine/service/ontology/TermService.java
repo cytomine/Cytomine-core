@@ -22,7 +22,7 @@ import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.RelationTerm;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.WrongArgumentException;
@@ -65,9 +65,6 @@ public class TermService extends ModelService {
 
     @Autowired
     private AnnotationTermRepository annotationTermRepository;
-
-    @Autowired
-    private AlgoAnnotationTermRepository algoAnnotationTermRepository;
 
     @Autowired
     private ReviewedAnnotationRepository reviewedAnnotationRepository;
@@ -132,7 +129,7 @@ public class TermService extends ModelService {
         if (jsonObject.isMissing("ontology")) {
             throw new WrongArgumentException("Ontology is mandatory for term creation");
         }
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkGuest(currentUser);
         securityACLService.check(jsonObject.getJSONAttrLong("ontology"), Ontology.class ,WRITE);
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
@@ -146,7 +143,7 @@ public class TermService extends ModelService {
      */
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(),WRITE);
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
@@ -162,7 +159,7 @@ public class TermService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(),DELETE);
         Command c = new DeleteCommand(currentUser, transaction);
@@ -193,7 +190,6 @@ public class TermService extends ModelService {
     @Override
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         deleteDependentRelationTerm((Term)domain, transaction, task);
-        deleteAlgoAnnotationTerm((Term)domain, transaction, task);
         deleteAnnotationTerm((Term)domain, transaction, task);
         deleteReviewedAnnotationTerm((Term)domain, transaction, task);
     }
@@ -201,15 +197,6 @@ public class TermService extends ModelService {
     public void deleteDependentRelationTerm(Term term, Transaction transaction, Task task) {
         for (RelationTerm relationTerm : relationTermService.list(term)) {
             relationTermService.delete(relationTerm, transaction, task, false);
-        }
-    }
-
-    public void deleteAlgoAnnotationTerm(Term term, Transaction transaction, Task task) {
-        long terms = algoAnnotationTermRepository.countByTerm(term);
-        long expectedTerms = algoAnnotationTermRepository.countByExpectedTerm(term);
-
-        if (terms!=0 || expectedTerms!=0) {
-            throw new ConstraintException("Term is still linked with "+(terms+expectedTerms)+" annotations created by job. Cannot delete term!");
         }
     }
 

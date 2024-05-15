@@ -25,7 +25,6 @@ import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.meta.Description;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.meta.TagDomainAssociation;
-import be.cytomine.domain.ontology.AlgoAnnotation;
 import be.cytomine.domain.ontology.ReviewedAnnotation;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
@@ -663,23 +662,6 @@ public class ImageInstanceServiceTests {
         assertThat(reviewedAnnotation.getArea()).isNotEqualTo(area);
     }
 
-
-    @Test
-    void edit_image_instance_resolution_modifies_algo_annotation() {
-        ImageInstance imageInstance = builder.given_an_image_instance();
-        AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
-        algoAnnotation.setImage(imageInstance);
-
-        Double perimeter = algoAnnotation.getPerimeter();
-        Double area = algoAnnotation.getArea();
-
-        imageInstanceService.update(imageInstance, imageInstance.toJsonObject().withChange("physicalSizeX", 2.5d));
-
-        assertThat(algoAnnotation.getPerimeter()).isNotEqualTo(perimeter);
-        assertThat(algoAnnotation.getArea()).isNotEqualTo(area);
-    }
-
-
     @Test
     void edit_image_instance_with_unexsting_abstract_image_fails() {
         ImageInstance imageInstance = builder.given_an_image_instance();
@@ -713,21 +695,6 @@ public class ImageInstanceServiceTests {
         SliceInstance sliceInstance = builder.given_a_slice_instance();
         ImageInstance imageInstance = sliceInstance.getImage();
 
-//        deleteDependentAlgoAnnotation(imageInstance, transaction, task);
-//        deleteDependentReviewedAnnotation(imageInstance, transaction, task);
-//        deleteDependentUserAnnotation(imageInstance, transaction, task);
-//        deleteDependentAnnotationAction(imageInstance, transaction, task);
-//        deleteDependentLastUserPosition(imageInstance, transaction, task);
-//        deleteDependentPersistentUserPosition(imageInstance, transaction, task);
-//        deleteDependentPersistentImageConsultation(imageInstance, transaction, task);
-//        deleteDependentProperty(imageInstance, transaction, task);
-//        deleteDependentNestedImageInstance(imageInstance, transaction, task);
-//        deleteDependentSliceInstance(imageInstance, transaction, task);
-//        deleteDependentTrack(imageInstance, transaction, task);
-
-        AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
-        algoAnnotation.setImage(imageInstance);
-
         ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
         reviewedAnnotation.setImage(imageInstance);
 
@@ -743,10 +710,8 @@ public class ImageInstanceServiceTests {
         userPositionService.add(new Date(), builder.given_superadmin(), sliceInstance, imageInstance, USER_VIEW, 0, 0d, false);
         imageConsultationService.add(builder.given_superadmin(), imageInstance.getId(), "xxx", "view", new Date());
 
-        AssertionsForClassTypes.assertThat(entityManager.find(AlgoAnnotation.class, algoAnnotation.getId())).isNotNull();
         AssertionsForClassTypes.assertThat(entityManager.find(ReviewedAnnotation.class, reviewedAnnotation.getId())).isNotNull();
         AssertionsForClassTypes.assertThat(entityManager.find(UserAnnotation.class, userAnnotation.getId())).isNotNull();
-        AssertionsForClassTypes.assertThat(entityManager.find(AlgoAnnotation.class, algoAnnotation.getId())).isNotNull();
         AssertionsForClassTypes.assertThat(entityManager.find(SliceInstance.class, sliceInstance.getId())).isNotNull();
         AssertionsForClassTypes.assertThat(entityManager.find(Property.class, property.getId())).isNotNull();
         AssertionsForClassTypes.assertThat(entityManager.find(Description.class, description.getId())).isNotNull();
@@ -763,10 +728,8 @@ public class ImageInstanceServiceTests {
         assertThat(commandResponse.getStatus()).isEqualTo(200);
         AssertionsForClassTypes.assertThat(imageInstanceService.find(imageInstance.getId()).isEmpty());
 
-        AssertionsForClassTypes.assertThat(entityManager.find(AlgoAnnotation.class, algoAnnotation.getId())).isNull();
         AssertionsForClassTypes.assertThat(entityManager.find(ReviewedAnnotation.class, reviewedAnnotation.getId())).isNull();
         AssertionsForClassTypes.assertThat(entityManager.find(UserAnnotation.class, userAnnotation.getId())).isNull();
-        AssertionsForClassTypes.assertThat(entityManager.find(AlgoAnnotation.class, algoAnnotation.getId())).isNull();
         AssertionsForClassTypes.assertThat(entityManager.find(SliceInstance.class, sliceInstance.getId())).isNull();
         AssertionsForClassTypes.assertThat(entityManager.find(Property.class, property.getId())).isNull();
         AssertionsForClassTypes.assertThat(entityManager.find(Description.class, description.getId())).isNull();

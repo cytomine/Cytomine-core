@@ -20,7 +20,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.meta.Tag;
 import be.cytomine.domain.meta.TagDomainAssociation;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.repository.meta.TagDomainAssociationRepository;
 import be.cytomine.repository.meta.TagRepository;
@@ -83,7 +83,7 @@ public class TagService extends ModelService {
 
     @Override
     public CommandResponse add(JsonObject jsonObject) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         jsonObject.put("user", currentUser.getId());
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
@@ -91,7 +91,7 @@ public class TagService extends ModelService {
 
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkIsCreator(domain, currentUser);
         if (tagDomainAssocitationRepository.countByTag((Tag)domain) > 0) {
             //if not admin then check if there is no association
@@ -102,7 +102,7 @@ public class TagService extends ModelService {
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkIsCreator(domain, currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);

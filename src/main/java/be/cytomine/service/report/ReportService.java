@@ -49,9 +49,8 @@ public class ReportService {
         add(new ReportColumn("imageURL", "View annotation on image", (float) 0.19));
     }};
     public static final List<ReportColumn> USER_REPORT_COLUMNS = new ArrayList<>(){{
-        add(new ReportColumn("username", "User Name", (float) 0.33));
-        add(new ReportColumn("firstname", "First Name", (float) 0.33));
-        add(new ReportColumn("lastname", "Last Name", (float) 0.34));
+        add(new ReportColumn("username", "Username", (float) 0.5));
+        add(new ReportColumn("name", "Name", (float) 0.5));
     }};
     public static final List<ReportColumn> IMAGE_CONSULTATION_COLUMNS = new ArrayList<>(){{
         add(new ReportColumn("time", "Cumulated duration (ms)", (float) 0.10));

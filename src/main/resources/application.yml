@@ -6,9 +6,6 @@ spring:
   main:
     allow-circular-references: true
 
-  thymeleaf:
-    prefix: 'classpath:/templates/'
-
   servlet:
     multipart:
       max-file-size: 15GB
@@ -48,12 +45,6 @@ spring:
       port: ${MONGO_PORT:27017}
       host: ${MONGO_HOST:localhost}
 
-  mail:
-    host: ${SMTP_HOST:}
-    port: ${SMTP_PORT:587}
-    username: ${SMTP_USER:}
-    password: ${SMTP_PASS:}
-
 server:
   port: ${PORT:8080}
 
@@ -78,15 +69,7 @@ application:
   superAdminPrivateKey: ${SUPER_ADMIN_PRIVATE_KEY:superAdminPrivateKey}
   ImageServerPublicKey: ${IMAGE_SERVER_PUBLIC_KEY:imageServerPublicKey}
   ImageServerPrivateKey: ${IMAGE_SERVER_PRIVATE_KEY:imageServerPrivateKey}
-  rabbitMQPublicKey: ${RABBITMQ_PUBLIC_KEY:rabbitMQPublicKey}
-  rabbitMQPrivateKey: ${RABBITMQ_PRIVATE_KEY:rabbitMQPrivateKey}
-  instanceHostWebsite: ${INSTANCE_HOST_WEBSITE_URL:#{'https://www.cytomine.com'}}
-  instanceHostSupportMail: ${INSTANCE_HOST_SUPPORT_MAIL:support@cytomine.com}
-  instanceHostPhoneNumber: ${INSTANCE_HOST_PHONE_NUMBER:+320/000.00.00}
   defaultLanguage: ${DEFAULT_LANGUAGE:ENGLISH}
-
-  notification:
-    email: ${DEFAULT_FROM_EMAIL:no-reply@cytomine.com}
 
   authentication:
     jwt:

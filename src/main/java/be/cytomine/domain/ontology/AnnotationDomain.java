@@ -21,7 +21,7 @@ import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.dto.Point;
@@ -135,16 +135,9 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
     public abstract boolean isUserAnnotation();
 
     /**
-     * Check if its an algo annotation
-     */
-    public abstract boolean isAlgoAnnotation();
-
-    /**
      * Check if its a review annotation
      */
     public abstract boolean isReviewedAnnotation();
-
-    public abstract boolean isRoiAnnotation();
 
     /**
      * Get all terms for automatic review
@@ -195,22 +188,6 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
     }
 
 
-    // TODO: cannot be perform here with spring
-//    /**
-//     * Get user/algo/reviewed annotation with id
-//     * Check the correct type and return it
-//     * @param id Annotation id
-//     * @return Annotation
-//     */
-//    public static AnnotationDomain getAnnotationDomain(String id, String className = null) {
-//        try {
-//            getAnnotationDomain(Long.parseLong(id), className)
-//        } catch(NumberFormatException e) {
-//            throw new ObjectNotFoundException("Annotation ${id} not found")
-//        }
-//    }
-//
-
     public static Optional<AnnotationDomain> findAnnotationDomain(EntityManager entityManager, Long id) {
         return Optional.ofNullable(getAnnotationDomain(entityManager, id, ""));
     }
@@ -232,16 +209,9 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
                 case "be.cytomine.domain.ontology.UserAnnotation":
                     domain = UserAnnotation.class;
                     break;
-                case "be.cytomine.domain.ontology.AlgoAnnotation":
-                    domain = AlgoAnnotation.class;
-                    break;
                 case "be.cytomine.domain.ontology.ReviewedAnnotation":
                     domain = ReviewedAnnotation.class;
                     break;
-                case "be.cytomine.domain.processing.RoiAnnotation":
-                    throw new CytomineMethodNotYetImplementedException("migration");
-                    //domain = RoiAnnotation.class;
-                    //break;
             }
         }
 
@@ -251,9 +221,7 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
             annotation = (AnnotationDomain)entityManager.find(domain, id);
         } else {
             annotation = entityManager.find(UserAnnotation.class, id);
-            if (annotation==null) annotation = entityManager.find(AlgoAnnotation.class, id);
             if (annotation==null) annotation = entityManager.find(ReviewedAnnotation.class, id);
-//            if (annotation==null) annotation = entityManager.find(RoiAnnotation.class, id);
         }
 
         if (annotation!=null) {
@@ -289,6 +257,6 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
         return returnArray;
     }
 
-    public abstract SecUser user();
+    public abstract User user();
 
 }

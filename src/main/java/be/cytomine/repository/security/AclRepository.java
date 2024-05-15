@@ -16,7 +16,7 @@ package be.cytomine.repository.security;
 * limitations under the License.
 */
 
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -25,22 +25,22 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface AclRepository extends JpaRepository<SecUser, Long> {
+public interface AclRepository extends JpaRepository<User, Long> {
 
 
 
-    @Query(value = "select count(secUser) from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, SecUser as secUser "+
-            "where aclObjectId.objectId = :projectId and aclEntry.aclObjectIdentity = aclObjectId and aclEntry.sid = aclSid and aclSid.sid = secUser.username " +
-            "and TYPE(secUser) = User and secUser.id = :userId")
+    @Query(value = "select count(user) from AclObjectIdentity as aclObjectId, AclEntry as aclEntry, AclSid as aclSid, User as user "+
+            "where aclObjectId.objectId = :projectId and aclEntry.aclObjectIdentity = aclObjectId and aclEntry.sid = aclSid and aclSid.sid = user.username " +
+            "and user.id = :userId")
     Long countEntries(long projectId, long userId);
 
 
     @Query(value = "SELECT mask FROM acl_object_identity aoi, acl_sid sid, acl_entry ae " +
             "WHERE aoi.object_id_identity = :domainId " +
-            "AND sid.sid = :humanUsername "  +
+            "AND sid.sid = :username "  +
             "AND ae.acl_object_identity = aoi.id "+
             "AND ae.sid = sid.id ", nativeQuery = true)
-    List<Integer> listMaskForUsers(Long domainId, String humanUsername);
+    List<Integer> listMaskForUsers(Long domainId, String username);
 
     @Query(value = "SELECT mask FROM acl_object_identity aoi, acl_sid sid, acl_entry ae " +
             "WHERE aoi.object_id_identity = :domainId " +
@@ -89,7 +89,7 @@ public interface AclRepository extends JpaRepository<SecUser, Long> {
     @Query(value = "DELETE FROM acl_entry WHERE acl_object_identity = ? AND mask = ? AND sid = ?", nativeQuery = true)
     void deleteAclEntry(Long aclObjectIdentity, int mask, Long sid);
 
-    @Query(value = "select secUser from AclObjectIdentity as aclObjectId, AclSid as aclSid, SecUser as secUser where aclObjectId.objectId = :domainId and aclObjectId.ownerSid = aclSid and aclSid.sid = secUser.username")
-    List<SecUser> listCreators(Long domainId);
+    @Query(value = "select user from AclObjectIdentity as aclObjectId, AclSid as aclSid, User as user where aclObjectId.objectId = :domainId and aclObjectId.ownerSid = aclSid and aclSid.sid = user.username")
+    List<User> listCreators(Long domainId);
 
 }

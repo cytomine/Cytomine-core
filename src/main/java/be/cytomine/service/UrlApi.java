@@ -95,22 +95,6 @@ public class UrlApi {
         return serverUrl + "/api/userannotation/"+idAnnotation+"/crop." + format + "?maxSize=" + maxSize;
     }
 
-    public static String getROIAnnotationCropWithAnnotationId(Long idAnnotation, String format) {
-        return serverUrl + "/api/roiannotation/"+idAnnotation+"/crop."+format;
-    }
-
-    public static String getROIAnnotationCropWithAnnotationIdWithMaxSize(Long idAnnotation, int maxSize, String format) {
-        return serverUrl + "/api/roiannotation/"+idAnnotation+"/crop."+format+"?maxSize=" + maxSize;
-    }
-
-    public static String getAlgoAnnotationCropWithAnnotationId(Long idAnnotation, String format) {
-        return serverUrl + "/api/algoannotation/"+idAnnotation+"/crop." + format;
-    }
-
-    public static String getAlgoAnnotationCropWithAnnotationIdWithMaxSize(Long idAnnotation, int maxsize, String format) {
-        return serverUrl + "/api/algoannotation/"+idAnnotation+"/crop."+format+"?maxSize=" + maxsize;
-    }
-
     public static String getReviewedAnnotationCropWithAnnotationId(Long idAnnotation, String format) {
         return serverUrl + "/api/reviewedannotation/"+idAnnotation+"/crop." + format;
     }

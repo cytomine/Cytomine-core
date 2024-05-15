@@ -18,22 +18,21 @@ package be.cytomine.api.controller;
 
 import be.cytomine.api.JsonResponseEntity;
 import be.cytomine.config.properties.ApplicationProperties;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastConnection;
 import be.cytomine.domain.social.PersistentConnection;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
-import be.cytomine.security.jwt.TokenProvider;
-import be.cytomine.security.jwt.TokenType;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.database.SequenceService;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.NonTransientDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -41,6 +40,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Date;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("")
@@ -58,41 +58,47 @@ public class ServerController extends RestCytomineController {
 
     private final LastConnectionRepository lastConnectionRepository;
 
-    private final TokenProvider tokenProvider;
-
-    //@Secured("IS_AUTHENTICATED_REMEMBERED") //TODO????
     @RequestMapping(value = {"/server/ping.json", "/server/ping"}, method = {RequestMethod.GET, RequestMethod.POST}) // without.json is deprecated
     public ResponseEntity<String> ping(HttpSession session) throws IOException {
         log.debug("REST request to ping");
         JsonObject json = super.mergeQueryParamsAndBodyParams();
         JsonObject response = new JsonObject();
         response.put("alive", true);
-        response.put("authenticated", SecurityUtils.isAuthenticated());
         response.put("version", applicationProperties.getVersion());
         response.put("serverURL", applicationProperties.getServerURL());
         response.put("serverID", applicationProperties.getServerId());
 
-        if (SecurityUtils.isAuthenticated()) {
-            SecUser user = currentUserService.getCurrentUser();
-            response.put("user", user.getId());
-            response.put("shortTermToken", tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM));
-
-            if (!user.getEnabled()) {
-                log.info("Disabled user. Invalidation of its sessions");
-                session.invalidate();
-            }
-            Long idProject = null;
-            if(!json.getJSONAttrStr("project", "null").equals("null")) {
-                idProject = json.getJSONAttrLong("project");
-            }
-            addLastConnection(user, idProject);
-        }
+        // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+//        if (isAuthenticated()) {
+//            User user = currentUserService.getCurrentUser();
+//            response.put("user", user.getId());
+////            response.put("shortTermToken", tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), TokenType.SHORT_TERM));
+//
+////            if (!user.getEnabled()) {
+////                log.info("Disabled user. Invalidation of its sessions");
+////                session.invalidate();
+////            }
+//            Long idProject = null;
+//            if(!json.getJSONAttrStr("project", "null").equals("null")) {
+//                idProject = json.getJSONAttrLong("project");
+//            }
+//            addLastConnection(user, idProject);
+//        }
         return JsonResponseEntity.status(HttpStatus.OK).body(response.toJsonString());
-
-        //{"alive":true,"authenticated":true,"version":"0.0.0","serverURL":"https://demo.cytomine.com","serverID":"938a336f-d600-48ac-9c3a-aaedc03a9f84","user":6399285}
     }
 
-    void addLastConnection(SecUser user, Long idProject) {
+    public static boolean isAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null &&
+                getAuthorities(authentication).noneMatch("ROLE_ANONYMOUS"::equals);
+    }
+
+    private static Stream<String> getAuthorities(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority);
+    }
+
+    void addLastConnection(User user, Long idProject) {
         try {
             LastConnection connection = new LastConnection();
             connection.setId(sequenceService.generateID());

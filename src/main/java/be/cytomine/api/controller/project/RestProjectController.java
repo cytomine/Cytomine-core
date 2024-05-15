@@ -20,7 +20,6 @@ import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.command.CommandHistory;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.OntologyRepository;
@@ -29,7 +28,7 @@ import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.search.ProjectSearchExtension;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
@@ -40,7 +39,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.mail.MessagingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,7 +58,7 @@ public class RestProjectController extends RestCytomineController {
     private final CurrentRoleService currentRoleService;
     
     private final OntologyRepository ontologyRepository;
-    private final SecUserService secUserService;
+    private final UserService userService;
 
     /**
      * List all ontology visible for the current user
@@ -79,7 +77,7 @@ public class RestProjectController extends RestCytomineController {
 
     ) {
         log.debug("REST request to list projects");
-        SecUser user = currentUserService.getCurrentUser();
+        User user = currentUserService.getCurrentUser();
 
         if(currentRoleService.isAdminByNow(user)) {
             //if user is admin, we print all available project
@@ -156,20 +154,6 @@ public class RestProjectController extends RestCytomineController {
         return responseSuccess(projectService.listLastOpened((User) currentUserService.getCurrentUser(), max));
     }
 
-    // TODO:
-//    /**
-//     * List all project available for this user, that can use a software
-//     */
-//    @GetMapping("/software/{id}/project.json")
-//    public ResponseEntity<String> listBySoftware(
-//            @PathVariable Long id
-//    ) {
-//        log.debug("REST request to list last project actions");
-//        Project project = projectRepository.findById(id)
-//                .orElseThrow(() -> new ObjectNotFoundException("Project", id));
-//        return responseSuccess(projectService.listBySoftware(project));
-//    }
-
     /**
      * List all project available for this user, that use a ontology
      */
@@ -194,7 +178,7 @@ public class RestProjectController extends RestCytomineController {
 
     ) {
         log.debug("REST request to list project with user {}", id);
-        User user = secUserService.findUser(id)
+        User user = userService.findUser(id)
                 .orElseThrow(() -> new ObjectNotFoundException("User", id));
         Page<JsonObject> result = projectService.list(user, new ProjectSearchExtension(), new ArrayList<>(), "created", "desc", max, offset);
         return responseSuccess(result);
@@ -212,7 +196,7 @@ public class RestProjectController extends RestCytomineController {
 
     ) {
         log.debug("REST request to list project with user {}", id);
-        User requestedUser = secUserService.findUser(id)
+        User requestedUser = userService.findUser(id)
                 .orElseThrow(() -> new ObjectNotFoundException("User", id));
 
         if(creator) {
@@ -256,28 +240,5 @@ public class RestProjectController extends RestCytomineController {
         }
 
         return responseSuccess(JsonObject.toJsonString(projectService.findCommandHistory(projects, user, max, offset, fullData, startDate, endDate)));
-    }
-
-
-
-
-//    @RestApiMethod(description="Invite a not yer existing user to the project")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The project id"),
-//            @RestApiParam(name="json", type="string", paramType = RestApiParamType.QUERY,description = "The user name and email of the invited user"),
-//    ])
-//
-    @PostMapping("/project/{id}/invitation.json")
-    public ResponseEntity<String> inviteNewUser(
-            @PathVariable Long id,
-            @RequestBody JsonObject json
-    ) throws MessagingException {
-        Project project = projectService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("Project", id));
-        User user = projectService.inviteUser(project, json.getJSONAttrStr("name"),
-                json.getJSONAttrStr("firstname", "firstname"),
-                json.getJSONAttrStr("lastname", "lastname"),
-                json.getJSONAttrStr("mail"));
-        return responseSuccess(user);
     }
 }

@@ -19,7 +19,7 @@ package be.cytomine.service.image.server;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.server.Storage;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.repository.image.server.StorageRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
@@ -28,7 +28,6 @@ import be.cytomine.service.PermissionService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.SecurityUtils;
 import be.cytomine.utils.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +60,7 @@ public class StorageService extends ModelService {
         return securityACLService.getStorageList(currentUserService.getCurrentUser(), true);
     }
 
-    public List<Storage> list(SecUser user, String searchString) {
+    public List<Storage> list(User user, String searchString) {
         return securityACLService.getStorageList(user, false, searchString);
     }
 
@@ -81,7 +80,7 @@ public class StorageService extends ModelService {
      * @return Response structure (created domain data,..)
      */
     public CommandResponse add(JsonObject json) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         json.put("user", currentRoleService.isAdminByNow(currentUser) ? json.get("user") : currentUser.getId());
         return executeCommand(new AddCommand(currentUser),null, json);
@@ -110,7 +109,7 @@ public class StorageService extends ModelService {
      */
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(), ADMINISTRATION);
         CommandResponse commandResponse = executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
         return commandResponse;
@@ -127,20 +126,30 @@ public class StorageService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(), ADMINISTRATION);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }
 
-    public void initUserStorage(final SecUser user) {
-        log.info ("create storage for " + user.getUsername());
-        final SecUser finalUser = user;
-        SecurityUtils.doWithAuth(applicationContext, user.getUsername(), () -> createStorage(finalUser));
-    }
+    public void initUserStorage(final User user) {
+        log.info("Initialize storage for {}", user.getUsername());
 
-    public CommandResponse createStorage(SecUser user) {
-        return executeCommand(new AddCommand(user),null, JsonObject.of("name", user.getUsername() + " storage", "user", user.getId()));
+        Storage storage = new Storage();
+        storage.setUser((User) user);
+        storage.setName(user.getUsername() + " storage");
+        storage = storageRepository.save(storage);
+
+        String username = user.getUsername();
+        if(!permissionService.hasACLPermission(storage, username, READ)) {
+            permissionService.addPermission(storage, storage.getUser().getUsername(), READ, user);
+        }
+        if(!permissionService.hasACLPermission(storage, username, WRITE)) {
+            permissionService.addPermission(storage, storage.getUser().getUsername(), WRITE, user);
+        }
+        if(!permissionService.hasACLPermission(storage, username, ADMINISTRATION)) {
+            permissionService.addPermission(storage, storage.getUser().getUsername(), ADMINISTRATION, user);
+        }
     }
 
 

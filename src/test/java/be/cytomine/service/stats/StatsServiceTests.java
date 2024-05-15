@@ -21,7 +21,6 @@ import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.*;
 import be.cytomine.repositorynosql.social.*;
@@ -150,7 +149,7 @@ public class StatsServiceTests {
         return connection;
     }
 
-    PersistentImageConsultation given_a_persistent_image_consultation(SecUser user, ImageInstance imageInstance, Date created) {
+    PersistentImageConsultation given_a_persistent_image_consultation(User user, ImageInstance imageInstance, Date created) {
         return imageConsultationService.add(user, imageInstance.getId(), "xxx", "mode", created);
     }
 
@@ -171,7 +170,6 @@ public class StatsServiceTests {
         UserAnnotation annotation = builder.given_a_user_annotation();
         assertThat(statsService.total(annotation.getClass())).isGreaterThanOrEqualTo(1);
         assertThat(statsService.total(annotation.getProject().getClass())).isGreaterThanOrEqualTo(1);
-        assertThat(statsService.total(AlgoAnnotation.class)).isEqualTo(0);
     }
 
     @Test
@@ -222,26 +220,6 @@ public class StatsServiceTests {
         assertThat(jsonObjects.stream().filter(x -> x.getJSONAttrLong("size")==1).collect(Collectors.toList())).hasSize(2);
 
         statsService.statAnnotationEvolution(project, builder.given_a_term(project.getOntology()), 7, DateUtils.addDays(new Date(), -30), DateUtils.addDays(new Date(), 0), true, false);
-
-    }
-
-    @Test
-    void stats_algo_annotation_evolution() {
-        Project project = builder.given_a_project();
-        AlgoAnnotation annotation1 = builder.given_a_algo_annotation(project);
-        annotation1.setCreated(DateUtils.addDays(new Date(), -1));
-        builder.persistAndReturn(annotation1);
-        AlgoAnnotation annotation2 = builder.given_a_algo_annotation(project);
-        annotation2.setCreated(DateUtils.addDays(new Date(), -10));
-        builder.persistAndReturn(annotation2);
-
-        List<JsonObject> jsonObjects = statsService.statAlgoAnnotationEvolution(project, null, 7, DateUtils.addDays(new Date(), -30), DateUtils.addDays(new Date(), 0), true, false);
-
-        assertThat(jsonObjects).hasSize(5);
-        assertThat(jsonObjects.stream().filter(x -> x.getJSONAttrLong("size")==1).collect(Collectors.toList())).hasSize(2);
-
-        statsService.statAlgoAnnotationEvolution(project, builder.given_a_term(project.getOntology()), 7, DateUtils.addDays(new Date(), -30), DateUtils.addDays(new Date(), 0), true, false);
-
 
     }
 

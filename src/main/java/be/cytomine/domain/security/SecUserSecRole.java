@@ -31,13 +31,13 @@ public class SecUserSecRole extends CytomineDomain implements Serializable {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "sec_user_id", nullable = false)
-    private SecUser secUser;
+    private User secUser;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "sec_role_id", nullable = false)
     private SecRole secRole;
 
-    Long getSecUserId() {
+    Long getUserId() {
         return (secUser!=null? secUser.getId() : null);
     }
 
@@ -50,13 +50,13 @@ public class SecUserSecRole extends CytomineDomain implements Serializable {
     }
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
-        SecUserSecRole secUserSecRole = this;
-        secUserSecRole.id = json.getJSONAttrLong("id",null);
-        secUserSecRole.secUser = (User)json.getJSONAttrDomain(entityManager, "user", new SecUser(), true);
-        secUserSecRole.secRole = (SecRole)json.getJSONAttrDomain(entityManager, "role", new SecRole(), true);
-        secUserSecRole.created = json.getJSONAttrDate("created");
-        secUserSecRole.updated = json.getJSONAttrDate("updated");
-        return secUserSecRole;
+        SecUserSecRole secSecUserSecRole = this;
+        secSecUserSecRole.id = json.getJSONAttrLong("id",null);
+        secSecUserSecRole.secUser = (User)json.getJSONAttrDomain(entityManager, "user", new User(), true);
+        secSecUserSecRole.secRole = (SecRole)json.getJSONAttrDomain(entityManager, "role", new SecRole(), true);
+        secSecUserSecRole.created = json.getJSONAttrDate("created");
+        secSecUserSecRole.updated = json.getJSONAttrDate("updated");
+        return secSecUserSecRole;
     }
 
     /**
@@ -66,10 +66,10 @@ public class SecUserSecRole extends CytomineDomain implements Serializable {
      */
     public static JsonObject getDataFromDomain(CytomineDomain domain) {
         JsonObject returnArray = CytomineDomain.getDataFromDomain(domain);
-        SecUserSecRole secUserSecRole = (SecUserSecRole)domain;
-        returnArray.put("user", secUserSecRole.getSecUserId());
-        returnArray.put("role", secUserSecRole.getSecRoleId());
-        returnArray.put("authority", secUserSecRole.getSecRoleAuthority());
+        SecUserSecRole secSecUserSecRole = (SecUserSecRole)domain;
+        returnArray.put("user", secSecUserSecRole.getUserId());
+        returnArray.put("role", secSecUserSecRole.getSecRoleId());
+        returnArray.put("authority", secSecUserSecRole.getSecRoleAuthority());
         return returnArray;
     }
 

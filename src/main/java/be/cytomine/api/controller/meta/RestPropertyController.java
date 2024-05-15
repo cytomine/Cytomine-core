@@ -21,7 +21,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.JsonInput;
 import be.cytomine.dto.JsonMultipleObject;
 import be.cytomine.dto.JsonSingleObject;
@@ -32,10 +32,9 @@ import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.meta.PropertyService;
 import be.cytomine.service.project.ProjectService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.utils.GeometryUtils;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.Task;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.locationtech.jts.geom.Geometry;
@@ -65,7 +64,7 @@ public class RestPropertyController extends RestCytomineController {
 
     private final AnnotationDomainRepository annotationDomainRepository;
 
-    private final SecUserService secUserService;
+    private final UserService userService;
 
     @GetMapping("/project/{project}/property.json")
     public ResponseEntity<String> listByProject(
@@ -153,13 +152,13 @@ public class RestPropertyController extends RestCytomineController {
         log.debug("REST request to list annotation position");
         ImageInstance imageInstance = imageInstanceService.find(imageInstanceId)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageInstanceId));
-        SecUser secUser = secUserService.find(userId)
-                .orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
+        User user = userService.find(userId)
+                .orElseThrow(() -> new ObjectNotFoundException("User", userId));
         Geometry boundingbox = null;
         if (bbox!=null) {
             boundingbox = GeometryUtils.createBoundingBox(bbox);
         }
-        return responseSuccess(propertyService.listAnnotationCenterPosition(secUser, imageInstance, boundingbox, key));
+        return responseSuccess(propertyService.listAnnotationCenterPosition(user, imageInstance, boundingbox, key));
     }
 
 

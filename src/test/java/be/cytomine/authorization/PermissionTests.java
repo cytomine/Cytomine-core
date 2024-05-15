@@ -126,7 +126,7 @@ public class PermissionTests {
 //        addPermission(domain,username,permission,currentUserService.getCurrentUser());
 //    }
 //
-//    public void addPermission(CytomineDomain domain, String username, Permission permission, SecUser user) {
+//    public void addPermission(CytomineDomain domain, String username, Permission permission, User user) {
 //
 //        //get domain class id
 //        Long aclClassId = getAclClassId(domain);

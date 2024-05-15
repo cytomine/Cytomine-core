@@ -64,7 +64,7 @@ public abstract class AbstractAuthorizationTest {
     protected UserRepository userRepository;
 
     @Autowired
-    protected SecUserSecRoleRepository secUserSecRoleRepository;
+    protected SecUserSecRoleRepository secSecUserSecRoleRepository;
 
     @Autowired
     protected SecRoleRepository secRoleRepository;

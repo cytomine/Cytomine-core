@@ -20,7 +20,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.meta.Description;
 import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.meta.DescriptionRepository;
@@ -94,7 +94,7 @@ public class DescriptionService extends ModelService {
     }
 
     public CommandResponse add(JsonObject jsonObject) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         //Get the associated domain
         CytomineDomain domain = getCytomineDomain(jsonObject.getJSONAttrStr("domainClassName"), jsonObject.getJSONAttrLong("domainIdent"));
         //TODO when is getting into this?
@@ -115,7 +115,7 @@ public class DescriptionService extends ModelService {
 
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         CytomineDomain parentDomain = getCytomineDomain(((Description) domain).getDomainClassName(), ((Description) domain).getDomainIdent());
         securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
@@ -123,7 +123,7 @@ public class DescriptionService extends ModelService {
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         CytomineDomain parentDomain = getCytomineDomain(((Description) domain).getDomainClassName(), ((Description) domain).getDomainIdent());
         securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
         Command c = new DeleteCommand(currentUser, transaction);

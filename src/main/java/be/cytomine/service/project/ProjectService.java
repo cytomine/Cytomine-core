@@ -23,13 +23,12 @@ import be.cytomine.domain.ontology.AnnotationTerm;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
-import be.cytomine.domain.security.ForgotPasswordToken;
-import be.cytomine.domain.security.SecRole;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.DatedCytomineDomain;
 import be.cytomine.dto.NamedCytomineDomain;
-import be.cytomine.exceptions.*;
+import be.cytomine.exceptions.AlreadyExistException;
+import be.cytomine.exceptions.ForbiddenException;
+import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.command.CommandHistoryRepository;
 import be.cytomine.repository.command.CommandRepository;
 import be.cytomine.repository.command.RedoStackItemRepository;
@@ -38,7 +37,6 @@ import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.project.ProjectRepresentativeUserRepository;
-import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
@@ -46,15 +44,12 @@ import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.dto.ProjectBounds;
 import be.cytomine.service.image.ImageInstanceService;
-import be.cytomine.service.ontology.AlgoAnnotationTermService;
 import be.cytomine.service.ontology.AnnotationTermService;
 import be.cytomine.service.ontology.OntologyService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.search.ProjectSearchExtension;
-import be.cytomine.service.security.SecUserSecRoleService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.service.utils.NotificationService;
 import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SQLSearchParameter;
@@ -63,30 +58,29 @@ import be.cytomine.utils.filters.SearchParameterProcessed;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.Accumulators;
+import jakarta.persistence.Query;
+import jakarta.persistence.Tuple;
+import jakarta.persistence.TupleElement;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.stereotype.Service;
 
-import jakarta.mail.MessagingException;
-import jakarta.persistence.Query;
-import jakarta.persistence.Tuple;
-import jakarta.persistence.TupleElement;
-import jakarta.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static be.cytomine.service.social.ImageConsultationService.DATABASE_NAME;
 import static com.mongodb.client.model.Aggregates.*;
-import static com.mongodb.client.model.Aggregates.sort;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
-import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.descending;
 import static org.springframework.security.acls.domain.BasePermission.*;
 
@@ -114,13 +108,10 @@ public class ProjectService extends ModelService {
     private UserRepository userRepository;
 
     @Autowired
-    private SecUserService secUserService;
+    private UserService userService;
 
     @Autowired
     private AnnotationTermService annotationTermService;
-
-    @Autowired
-    private AlgoAnnotationTermService algoAnnotationTermService;
 
     @Autowired
     private ReviewedAnnotationService reviewedAnnotationService;
@@ -153,19 +144,10 @@ public class ProjectService extends ModelService {
     private RedoStackItemRepository redoStackItemRepository;
 
     @Autowired
-    private SecUserSecRoleService secUserSecRoleService;
-
-    @Autowired
     MongoClient mongoClient;
 
     @Autowired
     private CurrentRoleService currentRoleService;
-
-    @Autowired
-    private SecRoleRepository secRoleRepository;
-
-    @Autowired
-    private NotificationService notificationService;
 
     @Autowired
     private ProjectRepresentativeUserRepository projectRepresentativeUserRepository;
@@ -189,7 +171,7 @@ public class ProjectService extends ModelService {
     }
 
     public ProjectBounds computeBounds(Boolean withMembersCount) {
-        SecUser user = currentUserService.getCurrentUser();
+        User user = currentUserService.getCurrentUser();
         if(currentRoleService.isAdminByNow(user)) {
             //if user is admin, we print all available project
             user = null;
@@ -249,7 +231,7 @@ public class ProjectService extends ModelService {
         return projectRepository.findAllProjectForUser(currentUserService.getCurrentUsername());
     }
 
-    public Page<JsonObject> list(SecUser user, ProjectSearchExtension projectSearchExtension, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
+    public Page<JsonObject> list(User user, ProjectSearchExtension projectSearchExtension, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
         if (user==null) {
             securityACLService.checkAdmin(currentUserService.getCurrentUser());
         } else {
@@ -359,7 +341,7 @@ public class ProjectService extends ModelService {
         }
 
         if(!tags.isBlank()){
-            from += "LEFT OUTER JOIN tag_domain_association t ON p.id = t.domain_ident AND t.domain_class_name = 'be.cytomine.domain.project.Project' "; //TODO: change class path
+            from += "LEFT OUTER JOIN tag_domain_association t ON p.id = t.domain_ident AND t.domain_class_name = 'be.cytomine.domain.project.Project' ";
             search +=" AND ";
             search += tags;
         }
@@ -378,7 +360,7 @@ public class ProjectService extends ModelService {
             from += "LEFT OUTER JOIN " +
                     " ( SELECT aclObjectId.object_id_identity as project_id, COUNT(DISTINCT secUser.id) as member_count " +
                     "   FROM acl_object_identity as aclObjectId, acl_entry as aclEntry, acl_sid as aclSid, sec_user as secUser " +
-                    "   WHERE aclEntry.acl_object_identity = aclObjectId.id and aclEntry.sid = aclSid.id and aclSid.sid = secUser.username and secUser.class = 'be.cytomine.domain.security.User' " +
+                    "   WHERE aclEntry.acl_object_identity = aclObjectId.id and aclEntry.sid = aclSid.id and aclSid.sid = secUser.username" +
                     "   GROUP BY aclObjectId.object_id_identity " +
                     ") members ON p.id = members.project_id ";
 
@@ -392,7 +374,7 @@ public class ProjectService extends ModelService {
             from += "LEFT OUTER JOIN description d ON d.domain_ident = p.id ";
         }
         if(projectSearchExtension.isWithCurrentUserRoles()) {
-            SecUser currentUser = currentUserService.getCurrentUser(); // cannot use user param because it is set to null if user connected as admin
+            User currentUser = currentUserService.getCurrentUser(); // cannot use user param because it is set to null if user connected as admin
             select += ", (admin_project.id IS NOT NULL) AS is_admin, (repr.id IS NOT NULL) AS is_representative ";
             from += "LEFT OUTER JOIN admin_project " +
                     "ON admin_project.id = p.id AND admin_project.user_id = " + currentUser.getId() + " " +
@@ -575,11 +557,6 @@ public class ProjectService extends ModelService {
         return projectRepository.findAllProjectForUserByOntology(currentUserService.getCurrentUsername(),ontology);
     }
 
-//    List<Software> listBySoftware(Software software) {
-//        // TODO:
-//        throw new RuntimeException("TODO");
-//    }
-
     public List<CommandHistory> lastAction(Project project, int max) {
         securityACLService.check(project, READ);
         return commandHistoryRepository.findAllByProject(project, PageRequest.of(0, max, Sort.by("created").descending()));
@@ -608,7 +585,7 @@ public class ProjectService extends ModelService {
     @Override
     public CommandResponse add(JsonObject jsonObject, Task task) {
         taskService.updateTask(task,5,"Start creating project " + jsonObject.getJSONAttrStr("name"));
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
 
         if(jsonObject.get("ontology")!=null) {
@@ -633,7 +610,7 @@ public class ProjectService extends ModelService {
             Optional<User> optionalUser = userRepository.findById(userId);
             if (optionalUser.isPresent()) {
                 log.info("addUserToProject project="+project.getId()+" user="+optionalUser.get().getId());
-                secUserService.addUserToProject(optionalUser.get(), project, false);
+                userService.addUserToProject(optionalUser.get(), project, false);
                 progress = progress + (40/users.size());
                 taskService.updateTask(task,Math.min(100,progress),"User "+optionalUser.get().getUsername()+" added as User");
             }
@@ -644,7 +621,7 @@ public class ProjectService extends ModelService {
             if (optionalUser.isPresent() && !Objects.equals(optionalUser.get().getId(), currentUserService.getCurrentUser().getId())) {
                 // current user is already in project
                 log.info("addUserToProject (admin) project="+project.getId()+" user="+optionalUser.get().getId());
-                secUserService.addUserToProject(optionalUser.get(), project, true);
+                userService.addUserToProject(optionalUser.get(), project, true);
                 progress = progress + (40/admins.size());
                 taskService.updateTask(task,Math.min(100,progress),"User "+optionalUser.get().getUsername()+" added as Admin");
             }
@@ -661,7 +638,7 @@ public class ProjectService extends ModelService {
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction, Task task) {
         Project project = (Project)domain;
         taskService.updateTask(task,5,"Start editing project " + project.getName());
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(project.container(),WRITE);
         Ontology ontology = project.getOntology();
 
@@ -675,7 +652,7 @@ public class ProjectService extends ModelService {
             if(!deleteTerms) {
                 userAssociatedTermsCount += annotationTermService.list(project).size();
             }
-            algoAssociatedTermsCount += algoAnnotationTermService.count(project);
+            algoAssociatedTermsCount += 0;
             reviewedAssociatedTermsCount += reviewedAnnotationService.countByProjectAndWithTerms(project);
             associatedTermsCount = userAssociatedTermsCount + algoAssociatedTermsCount + reviewedAssociatedTermsCount;
 
@@ -712,13 +689,13 @@ public class ProjectService extends ModelService {
 
 
         if(users!=null) {
-            List<Long> projectOldUsers = secUserService.listUsers(project).stream().map(CytomineDomain::getId).sorted().collect(Collectors.toList()); //[a,b,c]
+            List<Long> projectOldUsers = userService.listUsers(project).stream().map(CytomineDomain::getId).sorted().collect(Collectors.toList()); //[a,b,c]
             List<Long> projectNewUsers = users.stream().sorted().collect(Collectors.toList()); //[a,b,x]
             List<Long> nextAdmins;
             if(admins!=null) {
                 nextAdmins = admins;
             } else {
-                nextAdmins = secUserService.listAdmins(project).stream().map(CytomineDomain::getId).sorted().collect(Collectors.toList()); //[a,b,c]
+                nextAdmins = userService.listAdmins(project).stream().map(CytomineDomain::getId).sorted().collect(Collectors.toList()); //[a,b,c]
             }
             projectNewUsers.addAll(nextAdmins);  //add admin as user too
             projectNewUsers.add(currentUser.getId());
@@ -730,7 +707,7 @@ public class ProjectService extends ModelService {
 
 
         if(admins!=null) {
-            List<Long> projectOldAdmins = secUserService.listAdmins(project).stream().map(CytomineDomain::getId).sorted().collect(Collectors.toList()); //[a,b,c]
+            List<Long> projectOldAdmins = userService.listAdmins(project).stream().map(CytomineDomain::getId).sorted().collect(Collectors.toList()); //[a,b,c]
             List<Long> projectNewAdmins = admins.stream().sorted().collect(Collectors.toList()); //[a,b,x]
             projectNewAdmins.add(currentUser.getId());
             projectNewAdmins = projectNewAdmins.stream().distinct().collect(Collectors.toList());
@@ -774,9 +751,9 @@ public class ProjectService extends ModelService {
             }
         }
         if(ontology!=null && !Objects.equals(ontology.getId(), jsonNewData.getJSONAttrLong("ontology"))){
-            ontologyService.determineRightsForUsers(ontology, secUserService.listUsers(project));
+            ontologyService.determineRightsForUsers(ontology, userService.listUsers(project));
             if(project.getOntology()!=null) {
-                ontologyService.determineRightsForUsers(project.getOntology(), secUserService.listUsers(project));
+                ontologyService.determineRightsForUsers(project.getOntology(), userService.listUsers(project));
             }
         }
         return commandResponse;
@@ -799,7 +776,7 @@ public class ProjectService extends ModelService {
             Optional<User> optionalUser = userRepository.findById(userId);
             if (optionalUser.isPresent()) {
                 log.info("addUserToProject project="+project.getId()+" user="+optionalUser.get().getId());
-                secUserService.addUserToProject(optionalUser.get(), project, admin);
+                userService.addUserToProject(optionalUser.get(), project, admin);
                 progress = progress + (40/projectAddUser.size());
                 taskService.updateTask(task,Math.min(100,progress),"User "+optionalUser.get().getUsername()+" added as " + (admin? "Admin" : "User"));
             }
@@ -809,7 +786,7 @@ public class ProjectService extends ModelService {
             Optional<User> optionalUser = userRepository.findById(userId);
             if (optionalUser.isPresent()) {
                 log.info("projectDeleteUser project="+project.getId()+" user="+optionalUser.get().getId());
-                secUserService.deleteUserFromProject(optionalUser.get(), project, admin);
+                userService.deleteUserFromProject(optionalUser.get(), project, admin);
                 log.info("changeProjectUser " + permissionService.hasACLPermission(project, optionalUser.get().getUsername(), ADMINISTRATION));
                 progress = progress + (40/projectAddUser.size());
                 taskService.updateTask(task,Math.min(100,progress),"User "+optionalUser.get().getUsername()+" removed as " + (admin? "Admin" : "User"));
@@ -864,51 +841,11 @@ public class ProjectService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),ADMINISTRATION);
         securityACLService.checkIsNotReadOnly(domain.container());
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
-    }
-
-    //TODO
-    /**
-     * Invite an user (not yet existing) in project user
-     * @param sender User who send the invitation
-     * @param project Project that will be accessed by user
-     * @param json the name and the mail of the User to add in project
-     * @return Response structure
-     */
-    public User inviteUser(Project project, String username, String firstname, String lastname, String email) throws MessagingException {
-
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.put("username", username);
-        jsonObject.put("firstname", firstname);
-        jsonObject.put("lastname", lastname);
-        jsonObject.put("email", email);
-        jsonObject.put("password", "passwordExpired");
-
-        secUserService.add(jsonObject);
-        User user = (User) secUserService.findByUsername(jsonObject.getJSONAttrStr("username")).get();
-        SecRole secRole = secRoleRepository.getGuest();
-        secUserSecRoleService.add(JsonObject.of("user", user.getId(), "role", secRole.getId()));
-        if (project!=null) {
-            secUserService.addUserToProject(user, project, false);
-        }
-
-        user.setPasswordExpired(true);
-        userRepository.save(user);
-
-        ForgotPasswordToken forgotPasswordToken = new ForgotPasswordToken();
-        forgotPasswordToken.setUser(user);
-        forgotPasswordToken.setTokenKey(UUID.randomUUID().toString());
-        forgotPasswordToken.setExpiryDate(DateUtils.addDays(new Date(), 1));
-        getEntityManager().persist(forgotPasswordToken);
-
-        SecUser sender = currentUserService.getCurrentUser();
-        notificationService.notifyWelcome((User) sender, user, forgotPasswordToken);
-        return user;
-
     }
 
     protected void afterAdd(CytomineDomain domain, CommandResponse response) {
@@ -936,7 +873,7 @@ public class ProjectService extends ModelService {
     protected void beforeUpdate(CytomineDomain domain) {
         Project project = (Project)domain;
         project.setCountAnnotations(annotationDomainRepository.countAllUserAnnotationAndProject(domain.getId()));
-        project.setCountJobAnnotations(annotationDomainRepository.countAllAlgoAnnotationAndProject(domain.getId()));
+//        project.setCountJobAnnotations(annotationDomainRepository.countAllAlgoAnnotationAndProject(domain.getId()));
         project.setCountReviewedAnnotations(annotationDomainRepository.countAllReviewedAnnotationAndProject(domain.getId()));
         project.setCountImages(imageInstanceRepository.countAllByProject(project));
     }
@@ -969,7 +906,6 @@ public class ProjectService extends ModelService {
         deleteDependentImageInstance((Project) domain, transaction, task);
         deleteDependentRepresentativeUser((Project) domain, transaction, task);
         deleteDependentMetadata(domain, transaction, task);
-        //TODO: only that? software project? ...
     }
 
     private void deleteDependentRepresentativeUser(Project domain, Transaction transaction, Task task) {

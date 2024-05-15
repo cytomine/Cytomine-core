@@ -104,7 +104,7 @@ public class AnnotationTrackServiceTests {
         UserAnnotation annotation = builder.given_a_user_annotation();
         annotationTrack.setAnnotation(annotation);
         assertThat(annotationTrack).isIn(annotationTrackService.list(annotation));
-        assertThat(annotationTrackService.list(builder.given_a_algo_annotation())).isEmpty();
+        assertThat(annotationTrackService.list(builder.given_a_user_annotation())).isEmpty();
     }
 
     @Test

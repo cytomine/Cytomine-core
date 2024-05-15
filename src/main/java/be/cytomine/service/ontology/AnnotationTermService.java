@@ -23,7 +23,6 @@ import be.cytomine.domain.command.DeleteCommand;
 import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -31,7 +30,7 @@ import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.AnnotationTermRepository;
 import be.cytomine.repository.ontology.TermRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.command.TransactionService;
@@ -67,7 +66,7 @@ public class AnnotationTermService extends ModelService {
     private CurrentUserService currentUserService;
 
     @Autowired
-    private SecUserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private TermRepository termRepository;
@@ -84,7 +83,7 @@ public class AnnotationTermService extends ModelService {
     }
 
 
-    public Optional<AnnotationTerm> find(AnnotationDomain annotation, Term term, SecUser user) {
+    public Optional<AnnotationTerm> find(AnnotationDomain annotation, Term term, User user) {
         securityACLService.check(annotation.container(),READ);
         List<AnnotationTerm> annotationTerms = annotationTermRepository.findAllByUserAnnotationId(annotation.getId());
         return annotationTerms.stream().filter(x -> x.getTerm()==term && (user==null || x.getUser().getId().equals(user.getId()))).findFirst();
@@ -119,10 +118,10 @@ public class AnnotationTermService extends ModelService {
      */
     @Override
     public CommandResponse add(JsonObject jsonObject) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         //Check if user has a role that allows to associate terms with annotations
         securityACLService.checkGuest(currentUser);
-        SecUser creator = userRepository.findById(jsonObject.getJSONAttrLong("user", -1L))
+        User creator = userRepository.findById(jsonObject.getJSONAttrLong("user", -1L))
                 .orElse(currentUser);
         jsonObject.put("user", creator.getId());
 
@@ -143,7 +142,7 @@ public class AnnotationTermService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         //Check if user has a role that allows to associate terms with annotations
         securityACLService.checkGuest(currentUser);
         //if term is added from a user, check if the user has permission for UserAnnotation domain
@@ -154,13 +153,13 @@ public class AnnotationTermService extends ModelService {
         return executeCommand(c,domain, null);
     }
 
-    public CommandResponse addAnnotationTerm(Long idUserAnnotation, Long idTerm, Long idExpectedTerm, Long idUser, SecUser currentUser, Transaction transaction) {
+    public CommandResponse addAnnotationTerm(Long idUserAnnotation, Long idTerm, Long idExpectedTerm, Long idUser, User currentUser, Transaction transaction) {
         Term term = termRepository.findById(idTerm)
                 .orElseThrow(() -> new ObjectNotFoundException("Term", idExpectedTerm));
         UserAnnotation userAnnotation = userAnnotationRepository.findById(idUserAnnotation)
                 .orElseThrow(() -> new ObjectNotFoundException("UserAnnotation", idUserAnnotation));
-        SecUser creator = userRepository.findById(idUser)
-                .orElseThrow(() -> new ObjectNotFoundException("SecUser", idUser));
+        User creator = userRepository.findById(idUser)
+                .orElseThrow(() -> new ObjectNotFoundException("User", idUser));
         securityACLService.check(userAnnotation.container(),READ);
         JsonObject jsonObject = JsonObject.of(
                 "userannotation", idUserAnnotation,
@@ -179,7 +178,7 @@ public class AnnotationTermService extends ModelService {
      * Add annotation-term for an annotation and delete all annotation-term that where already map with this annotation by this user
      */
     public CommandResponse addWithDeletingOldTerm(Long idAnnotation, Long idTerm, Boolean fromAllUser) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         AnnotationDomain annotation = AnnotationDomain.findAnnotationDomain(getEntityManager(), idAnnotation)
                 .orElseThrow(() -> new ObjectNotFoundException("Annotation", idAnnotation));
         securityACLService.check(annotation.container(),READ,currentUser);

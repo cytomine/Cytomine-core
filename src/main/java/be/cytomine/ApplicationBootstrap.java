@@ -18,11 +18,10 @@ package be.cytomine;
 
 import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.config.nosqlmigration.InitialMongodbSetupMigration;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.project.ProjectRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.UrlApi;
 import be.cytomine.service.database.BootstrapDataService;
@@ -61,14 +60,11 @@ import static be.cytomine.service.database.BootstrapTestsDataService.*;
 @Transactional
 class ApplicationBootstrap {
 
-    private final SecUserRepository secUserRepository;
+    private final UserRepository userRepository;
 
     private final ApplicationProperties applicationProperties;
 
     private final Environment environment;
-
-    private boolean initAlreadyDone;
-
 
     @Autowired
     BootstrapDataService bootstrapDataService;
@@ -93,16 +89,6 @@ class ApplicationBootstrap {
 
     @Autowired
     BootstrapTestsDataService bootstrapTestsDataService;
-
-//    @Override
-//    public void onApplicationEvent(ApplicationReadyEvent event) {
-//        log.info("ApplicationListener#onApplicationEvent()");
-//        if (!initAlreadyDone) {
-//            // onApplicationEvent can be called multiple times (if cyclcic dependencies)
-//            init();
-//        }
-//        this.initAlreadyDone = true;
-//    }
 
     @PostConstruct
     public void init() {
@@ -144,15 +130,10 @@ class ApplicationBootstrap {
                 applicationProperties.getServerURL()
         );
 
-        if (EnvironmentUtils.isTest(environment) && secUserRepository.count() == 0) {
+        if (EnvironmentUtils.isTest(environment) && userRepository.count() == 0) {
             bootstrapDataService.initData();
             //noSQLCollectionService.cleanActivityDB() TODO:
-            bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", dataset.ADMINEMAIL, dataset.ADMINPASSWORD, List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
-
-            // same as superadmin, but a userjob
-            bootstrapUtilDataService.createUserJob("superadminjob", dataset.ADMINPASSWORD,
-                    (User)secUserRepository.findByUsernameLikeIgnoreCase("superadmin").orElseThrow(() -> new ObjectNotFoundException("User", "superadmin")),
-                    List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
+            bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
 
             // We need these users for all authorization tests
             // So we create them at the beginning in order to avoid creating them before each authorization tests
@@ -167,25 +148,18 @@ class ApplicationBootstrap {
             bootstrapTestsDataService.createUserForTests(CREATOR);
 
 
-        } else if (secUserRepository.count() == 0) {
+        } else if (userRepository.count() == 0) {
             //if database is empty, put minimal data
             bootstrapDataService.initData();
         }
 
+        // Deprecated API keys. Will be removed in a future release.
         if (applicationProperties.getImageServerPrivateKey()!=null && applicationProperties.getImageServerPublicKey()!=null) {
-            SecUser imageServerUser = secUserRepository.findByUsernameLikeIgnoreCase("ImageServer1")
+            User imageServerUser = userRepository.findByUsernameLikeIgnoreCase("ImageServer1")
                     .orElseThrow(() -> new ObjectNotFoundException("No user imageserver1, cannot assign keys"));
             imageServerUser.setPrivateKey(applicationProperties.getImageServerPrivateKey());
             imageServerUser.setPublicKey(applicationProperties.getImageServerPublicKey());
-            secUserRepository.save(imageServerUser);
-        }
-        if (applicationProperties.getRabbitMQPrivateKey()!=null && applicationProperties.getRabbitMQPrivateKey()!=null) {
-            secUserRepository.findByUsernameLikeIgnoreCase("rabbitmq")
-                    .ifPresent(user -> {
-                        user.setPrivateKey(applicationProperties.getRabbitMQPrivateKey());
-                        user.setPublicKey(applicationProperties.getRabbitMQPublicKey());
-                            secUserRepository.save(user);
-                    });
+            userRepository.save(imageServerUser);
         }
 
         log.info("Check image filters...");
