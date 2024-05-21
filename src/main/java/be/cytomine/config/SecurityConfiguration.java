@@ -18,11 +18,13 @@ package be.cytomine.config;
 
 import be.cytomine.config.security.ApiKeyFilter;
 import be.cytomine.repository.security.UserRepository;
+import be.cytomine.utils.JwtAuthConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -42,10 +44,17 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfiguration {
+
+    private static final String GROUPS = "groups";
+    private static final String REALM_ACCESS_CLAIM = "realm_access";
+    private static final String ROLES_CLAIM = "roles";
+
+    private final JwtAuthConverter customJwtAuthConverter;
     private final UserRepository userRepository;
 
-    public SecurityConfiguration(UserRepository userRepository) {
+    public SecurityConfiguration(UserRepository userRepository, JwtAuthConverter customJwtAuthConverter) {
         this.userRepository = userRepository;
+        this.customJwtAuthConverter = customJwtAuthConverter;
     }
     
     /**
@@ -114,6 +123,11 @@ public class SecurityConfiguration {
                                         .requestMatchers(HttpMethod.POST, "/server/ping.json").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
                                         .requestMatchers(new AntPathRequestMatcher("/**")).permitAll() // TODO IAM: remove ?
                 );
+        http.oauth2ResourceServer((oauth2) -> oauth2
+                .jwt(jwtAuthConverter -> jwtAuthConverter.jwtAuthenticationConverter(customJwtAuthConverter)));
+
+        http.oauth2Login(Customizer.withDefaults())
+                .logout(logout -> logout.logoutSuccessUrl("/"));
         return http.build();
     }
 }

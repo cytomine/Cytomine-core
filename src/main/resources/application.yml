@@ -12,6 +12,23 @@ spring:
       max-request-size: 15GB
       location: /tmp/multipart
 
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: core
+            authorization-grant-type: authorization_code
+            scope:
+              - openid
+        provider:
+          keycloak:
+            issuer-uri: http://iam:8100/iam/realms/cytomine
+            user-name-attribute: preferred_username
+      resourceserver:
+        jwt:
+          issuer-uri: http://iam:8100/iam/realms/cytomine
+
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     url: jdbc:postgresql://${POSTGIS_HOST:localhost}:${POSTGIS_PORT:5432}/${POSTGIS_DB_NAME:docker}
@@ -88,3 +105,9 @@ application:
   appEngine:
     enabled: ${APPENGINE_ENABLED:true}
     apiBasePath: ${APPENGINE_API_BASE_PATH:/app-engine/v1/}
+
+jwt:
+  auth:
+    converter:
+      resource-id: core
+      principle-attribute: preferred_username
