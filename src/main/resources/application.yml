@@ -28,6 +28,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://iam:8100/iam/realms/cytomine
+          jws-algorithms: RS256
 
   datasource:
     type: com.zaxxer.hikari.HikariDataSource

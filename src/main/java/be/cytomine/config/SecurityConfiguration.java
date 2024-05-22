@@ -117,6 +117,7 @@ public class SecurityConfiguration {
                                         .requestMatchers("/session/admin/info.json").authenticated()
                                         .requestMatchers("/session/admin/open.json").authenticated()
                                         .requestMatchers("/session/admin/close.json").authenticated()
+
                                         .requestMatchers(HttpMethod.GET, "/server/ping").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
                                         .requestMatchers(HttpMethod.GET, "/server/ping.json").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
                                         .requestMatchers(HttpMethod.POST, "/server/ping").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
