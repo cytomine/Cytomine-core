@@ -1,4 +1,21 @@
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: core
+            authorization-grant-type: authorization_code
+            scope:
+              - openid
+        provider:
+          keycloak:
+            issuer-uri: http://iam:8100/iam/realms/cytomine
+            user-name-attribute: preferred_username
+      resourceserver:
+        jwt:
+          issuer-uri: http://iam:8100/iam/realms/cytomine
+          jws-algorithms: RS256
   main:
     #    lazy-initialization: true
     allow-circular-references: true
@@ -314,3 +331,9 @@ application:
       project-users-heatmap-graph:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
+
+jwt:
+  auth:
+    converter:
+      resource-id: core
+      principle-attribute: preferred_username

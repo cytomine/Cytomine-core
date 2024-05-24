@@ -37,6 +37,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -56,7 +57,7 @@ public class SecurityConfiguration {
         this.userRepository = userRepository;
         this.customJwtAuthConverter = customJwtAuthConverter;
     }
-    
+
     /**
      * Argon2 is intentionally slow: slow-hashing functions are good for storing passwords, because it is time/resource consuming to crack them.
      * SHA-512 is not designed for storing passwords. so insecure and deprecated so in future check if sha256 use it if not use argon2 or bcrypt.
@@ -100,7 +101,6 @@ public class SecurityConfiguration {
 //        daoProvider.setPasswordEncoder(passwordEncoder());
 //        return new ProviderManager(daoProvider);
 //    }
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -112,23 +112,20 @@ public class SecurityConfiguration {
                                         (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
                 )
                 .authorizeHttpRequests((authorizeHttpRequests) ->
-                                authorizeHttpRequests
-                                        .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
-                                        .requestMatchers("/session/admin/info.json").authenticated()
-                                        .requestMatchers("/session/admin/open.json").authenticated()
-                                        .requestMatchers("/session/admin/close.json").authenticated()
+                        authorizeHttpRequests
+                                .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
+                                .requestMatchers("/session/admin/info.json").authenticated()
+                                .requestMatchers("/session/admin/open.json").authenticated()
+                                .requestMatchers("/session/admin/close.json").authenticated()
 
-                                        .requestMatchers(HttpMethod.GET, "/server/ping").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
-                                        .requestMatchers(HttpMethod.GET, "/server/ping.json").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
-                                        .requestMatchers(HttpMethod.POST, "/server/ping").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
-                                        .requestMatchers(HttpMethod.POST, "/server/ping.json").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
-                                        .requestMatchers(new AntPathRequestMatcher("/**")).permitAll() // TODO IAM: remove ?
+                                .requestMatchers(HttpMethod.GET, "/server/ping").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+                                .requestMatchers(HttpMethod.GET, "/server/ping.json").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+                                .requestMatchers(HttpMethod.POST, "/server/ping").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+                                .requestMatchers(HttpMethod.POST, "/server/ping.json").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+                                .requestMatchers(new AntPathRequestMatcher("/**")).permitAll() // TODO IAM: remove ?
                 );
         http.oauth2ResourceServer((oauth2) -> oauth2
                 .jwt(jwtAuthConverter -> jwtAuthConverter.jwtAuthenticationConverter(customJwtAuthConverter)));
-
-        http.oauth2Login(Customizer.withDefaults())
-                .logout(logout -> logout.logoutSuccessUrl("/"));
         return http.build();
     }
 }

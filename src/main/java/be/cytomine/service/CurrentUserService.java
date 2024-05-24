@@ -29,6 +29,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -65,7 +67,6 @@ public class CurrentUserService {
 
     public static Optional<CurrentUser> getSecurityCurrentUser() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
-
         return Optional.ofNullable(extractCurrentUser(securityContext.getAuthentication()));
     }
 
@@ -83,6 +84,11 @@ public class CurrentUserService {
         } else if (authentication.getPrincipal() instanceof UserDetails) {
             PartialCurrentUser partialCurrentUser = new PartialCurrentUser();
             partialCurrentUser.setUsername(((UserDetails) authentication.getPrincipal()).getUsername());
+            return partialCurrentUser;
+        }else if (authentication instanceof JwtAuthenticationToken) {
+            PartialCurrentUser partialCurrentUser = new PartialCurrentUser();
+            // this is the preferred_username coming from token claims
+            partialCurrentUser.setUsername(authentication.getName());
             return partialCurrentUser;
         }
         return null;

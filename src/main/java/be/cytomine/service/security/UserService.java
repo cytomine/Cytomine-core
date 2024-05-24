@@ -216,6 +216,10 @@ public class UserService extends ModelService {
         return userRepository.findById(id);
     }
 
+    public Optional<User> find(UUID sub) {
+        return userRepository.findByReference(String.valueOf(sub));
+    }
+
     public Optional<User> find(String id) {
         try {
             return find(Long.valueOf(id));

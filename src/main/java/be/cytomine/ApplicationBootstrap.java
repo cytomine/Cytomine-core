@@ -84,8 +84,8 @@ class ApplicationBootstrap {
     @Autowired
     Dataset dataset;
 
-    @Autowired
-    PasswordEncoder passwordEncoder;
+//    @Autowired
+//    PasswordEncoder passwordEncoder;
 
     @Autowired
     BootstrapTestsDataService bootstrapTestsDataService;
@@ -154,13 +154,13 @@ class ApplicationBootstrap {
         }
 
         // Deprecated API keys. Will be removed in a future release.
-        if (applicationProperties.getImageServerPrivateKey()!=null && applicationProperties.getImageServerPublicKey()!=null) {
-            User imageServerUser = userRepository.findByUsernameLikeIgnoreCase("ImageServer1")
-                    .orElseThrow(() -> new ObjectNotFoundException("No user imageserver1, cannot assign keys"));
-            imageServerUser.setPrivateKey(applicationProperties.getImageServerPrivateKey());
-            imageServerUser.setPublicKey(applicationProperties.getImageServerPublicKey());
-            userRepository.save(imageServerUser);
-        }
+//        if (applicationProperties.getImageServerPrivateKey()!=null && applicationProperties.getImageServerPublicKey()!=null) {
+//            User imageServerUser = userRepository.findByUsernameLikeIgnoreCase("ImageServer1")
+//                    .orElseThrow(() -> new ObjectNotFoundException("No user imageserver1, cannot assign keys"));
+//            imageServerUser.setPrivateKey(applicationProperties.getImageServerPrivateKey());
+//            imageServerUser.setPublicKey(applicationProperties.getImageServerPublicKey());
+//            userRepository.save(imageServerUser);
+//        }
 
         log.info("Check image filters...");
         bootstrapDataService.updateImageFilters();
