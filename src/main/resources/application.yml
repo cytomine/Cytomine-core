@@ -19,16 +19,21 @@ spring:
           keycloak:
             client-id: core
             authorization-grant-type: authorization_code
+            redirect-uri: http://nginx/iam/realms/cytomine
             scope:
               - openid
         provider:
           keycloak:
-            issuer-uri: http://iam:8100/iam/realms/cytomine
             user-name-attribute: preferred_username
+            authorization-uri: http://nginx/iam/realms/cytomine/protocol/openid-connect/auth
+            token-uri: http://nginx/iam/realms/cytomine/protocol/openid-connect/token
+            jwk-set-uri: http://nginx/iam/realms/cytomine/.well-known/openid-configuration
       resourceserver:
         jwt:
-          issuer-uri: http://iam:8100/iam/realms/cytomine
+          issuer-uri: http://127.0.0.1:8100/iam/realms/cytomine
           jws-algorithms: RS256
+          jwk-set-uri: http://nginx/iam/realms/cytomine/protocol/openid-connect/certs
+
 
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
