@@ -74,16 +74,16 @@ public class BootstrapDataService {
         bootstrapUtilsService.createRole("ROLE_GUEST");
 
         // TODO IAM: Can be removed if user are automatically created the first time one of his token is seen
-//        bootstrapUtilsService.createUser("admin", "Just an", "Admin", List.of("ROLE_USER", "ROLE_ADMIN"));
+        bootstrapUtilsService.createUser("admin", "Just an", "Admin", List.of("ROLE_USER", "ROLE_ADMIN"));
         bootstrapUtilsService.createUser("ImageServer1", "Image", "Server", List.of("ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN"));
         bootstrapUtilsService.createUser("superadmin", "Super", "Admin", List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
 
         bootstrapUtilsService.createRelation(PARENT);
 
         bootstrapUtilsService.createConfigurations("WELCOME", "<p>Welcome to the Cytomine software.</p><p>This software is supported by the <a href='https://cytomine.coop'>Cytomine company</a></p>", ConfigurationReadingRole.ALL);
-//        bootstrapUtilsService.createConfigurations("admin_email", applicationProperties.getAdminEmail(), ConfigurationReadingRole.ADMIN);
+        bootstrapUtilsService.createConfigurations("admin_email", applicationProperties.getAdminEmail(), ConfigurationReadingRole.ADMIN);
 
-//        changeUserKeys("admin", applicationProperties.getAdminPrivateKey(), applicationProperties.getAdminPublicKey());
+        changeUserKeys("admin", applicationProperties.getAdminPrivateKey(), applicationProperties.getAdminPublicKey());
         changeUserKeys("superadmin", applicationProperties.getSuperAdminPrivateKey(), applicationProperties.getSuperAdminPublicKey());
 
 

@@ -61,6 +61,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -509,7 +510,7 @@ public class UserResourceTests {
 
         restUserControllerMockMvc.perform(post("/api/user.json")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"username\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
+                        .content("{\"name\":\"TEST_CREATE\",\"reference\":\""+ UUID.randomUUID().toString() +"\",\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"username\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
@@ -556,7 +557,7 @@ public class UserResourceTests {
 
         restUserControllerMockMvc.perform(post("/api/user.json")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"username\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
+                        .content("{\"name\":\"TEST_CREATE\",\"reference\":\""+ UUID.randomUUID().toString() +"\",\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"username\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
                 .andDo(print())
                 .andExpect(status().isOk());
 
@@ -564,8 +565,7 @@ public class UserResourceTests {
         User user = userRepository.findByUsernameLikeIgnoreCase("TEST_CREATE").get();
 
         JsonObject jsonObject = user.toJsonObject();
-        jsonObject.put("firstname", "TEST_CREATE_CHANGE");
-        jsonObject.put("lastname", "TEST_CREATE_CHANGE");
+        jsonObject.put("name", "TEST_CREATE_CHANGE");
 
         restUserControllerMockMvc.perform(put("/api/user/{id}.json", jsonObject.getId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -577,7 +577,7 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.command").exists())
                 .andExpect(jsonPath("$.user.id").exists())
-                .andExpect(jsonPath("$.user.lastname").value("TEST_CREATE_CHANGE"));
+                .andExpect(jsonPath("$.user.name").value("TEST_CREATE_CHANGE"));
     }
 
     @Test
