@@ -73,7 +73,7 @@ run-junit:
     POSTGRES_USER: docker
     POSTGRES_PASSWORD: password
     POSTGRES_HOST_AUTH_METHOD: trust
-    POSTGIS_HOST: postgres
+    POSTGIS_HOST: postgis
     POSTGIS_PORT: 5432
     POSTGIS_DB_NAME: ${POSTGRES_DB}
     POSTGIS_USER: ${POSTGRES_USER}
