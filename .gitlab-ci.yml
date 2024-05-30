@@ -61,7 +61,7 @@ run-junit:
     - alias: mongodb
       name: cytomine/mongo:1.0.0
     - alias: iam
-      name: cytomine/iam-ce:1.0.1
+      name: cytomine/iam-ce:1.0.2
   variables:
     MONGO_INIT_DATABASE: cytomine
     MONGO_INITDB_ROOT_USERNAME: mongoadmin
