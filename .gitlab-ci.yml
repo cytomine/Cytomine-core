@@ -60,8 +60,6 @@ run-junit:
       name: cytomine/postgis:1.5.3-ci
     - alias: mongodb
       name: cytomine/mongo:1.0.0
-    - alias: iam
-      name: cytomine/iam-ce:ce-1.0.4
   variables:
     MONGO_INIT_DATABASE: cytomine
     MONGO_INITDB_ROOT_USERNAME: mongoadmin
@@ -80,26 +78,6 @@ run-junit:
     POSTGIS_DB_NAME: ${POSTGRES_DB}
     POSTGIS_USER: ${POSTGRES_USER}
     POSTGIS_PASS: ${POSTGRES_PASSWORD}
-    KC_ADMIN_EMAIL: some@cytomine.com
-    KC_DB_PASSWORD: kc_db_password
-    KC_DB_URL_DATABASE: iam
-    KC_DB_URL_HOST: postgis
-    KC_DB_URL_PORT: 5432
-    KC_DB_USERNAME: iam
-    KC_FEATURES: token-exchange
-    KC_HOSTNAME: 127.0.0.1:8100
-    KC_HOSTNAME_ADMIN: 127.0.0.1
-    KC_HOSTNAME_STRICT_BACKCHANNEL: true
-    KC_HOSTNAME_STRICT_HTTPS: false
-    KC_HTTP_RELATIVE_PATH: /iam
-    KC_PROXY_HEADERS: forwarded
-    KC_SMTP_FROM: no-reply@cytomine.com
-    KC_SMTP_HOST: ${KC_SMTP_HOST}
-    KC_SMTP_PASS: ${KC_SMTP_PASS}
-    KC_SMTP_PORT: ${KC_SMTP_PORT}
-    KC_SMTP_USER: ${KC_SMTP_USER}
-    KEYCLOAK_ADMIN: admin
-    KEYCLOAK_ADMIN_PASSWORD: admin_password
   script:
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
     # test log too large for gitlab if executed at 'debug' log level

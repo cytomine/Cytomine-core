@@ -42,10 +42,6 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfiguration {
 
-    private static final String GROUPS = "groups";
-    private static final String REALM_ACCESS_CLAIM = "realm_access";
-    private static final String ROLES_CLAIM = "roles";
-
     private final JwtAuthConverter customJwtAuthConverter;
     private final UserRepository userRepository;
 
