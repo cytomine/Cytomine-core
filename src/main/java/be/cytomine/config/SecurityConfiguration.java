@@ -45,6 +45,7 @@ public class SecurityConfiguration {
         this.customJwtAuthConverter = customJwtAuthConverter;
     }
 
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http

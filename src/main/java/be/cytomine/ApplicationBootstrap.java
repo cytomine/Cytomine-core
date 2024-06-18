@@ -39,7 +39,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,9 +82,6 @@ class ApplicationBootstrap {
 
     @Autowired
     Dataset dataset;
-
-//    @Autowired
-//    PasswordEncoder passwordEncoder;
 
     @Autowired
     BootstrapTestsDataService bootstrapTestsDataService;
