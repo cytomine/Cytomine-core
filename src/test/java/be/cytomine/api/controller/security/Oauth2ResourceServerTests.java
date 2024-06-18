@@ -43,15 +43,12 @@ import org.springframework.security.authentication.event.AuthenticationSuccessEv
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Supplier;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
@@ -79,12 +76,6 @@ public class Oauth2ResourceServerTests {
     private static RSAKey rsaKey;
 
     private static final String KEY_ID = "some random string";
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        Supplier<Object> baseUrl = () -> "http://localhost:" + wireMockServer.port();
-        registry.add("spring.security.oauth2.client.registration.resourceserver.jwt.jwk-set-uri", baseUrl);
-    }
 
     public static void configureWireMock(WireMockServer wireMockServer) throws JOSEException {
         rsaKey = new RSAKeyGenerator(2048)
