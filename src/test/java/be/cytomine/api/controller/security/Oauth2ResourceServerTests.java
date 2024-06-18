@@ -135,8 +135,16 @@ public class Oauth2ResourceServerTests {
     public void whenValidTokenProvided_thenNotFoundAsOk() throws Exception {
         // get a valid cytomine access token using password grant from iam microservice
         allProtectedMockMvc.perform(get("/api/project/45.json")
-                        .header("Authorization", "Bearer " + getSignedJwt()))
+                        .header("Authorization", "Bearer " + getSignedNotExpiredJwt()))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void whenExpiredTokenProvided_thenUnauthorized() throws Exception {
+        // get a valid cytomine access token using password grant from iam microservice
+        allProtectedMockMvc.perform(get("/api/project/45.json")
+                        .header("Authorization", "Bearer " + getSignedExpiredJwt()))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -168,11 +176,18 @@ public class Oauth2ResourceServerTests {
         Assertions.assertTrue(userRepository.findByReference(sub).isPresent());
     }
 
-    private String getSignedJwt() throws Exception {
+    private String getSignedNotExpiredJwt() throws Exception {
+        return getSignedJwt(Instant.now().plus(10, ChronoUnit.MINUTES));
+    }
+
+    private String getSignedExpiredJwt() throws Exception {
+        return getSignedJwt(Instant.now().minus(10, ChronoUnit.MINUTES));
+    }
+
+    private String getSignedJwt(Instant expiresAt) throws Exception {
 
         RSASSASigner signer = new RSASSASigner(rsaKey);
         Instant issuedAt = Instant.now();
-        Instant expiresAt = issuedAt.plus(10, ChronoUnit.MINUTES);
         Map<String, Object> resourceAccessClaim = new HashMap<>();
         Map<String, Object> resource = new HashMap<>();
         List<String> resourceRoles = List.of("ADMIN");
