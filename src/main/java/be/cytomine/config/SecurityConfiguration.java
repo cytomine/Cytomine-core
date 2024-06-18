@@ -70,7 +70,6 @@ public class SecurityConfiguration {
                 );
         http.oauth2ResourceServer((oauth2) -> oauth2
                 .jwt(jwtAuthConverter -> jwtAuthConverter.jwtAuthenticationConverter(customJwtAuthConverter)));
-
         return http.build();
     }
 }
