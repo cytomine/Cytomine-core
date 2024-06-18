@@ -147,6 +147,7 @@ public class Oauth2ResourceServerTests {
                 .andExpect(status().isUnauthorized());
     }
 
+
     @Test
     public void whenAuthenticationSuccessEventPublished_thenUserAddedIfDoesNotExist() {
         // user not already in the database
