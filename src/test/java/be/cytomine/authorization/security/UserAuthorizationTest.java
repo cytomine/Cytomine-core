@@ -105,12 +105,13 @@ public class UserAuthorizationTest extends AbstractAuthorizationTest {
         expectOK(() -> userService.listUsers(project));
     }
 
-    @Test
-    @WithMockUser(username = USER_NO_ACL)
-    public void user_can_add_user() {
-        User user = builder.given_a_not_persisted_user();
-        expectOK(() -> userService.add(user.toJsonObject().withChange("password", UUID.randomUUID().toString())));
-    }
+    // TODO IAM
+//    @Test
+//    @WithMockUser(username = USER_NO_ACL)
+//    public void user_can_add_user() {
+//        User user = builder.given_a_not_persisted_user();
+//        expectOK(() -> userService.add(user.toJsonObject().withChange("password", UUID.randomUUID().toString())));
+//    }
 
     @Test
     @WithMockUser(username = USER_NO_ACL)

@@ -39,7 +39,6 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.*;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,9 +82,6 @@ class ApplicationBootstrap {
 
     @Autowired
     Dataset dataset;
-
-    @Autowired
-    PasswordEncoder passwordEncoder;
 
     @Autowired
     BootstrapTestsDataService bootstrapTestsDataService;
@@ -133,10 +129,13 @@ class ApplicationBootstrap {
         if (EnvironmentUtils.isTest(environment) && userRepository.count() == 0) {
             bootstrapDataService.initData();
             //noSQLCollectionService.cleanActivityDB() TODO:
+            bootstrapUtilDataService.createUser(dataset.ADMINLOGIN, "Just an", "Admin", List.of("ROLE_USER", "ROLE_ADMIN"));
             bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
+            bootstrapUtilDataService.createUser(dataset.SUPERADMINLOGIN, "Super", "Admin", List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
 
             // We need these users for all authorization tests
             // So we create them at the beginning in order to avoid creating them before each authorization tests
+            bootstrapTestsDataService.createUserForTests(ADMIN);
             bootstrapTestsDataService.createUserForTests(SUPERADMIN);
             bootstrapTestsDataService.createUserForTests(USER_ACL_READ);
             bootstrapTestsDataService.createUserForTests(USER_ACL_WRITE);
@@ -154,13 +153,13 @@ class ApplicationBootstrap {
         }
 
         // Deprecated API keys. Will be removed in a future release.
-        if (applicationProperties.getImageServerPrivateKey()!=null && applicationProperties.getImageServerPublicKey()!=null) {
-            User imageServerUser = userRepository.findByUsernameLikeIgnoreCase("ImageServer1")
-                    .orElseThrow(() -> new ObjectNotFoundException("No user imageserver1, cannot assign keys"));
-            imageServerUser.setPrivateKey(applicationProperties.getImageServerPrivateKey());
-            imageServerUser.setPublicKey(applicationProperties.getImageServerPublicKey());
-            userRepository.save(imageServerUser);
-        }
+//        if (applicationProperties.getImageServerPrivateKey()!=null && applicationProperties.getImageServerPublicKey()!=null) {
+//            User imageServerUser = userRepository.findByUsernameLikeIgnoreCase("ImageServer1")
+//                    .orElseThrow(() -> new ObjectNotFoundException("No user imageserver1, cannot assign keys"));
+//            imageServerUser.setPrivateKey(applicationProperties.getImageServerPrivateKey());
+//            imageServerUser.setPublicKey(applicationProperties.getImageServerPublicKey());
+//            userRepository.save(imageServerUser);
+//        }
 
         log.info("Check image filters...");
         bootstrapDataService.updateImageFilters();

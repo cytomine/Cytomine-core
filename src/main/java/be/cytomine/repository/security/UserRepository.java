@@ -25,6 +25,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Spring Data JPA repository for the user entity.
@@ -93,6 +94,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         Long aclId = getAclSidFromUsername(username);
         return findAllUsersSharingAccessToSameProject(aclId);
     }
-
+    Optional<User> findByReference(String sub);
 
 }

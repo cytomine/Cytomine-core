@@ -28,7 +28,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Table(name = "sec_user")
+@Table(name = "sec_user" , uniqueConstraints = @UniqueConstraint(name = "unique_reference" , columnNames = {"reference"}))
 @Entity
 @Getter
 @Setter
@@ -40,9 +40,7 @@ public class User extends CytomineDomain {
     protected String username;
 
     @NotNull
-    @NotBlank
     @Column(nullable = false)
-    // The reference of the linked account in IAM
     protected String reference; //TODO IAM: should be UUID type
 
     @NotNull
@@ -50,7 +48,7 @@ public class User extends CytomineDomain {
     @Column(nullable = false)
     protected String name;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER , cascade = CascadeType.ALL)
     @JoinTable(
             name = "sec_user_sec_role",
             joinColumns = { @JoinColumn(name = "sec_user_id") },

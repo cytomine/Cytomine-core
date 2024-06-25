@@ -56,8 +56,8 @@ run-junit:
   stage: test
   image: gradle:7.6.4-jdk17-jammy
   services:
-    - alias: postgres
-      name: cytomine/postgis:1.5.1
+    - alias: postgis
+      name: cytomine/postgis:1.5.3
     - alias: mongodb
       name: cytomine/mongo:1.0.0
   variables:
@@ -73,7 +73,7 @@ run-junit:
     POSTGRES_USER: docker
     POSTGRES_PASSWORD: password
     POSTGRES_HOST_AUTH_METHOD: trust
-    POSTGIS_HOST: postgres
+    POSTGIS_HOST: postgis
     POSTGIS_PORT: 5432
     POSTGIS_DB_NAME: ${POSTGRES_DB}
     POSTGIS_USER: ${POSTGRES_USER}

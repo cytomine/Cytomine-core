@@ -18,21 +18,15 @@ package be.cytomine.config;
 
 import be.cytomine.config.security.ApiKeyFilter;
 import be.cytomine.repository.security.UserRepository;
+import be.cytomine.utils.JwtAuthConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
@@ -42,55 +36,15 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
 public class SecurityConfiguration {
+
+    private final JwtAuthConverter customJwtAuthConverter;
     private final UserRepository userRepository;
 
-    public SecurityConfiguration(UserRepository userRepository) {
+    public SecurityConfiguration(UserRepository userRepository, JwtAuthConverter customJwtAuthConverter) {
         this.userRepository = userRepository;
-    }
-    
-    /**
-     * Argon2 is intentionally slow: slow-hashing functions are good for storing passwords, because it is time/resource consuming to crack them.
-     * SHA-512 is not designed for storing passwords. so insecure and deprecated so in future check if sha256 use it if not use argon2 or bcrypt.
-     * recommended way is to use DelegatingPasswordEncoder()
-     *
-     * @return
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() { //TODO IAM: delete
-//        Digest based password encoding is not considered secure.
-//        Have to keep it for old Clients
-        return new MessageDigestPasswordEncoder("SHA-256");
-
-//        To-Do: something along these lines ....
-//        PasswordEncoder current = new MessageDigestPasswordEncoder("SHA-256");
-//
-//        String idForEncode = "argon2";
-//
-//        Map<String,PasswordEncoder> encoders = new HashMap<>();
-//        encoders.put("bcrypt", new BCryptPasswordEncoder());
-//        encoders.put("pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8());
-//        encoders.put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8());
-//        encoders.put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8());
-//        encoders.put("sha256", new MessageDigestPasswordEncoder("SHA-256"));
-//
-//        return new DelegatingPasswordEncoder(idForEncode, encoders);
+        this.customJwtAuthConverter = customJwtAuthConverter;
     }
 
-    /**
-     * configures Spring Security to use your DomainUserDetailsService to fetch user details from a custom source (DB which's UserRepository)
-     * and to use the provided PasswordEncoder to encode and verify passwords.
-     *
-     * @return
-     * @throws Exception
-     */
-//    @Bean
-//    public AuthenticationManager authManager(UserDetailsService detailsService) {
-//        // TODO IAM: adapt/remove
-//        DaoAuthenticationProvider daoProvider = new DaoAuthenticationProvider();
-//        daoProvider.setUserDetailsService(detailsService);
-//        daoProvider.setPasswordEncoder(passwordEncoder());
-//        return new ProviderManager(daoProvider);
-//    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -103,17 +57,22 @@ public class SecurityConfiguration {
                                         (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
                 )
                 .authorizeHttpRequests((authorizeHttpRequests) ->
-                                authorizeHttpRequests
-                                        .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
-                                        .requestMatchers("/session/admin/info.json").authenticated()
-                                        .requestMatchers("/session/admin/open.json").authenticated()
-                                        .requestMatchers("/session/admin/close.json").authenticated()
-                                        .requestMatchers(HttpMethod.GET, "/server/ping").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
-                                        .requestMatchers(HttpMethod.GET, "/server/ping.json").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
-                                        .requestMatchers(HttpMethod.POST, "/server/ping").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
-                                        .requestMatchers(HttpMethod.POST, "/server/ping.json").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
-                                        .requestMatchers(new AntPathRequestMatcher("/**")).permitAll() // TODO IAM: remove ?
+                        authorizeHttpRequests
+                                .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
+                                .requestMatchers("/session/admin/info.json").authenticated()
+                                .requestMatchers("/session/admin/open.json").authenticated()
+                                .requestMatchers("/session/admin/close.json").authenticated()
+
+                                .requestMatchers(HttpMethod.GET, "/server/ping").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+                                .requestMatchers(HttpMethod.GET, "/server/ping.json").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+                                .requestMatchers(HttpMethod.POST, "/server/ping").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+                                .requestMatchers(HttpMethod.POST, "/server/ping.json").permitAll() // TODO 2024.2 - LAST CONNECTION (IN A PROJECT)
+                                .requestMatchers(new AntPathRequestMatcher("/**")).permitAll() // TODO IAM: remove ?
                 );
+        http.oauth2ResourceServer((oauth2) -> oauth2
+                .jwt(jwtAuthConverter -> jwtAuthConverter.jwtAuthenticationConverter(customJwtAuthConverter)));
         return http.build();
     }
 }
+
+

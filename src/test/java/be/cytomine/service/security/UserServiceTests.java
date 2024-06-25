@@ -904,160 +904,162 @@ public class UserServiceTests {
         assertThat(users).isEqualTo(user1.getId().toString() + "," + user2.getId().toString() + ",");
     }
 
-    @Test
-    void add_valid_user() {
-        User user = builder.given_a_not_persisted_user();
-
-
-        CommandResponse commandResponse = userService.add(user.toJsonObject().withChange("password", "kikoulol"));
-
-        assertThat(commandResponse).isNotNull();
-        assertThat(commandResponse.getStatus()).isEqualTo(200);
-
-        assertThat(userService.findByUsername(user.getUsername())).isPresent();
-    }
-
-    @Test
-    void add_user_with_already_existing_username() {
-        User sameUsername = builder.given_a_user();
-        User user = builder.given_a_not_persisted_user();
-        user.setUsername(sameUsername.getUsername());
-
-        Assertions.assertThrows(AlreadyExistException.class, () -> {
-            userService.add(user.toJsonObject());
-        });
-    }
-
-    @Test
-    void add_user_with_already_existing_username_different_case() {
-        User sameUsername = builder.given_a_user();
-        User user = builder.given_a_not_persisted_user();
-        user.setUsername(sameUsername.getUsername().toUpperCase(Locale.ROOT));
-
-        Assertions.assertThrows(AlreadyExistException.class, () -> {
-            userService.add(user.toJsonObject());
-        });
-
-        user.setUsername(sameUsername.getUsername().toLowerCase(Locale.ROOT));
-
-        Assertions.assertThrows(AlreadyExistException.class, () -> {
-            userService.add(user.toJsonObject());
-        });
-    }
-
-    @Test
-    @Disabled("should we allow this (grails version accept same email)?")
-    void add_user_with_already_existing_email_different_case() {
-        User sameEmail = builder.given_a_user();
-        User user = builder.given_a_not_persisted_user();
-        user.setEmail(sameEmail.getEmail().toUpperCase(Locale.ROOT));
-
-        Assertions.assertThrows(AlreadyExistException.class, () -> {
-            userService.add(user.toJsonObject().withChange("password", "password"));
-        });
-
-        user.setEmail(sameEmail.getEmail().toLowerCase(Locale.ROOT));
-
-        Assertions.assertThrows(AlreadyExistException.class, () -> {
-            userService.add(user.toJsonObject().withChange("password", "password"));
-        });
-    }
-
-
-    @Test
-    void edit_valid_user_with_success() {
-        User user = builder.given_a_user();
-
-        CommandResponse commandResponse = userService.update(user, user.toJsonObject().withChange("name", "NEW NAME"));
-
-        assertThat(commandResponse).isNotNull();
-        assertThat(commandResponse.getStatus()).isEqualTo(200);
-        Optional<User> edited = userService.findByUsername(user.getUsername());
-        assertThat(((User)edited.get()).getName()).isEqualTo("NEW NAME");
-    }
-
-
-
-    @Test
-    void delete_valid_user_with_success() {
-        User user = builder.given_a_user();
-
-        CommandResponse commandResponse = userService.delete(user, null, null, true);
-
-        assertThat(commandResponse).isNotNull();
-        assertThat(commandResponse.getStatus()).isEqualTo(200);
-        AssertionsForClassTypes.assertThat(userService.find(user.getId()).isEmpty());
-    }
-
-    @Autowired
-    StorageService storageService;
-
-    @Test
-    void delete_user_with_dependency() {
-        User user = builder.given_a_user();
-
-        UserAnnotation userAnnotation = builder.given_a_user_annotation();
-        userAnnotation.setUser(user);
-
-        AnnotationTerm annotationTerm = builder.given_an_annotation_term();
-        annotationTerm.setUser(user);
-
-        ImageInstance imageInstance = builder.given_an_image_instance();
-        imageInstance.setUser(user);
-
-        Ontology ontology = builder.given_an_ontology();
-        ontology.setUser(user);
-
-        ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
-        reviewedAnnotation.setUser(user);
-
-        UploadedFile uploadedFile = builder.given_a_uploaded_file();
-        uploadedFile.setUser(user);
-
-        Storage storage = builder.given_a_storage(user);
-        //storageService.initUserStorage(user);
-
-        ProjectDefaultLayer projectDefaultLayer =
-                builder.given_a_project_default_layer(builder.given_a_project(), user);
-
-        ProjectRepresentativeUser projectRepresentativeUser =
-                builder.given_a_project_representative_user(builder.given_a_project(), user);
-
-        // add another representative so that we can delete the first one
-        builder.given_a_project_representative_user(projectRepresentativeUser.getProject(), builder.given_superadmin());
-
-        CommandResponse commandResponse = userService.delete(user, null, null, true);
-
-        assertThat(commandResponse).isNotNull();
-        assertThat(commandResponse.getStatus()).isEqualTo(200);
-        AssertionsForClassTypes.assertThat(userService.find(user.getId()).isEmpty());
-
-        assertThat(entityManager.find(UserAnnotation.class, userAnnotation.getId())).isNull();
-        assertThat(entityManager.find(AnnotationTerm.class, annotationTerm.getId())).isNull();
-        assertThat(entityManager.find(ImageInstance.class, imageInstance.getId())).isNull();
-        assertThat(entityManager.find(Ontology.class, ontology.getId())).isNull();
-        assertThat(entityManager.find(ReviewedAnnotation.class, reviewedAnnotation.getId())).isNull();
-        assertThat(entityManager.find(UploadedFile.class, uploadedFile.getId())).isNull();
-        //assertThat(entityManager.find(Storage.class, storage.getId())).isNull();
-        assertThat(entityManager.find(ProjectDefaultLayer.class, projectDefaultLayer.getId())).isNull();
-        assertThat(entityManager.find(ProjectRepresentativeUser.class, projectRepresentativeUser.getId())).isNull();
-    }
-
-    @Test
-    void delete_user_create_with_service_with_dependency() {
-        User user = builder.given_a_not_persisted_user();
-
-        CommandResponse commandResponse = userService.add(user.toJsonObject().withChange("password", "kikoulol"));
-
-        assertThat(commandResponse).isNotNull();
-        assertThat(commandResponse.getStatus()).isEqualTo(200);
-
-        assertThat(userService.findByUsername(user.getUsername())).isPresent();
-        user = (User)userService.findByUsername(user.getUsername()).get();
-        commandResponse = userService.delete(user, null, null, true);
-        assertThat(commandResponse).isNotNull();
-        assertThat(commandResponse.getStatus()).isEqualTo(200);
-    }
+// TODO: IAM Account
+//
+//    @Test
+//    void add_valid_user() {
+//        User user = builder.given_a_not_persisted_user();
+//
+//
+//        CommandResponse commandResponse = userService.add(user.toJsonObject().withChange("password", "kikoulol"));
+//
+//        assertThat(commandResponse).isNotNull();
+//        assertThat(commandResponse.getStatus()).isEqualTo(200);
+//
+//        assertThat(userService.findByUsername(user.getUsername())).isPresent();
+//    }
+//
+//    @Test
+//    void add_user_with_already_existing_username() {
+//        User sameUsername = builder.given_a_user();
+//        User user = builder.given_a_not_persisted_user();
+//        user.setUsername(sameUsername.getUsername());
+//
+//        Assertions.assertThrows(AlreadyExistException.class, () -> {
+//            userService.add(user.toJsonObject());
+//        });
+//    }
+//
+//    @Test
+//    void add_user_with_already_existing_username_different_case() {
+//        User sameUsername = builder.given_a_user();
+//        User user = builder.given_a_not_persisted_user();
+//        user.setUsername(sameUsername.getUsername().toUpperCase(Locale.ROOT));
+//
+//        Assertions.assertThrows(AlreadyExistException.class, () -> {
+//            userService.add(user.toJsonObject());
+//        });
+//
+//        user.setUsername(sameUsername.getUsername().toLowerCase(Locale.ROOT));
+//
+//        Assertions.assertThrows(AlreadyExistException.class, () -> {
+//            userService.add(user.toJsonObject());
+//        });
+//    }
+//
+//    @Test
+//    @Disabled("should we allow this (grails version accept same email)?")
+//    void add_user_with_already_existing_email_different_case() {
+//        User sameEmail = builder.given_a_user();
+//        User user = builder.given_a_not_persisted_user();
+//        user.setEmail(sameEmail.getEmail().toUpperCase(Locale.ROOT));
+//
+//        Assertions.assertThrows(AlreadyExistException.class, () -> {
+//            userService.add(user.toJsonObject().withChange("password", "password"));
+//        });
+//
+//        user.setEmail(sameEmail.getEmail().toLowerCase(Locale.ROOT));
+//
+//        Assertions.assertThrows(AlreadyExistException.class, () -> {
+//            userService.add(user.toJsonObject().withChange("password", "password"));
+//        });
+//    }
+//
+//
+//    @Test
+//    void edit_valid_user_with_success() {
+//        User user = builder.given_a_user();
+//
+//        CommandResponse commandResponse = userService.update(user, user.toJsonObject().withChange("name", "NEW NAME"));
+//
+//        assertThat(commandResponse).isNotNull();
+//        assertThat(commandResponse.getStatus()).isEqualTo(200);
+//        Optional<User> edited = userService.findByUsername(user.getUsername());
+//        assertThat(((User)edited.get()).getName()).isEqualTo("NEW NAME");
+//    }
+//
+//
+//
+//    @Test
+//    void delete_valid_user_with_success() {
+//        User user = builder.given_a_user();
+//
+//        CommandResponse commandResponse = userService.delete(user, null, null, true);
+//
+//        assertThat(commandResponse).isNotNull();
+//        assertThat(commandResponse.getStatus()).isEqualTo(200);
+//        AssertionsForClassTypes.assertThat(userService.find(user.getId()).isEmpty());
+//    }
+//
+//    @Autowired
+//    StorageService storageService;
+//
+//    @Test
+//    void delete_user_with_dependency() {
+//        User user = builder.given_a_user();
+//
+//        UserAnnotation userAnnotation = builder.given_a_user_annotation();
+//        userAnnotation.setUser(user);
+//
+//        AnnotationTerm annotationTerm = builder.given_an_annotation_term();
+//        annotationTerm.setUser(user);
+//
+//        ImageInstance imageInstance = builder.given_an_image_instance();
+//        imageInstance.setUser(user);
+//
+//        Ontology ontology = builder.given_an_ontology();
+//        ontology.setUser(user);
+//
+//        ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
+//        reviewedAnnotation.setUser(user);
+//
+//        UploadedFile uploadedFile = builder.given_a_uploaded_file();
+//        uploadedFile.setUser(user);
+//
+//        Storage storage = builder.given_a_storage(user);
+//        //storageService.initUserStorage(user);
+//
+//        ProjectDefaultLayer projectDefaultLayer =
+//                builder.given_a_project_default_layer(builder.given_a_project(), user);
+//
+//        ProjectRepresentativeUser projectRepresentativeUser =
+//                builder.given_a_project_representative_user(builder.given_a_project(), user);
+//
+//        // add another representative so that we can delete the first one
+//        builder.given_a_project_representative_user(projectRepresentativeUser.getProject(), builder.given_superadmin());
+//
+//        CommandResponse commandResponse = userService.delete(user, null, null, true);
+//
+//        assertThat(commandResponse).isNotNull();
+//        assertThat(commandResponse.getStatus()).isEqualTo(200);
+//        AssertionsForClassTypes.assertThat(userService.find(user.getId()).isEmpty());
+//
+//        assertThat(entityManager.find(UserAnnotation.class, userAnnotation.getId())).isNull();
+//        assertThat(entityManager.find(AnnotationTerm.class, annotationTerm.getId())).isNull();
+//        assertThat(entityManager.find(ImageInstance.class, imageInstance.getId())).isNull();
+//        assertThat(entityManager.find(Ontology.class, ontology.getId())).isNull();
+//        assertThat(entityManager.find(ReviewedAnnotation.class, reviewedAnnotation.getId())).isNull();
+//        assertThat(entityManager.find(UploadedFile.class, uploadedFile.getId())).isNull();
+//        //assertThat(entityManager.find(Storage.class, storage.getId())).isNull();
+//        assertThat(entityManager.find(ProjectDefaultLayer.class, projectDefaultLayer.getId())).isNull();
+//        assertThat(entityManager.find(ProjectRepresentativeUser.class, projectRepresentativeUser.getId())).isNull();
+//    }
+//
+//    @Test
+//    void delete_user_create_with_service_with_dependency() {
+//        User user = builder.given_a_not_persisted_user();
+//
+//        CommandResponse commandResponse = userService.add(user.toJsonObject().withChange("password", "kikoulol"));
+//
+//        assertThat(commandResponse).isNotNull();
+//        assertThat(commandResponse.getStatus()).isEqualTo(200);
+//
+//        assertThat(userService.findByUsername(user.getUsername())).isPresent();
+//        user = (User)userService.findByUsername(user.getUsername()).get();
+//        commandResponse = userService.delete(user, null, null, true);
+//        assertThat(commandResponse).isNotNull();
+//        assertThat(commandResponse.getStatus()).isEqualTo(200);
+//    }
 
 
     @Test

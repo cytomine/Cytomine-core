@@ -1,4 +1,25 @@
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: core
+            authorization-grant-type: authorization_code
+            redirect-uri: http://nginx/iam/realms/cytomine
+            scope:
+              - openid
+        provider:
+          keycloak:
+            user-name-attribute: preferred_username
+            authorization-uri: http://nginx/iam/realms/cytomine/protocol/openid-connect/auth
+            token-uri: http://nginx/iam/realms/cytomine/protocol/openid-connect/token
+            jwk-set-uri: http://localhost:8888/
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8888/
+          jws-algorithms: RS256
+          jwk-set-uri: http://localhost:8888/
   main:
     #    lazy-initialization: true
     allow-circular-references: true
@@ -314,3 +335,9 @@ application:
       project-users-heatmap-graph:
         ADMIN_PROJECT: true
         CONTRIBUTOR_PROJECT: true
+
+jwt:
+  auth:
+    converter:
+      resource-id: core
+      principle-attribute: preferred_username
