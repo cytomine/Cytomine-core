@@ -129,10 +129,13 @@ class ApplicationBootstrap {
         if (EnvironmentUtils.isTest(environment) && userRepository.count() == 0) {
             bootstrapDataService.initData();
             //noSQLCollectionService.cleanActivityDB() TODO:
+            bootstrapUtilDataService.createUser(dataset.ADMINLOGIN, "Just an", "Admin", List.of("ROLE_USER", "ROLE_ADMIN"));
             bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
+            bootstrapUtilDataService.createUser(dataset.SUPERADMINLOGIN, "Super", "Admin", List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
 
             // We need these users for all authorization tests
             // So we create them at the beginning in order to avoid creating them before each authorization tests
+            bootstrapTestsDataService.createUserForTests(ADMIN);
             bootstrapTestsDataService.createUserForTests(SUPERADMIN);
             bootstrapTestsDataService.createUserForTests(USER_ACL_READ);
             bootstrapTestsDataService.createUserForTests(USER_ACL_WRITE);
