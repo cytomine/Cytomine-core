@@ -57,7 +57,7 @@ run-junit:
   image: gradle:7.6.4-jdk17-jammy
   services:
     - alias: postgis
-      name: cytomine/postgis:1.5.3-ci
+      name: cytomine/postgis:1.5.3
     - alias: mongodb
       name: cytomine/mongo:1.0.0
   variables:
