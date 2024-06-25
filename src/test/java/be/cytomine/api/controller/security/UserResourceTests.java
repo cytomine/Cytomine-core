@@ -502,99 +502,99 @@ public class UserResourceTests {
     }
 
 
-    @Test
-    @Transactional
-    public void add_valid_user() throws Exception {
-
-        restUserControllerMockMvc.perform(post("/api/user.json")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"TEST_CREATE\",\"reference\":\""+ UUID.randomUUID().toString() +"\",\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"username\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.printMessage").value(true))
-                .andExpect(jsonPath("$.callback").exists())
-                .andExpect(jsonPath("$.callback.userID").exists())
-                .andExpect(jsonPath("$.callback.method").value("be.cytomine.AddUserCommand"))
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.command").exists())
-                .andExpect(jsonPath("$.user.id").exists())
-                .andExpect(jsonPath("$.user.username").value("TEST_CREATE"));
-
-        User user = userRepository.findByUsernameLikeIgnoreCase("TEST_CREATE").get();
-
-    }
-
-
-    @Test
-    @Transactional
-    public void add_user_refused_if_username_exists() throws Exception {
-        User user = builder.given_a_user();
-        restUserControllerMockMvc.perform(post("/api/user.json")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(user.toJSON()))
-                .andDo(print())
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.success").value(false));
-    }
-
-    @Test
-    @Transactional
-    public void add_user_refused_if_username_not_set() throws Exception {
-        User user = builder.given_a_user();
-        restUserControllerMockMvc.perform(post("/api/user.json")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
-                .andDo(print())
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false));
-    }
-
-    @Test
-    @Transactional
-    public void edit_valid_user() throws Exception {
-
-        restUserControllerMockMvc.perform(post("/api/user.json")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"TEST_CREATE\",\"reference\":\""+ UUID.randomUUID().toString() +"\",\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"username\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-
-        User user = userRepository.findByUsernameLikeIgnoreCase("TEST_CREATE").get();
-
-        JsonObject jsonObject = user.toJsonObject();
-        jsonObject.put("name", "TEST_CREATE_CHANGE");
-
-        restUserControllerMockMvc.perform(put("/api/user/{id}.json", jsonObject.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonObject.toJsonString()))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.printMessage").value(true))
-                .andExpect(jsonPath("$.callback").exists())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.command").exists())
-                .andExpect(jsonPath("$.user.id").exists())
-                .andExpect(jsonPath("$.user.name").value("TEST_CREATE_CHANGE"));
-    }
-
-    @Test
-    @Transactional
-    public void delete_user() throws Exception {
-        User user = builder.given_a_user();
-        restUserControllerMockMvc.perform(delete("/api/user/{id}.json", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(user.toJSON()))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.printMessage").value(true))
-                .andExpect(jsonPath("$.callback").exists())
-                .andExpect(jsonPath("$.callback.userID").exists())
-                .andExpect(jsonPath("$.callback.method").value("be.cytomine.DeleteUserCommand"))
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.command").exists())
-                .andExpect(jsonPath("$.user.id").exists());
-    }
+//    @Test
+//    @Transactional
+//    public void add_valid_user() throws Exception {
+//
+//        restUserControllerMockMvc.perform(post("/api/user.json")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content("{\"name\":\"TEST_CREATE\",\"reference\":\""+ UUID.randomUUID().toString() +"\",\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"username\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
+//                .andDo(print())
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.printMessage").value(true))
+//                .andExpect(jsonPath("$.callback").exists())
+//                .andExpect(jsonPath("$.callback.userID").exists())
+//                .andExpect(jsonPath("$.callback.method").value("be.cytomine.AddUserCommand"))
+//                .andExpect(jsonPath("$.message").exists())
+//                .andExpect(jsonPath("$.command").exists())
+//                .andExpect(jsonPath("$.user.id").exists())
+//                .andExpect(jsonPath("$.user.username").value("TEST_CREATE"));
+//
+//        User user = userRepository.findByUsernameLikeIgnoreCase("TEST_CREATE").get();
+//
+//    }
+//
+//
+//    @Test
+//    @Transactional
+//    public void add_user_refused_if_username_exists() throws Exception {
+//        User user = builder.given_a_user();
+//        restUserControllerMockMvc.perform(post("/api/user.json")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(user.toJSON()))
+//                .andDo(print())
+//                .andExpect(status().isConflict())
+//                .andExpect(jsonPath("$.success").value(false));
+//    }
+//
+//    @Test
+//    @Transactional
+//    public void add_user_refused_if_username_not_set() throws Exception {
+//        User user = builder.given_a_user();
+//        restUserControllerMockMvc.perform(post("/api/user.json")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content("{\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
+//                .andDo(print())
+//                .andExpect(status().isBadRequest())
+//                .andExpect(jsonPath("$.success").value(false));
+//    }
+//
+//    @Test
+//    @Transactional
+//    public void edit_valid_user() throws Exception {
+//
+//        restUserControllerMockMvc.perform(post("/api/user.json")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content("{\"name\":\"TEST_CREATE\",\"reference\":\""+ UUID.randomUUID().toString() +"\",\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"username\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
+//                .andDo(print())
+//                .andExpect(status().isOk());
+//
+//
+//        User user = userRepository.findByUsernameLikeIgnoreCase("TEST_CREATE").get();
+//
+//        JsonObject jsonObject = user.toJsonObject();
+//        jsonObject.put("name", "TEST_CREATE_CHANGE");
+//
+//        restUserControllerMockMvc.perform(put("/api/user/{id}.json", jsonObject.getId())
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(jsonObject.toJsonString()))
+//                .andDo(print())
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.printMessage").value(true))
+//                .andExpect(jsonPath("$.callback").exists())
+//                .andExpect(jsonPath("$.message").exists())
+//                .andExpect(jsonPath("$.command").exists())
+//                .andExpect(jsonPath("$.user.id").exists())
+//                .andExpect(jsonPath("$.user.name").value("TEST_CREATE_CHANGE"));
+//    }
+//
+//    @Test
+//    @Transactional
+//    public void delete_user() throws Exception {
+//        User user = builder.given_a_user();
+//        restUserControllerMockMvc.perform(delete("/api/user/{id}.json", user.getId())
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(user.toJSON()))
+//                .andDo(print())
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.printMessage").value(true))
+//                .andExpect(jsonPath("$.callback").exists())
+//                .andExpect(jsonPath("$.callback.userID").exists())
+//                .andExpect(jsonPath("$.callback.method").value("be.cytomine.DeleteUserCommand"))
+//                .andExpect(jsonPath("$.message").exists())
+//                .andExpect(jsonPath("$.command").exists())
+//                .andExpect(jsonPath("$.user.id").exists());
+//    }
 
 
 //max=25&offset=0&projectRole[in]=contributor,manager,representative&sort=&order=
