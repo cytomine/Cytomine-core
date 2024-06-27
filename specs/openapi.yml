@@ -1,0 +1,111 @@
+openapi: 3.0.0
+info:
+  title: Partial core API
+  version: 0.1.0
+  description: core API provides requests for core features of Cytomine. This spec is partial as it currently contains only new endpoints.
+
+servers:
+  - url: http://localhost:8080/api/
+
+tags:
+  - name: Account
+  - name: Legacy user keys
+
+paths:
+  /user/current/keys:
+    get:
+      summary: Get key pair for current user
+      tags:
+        - Legacy user keys
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/legacy-user-keys"
+    post:
+      summary: Regenerate key pair for current user
+      description: |
+        Previous pair is invalidated.
+      tags:
+        - Legacy user keys
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/legacy-user-keys"
+components:
+  parameters:
+    pagination-max:
+      name: max
+      in: query
+      description: |
+        Pagination: number of items per page. Use `0` to disable pagination.
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: '0'
+    pagination-offset:
+      name: offset
+      in: query
+      description: |
+        Pagination: offset of the first returned item. The first item has offset `0`.
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: '0'
+    account-reference:
+      name: id
+      in: path
+      description: The account reference
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    collection:
+      type: object
+      properties:
+        size:
+          type: integer
+          format: int64
+          description: The number of items in the collection
+        totalPages:
+          type: integer
+          format: int64
+          description: The number of pages according to the current pagination parameters
+        perPage:
+          type: integer
+          format: int64
+          description: The number of items per page according to the current pagination parameters
+        offset:
+          type: integer
+          format: int64
+          description: The current offset in the pagination according to the current pagination parameters
+    legacy-user-keys:
+      type: object
+      properties:
+        primaryKey:
+          type: string
+          format: uuid
+        secondaryKey:
+          type: string
+          format: uuid
+    generic-error:
+      type: object
+      properties:
+        error_code:
+          type: string
+          pattern: ^CORE-[a-zA-Z0-9_-]+$
+          description: an error code structured as `{component}-{reason}`
+        message:
+          type: string
+          description: the human-readable error message associated with the error_code (non-localized, in english)
+        details:
+          type: object
+          description: provide a more detailed description of the error, structure and content depends on the error code
