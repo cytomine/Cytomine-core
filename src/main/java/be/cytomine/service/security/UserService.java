@@ -764,6 +764,11 @@ public class UserService extends ModelService {
         return getAllOnlineUsers(project);
     }
 
+    public User regenerateKeys(User user) {
+        user.generateKeys();
+        return userRepository.save(user);
+    }
+
 
     /**
      * Add the new domain with JSON data

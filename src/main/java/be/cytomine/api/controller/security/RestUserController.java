@@ -210,6 +210,24 @@ public class RestUserController extends RestCytomineController {
 
         return responseSuccess(JsonObject.of("signature", signature, "publicKey", user.getPublicKey()));
     }
+
+    @GetMapping("/user/current/keys")
+    public ResponseEntity<String> getCurrentUserKeys() {
+        User user = currentUserService.getCurrentUser();
+        return responseSuccess(JsonObject.of(
+                "primaryKey", user.getPublicKey(),
+                "secondaryKey", user.getPrivateKey())
+        );
+    }
+
+    @PostMapping("/user/current/keys")
+    public ResponseEntity<String> regenerateCurrentUserKeys() {
+        User user = userService.regenerateKeys(currentUserService.getCurrentUser());
+        return responseSuccess(JsonObject.of(
+                "primaryKey", user.getPublicKey(),
+                "secondaryKey", user.getPrivateKey())
+        );
+    }
     /******************************************************************************************************************/
 
 
