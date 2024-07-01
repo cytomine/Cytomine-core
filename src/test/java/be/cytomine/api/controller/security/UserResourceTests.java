@@ -65,6 +65,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -468,6 +469,35 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.publicKey").value(user.getPublicKey()))
                 .andExpect(jsonPath("$.signature").isNotEmpty());
 
+    }
+
+    @Test
+    @Transactional
+    public void get_current_user_keys() throws Exception {
+        User currentUser = builder.given_superadmin();
+
+        restUserControllerMockMvc.perform(get("/api/user/current/keys")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.primaryKey").value(currentUser.getPublicKey()))
+                .andExpect(jsonPath("$.secondaryKey").value(currentUser.getPrivateKey()));
+    }
+
+    @Test
+    @Transactional
+    public void regenerate_current_user_keys() throws Exception {
+        User currentUser = builder.given_superadmin();
+
+        String oldPrimaryKey = currentUser.getPublicKey();
+        String oldSecondaryKey = currentUser.getPrivateKey();
+
+        restUserControllerMockMvc.perform(post("/api/user/current/keys")
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.primaryKey").value(not(oldPrimaryKey)))
+                .andExpect(jsonPath("$.secondaryKey").value(not(oldSecondaryKey)));
     }
 
 
