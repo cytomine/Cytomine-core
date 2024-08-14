@@ -46,24 +46,6 @@ Run it using:
 Default application configuration values are located in `src/main/resources/application.yml`.
 You can override them by creating a `application.yml` or `.properties` in the application root directory.
 
-## Jenkins
-
-A Jenkins file is provided.
-
-1. Retrieve source code from repository
-2. Compute the current version based on the current commit tag (if a tag has been defined)
-    * `git tag -a "v$x.$y.$z"` (e.g. v1.2.3) in order to defne an official release
-    * `git tag -a "v$x.$y.$z-beta.$n"` (e.g. v1.2.3-beta.5) in order to defne an beta release
-    * Otherwise a name will be generated from the branche name and the datetime
-3. Download core dependencies
-4. Run postgresql, mongodb and rabbitmq thanks to docker-compose
-5. Run tests
-6. Publish tests results reports on Jenkins
-7. Publish tests coverage reports on Jenkins
-8. Shutdown postgresql, mongodb and rabbitmq configurations.
-9. Build and publish a jar
-10. Build and publish a docker image. 
-
 ## Upgrade from old version Cytomine dataset
 
 The upgrade only works with a dataset from at least core 3.2.0.

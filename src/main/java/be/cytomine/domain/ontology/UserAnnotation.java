@@ -63,6 +63,14 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
     )
     private List<Track> tracks = new ArrayList<>();
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "annotation_link",
+            joinColumns = { @JoinColumn(name = "annotation_ident") },
+            inverseJoinColumns = { @JoinColumn(name = "group_id") }
+    )
+    private List<AnnotationLink> links = new ArrayList<>();
+
     @PrePersist
     public void beforeCreate() {
         super.beforeCreate();
@@ -107,6 +115,14 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
     public List<Long> tracksId() {
         return tracks().stream().map(CytomineDomain::getId).distinct().collect(Collectors.toList());
 
+    }
+
+    public List<Long> annotationLinksId() {
+        return links.stream().map(CytomineDomain::getId).distinct().collect(Collectors.toList());
+    }
+
+    public List<Long> linkedAnnotations() {
+        return links.stream().map(AnnotationLink::getAnnotationIdent).distinct().collect(Collectors.toList());
     }
 
     /**
