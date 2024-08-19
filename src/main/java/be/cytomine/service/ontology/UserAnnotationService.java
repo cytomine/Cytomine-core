@@ -32,16 +32,19 @@ import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.UserAnnotationListing;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.image.SliceInstanceRepository;
-import be.cytomine.repository.ontology.*;
+import be.cytomine.repository.ontology.AlgoAnnotationTermRepository;
+import be.cytomine.repository.ontology.SharedAnnotationRepository;
+import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.dto.BoundariesCropParameter;
-import be.cytomine.service.image.ImageInstanceService;
+import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.image.SliceInstanceService;
 import be.cytomine.service.meta.PropertyService;
+import be.cytomine.service.search.RetrievalService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.service.utils.ValidateGeometryService;
@@ -59,10 +62,10 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.springframework.security.acls.domain.BasePermission.DELETE;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Slf4j
@@ -132,6 +135,9 @@ public class UserAnnotationService extends ModelService {
 
     @Autowired
     private SharedAnnotationRepository sharedAnnotationRepository;
+
+    @Autowired
+    private RetrievalService retrievalService;
 
     @Override
     public Class currentDomain() {
@@ -483,6 +489,23 @@ public class UserAnnotationService extends ModelService {
     protected void afterAdd(CytomineDomain domain, CommandResponse response) {
         response.getData().put("annotation", response.getData().get("userannotation"));
         response.getData().remove("userannotation");
+
+        /* Index the annotation */
+        AnnotationDomain annotation = (AnnotationDomain) domain;
+
+        CropParameter parameters = new CropParameter();
+        parameters.setComplete(true);
+        parameters.setDraw(true);
+        parameters.setFormat("png");
+        parameters.setIncreaseArea(1.25);
+        parameters.setLocation(annotation.getWktLocation());
+        parameters.setMaxSize(256);
+
+        try {
+            retrievalService.indexAnnotation(annotation, parameters, null);
+        } catch (IOException | ParseException | InterruptedException exception) {
+            log.error(exception.getMessage());
+        }
     }
 
 
@@ -588,6 +611,13 @@ public class UserAnnotationService extends ModelService {
     protected void afterDelete(CytomineDomain domain, CommandResponse response) {
         response.getData().put("annotation", response.getData().get("userannotation"));
         response.getData().remove("userannotation");
+
+        /* Delete the annotation from the CBIR database */
+        try {
+            retrievalService.deleteIndex((AnnotationDomain) domain);
+        } catch (IOException | InterruptedException exception) {
+            log.error(exception.getMessage());
+        }
     }
 
     public List<CommandResponse> repeat(UserAnnotation userAnnotation, Long baseSliceId, int repeat) {
