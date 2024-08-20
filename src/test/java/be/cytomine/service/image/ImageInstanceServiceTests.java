@@ -16,9 +16,24 @@ package be.cytomine.service.image;
 * limitations under the License.
 */
 
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import org.assertj.core.api.AssertionsForClassTypes;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.security.acls.domain.BasePermission;
+import org.springframework.security.test.context.support.WithMockUser;
+
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.TestApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.NestedImageInstance;
 import be.cytomine.domain.image.SliceInstance;
@@ -27,21 +42,15 @@ import be.cytomine.domain.meta.Description;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.meta.TagDomainAssociation;
 import be.cytomine.domain.ontology.AlgoAnnotation;
-import be.cytomine.domain.ontology.AnnotationTrack;
 import be.cytomine.domain.ontology.ReviewedAnnotation;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
-import be.cytomine.domain.social.AnnotationAction;
 import be.cytomine.exceptions.AlreadyExistException;
-import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.repository.image.UploadedFileRepository;
 import be.cytomine.repositorynosql.social.AnnotationActionRepository;
 import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
 import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
-import be.cytomine.service.CommandService;
-import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.dto.ImageInstanceBounds;
 import be.cytomine.service.search.ImageSearchExtension;
 import be.cytomine.service.social.AnnotationActionService;
@@ -51,26 +60,11 @@ import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.filters.SearchOperation;
 import be.cytomine.utils.filters.SearchParameterEntry;
-import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
-import org.springframework.security.acls.domain.BasePermission;
-import org.springframework.security.test.context.support.WithMockUser;
-
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static be.cytomine.service.social.UserPositionServiceTests.USER_VIEW;
-import static org.assertj.core.api.AssertionsForClassTypes.fail;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
@@ -82,16 +76,7 @@ public class ImageInstanceServiceTests {
     ImageInstanceService imageInstanceService;
 
     @Autowired
-    UploadedFileRepository uploadedFileRepository;
-
-    @Autowired
     BasicInstanceBuilder builder;
-
-    @Autowired
-    CommandService commandService;
-
-    @Autowired
-    TransactionService transactionService;
 
     @Autowired
     EntityManager entityManager;
@@ -113,6 +98,31 @@ public class ImageInstanceServiceTests {
 
     @Autowired
     PersistentImageConsultationRepository persistentImageConsultationRepository;
+
+    private static WireMockServer wireMockServer;
+
+    private static void setupStub() {
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.delete(urlPathMatching("/api/images/.*"))
+            .withQueryParam("storage", WireMock.matching(".*"))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+    }
+
+    @BeforeAll
+    public static void beforeAll() {
+        wireMockServer = new WireMockServer(8888);
+        wireMockServer.start();
+        WireMock.configureFor("localhost", wireMockServer.port());
+
+        setupStub();
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        wireMockServer.stop();
+    }
 
     @BeforeEach
     public void cleanDB() {

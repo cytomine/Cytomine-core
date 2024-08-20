@@ -63,6 +63,7 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -503,7 +504,7 @@ public class UserAnnotationService extends ModelService {
 
         try {
             retrievalService.indexAnnotation(annotation, parameters, null);
-        } catch (IOException | ParseException | InterruptedException exception) {
+        } catch (ParseException | UnsupportedEncodingException exception) {
             log.error(exception.getMessage());
         }
     }
@@ -613,11 +614,7 @@ public class UserAnnotationService extends ModelService {
         response.getData().remove("userannotation");
 
         /* Delete the annotation from the CBIR database */
-        try {
-            retrievalService.deleteIndex((AnnotationDomain) domain);
-        } catch (IOException | InterruptedException exception) {
-            log.error(exception.getMessage());
-        }
+        retrievalService.deleteIndex((AnnotationDomain) domain);
     }
 
     public List<CommandResponse> repeat(UserAnnotation userAnnotation, Long baseSliceId, int repeat) {

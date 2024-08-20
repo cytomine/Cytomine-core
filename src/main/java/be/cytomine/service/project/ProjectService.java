@@ -16,6 +16,7 @@ package be.cytomine.service.project;
 * limitations under the License.
 */
 
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
@@ -27,7 +28,6 @@ import be.cytomine.domain.security.ForgotPasswordToken;
 import be.cytomine.domain.security.SecRole;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.domain.social.PersistentConnection;
 import be.cytomine.dto.DatedCytomineDomain;
 import be.cytomine.dto.NamedCytomineDomain;
 import be.cytomine.exceptions.*;
@@ -41,7 +41,6 @@ import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.project.ProjectRepresentativeUserRepository;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
-import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
@@ -53,7 +52,6 @@ import be.cytomine.service.ontology.AnnotationTermService;
 import be.cytomine.service.ontology.OntologyService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.search.ProjectSearchExtension;
-import be.cytomine.service.security.SecRoleService;
 import be.cytomine.service.security.SecUserSecRoleService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
@@ -72,8 +70,10 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.http.*;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import javax.mail.MessagingException;
 import javax.persistence.Query;
@@ -89,7 +89,6 @@ import static com.mongodb.client.model.Aggregates.*;
 import static com.mongodb.client.model.Aggregates.sort;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
-import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.descending;
 import static org.springframework.security.acls.domain.BasePermission.*;
 
@@ -97,6 +96,9 @@ import static org.springframework.security.acls.domain.BasePermission.*;
 @Service
 @Transactional
 public class ProjectService extends ModelService {
+
+    @Autowired
+    private ApplicationProperties applicationProperties;
 
     @Autowired
     private CommandHistoryRepository commandHistoryRepository;
@@ -172,6 +174,9 @@ public class ProjectService extends ModelService {
 
     @Autowired
     private ProjectRepresentativeUserRepository projectRepresentativeUserRepository;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     public Project get(Long id) {
         return find(id).orElse(null);
@@ -599,6 +604,28 @@ public class ProjectService extends ModelService {
         return projectRepository.listByUser(user);
     }
 
+    private void createStorage(String projectId) {
+        String url = this.applicationProperties.getRetrievalServerURL() + "/api/storages";
+        Map<String, String> payload = new HashMap<>();
+        payload.put("name", projectId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(payload, headers);
+
+        log.debug("Sending POST request to {}, {}", url, projectId);
+        ResponseEntity<String> response = restTemplate.exchange(
+            url,
+            HttpMethod.POST,
+            requestEntity,
+            String.class
+        );
+
+        if (!response.getStatusCode().equals(HttpStatus.OK)) {
+            log.error("Failed to create storage for project {}", projectId);
+        }
+    }
+
     @Override
     public CommandResponse add(JsonObject jsonObject) {
         return add(jsonObject, null);
@@ -648,6 +675,9 @@ public class ProjectService extends ModelService {
                 taskService.updateTask(task,Math.min(100,progress),"User "+optionalUser.get().getUsername()+" added as Admin");
             }
         }
+
+        // Create retrieval storage
+        createStorage(project.getId().toString());
 
         return commandResponse;
     }

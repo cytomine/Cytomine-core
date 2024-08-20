@@ -16,9 +16,24 @@ package be.cytomine.service.project;
 * limitations under the License.
 */
 
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import org.apache.commons.lang3.time.DateUtils;
+import org.assertj.core.api.AssertionsForClassTypes;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.security.test.context.support.WithMockUser;
+
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.meta.Description;
 import be.cytomine.domain.meta.Property;
@@ -32,11 +47,8 @@ import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.dto.NamedCytomineDomain;
 import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.ForbiddenException;
-import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
-import be.cytomine.service.CommandService;
 import be.cytomine.service.PermissionService;
-import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.dto.ProjectBounds;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.search.ProjectSearchExtension;
@@ -46,22 +58,8 @@ import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.filters.SearchOperation;
 import be.cytomine.utils.filters.SearchParameterEntry;
-import org.apache.commons.lang3.time.DateUtils;
-import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
-import org.springframework.security.test.context.support.WithMockUser;
 
-import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
-import java.util.*;
-import java.util.stream.Collectors;
-
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 import static org.springframework.security.acls.domain.BasePermission.READ;
@@ -77,16 +75,7 @@ public class ProjectServiceTests {
     ProjectService projectService;
 
     @Autowired
-    ProjectRepository projectRepository;
-
-    @Autowired
     BasicInstanceBuilder builder;
-
-    @Autowired
-    CommandService commandService;
-
-    @Autowired
-    TransactionService transactionService;
 
     @Autowired
     PersistentProjectConnectionRepository persistentProjectConnectionRepository;
@@ -105,9 +94,23 @@ public class ProjectServiceTests {
 
     @Autowired
     EntityManager entityManager;
-    
+
     @Autowired
     ProjectRepresentativeUserService projectRepresentativeUserService;
+
+    private static WireMockServer wireMockServer;
+
+    @BeforeAll
+    public static void beforeAll() {
+        wireMockServer = new WireMockServer(8888);
+        wireMockServer.start();
+        WireMock.configureFor("localhost", 8888);
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        wireMockServer.stop();
+    }
 
     @BeforeEach
     void cleanMongo() {
@@ -263,9 +266,36 @@ public class ProjectServiceTests {
         builder.addUserToProject(project1, builder.given_superadmin().getUsername());
         builder.addUserToProject(project2, builder.given_superadmin().getUsername());
 
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
+            .withQueryParam("storage", WireMock.matching(".*"))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        /* Simulate call to PIMS */
+        wireMockServer.stubFor(WireMock.post(urlPathMatching("/image/.*/annotation/drawing"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
+        );
+
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(project2);
+        userAnnotation
+            .getSlice()
+            .getBaseSlice()
+            .getUploadedFile()
+            .getImageServer()
+            .setUrl("http://localhost:8888");
+
         userAnnotationService.add(userAnnotation.toJsonObject());
         userAnnotation = builder.given_a_not_persisted_user_annotation(project1);
+        userAnnotation
+            .getSlice()
+            .getBaseSlice()
+            .getUploadedFile()
+            .getImageServer()
+            .setUrl("http://localhost:8888");
+
         userAnnotationService.add(userAnnotation.toJsonObject());
 
         ProjectSearchExtension projectSearchExtension = new ProjectSearchExtension();
@@ -296,6 +326,32 @@ public class ProjectServiceTests {
         Project project2 = builder.given_a_project();
         UserAnnotation userAnnotation1 = builder.given_a_not_persisted_user_annotation(project1);
         UserAnnotation userAnnotation2 = builder.given_a_not_persisted_user_annotation(project2);
+        userAnnotation1
+            .getSlice()
+            .getBaseSlice()
+            .getUploadedFile()
+            .getImageServer()
+            .setUrl("http://localhost:8888");
+        userAnnotation2
+            .getSlice()
+            .getBaseSlice()
+            .getUploadedFile()
+            .getImageServer()
+            .setUrl("http://localhost:8888");
+
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
+            .withQueryParam("storage", WireMock.matching(".*"))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        /* Simulate call to PIMS */
+        wireMockServer.stubFor(WireMock.post(urlPathMatching("/image/.*/annotation/drawing"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
+        );
+
         userAnnotationService.add(userAnnotation1.toJsonObject());
         userAnnotationService.add(userAnnotation2.toJsonObject());
 
@@ -308,13 +364,11 @@ public class ProjectServiceTests {
         assertThat(projectService.findCommandHistory(List.of(project1), builder.given_superadmin().getId(), 0L, 0L, false, null, null))
                 .hasSize(1);
 
-
         assertThat(projectService.findCommandHistory(List.of(project1), builder.given_superadmin().getId(), 0L, 0L, true, DateUtils.addSeconds(new Date(), 10).getTime(), null))
                 .hasSize(0);
 
         assertThat(projectService.findCommandHistory(List.of(project1), builder.given_superadmin().getId(), 0L, 0L, true, DateUtils.addSeconds(new Date(), -10).getTime(), DateUtils.addSeconds(new Date(), +10).getTime()))
                 .hasSize(1);
-
     }
 
 
@@ -622,6 +676,25 @@ public class ProjectServiceTests {
         Project project1 = builder.given_a_project();
 
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(project1);
+        userAnnotation
+            .getSlice()
+            .getBaseSlice()
+            .getUploadedFile()
+            .getImageServer()
+            .setUrl("http://localhost:8888");
+
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
+            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        /* Simulate call to PIMS */
+        wireMockServer.stubFor(WireMock.post(urlPathMatching("/image/.*/annotation/drawing"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
+        );
 
         assertThat(projectService.lastAction(project1, 10)).hasSize(0);
         userAnnotationService.add(userAnnotation.toJsonObject());
@@ -655,6 +728,12 @@ public class ProjectServiceTests {
     void add_project() {
         Project project = BasicInstanceBuilder.given_a_not_persisted_project();
 
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
         CommandResponse commandResponse = projectService.add(project.toJsonObject());
 
         assertThat(commandResponse).isNotNull();
@@ -663,8 +742,7 @@ public class ProjectServiceTests {
         Project projectCreated = projectService.find(commandResponse.getObject().getId()).get();
         assertThat(projectCreated.getName()).isEqualTo(project.getName());
 
-        assertThat(securityACLService.getProjectUsers(projectCreated))
-                .containsExactly(builder.given_superadmin().getUsername());
+        assertThat(securityACLService.getProjectUsers(projectCreated)).containsExactly(builder.given_superadmin().getUsername());
 
         assertThat(permissionService.hasACLPermission(projectCreated, builder.given_superadmin().getUsername(), ADMINISTRATION)).isTrue();
 
@@ -678,9 +756,16 @@ public class ProjectServiceTests {
         User user = builder.given_a_user();
         User admin = builder.given_a_user();
 
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
 
         CommandResponse commandResponse = projectService.add(project.toJsonObject()
-                .withChange("users", List.of(user.getId())).withChange("admins", List.of(admin.getId())));
+            .withChange("users", List.of(user.getId()))
+            .withChange("admins", List.of(admin.getId()))
+        );
 
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);
@@ -737,7 +822,7 @@ public class ProjectServiceTests {
         builder.persistAndReturn(userAnnotation);
         builder.given_an_annotation_term(userAnnotation);
         Ontology anotherOntology = builder.given_an_ontology();
-        
+
         Assertions.assertThrows(ForbiddenException.class, () -> {
             projectService.update(project, project.toJsonObject()
                     .withChange("ontology", anotherOntology.getId()));
@@ -809,13 +894,13 @@ public class ProjectServiceTests {
 
         assertThat(projectRepresentativeUserService.find(project, previousUser)).isPresent();
         assertThat(projectRepresentativeUserService.find(project, newUser)).isEmpty();
-        
+
         CommandResponse commandResponse = projectService.update(project, project.toJsonObject()
                 .withChange("representatives", List.of(newUser.getId())));
 
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);
-        
+
         assertThat(projectRepresentativeUserService.find(project, previousUser)).isEmpty();
         assertThat(projectRepresentativeUserService.find(project, newUser)).isPresent();
     }
@@ -841,7 +926,7 @@ public class ProjectServiceTests {
 
         given_a_persistent_connection_in_project(user1, project1, DateUtils.addSeconds(new Date(), -300));
         given_a_persistent_connection_in_project(user1, project2, DateUtils.addSeconds(new Date(), -5));
-        
+
         assertThat(projectService.getActiveProjects()).contains(project2.getId()).doesNotContain(project1.getId(), project3.getId());
     }
 
@@ -851,7 +936,7 @@ public class ProjectServiceTests {
         Project project1 = builder.given_a_project_with_user(user1);
         Project project2 = builder.given_a_project_with_user(user1);
         Project project3 = builder.given_a_project_with_user(user1);
-        
+
         builder.addUserToProject(project2, user1.getUsername());
         builder.addUserToProject(project2, builder.given_superadmin().getUsername());
 
@@ -864,7 +949,7 @@ public class ProjectServiceTests {
 
         given_a_persistent_connection_in_project(builder.given_superadmin(), project1, DateUtils.addSeconds(new Date(), -10));
         given_a_persistent_connection_in_project(user1, project2, DateUtils.addSeconds(new Date(), -5));
-        
+
         assertThat(projectService.getActiveProjectsWithNumberOfUsers()).hasSize(2);
     }
 
@@ -885,6 +970,12 @@ public class ProjectServiceTests {
     void delete_project_just_beeing_created() {
         Project project = BasicInstanceBuilder.given_a_not_persisted_project();
 
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
         CommandResponse commandResponse = projectService.add(project.toJsonObject());
 
         assertThat(commandResponse).isNotNull();
@@ -902,7 +993,7 @@ public class ProjectServiceTests {
     @Test
     void delete_project_with_dependencies() {
         Project project = builder.given_a_project();
-        ImageInstance imageInstance = builder.given_an_image_instance(project);
+        builder.given_an_image_instance(project);
         UserAnnotation annotation = builder.given_a_not_persisted_user_annotation(project);
         builder.persistAndReturn(annotation);
 
@@ -911,6 +1002,12 @@ public class ProjectServiceTests {
         TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), project);
         AttachedFile attachedFile = builder.given_a_attached_file(project);
 
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.delete(urlPathEqualTo("/api/images/" + annotation.getId()))
+            .withQueryParam("storage", WireMock.equalTo(annotation.getProject().getId().toString()))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
 
         AssertionsForClassTypes.assertThat(entityManager.find(Property.class, property.getId())).isNotNull();
         AssertionsForClassTypes.assertThat(entityManager.find(Description.class, description.getId())).isNotNull();
@@ -927,9 +1024,7 @@ public class ProjectServiceTests {
         AssertionsForClassTypes.assertThat(entityManager.find(Description.class, description.getId())).isNull();
         AssertionsForClassTypes.assertThat(entityManager.find(TagDomainAssociation.class, tagDomainAssociation.getId())).isNull();
         AssertionsForClassTypes.assertThat(entityManager.find(AttachedFile.class, attachedFile.getId())).isNull();
-
     }
-
 
     PersistentProjectConnection given_a_persistent_connection_in_project(User user, Project project, Date created) {
         PersistentProjectConnection connection = projectConnectionService.add(user, project, "xxx", "linux", "chrome", "123", created);

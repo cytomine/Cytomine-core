@@ -16,19 +16,18 @@ package be.cytomine.api.controller.ontology;
 * limitations under the License.
 */
 
-import be.cytomine.BasicInstanceBuilder;
-import be.cytomine.CytomineCoreApplication;
-import be.cytomine.TestUtils;
-import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.meta.AttachedFile;
-import be.cytomine.domain.ontology.*;
-import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.User;
-import be.cytomine.repository.ontology.AnnotationDomainRepository;
-import be.cytomine.repository.ontology.UserAnnotationRepository;
-import be.cytomine.service.CommandService;
-import be.cytomine.utils.JsonObject;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import javax.persistence.EntityManager;
+import javax.persistence.Tuple;
+import javax.transaction.Transactional;
+
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -39,9 +38,6 @@ import com.vividsolutions.jts.io.WKTReader;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -51,17 +47,19 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
-import javax.persistence.EntityManager;
-import javax.persistence.Tuple;
-import javax.transaction.Transactional;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.stream.Collectors;
+import be.cytomine.BasicInstanceBuilder;
+import be.cytomine.CytomineCoreApplication;
+import be.cytomine.TestUtils;
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.image.SliceInstance;
+import be.cytomine.domain.ontology.*;
+import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.User;
+import be.cytomine.repository.ontology.AnnotationDomainRepository;
+import be.cytomine.repository.ontology.UserAnnotationRepository;
+import be.cytomine.utils.JsonObject;
 
 import static be.cytomine.service.utils.SimplifyGeometryServiceTests.getPointMultiplyByGeometriesOrInteriorRings;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -1329,6 +1327,27 @@ public class AnnotationDomainResourceTests {
     @Transactional
     public void add_valid_user_annotation() throws Exception {
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation();
+        userAnnotation
+            .getSlice()
+            .getBaseSlice()
+            .getUploadedFile()
+            .getImageServer()
+            .setUrl("http://localhost:8888");
+
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
+            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        /* Simulate call to PIMS */
+        String id = URLEncoder.encode(userAnnotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/" + id + "/annotation/drawing"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
+        );
+
         restAnnotationDomainControllerMockMvc.perform(post("/api/annotation.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userAnnotation.toJSON()))
@@ -1341,7 +1360,6 @@ public class AnnotationDomainResourceTests {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.command").exists())
                 .andExpect(jsonPath("$.annotation.id").exists());
-
     }
 
 
@@ -1442,6 +1460,14 @@ public class AnnotationDomainResourceTests {
     @org.springframework.transaction.annotation.Transactional
     public void delete_user_annotation() throws Exception {
         UserAnnotation userAnnotation = builder.given_a_user_annotation();
+
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.delete(urlPathEqualTo("/api/images/" + userAnnotation.getId()))
+            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
         restAnnotationDomainControllerMockMvc.perform(delete("/api/annotation/{id}.json", userAnnotation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userAnnotation.toJSON()))
@@ -1508,10 +1534,30 @@ public class AnnotationDomainResourceTests {
     @Test
     @Transactional
     public void simplify_annotation_while_creating_it() throws Exception {
-
         AnnotationDomain annotation = builder.given_a_not_persisted_user_annotation();
         annotation.setLocation(new WKTReader().read(TestUtils.getResourceFileAsString("dataset/very_big_annotation.txt")));
         assertThat(annotation.getLocation().getNumPoints()).isGreaterThanOrEqualTo(500);
+
+        annotation
+            .getSlice()
+            .getBaseSlice()
+            .getUploadedFile()
+            .getImageServer()
+            .setUrl("http://localhost:8888");
+
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
+            .withQueryParam("storage", WireMock.equalTo(annotation.getProject().getId().toString()))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        /* Simulate call to PIMS */
+        String imageId = URLEncoder.encode(annotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/" + imageId + "/annotation/drawing"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
+        );
 
         int maxPoint;
         int minPoint;
@@ -1535,7 +1581,6 @@ public class AnnotationDomainResourceTests {
         minPoint = 100;
         annotation.setLocation(new WKTReader().read(TestUtils.getResourceFileAsString("dataset/very_big_annotation.txt")));
 
-
         mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotation.json")
                         .param("minPoint", String.valueOf(minPoint)).param("maxPoint", String.valueOf(maxPoint))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -1544,10 +1589,9 @@ public class AnnotationDomainResourceTests {
         annotationResponse = (Map<String, Object>) JsonObject.toMap(mvcResult.getResponse().getContentAsString()).get("annotation");
         id = (Integer)annotationResponse.get("id");
         annotation = annotationDomainRepository.getById(id.longValue());
+
         assertThat(annotation.getLocation().getNumPoints()).isLessThanOrEqualTo(getPointMultiplyByGeometriesOrInteriorRings(annotation.getLocation(), maxPoint));
         assertThat(annotation.getLocation().getNumPoints()).isGreaterThanOrEqualTo(getPointMultiplyByGeometriesOrInteriorRings(annotation.getLocation(), minPoint));
-
-
     }
 
     @Test
@@ -1857,6 +1901,25 @@ public class AnnotationDomainResourceTests {
         json.put("remove", false);
         json.put("layers", List.of(annot1.user().getId()));
 
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
+            .withQueryParam("storage", WireMock.matching(".*"))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        wireMockServer.stubFor(WireMock.delete(urlPathMatching("/api/images/.*"))
+            .withQueryParam("storage", WireMock.matching(".*"))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        /* Simulate call to PIMS */
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/.*/annotation/drawing"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
+        );
+
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotationcorrection.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.toJsonString()))
@@ -1866,7 +1929,4 @@ public class AnnotationDomainResourceTests {
         Map<String, Object> annotation = (Map<String, Object>)(reviewMode? map.get("reviewedannotation") : map.get("annotation"));
         assertThat(new WKTReader().read(expectedLocation).getEnvelope()).isEqualTo(new WKTReader().read(annotation.get("location").toString()).getEnvelope()); // may be retrieving the merge would be better?
     }
-
-
-
 }

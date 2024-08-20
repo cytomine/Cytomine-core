@@ -16,6 +16,19 @@ package be.cytomine.authorization.project;
 * limitations under the License.
 */
 
+import java.util.*;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.acls.domain.BasePermission;
+import org.springframework.security.acls.model.Permission;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.annotation.Transactional;
+
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.authorization.CRUDAuthorizationTest;
@@ -29,9 +42,7 @@ import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.repository.project.ProjectRepresentativeUserRepository;
-import be.cytomine.service.PermissionService;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.meta.AttachedFileService;
 import be.cytomine.service.meta.DescriptionService;
@@ -42,35 +53,17 @@ import be.cytomine.service.project.ProjectRepresentativeUserService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.search.ProjectSearchExtension;
 import be.cytomine.service.security.SecUserService;
-import be.cytomine.service.security.SecurityACLService;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.acls.domain.BasePermission;
-import org.springframework.security.acls.model.Permission;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.swing.plaf.BorderUIResource;
-import java.util.*;
 
 import static be.cytomine.domain.project.EditingMode.*;
-import static be.cytomine.domain.security.SecUser_.password;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
-import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @AutoConfigureMockMvc
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @Transactional
 public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
-
-
-    private Project project = null;
 
     @Autowired
     ProjectService projectService;
@@ -79,12 +72,6 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
     BasicInstanceBuilder builder;
 
     @Autowired
-    SecurityACLService securityACLService;
-
-    @Autowired
-    PermissionService permissionService;
-    
-    @Autowired
     SecUserService secUserService;
 
     @Autowired
@@ -92,37 +79,88 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
 
     @Autowired
     ProjectRepresentativeUserRepository projectRepresentativeUserRepository;
-    
+
     @Autowired
     DescriptionService descriptionService;
-    
+
     @Autowired
     AttachedFileService attachedFileService;
-    
+
     @Autowired
     PropertyService propertyService;
 
     @Autowired
     ImageInstanceService imageInstanceService;
-    
+
     @Autowired
     TagDomainAssociationService tagDomainAssociationService;
 
     @Autowired
     UserAnnotationService userAnnotationService;
 
-    @Autowired
-    UserAnnotationRepository userAnnotationRepository;
-    
+    private Project project = null;
+
+    private static WireMockServer wireMockServer;
+
+    private static void setupStub() {
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
+            .withQueryParam("storage", WireMock.matching(".*"))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        wireMockServer.stubFor(WireMock.delete(urlPathMatching("/api/images/.*"))
+            .withQueryParam("storage", WireMock.matching(".*"))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        /* Simulate call to PIMS */
+        wireMockServer.stubFor(WireMock.post(urlPathMatching("/image/.*/annotation/drawing"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
+        );
+    }
+
+    @BeforeAll
+    public static void beforeAll() {
+        wireMockServer = new WireMockServer(8888);
+        wireMockServer.start();
+        WireMock.configureFor("localhost", wireMockServer.port());
+
+        setupStub();
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        wireMockServer.stop();
+    }
+
     @BeforeEach
     public void before() throws Exception {
         if (project == null) {
             project = builder.given_a_project();
-            ;
+
             initACL(project);
         }
         project.setMode(CLASSIC);
         builder.persistAndReturn(project);
+    }
+
+    private UserAnnotation setImageServerUrl(UserAnnotation annotation) {
+        annotation
+            .getSlice()
+            .getBaseSlice()
+            .getUploadedFile()
+            .getImageServer()
+            .setUrl("http://localhost:8888");
+        return annotation;
     }
 
     @Test
@@ -281,111 +319,104 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         TagDomainAssociation tdaUser = (TagDomainAssociation) data.get("tagDomainAssociationUser");
 
         //add,update, delete property (simple user data)
-        expectOK(() -> { propertyService.add(builder.given_a_not_persisted_property(annotationUser, "xxx", "value").toJsonObject()); });
-        expectOK(() -> { propertyService.update(propertyUser, propertyUser.toJsonObject()); });
-        expectOK(() -> { propertyService.delete(propertyUser, null, null, false); });
+        expectOK(() -> propertyService.add(builder.given_a_not_persisted_property(annotationUser, "xxx", "value").toJsonObject()));
+        expectOK(() -> propertyService.update(propertyUser, propertyUser.toJsonObject()));
+        expectOK(() -> propertyService.delete(propertyUser, null, null, false));
 
         //add,update, delete property (admin data)
-        expectOK(() -> { propertyService.add(builder.given_a_not_persisted_property(annotationAdmin, "xxx", "value").toJsonObject()); });
-        expectOK(() -> { propertyService.update(propertyAdmin, propertyAdmin.toJsonObject()); });
-        expectOK(() -> { propertyService.delete(propertyAdmin, null, null, false); });
+        expectOK(() -> propertyService.add(builder.given_a_not_persisted_property(annotationAdmin, "xxx", "value").toJsonObject()));
+        expectOK(() -> propertyService.update(propertyAdmin, propertyAdmin.toJsonObject()));
+        expectOK(() -> propertyService.delete(propertyAdmin, null, null, false));
 
         //add,update, delete property (superadmin data)
-        expectOK(() -> { propertyService.add(builder.given_a_not_persisted_property(annotation, "xxx", "value").toJsonObject()); });
-        expectOK(() -> { propertyService.update(property, property.toJsonObject()); });
-        expectOK(() -> { propertyService.delete(property, null, null, false); });
+        expectOK(() -> propertyService.add(builder.given_a_not_persisted_property(annotation, "xxx", "value").toJsonObject()));
+        expectOK(() -> propertyService.update(property, property.toJsonObject()));
+        expectOK(() -> propertyService.delete(property, null, null, false));
 
         //add,update, delete description (simple user data)
-        expectOK(() -> { descriptionService.update(descriptionUser, descriptionUser.toJsonObject()); });
-        expectOK(() -> { descriptionService.delete(descriptionUser, null, null, false); });
-        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotationUser).toJsonObject()); });
+        expectOK(() -> descriptionService.update(descriptionUser, descriptionUser.toJsonObject()));
+        expectOK(() -> descriptionService.delete(descriptionUser, null, null, false));
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(annotationUser).toJsonObject()));
 
         //add,update, delete description (admin data)
-        expectOK(() -> { descriptionService.update(descriptionAdmin, descriptionAdmin.toJsonObject()); });
-        expectOK(() -> { descriptionService.delete(descriptionAdmin, null, null, false); });
-        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotationAdmin).toJsonObject()); });
+        expectOK(() -> descriptionService.update(descriptionAdmin, descriptionAdmin.toJsonObject()));
+        expectOK(() -> descriptionService.delete(descriptionAdmin, null, null, false));
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(annotationAdmin).toJsonObject()));
 
         //add,update, delete description (superadmin data)
-        expectOK(() -> { descriptionService.update(description, description.toJsonObject()); });
-        expectOK(() -> { descriptionService.delete(description, null, null, false); });
-        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotation).toJsonObject()); });
+        expectOK(() -> descriptionService.update(description, description.toJsonObject()));
+        expectOK(() -> descriptionService.delete(description, null, null, false));
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(annotation).toJsonObject()));
 
         //add,update, delete tagDomainAssociation (simple user data)
-        expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationUser).toJsonObject()); });
-        expectOK(() -> { tagDomainAssociationService.delete(tdaUser, null, null, false); });
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationUser).toJsonObject()));
+        expectOK(() -> tagDomainAssociationService.delete(tdaUser, null, null, false));
 
         //add,update, delete tagDomainAssociation (admin data)
-        expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationAdmin).toJsonObject()); });
-        expectOK(() -> { tagDomainAssociationService.delete(tdaAdmin, null, null, false); });
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationAdmin).toJsonObject()));
+        expectOK(() -> tagDomainAssociationService.delete(tdaAdmin, null, null, false));
 
         //add,update, delete tagDomainAssociation (superadmin data)
-        expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotation).toJsonObject()); });
-        expectOK(() -> { tagDomainAssociationService.delete(tda, null, null, false); });
-
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotation).toJsonObject()));
+        expectOK(() -> tagDomainAssociationService.delete(tda, null, null, false));
 
         //add,update, delete attachedFile (simple user data)
-        expectOK(() -> { attachedFileService.delete(attachedFileUser, null, null, false); });
-        expectOK(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationUser.getId(), annotationUser.getClass().getName()); });
+        expectOK(() -> attachedFileService.delete(attachedFileUser, null, null, false));
+        expectOK(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationUser.getId(), annotationUser.getClass().getName()));
 
         //add,update, delete attachedFile (admin data)
-        expectOK(() -> { attachedFileService.delete(attachedFileAdmin, null, null, false); });
-        expectOK(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationAdmin.getId(), annotationAdmin.getClass().getName()); });
+        expectOK(() -> attachedFileService.delete(attachedFileAdmin, null, null, false));
+        expectOK(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationAdmin.getId(), annotationAdmin.getClass().getName()));
 
         //add,update, delete attachedFile (superadmin data)
-        expectOK(() -> { attachedFileService.delete(attachedFile, null, null, false); });
-        expectOK(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotation.getId(), annotation.getClass().getName()); });
+        expectOK(() -> attachedFileService.delete(attachedFile, null, null, false));
+        expectOK(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotation.getId(), annotation.getClass().getName()));
 
         //start reviewing image (simple user data)
-        expectOK(() -> { imageInstanceService.startReview(imageUser); });
-        expectOK(() -> { imageInstanceService.stopReview(imageUser, false); });
+        expectOK(() -> imageInstanceService.startReview(imageUser));
+        expectOK(() -> imageInstanceService.stopReview(imageUser, false));
 
         //start reviewing image (admin data)
-        expectOK(() -> { imageInstanceService.startReview(imageAdmin); });
-        expectOK(() -> { imageInstanceService.stopReview(imageAdmin, false); });
+        expectOK(() -> imageInstanceService.startReview(imageAdmin));
+        expectOK(() -> imageInstanceService.stopReview(imageAdmin, false));
 
         //start reviewing image (superadmin data)
-        expectOK(() -> { imageInstanceService.startReview(image); });
-        expectOK(() -> { imageInstanceService.stopReview(image, false); });
-
+        expectOK(() -> imageInstanceService.startReview(image));
+        expectOK(() -> imageInstanceService.stopReview(image, false));
 
         //add annotation on my layer
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(slice).toJsonObject()); });
+        expectOK(() -> userAnnotationService.add(setImageServerUrl(builder.given_a_user_annotation(slice)).toJsonObject()));
         //add annotation on other layers
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(sliceUser).toJsonObject()); });
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(sliceAdmin).toJsonObject()); });
-
+        expectOK(() -> userAnnotationService.add(setImageServerUrl(builder.given_a_user_annotation(sliceUser)).toJsonObject()));
+        expectOK(() -> userAnnotationService.add(setImageServerUrl(builder.given_a_user_annotation(sliceAdmin)).toJsonObject()));
 
         //update, delete annotation (simple user data)
-        expectOK(() -> { userAnnotationService.update(annotationUser, annotationUser.toJsonObject()); });
-        expectOK(() -> { userAnnotationService.delete(annotationUser, null, null, false); });
+        expectOK(() -> userAnnotationService.update(annotationUser, annotationUser.toJsonObject()));
+        expectOK(() -> userAnnotationService.delete(annotationUser, null, null, false));
 
         //update, delete annotation (admin data)
-        expectOK(() -> { userAnnotationService.update(annotationAdmin, annotationAdmin.toJsonObject()); });
-        expectOK(() -> { userAnnotationService.delete(annotationAdmin, null, null, false); });
+        expectOK(() -> userAnnotationService.update(annotationAdmin, annotationAdmin.toJsonObject()));
+        expectOK(() -> userAnnotationService.delete(annotationAdmin, null, null, false));
 
         //update, delete annotation (super admin data)
-        expectOK(() -> { userAnnotationService.update(annotation, annotation.toJsonObject()); });
-        expectOK(() -> { userAnnotationService.delete(annotation, null, null, false); });
-
+        expectOK(() -> userAnnotationService.update(annotation, annotation.toJsonObject()));
+        expectOK(() -> userAnnotationService.delete(annotation, null, null, false));
 
         //add image instance
-        expectOK(() -> { imageInstanceService.add(builder.given_a_not_persisted_image_instance(project).toJsonObject()); });
-
-
+        expectOK(() -> imageInstanceService.add(builder.given_a_not_persisted_image_instance(project).toJsonObject()));
 
         //update, delete image instance (simple user data)
-        expectOK(() -> { imageInstanceService.update(imageUser, imageUser.toJsonObject()); });
-        expectOK(() -> { imageInstanceService.delete(imageUser, null, null, false); });
+        expectOK(() -> imageInstanceService.update(imageUser, imageUser.toJsonObject()));
+        expectOK(() -> imageInstanceService.delete(imageUser, null, null, false));
 
         //update, delete image instance (admin data)
-        expectOK(() -> { imageInstanceService.update(imageAdmin, imageAdmin.toJsonObject()); });
-        expectOK(() -> { imageInstanceService.delete(imageAdmin, null, null, false); });
+        expectOK(() -> imageInstanceService.update(imageAdmin, imageAdmin.toJsonObject()));
+        expectOK(() -> imageInstanceService.delete(imageAdmin, null, null, false));
 
         //update, delete image instance (superadmin data)
-        expectOK(() -> { imageInstanceService.update(image, image.toJsonObject()); });
-        expectOK(() -> { imageInstanceService.delete(image, null, null, false); });
+        expectOK(() -> imageInstanceService.update(image, image.toJsonObject()));
+        expectOK(() -> imageInstanceService.delete(image, null, null, false));
     }
-
 
     @Test
     @WithMockUser(username = USER_ACL_ADMIN)
@@ -424,109 +455,103 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         TagDomainAssociation tdaUser = (TagDomainAssociation) data.get("tagDomainAssociationUser");
 
         //add,update, delete property (simple user data)
-        expectOK(() -> { propertyService.add(builder.given_a_not_persisted_property(annotationUser, "xxx", "value").toJsonObject()); });
-        expectOK(() -> { propertyService.update(propertyUser, propertyUser.toJsonObject()); });
-        expectOK(() -> { propertyService.delete(propertyUser, null, null, false); });
+        expectOK(() -> propertyService.add(builder.given_a_not_persisted_property(annotationUser, "xxx", "value").toJsonObject()));
+        expectOK(() -> propertyService.update(propertyUser, propertyUser.toJsonObject()));
+        expectOK(() -> propertyService.delete(propertyUser, null, null, false));
 
         //add,update, delete property (admin data)
-        expectOK(() -> { propertyService.add(builder.given_a_not_persisted_property(annotationAdmin, "xxx", "value").toJsonObject()); });
-        expectOK(() -> { propertyService.update(propertyAdmin, propertyAdmin.toJsonObject()); });
-        expectOK(() -> { propertyService.delete(propertyAdmin, null, null, false); });
+        expectOK(() -> propertyService.add(builder.given_a_not_persisted_property(annotationAdmin, "xxx", "value").toJsonObject()));
+        expectOK(() -> propertyService.update(propertyAdmin, propertyAdmin.toJsonObject()));
+        expectOK(() -> propertyService.delete(propertyAdmin, null, null, false));
 
         //add,update, delete property (superadmin data)
-        expectOK(() -> { propertyService.add(builder.given_a_not_persisted_property(annotation, "xxx", "value").toJsonObject()); });
-        expectOK(() -> { propertyService.update(property, property.toJsonObject()); });
-        expectOK(() -> { propertyService.delete(property, null, null, false); });
+        expectOK(() -> propertyService.add(builder.given_a_not_persisted_property(annotation, "xxx", "value").toJsonObject()));
+        expectOK(() -> propertyService.update(property, property.toJsonObject()));
+        expectOK(() -> propertyService.delete(property, null, null, false));
 
         //add,update, delete description (simple user data)
-        expectOK(() -> { descriptionService.update(descriptionUser, descriptionUser.toJsonObject()); });
-        expectOK(() -> { descriptionService.delete(descriptionUser, null, null, false); });
-        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotationUser).toJsonObject()); });
+        expectOK(() -> descriptionService.update(descriptionUser, descriptionUser.toJsonObject()));
+        expectOK(() -> descriptionService.delete(descriptionUser, null, null, false));
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(annotationUser).toJsonObject()));
 
         //add,update, delete description (admin data)
-        expectOK(() -> { descriptionService.update(descriptionAdmin, descriptionAdmin.toJsonObject()); });
-        expectOK(() -> { descriptionService.delete(descriptionAdmin, null, null, false); });
-        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotationAdmin).toJsonObject()); });
+        expectOK(() -> descriptionService.update(descriptionAdmin, descriptionAdmin.toJsonObject()));
+        expectOK(() -> descriptionService.delete(descriptionAdmin, null, null, false));
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(annotationAdmin).toJsonObject()));
 
         //add,update, delete description (superadmin data)
-        expectOK(() -> { descriptionService.update(description, description.toJsonObject()); });
-        expectOK(() -> { descriptionService.delete(description, null, null, false); });
-        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotation).toJsonObject()); });
+        expectOK(() -> descriptionService.update(description, description.toJsonObject()));
+        expectOK(() -> descriptionService.delete(description, null, null, false));
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(annotation).toJsonObject()));
 
         //add,update, delete tagDomainAssociation (simple user data)
-        expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationUser).toJsonObject()); });
-        expectOK(() -> { tagDomainAssociationService.delete(tdaUser, null, null, false); });
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationUser).toJsonObject()));
+        expectOK(() -> tagDomainAssociationService.delete(tdaUser, null, null, false));
 
         //add,update, delete tagDomainAssociation (admin data)
-        expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationAdmin).toJsonObject()); });
-        expectOK(() -> { tagDomainAssociationService.delete(tdaAdmin, null, null, false); });
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationAdmin).toJsonObject()));
+        expectOK(() -> tagDomainAssociationService.delete(tdaAdmin, null, null, false));
 
         //add,update, delete tagDomainAssociation (superadmin data)
-        expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotation).toJsonObject()); });
-        expectOK(() -> { tagDomainAssociationService.delete(tda, null, null, false); });
-
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotation).toJsonObject()));
+        expectOK(() -> tagDomainAssociationService.delete(tda, null, null, false));
 
         //add,update, delete attachedFile (simple user data)
-        expectOK(() -> { attachedFileService.delete(attachedFileUser, null, null, false); });
-        expectOK(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationUser.getId(), annotationUser.getClass().getName()); });
+        expectOK(() -> attachedFileService.delete(attachedFileUser, null, null, false));
+        expectOK(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationUser.getId(), annotationUser.getClass().getName()));
 
         //add,update, delete attachedFile (admin data)
-        expectOK(() -> { attachedFileService.delete(attachedFileAdmin, null, null, false); });
-        expectOK(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationAdmin.getId(), annotationAdmin.getClass().getName()); });
+        expectOK(() -> attachedFileService.delete(attachedFileAdmin, null, null, false));
+        expectOK(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationAdmin.getId(), annotationAdmin.getClass().getName()));
 
         //add,update, delete attachedFile (superadmin data)
-        expectOK(() -> { attachedFileService.delete(attachedFile, null, null, false); });
-        expectOK(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotation.getId(), annotation.getClass().getName()); });
+        expectOK(() -> attachedFileService.delete(attachedFile, null, null, false));
+        expectOK(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotation.getId(), annotation.getClass().getName()));
 
         //start reviewing image (simple user data)
-        expectOK(() -> { imageInstanceService.startReview(imageUser); });
-        expectOK(() -> { imageInstanceService.stopReview(imageUser, false); });
+        expectOK(() -> imageInstanceService.startReview(imageUser));
+        expectOK(() -> imageInstanceService.stopReview(imageUser, false));
 
         //start reviewing image (admin data)
-        expectOK(() -> { imageInstanceService.startReview(imageAdmin); });
-        expectOK(() -> { imageInstanceService.stopReview(imageAdmin, false); });
+        expectOK(() -> imageInstanceService.startReview(imageAdmin));
+        expectOK(() -> imageInstanceService.stopReview(imageAdmin, false));
 
         //start reviewing image (superadmin data)
-        expectOK(() -> { imageInstanceService.startReview(image); });
-        expectOK(() -> { imageInstanceService.stopReview(image, false); });
-
+        expectOK(() -> imageInstanceService.startReview(image));
+        expectOK(() -> imageInstanceService.stopReview(image, false));
 
         //add annotation on my layer
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(slice).toJsonObject()); });
+        expectOK(() -> userAnnotationService.add(setImageServerUrl(builder.given_a_user_annotation(slice)).toJsonObject()));
         //add annotation on other layers
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(sliceUser).toJsonObject()); });
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(sliceAdmin).toJsonObject()); });
-
+        expectOK(() -> userAnnotationService.add(setImageServerUrl(builder.given_a_user_annotation(sliceUser)).toJsonObject()));
+        expectOK(() -> userAnnotationService.add(setImageServerUrl(builder.given_a_user_annotation(sliceAdmin)).toJsonObject()));
 
         //update, delete annotation (simple user data)
-        expectOK(() -> { userAnnotationService.update(annotationUser, annotationUser.toJsonObject()); });
-        expectOK(() -> { userAnnotationService.delete(annotationUser, null, null, false); });
+        expectOK(() -> userAnnotationService.update(annotationUser, annotationUser.toJsonObject()));
+        expectOK(() -> userAnnotationService.delete(annotationUser, null, null, false));
 
         //update, delete annotation (admin data)
-        expectOK(() -> { userAnnotationService.update(annotationAdmin, annotationAdmin.toJsonObject()); });
-        expectOK(() -> { userAnnotationService.delete(annotationAdmin, null, null, false); });
+        expectOK(() -> userAnnotationService.update(annotationAdmin, annotationAdmin.toJsonObject()));
+        expectOK(() -> userAnnotationService.delete(annotationAdmin, null, null, false));
 
         //update, delete annotation (super admin data)
-        expectOK(() -> { userAnnotationService.update(annotation, annotation.toJsonObject()); });
-        expectOK(() -> { userAnnotationService.delete(annotation, null, null, false); });
-
+        expectOK(() -> userAnnotationService.update(annotation, annotation.toJsonObject()));
+        expectOK(() -> userAnnotationService.delete(annotation, null, null, false));
 
         //add image instance
-        expectOK(() -> { imageInstanceService.add(builder.given_a_not_persisted_image_instance(project).toJsonObject()); });
-
-
+        expectOK(() -> imageInstanceService.add(builder.given_a_not_persisted_image_instance(project).toJsonObject()));
 
         //update, delete image instance (simple user data)
-        expectOK(() -> { imageInstanceService.update(imageUser, imageUser.toJsonObject()); });
-        expectOK(() -> { imageInstanceService.delete(imageUser, null, null, false); });
+        expectOK(() -> imageInstanceService.update(imageUser, imageUser.toJsonObject()));
+        expectOK(() -> imageInstanceService.delete(imageUser, null, null, false));
 
         //update, delete image instance (admin data)
-        expectOK(() -> { imageInstanceService.update(imageAdmin, imageAdmin.toJsonObject()); });
-        expectOK(() -> { imageInstanceService.delete(imageAdmin, null, null, false); });
+        expectOK(() -> imageInstanceService.update(imageAdmin, imageAdmin.toJsonObject()));
+        expectOK(() -> imageInstanceService.delete(imageAdmin, null, null, false));
 
         //update, delete image instance (superadmin data)
-        expectOK(() -> { imageInstanceService.update(image, image.toJsonObject()); });
-        expectOK(() -> { imageInstanceService.delete(image, null, null, false); });
+        expectOK(() -> imageInstanceService.update(image, image.toJsonObject()));
+        expectOK(() -> imageInstanceService.delete(image, null, null, false));
     }
 
     @Disabled("wait for software package")
@@ -651,24 +676,24 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         TagDomainAssociation tdaUser = (TagDomainAssociation) data.get("tagDomainAssociationUser");
 
         //add,update, delete property (simple user data)
-        expectOK(() -> { propertyService.add(builder.given_a_not_persisted_property(annotationUser, "xxx", "value").toJsonObject()); });
-        expectOK(() -> { propertyService.update(propertyUser, propertyUser.toJsonObject()); });
-        expectOK(() -> { propertyService.delete(propertyUser, null, null, false); });
+        expectOK(() -> propertyService.add(builder.given_a_not_persisted_property(annotationUser, "xxx", "value").toJsonObject()));
+        expectOK(() -> propertyService.update(propertyUser, propertyUser.toJsonObject()));
+        expectOK(() -> propertyService.delete(propertyUser, null, null, false));
 
         //add,update, delete property (admin data)
-        expectForbidden(() -> { propertyService.add(builder.given_a_not_persisted_property(annotationAdmin, "xxx", "value").toJsonObject()); });
-        expectForbidden(() -> { propertyService.update(propertyAdmin, propertyAdmin.toJsonObject()); });
-        expectForbidden(() -> { propertyService.delete(propertyAdmin, null, null, false); });
+        expectForbidden(() -> propertyService.add(builder.given_a_not_persisted_property(annotationAdmin, "xxx", "value").toJsonObject()));
+        expectForbidden(() -> propertyService.update(propertyAdmin, propertyAdmin.toJsonObject()));
+        expectForbidden(() -> propertyService.delete(propertyAdmin, null, null, false));
 
         //add,update, delete property (superadmin data)
-        expectForbidden(() -> { propertyService.add(builder.given_a_not_persisted_property(annotation, "xxx", "value").toJsonObject()); });
-        expectForbidden(() -> { propertyService.update(property, property.toJsonObject()); });
-        expectForbidden(() -> { propertyService.delete(property, null, null, false); });
+        expectForbidden(() -> propertyService.add(builder.given_a_not_persisted_property(annotation, "xxx", "value").toJsonObject()));
+        expectForbidden(() -> propertyService.update(property, property.toJsonObject()));
+        expectForbidden(() -> propertyService.delete(property, null, null, false));
 
         //add,update, delete description (simple user data)
-        expectOK(() -> { descriptionService.update(descriptionUser, descriptionUser.toJsonObject()); });
-        expectOK(() -> { descriptionService.delete(descriptionUser, null, null, false); });
-        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotationUser).toJsonObject()); });
+        expectOK(() -> descriptionService.update(descriptionUser, descriptionUser.toJsonObject()));
+        expectOK(() -> descriptionService.delete(descriptionUser, null, null, false));
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(annotationUser).toJsonObject()));
         //TODO description doesn't have a user or creator field. Doesn't check neither if admin or not so all is 200
 //        //add,update, delete description (admin data)
 //        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotationAdmin).toJsonObject()); });
@@ -681,80 +706,72 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
 //        expectOK(() -> { descriptionService.delete(description, null, null, false); });
 
         //add,update, delete tagDomainAssociation (simple user data)
-        expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationUser).toJsonObject()); });
-        expectOK(() -> { tagDomainAssociationService.delete(tdaUser, null, null, false); });
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationUser).toJsonObject()));
+        expectOK(() -> tagDomainAssociationService.delete(tdaUser, null, null, false));
 
         //add,update, delete tagDomainAssociation (admin data)
-        expectForbidden(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationAdmin).toJsonObject()); });
-        expectForbidden(() -> { tagDomainAssociationService.delete(tdaAdmin, null, null, false); });
+        expectForbidden(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationAdmin).toJsonObject()));
+        expectForbidden(() -> tagDomainAssociationService.delete(tdaAdmin, null, null, false));
 
         //add,update, delete tagDomainAssociation (superadmin data)
-        expectForbidden(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotation).toJsonObject()); });
-        expectForbidden(() -> { tagDomainAssociationService.delete(tda, null, null, false); });
-
+        expectForbidden(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotation).toJsonObject()));
+        expectForbidden(() -> tagDomainAssociationService.delete(tda, null, null, false));
 
         //add,update, delete attachedFile (simple user data)
-        expectOK(() -> { attachedFileService.delete(attachedFileUser, null, null, false); });
-        expectOK(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationUser.getId(), annotationUser.getClass().getName()); });
+        expectOK(() -> attachedFileService.delete(attachedFileUser, null, null, false));
+        expectOK(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationUser.getId(), annotationUser.getClass().getName()));
 
         //add,update, delete attachedFile (admin data)
-        expectForbidden(() -> { attachedFileService.delete(attachedFileAdmin, null, null, false); });
-        expectForbidden(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationAdmin.getId(), annotationAdmin.getClass().getName()); });
+        expectForbidden(() -> attachedFileService.delete(attachedFileAdmin, null, null, false));
+        expectForbidden(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationAdmin.getId(), annotationAdmin.getClass().getName()));
 
         //add,update, delete attachedFile (superadmin data)
-        expectForbidden(() -> { attachedFileService.delete(attachedFile, null, null, false); });
-        expectForbidden(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotation.getId(), annotation.getClass().getName()); });
+        expectForbidden(() -> attachedFileService.delete(attachedFile, null, null, false));
+        expectForbidden(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotation.getId(), annotation.getClass().getName()));
 
         //start reviewing image (simple user data)
-        expectOK(() -> { imageInstanceService.startReview(imageUser); });
+        expectOK(() -> imageInstanceService.startReview(imageUser));
 
         //start reviewing image (admin data)
-        expectForbidden(() -> { imageInstanceService.startReview(imageAdmin); });
+        expectForbidden(() -> imageInstanceService.startReview(imageAdmin));
 
         //start reviewing image (superadmin data)
-        expectForbidden(() -> { imageInstanceService.startReview(image); });
-
+        expectForbidden(() -> imageInstanceService.startReview(image));
 
         //add annotation on my layer
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(sliceUser, userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get()).toJsonObject()); });
+        expectOK(() -> userAnnotationService.add(setImageServerUrl(builder.given_a_user_annotation(sliceUser, userRepository.findByUsernameLikeIgnoreCase(USER_ACL_READ).get())).toJsonObject()));
         //add annotation on other layers
-        expectForbidden(() -> { userAnnotationService.add(builder.given_a_user_annotation(slice).toJsonObject()); });
-        expectForbidden(() -> { userAnnotationService.add(builder.given_a_user_annotation(sliceAdmin).toJsonObject()); });
+        expectForbidden(() -> userAnnotationService.add(builder.given_a_user_annotation(slice).toJsonObject()));
+        expectForbidden(() -> userAnnotationService.add(builder.given_a_user_annotation(sliceAdmin).toJsonObject()));
 
         //update, delete annotation (simple user data)
-        expectOK(() -> { userAnnotationService.update(annotationUser, annotationUser.toJsonObject()); });
-        expectOK(() -> { userAnnotationService.delete(annotationUser, null, null, false); });
+        expectOK(() -> userAnnotationService.update(annotationUser, annotationUser.toJsonObject()));
+        expectOK(() -> userAnnotationService.delete(annotationUser, null, null, false));
 
         //update, delete annotation (admin data)
-        expectForbidden(() -> { userAnnotationService.update(annotationAdmin, annotationAdmin.toJsonObject()); });
-        expectForbidden(() -> { userAnnotationService.delete(annotationAdmin, null, null, false); });
+        expectForbidden(() -> userAnnotationService.update(annotationAdmin, annotationAdmin.toJsonObject()));
+        expectForbidden(() -> userAnnotationService.delete(annotationAdmin, null, null, false));
 
         //update, delete annotation (super admin data)
-        expectForbidden(() -> { userAnnotationService.update(annotation, annotation.toJsonObject()); });
-        expectForbidden(() -> { userAnnotationService.delete(annotation, null, null, false); });
-
+        expectForbidden(() -> userAnnotationService.update(annotation, annotation.toJsonObject()));
+        expectForbidden(() -> userAnnotationService.delete(annotation, null, null, false));
 
         //add image instance
-        expectOK(() -> { imageInstanceService.add(builder.given_a_not_persisted_image_instance(project).toJsonObject()); });
-
-
+        expectOK(() -> imageInstanceService.add(builder.given_a_not_persisted_image_instance(project).toJsonObject()));
 
         //update, delete image instance (simple user data)
-        expectOK(() -> { imageInstanceService.update(imageUser, imageUser.toJsonObject()); });
+        expectOK(() -> imageInstanceService.update(imageUser, imageUser.toJsonObject()));
 
-
-        expectOK(() -> { imageInstanceService.delete(imageUser, null, null, false); });
+        expectOK(() -> imageInstanceService.delete(imageUser, null, null, false));
 
         //update, delete image instance (admin data)
-        expectForbidden(() -> { imageInstanceService.update(imageAdmin, imageAdmin.toJsonObject()); });
-        expectForbidden(() -> { imageInstanceService.delete(imageAdmin, null, null, false); });
+        expectForbidden(() -> imageInstanceService.update(imageAdmin, imageAdmin.toJsonObject()));
+        expectForbidden(() -> imageInstanceService.delete(imageAdmin, null, null, false));
 
         //update, delete image instance (superadmin data)
-        expectForbidden(() -> { imageInstanceService.update(image, image.toJsonObject()); });
-        expectForbidden(() -> { imageInstanceService.delete(image, null, null, false); });
+        expectForbidden(() -> imageInstanceService.update(image, image.toJsonObject()));
+        expectForbidden(() -> imageInstanceService.delete(image, null, null, false));
     }
-
-
 
     @Test
     @WithMockUser(username = USER_ACL_ADMIN)
@@ -793,109 +810,103 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         TagDomainAssociation tdaUser = (TagDomainAssociation) data.get("tagDomainAssociationUser");
 
         //add,update, delete property (simple user data)
-        expectOK(() -> { propertyService.add(builder.given_a_not_persisted_property(annotationUser, "xxx", "value").toJsonObject()); });
-        expectOK(() -> { propertyService.update(propertyUser, propertyUser.toJsonObject()); });
-        expectOK(() -> { propertyService.delete(propertyUser, null, null, false); });
+        expectOK(() -> propertyService.add(builder.given_a_not_persisted_property(annotationUser, "xxx", "value").toJsonObject()));
+        expectOK(() -> propertyService.update(propertyUser, propertyUser.toJsonObject()));
+        expectOK(() -> propertyService.delete(propertyUser, null, null, false));
 
         //add,update, delete property (admin data)
-        expectOK(() -> { propertyService.add(builder.given_a_not_persisted_property(annotationAdmin, "xxx", "value").toJsonObject()); });
-        expectOK(() -> { propertyService.update(propertyAdmin, propertyAdmin.toJsonObject()); });
-        expectOK(() -> { propertyService.delete(propertyAdmin, null, null, false); });
+        expectOK(() -> propertyService.add(builder.given_a_not_persisted_property(annotationAdmin, "xxx", "value").toJsonObject()));
+        expectOK(() -> propertyService.update(propertyAdmin, propertyAdmin.toJsonObject()));
+        expectOK(() -> propertyService.delete(propertyAdmin, null, null, false));
 
         //add,update, delete property (superadmin data)
-        expectOK(() -> { propertyService.add(builder.given_a_not_persisted_property(annotation, "xxx", "value").toJsonObject()); });
-        expectOK(() -> { propertyService.update(property, property.toJsonObject()); });
-        expectOK(() -> { propertyService.delete(property, null, null, false); });
+        expectOK(() -> propertyService.add(builder.given_a_not_persisted_property(annotation, "xxx", "value").toJsonObject()));
+        expectOK(() -> propertyService.update(property, property.toJsonObject()));
+        expectOK(() -> propertyService.delete(property, null, null, false));
 
         //add,update, delete description (simple user data)
-        expectOK(() -> { descriptionService.update(descriptionUser, descriptionUser.toJsonObject()); });
-        expectOK(() -> { descriptionService.delete(descriptionUser, null, null, false); });
-        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotationUser).toJsonObject()); });
+        expectOK(() -> descriptionService.update(descriptionUser, descriptionUser.toJsonObject()));
+        expectOK(() -> descriptionService.delete(descriptionUser, null, null, false));
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(annotationUser).toJsonObject()));
 
         //add,update, delete description (admin data)
-        expectOK(() -> { descriptionService.update(descriptionAdmin, descriptionAdmin.toJsonObject()); });
-        expectOK(() -> { descriptionService.delete(descriptionAdmin, null, null, false); });
-        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotationAdmin).toJsonObject()); });
+        expectOK(() -> descriptionService.update(descriptionAdmin, descriptionAdmin.toJsonObject()));
+        expectOK(() -> descriptionService.delete(descriptionAdmin, null, null, false));
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(annotationAdmin).toJsonObject()));
 
         //add,update, delete description (superadmin data)
-        expectOK(() -> { descriptionService.update(description, description.toJsonObject()); });
-        expectOK(() -> { descriptionService.delete(description, null, null, false); });
-        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotation).toJsonObject()); });
+        expectOK(() -> descriptionService.update(description, description.toJsonObject()));
+        expectOK(() -> descriptionService.delete(description, null, null, false));
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(annotation).toJsonObject()));
 
         //add,update, delete tagDomainAssociation (simple user data)
-        expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationUser).toJsonObject()); });
-        expectOK(() -> { tagDomainAssociationService.delete(tdaUser, null, null, false); });
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationUser).toJsonObject()));
+        expectOK(() -> tagDomainAssociationService.delete(tdaUser, null, null, false));
 
         //add,update, delete tagDomainAssociation (admin data)
-        expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationAdmin).toJsonObject()); });
-        expectOK(() -> { tagDomainAssociationService.delete(tdaAdmin, null, null, false); });
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationAdmin).toJsonObject()));
+        expectOK(() -> tagDomainAssociationService.delete(tdaAdmin, null, null, false));
 
         //add,update, delete tagDomainAssociation (superadmin data)
-        expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotation).toJsonObject()); });
-        expectOK(() -> { tagDomainAssociationService.delete(tda, null, null, false); });
-
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotation).toJsonObject()));
+        expectOK(() -> tagDomainAssociationService.delete(tda, null, null, false));
 
         //add,update, delete attachedFile (simple user data)
-        expectOK(() -> { attachedFileService.delete(attachedFileUser, null, null, false); });
-        expectOK(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationUser.getId(), annotationUser.getClass().getName()); });
+        expectOK(() -> attachedFileService.delete(attachedFileUser, null, null, false));
+        expectOK(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationUser.getId(), annotationUser.getClass().getName()));
 
         //add,update, delete attachedFile (admin data)
-        expectOK(() -> { attachedFileService.delete(attachedFileAdmin, null, null, false); });
-        expectOK(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationAdmin.getId(), annotationAdmin.getClass().getName()); });
+        expectOK(() -> attachedFileService.delete(attachedFileAdmin, null, null, false));
+        expectOK(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationAdmin.getId(), annotationAdmin.getClass().getName()));
 
         //add,update, delete attachedFile (superadmin data)
-        expectOK(() -> { attachedFileService.delete(attachedFile, null, null, false); });
-        expectOK(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotation.getId(), annotation.getClass().getName()); });
+        expectOK(() -> attachedFileService.delete(attachedFile, null, null, false));
+        expectOK(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotation.getId(), annotation.getClass().getName()));
 
         //start reviewing image (simple user data)
-        expectOK(() -> { imageInstanceService.startReview(imageUser); });
-        expectOK(() -> { imageInstanceService.stopReview(imageUser, false); });
+        expectOK(() -> imageInstanceService.startReview(imageUser));
+        expectOK(() -> imageInstanceService.stopReview(imageUser, false));
 
         //start reviewing image (admin data)
-        expectOK(() -> { imageInstanceService.startReview(imageAdmin); });
-        expectOK(() -> { imageInstanceService.stopReview(imageAdmin, false); });
+        expectOK(() -> imageInstanceService.startReview(imageAdmin));
+        expectOK(() -> imageInstanceService.stopReview(imageAdmin, false));
 
         //start reviewing image (superadmin data)
-        expectOK(() -> { imageInstanceService.startReview(image); });
-        expectOK(() -> { imageInstanceService.stopReview(image, false); });
-
+        expectOK(() -> imageInstanceService.startReview(image));
+        expectOK(() -> imageInstanceService.stopReview(image, false));
 
         //add annotation on my layer
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(slice).toJsonObject()); });
+        expectOK(() -> userAnnotationService.add(setImageServerUrl(builder.given_a_user_annotation(slice)).toJsonObject()));
         //add annotation on other layers
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(sliceUser).toJsonObject()); });
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(sliceAdmin).toJsonObject()); });
-
+        expectOK(() -> userAnnotationService.add(setImageServerUrl(builder.given_a_user_annotation(sliceUser)).toJsonObject()));
+        expectOK(() -> userAnnotationService.add(setImageServerUrl(builder.given_a_user_annotation(sliceAdmin)).toJsonObject()));
 
         //update, delete annotation (simple user data)
-        expectOK(() -> { userAnnotationService.update(annotationUser, annotationUser.toJsonObject()); });
-        expectOK(() -> { userAnnotationService.delete(annotationUser, null, null, false); });
+        expectOK(() -> userAnnotationService.update(annotationUser, annotationUser.toJsonObject()));
+        expectOK(() -> userAnnotationService.delete(annotationUser, null, null, false));
 
         //update, delete annotation (admin data)
-        expectOK(() -> { userAnnotationService.update(annotationAdmin, annotationAdmin.toJsonObject()); });
-        expectOK(() -> { userAnnotationService.delete(annotationAdmin, null, null, false); });
+        expectOK(() -> userAnnotationService.update(annotationAdmin, annotationAdmin.toJsonObject()));
+        expectOK(() -> userAnnotationService.delete(annotationAdmin, null, null, false));
 
         //update, delete annotation (super admin data)
-        expectOK(() -> { userAnnotationService.update(annotation, annotation.toJsonObject()); });
-        expectOK(() -> { userAnnotationService.delete(annotation, null, null, false); });
-
+        expectOK(() -> userAnnotationService.update(annotation, annotation.toJsonObject()));
+        expectOK(() -> userAnnotationService.delete(annotation, null, null, false));
 
         //add image instance
-        expectOK(() -> { imageInstanceService.add(builder.given_a_not_persisted_image_instance(project).toJsonObject()); });
-
-
+        expectOK(() -> imageInstanceService.add(builder.given_a_not_persisted_image_instance(project).toJsonObject()));
 
         //update, delete image instance (simple user data)
-        expectOK(() -> { imageInstanceService.update(imageUser, imageUser.toJsonObject()); });
-        expectOK(() -> { imageInstanceService.delete(imageUser, null, null, false); });
+        expectOK(() -> imageInstanceService.update(imageUser, imageUser.toJsonObject()));
+        expectOK(() -> imageInstanceService.delete(imageUser, null, null, false));
 
         //update, delete image instance (admin data)
-        expectOK(() -> { imageInstanceService.update(imageAdmin, imageAdmin.toJsonObject()); });
-        expectOK(() -> { imageInstanceService.delete(imageAdmin, null, null, false); });
+        expectOK(() -> imageInstanceService.update(imageAdmin, imageAdmin.toJsonObject()));
+        expectOK(() -> imageInstanceService.delete(imageAdmin, null, null, false));
 
         //update, delete image instance (superadmin data)
-        expectOK(() -> { imageInstanceService.update(image, image.toJsonObject()); });
-        expectOK(() -> { imageInstanceService.delete(image, null, null, false); });
+        expectOK(() -> imageInstanceService.update(image, image.toJsonObject()));
+        expectOK(() -> imageInstanceService.delete(image, null, null, false));
     }
 
     @Disabled("wait for software package")
@@ -904,8 +915,6 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
     public void testRestrictedProjectWithJobData() {
         Assertions.fail("todo");
     }
-
-
 
     @Test
     @WithMockUser(username = USER_ACL_ADMIN)
@@ -1161,109 +1170,103 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         TagDomainAssociation tdaUser = (TagDomainAssociation) data.get("tagDomainAssociationUser");
 
         //add,update, delete property (simple user data)
-        expectOK(() -> { propertyService.add(builder.given_a_not_persisted_property(annotationUser, "xxx", "value").toJsonObject()); });
-        expectOK(() -> { propertyService.update(propertyUser, propertyUser.toJsonObject()); });
-        expectOK(() -> { propertyService.delete(propertyUser, null, null, false); });
+        expectOK(() -> propertyService.add(builder.given_a_not_persisted_property(annotationUser, "xxx", "value").toJsonObject()));
+        expectOK(() -> propertyService.update(propertyUser, propertyUser.toJsonObject()));
+        expectOK(() -> propertyService.delete(propertyUser, null, null, false));
 
         //add,update, delete property (admin data)
-        expectOK(() -> { propertyService.add(builder.given_a_not_persisted_property(annotationAdmin, "xxx", "value").toJsonObject()); });
-        expectOK(() -> { propertyService.update(propertyAdmin, propertyAdmin.toJsonObject()); });
-        expectOK(() -> { propertyService.delete(propertyAdmin, null, null, false); });
+        expectOK(() -> propertyService.add(builder.given_a_not_persisted_property(annotationAdmin, "xxx", "value").toJsonObject()));
+        expectOK(() -> propertyService.update(propertyAdmin, propertyAdmin.toJsonObject()));
+        expectOK(() -> propertyService.delete(propertyAdmin, null, null, false));
 
         //add,update, delete property (superadmin data)
-        expectOK(() -> { propertyService.add(builder.given_a_not_persisted_property(annotation, "xxx", "value").toJsonObject()); });
-        expectOK(() -> { propertyService.update(property, property.toJsonObject()); });
-        expectOK(() -> { propertyService.delete(property, null, null, false); });
+        expectOK(() -> propertyService.add(builder.given_a_not_persisted_property(annotation, "xxx", "value").toJsonObject()));
+        expectOK(() -> propertyService.update(property, property.toJsonObject()));
+        expectOK(() -> propertyService.delete(property, null, null, false));
 
         //add,update, delete description (simple user data)
-        expectOK(() -> { descriptionService.update(descriptionUser, descriptionUser.toJsonObject()); });
-        expectOK(() -> { descriptionService.delete(descriptionUser, null, null, false); });
-        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotationUser).toJsonObject()); });
+        expectOK(() -> descriptionService.update(descriptionUser, descriptionUser.toJsonObject()));
+        expectOK(() -> descriptionService.delete(descriptionUser, null, null, false));
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(annotationUser).toJsonObject()));
 
         //add,update, delete description (admin data)
-        expectOK(() -> { descriptionService.update(descriptionAdmin, descriptionAdmin.toJsonObject()); });
-        expectOK(() -> { descriptionService.delete(descriptionAdmin, null, null, false); });
-        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotationAdmin).toJsonObject()); });
+        expectOK(() -> descriptionService.update(descriptionAdmin, descriptionAdmin.toJsonObject()));
+        expectOK(() -> descriptionService.delete(descriptionAdmin, null, null, false));
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(annotationAdmin).toJsonObject()));
 
         //add,update, delete description (superadmin data)
-        expectOK(() -> { descriptionService.update(description, description.toJsonObject()); });
-        expectOK(() -> { descriptionService.delete(description, null, null, false); });
-        expectOK(() -> { descriptionService.add(builder.given_a_not_persisted_description(annotation).toJsonObject()); });
+        expectOK(() -> descriptionService.update(description, description.toJsonObject()));
+        expectOK(() -> descriptionService.delete(description, null, null, false));
+        expectOK(() -> descriptionService.add(builder.given_a_not_persisted_description(annotation).toJsonObject()));
 
         //add,update, delete tagDomainAssociation (simple user data)
-        expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationUser).toJsonObject()); });
-        expectOK(() -> { tagDomainAssociationService.delete(tdaUser, null, null, false); });
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationUser).toJsonObject()));
+        expectOK(() -> tagDomainAssociationService.delete(tdaUser, null, null, false));
 
         //add,update, delete tagDomainAssociation (admin data)
-        expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationAdmin).toJsonObject()); });
-        expectOK(() -> { tagDomainAssociationService.delete(tdaAdmin, null, null, false); });
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotationAdmin).toJsonObject()));
+        expectOK(() -> tagDomainAssociationService.delete(tdaAdmin, null, null, false));
 
         //add,update, delete tagDomainAssociation (superadmin data)
-        expectOK(() -> { tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotation).toJsonObject()); });
-        expectOK(() -> { tagDomainAssociationService.delete(tda, null, null, false); });
-
+        expectOK(() -> tagDomainAssociationService.add(builder.given_a_not_persisted_tag_association(builder.given_a_tag(), annotation).toJsonObject()));
+        expectOK(() -> tagDomainAssociationService.delete(tda, null, null, false));
 
         //add,update, delete attachedFile (simple user data)
-        expectOK(() -> { attachedFileService.delete(attachedFileUser, null, null, false); });
-        expectOK(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationUser.getId(), annotationUser.getClass().getName()); });
+        expectOK(() -> attachedFileService.delete(attachedFileUser, null, null, false));
+        expectOK(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationUser.getId(), annotationUser.getClass().getName()));
 
         //add,update, delete attachedFile (admin data)
-        expectOK(() -> { attachedFileService.delete(attachedFileAdmin, null, null, false); });
-        expectOK(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationAdmin.getId(), annotationAdmin.getClass().getName()); });
+        expectOK(() -> attachedFileService.delete(attachedFileAdmin, null, null, false));
+        expectOK(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotationAdmin.getId(), annotationAdmin.getClass().getName()));
 
         //add,update, delete attachedFile (superadmin data)
-        expectOK(() -> { attachedFileService.delete(attachedFile, null, null, false); });
-        expectOK(() -> { attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotation.getId(), annotation.getClass().getName()); });
+        expectOK(() -> attachedFileService.delete(attachedFile, null, null, false));
+        expectOK(() -> attachedFileService.create("test.txt", new String("hello").getBytes(), "test", annotation.getId(), annotation.getClass().getName()));
 
         //start reviewing image (simple user data)
-        expectOK(() -> { imageInstanceService.startReview(imageUser); });
-        expectOK(() -> { imageInstanceService.stopReview(imageUser, false); });
+        expectOK(() -> imageInstanceService.startReview(imageUser));
+        expectOK(() -> imageInstanceService.stopReview(imageUser, false));
 
         //start reviewing image (admin data)
-        expectOK(() -> { imageInstanceService.startReview(imageAdmin); });
-        expectOK(() -> { imageInstanceService.stopReview(imageAdmin, false); });
+        expectOK(() -> imageInstanceService.startReview(imageAdmin));
+        expectOK(() -> imageInstanceService.stopReview(imageAdmin, false));
 
         //start reviewing image (superadmin data)
-        expectOK(() -> { imageInstanceService.startReview(image); });
-        expectOK(() -> { imageInstanceService.stopReview(image, false); });
-
+        expectOK(() -> imageInstanceService.startReview(image));
+        expectOK(() -> imageInstanceService.stopReview(image, false));
 
         //add annotation on my layer
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(slice).toJsonObject()); });
+        expectOK(() -> userAnnotationService.add(setImageServerUrl(builder.given_a_user_annotation(slice)).toJsonObject()));
         //add annotation on other layers
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(sliceUser).toJsonObject()); });
-        expectOK(() -> { userAnnotationService.add(builder.given_a_user_annotation(sliceAdmin).toJsonObject()); });
-
+        expectOK(() -> userAnnotationService.add(setImageServerUrl(builder.given_a_user_annotation(sliceUser)).toJsonObject()));
+        expectOK(() -> userAnnotationService.add(setImageServerUrl(builder.given_a_user_annotation(sliceAdmin)).toJsonObject()));
 
         //update, delete annotation (simple user data)
-        expectOK(() -> { userAnnotationService.update(annotationUser, annotationUser.toJsonObject()); });
-        expectOK(() -> { userAnnotationService.delete(annotationUser, null, null, false); });
+        expectOK(() -> userAnnotationService.update(annotationUser, annotationUser.toJsonObject()));
+        expectOK(() -> userAnnotationService.delete(annotationUser, null, null, false));
 
         //update, delete annotation (admin data)
-        expectOK(() -> { userAnnotationService.update(annotationAdmin, annotationAdmin.toJsonObject()); });
-        expectOK(() -> { userAnnotationService.delete(annotationAdmin, null, null, false); });
+        expectOK(() -> userAnnotationService.update(annotationAdmin, annotationAdmin.toJsonObject()));
+        expectOK(() -> userAnnotationService.delete(annotationAdmin, null, null, false));
 
         //update, delete annotation (super admin data)
-        expectOK(() -> { userAnnotationService.update(annotation, annotation.toJsonObject()); });
-        expectOK(() -> { userAnnotationService.delete(annotation, null, null, false); });
-
+        expectOK(() -> userAnnotationService.update(annotation, annotation.toJsonObject()));
+        expectOK(() -> userAnnotationService.delete(annotation, null, null, false));
 
         //add image instance
-        expectOK(() -> { imageInstanceService.add(builder.given_a_not_persisted_image_instance(project).toJsonObject()); });
-
-
+        expectOK(() -> imageInstanceService.add(builder.given_a_not_persisted_image_instance(project).toJsonObject()));
 
         //update, delete image instance (simple user data)
-        expectOK(() -> { imageInstanceService.update(imageUser, imageUser.toJsonObject()); });
-        expectOK(() -> { imageInstanceService.delete(imageUser, null, null, false); });
+        expectOK(() -> imageInstanceService.update(imageUser, imageUser.toJsonObject()));
+        expectOK(() -> imageInstanceService.delete(imageUser, null, null, false));
 
         //update, delete image instance (admin data)
-        expectOK(() -> { imageInstanceService.update(imageAdmin, imageAdmin.toJsonObject()); });
-        expectOK(() -> { imageInstanceService.delete(imageAdmin, null, null, false); });
+        expectOK(() -> imageInstanceService.update(imageAdmin, imageAdmin.toJsonObject()));
+        expectOK(() -> imageInstanceService.delete(imageAdmin, null, null, false));
 
         //update, delete image instance (superadmin data)
-        expectOK(() -> { imageInstanceService.update(image, image.toJsonObject()); });
-        expectOK(() -> { imageInstanceService.delete(image, null, null, false); });
+        expectOK(() -> imageInstanceService.update(image, image.toJsonObject()));
+        expectOK(() -> imageInstanceService.delete(image, null, null, false));
     }
 
     @Disabled("wait for software package")
@@ -1368,7 +1371,7 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
 
         return result;
     }
-    
+
 
 
 

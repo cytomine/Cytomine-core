@@ -16,10 +16,9 @@ package be.cytomine.api.controller.search;
  * limitations under the License.
  */
 
-import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.service.dto.CropParameter;
-import be.cytomine.service.search.RetrievalService;
+import java.io.UnsupportedEncodingException;
+import javax.persistence.EntityManager;
+
 import com.vividsolutions.jts.io.ParseException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,12 +28,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.persistence.EntityManager;
-import java.io.IOException;
+import be.cytomine.api.controller.RestCytomineController;
+import be.cytomine.domain.ontology.AnnotationDomain;
+import be.cytomine.dto.search.SearchResponse;
+import be.cytomine.service.dto.CropParameter;
+import be.cytomine.service.search.RetrievalService;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
-@Slf4j
 @RequiredArgsConstructor
 public class RestRetrievalController extends RestCytomineController {
 
@@ -54,33 +56,33 @@ public class RestRetrievalController extends RestCytomineController {
         return parameters;
     }
 
-    @GetMapping("/retrieval/index.json")
-    public ResponseEntity<String> indexAnnotation(@RequestParam(value = "annotation") Long id) throws IOException, ParseException, InterruptedException {
+    @GetMapping("/retrieval/index")
+    public ResponseEntity<String> indexAnnotation(
+        @RequestParam(value = "annotation") Long id
+    ) throws ParseException, UnsupportedEncodingException {
         log.debug("REST request to index an annotation");
 
         AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
         CropParameter parameters = getParameters(annotation.getWktLocation());
 
-        return responseSuccess(retrievalService.indexAnnotation(annotation, parameters, getRequestETag()));
+        return retrievalService.indexAnnotation(annotation, parameters, getRequestETag());
     }
 
-    @GetMapping("/retrieval/retrieve.json")
-    public ResponseEntity<String> retrieveSimilarAnnotations(
+    @GetMapping("/retrieval/search")
+    public ResponseEntity<SearchResponse> retrieveSimilarAnnotations(
         @RequestParam(value = "annotation") Long id,
         @RequestParam(value = "nrt_neigh") Long nrt_neigh
-    ) throws IOException, ParseException, InterruptedException {
+    ) throws ParseException, UnsupportedEncodingException {
         log.debug("REST request to retrieve similar annotations given a query annotation {}", id);
 
         AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(entityManager, id);
         CropParameter parameters = getParameters(annotation.getWktLocation());
 
-        return responseSuccess(
-            retrievalService.retrieveSimilarImages(
-                annotation,
-                parameters,
-                getRequestETag(),
-                nrt_neigh
-            )
+        return retrievalService.retrieveSimilarImages(
+            annotation,
+            parameters,
+            getRequestETag(),
+            nrt_neigh
         );
     }
 }

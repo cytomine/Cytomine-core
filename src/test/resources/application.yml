@@ -91,6 +91,7 @@ application:
 
   defaultLanguage: ENGLISH
   imageServerURL: [http://ims.cytomine.local]
+  retrievalServerURL: http://localhost:8888
   messageBrokerServerURL: messageBrokerServerURL
   annotation:
     maxNumberOfPoint: 200

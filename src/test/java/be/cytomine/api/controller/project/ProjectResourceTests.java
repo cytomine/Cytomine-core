@@ -16,55 +16,47 @@ package be.cytomine.api.controller.project;
 * limitations under the License.
 */
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import javax.persistence.EntityManager;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import org.apache.commons.lang3.time.DateUtils;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithUserDetails;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.meta.TagDomainAssociation;
 import be.cytomine.domain.ontology.AnnotationTerm;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
-import be.cytomine.domain.social.LastConnection;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.AclRepository;
 import be.cytomine.repository.security.ForgotPasswordTokenRepository;
-import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.social.ProjectConnectionService;
-import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
-import liquibase.pro.packaged.A;
-import org.apache.commons.lang3.time.DateUtils;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.test.context.support.WithUserDetails;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.mail.MessagingException;
-import javax.persistence.EntityManager;
-
-import java.util.Date;
-import java.util.List;
-
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
@@ -108,10 +100,21 @@ public class ProjectResourceTests {
     ForgotPasswordTokenRepository forgotPasswordTokenRepository;
 
     @Autowired
-    SecRoleRepository secRoleRepository;
-
-    @Autowired
     SecUserRepository secUserRepository;
+
+    private static WireMockServer wireMockServer;
+
+    @BeforeAll
+    public static void beforeAll() {
+        wireMockServer = new WireMockServer(8888);
+        wireMockServer.start();
+        WireMock.configureFor("localhost", 8888);
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        wireMockServer.stop();
+    }
 
     @BeforeEach
     public void cleanActivities() {
@@ -161,26 +164,46 @@ public class ProjectResourceTests {
         Project project = builder.given_a_project();
         builder.addUserToProject(project, builder.given_superadmin().getUsername());
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(project);
+
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
+            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        /* Simulate call to PIMS */
+        String id = URLEncoder.encode(userAnnotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/" + id + "/annotation/drawing"))
+                .withRequestBody(WireMock.matching(".*"))
+                .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
+        );
+
+        userAnnotation
+            .getSlice()
+            .getBaseSlice()
+            .getUploadedFile()
+            .getImageServer()
+            .setUrl("http://localhost:8888");
         userAnnotationService.add(userAnnotation.toJsonObject());
 
         restProjectControllerMockMvc.perform(get("/api/project.json")
-                        .param("max", "10")
-                        .param("offset", "0")
-                        .param("withLastActivity", "true")
-                        .param("withMembersCount", "true")
-                        .param("withCurrentUserRoles", "true")
-                        .param("sort", "id")
-                        .param("order", "desc")
-                )
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.id=='"+project.getId()+"')].lastActivity").hasJsonPath())
-                .andExpect(jsonPath("$.collection[?(@.id=='"+project.getId()+"')].currentUserRoles").hasJsonPath())
-                .andExpect(jsonPath("$.collection[?(@.id=='"+project.getId()+"')].currentUserRoles.admin").value(true))
-                .andExpect(jsonPath("$.collection[?(@.id=='"+project.getId()+"')].currentUserRoles.representative").value(false))
-                .andExpect(jsonPath("$.collection[?(@.id=='"+project.getId()+"')].membersCount").value(1))
-        ;
+                .param("max", "10")
+                .param("offset", "0")
+                .param("withLastActivity", "true")
+                .param("withMembersCount", "true")
+                .param("withCurrentUserRoles", "true")
+                .param("sort", "id")
+                .param("order", "desc")
+            )
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
+            .andExpect(jsonPath("$.collection[?(@.id=='" + project.getId() + "')].lastActivity").hasJsonPath())
+            .andExpect(jsonPath("$.collection[?(@.id=='" + project.getId() + "')].currentUserRoles").hasJsonPath())
+            .andExpect(jsonPath("$.collection[?(@.id=='" + project.getId() + "')].currentUserRoles.admin").value(true))
+            .andExpect(jsonPath("$.collection[?(@.id=='" + project.getId() + "')].currentUserRoles.representative").value(false))
+            .andExpect(jsonPath("$.collection[?(@.id=='" + project.getId() + "')].membersCount").value(1));
     }
 
     @Test
@@ -508,6 +531,20 @@ public class ProjectResourceTests {
         Project project = BasicInstanceBuilder.given_a_not_persisted_project();
         project.setOntology(builder.given_an_ontology());
         project.setName("add_valid_project");
+
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
+            .withRequestBody(
+                WireMock.matching(".*\"name\":\"\\d+\".*")
+            )
+            .willReturn(aResponse()
+                .withStatus(HttpStatus.OK.value())
+                .withHeader("Content-Type", "application/json")
+                .withBody("{ \"message\": \"Created storage with name: " + project.getId() + "\" }")
+            )
+        );
+
+        /* Test project creation */
         restProjectControllerMockMvc.perform(post("/api/project.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(project.toJSON()))
@@ -534,6 +571,20 @@ public class ProjectResourceTests {
     public void add_valid_project_without_ontology() throws Exception {
         Project project = BasicInstanceBuilder.given_a_not_persisted_project();
         project.setOntology(null);
+
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
+            .withRequestBody(
+                WireMock.matching(".*\"name\":\"\\d+\".*")
+            )
+            .willReturn(aResponse()
+                .withStatus(HttpStatus.OK.value())
+                .withHeader("Content-Type", "application/json")
+                .withBody("{ \"message\": \"Created storage with name: " + project.getId() + "\" }")
+            )
+        );
+
+        /* Test project creation */
         restProjectControllerMockMvc.perform(post("/api/project.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(project.toJSON()))
@@ -756,7 +807,28 @@ public class ProjectResourceTests {
         Project project = builder.given_a_project();
         builder.addUserToProject(project, builder.given_superadmin().getUsername());
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(project);
-        CommandResponse commandResponse = userAnnotationService.add(userAnnotation.toJsonObject());
+
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
+            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        /* Simulate call to PIMS */
+        String id = URLEncoder.encode(userAnnotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/" + id + "/annotation/drawing"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
+        );
+
+        userAnnotation
+            .getSlice()
+            .getBaseSlice()
+            .getUploadedFile()
+            .getImageServer()
+            .setUrl("http://localhost:8888");
+        userAnnotationService.add(userAnnotation.toJsonObject());
 
         restProjectControllerMockMvc.perform(get("/api/project/{id}/last/{max}.json", project.getId(), 10))
                 .andDo(print())
@@ -816,13 +888,13 @@ public class ProjectResourceTests {
     public void list_by_ontology() throws Exception {
         Project project = builder.given_a_project();
         builder.addUserToProject(project, builder.given_superadmin().getUsername());
-        
-        
+
+
         restProjectControllerMockMvc.perform(get("/api/ontology/{id}/project.json", project.getOntology().getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[0].id").value(project.getId()));
-        
+
     }
 
     @Test
@@ -1054,7 +1126,28 @@ public class ProjectResourceTests {
         builder.addUserToProject(project, creator.getUsername());
 
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(project);
-        CommandResponse commandResponse = userAnnotationService.add(userAnnotation.toJsonObject());
+
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
+            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        /* Simulate call to PIMS */
+        String id = URLEncoder.encode(userAnnotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/" + id + "/annotation/drawing"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
+        );
+
+        userAnnotation
+            .getSlice()
+            .getBaseSlice()
+            .getUploadedFile()
+            .getImageServer()
+            .setUrl("http://localhost:8888");
+        userAnnotationService.add(userAnnotation.toJsonObject());
 
         restProjectControllerMockMvc.perform(get("/api/commandhistory.json")
                         .param("fullData", "true"))
@@ -1071,7 +1164,6 @@ public class ProjectResourceTests {
 
     }
 
-
     @Test
     @Transactional
     public void list_command_history_with_dates() throws Exception {
@@ -1080,34 +1172,52 @@ public class ProjectResourceTests {
         builder.addUserToProject(project, creator.getUsername());
 
         Date start = DateUtils.addSeconds(new Date(), -5);
-        UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(project);
-        CommandResponse commandResponse = userAnnotationService.add(userAnnotation.toJsonObject());
         Date stop = DateUtils.addSeconds(new Date(), 5);
+        UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(project);
 
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
+            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
+            .withQueryParam("index", WireMock.equalTo("annotation"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        /* Simulate call to PIMS */
+        String id = URLEncoder.encode(userAnnotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
+        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/" + id + "/annotation/drawing"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
+        );
+
+        userAnnotation
+            .getSlice()
+            .getBaseSlice()
+            .getUploadedFile()
+            .getImageServer()
+            .setUrl("http://localhost:8888");
+        userAnnotationService.add(userAnnotation.toJsonObject());
 
         restProjectControllerMockMvc.perform(get("/api/project/{id}/commandhistory.json", project.getId())
-                        .param("startDate", start.getTime()+"")
-                        .param("endDate", stop.getTime()+""))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.project=="+project.getId()+")]").exists());
+                .param("startDate", start.getTime()+"")
+                .param("endDate", stop.getTime()+""))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[?(@.project=="+project.getId()+")]").exists());
 
         restProjectControllerMockMvc.perform(get("/api/project/{id}/commandhistory.json", project.getId())
-                        .param("startDate", DateUtils.addSeconds(start, -5).getTime()+"")
-                        .param("endDate", DateUtils.addSeconds(start, -3).getTime()+""))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.project=="+project.getId()+")]").doesNotExist());
+                .param("startDate", DateUtils.addSeconds(start, -5).getTime()+"")
+                .param("endDate", DateUtils.addSeconds(start, -3).getTime()+""))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[?(@.project=="+project.getId()+")]").doesNotExist());
 
         restProjectControllerMockMvc.perform(get("/api/project/{id}/commandhistory.json", project.getId())
-                        .param("startDate", DateUtils.addSeconds(start, 3).getTime()+"")
-                        .param("endDate", DateUtils.addSeconds(start, 5).getTime()+""))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.project=="+project.getId()+")]").doesNotExist());
-
+                .param("startDate", DateUtils.addSeconds(start, 3).getTime()+"")
+                .param("endDate", DateUtils.addSeconds(start, 5).getTime()+""))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$[?(@.project=="+project.getId()+")]").doesNotExist());
     }
-
 
     @Test
     public void invite_user_in_project() throws Exception {
