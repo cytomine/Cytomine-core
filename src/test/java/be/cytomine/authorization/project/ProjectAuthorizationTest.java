@@ -24,6 +24,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.security.acls.model.Permission;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -119,6 +120,10 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
             .withRequestBody(WireMock.matching(".*"))
             .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        wireMockServer.stubFor(WireMock.delete(urlPathMatching("/api/storages/.*"))
+            .willReturn(aResponse().withStatus(HttpStatus.OK.value()))
         );
 
         /* Simulate call to PIMS */

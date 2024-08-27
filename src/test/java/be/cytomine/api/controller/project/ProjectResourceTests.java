@@ -104,11 +104,43 @@ public class ProjectResourceTests {
 
     private static WireMockServer wireMockServer;
 
+    private static void setupStub() {
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
+            .withQueryParam("storage", WireMock.matching(".*"))
+            .withQueryParam("index", WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
+            .withRequestBody(
+                WireMock.matching(".*\"name\":\"\\d+\".*")
+            )
+            .willReturn(aResponse()
+                .withStatus(HttpStatus.OK.value())
+            )
+        );
+
+        wireMockServer.stubFor(WireMock.delete(urlPathMatching("/api/storages/.*"))
+            .willReturn(aResponse()
+                .withStatus(HttpStatus.OK.value())
+            )
+        );
+
+        /* Simulate call to PIMS */
+        wireMockServer.stubFor(WireMock.post(urlMatching("/image/.*/annotation/drawing"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
+        );
+    }
+
     @BeforeAll
     public static void beforeAll() {
         wireMockServer = new WireMockServer(8888);
         wireMockServer.start();
         WireMock.configureFor("localhost", 8888);
+
+        setupStub();
     }
 
     @AfterAll
@@ -164,20 +196,6 @@ public class ProjectResourceTests {
         Project project = builder.given_a_project();
         builder.addUserToProject(project, builder.given_superadmin().getUsername());
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(project);
-
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
-            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-
-        /* Simulate call to PIMS */
-        String id = URLEncoder.encode(userAnnotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/" + id + "/annotation/drawing"))
-                .withRequestBody(WireMock.matching(".*"))
-                .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
-        );
 
         userAnnotation
             .getSlice()
@@ -532,18 +550,6 @@ public class ProjectResourceTests {
         project.setOntology(builder.given_an_ontology());
         project.setName("add_valid_project");
 
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
-            .withRequestBody(
-                WireMock.matching(".*\"name\":\"\\d+\".*")
-            )
-            .willReturn(aResponse()
-                .withStatus(HttpStatus.OK.value())
-                .withHeader("Content-Type", "application/json")
-                .withBody("{ \"message\": \"Created storage with name: " + project.getId() + "\" }")
-            )
-        );
-
         /* Test project creation */
         restProjectControllerMockMvc.perform(post("/api/project.json")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -573,16 +579,7 @@ public class ProjectResourceTests {
         project.setOntology(null);
 
         /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
-            .withRequestBody(
-                WireMock.matching(".*\"name\":\"\\d+\".*")
-            )
-            .willReturn(aResponse()
-                .withStatus(HttpStatus.OK.value())
-                .withHeader("Content-Type", "application/json")
-                .withBody("{ \"message\": \"Created storage with name: " + project.getId() + "\" }")
-            )
-        );
+
 
         /* Test project creation */
         restProjectControllerMockMvc.perform(post("/api/project.json")
@@ -773,6 +770,7 @@ public class ProjectResourceTests {
     @Test
     @Transactional
     public void delete_project() throws Exception {
+
         Project project = builder.given_a_project();
         restProjectControllerMockMvc.perform(delete("/api/project/{id}.json", project.getId())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -807,21 +805,6 @@ public class ProjectResourceTests {
         Project project = builder.given_a_project();
         builder.addUserToProject(project, builder.given_superadmin().getUsername());
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(project);
-
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
-            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-
-        /* Simulate call to PIMS */
-        String id = URLEncoder.encode(userAnnotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/" + id + "/annotation/drawing"))
-            .withRequestBody(WireMock.matching(".*"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
-        );
-
         userAnnotation
             .getSlice()
             .getBaseSlice()
@@ -1126,21 +1109,6 @@ public class ProjectResourceTests {
         builder.addUserToProject(project, creator.getUsername());
 
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(project);
-
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
-            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-
-        /* Simulate call to PIMS */
-        String id = URLEncoder.encode(userAnnotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/" + id + "/annotation/drawing"))
-            .withRequestBody(WireMock.matching(".*"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
-        );
-
         userAnnotation
             .getSlice()
             .getBaseSlice()
@@ -1174,20 +1142,6 @@ public class ProjectResourceTests {
         Date start = DateUtils.addSeconds(new Date(), -5);
         Date stop = DateUtils.addSeconds(new Date(), 5);
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(project);
-
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
-            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-
-        /* Simulate call to PIMS */
-        String id = URLEncoder.encode(userAnnotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/" + id + "/annotation/drawing"))
-            .withRequestBody(WireMock.matching(".*"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
-        );
 
         userAnnotation
             .getSlice()

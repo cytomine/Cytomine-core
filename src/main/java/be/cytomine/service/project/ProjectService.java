@@ -970,6 +970,21 @@ public class ProjectService extends ModelService {
         project.setCountImages(imageInstanceRepository.countAllByProject(project));
     }
 
+    private void deleteStorage(Long projectId) {
+        String url = this.applicationProperties.getRetrievalServerURL() + "/api/storages/" + projectId;
+
+        log.debug("Send DELETE request to {}", url);
+        ResponseEntity<String> response = restTemplate.exchange(
+            url,
+            HttpMethod.DELETE,
+            null,
+            String.class
+        );
+
+        if (!response.getStatusCode().equals(HttpStatus.OK)) {
+            log.error("Failed to delete storage for project {}", projectId);
+        }
+    }
 
     protected void beforeDelete(CytomineDomain domain) {
         Project project = (Project)domain;
@@ -977,8 +992,9 @@ public class ProjectService extends ModelService {
         undoStackItemRepository.deleteAllByCommand_Project(project);
         redoStackItemRepository.deleteAllByCommand_Project(project);
         commandRepository.deleteAllByProject(project);
-    }
 
+        deleteStorage(project.getId());
+    }
 
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
         return List.of(domain.getId(), ((Project)domain).getName());
