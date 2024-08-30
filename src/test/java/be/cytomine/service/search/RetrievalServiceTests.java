@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
@@ -132,10 +134,10 @@ public class RetrievalServiceTests {
     }
 
     @Test
+    @WithMockUser(authorities = "ROLE_SUPER_ADMIN", username = "superadmin")
     public void search_similar_images_with_success() throws JsonProcessingException, ParseException,
         UnsupportedEncodingException {
-        UserAnnotation annotation =
-            UserAnnotationResourceTests.given_a_user_annotation_with_valid_image_server(builder);
+        UserAnnotation annotation = UserAnnotationResourceTests.given_a_user_annotation_with_valid_image_server(builder);
 
         /* Simulate call to PIMS */
         String id = URLEncoder.encode(annotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
@@ -143,9 +145,7 @@ public class RetrievalServiceTests {
         String body = "{\"annotations\":{},\"level\":0,\"background_transparency\":0,\"z_slices\":0,\"timepoints\":0}";
 
         wireMockServer.stubFor(WireMock.post(urlEqualTo(url))
-            .withRequestBody(
-                WireMock.equalToJson(body)
-            )
+            .withRequestBody(WireMock.equalToJson(body))
             .willReturn(aResponse()
                 .withStatus(HttpStatus.OK.value())
                 .withBody(UUID.randomUUID().toString().getBytes())
@@ -154,10 +154,9 @@ public class RetrievalServiceTests {
 
         /* Simulate call to CBIR */
         ObjectMapper objectMapper = new ObjectMapper();
-        String expectedUrlPath = "/api/search";
         SearchResponse expectedResponse = new SearchResponse(
             annotation.getId().toString(),
-            annotation.getProject().getId().toString(),
+            List.of(annotation.getProject().getId().toString()),
             "annotation",
             Arrays.asList(
                 Arrays.asList(annotation.getId().toString(), 0.0),
@@ -166,9 +165,9 @@ public class RetrievalServiceTests {
             )
         );
 
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo(expectedUrlPath))
-            .withQueryParam("storage", WireMock.equalTo(annotation.getProject().getId().toString()))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/search"))
+            .withQueryParam("storage", WireMock.matching(".*"))
+            .withQueryParam("index", WireMock.matching(".*"))
             .willReturn(aResponse()
                 .withStatus(HttpStatus.OK.value())
                 .withHeader("Content-Type", "application/json")

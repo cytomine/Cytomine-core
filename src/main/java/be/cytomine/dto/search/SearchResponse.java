@@ -10,9 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SearchResponse {
-
     private String query;
-    private String storage;
+    private List<String> storage;
     private String index;
     private List<List<Object>> similarities;
 }

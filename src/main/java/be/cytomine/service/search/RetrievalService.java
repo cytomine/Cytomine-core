@@ -33,12 +33,14 @@ import org.springframework.web.util.UriComponentsBuilder;
 import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.ontology.AnnotationDomain;
+import be.cytomine.domain.project.Project;
 import be.cytomine.domain.search.RetrievalServer;
 import be.cytomine.dto.PimsResponse;
 import be.cytomine.dto.search.SearchResponse;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.middleware.ImageServerService;
+import be.cytomine.service.project.ProjectService;
 import be.cytomine.utils.JsonObject;
 
 @Slf4j
@@ -46,6 +48,8 @@ import be.cytomine.utils.JsonObject;
 public class RetrievalService extends ModelService {
 
     private final ImageServerService imageServerService;
+
+    private final ProjectService projectService;
 
     private final RestTemplate restTemplate;
 
@@ -56,9 +60,11 @@ public class RetrievalService extends ModelService {
     public RetrievalService(
         ApplicationProperties applicationProperties,
         ImageServerService imageServerService,
+        ProjectService projectService,
         RestTemplate restTemplate
     ) {
         this.imageServerService = imageServerService;
+        this.projectService = projectService;
         this.restTemplate = restTemplate;
         this.baseUrl = applicationProperties.getRetrievalServerURL();
     }
@@ -152,9 +158,12 @@ public class RetrievalService extends ModelService {
         String etag,
         Long nrt_neigh
     ) throws ParseException, UnsupportedEncodingException {
+        List<Project> projects = projectService.listForCurrentUser();
+        List<Long> ids = projects.stream().map(CytomineDomain::getId).toList();
+
         String url = UriComponentsBuilder
             .fromHttpUrl(this.baseUrl + "/api/search")
-            .queryParam("storage", annotation.getProject().getId())
+            .queryParam("storage", ids)
             .queryParam("index", this.indexName)
             .queryParam("nrt_neigh", nrt_neigh + 1)
             .toUriString();
