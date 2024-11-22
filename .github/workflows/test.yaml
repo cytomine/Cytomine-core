@@ -4,6 +4,10 @@ on:
   pull_request:
     branches:
       - main
+    paths:
+      - "src/main/resources/**"
+      - "src/test/resources/**"
+      - "src/**/*.java"
 
 jobs:
   test-core:
