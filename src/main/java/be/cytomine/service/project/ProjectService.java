@@ -570,19 +570,12 @@ public class ProjectService extends ModelService {
         return data;
     }
 
-
-
     public List<Project> listByOntology(Ontology ontology) {
         if (currentRoleService.isAdminByNow(currentUserService.getCurrentUser())) {
             return projectRepository.findAllByOntology(ontology);
         }
         return projectRepository.findAllProjectForUserByOntology(currentUserService.getCurrentUsername(),ontology);
     }
-
-//    List<Software> listBySoftware(Software software) {
-//        // TODO:
-//        throw new RuntimeException("TODO");
-//    }
 
     public List<CommandHistory> lastAction(Project project, int max) {
         securityACLService.check(project, READ);
@@ -1014,7 +1007,6 @@ public class ProjectService extends ModelService {
         deleteDependentImageInstance((Project) domain, transaction, task);
         deleteDependentRepresentativeUser((Project) domain, transaction, task);
         deleteDependentMetadata(domain, transaction, task);
-        //TODO: only that? software project? ...
     }
 
     private void deleteDependentRepresentativeUser(Project domain, Transaction transaction, Task task) {

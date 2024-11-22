@@ -679,12 +679,6 @@ public class SecUserServiceTests {
         assertThat(secUserService.findCreator(projectWhereUserIsManager)).contains(user);
     }
 
-    @Disabled("software package")
-    @Test
-    void list_project_users_show_userjob() {
-
-    }
-
     @Test
     void list_ontology_users() {
         User user = builder.given_superadmin();
@@ -721,11 +715,6 @@ public class SecUserServiceTests {
 
         assertThat(secUserService.listAll(project))
                 .contains(user);
-    }
-
-    @Disabled("software package")
-    @Test
-    void list_all_project_users_with_user_job() {
     }
 
     @Test
@@ -1201,14 +1190,6 @@ public class SecUserServiceTests {
         commandResponse = secUserService.delete(user, null, null, true);
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);
-    }
-
-
-
-    @Disabled("software package")
-    @Test
-    void delete_user_job_with_dependency() {
-
     }
 
     @Test

@@ -559,13 +559,6 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         expectOK(() -> imageInstanceService.delete(image, null, null, false));
     }
 
-    @Disabled("wait for software package")
-    @Test
-    @WithMockUser(username = USER_ACL_ADMIN)
-    public void classic_project_with_job_data(){
-        Assertions.fail("todo");
-    }
-
     @Test
     @WithMockUser(username = USER_ACL_ADMIN)
     public void restricted_project_scenario_for_admin(){
@@ -912,13 +905,6 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         //update, delete image instance (superadmin data)
         expectOK(() -> imageInstanceService.update(image, image.toJsonObject()));
         expectOK(() -> imageInstanceService.delete(image, null, null, false));
-    }
-
-    @Disabled("wait for software package")
-    @Test
-    @WithMockUser(username = SUPERADMIN)
-    public void testRestrictedProjectWithJobData() {
-        Assertions.fail("todo");
     }
 
     @Test
@@ -1272,14 +1258,6 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         //update, delete image instance (superadmin data)
         expectOK(() -> imageInstanceService.update(image, image.toJsonObject()));
         expectOK(() -> imageInstanceService.delete(image, null, null, false));
-    }
-
-    @Disabled("wait for software package")
-    @Test
-    @WithMockUser(username = SUPERADMIN)
-    void testReadOnlyProjectWithJobData() {
-        Assertions.fail("todo");
-
     }
 
     private Map<String, Object> initProjectDataSet(Project project){

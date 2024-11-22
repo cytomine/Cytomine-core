@@ -550,64 +550,6 @@ public class AnnotationDomainResourceTests {
                 .andReturn();
     }
 
-
-
-
-    @Disabled("Disabled until Software package is up!")
-    @Test
-    void list_user_annotation_with_suggested_term() {
-        Assertions.fail("todo after job/algoannot/...");
-
-        //
-//        //create annotation
-//        AnnotationTerm annotationTerm = BasicInstanceBuilder.getAnnotationTerm()
-//        annotationTerm.term = BasicInstanceBuilder.getTerm()
-//        BasicInstanceBuilder.saveDomain(annotationTerm)
-//        UserAnnotation annotation = annotationTerm.userAnnotation
-//
-//        //create job
-//        UserJob userJob = BasicInstanceBuilder.getUserJob(annotation.project)
-//        Job job = userJob.job
-//
-//        //create suggest with different term
-//        AlgoAnnotationTerm suggest = BasicInstanceBuilder.getAlgoAnnotationTerm(job,annotation,userJob)
-//        suggest.term = BasicInstanceBuilder.getAnotherBasicTerm()
-//        BasicInstanceBuilder.saveDomain(suggest)
-//
-//        println "project=${annotation.project.id}"
-//        println "a.term=${annotation.terms().collect{it.id}.join(",")}"
-//        println "at.term=${suggest.term.id}"
-//        println "job=${job.id}"
-//        println "user=${UserJob.findByJob(job).id}"
-//
-//        def result = AnnotationDomainAPI.listByProjectAndTermWithSuggest(annotation.project.id, annotationTerm.term.id, suggest.term.id, UserJob.findByJob(job).id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        def json = JSON.parse(result.data)
-//        assert json.collection instanceof JSONArray
-//        assert AnnotationDomainAPI.containsInJSONList(annotation.id,json)
-//
-//        //create annotation
-//        AnnotationTerm annotationTerm2 = BasicInstanceBuilder.getAnnotationTerm()
-//        annotationTerm2.userAnnotation = BasicInstanceBuilder.getUserAnnotationNotExist(annotationTerm2.container(),true)
-//        annotationTerm2.term = BasicInstanceBuilder.getTerm()
-//        BasicInstanceBuilder.saveDomain(annotationTerm2)
-//        UserAnnotation annotation2 = annotationTerm2.userAnnotation
-//
-//        //create suggest with same term
-//        AlgoAnnotationTerm suggest2 = BasicInstanceBuilder.getAlgoAnnotationTerm(job,annotation2,userJob)
-//        suggest2.term = BasicInstanceBuilder.getTerm()
-//        BasicInstanceBuilder.saveDomain(suggest)
-//
-//        //We are looking for a different term => annotation shouldn't be in result
-//        result = AnnotationDomainAPI.listByProjectAndTermWithSuggest(annotation2.project.id, annotationTerm2.term.id, suggest.term.id, job.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        json = JSON.parse(result.data)
-//        assert json.collection instanceof JSONArray
-//        assert !AnnotationDomainAPI.containsInJSONList(annotation2.id,json)
-    }
-
-
-
     @Test
     @Transactional
     public void list_user_annotation_without_term() throws Exception {

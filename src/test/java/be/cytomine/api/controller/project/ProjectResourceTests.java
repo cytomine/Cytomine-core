@@ -891,35 +891,6 @@ public class ProjectResourceTests {
 
     }
 
-
-    @Disabled("implement when software package is done")
-    @Test
-    @Transactional
-    public void list_by_software() throws Exception {
-//        Project project = builder.given_a_project();
-//        builder.addUserToProject(project, builder.given_superadmin().getUsername());
-//
-//
-//        restProjectControllerMockMvc.perform(get("/api/software/{id}/project.json", project.getsoftware().getId()))
-//                .andDo(print())
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.collection[0].id").value(project.getId()));
-
-    }
-
-    @Disabled("implement when software package is done")
-    @Test
-    @Transactional
-    public void list_by_software_that_does_not_exist() throws Exception {
-//        Project project = builder.given_a_project();
-//        builder.addUserToProject(project, builder.given_superadmin().getUsername());
-//        restProjectControllerMockMvc.perform(get("/api/software/{id}/project.json", 0L))
-//                .andDo(print())
-//                .andExpect(status().isNotFound());
-
-    }
-
-
     @Test
     @Transactional
     public void list_by_user() throws Exception {
