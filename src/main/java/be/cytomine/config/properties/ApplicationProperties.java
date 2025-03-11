@@ -92,6 +92,10 @@ public class ApplicationProperties {
 
     private String messageBrokerServerURL;
 
+    private String elasticsearchServerURL;
+
+    private String retrievalServerURL;
+
     private Software software;
 
     private Annotation annotation;

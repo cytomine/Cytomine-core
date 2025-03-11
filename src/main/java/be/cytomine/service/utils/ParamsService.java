@@ -142,17 +142,20 @@ public class ParamsService {
         return secUserRepository.findAllByIdIn(users).stream().map(CytomineDomain::getId).collect(Collectors.toList());
     }
 
-    private static Map<String, String> PARAMETER_ASSOCIATION = Map.of(
-            "showBasic","basic",
-            "showMeta","meta",
-            "showWKT","wkt",
-            "showGIS","gis",
-            "showTerm","term",
-            "showImage","image",
-            "showAlgo","algo",
-            "showUser","user",
-            "showSlice","slice",
-            "showTrack","track");
+    private static Map<String, String> PARAMETER_ASSOCIATION = Map.ofEntries(
+            Map.entry("showBasic","basic"),
+            Map.entry("showMeta","meta"),
+            Map.entry("showWKT","wkt"),
+            Map.entry("showGIS","gis"),
+            Map.entry("showTerm","term"),
+            Map.entry("showImage","image"),
+            Map.entry("showAlgo","algo"),
+            Map.entry("showUser","user"),
+            Map.entry("showSlice","slice"),
+            Map.entry("showTrack","track"),
+            Map.entry("showImageGroup", "imageGroup"),
+            Map.entry("showLink", "group")
+    );
 
 
     public List<String> getPropertyGroupToShow(JsonObject params) {

@@ -72,6 +72,9 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 public class AlgoAnnotationService extends ModelService {
 
     @Autowired
+    private AnnotationLinkService annotationLinkService;
+
+    @Autowired
     private AlgoAnnotationRepository algoAnnotationRepository;
 
     @Autowired
@@ -336,6 +339,21 @@ public class AlgoAnnotationService extends ModelService {
             }
             ((Map<String, Object>)commandResponse.getData().get("annotation")).put("annotationTrack", annotationTracks);
             ((Map<String, Object>)commandResponse.getData().get("annotation")).put("track", annotationTracks.stream().map(x -> x.getTrack()).collect(Collectors.toList()));
+        }
+
+        // Add annotation-group/link if any
+        Long groupId = jsonObject.getJSONAttrLong("group", null);
+        if (groupId != null) {
+            CommandResponse response = annotationLinkService.addAnnotationLink(
+                    AlgoAnnotation.class.getName(),
+                    addedAnnotation.getId(),
+                    groupId,
+                    addedAnnotation.getImage().getId(),
+                    transaction
+            );
+
+            ((Map<String, Object>)commandResponse.getData().get("annotation")).put("group", groupId);
+            ((Map<String, Object>)commandResponse.getData().get("annotation")).put("annotationLinks", response.getData().get("annotationlink"));
         }
 
         return commandResponse;

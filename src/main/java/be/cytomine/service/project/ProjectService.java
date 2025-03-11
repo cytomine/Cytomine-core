@@ -16,6 +16,7 @@ package be.cytomine.service.project;
 * limitations under the License.
 */
 
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
@@ -27,7 +28,6 @@ import be.cytomine.domain.security.ForgotPasswordToken;
 import be.cytomine.domain.security.SecRole;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.domain.social.PersistentConnection;
 import be.cytomine.dto.DatedCytomineDomain;
 import be.cytomine.dto.NamedCytomineDomain;
 import be.cytomine.exceptions.*;
@@ -41,7 +41,6 @@ import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.project.ProjectRepresentativeUserRepository;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
-import be.cytomine.repositorynosql.social.PersistentConnectionRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
@@ -53,7 +52,6 @@ import be.cytomine.service.ontology.AnnotationTermService;
 import be.cytomine.service.ontology.OntologyService;
 import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.search.ProjectSearchExtension;
-import be.cytomine.service.security.SecRoleService;
 import be.cytomine.service.security.SecUserSecRoleService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
@@ -72,8 +70,10 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.http.*;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import javax.mail.MessagingException;
 import javax.persistence.Query;
@@ -89,7 +89,6 @@ import static com.mongodb.client.model.Aggregates.*;
 import static com.mongodb.client.model.Aggregates.sort;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
-import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.descending;
 import static org.springframework.security.acls.domain.BasePermission.*;
 
@@ -97,6 +96,9 @@ import static org.springframework.security.acls.domain.BasePermission.*;
 @Service
 @Transactional
 public class ProjectService extends ModelService {
+
+    @Autowired
+    private ApplicationProperties applicationProperties;
 
     @Autowired
     private CommandHistoryRepository commandHistoryRepository;
@@ -172,6 +174,9 @@ public class ProjectService extends ModelService {
 
     @Autowired
     private ProjectRepresentativeUserRepository projectRepresentativeUserRepository;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     public Project get(Long id) {
         return find(id).orElse(null);
@@ -569,19 +574,12 @@ public class ProjectService extends ModelService {
         return data;
     }
 
-
-
     public List<Project> listByOntology(Ontology ontology) {
         if (currentRoleService.isAdminByNow(currentUserService.getCurrentUser())) {
             return projectRepository.findAllByOntology(ontology);
         }
         return projectRepository.findAllProjectForUserByOntology(currentUserService.getCurrentUsername(),ontology);
     }
-
-//    List<Software> listBySoftware(Software software) {
-//        // TODO:
-//        throw new RuntimeException("TODO");
-//    }
 
     public List<CommandHistory> lastAction(Project project, int max) {
         securityACLService.check(project, READ);
@@ -601,6 +599,28 @@ public class ProjectService extends ModelService {
     public List<NamedCytomineDomain> listByUser(User user) {
         securityACLService.checkIsSameUser(user,currentUserService.getCurrentUser());
         return projectRepository.listByUser(user);
+    }
+
+    private void createStorage(String projectId) {
+        String url = this.applicationProperties.getRetrievalServerURL() + "/api/storages";
+        Map<String, String> payload = new HashMap<>();
+        payload.put("name", projectId);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(payload, headers);
+
+        log.debug("Sending POST request to {}, {}", url, projectId);
+        ResponseEntity<String> response = restTemplate.exchange(
+            url,
+            HttpMethod.POST,
+            requestEntity,
+            String.class
+        );
+
+        if (!response.getStatusCode().equals(HttpStatus.OK)) {
+            log.error("Failed to create storage for project {}", projectId);
+        }
     }
 
     @Override
@@ -652,6 +672,9 @@ public class ProjectService extends ModelService {
                 taskService.updateTask(task,Math.min(100,progress),"User "+optionalUser.get().getUsername()+" added as Admin");
             }
         }
+
+        // Create retrieval storage
+        createStorage(project.getId().toString());
 
         return commandResponse;
     }
@@ -944,6 +967,21 @@ public class ProjectService extends ModelService {
         project.setCountImages(imageInstanceRepository.countAllByProject(project));
     }
 
+    private void deleteStorage(Long projectId) {
+        String url = this.applicationProperties.getRetrievalServerURL() + "/api/storages/" + projectId;
+
+        log.debug("Send DELETE request to {}", url);
+        ResponseEntity<String> response = restTemplate.exchange(
+            url,
+            HttpMethod.DELETE,
+            null,
+            String.class
+        );
+
+        if (!response.getStatusCode().equals(HttpStatus.OK)) {
+            log.error("Failed to delete storage for project {}", projectId);
+        }
+    }
 
     protected void beforeDelete(CytomineDomain domain) {
         Project project = (Project)domain;
@@ -951,8 +989,9 @@ public class ProjectService extends ModelService {
         undoStackItemRepository.deleteAllByCommand_Project(project);
         redoStackItemRepository.deleteAllByCommand_Project(project);
         commandRepository.deleteAllByProject(project);
-    }
 
+        deleteStorage(project.getId());
+    }
 
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
         return List.of(domain.getId(), ((Project)domain).getName());
@@ -972,7 +1011,6 @@ public class ProjectService extends ModelService {
         deleteDependentImageInstance((Project) domain, transaction, task);
         deleteDependentRepresentativeUser((Project) domain, transaction, task);
         deleteDependentMetadata(domain, transaction, task);
-        //TODO: only that? software project? ...
     }
 
     private void deleteDependentRepresentativeUser(Project domain, Transaction transaction, Task task) {

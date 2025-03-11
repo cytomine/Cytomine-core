@@ -332,9 +332,6 @@ public class RestStatsController extends RestCytomineController {
         return responseSuccess(statsService.statAnnotationActionsEvolution(project, daysRange, startDate, endDate, accumulate, type));
     }
 
-
-
-
     @GetMapping("/stats/all.json")
     public ResponseEntity<String> allGlobalStats() {
         securityACLService.checkAdmin(currentUserService.getCurrentUser());
@@ -347,11 +344,7 @@ public class RestStatsController extends RestCytomineController {
         result.put("jobAnnotations", statsService.total(AlgoAnnotation.class));
         result.put("terms", statsService.total(Term.class));
         result.put("ontologies", statsService.total(Ontology.class));
-        //TODO
-//        result.put("softwares", statsService.total(Software.class));
-//        result.put("jobs", statsService.total(Job.class));
 
         return responseSuccess(result);
     }
-
 }

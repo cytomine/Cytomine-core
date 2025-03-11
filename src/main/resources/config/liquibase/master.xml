@@ -26,4 +26,8 @@
     <include file="/config/liquibase/changelog/00000000_9_delete_postgres_user.xml" relativeToChangelogFile="false"/>
 
     <include file="/config/liquibase/changelog/00000000_10_delete_image_server.xml" relativeToChangelogFile="false"/>
+
+    <include file="config/liquibase/changelog/00000000_6_annot_links.xml" relativeToChangelogFile="false"/>
+
+    <include file="config/liquibase/changelog/00000000_7_z_name.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

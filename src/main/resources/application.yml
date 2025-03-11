@@ -5,9 +5,9 @@ spring:
 
   main:
     allow-circular-references: true
- 
+
   thymeleaf:
-    prefix: 'classpath:/templates/'
+    prefix: "classpath:/templates/"
 
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
@@ -95,10 +95,10 @@ application:
       secret: ${JWT_SECRET}
       # Token is valid 24 hours
       token-validity-in-seconds: ${TOKEN_VALIDITY_IN_SECONDS:86400}
-      token-validity-in-seconds-for-remember-me: ${TOKEN_VALIDITY_IN_SECONDS_REMEMBER_ME:2592000} 
+      token-validity-in-seconds-for-remember-me: ${TOKEN_VALIDITY_IN_SECONDS_REMEMBER_ME:2592000}
       token-validity-in-seconds-for-short-term: ${TOKEN_VALIDITY_IN_SECONDS_SHORT_TERM:240}
 
   internalProxyURL: ${INTERNAL_PROXY_URL:http://localhost}
-  
+
   annotation:
     maxNumberOfPoint: ${ANNOTATION_MAX_POINTS:200}

@@ -16,6 +16,21 @@ package be.cytomine.service.ontology;
 * limitations under the License.
 */
 
+import java.util.List;
+import java.util.UUID;
+import javax.transaction.Transactional;
+
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
+
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.ontology.Ontology;
@@ -23,7 +38,6 @@ import be.cytomine.domain.ontology.RelationTerm;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.OntologyRepository;
@@ -32,22 +46,11 @@ import be.cytomine.repository.ontology.TermRepository;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
-import be.cytomine.service.ontology.OntologyService;
-import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.project.ProjectService;
-import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.test.context.support.WithMockUser;
 
-import javax.transaction.Transactional;
-
-import java.util.List;
-
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.security.acls.domain.BasePermission.*;
 
@@ -82,7 +85,31 @@ public class OntologyServiceTests {
     PermissionService permissionService;
 
     @Autowired
-    SecurityACLService securityACLService;
+    ProjectService projectService;
+
+    private static WireMockServer wireMockServer;
+
+    private static void setupStub() {
+        /* Simulate call to CBIR */
+        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
+            .withRequestBody(WireMock.matching(".*"))
+            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
+        );
+    }
+
+    @BeforeAll
+    public static void beforeAll() {
+        wireMockServer = new WireMockServer(8888);
+        wireMockServer.start();
+        WireMock.configureFor("localhost", wireMockServer.port());
+
+        setupStub();
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        wireMockServer.stop();
+    }
 
     @Test
     void list_all_ontology_with_success() {
@@ -322,8 +349,7 @@ public class OntologyServiceTests {
 
     }
 
-    @Autowired
-    ProjectService projectService;
+
 
     @Test
     @WithMockUser("user")
