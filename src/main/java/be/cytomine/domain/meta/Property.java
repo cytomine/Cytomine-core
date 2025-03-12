@@ -16,17 +16,16 @@ package be.cytomine.domain.meta;
 * limitations under the License.
 */
 
-import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.GenericCytomineDomainContainer;
-import be.cytomine.utils.JsonObject;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.data.elasticsearch.annotations.Field;
-
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+
+import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.GenericCytomineDomainContainer;
+import be.cytomine.utils.JsonObject;
 
 @Entity
 @Getter
@@ -42,11 +41,9 @@ public class Property extends CytomineDomain {
 
     @NotNull
     @NotBlank
-    @Field(name = "domain_class_name")
     private String domainClassName;
 
     @NotNull
-    @Field(name = "domain_ident")
     private Long domainIdent;
 
     /**
