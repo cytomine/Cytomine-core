@@ -947,8 +947,6 @@ public class ProjectService extends ModelService {
         undoStackItemRepository.deleteAllByCommand_Project(project);
         redoStackItemRepository.deleteAllByCommand_Project(project);
         commandRepository.deleteAllByProject(project);
-
-        deleteStorage(project.getId());
     }
 
     public List<Object> getStringParamsI18n(CytomineDomain domain) {

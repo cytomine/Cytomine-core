@@ -1238,19 +1238,6 @@ public class AnnotationDomainResourceTests {
     @Transactional
     public void add_valid_user_annotation() throws Exception {
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation();
-        userAnnotation
-            .getSlice()
-            .getBaseSlice()
-            .getUploadedFile()
-            .getImageServer()
-            .setUrl("http://localhost:8888");
-
-        /* Simulate call to PIMS */
-        String id = URLEncoder.encode(userAnnotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/" + id + "/annotation/drawing"))
-            .withRequestBody(WireMock.matching(".*"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
-        );
 
         restAnnotationDomainControllerMockMvc.perform(post("/api/annotation.json")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -1434,20 +1421,6 @@ public class AnnotationDomainResourceTests {
         AnnotationDomain annotation = builder.given_a_not_persisted_user_annotation();
         annotation.setLocation(new WKTReader().read(TestUtils.getResourceFileAsString("dataset/very_big_annotation.txt")));
         assertThat(annotation.getLocation().getNumPoints()).isGreaterThanOrEqualTo(500);
-
-        annotation
-            .getSlice()
-            .getBaseSlice()
-            .getUploadedFile()
-            .getImageServer()
-            .setUrl("http://localhost:8888");
-
-        /* Simulate call to PIMS */
-        String imageId = URLEncoder.encode(annotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/" + imageId + "/annotation/drawing"))
-            .withRequestBody(WireMock.matching(".*"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
-        );
 
         int maxPoint;
         int minPoint;
@@ -1790,12 +1763,6 @@ public class AnnotationDomainResourceTests {
         json.put("review", reviewMode);
         json.put("remove", false);
         json.put("layers", List.of(annot1.user().getId()));
-
-        /* Simulate call to PIMS */
-        wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/.*/annotation/drawing"))
-            .withRequestBody(WireMock.matching(".*"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
-        );
 
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotationcorrection.json")
                         .contentType(MediaType.APPLICATION_JSON)

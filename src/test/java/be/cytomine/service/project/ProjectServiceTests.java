@@ -21,8 +21,6 @@ import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
 import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.*;
@@ -60,7 +58,6 @@ import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.filters.SearchOperation;
 import be.cytomine.utils.filters.SearchParameterEntry;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 import static org.springframework.security.acls.domain.BasePermission.READ;
@@ -98,30 +95,6 @@ public class ProjectServiceTests {
 
     @Autowired
     ProjectRepresentativeUserService projectRepresentativeUserService;
-
-    private static WireMockServer wireMockServer;
-
-    private static void setupStub() {
-        /* Simulate call to PIMS */
-        wireMockServer.stubFor(WireMock.post(urlPathMatching("/image/.*/annotation/drawing"))
-            .withRequestBody(WireMock.matching(".*"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString().getBytes()))
-        );
-    }
-
-    @BeforeAll
-    public static void beforeAll() {
-        wireMockServer = new WireMockServer(8888);
-        wireMockServer.start();
-        WireMock.configureFor("localhost", 8888);
-
-        setupStub();
-    }
-
-    @AfterAll
-    public static void afterAll() {
-        wireMockServer.stop();
-    }
 
     @BeforeEach
     void cleanMongo() {
@@ -278,22 +251,8 @@ public class ProjectServiceTests {
         builder.addUserToProject(project2, builder.given_superadmin().getUsername());
 
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(project2);
-        userAnnotation
-            .getSlice()
-            .getBaseSlice()
-            .getUploadedFile()
-            .getImageServer()
-            .setUrl("http://localhost:8888");
-
         userAnnotationService.add(userAnnotation.toJsonObject());
         userAnnotation = builder.given_a_not_persisted_user_annotation(project1);
-        userAnnotation
-            .getSlice()
-            .getBaseSlice()
-            .getUploadedFile()
-            .getImageServer()
-            .setUrl("http://localhost:8888");
-
         userAnnotationService.add(userAnnotation.toJsonObject());
 
         ProjectSearchExtension projectSearchExtension = new ProjectSearchExtension();
@@ -324,19 +283,6 @@ public class ProjectServiceTests {
         Project project2 = builder.given_a_project();
         UserAnnotation userAnnotation1 = builder.given_a_not_persisted_user_annotation(project1);
         UserAnnotation userAnnotation2 = builder.given_a_not_persisted_user_annotation(project2);
-        userAnnotation1
-            .getSlice()
-            .getBaseSlice()
-            .getUploadedFile()
-            .getImageServer()
-            .setUrl("http://localhost:8888");
-        userAnnotation2
-            .getSlice()
-            .getBaseSlice()
-            .getUploadedFile()
-            .getImageServer()
-            .setUrl("http://localhost:8888");
-
         userAnnotationService.add(userAnnotation1.toJsonObject());
         userAnnotationService.add(userAnnotation2.toJsonObject());
 
@@ -665,12 +611,6 @@ public class ProjectServiceTests {
         Project project1 = builder.given_a_project();
 
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation(project1);
-        userAnnotation
-            .getSlice()
-            .getBaseSlice()
-            .getUploadedFile()
-            .getImageServer()
-            .setUrl("http://localhost:8888");
 
         assertThat(projectService.lastAction(project1, 10)).hasSize(0);
         userAnnotationService.add(userAnnotation.toJsonObject());
