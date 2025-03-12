@@ -105,28 +105,6 @@ public class ProjectResourceTests {
     private static WireMockServer wireMockServer;
 
     private static void setupStub() {
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
-            .withQueryParam("storage", WireMock.matching(".*"))
-            .withQueryParam("index", WireMock.matching(".*"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
-            .withRequestBody(
-                WireMock.matching(".*\"name\":\"\\d+\".*")
-            )
-            .willReturn(aResponse()
-                .withStatus(HttpStatus.OK.value())
-            )
-        );
-
-        wireMockServer.stubFor(WireMock.delete(urlPathMatching("/api/storages/.*"))
-            .willReturn(aResponse()
-                .withStatus(HttpStatus.OK.value())
-            )
-        );
-
         /* Simulate call to PIMS */
         wireMockServer.stubFor(WireMock.post(urlMatching("/image/.*/annotation/drawing"))
             .withRequestBody(WireMock.matching(".*"))
@@ -577,9 +555,6 @@ public class ProjectResourceTests {
     public void add_valid_project_without_ontology() throws Exception {
         Project project = BasicInstanceBuilder.given_a_not_persisted_project();
         project.setOntology(null);
-
-        /* Simulate call to CBIR */
-
 
         /* Test project creation */
         restProjectControllerMockMvc.perform(post("/api/project.json")

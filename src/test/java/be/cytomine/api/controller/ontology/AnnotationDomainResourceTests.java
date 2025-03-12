@@ -1245,13 +1245,6 @@ public class AnnotationDomainResourceTests {
             .getImageServer()
             .setUrl("http://localhost:8888");
 
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
-            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-
         /* Simulate call to PIMS */
         String id = URLEncoder.encode(userAnnotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
         wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/" + id + "/annotation/drawing"))
@@ -1372,13 +1365,6 @@ public class AnnotationDomainResourceTests {
     public void delete_user_annotation() throws Exception {
         UserAnnotation userAnnotation = builder.given_a_user_annotation();
 
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.delete(urlPathEqualTo("/api/images/" + userAnnotation.getId()))
-            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-
         restAnnotationDomainControllerMockMvc.perform(delete("/api/annotation/{id}.json", userAnnotation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userAnnotation.toJSON()))
@@ -1455,13 +1441,6 @@ public class AnnotationDomainResourceTests {
             .getUploadedFile()
             .getImageServer()
             .setUrl("http://localhost:8888");
-
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
-            .withQueryParam("storage", WireMock.equalTo(annotation.getProject().getId().toString()))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
 
         /* Simulate call to PIMS */
         String imageId = URLEncoder.encode(annotation.getSlice().getBaseSlice().getPath(), StandardCharsets.UTF_8);
@@ -1811,19 +1790,6 @@ public class AnnotationDomainResourceTests {
         json.put("review", reviewMode);
         json.put("remove", false);
         json.put("layers", List.of(annot1.user().getId()));
-
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
-            .withQueryParam("storage", WireMock.matching(".*"))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-
-        wireMockServer.stubFor(WireMock.delete(urlPathMatching("/api/images/.*"))
-            .withQueryParam("storage", WireMock.matching(".*"))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
 
         /* Simulate call to PIMS */
         wireMockServer.stubFor(WireMock.post(urlEqualTo("/image/.*/annotation/drawing"))

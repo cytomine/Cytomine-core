@@ -601,28 +601,6 @@ public class ProjectService extends ModelService {
         return projectRepository.listByUser(user);
     }
 
-    private void createStorage(String projectId) {
-        String url = this.applicationProperties.getRetrievalServerURL() + "/api/storages";
-        Map<String, String> payload = new HashMap<>();
-        payload.put("name", projectId);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(payload, headers);
-
-        log.debug("Sending POST request to {}, {}", url, projectId);
-        ResponseEntity<String> response = restTemplate.exchange(
-            url,
-            HttpMethod.POST,
-            requestEntity,
-            String.class
-        );
-
-        if (!response.getStatusCode().equals(HttpStatus.OK)) {
-            log.error("Failed to create storage for project {}", projectId);
-        }
-    }
-
     @Override
     public CommandResponse add(JsonObject jsonObject) {
         return add(jsonObject, null);
@@ -673,12 +651,8 @@ public class ProjectService extends ModelService {
             }
         }
 
-        // Create retrieval storage
-        createStorage(project.getId().toString());
-
         return commandResponse;
     }
-
 
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         return update(domain, jsonNewData, transaction, null);
@@ -965,22 +939,6 @@ public class ProjectService extends ModelService {
         project.setCountJobAnnotations(annotationDomainRepository.countAllAlgoAnnotationAndProject(domain.getId()));
         project.setCountReviewedAnnotations(annotationDomainRepository.countAllReviewedAnnotationAndProject(domain.getId()));
         project.setCountImages(imageInstanceRepository.countAllByProject(project));
-    }
-
-    private void deleteStorage(Long projectId) {
-        String url = this.applicationProperties.getRetrievalServerURL() + "/api/storages/" + projectId;
-
-        log.debug("Send DELETE request to {}", url);
-        ResponseEntity<String> response = restTemplate.exchange(
-            url,
-            HttpMethod.DELETE,
-            null,
-            String.class
-        );
-
-        if (!response.getStatusCode().equals(HttpStatus.OK)) {
-            log.error("Failed to delete storage for project {}", projectId);
-        }
     }
 
     protected void beforeDelete(CytomineDomain domain) {

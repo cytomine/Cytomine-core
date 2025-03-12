@@ -102,28 +102,6 @@ public class ProjectServiceTests {
     private static WireMockServer wireMockServer;
 
     private static void setupStub() {
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
-            .withQueryParam("storage", WireMock.matching(".*"))
-            .withQueryParam("index", WireMock.matching(".*"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-
-        wireMockServer.stubFor(WireMock.delete(urlPathMatching("/api/images/.*"))
-            .withQueryParam("storage", WireMock.matching(".*"))
-            .withQueryParam("index", WireMock.matching(".*"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
-            .withRequestBody(WireMock.matching(".*"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-
-        wireMockServer.stubFor(WireMock.delete(urlPathMatching("/api/storages/.*"))
-            .willReturn(aResponse().withStatus(HttpStatus.OK.value()))
-        );
-
         /* Simulate call to PIMS */
         wireMockServer.stubFor(WireMock.post(urlPathMatching("/image/.*/annotation/drawing"))
             .withRequestBody(WireMock.matching(".*"))

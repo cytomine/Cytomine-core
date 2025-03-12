@@ -44,7 +44,6 @@ import be.cytomine.service.dto.CropParameter;
 import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.image.SliceInstanceService;
 import be.cytomine.service.meta.PropertyService;
-import be.cytomine.service.search.RetrievalService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.service.utils.ValidateGeometryService;
@@ -136,9 +135,6 @@ public class UserAnnotationService extends ModelService {
 
     @Autowired
     private SharedAnnotationRepository sharedAnnotationRepository;
-
-    @Autowired
-    private RetrievalService retrievalService;
 
     @Override
     public Class currentDomain() {
@@ -490,25 +486,7 @@ public class UserAnnotationService extends ModelService {
     protected void afterAdd(CytomineDomain domain, CommandResponse response) {
         response.getData().put("annotation", response.getData().get("userannotation"));
         response.getData().remove("userannotation");
-
-        /* Index the annotation */
-        AnnotationDomain annotation = (AnnotationDomain) domain;
-
-        CropParameter parameters = new CropParameter();
-        parameters.setComplete(true);
-        parameters.setDraw(true);
-        parameters.setFormat("png");
-        parameters.setIncreaseArea(1.25);
-        parameters.setLocation(annotation.getWktLocation());
-        parameters.setMaxSize(256);
-
-        try {
-            retrievalService.indexAnnotation(annotation, parameters, null);
-        } catch (ParseException | UnsupportedEncodingException exception) {
-            log.error(exception.getMessage());
-        }
     }
-
 
     /**
      * Update this domain with new data from json
@@ -612,9 +590,6 @@ public class UserAnnotationService extends ModelService {
     protected void afterDelete(CytomineDomain domain, CommandResponse response) {
         response.getData().put("annotation", response.getData().get("userannotation"));
         response.getData().remove("userannotation");
-
-        /* Delete the annotation from the CBIR database */
-        retrievalService.deleteIndex((AnnotationDomain) domain);
     }
 
     public List<CommandResponse> repeat(UserAnnotation userAnnotation, Long baseSliceId, int repeat) {

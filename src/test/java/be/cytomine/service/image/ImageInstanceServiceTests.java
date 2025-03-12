@@ -101,22 +101,11 @@ public class ImageInstanceServiceTests {
 
     private static WireMockServer wireMockServer;
 
-    private static void setupStub() {
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.delete(urlPathMatching("/api/images/.*"))
-            .withQueryParam("storage", WireMock.matching(".*"))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-    }
-
     @BeforeAll
     public static void beforeAll() {
         wireMockServer = new WireMockServer(8888);
         wireMockServer.start();
         WireMock.configureFor("localhost", wireMockServer.port());
-
-        setupStub();
     }
 
     @AfterAll

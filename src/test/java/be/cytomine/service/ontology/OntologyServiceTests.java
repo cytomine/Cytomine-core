@@ -89,21 +89,11 @@ public class OntologyServiceTests {
 
     private static WireMockServer wireMockServer;
 
-    private static void setupStub() {
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/storages"))
-            .withRequestBody(WireMock.matching(".*"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-    }
-
     @BeforeAll
     public static void beforeAll() {
         wireMockServer = new WireMockServer(8888);
         wireMockServer.start();
         WireMock.configureFor("localhost", wireMockServer.port());
-
-        setupStub();
     }
 
     @AfterAll

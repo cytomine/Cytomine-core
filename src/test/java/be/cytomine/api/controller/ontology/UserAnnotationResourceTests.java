@@ -341,13 +341,6 @@ public class UserAnnotationResourceTests {
             .getImageServer()
             .setUrl("http://localhost:8888");
 
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
-            .withQueryParam("storage", WireMock.matching(".*"))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-
         /* Simulate call to PIMS */
         wireMockServer.stubFor(WireMock.post(urlPathMatching("/image/.*/annotation/drawing"))
             .withRequestBody(WireMock.matching(".*"))
@@ -397,13 +390,6 @@ public class UserAnnotationResourceTests {
             .getImageServer()
             .setUrl("http://localhost:8888");
 
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
-            .withQueryParam("storage", WireMock.matching(".*"))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
-
         /* Simulate call to PIMS */
         wireMockServer.stubFor(WireMock.post(urlPathMatching("/image/.*/annotation/drawing"))
             .withRequestBody(WireMock.matching(".*"))
@@ -434,13 +420,6 @@ public class UserAnnotationResourceTests {
         Term term2 = builder.given_a_term(userAnnotation.getProject().getOntology());
         JsonObject jsonObject = userAnnotation.toJsonObject();
         jsonObject.put("term", Arrays.asList(term1.getId(), term2.getId()));
-
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.post(urlPathEqualTo("/api/images"))
-            .withQueryParam("storage", WireMock.matching(".*"))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
 
         /* Simulate call to PIMS */
         wireMockServer.stubFor(WireMock.post(urlPathMatching("/image/.*/annotation/drawing"))
@@ -480,13 +459,6 @@ public class UserAnnotationResourceTests {
     @Transactional
     public void delete_user_annotation() throws Exception {
         UserAnnotation userAnnotation = builder.given_a_user_annotation();
-
-        /* Simulate call to CBIR */
-        wireMockServer.stubFor(WireMock.delete(urlPathEqualTo("/api/images/" + userAnnotation.getId()))
-            .withQueryParam("storage", WireMock.equalTo(userAnnotation.getProject().getId().toString()))
-            .withQueryParam("index", WireMock.equalTo("annotation"))
-            .willReturn(aResponse().withBody(UUID.randomUUID().toString()))
-        );
 
         restUserAnnotationControllerMockMvc.perform(delete("/api/userannotation/{id}.json", userAnnotation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
