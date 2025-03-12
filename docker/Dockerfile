@@ -1,8 +1,8 @@
 ARG CORE_VERSION
 ARG CORE_REVISION
-ARG ENTRYPOINT_SCRIPTS_VERSION=1.3.0
+ARG ENTRYPOINT_SCRIPTS_VERSION=1.0.0
 ARG GRADLE_VERSION=7.2-jdk17-alpine
-ARG GRADLE_DEV_VERSION=8.5-jdk17-jammy
+ARG GRADLE_DEV_VERSION=7.2-jdk17
 ARG OPENJDK_VERSION=17-slim-bullseye
 
 
@@ -41,14 +41,14 @@ RUN sed -i -- 's/version: 0.0.0/version: '$CORE_VERSION'/g' /app/src/main/resour
 
 #######################################################################################
 ## Stage: entrypoint script. Use a multi-stage because COPY --from cannot interpolate variables
-FROM cytomine/entrypoint-scripts:${ENTRYPOINT_SCRIPTS_VERSION} as entrypoint-scripts
+FROM cytomineuliege/entrypoint-scripts:${ENTRYPOINT_SCRIPTS_VERSION} AS entrypoint-scripts
 
 #######################################################################################
 ## Stage: Cytomine core development image
 FROM gradle:${GRADLE_DEV_VERSION} AS dev-server
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends gettext=0.21-4ubuntu4
+    apt-get install -y --no-install-recommends gettext=0.19.8.1-10build1
 
 ENV GRADLE_USER_HOME=/opt/gradle/.gradle
 
@@ -62,7 +62,7 @@ ENTRYPOINT ["cytomine-entrypoint.sh"]
 
 #######################################################################################
 ## Stage: Cytomine core image
-FROM openjdk:${OPENJDK_VERSION} as production
+FROM openjdk:${OPENJDK_VERSION} AS production
 
 ARG CORE_VERSION
 ARG CORE_REVISION
@@ -70,11 +70,11 @@ ARG ENTRYPOINT_SCRIPTS_VERSION
 ARG GRADLE_VERSION
 ARG OPENJDK_VERSION
 
-LABEL org.opencontainers.image.authors="support@cytomine.com" \
-      org.opencontainers.image.url="https://www.cytomine.org/" \
-      org.opencontainers.image.documentation="https://doc.cytomine.org/" \
-      org.opencontainers.image.source="https://github.com/cytomine/Cytomine-core-spring" \
-      org.opencontainers.image.vendor="Cytomine Corporation SA" \
+LABEL org.opencontainers.image.authors="uliege@cytomine.org" \
+      org.opencontainers.image.url="https://uliege.cytomine.org/" \
+      org.opencontainers.image.documentation="https://doc.uliege.cytomine.org/" \
+      org.opencontainers.image.source="https://github.com/Cytomine-ULiege/Cytomine-core" \
+      org.opencontainers.image.vendor="Cytomine ULiège" \
       org.opencontainers.image.version="${CORE_VERSION}" \
       org.opencontainers.image.revision="${CORE_REVISION}" \
       org.opencontainers.image.deps.openjdk.version="${OPENJDK_VERSION}" \
