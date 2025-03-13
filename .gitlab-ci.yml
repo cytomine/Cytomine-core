@@ -6,10 +6,10 @@ lint-dockerfile:
   stage: lint
   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/hadolint/hadolint:latest-alpine
   script:
-    - hadolint docker/Dockerfile
+    - hadolint Dockerfile
   rules:
     - changes:
-        - docker/Dockerfile
+        - Dockerfile
       when: always
 
     # If the Dockerfile has not been changed, this job can be skipped
@@ -22,20 +22,28 @@ test:
   services:
     - alias: postgis
       name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/cytomineuliege/postgis:${CYTOMINE_POSTGIS_VERSION}
-    - alias: mongo
+    - alias: mongodb
       name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/cytomineuliege/mongo:${CYTOMINE_MONGO_VERSION}
   variables:
-    GRADLE_USER_HOME: /cache/.gradle
+    MONGO_INIT_DATABASE: cytomine
     MONGO_INITDB_ROOT_USERNAME: mongoadmin
-    MONGO_INITDB_ROOT_PASSWORD: secret
-    MONGO_INITDB_DATABASE: cytomine
-    POSTGRES_USER: docker
-    POSTGRES_PASSWORD: docker
+    MONGO_INITDB_ROOT_PASSWORD: password
+    MONGO_HOST: mongodb
+    MONGO_PORT: 27017
+    MONGO_DB_NAME: ${MONGO_INIT_DATABASE}
+    MONGO_USER: ${MONGO_INITDB_ROOT_USERNAME}
+    MONGO_PASS: ${MONGO_INITDB_ROOT_PASSWORD}
     POSTGRES_DB: docker
+    POSTGRES_USER: docker
+    POSTGRES_PASSWORD: password
+    POSTGIS_HOST: postgis
+    POSTGIS_PORT: 5432
+    POSTGIS_DB_NAME: ${POSTGRES_DB}
+    POSTGIS_USER: ${POSTGRES_USER}
+    POSTGIS_PASS: ${POSTGRES_PASSWORD}
+
   script:
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
-    - sed -i -- "s/localhost:5432/postgis:5432/g" src/test/resources/application.yml
-    - "sed -i -- 's/host: localhost/host: mongo/g' src/test/resources/application.yml"
     - sed -i -- "s/name=\"be.cytomine\" level=\"debug\"/name=\"be.cytomine\" level=\"info\"/g" src/test/resources/logback-test.xml
     - gradle :test --no-daemon
   artifacts:
