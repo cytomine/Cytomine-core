@@ -24,14 +24,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.persistence.EntityManager;
-import javax.persistence.Tuple;
-import javax.transaction.Transactional;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Tuple;
+import jakarta.transaction.Transactional;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;

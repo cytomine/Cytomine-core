@@ -1,7 +1,7 @@
 # List ARGs here for better readability.
 ARG CORE_VERSION
 ARG CORE_REVISION
-ARG ENTRYPOINT_SCRIPTS_VERSION=1.4.0
+ARG ENTRYPOINT_SCRIPTS_VERSION=1.0.0
 ARG GRADLE_VERSION=7.2-jdk17-alpine
 ARG GRADLE_DEV_VERSION=7.6.4-jdk17-jammy
 ARG OPENJDK_VERSION=17-slim-bullseye
@@ -51,8 +51,8 @@ FROM gradle:${GRADLE_DEV_VERSION} AS dev-server
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
       gettext=0.21-4ubuntu4 \
-      openssh-server=1:8.9p1-3ubuntu0.7 \
-      rsync=3.2.7-0ubuntu0.22.04.2
+      openssh-server=1:8.9p1-3ubuntu0.11 \
+      rsync=3.2.7-0ubuntu0.22.04.4
 
 ENV GRADLE_USER_HOME=/opt/gradle/.gradle
 
