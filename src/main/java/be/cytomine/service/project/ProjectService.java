@@ -16,6 +16,7 @@ package be.cytomine.service.project;
 * limitations under the License.
 */
 
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
@@ -69,8 +70,10 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.http.*;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import jakarta.mail.MessagingException;
 import jakarta.persistence.Query;
@@ -86,7 +89,6 @@ import static com.mongodb.client.model.Aggregates.*;
 import static com.mongodb.client.model.Aggregates.sort;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
-import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Sorts.descending;
 import static org.springframework.security.acls.domain.BasePermission.*;
 
@@ -94,6 +96,9 @@ import static org.springframework.security.acls.domain.BasePermission.*;
 @Service
 @Transactional
 public class ProjectService extends ModelService {
+
+    @Autowired
+    private ApplicationProperties applicationProperties;
 
     @Autowired
     private CommandHistoryRepository commandHistoryRepository;
@@ -169,6 +174,9 @@ public class ProjectService extends ModelService {
 
     @Autowired
     private ProjectRepresentativeUserRepository projectRepresentativeUserRepository;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     public Project get(Long id) {
         return find(id).orElse(null);
@@ -566,19 +574,12 @@ public class ProjectService extends ModelService {
         return data;
     }
 
-
-
     public List<Project> listByOntology(Ontology ontology) {
         if (currentRoleService.isAdminByNow(currentUserService.getCurrentUser())) {
             return projectRepository.findAllByOntology(ontology);
         }
         return projectRepository.findAllProjectForUserByOntology(currentUserService.getCurrentUsername(),ontology);
     }
-
-//    List<Software> listBySoftware(Software software) {
-//        // TODO:
-//        throw new RuntimeException("TODO");
-//    }
 
     public List<CommandHistory> lastAction(Project project, int max) {
         securityACLService.check(project, READ);
@@ -652,7 +653,6 @@ public class ProjectService extends ModelService {
 
         return commandResponse;
     }
-
 
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         return update(domain, jsonNewData, transaction, null);
@@ -941,7 +941,6 @@ public class ProjectService extends ModelService {
         project.setCountImages(imageInstanceRepository.countAllByProject(project));
     }
 
-
     protected void beforeDelete(CytomineDomain domain) {
         Project project = (Project)domain;
         commandHistoryRepository.deleteAllByProject(project);
@@ -949,7 +948,6 @@ public class ProjectService extends ModelService {
         redoStackItemRepository.deleteAllByCommand_Project(project);
         commandRepository.deleteAllByProject(project);
     }
-
 
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
         return List.of(domain.getId(), ((Project)domain).getName());
@@ -969,7 +967,6 @@ public class ProjectService extends ModelService {
         deleteDependentImageInstance((Project) domain, transaction, task);
         deleteDependentRepresentativeUser((Project) domain, transaction, task);
         deleteDependentMetadata(domain, transaction, task);
-        //TODO: only that? software project? ...
     }
 
     private void deleteDependentRepresentativeUser(Project domain, Transaction transaction, Task task) {

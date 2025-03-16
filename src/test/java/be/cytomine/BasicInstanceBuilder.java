@@ -19,6 +19,8 @@ package be.cytomine;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.appengine.TaskRun;
 import be.cytomine.domain.image.*;
+import be.cytomine.domain.image.group.ImageGroup;
+import be.cytomine.domain.image.group.ImageGroupImageInstance;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.meta.*;
 import be.cytomine.domain.ontology.*;
@@ -1036,6 +1038,109 @@ public class BasicInstanceBuilder {
         return secUserSecRole;
     }
 
+    public ImageGroup given_a_not_persisted_imagegroup() {
+        return given_a_not_persisted_imagegroup(given_a_project());
+    }
+
+    public ImageGroup given_a_not_persisted_imagegroup(Project project) {
+        ImageGroup imageGroup = new ImageGroup();
+        imageGroup.setName(randomString());
+        imageGroup.setProject(project);
+        return imageGroup;
+    }
+
+    public ImageGroup given_an_imagegroup() {
+        return persistAndReturn(given_a_not_persisted_imagegroup(given_a_project()));
+    }
+
+    public ImageGroup given_an_imagegroup(Project project) {
+        return persistAndReturn(given_a_not_persisted_imagegroup(project));
+    }
+
+    public ImageGroupImageInstance given_a_not_persisted_imagegroup_imageinstance() {
+        Project project = given_a_project();
+        ImageGroup group = given_an_imagegroup(project);
+        ImageInstance image = given_an_image_instance(project);
+
+        return given_a_not_persisted_imagegroup_imageinstance(group, image);
+    }
+
+    public ImageGroupImageInstance given_a_not_persisted_imagegroup_imageinstance(ImageGroup group, ImageInstance image) {
+        ImageGroupImageInstance igii = new ImageGroupImageInstance();
+        igii.setGroup(group);
+        igii.setImage(image);
+        return igii;
+    }
+
+    public ImageGroupImageInstance given_an_imagegroup_imageinstance() {
+        ImageGroupImageInstance igii = given_a_not_persisted_imagegroup_imageinstance();
+        Project project = given_a_project();
+        igii.setGroup(given_an_imagegroup(project));
+        igii.setImage(given_an_image_instance(project));
+        return persistAndReturn(igii);
+    }
+
+    public ImageGroupImageInstance given_an_imagegroup_imageinstance(ImageGroup group, ImageInstance image) {
+        ImageGroupImageInstance igii = given_a_not_persisted_imagegroup_imageinstance();
+        igii.setGroup(group);
+        igii.setImage(image);
+        return persistAndReturn(igii);
+    }
+
+    public AnnotationGroup given_a_not_persisted_annotation_group(Project project, ImageGroup imageGroup) {
+        AnnotationGroup annotationGroup = new AnnotationGroup();
+        annotationGroup.setProject(project);
+        annotationGroup.setImageGroup(imageGroup);
+        annotationGroup.setType("SAME_OBJECT");
+        return annotationGroup;
+    }
+
+    public AnnotationGroup given_a_not_persisted_annotation_group() {
+        Project project = given_a_project();
+        return given_a_not_persisted_annotation_group(project, given_an_imagegroup(project));
+    }
+
+    public AnnotationGroup given_an_annotation_group(Project project, ImageGroup imageGroup) {
+        return persistAndReturn(given_a_not_persisted_annotation_group(project, imageGroup));
+    }
+
+    public AnnotationGroup given_an_annotation_group() {
+        return persistAndReturn(given_a_not_persisted_annotation_group());
+    }
+
+    public AnnotationLink given_a_not_persisted_annotation_link(
+            UserAnnotation annotation, AnnotationGroup annotationGroup, ImageInstance image
+    ) {
+        AnnotationLink annotationLink = new AnnotationLink();
+        annotationLink.setAnnotationClassName(annotation.getClass().getName());
+        annotationLink.setAnnotationIdent(annotation.getId());
+        annotationLink.setGroup(annotationGroup);
+        annotationLink.setImage(image);
+
+        return annotationLink;
+    }
+
+    public AnnotationLink given_a_not_persisted_annotation_link() {
+        Project project = given_a_project();
+
+        return given_a_not_persisted_annotation_link(
+                given_a_user_annotation(project),
+                given_an_annotation_group(project, given_an_imagegroup(project)),
+                given_an_image_instance(project)
+        );
+    }
+
+    public AnnotationLink given_an_annotation_link(
+            UserAnnotation annotation, AnnotationGroup annotationGroup, ImageInstance image
+    ) {
+        return persistAndReturn(given_a_not_persisted_annotation_link(
+                annotation, annotationGroup, image
+        ));
+    }
+
+    public AnnotationLink given_an_annotation_link() {
+        return persistAndReturn(given_a_not_persisted_annotation_link());
+    }
 
     public TaskRun given_a_not_persisted_task_run() {
         return given_a_not_persisted_task_run(given_a_project(), UUID.randomUUID());
@@ -1052,5 +1157,4 @@ public class BasicInstanceBuilder {
     public TaskRun given_a_task_run() {
         return persistAndReturn(given_a_not_persisted_task_run(given_a_project(), UUID.randomUUID()));
     }
-
 }

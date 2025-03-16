@@ -7,7 +7,7 @@ spring:
     allow-circular-references: true
 
   thymeleaf:
-    prefix: 'classpath:/templates/'
+    prefix: "classpath:/templates/"
 
   servlet:
     multipart:
@@ -53,6 +53,12 @@ spring:
     port: ${SMTP_PORT:587}
     username: ${SMTP_USER:}
     password: ${SMTP_PASS:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:true}
+          starttls:
+            enable: ${SMTP_STARTTLS:true}
 
 server:
   port: ${PORT:8080}

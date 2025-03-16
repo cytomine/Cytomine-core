@@ -32,7 +32,9 @@ import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.UserAnnotationListing;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.image.SliceInstanceRepository;
-import be.cytomine.repository.ontology.*;
+import be.cytomine.repository.ontology.AlgoAnnotationTermRepository;
+import be.cytomine.repository.ontology.SharedAnnotationRepository;
+import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
@@ -67,6 +69,9 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 @Service
 @Transactional
 public class UserAnnotationService extends ModelService {
+
+    @Autowired
+    private AnnotationLinkService annotationLinkService;
 
     @Autowired
     private UserAnnotationRepository userAnnotationRepository;
@@ -450,6 +455,22 @@ public class UserAnnotationService extends ModelService {
             ((Map<String, Object>)commandResponse.getData().get("annotation")).put("annotationTrack", annotationTracks);
             ((Map<String, Object>)commandResponse.getData().get("annotation")).put("track", annotationTracks.stream().map(x -> x.getTrack()).collect(Collectors.toList()));
         }
+
+        // Add annotation-group/link if any
+        Long groupId = jsonObject.getJSONAttrLong("group", null);
+        if (groupId != null) {
+            CommandResponse response = annotationLinkService.addAnnotationLink(
+                    UserAnnotation.class.getName(),
+                    addedAnnotation.getId(),
+                    groupId,
+                    addedAnnotation.getImage().getId(),
+                    transaction
+            );
+
+            ((Map<String, Object>)commandResponse.getData().get("annotation")).put("group", groupId);
+            ((Map<String, Object>)commandResponse.getData().get("annotation")).put("annotationLinks", response.getData().get("annotationlink"));
+        }
+
         log.debug("end of add command");
         return commandResponse;
     }
@@ -463,7 +484,6 @@ public class UserAnnotationService extends ModelService {
         response.getData().put("annotation", response.getData().get("userannotation"));
         response.getData().remove("userannotation");
     }
-
 
     /**
      * Update this domain with new data from json
@@ -535,6 +555,9 @@ public class UserAnnotationService extends ModelService {
 
 
     protected void afterUpdate(CytomineDomain domain, CommandResponse response) {
+        String query = "UPDATE annotation_link SET updated = NOW() WHERE annotation_ident = " + domain.getId();
+        getEntityManager().createNativeQuery(query);
+
         response.getData().put("annotation", response.getData().get("userannotation"));
         response.getData().remove("userannotation");
     }

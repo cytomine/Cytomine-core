@@ -1,65 +1,29 @@
 stages:
-  - prepare
+  - lint
   - test
-  - build
 
-
-variables:
-  DOCKER_IMAGE_NAME: 'cytomine/core'
-  ENTRYPOINT_SCRIPTS_VERSION: '1.3.0'
-  GRADLE_VERSION: '7.6.4-jdk17-alpine'
-  OPENJDK_VERSION: '17-slim-bullseye'
-
-
-default:
-  tags:
-    - docker
-
-
-make-version-name:
-  stage: prepare
-  # regex check does not work with /bin/sh because of parenthesis so we need /bin/bash here
-  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/bash:5.2.15-alpine3.16
-  script:
-    - | # If no tag has been pushed ($CI_COMMIT_TAG is empty), name it as SNAPSHOT
-      if [ -z $CI_COMMIT_TAG ]; then
-        echo "CM_VERSION=$CI_COMMIT_BRANCH" > .env
-      else
-        # Else use the tag
-        echo "CM_VERSION=$CI_COMMIT_TAG" > .env
-      fi
-    - cat .env
-  artifacts:
-    reports:
-      dotenv: .env
-
-
-lint-dockerfiles:
-  stage: test
+lint-dockerfile:
+  stage: lint
   image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/hadolint/hadolint:latest-alpine
-  # Uncomment to silent some warnings if needed
-  #variables:
-  #  HADOLINT_OPT: --ignore DL3008
   script:
-    - hadolint ${HADOLINT_OPT} docker/Dockerfile
+    - hadolint Dockerfile
   rules:
     - changes:
-        - docker/Dockerfile
+        - Dockerfile
       when: always
 
     # If the Dockerfile has not been changed, this job can be skipped
     - when: never
       allow_failure: true
 
-
-run-junit:
+test:
   stage: test
-  image: gradle:7.6.4-jdk17-jammy
+  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/gradle:${GRADLE_VERSION}
   services:
-    - alias: postgres
-      name: cytomine/postgis:1.5.1
+    - alias: postgis
+      name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/cytomineuliege/postgis:${CYTOMINE_POSTGIS_VERSION}
     - alias: mongodb
-      name: cytomine/mongo:1.0.0
+      name: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/cytomineuliege/mongo:${CYTOMINE_MONGO_VERSION}
   variables:
     MONGO_INIT_DATABASE: cytomine
     MONGO_INITDB_ROOT_USERNAME: mongoadmin
@@ -72,12 +36,12 @@ run-junit:
     POSTGRES_DB: docker
     POSTGRES_USER: docker
     POSTGRES_PASSWORD: password
-    POSTGRES_HOST_AUTH_METHOD: trust
-    POSTGIS_HOST: postgres
+    POSTGIS_HOST: postgis
     POSTGIS_PORT: 5432
     POSTGIS_DB_NAME: ${POSTGRES_DB}
     POSTGIS_USER: ${POSTGRES_USER}
     POSTGIS_PASS: ${POSTGRES_PASSWORD}
+
   script:
     - export GRADLE_USER_HOME=$GRADLE_USER_HOME
     # test log too large for gitlab if executed at 'debug' log level
@@ -86,41 +50,3 @@ run-junit:
   artifacts:
     reports:
       junit: build/test-results/test/**/TEST-*.xml
-      # TODO integrate code coverage
-
-
-
-build-push-docker-image:
-  stage: build
-  image: ${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX}/docker:latest
-  needs:
-    - job: make-version-name
-      artifacts: true
-  rules:
-    - if: $CI_COMMIT_TAG
-  script:
-    - echo "Log in to Gitlab docker registry"
-    - mkdir -p ~/.docker
-    - echo ${DOCKER_AUTH_CONFIG} > ~/.docker/config.json
-
-    - echo "Build the docker image ${DOCKER_IMAGE_NAME}:${CM_VERSION}"
-    - |
-      docker build \
-        --build-arg CORE_VERSION=${CM_VERSION} \
-        --build-arg CORE_REVISION=${CI_COMMIT_SHORT_SHA} \
-        --build-arg ENTRYPOINT_SCRIPTS_VERSION=${ENTRYPOINT_SCRIPTS_VERSION} \
-        --build-arg GRADLE_VERSION=${GRADLE_VERSION} \
-        --build-arg OPENJDK_VERSION=${OPENJDK_VERSION} \
-        -t ${DOCKER_IMAGE_NAME}:${CM_VERSION} \
-        -t ${DOCKER_IMAGE_NAME}:latest \
-        -f docker/Dockerfile \
-        .
-
-    # Use credential helper (see https://docs.docker.com/engine/reference/commandline/login/#credentials-store)
-    - mkdir -p $HOME/.docker && echo $DOCKER_HUB_AUTH_CONFIG > $HOME/.docker/config.json
-    - echo "Registry credentials configured at $HOME/.docker/config.json"
-
-    - echo "Pushing docker image ${DOCKER_IMAGE_NAME}:${CM_VERSION} and ${DOCKER_IMAGE_NAME}:latest"
-    - docker push ${DOCKER_IMAGE_NAME}:${CM_VERSION}
-    - docker push ${DOCKER_IMAGE_NAME}:latest
-    - echo "Successfully pushed docker image ${DOCKER_IMAGE_NAME}:${CM_VERSION} and ${DOCKER_IMAGE_NAME}:latest"

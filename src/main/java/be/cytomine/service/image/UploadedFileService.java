@@ -146,6 +146,15 @@ public class UploadedFileService extends ModelService {
             }
         }
 
+        validatedSearchParameters.addAll(
+            SQLSearchParameter
+                .getDomainAssociatedSearchParameters(AbstractImage.class, searchParameters, getEntityManager())
+                .stream()
+                .filter(x -> !x.getProperty().equals("original_filename"))
+                .map(x -> new SearchParameterEntry("ai." + x.getProperty(), x.getOperation(), x.getValue()))
+                .toList()
+        );
+
         SearchParameterProcessed sqlSearchConditions = SQLSearchParameter.searchParametersToSQLConstraints(validatedSearchParameters);
         String search = sqlSearchConditions.getData().stream().map(SearchParameterEntry::getSql).collect(Collectors.joining(" AND "));
 
@@ -183,6 +192,9 @@ public class UploadedFileService extends ModelService {
                 "uf.status, " +
                 "uf.storage_id, " +
                 "uf.user_id, " +
+                "ai.height, " +
+                "ai.magnification, " +
+                "ai.width, " +
                 "CASE WHEN (nlevel(uf.l_tree) > 0) THEN ltree2text(subltree(uf.l_tree, 0, 1)) ELSE NULL END AS root, " +
                 treeSelect +
                 "CASE WHEN (uf.status = " + UploadedFileStatus.CONVERTED.getCode() + " OR uf.status = " + UploadedFileStatus.DEPLOYED.getCode() + ") " +

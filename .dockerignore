@@ -1,5 +1,3 @@
 *
 !src
 !build.gradle
-!scripts
-!ci/cytomine.jar

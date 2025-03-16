@@ -56,8 +56,12 @@ public class CytomineMailService {
         NotificationProperties notificationConfiguration = applicationProperties.getNotification();
         String defaultEmail = notificationConfiguration.getEmail();
 
+        // Force all e-mail to be issued from the one passed in the configuration to avoid such Exception:
+        // "SMTPSendFailedException: 550 5.7.60 SMTP; Client does not have permissions to send as this sender"
+        from = defaultEmail;
+
         if (StringUtils.isBlank(from)) {
-            from = defaultEmail;
+            from = NO_REPLY_EMAIL;
         }
 
         if (smtpHost.equals("disabled")) {
@@ -119,7 +123,11 @@ public class CytomineMailService {
         try {
             sender.send(mail);
         } catch (Exception e) {
-            log.error("can't send email "+mail+" (MessagingException)");
+            log.error("can't send email ["+subject+"] (MessagingException) "+e.getMessage());
+            log.error("from " + from);
+            log.error("to " + Arrays.toString(to));
+            log.error("cc " + Arrays.toString(cc));
+            log.error("bcc " + Arrays.toString(bcc));
             throw new MiddlewareException(e.getMessage());
         }
     }

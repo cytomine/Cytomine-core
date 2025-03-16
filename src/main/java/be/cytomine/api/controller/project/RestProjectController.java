@@ -58,7 +58,7 @@ public class RestProjectController extends RestCytomineController {
     private final CurrentUserService currentUserService;
 
     private final CurrentRoleService currentRoleService;
-    
+
     private final OntologyRepository ontologyRepository;
     private final SecUserService secUserService;
 
@@ -137,7 +137,6 @@ public class RestProjectController extends RestCytomineController {
     public ResponseEntity<String> lastAction(
             @PathVariable Long id,
             @PathVariable Long max
-            
     ) {
         log.debug("REST request to list last project actions");
         Project project = projectRepository.findById(id)
@@ -152,23 +151,9 @@ public class RestProjectController extends RestCytomineController {
             @RequestParam(required = false, defaultValue = "0") Long max
     ) {
         log.debug("REST request to list last opened");
-        
+
         return responseSuccess(projectService.listLastOpened((User) currentUserService.getCurrentUser(), max));
     }
-
-    // TODO:
-//    /**
-//     * List all project available for this user, that can use a software
-//     */
-//    @GetMapping("/software/{id}/project.json")
-//    public ResponseEntity<String> listBySoftware(
-//            @PathVariable Long id
-//    ) {
-//        log.debug("REST request to list last project actions");
-//        Project project = projectRepository.findById(id)
-//                .orElseThrow(() -> new ObjectNotFoundException("Project", id));
-//        return responseSuccess(projectService.listBySoftware(project));
-//    }
 
     /**
      * List all project available for this user, that use a ontology
