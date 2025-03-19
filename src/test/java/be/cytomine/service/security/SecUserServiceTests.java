@@ -1281,5 +1281,4 @@ public class SecUserServiceTests {
         assertThat(permissionService.hasACLPermission(storage, user.getUsername(), ADMINISTRATION)).isFalse();
         assertThat(permissionService.hasACLPermission(storage, user.getUsername(), READ)).isFalse();
     }
-
 }

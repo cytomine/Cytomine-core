@@ -50,7 +50,6 @@ import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
-import be.cytomine.service.dto.JobLayerDTO;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.server.StorageService;
 import be.cytomine.service.ontology.*;
@@ -790,10 +789,6 @@ public class SecUserService extends ModelService {
             layersFormatted.add(currentUser.toJsonObject());
         }
 
-        if (image != null) {
-            //TODO: refactor as job & software table are deleted
-//            layersFormatted.addAll(secUserRepository.findAllUserJob(image.getId(), image.getProject().getId()).stream().map(JobLayerDTO::getDataFromDomain).collect(Collectors.toList()));
-        }
         return layersFormatted;
     }
 

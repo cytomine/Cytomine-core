@@ -36,8 +36,6 @@ public class ApplicationProperties {
 
     private String serverURL;
 
-    private String hyperspectralServerURL;
-
     private NotificationProperties notification;
 
     private String storagePath;
@@ -78,7 +76,6 @@ public class ApplicationProperties {
     @NotBlank
     private String superAdminPublicKey;
 
-
     private String ImageServerPrivateKey;
 
     private String ImageServerPublicKey;
@@ -86,8 +83,6 @@ public class ApplicationProperties {
     private String rabbitMQPrivateKey;
 
     private String rabbitMQPublicKey;
-
-    private String softwareSources;
 
     private String defaultLanguage;
 
@@ -103,6 +98,7 @@ public class ApplicationProperties {
         this.annotation = annotation;
     }
 }
+
 @ToString
 class Annotation {
     int maxNumberOfPoint;

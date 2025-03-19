@@ -197,7 +197,6 @@ public class SecUserSecRoleServiceTests {
         });
     }
 
-
     @Test
     void re_define_role() {
         User user = builder.given_a_guest();

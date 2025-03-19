@@ -28,7 +28,11 @@
 
     <include file="config/liquibase/changelog/00000000_6_image_filters.xml" relativeToChangelogFile="false"/>
 
+    <include file="config/liquibase/changelog/00000000_6_annot_links.xml" relativeToChangelogFile="false"/>
+
     <include file="config/liquibase/changelog/00000000_7_delete_useless_pg_users.xml" relativeToChangelogFile="false"/>
+
+    <include file="config/liquibase/changelog/00000000_7_z_name.xml" relativeToChangelogFile="false"/>
 
     <include file="/config/liquibase/changelog/00000000_8_remove_raw_metadata_from_image_properties.xml" relativeToChangelogFile="false"/>
 
@@ -40,7 +44,4 @@
 
     <include file="/config/liquibase/changelog/00000000_12_taskrun.xml" relativeToChangelogFile="false"/>
 
-    <include file="config/liquibase/changelog/00000000_6_annot_links.xml" relativeToChangelogFile="false"/>
-
-    <include file="config/liquibase/changelog/00000000_7_z_name.xml" relativeToChangelogFile="false"/>
 </databaseChangeLog>

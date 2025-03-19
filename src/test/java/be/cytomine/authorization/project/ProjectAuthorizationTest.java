@@ -1,21 +1,5 @@
 package be.cytomine.authorization.project;
 
-/*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
-
 import java.util.*;
 
 import org.junit.jupiter.api.*;
@@ -62,37 +46,37 @@ import static org.springframework.security.acls.domain.BasePermission.ADMINISTRA
 public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
 
     @Autowired
-    ProjectService projectService;
+    private ProjectService projectService;
 
     @Autowired
-    BasicInstanceBuilder builder;
+    private BasicInstanceBuilder builder;
 
     @Autowired
-    SecUserService secUserService;
+    private SecUserService secUserService;
 
     @Autowired
-    ProjectRepresentativeUserService projectRepresentativeUserService;
+    private ProjectRepresentativeUserService projectRepresentativeUserService;
 
     @Autowired
-    ProjectRepresentativeUserRepository projectRepresentativeUserRepository;
+    private ProjectRepresentativeUserRepository projectRepresentativeUserRepository;
 
     @Autowired
-    DescriptionService descriptionService;
+    private DescriptionService descriptionService;
 
     @Autowired
-    AttachedFileService attachedFileService;
+    private AttachedFileService attachedFileService;
 
     @Autowired
-    PropertyService propertyService;
+    private PropertyService propertyService;
 
     @Autowired
-    ImageInstanceService imageInstanceService;
+    private ImageInstanceService imageInstanceService;
 
     @Autowired
-    TagDomainAssociationService tagDomainAssociationService;
+    private TagDomainAssociationService tagDomainAssociationService;
 
     @Autowired
-    UserAnnotationService userAnnotationService;
+    private UserAnnotationService userAnnotationService;
 
     private Project project = null;
 

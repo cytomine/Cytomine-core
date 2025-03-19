@@ -101,7 +101,6 @@ public class AlgoAnnotationServiceTests {
         assertThat(algoAnnotationService.find(0L)).isEmpty();
     }
 
-
     @Test
     void count_by_project() {
         AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
