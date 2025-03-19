@@ -65,8 +65,6 @@ application:
   superAdminPublicKey: superAdminPublicKey
   ImageServerPrivateKey: imageServerPrivateKey
   ImageServerPublicKey: imageServerPublicKey
-  rabbitMQPrivateKey: rabbitMQPrivateKey
-  rabbitMQPublicKey: rabbitMQPublicKey
   instanceHostWebsite: instanceHostWebsite.com
   instanceHostSupportMail: instanceHostSupportMail@email.com
   instanceHostPhoneNumber: 0999999999

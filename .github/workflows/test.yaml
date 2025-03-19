@@ -37,12 +37,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-      rabbitmq:
-        image: rabbitmq:${{ vars.RABBITMQ_VERSION }}
-        ports:
-          - 5672:5672
-          - 15672:15672
-
     steps:
       - name: Set up the repository
         uses: actions/checkout@v4

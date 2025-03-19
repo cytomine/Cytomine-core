@@ -57,7 +57,6 @@ public class BootstrapDataService {
 
         initImageFilters();
 
-
         bootstrapUtilsService.createMime("tif", "image/pyrtiff");
         bootstrapUtilsService.createMime("jp2", "image/jp2");
         bootstrapUtilsService.createMime("ndpi", "openslide/ndpi");
@@ -77,28 +76,15 @@ public class BootstrapDataService {
         bootstrapUtilsService.createUser("admin", "Just an", "Admin", dataset.ADMINEMAIL, dataset.ADMINPASSWORD,  List.of("ROLE_USER", "ROLE_ADMIN"));
         bootstrapUtilsService.createUser("ImageServer1", "Image", "Server", dataset.ADMINEMAIL, RandomStringUtils.random(32).toUpperCase(), List.of("ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN"));
         bootstrapUtilsService.createUser("superadmin", "Super", "Admin", dataset.ADMINEMAIL, dataset.ADMINPASSWORD,  List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
-        bootstrapUtilsService.createUser("rabbitmq", "rabbitmq", "user", dataset.ADMINEMAIL, RandomStringUtils.random(32).toUpperCase(),  List.of("ROLE_USER", "ROLE_SUPER_ADMIN"));
         bootstrapUtilsService.createUser("monitoring", "Monitoring", "Monitoring", dataset.ADMINEMAIL, RandomStringUtils.random(32).toUpperCase(),  List.of("ROLE_USER","ROLE_SUPER_ADMIN"));
 
         bootstrapUtilsService.createRelation(PARENT);
 
         bootstrapUtilsService.createConfigurations("WELCOME", "<p>Welcome to the Cytomine software.</p><p>This software is supported by the <a href='https://cytomine.coop'>Cytomine company</a></p>", ConfigurationReadingRole.ALL);
         bootstrapUtilsService.createConfigurations("admin_email", applicationProperties.getAdminEmail(), ConfigurationReadingRole.ADMIN);
-//        bootstrapUtilsService.createConfigurations("notification_email", applicationConfiguration.getNotification().getEmail(), ConfigurationReadingRole.ADMIN);
-//        bootstrapUtilsService.createConfigurations("notification_password", applicationConfiguration.getNotification().getPassword(), ConfigurationReadingRole.ADMIN);
-//        bootstrapUtilsService.createConfigurations("notification_smtp_host", applicationConfiguration.getNotification().getSmtpHost(), ConfigurationReadingRole.ADMIN);
-//        bootstrapUtilsService.createConfigurations("notification_smtp_port", applicationConfiguration.getNotification().getSmtpPort(), ConfigurationReadingRole.ADMIN);
-
-//        SecUser admin = secUserRepository.findByUsernameLikeIgnoreCase("admin")
-//                .orElseThrow(() -> new ObjectNotFoundException("admin user does not exists"));
-//        admin.setPrivateKey(applicationConfiguration.getAdminPrivateKey());
-//        admin.setPublicKey(applicationConfiguration.getAdminPublicKey());
-//        secUserRepository.save(admin);
 
         changeUserKeys("admin", applicationProperties.getAdminPrivateKey(), applicationProperties.getAdminPublicKey());
         changeUserKeys("superadmin", applicationProperties.getSuperAdminPrivateKey(), applicationProperties.getSuperAdminPublicKey());
-
-
     }
 
     public void initImageFilters() {
