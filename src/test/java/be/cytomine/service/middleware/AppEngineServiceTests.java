@@ -1,8 +1,7 @@
 package be.cytomine.service.middleware;
 
-import be.cytomine.CytomineCoreApplication;
-import be.cytomine.service.appengine.AppEngineService;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -13,7 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import javax.transaction.Transactional;
+import be.cytomine.CytomineCoreApplication;
+import be.cytomine.service.appengine.AppEngineService;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class AppEngineServiceTests {
 
     @Autowired
-    AppEngineService appEngineService;
+    private AppEngineService appEngineService;
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
 
@@ -37,29 +37,21 @@ public class AppEngineServiceTests {
         wireMockServer.start();
     }
 
-
     @AfterAll
     public static void afterAll() {
-        try {
-            wireMockServer.stop();
-        } catch (Exception e) {
-        }
+        wireMockServer.stop();
     }
 
     @Test
     void get_task() {
         configureFor("localhost", 8888);
         stubFor(get(urlEqualTo(apiBasePath + "task"))
-                .willReturn(
-                        aResponse().withBody(
-                                """
-                                        {"a":"b", "c":2}
-                                        """
-                        )
-                )
+            .willReturn(
+                aResponse().withBody("{\"a\":\"b\", \"c\":2}")
+            )
         );
         ResponseEntity<String> response = appEngineService.get("task");
         assertThat(response).isNotNull();
-        assertThat(response.getStatusCodeValue()).isEqualTo(200);
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
     }
 }
