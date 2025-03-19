@@ -748,10 +748,6 @@ public class ImageInstanceResourceTests {
 
         String url = "/image/" + URLEncoder.encode(image.getBaseImage().getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/annotation/crop";
         String body = "{\"length\":512,\"z_slices\":0,\"annotations\":[{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"}],\"timepoints\":0,\"background_transparency\":0}";
-        System.out.println(url);
-        System.out.println(body);
-        //{"length":512,"annotations":{"geometry":"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))"},"level":0,"background_transparency":0,"z_slices":0,"timepoints":0}
-        //{"length":512,"annotations":{"geometry":"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))"},"background_transparency":0,"z_slices":0,"timepoints":0}
 
         stubFor(WireMock.post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(WireMock.equalTo(
                                 body

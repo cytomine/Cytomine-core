@@ -22,7 +22,6 @@ import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.project.Project;
-import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
@@ -40,7 +39,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
 import java.net.URLEncoder;
@@ -68,36 +66,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AbstractImageResourceTests {
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
     private BasicInstanceBuilder builder;
 
     @Autowired
     private MockMvc restAbstractImageControllerMockMvc;
 
     @Autowired
-    private PropertyRepository propertyRepository;
-
-    @Autowired
     private ApplicationProperties applicationProperties;
 
-//    @Autowired
-//    private RestAbstractImageController restAbstractImageController;
-
     private static WireMockServer wireMockServer = new WireMockServer(8888);
-
-
-//    @BeforeEach
-//    public void initMock() {
-//        if(restAbstractImageControllerMockMvc==null) {
-//            restAbstractImageControllerMockMvc = MockMvcBuilders.standaloneSetup(restAbstractImageController)
-//                    .setControllerAdvice(new ApiExceptionHandler())
-//                    .build();
-//        }
-//    }
-
-
 
     @BeforeAll
     public static void beforeAll() {
@@ -698,7 +675,6 @@ public class AbstractImageResourceTests {
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
         configureFor("localhost", 8888);
-        //String url = "/slice/crop.png?fif=%2Fdata%2Fimages%2F" + builder.given_superadmin().getId() + "%2F1636379100999%2FCMU-2%2FCMU-2.mrxs&mimeType=openslide%2Fmrxs&topLeftX=10&topLeftY=220676&width=30&height=40&imageWidth=109240&imageHeight=220696&type=crop";
 
         String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/window";
         String body = "{\"level\":0,\"z_slices\":0,\"timepoints\":0,\"region\":{\"left\":10,\"top\":20,\"width\":30,\"height\":40}}";

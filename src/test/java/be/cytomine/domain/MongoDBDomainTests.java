@@ -100,26 +100,6 @@ public class MongoDBDomainTests {
     @Test
     void last_connection_indexes() throws ParseException, JsonProcessingException {
         ListIndexesIterable<Document> indexes = retrieveIndex("lastConnection");
-        //> db.lastConnection.getIndexes()
-        //[
-        //	{
-        //		"v" : 1,
-        //		"key" : {
-        //			"_id" : 1
-        //		},
-        //		"name" : "_id_",
-        //		"ns" : "cytomine.lastConnection"
-        //	},
-        //	{
-        //		"v" : 1,
-        //		"key" : {
-        //			"date" : 2
-        //		},
-        //		"name" : "date_2",
-        //		"ns" : "cytomine.lastConnection",
-        //		"expireAfterSeconds" : 300
-        //	}
-        //]
         Document indexId = null;
         Document indexUserDate = null;
         for (Document index : indexes) {
@@ -143,9 +123,6 @@ public class MongoDBDomainTests {
      */
     @Test
     void last_connection_domain() throws ParseException, JsonProcessingException {
-        // EXpected:
-//        { "_id" : NumberLong(60657), "date" : ISODate("2022-02-02T07:30:23.384Z"), "created" : ISODate("2022-02-02T07:30:23.385Z"), "user" : NumberLong(58), "version" : NumberLong(0) }
-
         LastConnection lastConnection = new LastConnection();
         lastConnection.setId(60657L);
         lastConnection.setProject(null);
@@ -156,18 +133,6 @@ public class MongoDBDomainTests {
 
         Document document = retrieveDocument("lastConnection", lastConnection.getId());
 
-        // Result from grails version
-        //{
-        //	"_id": 60657,
-        //	"date": {
-        //		"$date": "2022-02-02T07:30:23.384Z"
-        //	},
-        //	"created": {
-        //		"$date": "2022-02-02T07:30:23.385Z"
-        //	},
-        //	"user": 58,
-        //	"version": 0
-        //}
 
         String expectedResults =
                 "{\n" +
@@ -195,58 +160,6 @@ public class MongoDBDomainTests {
      */
     @Test
     void last_user_position_index() throws ParseException, JsonProcessingException {
-        // Expected:
-        //> db.lastUserPosition.getIndexes()
-        //[
-        //	{
-        //		"v" : 1,
-        //		"key" : {
-        //			"_id" : 1
-        //		},
-        //		"name" : "_id_",
-        //		"ns" : "cytomine.lastUserPosition"
-        //	},
-        //	{
-        //		"v" : 1,
-        //		"key" : {
-        //			"user" : 1,
-        //			"image" : 1,
-        //			"slice" : 1,
-        //			"created" : -1
-        //		},
-        //		"name" : "user_1_image_1_slice_1_created_-1",
-        //		"ns" : "cytomine.lastUserPosition"
-        //	},
-        //	{
-        //		"v" : 1,
-        //		"key" : {
-        //			"location" : "2d",
-        //			"image" : 1,
-        //			"slice" : 1
-        //		},
-        //		"name" : "location_2d_image_1_slice_1",
-        //		"ns" : "cytomine.lastUserPosition",
-        //		"min" : -2147483648,
-        //		"max" : 2147483647
-        //	},
-        //	{
-        //		"v" : 1,
-        //		"key" : {
-        //			"created" : 1
-        //		},
-        //		"name" : "created_1",
-        //		"ns" : "cytomine.lastUserPosition",
-        //		"expireAfterSeconds" : 60
-        //	},
-        //	{
-        //		"v" : 1,
-        //		"key" : {
-        //			"image" : 1
-        //		},
-        //		"name" : "image_1",
-        //		"ns" : "cytomine.lastUserPosition"
-        //	}
-        //]
         ListIndexesIterable<Document> indexes = retrieveIndex("lastUserPosition");
         Document indexId = null;
         Document indexUserImageSliceCreated = null;
@@ -302,21 +215,6 @@ public class MongoDBDomainTests {
      */
     @Test
     void last_user_position_domain() throws ParseException, JsonProcessingException {
-        // Expected:
-        //> db.lastUserPosition.find({}).sort({_id:-1}).limit(1);
-        //        { "_id" : NumberLong(60911),
-        //        "broadcast" : false,
-        //        "created" : ISODate("2022-02-02T07:40:46.710Z"),
-        //        "image" : NumberLong(29240),
-        //        "imageName" : "CMU-1-Small-Region (1).svs",
-        //        "location" : [ [ -109, 2548 ], [ 683, 2548 ], [ 683, 2028 ], [ -109, 2028 ] ],
-        //        "project" : NumberLong(22782),
-        //        "rotation" : "0.0",
-        //        "slice" : NumberLong(29241),
-        //        "user" : NumberLong(58),
-        //        "zoom" : 5 }
-        //
-
         LastUserPosition lastPosition = new LastUserPosition();
         lastPosition.setId(60911L);
         lastPosition.setBroadcast(false);
@@ -338,27 +236,6 @@ public class MongoDBDomainTests {
         lastPosition = lastUserPositionRepository.insert(lastPosition);
 
         Document document = retrieveDocument("lastUserPosition", lastPosition.getId());
-
-        //        {
-        //	"_id": 60911,
-        //	"broadcast": false,
-        //	"created": {
-        //		"$date": "2022-02-02T07:40:46.71Z"
-        //	},
-        //	"image": 29240,
-        //	"imageName": "CMU-1-Small-Region (1).svs",
-        //	"location": [
-        //		[-109.0, 2548.0],
-        //		[683.0, 2548.0],
-        //		[683.0, 2028.0],
-        //		[-109.0, 2028.0]
-        //	],
-        //	"project": 22782,
-        //	"rotation": "0.0",
-        //	"slice": 29241,
-        //	"user": 58,
-        //	"zoom": 5
-        //}
 
         String expectedResults = "{\n" +
                 "\"_id\": 60911,\n" +
@@ -389,29 +266,7 @@ public class MongoDBDomainTests {
 
     @Test
     void peristent_connection_indexes() {
-
         ListIndexesIterable<Document> indexes = retrieveIndex("persistentConnection");
-        // Expected
-        //> db.persistentConnection.getIndexes()
-        //                [
-        //                {
-        //                        "v" : 1,
-        //                "key" : {
-        //            "_id" : 1
-        //        },
-        //        "name" : "_id_",
-        //                "ns" : "cytomine.persistentConnection"
-        //	},
-        //        {
-        //            "v" : 1,
-        //                "key" : {
-        //            "user" : 1,
-        //                    "created" : -1
-        //        },
-        //            "name" : "user_1_created_-1",
-        //                "ns" : "cytomine.persistentConnection"
-        //        }
-        //]
 
         Document indexId = null;
         Document indexUserCreated = null;
@@ -436,18 +291,6 @@ public class MongoDBDomainTests {
      */
     @Test
     void persistent_connection_domain() throws ParseException, JsonProcessingException {
-
-        // Result from Mongodb with the Cytomine Grails version
-
-//        > db.persistentConnection.findOne()
-//        {
-//                 "_id" : NumberLong(198),
-//                "created" : ISODate("2021-09-15T14:21:41.204Z"),
-//                "session" : "2D68BD4BE734DC4EFF20F9FB0EE5F3F7",
-//                "user" : NumberLong(58),
-//                "version" : NumberLong(0)
-//        }
-
         PersistentConnection connection = new PersistentConnection();
         connection.setId(3073L);
         connection.setCreated(mongoDBFormat.parse("2021-09-22T09:06:32.472Z"));
@@ -458,15 +301,6 @@ public class MongoDBDomainTests {
 
         Document document = retrieveDocument("persistentConnection", connection.getId());
 
-        // check index
-        // {
-        //   "_id":3073,
-        //   "created":{
-        //      "$date":"2021-09-22T07:06:32.472Z"
-        //   },
-        //   "session":"B7850470EED8CD7570E05C50FD5F02F6"
-        //}
-
         String expectedResults =
                 "{\n" +
                         "   \"_id\":3073,\n" +
@@ -475,7 +309,6 @@ public class MongoDBDomainTests {
                         "   },\n" +
                         "   \"session\":\"B7850470EED8CD7570E05C50FD5F02F6\"\n" +
                         "}";
-
 
         String expectedResultsAnotherTimeZone = expectedResults.replaceAll("2021-09-22T07:06:32.472Z", "2021-09-22T09:06:32.472Z");
 
@@ -488,24 +321,6 @@ public class MongoDBDomainTests {
      */
     @Test
     void persistent_project_connection_domain() throws ParseException, JsonProcessingException {
-
-        // Result from Mongodb with the Cytomine Grails version
-
-//        > db.persistentProjectConnection.findOne()
-//        {
-//                 "_id" : NumberLong(3073),
-//                "browser" : "firefox",
-//                "browserVersion" : "92.0.0",
-//                "created" : ISODate("2021-09-22T09:06:32.472Z"),
-//                "os" : "Linux",
-//                "project" : NumberLong(3063),
-//                "session" : "B7850470EED8CD7570E05C50FD5F02F6",
-//                "user" : NumberLong(58),
-//                "countCreatedAnnotations" : 0,
-//                "countViewedImages" : 0,
-//                "time" : NumberLong(139164)
-//        }
-
         PersistentProjectConnection connection = new PersistentProjectConnection();
         connection.setId(3073L);
         connection.setBrowser("firefox");
@@ -522,8 +337,6 @@ public class MongoDBDomainTests {
         connection = persistentProjectConnectionRepository.insert(connection);
 
         Document document = retrieveDocument("persistentProjectConnection", connection.getId());
-
-        // {"_id": 3073, "browser": "firefox", "browserVersion": "92.0.0", "created": {"$date": "2021-09-22T09:06:32.472Z"}, "os": "Linux", "project": 3063, "session": "B7850470EED8CD7570E05C50FD5F02F6", "user": 58, "countCreatedAnnotations": 0, "countViewedImages": 0, "time": 139164}
 
         String expectedResults =
                 "{\n" +
@@ -554,26 +367,6 @@ public class MongoDBDomainTests {
      */
     @Test
     void persistent_image_consultation_domain() throws ParseException, JsonProcessingException {
-
-        // Result from Mongodb with the Cytomine Grails version
-
-//> db.persistentImageConsultation.findOne()
-//        {
-//            "_id" : NumberLong(3975),
-//                "created" : ISODate("2021-09-23T08:55:02.602Z"),
-//                "image" : NumberLong(3962),
-//                "imageName" : "CMU-1-Small-Region (1).svs",
-//                "imageThumb" : "http://localhost-core/api/imageinstance/3962/thumb.png?maxSize=256",
-//                "mode" : "view",
-//                "project" : NumberLong(3063),
-//                "projectConnection" : NumberLong(3974),
-//                "session" : "B6AC04394B9D9F746A15E511C5DC243B",
-//                "user" : NumberLong(58),
-//                "countCreatedAnnotations" : 0,
-//                "time" : NumberLong(12149)
-//        }
-
-
         PersistentImageConsultation consultation = new PersistentImageConsultation();
         consultation.setId(3975L);
         consultation.setUser(58L);
@@ -592,8 +385,6 @@ public class MongoDBDomainTests {
         consultation = persistentImageConsultationRepository.insert(consultation);
 
         Document document = retrieveDocument("persistentImageConsultation", consultation.getId());
-
-     // "_id": 3975, "created": {"$date": "2021-09-23T08:55:02.602Z"}, "image": 3962, "imageName": "CMU-1-Small-Region (1).svs", "imageThumb": "http://localhost-core/api/imageinstance/3962/thumb.png?maxSize=256", "mode": "view", "project": 3063, "projectConnection": 3974, "session": "B6AC04394B9D9F746A15E511C5DC243B", "user": 58, "countCreatedAnnotations": 0, "time": 12149}
 
         String expectedResults =
                 "{\n" +
@@ -626,50 +417,6 @@ public class MongoDBDomainTests {
      */
     @Test
     void persistent_user_position_index() throws ParseException, JsonProcessingException {
-
-        //Test index
-        //> db.persistentUserPosition.getIndexes()
-        //[
-        //	{
-        //		"v" : 1,
-        //		"key" : {
-        //			"_id" : 1
-        //		},
-        //		"name" : "_id_",
-        //		"ns" : "cytomine.persistentUserPosition"
-        //	},
-        //	{
-        //		"v" : 1,
-        //		"key" : {
-        //			"user" : 1,
-        //			"image" : 1,
-        //			"slice" : 1,
-        //			"created" : -1
-        //		},
-        //		"name" : "user_1_image_1_slice_1_created_-1",
-        //		"ns" : "cytomine.persistentUserPosition"
-        //	},
-        //	{
-        //		"v" : 1,
-        //		"key" : {
-        //			"location" : "2d",
-        //			"image" : 1,
-        //			"slice" : 1
-        //		},
-        //		"name" : "location_2d_image_1_slice_1",
-        //		"ns" : "cytomine.persistentUserPosition",
-        //		"min" : -2147483648,
-        //		"max" : 2147483647
-        //	},
-        //	{
-        //		"v" : 1,
-        //		"key" : {
-        //			"image" : 1
-        //		},
-        //		"name" : "image_1",
-        //		"ns" : "cytomine.persistentUserPosition"
-        //	}
-        //]
         ListIndexesIterable<Document> indexes = retrieveIndex("persistentUserPosition");
         Document indexId = null;
         Document indexUserImageSliceCreated = null;
@@ -716,36 +463,6 @@ public class MongoDBDomainTests {
      */
     @Test
     void persistent_user_position_domain() throws ParseException, JsonProcessingException {
-        // Result from Mongodb with the Cytomine Grails version
-
-        //> db.persistentUserPosition.findOne()
-        //        {
-        //            "_id" : NumberLong(3977),
-        //                "broadcast" : false,
-        //                "created" : ISODate("2021-09-23T08:55:03.608Z"),
-        //                "image" : NumberLong(3962),
-        //                "imageName" : "CMU-1-Small-Region (1).svs",
-        //                "location" : [
-        //		[
-        //            -3338,3128
-        //		],
-        //		[
-        //            5558,3128
-        //		],
-        //		[
-        //            5558,-160
-        //		],
-        //		[
-        //            -3338,-160
-        //		]
-        //	],
-        //            "project" : NumberLong(3063),
-        //                "rotation" : "0.0",
-        //                "session" : "B6AC04394B9D9F746A15E511C5DC243B",
-        //                "slice" : NumberLong(3963),
-        //                "user" : NumberLong(58),
-        //                "zoom" : 2
-        //        }
         ImageInstance imageInstance = new ImageInstance();
         imageInstance.setId(3962L);
         Project project = new Project();
@@ -754,7 +471,6 @@ public class MongoDBDomainTests {
         sliceInstance.setId(3963L);
         User user = new User();
         user.setId(58L);
-
 
         PersistentUserPosition lastPosition = new PersistentUserPosition();
         lastPosition.setId(3977L);
@@ -822,26 +538,6 @@ public class MongoDBDomainTests {
     @Test
     void annotation_action_indexes() throws ParseException, JsonProcessingException {
         ListIndexesIterable<Document> indexes = retrieveIndex("annotationAction");
-        //[
-        //	{
-        //		"v" : 1,
-        //		"key" : {
-        //			"_id" : 1
-        //		},
-        //		"name" : "_id_",
-        //		"ns" : "cytomine.annotationAction"
-        //	},
-        //	{
-        //		"v" : 1,
-        //		"key" : {
-        //			"user" : 1,
-        //			"image" : 1,
-        //			"created" : -1
-        //		},
-        //		"name" : "user_1_image_1_created_-1",
-        //		"ns" : "cytomine.annotationAction"
-        //	}
-        //]
         Document indexId = null;
         Document indexUserDate = null;
         for (Document index : indexes) {
@@ -877,15 +573,4 @@ public class MongoDBDomainTests {
         MongoCollection<Document> persistentProjectConnection = mongoClient.getDatabase(DATABASE_NAME).getCollection(collectionName);
         return persistentProjectConnection.listIndexes();
     }
-
-
-    // how to retrieve doc from grails version
-
-    //        MongoClient mongoClient = MongoClients.create();
-//        MongoCollection<Document> persistentProjectConnectionFromGrails = mongoClient.getDatabase(DATABASE_NAME).getCollection("persistentProjectConnection");
-//        results = persistentProjectConnectionFromGrails.find(eq("_id", 3073L))
-//                .into(new ArrayList<>());
-//        for (Document result : results) {
-//            System.out.println(result.toJson());
-//        }
 }

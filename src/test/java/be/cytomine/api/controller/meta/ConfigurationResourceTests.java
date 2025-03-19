@@ -66,18 +66,6 @@ public class ConfigurationResourceTests {
     @Test
     @Transactional
     public void get_a_configuration() throws Exception {
-
-//        {
-//            "class":"be.cytomine.meta.Configuration",
-//                "id":2608425,
-//                "created":"1559738023994",
-//                "updated":"1616463100826",
-//                "deleted":null,
-//                "key":"WELCOME",
-//                "value":"<p><strong>Welcome !<\u002fstrong> This DEMO instance of <strong>Cytomine 3.0<\u002fstrong> is provided to you by <a href=\"https://cytomine.com\" rel=\"noopener noreferrer\" target=\"_blank\">Cytomine corporation<\u002fa>.<\u002fp><p><strong style=\"color: rgb(230, 0, 0); background-color: rgb(255, 255, 0);\">ATTENTION<\u002fstrong><strong style=\"color: rgb(230, 0, 0);\"> :<\u002fstrong> URL of this instance have been updated from demo.cytomine<span style=\"color: rgb(230, 0, 0);\">.coop<\u002fspan> to demo.cytomine<span style=\"color: rgb(102, 185, 102);\">.com<\u002fspan>. Automatic redirection have been setup.<\u002fp>",
-//                "readingRole":"ALL"
-//        }
-
         Configuration configuration = builder.given_a_configuration("xxx");
 
         restConfigurationControllerMockMvc.perform(get("/api/configuration/key/{key}.json", configuration.getKey()))

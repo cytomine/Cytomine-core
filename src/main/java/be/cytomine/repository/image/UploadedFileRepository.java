@@ -76,22 +76,4 @@ public interface UploadedFileRepository extends JpaRepository<UploadedFile, Long
     void deleteAllByUser(User user);
 
     long countByStorage(Storage storage);
-
-//
-//    @Query(value = "SELECT uf.* " +
-//            "FROM uploaded_file uf " +
-//            "WHERE true " +
-//            "AND (:ignoreUserIdFilter IS TRUE OR uf.user_id = :userId)"
-//            , nativeQuery = true)
-//    Page<UploadedFile> search(boolean ignoreUserIdFilter, long userId, Pageable pageable);
-//
-//    default Page<UploadedFile> search(Long userId, Long parentId, Boolean onlyRoot, List<Long> storagesIds, Pageable pageable) {
-//        return search(userId==null, Optional.ofNullable(userId).orElse(-1L), pageable);
-//    }
-
-
-
-
-
-
 }

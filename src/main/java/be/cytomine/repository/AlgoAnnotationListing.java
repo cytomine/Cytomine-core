@@ -24,14 +24,10 @@ public class AlgoAnnotationListing extends AnnotationListing {
     public AlgoAnnotationListing(EntityManager entityManager) {
         super(entityManager);
     }
-    //parentIdent : 'a.parent_ident',
-    //user -> user_job_id?
-    //algo rate
 
     public String getDomainClass() {
         return "be.cytomine.domain.ontology.AlgoAnnotation";
     }
-
 
     @Override
     LinkedHashMap<String, AvailableColumns> getAvailableColumn() {
@@ -134,25 +130,13 @@ public class AlgoAnnotationListing extends AnnotationListing {
             from += "LEFT OUTER JOIN algo_annotation_term aat ON a.id = aat.annotation_ident ";
             from += "LEFT OUTER JOIN algo_annotation_term aat2 ON a.id = aat2.annotation_ident ";
             where += "AND aat.id <> aat2.id AND aat.term_id <> aat2.term_id AND aat.deleted IS NULL AND aat2.deleted IS NULL ";
-            /*from = "$from, algo_annotation_term aat, algo_annotation_term aat2 "
-            where = "$where" +
-                    "AND a.id = aat.annotation_ident\n" +
-                    " AND a.id = aat2.annotation_ident\n" +
-                    " AND aat.id <> aat2.id \n" +
-                    " AND aat.term_id <> aat2.term_id \n" +
-                    " AND aat.deleted is NULL \n"+
-                    " AND aat2.deleted is NULL \n"*/
         } else if ((noTerm || noAlgoTerm) && !(term != null || terms != null)) {
-            //from = "$from LEFT JOIN (SELECT * from algo_annotation_term x ${users ? "where x.deleted IS NULL AND x.user_job_id IN (${users.join(",")})" : ""}) aat ON a.id = aat.annotation_ident "
             from = from + " LEFT JOIN (SELECT * from algo_annotation_term x where true + " + (users != null ? "and x.user_job_id IN (" + joinValues(users) + ")" : "") + " and x.deleted IS NULL) aat ON a.id = aat.annotation_ident ";
-            //where = "$where AND aat.id IS NULL \n"
             where = where + " AND (aat.id IS NULL OR aat.deleted IS NOT NULL) \n";
 
         } else if (columnsToPrint.contains("term")) {
             from += "LEFT JOIN algo_annotation_term aat ON a.id = aat.annotation_ident ";
             where += "AND aat.deleted IS NULL ";
-            //from = "$from LEFT OUTER JOIN algo_annotation_term aat ON a.id = aat.annotation_ident"
-            //where = "$where AND aat.deleted IS NULL \n"
         }
 
         if (columnsToPrint.contains("track")) {

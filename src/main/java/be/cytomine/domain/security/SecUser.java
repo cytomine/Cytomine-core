@@ -36,13 +36,6 @@ import java.util.*;
         discriminatorType = DiscriminatorType.STRING)
 public class SecUser extends CytomineDomain {
 
-
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGen")
-//    @SequenceGenerator(name = "myGen", sequenceName = "hibernate_sequence", allocationSize=1)
-//    protected Long id;
-
-
     @NotNull
     @NotBlank
     @Column(nullable = false)
@@ -73,7 +66,6 @@ public class SecUser extends CytomineDomain {
 
     protected Boolean passwordExpired = false;
 
-
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "sec_user_sec_role",
@@ -88,7 +80,6 @@ public class SecUser extends CytomineDomain {
 
     public SecUser() {
     }
-
 
     public String humanUsername() {
         return username;

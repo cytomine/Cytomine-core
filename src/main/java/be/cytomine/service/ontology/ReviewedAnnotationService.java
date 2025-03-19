@@ -175,108 +175,12 @@ public class ReviewedAnnotationService extends ModelService {
         return annotationListingService.executeRequest(reviewedAnnotationListing);
     }
 
-
-    // TODO: seems useless, no migration?
-//    /**
-//     * List validate annotation
-//     * @param image Image filter
-//     * @param bbox Boundary area filter
-//     * @return Reviewed Annotation list
-//     */
-//    def list(ImageInstance image, String bbox, def propertiesToShow = null) {
-//        Geometry boundingbox = GeometryUtils.createBoundingBox(bbox)
-//        list(image, boundingbox,propertiesToShow)
-//    }
-//
-//    /**
-//     * List validate annotation
-//     * @param image Image filter
-//     * @param bbox Boundary area filter
-//     * @return Reviewed Annotation list
-//     */
-//    def list(ImageInstance image, Geometry bbox, def propertiesToShow = null) {
-//        securityACLService.check(image.container(),READ)
-//
-//
-//        def rule = kmeansGeometryService.mustBeReduce(image,null,bbox)
-//        if(rule==kmeansGeometryService.FULL) {
-//            /**
-//             * We will sort annotation so that big annotation that covers a lot of annotation comes first (appear behind little annotation so we can select annotation behind other)
-//             * We compute in 'gc' the set of all other annotation that must be list
-//             * For each review annotation, we compute the number of other annotation that cover it (ST_CoveredBy => t or f => 0 or 1)
-//             *
-//             * ST_CoveredBy will return false if the annotation is not perfectly "under" the compare annotation (if some points are outside)
-//             * So in gc, we increase the size of each compare annotation just for the check
-//             * So if an annotation x is under y but x has some point next outside y, x will appear top (if no resize, it will appear top or behind).
-//             */
-//            def xfactor = "1.28"
-//            def yfactor = "1.28"
-//            //TODO:: get zoom info from UI client, display with scaling only with hight zoom (< annotations)
-//
-//            double imageWidth = image.baseImage.width
-//            double bboxWidth = bbox.getEnvelopeInternal().width
-//            double ratio = bboxWidth/imageWidth*100
-//
-//            boolean zoomToLow = ratio > 50
-//
-//            log.info "imageWidth=$imageWidth"
-//            log.info "bboxWidth=$bboxWidth"
-//            log.info "ratio=$ratio"
-//            log.info  "zoomToLow="+zoomToLow
-//            String subRequest
-//            if (zoomToLow) {
-//                subRequest = "(SELECT SUM(ST_CoveredBy(ga.location,gb.location )::integer) "
-//            } else {
-//                //too heavy to use with little zoom
-//                subRequest = "(SELECT SUM(ST_CoveredBy(ga.location,ST_Translate(ST_Scale(gb.location, $xfactor, $yfactor), ST_X(ST_Centroid(gb.location))*(1 - $xfactor), ST_Y(ST_Centroid(gb.location))*(1 - $yfactor) ))::integer) "
-//
-//            }
-//
-//            subRequest =  subRequest +
-//                    "FROM reviewed_annotation ga, reviewed_annotation gb " +
-//                    "WHERE ga.id=a.id " +
-//                    "AND ga.id<>gb.id " +
-//                    "AND ga.image_id=gb.image_id " +
-//                    "AND ST_Intersects(gb.location,ST_GeometryFromText('" + bbox.toString() + "',0)))\n"
-//
-//            ReviewedAnnotationListing al = new ReviewedAnnotationListing(
-//                    columnToPrint: propertiesToShow,
-//                    image: image.id,
-//                    bbox : bbox,
-//                    orderBy: ['id':'asc']
-//            //orderBy: ['numberOfCoveringAnnotation':'asc','id':'asc']
-//                )
-//
-//            //DISABLE COVER BY FOR PERF
-//            //al.addExtraColumn("numberOfCoveringAnnotation",subRequest)
-//            annotationListingService.executeRequest(al)
-//
-//        } else {
-//
-//            ReviewedAnnotationListing al = new ReviewedAnnotationListing(
-//                    columnToPrint: propertiesToShow,
-//                    kmeans: true,
-//                    image: image.id,
-//                    avoidEmptyCentroid : true,
-//                    bbox : bbox
-//                )
-//            if(rule==kmeansGeometryService.KMEANSFULL){
-//
-//                kmeansGeometryService.doKeamsFullRequest(al.getAnnotationsRequest())
-//            } else {
-//                kmeansGeometryService.doKeamsSoftRequest(al.getAnnotationsRequest())
-//            }
-//        }
-//    }
-
-
     public List<UserTermMapping> listTerms(ReviewedAnnotation annotation) {
         Long reviewer = (annotation.getImage().getReviewUser()!=null?
                 annotation.getImage().getReviewUser().getId() : null);
         return annotation.getTerms().stream().map(x -> new UserTermMapping(x.getId(), reviewer))
                 .collect(Collectors.toList());
     }
-
 
     /**
      * Add the new domain with JSON data
@@ -521,40 +425,15 @@ public class ReviewedAnnotationService extends ModelService {
         return reviewed.stream().map(CytomineDomain::getId).collect(Collectors.toList());
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     protected void beforeAdd(CytomineDomain domain) {
         // this will be done in the PrePersist method ; but the validation is done before PrePersist
         ((ReviewedAnnotation)domain).setWktLocation(((ReviewedAnnotation)domain).getLocation().toText());
     }
 
-
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
         ReviewedAnnotation annotation = (ReviewedAnnotation)domain;
         return List.of(currentUserService.getCurrentUser().toString(), annotation.getImage().getBaseImage().getOriginalFilename());
     }
-
-
 
     @Override
     public void checkDoNotAlreadyExist(CytomineDomain domain) {
@@ -564,7 +443,6 @@ public class ReviewedAnnotationService extends ModelService {
             throw new AlreadyExistException("Annotation " + ((ReviewedAnnotation)domain).getParentIdent() + " has already been reviewed");
         }
     }
-
 
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         ((ReviewedAnnotation)domain).getTerms().clear();
@@ -644,6 +522,4 @@ public class ReviewedAnnotationService extends ModelService {
         }
         return result;
     }
-
-
 }

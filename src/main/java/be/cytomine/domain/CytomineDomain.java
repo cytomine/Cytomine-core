@@ -40,18 +40,13 @@ import java.util.stream.Collectors;
 @EntityListeners(AuditingEntityListener.class)
 public abstract class CytomineDomain {
 
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGenerator")
-//    //@SequenceGenerator(name = "myGen", sequenceName = "hibernate_sequence", allocationSize=1)
-//    @GenericGenerator(name = "myGenerator", strategy = "be.cytomine.config.CustomIdentifierGenerator")
     @GenericGenerator(
-            name = "myGenerator",
-            strategy = "be.cytomine.config.CustomIdentifierGenerator",
-            parameters = {
-                    @org.hibernate.annotations.Parameter(name = "sequence_name", value = "hibernate_sequence"),
-                    @org.hibernate.annotations.Parameter(name = "increment_size", value = "1")
-
-            }
+        name = "myGenerator",
+        strategy = "be.cytomine.config.CustomIdentifierGenerator",
+        parameters = {
+            @org.hibernate.annotations.Parameter(name = "sequence_name", value = "hibernate_sequence"),
+            @org.hibernate.annotations.Parameter(name = "increment_size", value = "1")
+        }
     )
     @GeneratedValue(strategy = GenerationType.SEQUENCE,generator = "myGenerator")
     @Id
@@ -100,14 +95,6 @@ public abstract class CytomineDomain {
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         return null;
     }
-
-//    public static CytomineDomain buildDomainFromJson(JsonObject json) {
-//        return null;
-//    }
-//
-//    public static CytomineDomain buildDomainFromJson(JsonObject json, CytomineDomain domain) {
-//        return null;
-//    }
 
     public List<ValidationError> validate() {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();

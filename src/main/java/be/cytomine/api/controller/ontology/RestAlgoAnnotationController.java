@@ -1,20 +1,16 @@
 package be.cytomine.api.controller.ontology;
 
-/*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+import java.io.IOException;
+import java.util.*;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.io.ParseException;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.api.controller.utils.AnnotationListingBuilder;
@@ -38,23 +34,11 @@ import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.locationtech.jts.io.ParseException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.cloud.gateway.mvc.ProxyExchange;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.util.*;
-
-@RestController
-@RequestMapping("/api")
 @Slf4j
 @RequiredArgsConstructor
+@RequestMapping("/api")
+@RestController
 public class RestAlgoAnnotationController extends RestCytomineController {
 
     private final AlgoAnnotationService algoAnnotationService;
@@ -75,7 +59,6 @@ public class RestAlgoAnnotationController extends RestCytomineController {
 
     private final TermService termService;
 
-
     /**
      * List all annotation (created by algo) visible for the current user
      */
@@ -90,7 +73,6 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         }
         return responseSuccess(result);
     }
-
 
     @GetMapping("/algoannotation/{id}.json")
     public ResponseEntity<String> show(
@@ -115,7 +97,6 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         Date end = (endDate!=null? new Date(endDate) : null);
         return responseSuccess(JsonObject.of("total", algoAnnotationService.countByProject(project, start, end)));
     }
-
 
     @PostMapping("/algoannotation.json")
     public ResponseEntity<String> add(
@@ -154,7 +135,6 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         return service.add(json);
     }
 
-
     @PutMapping("/algoannotation/{id}.json")
     public ResponseEntity<String> edit(@PathVariable String id, @RequestBody JsonObject json) {
         log.debug("REST request to edit algo annotation : " + id);
@@ -170,7 +150,6 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         log.debug("REST request to delete an annotation : " + id);
         return delete(algoAnnotationService, JsonObject.of("id", id), null);
     }
-
 
     /**
      * DDownload a report (pdf, xls,...) with software annotation data from a specific project
@@ -193,25 +172,6 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         byte[] report = annotationListingBuilder.buildAnnotationReport(idProject, users, params, terms, format);
         responseReportFile(reportService.getAnnotationReportFileName(format, idProject), report, format);
     }
-    // TODO
-//    @RestApiMethod(description="Download a report (pdf, xls,...) with software annotation data from a specific project")
-//    @RestApiResponseObject(objectIdentifier =  "file")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The project id"),
-//            @RestApiParam(name="terms", type="list", paramType = RestApiParamType.QUERY,description = "The annotation terms id (if empty: all terms)"),
-//            @RestApiParam(name="users", type="list", paramType = RestApiParamType.QUERY,description = "The annotation users id (if empty: all users)"),
-//            @RestApiParam(name="images", type="list", paramType = RestApiParamType.QUERY,description = "The annotation images id (if empty: all images)"),
-//            @RestApiParam(name="afterThan", type="Long", paramType = RestApiParamType.QUERY, description = "(Optional) Annotations created before this date will not be returned"),
-//            @RestApiParam(name="beforeThan", type="Long", paramType = RestApiParamType.QUERY, description = "(Optional) Annotations created after this date will not be returned"),
-//            @RestApiParam(name="format", type="string", paramType = RestApiParamType.QUERY,description = "The report format (pdf, xls,...)"),
-//            ])
-//    def downloadDocumentByProject() {
-//        Long afterThan = params.getLong('afterThan')
-//        Long beforeThan = params.getLong('beforeThan')
-//        reportService.createAnnotationDocuments(params.long('id'), params.terms, params.boolean("noTerm", false), params.boolean("multipleTerms", false),
-//        params.users, params.images, afterThan, beforeThan, params.format, response, "ALGOANNOTATION")
-//    }
-
 
     @RequestMapping(value = "/algoannotation/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<byte[]> crop(
@@ -411,7 +371,6 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         return imageServerService.crop(algoAnnotation, cropParameter, etag, proxy);
     }
 
-
     /**
      * Add comment on an annotation to other user
      */
@@ -427,7 +386,6 @@ public class RestAlgoAnnotationController extends RestCytomineController {
         json.put("annotationClassName", annotation.getClass().getName());
         return responseSuccess(sharedAnnotationService.add(json));
     }
-
 
     /**
      * Show a single comment for an annotation
@@ -456,5 +414,4 @@ public class RestAlgoAnnotationController extends RestCytomineController {
                 .orElseThrow(()-> new ObjectNotFoundException("Annotation", annotationId));
         return responseSuccess(sharedAnnotationService.listComments(annotation));
     }
-
 }

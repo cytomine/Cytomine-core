@@ -69,23 +69,6 @@ public abstract class RestCytomineController {
     @Autowired
     protected HttpServletResponse response;
 
-//    /**
-//     * Response a successful HTTP message
-//     * @param data Message content
-//     */
-//    protected JsonObject responseSuccess(Object data, Map<String,String> params) {
-//        if(data instanceof List) {
-//            return responseList((List)data, params);
-//        } else if(data instanceof Collection) {
-//            List list = new ArrayList();
-//            list.addAll((Collection)data);
-//            return responseList(list, params);
-//        }
-//        else {
-//            response(data);
-//        }
-//    }
-
     protected String getRequestETag() {
         return request.getHeader("If-None-Match")!=null ? request.getHeader("If-None-Match") : request.getHeader("if-none-match");
     }
@@ -109,12 +92,6 @@ public abstract class RestCytomineController {
         }
 
         int realMax = requestParams.get("max").equals("0") ? Integer.MAX_VALUE : Integer.parseInt(requestParams.get("max"));
-//        int pageIndex =  Math.floor(Double.parseDouble(requestParams.get("offset")) / (double)realMax);
-//
-//        return PageRequest.of(
-//                pageIndex,
-//                realMax,
-//                sort);
 
         return new OffsetBasedPageRequest(Long.parseLong(requestParams.get("offset")), realMax, sort);
     }
@@ -180,10 +157,6 @@ public abstract class RestCytomineController {
         return JsonObject.of("collection", finalContent, "offset", offset, "perPage", Math.min(max, page.getContent().size()), "size", page.getTotalElements(), "totalPages", (int)Math.ceil((double)page.getTotalElements()/(double)max));
     }
 
-//    protected ResponseEntity<String> response(Map<String, Object> response, int code) {
-//        return ResponseEntity.status(code).body(convertObjectToJSON(response));
-//    }
-
     protected ResponseEntity<String> responseSuccess(Page page) {
         return responseSuccess(page, false);
     }
@@ -203,7 +176,6 @@ public abstract class RestCytomineController {
         }
         return JsonResponseEntity.status(HttpStatus.OK).body(buildJsonList(page, requestParams).toJsonString());
     }
-
 
     protected ResponseEntity<String> responseSuccess(Page page, Integer offsetParameter, Integer maxParameter) {
         return JsonResponseEntity.status(HttpStatus.OK).body(buildJsonList(page, offsetParameter, maxParameter).toJsonString());
@@ -280,8 +252,6 @@ public abstract class RestCytomineController {
         return JsonResponseEntity.status(HttpStatus.OK).body(json.toJsonString());
     }
 
-
-
     protected ResponseEntity<String> responseSuccess(CytomineDomain response) {
         return JsonResponseEntity.status(HttpStatus.OK).body(response.toJSON());
     }
@@ -354,18 +324,9 @@ public abstract class RestCytomineController {
         return results;
     }
 
-//    protected List<JsonObject> convertObjectToJSON(List list) {
-//        List<JsonObject> results = new ArrayList<>();
-//        for (Object o : list) {
-//            results.add(convertObjectToJSON(o));
-//        }
-//        return results;
-//    }
-
     protected String convertListToJSON(List o) {
         return JsonObject.toJsonString(o);
     }
-
 
     public ResponseEntity<String> add(ModelService service, JsonInput json) {
         return add(service, json, null);
@@ -385,8 +346,6 @@ public abstract class RestCytomineController {
         }
         return add(service, data);
     }
-
-
 
     public JsonObject addMultiple(ModelService service, List<JsonObject> json) {
         return service.addMultiple(json);
@@ -477,21 +436,6 @@ public abstract class RestCytomineController {
 
     }
 
-    /**
-     * Build a response message for a domain not found
-     * E.g. annotation 34 was not found
-     * className = annotation, id = 34.
-     * @param className Type of domain not found
-     * @param id Domain id
-     */
-//    private static JsonObject buildJsonNotFound(String className, String id) {
-//        return buildJsonNotFound(className, Map.of("id", id));
-//    }
-//
-//    private static JsonObject buildJsonNotFound(String className, String filter, String id) {
-//        return buildJsonNotFound(className, Map.of(filter, id));
-//    }
-
     private static JsonObject buildJsonNotFound(String className, Map<String, Object> filters) {
         log.info("responseNotFound $className $id");
         log.error(className + " with filter " + filters + " does not exist");
@@ -499,10 +443,6 @@ public abstract class RestCytomineController {
         jsonObject.put("errors", Map.of("message",  className + " not found with filters : " + filters));
         return jsonObject;
     }
-
-//    private static JsonObject buildJsonNotFound(String className, Long id) {
-//        return buildJsonNotFound(className, String.valueOf(id));
-//    }
 
     protected ResponseEntity<String> responseNotFound(String className, String id) {
         return responseNotFound(className, "id", id);
@@ -537,7 +477,6 @@ public abstract class RestCytomineController {
         }
         return flatMap;
     }
-
 
     protected void responseImageByteArray(String contentType, byte[] bytes) throws IOException {
         response.setContentLength(bytes.length);
@@ -606,7 +545,6 @@ public abstract class RestCytomineController {
             }
         }
     }
-
 
     /**
      * Response an image as a HTTP response

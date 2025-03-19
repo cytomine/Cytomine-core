@@ -153,16 +153,6 @@ public class UserAnnotationService extends ModelService {
         return optionalUserAnnotation;
     }
 
-// TODO: seems to be useless ; no migration?:
-//    def list(Project project, def propertiesToShow = null) {
-//        securityACLService.check(project.container(), READ)
-//        annotationListingService.executeRequest(new UserAnnotationListing(
-//                project: project.id,
-//                columnToPrint: propertiesToShow
-//        ))
-//    }
-
-
     public List listIncluded(ImageInstance image, String geometry, SecUser user, List<Long> terms, AnnotationDomain annotation, List<String> propertiesToShow) {
         securityACLService.check(image.container(), READ);
 
@@ -175,90 +165,6 @@ public class UserAnnotationService extends ModelService {
         userAnnotationListing.setBbox(geometry);
         return annotationListingService.executeRequest(userAnnotationListing);
     }
-
-
-    //TODO: seems to be useless ; no migration?: + need job
-    /**
-     * List annotation where a user from 'userList' has added term 'realTerm' and for which a specific job has predicted 'suggestedTerm'
-     * @param project Annotation project
-     * @return
-     */
-//    List list(Project project, List<Long> userList, Term realTerm, Term suggestedTerm, Job job,
-//             def propertiesToShow = null) {
-//        securityACLService.check(project.container(), READ)
-//        if (userList.isEmpty()) {
-//            return []
-//        }
-//        annotationListingService.executeRequest(new UserAnnotationListing(
-//                columnToPrint: propertiesToShow,
-//                project: project.id,
-//                users: userList,
-//                term: realTerm.id,
-//                suggestedTerm: suggestedTerm.id,
-//                userForTermAlgo: UserJob.findByJob(job)
-//        ))
-//    }
-//TODO: seems to be useless ; no migration?:
-//
-//    /**
-//     * List annotations according to some filters parameters (rem : use list light if you only need the response, not
-//     * the objects)
-//     * @param image the image instance
-//     * @param bbox Geometry restricted Area
-//     * @param termsIDS filter terms ids
-//     * @param userIDS filter user ids
-//     * @return Annotation listing
-//     */
-//    def list(ImageInstance image, Geometry bbox, List<Long> termsIDS, List<Long> userIDS) {
-//        //:to do use listlight and parse WKT instead ?
-//        Collection<UserAnnotation> annotations = UserAnnotation.createCriteria()
-//                .add(Restrictions.isNull("deleted"))
-//                .add(Restrictions.in("user.id", userIDS))
-//                .add(Restrictions.eq("image.id", image.id))
-//                .add(SpatialRestrictions.intersects("location", bbox))
-//                .list()
-//
-//        if (!annotations.isEmpty() && termsIDS.size() > 0) {
-//            annotations = (Collection<UserAnnotation>) AnnotationTerm.createCriteria().list {
-//                isNull("deleted")
-//                inList("term.id", termsIDS)
-//                join("userAnnotation")
-//                createAlias("userAnnotation", "a")
-//                projections {
-//                    inList("a.id", annotations.collect { it.id })
-//                    groupProperty("userAnnotation")
-//                }
-//            }
-//        }
-//
-//        return annotations
-//    }
-//TODO: seems to be useless ; no migration?:
-
-//    def list(SliceInstance slice, Geometry bbox, List<Long> termsIDS, List<Long> userIDS) {
-//        //:to do use listlight and parse WKT instead ?
-//        Collection<UserAnnotation> annotations = UserAnnotation.createCriteria()
-//                .add(Restrictions.isNull("deleted"))
-//                .add(Restrictions.in("user.id", userIDS))
-//                .add(Restrictions.eq("slice.id", slice.id))
-//                .add(SpatialRestrictions.intersects("location", bbox))
-//                .list()
-//
-//        if (!annotations.isEmpty() && termsIDS.size() > 0) {
-//            annotations = (Collection<UserAnnotation>) AnnotationTerm.createCriteria().list {
-//                isNull("deleted")
-//                inList("term.id", termsIDS)
-//                join("userAnnotation")
-//                createAlias("userAnnotation", "a")
-//                projections {
-//                    inList("a.id", annotations.collect { it.id })
-//                    groupProperty("userAnnotation")
-//                }
-//            }
-//        }
-//
-//        return annotations
-//    }
 
     public Long count(User user, Project project) {
         if (project!=null) {

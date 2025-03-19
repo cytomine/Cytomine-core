@@ -95,7 +95,6 @@ public class CurrentRoleService {
         Set<SecRole> roles = findRealRole(user);
         boolean isSuperAdmin = roles.stream().anyMatch(role -> role.getAuthority().equals("ROLE_SUPER_ADMIN"));
         //role super admin don't need to open a admin session, so we don't remove the role admin from the current role
-        //log.info "isSuperAdmin=$isSuperAdmin isAdmin=$isAdmin"
         if(!currentAdmins.containsKey(user.getUsername()) && !isSuperAdmin) {
             roles = roles.stream().filter(role -> !role.getAuthority().equals("ROLE_ADMIN")).collect(Collectors.toSet());
         }

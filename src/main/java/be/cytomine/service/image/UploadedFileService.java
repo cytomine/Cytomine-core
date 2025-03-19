@@ -264,28 +264,6 @@ public class UploadedFileService extends ModelService {
                 "GROUP BY uf.id , uf.l_tree " +
                 "ORDER BY uf.l_tree ASC ";
 
-
-//        String request = "SELECT uf.id, uf.created, uf.original_filename, uf.content_type, " +
-//                "uf.l_tree, uf.parent_id as parent, " +
-//                "uf.size, uf.status " +
-//                "FROM uploaded_file uf " +
-//                "LEFT JOIN abstract_image ai ON ai.uploaded_file_id = uf.id " +
-//                "LEFT JOIN abstract_slice asl ON asl.uploaded_file_id = uf.id " +
-//                "LEFT JOIN companion_file cf ON cf.uploaded_file_id = uf.id " +
-//                "LEFT JOIN acl_object_identity as aoi ON aoi.object_id_identity = uf.storage_id " +
-//                "LEFT JOIN acl_entry as ae ON ae.acl_object_identity = aoi.id " +
-//                "LEFT JOIN acl_sid as asi ON asi.id = ae.sid " +
-//                "WHERE asi.sid = :username " +
-//                "AND uf.deleted IS NULL " +
-//                "GROUP BY uf.id " +
-//                "ORDER BY uf.l_tree ASC ";
-
-//        String request = "SELECT uf.id, uf.created, uf.original_filename, uf.content_type, " +
-//                "uf.l_tree, uf.parent_id as parent, " +
-//                "uf.size, uf.status " +
-//                "FROM uploaded_file uf ";
-
-
         Query query = getEntityManager().createNativeQuery(request, Tuple.class);
         query.setParameter("username", user.getUsername());
 

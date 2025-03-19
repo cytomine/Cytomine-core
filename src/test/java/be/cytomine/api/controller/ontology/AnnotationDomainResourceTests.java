@@ -423,9 +423,6 @@ public class AnnotationDomainResourceTests {
         // intersect a,b and c
         String polygonIncluding_A1_A2_A3 = "POLYGON ((2 2, 3 2, 3 4, 2 4, 2 2))";
 
-
-        //api/imageinstance/$idImage/annotation/included.json?geometry=${geometry.replace(" ","%20")}" + (terms? "&terms=${terms.join(',')}" : "") + "&user=${idUser}"
-
         restAnnotationDomainControllerMockMvc.perform(get("/api/imageinstance/"+image.getId()+"/annotation/included.json")
                         .param("geometry", polygonIncluding_A1_A2_A3.toString())
                         .param("user", this.me.getId().toString())
@@ -1662,7 +1659,6 @@ public class AnnotationDomainResourceTests {
                 .andExpect(status().isOk()).andReturn();
 
         assert new WKTReader().read(expectedLocation).equals(annotation.getLocation());
-        //assertEquals(expectedLocation,annotationToFill.location.toString())
     }
 
     @Test

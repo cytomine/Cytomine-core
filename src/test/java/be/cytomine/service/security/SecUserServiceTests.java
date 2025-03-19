@@ -1137,7 +1137,6 @@ public class SecUserServiceTests {
         uploadedFile.setUser(user);
 
         Storage storage = builder.given_a_storage(user);
-        //storageService.initUserStorage(user);
 
         ProjectDefaultLayer projectDefaultLayer =
                 builder.given_a_project_default_layer(builder.given_a_project(), user);

@@ -1,20 +1,18 @@
 package be.cytomine.api.controller.security;
 
-/*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import be.cytomine.api.JsonResponseEntity;
 import be.cytomine.api.controller.RestCytomineController;
@@ -43,26 +41,13 @@ import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.SecurityUtils;
 import be.cytomine.utils.StringUtils;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationContext;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
-@RestController
-@RequestMapping("/api")
 @Slf4j
 @RequiredArgsConstructor
+@RequestMapping("/api")
+@RestController
 public class RestUserController extends RestCytomineController {
 
     private final SecUserService secUserService;
@@ -84,7 +69,6 @@ public class RestUserController extends RestCytomineController {
     private final ApplicationContext applicationContext;
 
     private final ReportService reportService;
-
 
     @GetMapping("/project/{id}/admin.json")
     public ResponseEntity<String> showAdminByProject(
@@ -116,7 +100,6 @@ public class RestUserController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("Project", id));
         return responseSuccess(List.of(secUserService.findCreator(project).orElseThrow(() -> new ObjectNotFoundException("Project", "CREATOR"))));
     }
-
 
     @GetMapping("/ontology/{id}/user.json")
     public ResponseEntity<String> showUserByOntology(
@@ -151,7 +134,6 @@ public class RestUserController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("Storage", id));
         return responseSuccess(secUserService.listUsers(storage), isFilterRequired());
     }
-
 
     @GetMapping("/user.json")
     public ResponseEntity<String> list(
@@ -234,8 +216,6 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(JsonObject.of("signature", signature, "publicKey", user.getPublicKey()));
     }
 
-
-
     @GetMapping("/user/current.json")
     public ResponseEntity<String> getCurrentUser(
     ) {
@@ -260,7 +240,6 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(object);
     }
 
-
     @PostMapping("/user.json")
     public ResponseEntity<String> createUser(@RequestBody String json) {
         log.debug("REST request to save User : " + json);
@@ -279,7 +258,6 @@ public class RestUserController extends RestCytomineController {
         return delete(secUserService, JsonObject.of("id", Long.parseLong(id)), null);
     }
 
-
     @PostMapping("/user/{id}/lock.json")
     public ResponseEntity<String> lock(@PathVariable Long id) {
         log.debug("REST request to lock User : {}", id);
@@ -295,8 +273,6 @@ public class RestUserController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("User", id));
         return responseSuccess(secUserService.unlock(user));
     }
-
-
 
     @GetMapping("/project/{id}/user.json")
     public ResponseEntity<String> showByProject(
@@ -324,10 +300,7 @@ public class RestUserController extends RestCytomineController {
                 secUserService.listUsersExtendedByProject(project, userSearchExtension, retrieveSearchParameters(), sortColumn, sortDirection, max, offset)
                 , isFilterRequired()
         );
-
-        //return responseSuccess(projectService.list(user, projectSearchExtension, new ArrayList<>(), "created", "desc", 0L, 0L), allParams);
     }
-
 
     @PostMapping("/project/{project}/user/{user}.json")
     public ResponseEntity<String> addUserToProject(@PathVariable("project") Long projectId, @PathVariable("user") Long userId) {
@@ -504,7 +477,6 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(JsonObject.of("data", JsonObject.of("message", "OK")).toJsonString());
     }
 
-
     @PutMapping("/user/{user}/password.json")
     public ResponseEntity<String> resetPassword(@PathVariable("user") Long userId,
                                                 @RequestBody JsonObject json) {
@@ -570,7 +542,6 @@ public class RestUserController extends RestCytomineController {
         return responseSuccess(friends, isFilterRequired());
     }
 
-
     @GetMapping("/project/{project}/online/user.json")
     public ResponseEntity<String> listOnlineFriendsWithPosition(
             @PathVariable(value = "project") Long projectId
@@ -592,7 +563,6 @@ public class RestUserController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
         return responseSuccess(secUserService.getUsersWithLastActivities(project), isFilterRequired());
     }
-
 
     @GetMapping("/project/{project}/user/download")
     public void download(
@@ -635,7 +605,6 @@ public class RestUserController extends RestCytomineController {
 
         return responseSuccess(secUserService.getResumeActivities(project, user), isFilterRequired());
     }
-
 
     boolean isFilterRequired() {
         try{

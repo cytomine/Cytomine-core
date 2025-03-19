@@ -65,15 +65,9 @@ public abstract class ModelService<T extends CytomineDomain> {
     @Autowired
     SecurityACLService securityACLService;
 
-//    @Autowired
-//    ResponseService responseService;
-
     @Autowired
     ApplicationContext applicationContext;
 
-//    @Autowired
-//    TaskService taskService;
-//
     @Autowired
     CommandService commandService;
 
@@ -95,16 +89,6 @@ public abstract class ModelService<T extends CytomineDomain> {
     @Autowired
     TagDomainAssociationService tagDomainAssociationService;
 
-//    def responseService
-
-//    def cytomineService
-//    def grailsApplication
-//    def taskService
-//    def attachedFileService
-//    def descriptionService
-//    def propertyService
-//    def tagDomainAssociationService
-    //def securityACLService
     boolean saveOnUndoRedoStack = true;
 
     public Long generateNextId() {
@@ -116,13 +100,7 @@ public abstract class ModelService<T extends CytomineDomain> {
      */
     public void saveDomain(CytomineDomain newObject) {
         checkDoNotAlreadyExist(newObject);
-//        List<ValidationError> validationErrors = newObject.validate();
-//        if (!validationErrors.isEmpty()) {
-//            for (ValidationError validationError : validationErrors) {
-//                log.error(validationError.getProperty() + " " + validationError.getMessage());
-//            }
-//            throw new WrongArgumentException(validationErrors.toString());
-//        }
+
         try {
             if (newObject.getId()!=null && !entityManager.contains(newObject)) {
                 log.debug("object detached");
@@ -181,7 +159,6 @@ public abstract class ModelService<T extends CytomineDomain> {
         return executeCommand(c,task);
     }
 
-
     public CommandResponse executeCommand(Command c) {
         return executeCommand(c, null);
     }
@@ -200,21 +177,6 @@ public abstract class ModelService<T extends CytomineDomain> {
             //remove all dependent domains
 
             // TODO: delete dependency mechanism
-//            def allServiceMethods = this.getClass().getMethods()
-//            def dependencyMethods = allServiceMethods.findAll{it.name.startsWith("deleteDependent")}.unique({it.name})
-//
-//            def (ordered, unordered) = dependencyMethods.split { it.annotations.findAll{it instanceof DependencyOrder}.size() > 0  }
-//            ordered = ordered.sort{- it.annotations.find{it instanceof DependencyOrder}.order()}
-//            dependencyMethods = ordered + unordered
-//
-//            int numberOfDirectDependence = dependencyMethods.size()
-//
-//            dependencyMethods*.name.eachWithIndex { method, index ->
-//                    taskService.updateTask(task, (int)((double)index/(double)numberOfDirectDependence)*100, "")
-//                this."$method"(domainToDelete,c.transaction,task)
-//            }
-//            task
-
         }
         initCommandService();
         c.setSaveOnUndoRedoStack(this.isSaveOnUndoRedoStack()); //need to use getter method, to get child value

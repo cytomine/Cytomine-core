@@ -226,9 +226,7 @@ public class ReviewedAnnotationListing extends AnnotationListing {
                     "AND ga.image_id=gb.image_id " +
                     "AND ST_Intersects(gb.location,ST_GeometryFromText('" + bbox + "',0)))\n";
 
-            //orderBy = ['numberOfCoveringAnnotation':'asc','id':'asc']
             orderBy = new LinkedHashMap<>(Map.of("id", "desc"));
-            //addExtraColumn("numberOfCoveringAnnotation",subRequest)
             return subRequest;
         }
         return "";

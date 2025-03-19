@@ -716,18 +716,6 @@ public class ImageInstanceServiceTests {
         SliceInstance sliceInstance = builder.given_a_slice_instance();
         ImageInstance imageInstance = sliceInstance.getImage();
 
-//        deleteDependentAlgoAnnotation(imageInstance, transaction, task);
-//        deleteDependentReviewedAnnotation(imageInstance, transaction, task);
-//        deleteDependentUserAnnotation(imageInstance, transaction, task);
-//        deleteDependentAnnotationAction(imageInstance, transaction, task);
-//        deleteDependentLastUserPosition(imageInstance, transaction, task);
-//        deleteDependentPersistentUserPosition(imageInstance, transaction, task);
-//        deleteDependentPersistentImageConsultation(imageInstance, transaction, task);
-//        deleteDependentProperty(imageInstance, transaction, task);
-//        deleteDependentNestedImageInstance(imageInstance, transaction, task);
-//        deleteDependentSliceInstance(imageInstance, transaction, task);
-//        deleteDependentTrack(imageInstance, transaction, task);
-
         AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
         algoAnnotation.setImage(imageInstance);
 

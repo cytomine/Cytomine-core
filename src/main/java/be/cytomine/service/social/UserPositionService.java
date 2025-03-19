@@ -121,15 +121,6 @@ public class UserPositionService {
     @Autowired
     SequenceService sequenceService;
 
-//
-//    public LastUserPosition add(SecUser user, SliceInstance sliceInstance) {
-//
-//    }
-//
-//    public LastUserPosition add(SecUser user, ImageInstance imageInstance) {
-//
-//    }
-
     // usersTracked key -> "trackedUserId/imageId"
     public static Map<String, List<User>> broadcasters = new ConcurrentHashMap<>();
 
@@ -164,16 +155,6 @@ public class UserPositionService {
         position.setUpdated(created);
         position.setImageName(imageInstance.getBlindInstanceFilename());
         lastUserPositionRepository.insert(position);
-
-        // It used to be WS through HTTP polling.
-        // It probably can be removed at some point.
-        //if(lastPosition.isPresent() && !LastUserPosition.isSameLocation(lastPosition.get().getLocation(), currentLocation)){
-        //    try{
-        //        webSocketUserPositionHandler.sendPositionToFollowers(user.getId().toString(), imageInstance.getId().toString(), position.toJsonObject().toJsonString());
-        //    }catch (ServerException e){
-        //        log.error(e.getMessage());
-        //    }
-        //}
 
         PersistentUserPosition persistedPosition = new PersistentUserPosition();
         persistedPosition.setId(sequenceService.generateID());

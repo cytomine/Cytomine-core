@@ -60,7 +60,6 @@ public class ServerController extends RestCytomineController {
 
     private final TokenProvider tokenProvider;
 
-    //@Secured("IS_AUTHENTICATED_REMEMBERED") //TODO????
     @RequestMapping(value = {"/server/ping.json", "/server/ping"}, method = {RequestMethod.GET, RequestMethod.POST}) // without.json is deprecated
     public ResponseEntity<String> ping(HttpSession session) throws IOException {
         log.debug("REST request to ping");
@@ -88,8 +87,6 @@ public class ServerController extends RestCytomineController {
             addLastConnection(user, idProject);
         }
         return JsonResponseEntity.status(HttpStatus.OK).body(response.toJsonString());
-
-        //{"alive":true,"authenticated":true,"version":"0.0.0","serverURL":"https://demo.cytomine.com","serverID":"938a336f-d600-48ac-9c3a-aaedc03a9f84","user":6399285}
     }
 
     void addLastConnection(SecUser user, Long idProject) {
@@ -122,5 +119,4 @@ public class ServerController extends RestCytomineController {
         jsonObject.put("serverURL", applicationProperties.getServerURL());
         return ResponseEntity.ok(jsonObject.toJsonString());
     }
-
 }

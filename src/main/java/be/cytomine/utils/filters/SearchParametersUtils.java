@@ -72,12 +72,9 @@ public class SearchParametersUtils {
                     values = URLDecoder.decode(values.toString(), StandardCharsets.UTF_8);
                 }
 
-//                String sqlOperator = (operator.equals(SEARCH_PARAM_EQUALS)) ? "=" : operator;
-
                 if(EnumUtils.isValidEnum(SearchOperation.class, operator)) {
                     SearchParameterEntry searchParameterEntry =
                             new SearchParameterEntry(field, SearchOperation.valueOf(operator), values);
-//                    searchParameterEntry.set(sqlOperator);
                     searchParameterEntries.add(searchParameterEntry);
                 }
             }

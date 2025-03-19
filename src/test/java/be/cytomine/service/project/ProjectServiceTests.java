@@ -310,9 +310,7 @@ public class ProjectServiceTests {
     @Test
     void list_user_project_with_annotation_filters() {
         Project project1 = builder.given_a_project();
-        //Project project2 = builder.given_a_project();
         builder.addUserToProject(project1, builder.given_superadmin().getUsername());
-        //builder.addUserToProject(project2, builder.given_superadmin().getUsername());
 
         project1.setCountImages(100L);
         project1.setCountAnnotations(200L);
@@ -921,55 +919,4 @@ public class ProjectServiceTests {
         PersistentProjectConnection connection = projectConnectionService.add(user, project, "xxx", "linux", "chrome", "123", created);
         return connection;
     }
-
-
-
-
-
-
-
-
-// FOR CONTROLLER TEST
-
-    //    //search
-//    void testGetSearch(){
-//
-//        searchParameters = [[operator : "in", field : "ontology_id", value:"null,"+p1.ontology.id]]
-//
-//        result = ProjectAPI.list(searchParameters, Infos.ADMINLOGIN, Infos.ADMINPASSWORD)
-//        assert 200 == result.code
-//        json = JSON.parse(result.data)
-//        assert json.collection instanceof JSONArray
-//
-
-
-
-    //        Project p4 = BasicInstanceBuilder.getProjectNotExist(true)
-//        p4.name = "T&test=5"
-//        p4.save(flush: true)
-//        p4 = p4.refresh()
-//
-//        searchParameters = [[operator : "like", field : "name", value:"T&test=5"]]
-//
-//        result = ProjectAPI.list(searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        json = JSON.parse(result.data)
-//        assert json.collection instanceof JSONArray
-//        assert json.size == 1
-//        assert !ProjectAPI.containsInJSONList(p1.id,json)
-//        assert ProjectAPI.containsInJSONList(p4.id,json)
-
-
-
-//
-
-//
-//
-//        searchParameters = [[operator : "like", field : "name", value:"T';DELETE FROM amqp_queue_config;SELECT * FROM project WHERE name LIKE 'T%X';--"]]
-//
-//        result = ProjectAPI.list(searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code // if multiple queries, error is returned. If 200 ==> OK
-//    }
-
-
 }

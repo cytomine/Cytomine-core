@@ -1,22 +1,18 @@
 package be.cytomine.domain.appengine;
 
+import java.util.Optional;
+import java.util.UUID;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
+
 import be.cytomine.converter.UUIDConverter;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.utils.JsonObject;
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.Type;
-
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import org.hibernate.type.descriptor.jdbc.UUIDJdbcType;
-
-import java.util.Optional;
-
-import java.util.UUID;
 
 @Entity
 @Getter

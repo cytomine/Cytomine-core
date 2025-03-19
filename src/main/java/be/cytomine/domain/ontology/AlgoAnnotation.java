@@ -48,16 +48,9 @@ public class AlgoAnnotation extends AnnotationDomain implements Serializable {
 
     Integer countReviewedAnnotations = 0;
 
-
-//    @JoinTable(
-//            name = "algo_annotation_term",
-//            joinColumns = { @JoinColumn(name = "annotation_ident") }
-//    )
     @OneToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "annotation_ident", referencedColumnName = "id")
     private List<AlgoAnnotationTerm> algoAnnotationTerms = new ArrayList<>();
-
-
 
     @PrePersist
     public void beforeCreate() {
@@ -116,7 +109,6 @@ public class AlgoAnnotation extends AnnotationDomain implements Serializable {
         return false;
     }
 
-
     /**
      * Get all terms for automatic review
      * If review is done "for all" (without manual user control), we add these term to the new review annotation
@@ -131,8 +123,6 @@ public class AlgoAnnotation extends AnnotationDomain implements Serializable {
     Long getUserId() {
         return user.getId();
     }
-
-
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         AlgoAnnotation annotation = this;
@@ -182,7 +172,6 @@ public class AlgoAnnotation extends AnnotationDomain implements Serializable {
         returnArray.put("url", UrlApi.getAlgoAnnotationCropWithAnnotationId(annotation.getId(), "png"));
         returnArray.put("imageURL", UrlApi.getAnnotationURL(annotation.getImage().getProject().getId(), annotation.getImage().getId(), annotation.getId()));
         returnArray.put("reviewed", annotation.hasReviewedAnnotation());
-        // TODO returnArray.put("track", domain?.tracksId());
         return returnArray;
     }
 

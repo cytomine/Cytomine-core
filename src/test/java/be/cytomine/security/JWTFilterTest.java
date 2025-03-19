@@ -64,10 +64,6 @@ class JWTFilterTest {
         Mockito.when(secUserRepository.findByUsernameLikeIgnoreCase(eq("test-user"))).thenReturn(Optional.of(secUser));
 
         tokenProvider = new TokenProvider(applicationProperties, secUserRepository);
-//        ReflectionTestUtils.setField(tokenProvider, "key", Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
-//        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", 6000000);
-//        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMillisecondsForRememberMe", 6000000);
-//        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMillisecondsForShortTerm", 300000);
         jwtFilter = new JWTFilter(tokenProvider);
         SecurityContextHolder.getContext().setAuthentication(null);
     }

@@ -97,8 +97,6 @@ public class AnnotationActionResourceTests {
         User user = builder.given_superadmin();
         AnnotationDomain annotationDomain = builder.given_a_user_annotation();
 
-        //{"annotationIdent":6897878,"action":"select"}
-
         JsonObject jsonObject = new JsonObject();
         jsonObject.put("annotationIdent", annotationDomain.getId());
         jsonObject.put("action", "select");

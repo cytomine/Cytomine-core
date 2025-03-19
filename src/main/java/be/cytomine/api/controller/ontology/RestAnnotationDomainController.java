@@ -1,20 +1,16 @@
 package be.cytomine.api.controller.ontology;
 
-/*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import jakarta.persistence.EntityManager;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.io.ParseException;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.api.controller.utils.AnnotationListingBuilder;
@@ -40,22 +36,11 @@ import be.cytomine.service.utils.ParamsService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.utils.GeometryUtils;
 import be.cytomine.utils.JsonObject;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.locationtech.jts.io.ParseException;
-import org.springframework.cloud.gateway.mvc.ProxyExchange;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import jakarta.persistence.EntityManager;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
-
-@RestController
-@RequestMapping("/api")
 @Slf4j
 @RequiredArgsConstructor
+@RequestMapping("/api")
+@RestController
 public class RestAnnotationDomainController extends RestCytomineController {
 
     private final AnnotationListingService annotationListingService;
@@ -87,11 +72,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
     private final SimplifyGeometryService simplifyGeometryService;
 
     private final AnnotationListingBuilder annotationListingBuilder;
-
-    /**
-     * List all ontology visible for the current user
-     * For each ontology, print the terms tree
-     */
 
     @RequestMapping(value = { "/annotation/search.json"}, method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<String> searchSpecified() throws IOException {
@@ -205,13 +185,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
         return imageServerService.crop(annotation, cropParameter, etag, proxy);
     }
 
-
-//            @RestApiParam(name="idImage", type="long", paramType = RestApiParamType.QUERY,description = "The image id"),
-//            @RestApiParam(name="geometry", type="string", paramType = RestApiParamType.QUERY,description = "(Optional) WKT form of the geometry (if not set, set annotation param)"),
-//            @RestApiParam(name="annotation", type="long", paramType = RestApiParamType.QUERY,description = "(Optional) The annotation id for the geometry (if not set, set geometry param)"),
-//            @RestApiParam(name="user", type="long", paramType = RestApiParamType.QUERY,description = "The annotation user id (may be an algo) "),
-//            @RestApiParam(name="terms", type="list", paramType = RestApiParamType.QUERY,description = "The annotation terms id")
-//            ])
     @GetMapping("/imageinstance/{image}/annotation/included.json")
     public ResponseEntity<String> listIncludedAnnotation(
             @PathVariable(name="image") Long imageId
@@ -223,41 +196,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
                 paramsService.getPropertyGroupToShow(jsonObject)
         ));
     }
-
-//    @Autowired
-//    CompanionFileService companionFileService;
-//
-//    @GetMapping("/annotation/{id}/profile.json")
-//    public ResponseEntity<String> profile(
-//            @PathVariable(name="id") Long annotationId
-//    ) throws IOException {
-//            AnnotationDomain annotation = AnnotationDomain.findAnnotationDomain(entityManager, annotationId)
-//                    .orElseThrow(() -> new ObjectNotFoundException("Annotation "+annotationId+" not found!"));
-//
-//            if (!companionFileService.hasProfile(annotation.getImage().getBaseImage())) {
-//                throw new ObjectNotFoundException("No profile for abstract image " + annotation.getImage().getBaseImage());
-//            }
-//
-//            CompanionFile cf = companionFileService.list(annotation.getImage().getBaseImage()).stream().filter(x -> x.getType()!=null && x.getType().equals("HDF5")).findFirst().get();
-//
-//            return responseSuccess(imageServerService.profile(cf, annotation, retrieveRequestParam()));
-//    }
-
-    //TODO
-//    @RestApiMethod(description="Get all annotation that intersect a geometry or another annotation. Unlike the simple list, extra parameter (show/hide) are not available. ")
-//    @RestApiResponseObject(objectIdentifier = "file")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="idImage", type="long", paramType = RestApiParamType.QUERY,description = "The image id"),
-//            @RestApiParam(name="geometry", type="string", paramType = RestApiParamType.QUERY,description = "(Optional) WKT form of the geometry (if not set, set annotation param)"),
-//            @RestApiParam(name="annotation", type="long", paramType = RestApiParamType.QUERY,description = "(Optional) The annotation id for the geometry (if not set, set geometry param)"),
-//            @RestApiParam(name="user", type="long", paramType = RestApiParamType.QUERY,description = "The annotation user id (may be an algo) "),
-//            @RestApiParam(name="terms", type="list", paramType = RestApiParamType.QUERY,description = "The annotation terms id")
-//            ])
-//    def downloadIncludedAnnotation() {
-//        ImageInstance image = imageInstanceService.read(params.long('idImage'))
-//        def lists = getIncludedAnnotation(params,['basic','meta','gis','image','term'])
-//        downloadPdf(lists, image.project)
-//    }
 
     private List getIncludedAnnotation(JsonObject params, List<String> propertiesToShow){
 
@@ -296,8 +234,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
         return response;
     }
 
-
-
     /**
      * Read a specific annotation
      * It's better to avoid the user of this method if we know the correct type of an annotation id
@@ -314,7 +250,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
             return restReviewedAnnotationController.show(id);
         } else {
             throw new CytomineMethodNotYetImplementedException("ROI annotation not yet implemented");
-            // TODO
         }
     }
 
@@ -364,11 +299,9 @@ public class RestAnnotationDomainController extends RestCytomineController {
                 return restReviewedAnnotationController.edit(id.toString(), jsonObject);
             } else {
                 throw new CytomineMethodNotYetImplementedException("ROI annotation not yet implemented");
-                // TODO
             }
         }
     }
-
 
     /**
      * Delete an annotation
@@ -387,7 +320,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
             return restReviewedAnnotationController.delete(id.toString());
         } else {
             throw new CytomineMethodNotYetImplementedException("ROI annotation not yet implemented");
-            // TODO
         }
     }
 
@@ -416,34 +348,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
         SimplifiedAnnotation simplifiedAnnotation = simplifyGeometryService.simplifyPolygon(jsonObject.getJSONAttrStr("wkt"), minPoint, maxPoint);
         return responseSuccess(JsonObject.of("wkt", simplifiedAnnotation.getNewAnnotation().toText()));
     }
-
-
-//TODO
-//
-//    @RequestMapping(value = "/annotation/{id}/profile.json", method = {RequestMethod.GET})
-//    public ResponseEntity<String> profile(
-//            @PathVariable Long id
-//
-//    )  {
-//        try {
-//            AnnotationDomain annotation = AnnotationDomain.getAnnotationDomain(params.long('id'))
-//            if (!annotation) {
-//                throw new ObjectNotFoundException("Annotation ${params.long('id')} not found!")
-//            }
-//
-//            if (!annotation.image.baseImage.hasProfile()) {
-//                throw new ObjectNotFoundException("No profile for abstract image ${annotation.image.baseImage}")
-//            }
-//
-//            CompanionFile cf = CompanionFile.findByImageAndType(annotation.image.baseImage, "HDF5")
-//
-//            responseSuccess(imageServerService.profile(cf, annotation, params))
-//        }
-//        catch (CytomineException e) {
-//            responseError(e)
-//        }
-//    }
-
 
     /**
      * Fill an annotation.
@@ -477,13 +381,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
     public ResponseEntity<String> addCorrection(
             @RequestBody JsonObject jsonObject
     ) throws ParseException {
-//        def json = request.JSON
-//        String location = json.location
-//        boolean review = json.review
-//        Long idImage = json.image
-//        boolean remove = json.remove
-//        def layers = json.layers
-//        Long idAnnotation = json.annotation
         String location = jsonObject.getJSONAttrStr("location");
         List<Long> layers = jsonObject.getJSONAttrListLong("layers");
         Long image = jsonObject.getJSONAttrLong("image");
@@ -514,7 +411,6 @@ public class RestAnnotationDomainController extends RestCytomineController {
         log.info("idsReviewedAnnotation="+idsReviewedAnnotation);
         log.info("idsUserAnnotation="+idsUserAnnotation);
 
-
         //there is no user/reviewed intersect
         if (idsUserAnnotation.isEmpty() && idsReviewedAnnotation.isEmpty()) {
             throw new WrongArgumentException("There is no intersect annotation!");
@@ -525,6 +421,5 @@ public class RestAnnotationDomainController extends RestCytomineController {
         } else {
             return responseSuccess(userAnnotationService.doCorrectUserAnnotation(idsUserAnnotation, location, remove));
         }
-
     }
 }

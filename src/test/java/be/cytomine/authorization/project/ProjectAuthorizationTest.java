@@ -193,7 +193,6 @@ public class ProjectAuthorizationTest extends CRUDAuthorizationTest {
         projectRepresentativeUserRepository.save(builder.given_a_not_persisted_project_representative_user(
                 project, builder.given_superadmin()
         ));
-//        expectOK(() -> {secUserService.addUserToProject(builder.given_superadmin(), project, false); });
 
         expectForbidden(() -> {projectRepresentativeUserService.add(projectRepresentativeUser.toJsonObject());});
         builder.persistAndReturn(projectRepresentativeUser);

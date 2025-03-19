@@ -1,20 +1,31 @@
 package be.cytomine.api;
 
-/*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.mail.MessagingException;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DateUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.*;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.*;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.security.AuthWithToken;
@@ -34,29 +45,6 @@ import be.cytomine.security.jwt.TokenType;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.NotificationService;
 import be.cytomine.utils.JsonObject;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.time.DateUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.*;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.*;
-
-import jakarta.mail.MessagingException;
-import jakarta.persistence.EntityManager;
-import jakarta.validation.Valid;
-import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -74,10 +62,8 @@ public class LoginController extends RestCytomineController {
 
     private final SecurityACLService securityACLService;
 
-
     @PostMapping("/api/authenticate")
     public ResponseEntity<JWTToken> authorize(@Valid @RequestBody LoginVM loginVM) {
-
         try {
             JWTToken jwtTokens = logInAndGenerateCredentials(loginVM.getUsername(), loginVM.getPassword(), loginVM.isRememberMe());
             HttpHeaders httpHeaders = new HttpHeaders();
@@ -96,8 +82,6 @@ public class LoginController extends RestCytomineController {
         }
     }
 
-
-
     @RequestMapping(path = {"/login/forgotUsername"}, method = {RequestMethod.POST})
     public ResponseEntity<String> checkPassword(@RequestBody MultiValueMap<String, String> formData) throws MessagingException {
         log.debug("REST request to retrieve username");
@@ -107,9 +91,6 @@ public class LoginController extends RestCytomineController {
         notificationService.notifyForgotUsername(user);
         return responseSuccess(JsonObject.of("message","Check your inbox"));
     }
-
-
-
 
     @RequestMapping(path = {"/login/forgotPassword"}, method = {RequestMethod.POST})
     public ResponseEntity<String> forgotPassword(
@@ -192,8 +173,6 @@ public class LoginController extends RestCytomineController {
         return  responseSuccess(JsonObject.of("success", true, "token", token.getTokenKey()));
     }
 
-
-
     private JWTToken logInAndGenerateCredentials(String username, String password, Boolean isRememberMe) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
                 username,
@@ -207,7 +186,6 @@ public class LoginController extends RestCytomineController {
         httpHeaders.add(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + token);
         return new JWTToken(token, shortTermToken);
     }
-
 
     private JWTToken logInAndGenerateCredentials(String username, Set<SecRole> roles, Boolean isRememberMe) {
         List<GrantedAuthority> authorities = roles.stream().map(x -> new SimpleGrantedAuthority(x.getAuthority())).collect(Collectors.toList());

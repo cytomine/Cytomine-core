@@ -73,7 +73,6 @@ public class JWTFilter extends GenericFilterBean {
                 } catch (AuthenticationException exception) {
                     ((HttpServletResponse)servletResponse).sendError(HttpStatus.UNAUTHORIZED.value(), exception.msg);
                     return;
-                    //throw new AuthenticationException(exception.getMessage());
                 }
 
             }

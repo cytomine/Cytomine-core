@@ -32,7 +32,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,7 +41,6 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 
-import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -75,8 +73,6 @@ public class SecurityConfiguration {
         filter.setFailureHandler(switchUserFailureHandler());
         filter.setUsernameParameter("username");
         filter.setSwitchUserUrl("/api/login/impersonate");
-        //filter.setSwitchFailureUrl("/api/login/switchUser");
-        //filter.setTargetUrl("/admin/user-management");
         return filter;
     }
 
@@ -107,28 +103,7 @@ public class SecurityConfiguration {
 //        Digest based password encoding is not considered secure.
 //        Have to keep it for old Clients
         return new MessageDigestPasswordEncoder("SHA-256");
-
-//        To-Do: something along these lines ....
-//        PasswordEncoder current = new MessageDigestPasswordEncoder("SHA-256");
-//
-//        String idForEncode = "argon2";
-//
-//        Map<String,PasswordEncoder> encoders = new HashMap<>();
-//        encoders.put("bcrypt", new BCryptPasswordEncoder());
-//        encoders.put("pbkdf2", Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8());
-//        encoders.put("scrypt", SCryptPasswordEncoder.defaultsForSpringSecurity_v5_8());
-//        encoders.put("argon2", Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8());
-//        encoders.put("sha256", new MessageDigestPasswordEncoder("SHA-256"));
-//
-//        return new DelegatingPasswordEncoder(idForEncode, encoders);
     }
-
-    // TODO: we are trying to migrate this to exposing a Bean is it really working? NOT sure more testing is needed
-    // Check out: authManager(UserDetailsService detailsService) for how we migrated
-//    @Override
-//    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-//        auth.userDetailsService(domainUserDetailsService).passwordEncoder(passwordEncoder());
-//    }
 
     /**
      * configures Spring Security to use your DomainUserDetailsService to fetch user details from a custom source (DB which's SecUserRepository)
@@ -169,7 +144,6 @@ public class SecurityConfiguration {
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-// @formatter:off
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .addFilterBefore(new ApiKeyFilter(domainUserDetailsService, secUserRepository), BasicAuthenticationFilter.class)
@@ -178,11 +152,6 @@ public class SecurityConfiguration {
                                 .authenticationEntryPoint(
                                         (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
                 )
-
-//            .logout()
-//            .logoutUrl("/api/logout")
-//            .logoutSuccessHandler(ajaxLogoutSuccessHandler())
-//            .permitAll()
 
                 .authorizeHttpRequests((authorizeHttpRequests) ->
                                 authorizeHttpRequests
@@ -206,8 +175,6 @@ public class SecurityConfiguration {
 //                .shouldFilterAllDispatcherTypes(true)
 //                .dispatcherTypeMatchers(DispatcherType.FORWARD).permitAll()
 
-
-//            .httpBasic()
                 .apply(securityConfigurerAdapter())
             .and()
                 .addFilter(switchUserFilter())
@@ -226,22 +193,5 @@ public class SecurityConfiguration {
         ;
 
         return http.build();
-        // @formatter:on
     }
-
-//    grails.plugin.springsecurity.interceptUrlMap = [
-//        '/admin/**':    ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/admincyto/**':    ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/monitoring/**':    ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/j_spring_security_switch_user': ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/securityInfo/**': ['ROLE_ADMIN','ROLE_SUPER_ADMIN'],
-//        '/api/**':      ['IS_AUTHENTICATED_REMEMBERED'],
-//        '/lib/**':      ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/css/**':      ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/images/**':   ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/*':           ['IS_AUTHENTICATED_REMEMBERED'], //if cas authentication, active this      //beta comment
-//        '/login/**':    ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/logout/**':   ['IS_AUTHENTICATED_ANONYMOUSLY'],
-//        '/status/**':   ['IS_AUTHENTICATED_ANONYMOUSLY']
-//        ]
 }

@@ -359,30 +359,6 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.algo").value(false))
                 .andExpect(jsonPath("$.email").value(currentUser.getEmail()))
                 .andExpect(jsonPath("$.username").value(currentUser.getUsername()));
-
-//current user:
-//        {
-//            "firstname":"Loïc",
-//                "color":null,
-//                "created":"1621261562392",
-//                "origin":"ADMINISTRATOR",
-//                "admin":true,
-//                "language":"EN",
-//                "publicKey":********************
-//                "enabled":true,
-//                "lastname":"Rollus",
-//                "privateKey":*********************
-//                "deleted":null,
-//                "guest":false,
-//                "id":6399285,
-//                "passwordExpired":false,
-//                "class":"be.cytomine.security.User",
-//                "updated":"1621262650241",
-//                "user":false,
-//                "algo":false,
-//                "email":"loic.rollus@cytomine.com",
-//                "username":"lrollus"
-//        }
     }
 
     @Test
@@ -412,32 +388,7 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.algo").value(false))
                 .andExpect(jsonPath("$.email").value(currentUser.getEmail()))
                 .andExpect(jsonPath("$.username").value(currentUser.getUsername()));
-
-//current user:
-//        {
-//            "firstname":"Loïc",
-//                "color":null,
-//                "created":"1621261562392",
-//                "origin":"ADMINISTRATOR",
-//                "admin":true,
-//                "language":"EN",
-//                "publicKey":********************
-//                "enabled":true,
-//                "lastname":"Rollus",
-//                "privateKey":*********************
-//                "deleted":null,
-//                "guest":false,
-//                "id":6399285,
-//                "passwordExpired":false,
-//                "class":"be.cytomine.security.User",
-//                "updated":"1621262650241",
-//                "user":false,
-//                "algo":false,
-//                "email":"loic.rollus@cytomine.com",
-//                "username":"lrollus"
-//        }
     }
-
 
     @Test
     @Transactional
@@ -466,28 +417,6 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.algo").value(false))
                 .andExpect(jsonPath("$.email").doesNotExist())
                 .andExpect(jsonPath("$.username").value(builder.given_superadmin().getUsername()));
-
-
-        //other user:
-//        {
-//            "firstname": "Chloé",
-//                "color": null,
-//                "created": "1634739741117",
-//                "origin": "ADMINISTRATOR",
-//                "admin": true,
-//                "language": "EN",
-//                "enabled": true,
-//                "lastname": "Marchal",
-//                "deleted": null,
-//                "guest": false,
-//                "id": 7056449,
-//                "class": "be.cytomine.security.User",
-//                "updated": "1637930759649",
-//                "user": false,
-//                "algo": false,
-//                "email": null,
-//                "username": "cmarchal"
-//        }
     }
 
     @Test
@@ -577,31 +506,6 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.algo").value(false))
                 .andExpect(jsonPath("$.email").value(currentUser.getEmail()))
                 .andExpect(jsonPath("$.username").value(currentUser.getUsername()));
-
-
-//current user:
-//        {
-//            "firstname":"Loïc",
-//                "color":null,
-//                "created":"1621261562392",
-//                "origin":"ADMINISTRATOR",
-//                "admin":true,
-//                "language":"EN",
-//                "publicKey":********************
-//                "enabled":true,
-//                "lastname":"Rollus",
-//                "privateKey":*********************
-//                "deleted":null,
-//                "guest":false,
-//                "id":6399285,
-//                "passwordExpired":false,
-//                "class":"be.cytomine.security.User",
-//                "updated":"1621262650241",
-//                "user":false,
-//                "algo":false,
-//                "email":"loic.rollus@cytomine.com",
-//                "username":"lrollus"
-//        }
     }
 
 
@@ -762,8 +666,6 @@ public class UserResourceTests {
 
     }
 
-//max=25&offset=0&projectRole[in]=contributor,manager,representative&sort=&order=
-
     @Test
     @Transactional
     public void list_project_users_with_role_filter() throws Exception {
@@ -823,24 +725,6 @@ public class UserResourceTests {
         builder.given_a_project_representative_user(project, projectPrepresentative);
         builder.addUserToProject(project, projectAdmin.getUsername(), ADMINISTRATION);
         builder.addUserToProject(project, projectUser.getUsername(), READ);
-
-//        restUserControllerMockMvc.perform(get("/api/project/{id}/user.json", project.getId())
-//                        .param("max", "5")
-//                        .param("offset", "0")
-//                        .param("projectRole[in]", "contributor,manager,representative")
-//                        .param("sortColumn", "created")
-//                        .param("sortDirection", "asc")
-//                )
-//                .andDo(print())
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.collection", hasSize(3)))
-//                .andExpect(jsonPath("$.offset").value(0))
-//                .andExpect(jsonPath("$.perPage").value(3))
-//                .andExpect(jsonPath("$.size").value(3))
-//                .andExpect(jsonPath("$.totalPages").value(1))
-//                .andExpect(jsonPath("$.collection[0].username").value(projectPrepresentative.getUsername()))
-//                .andExpect(jsonPath("$.collection[1].username").value(projectAdmin.getUsername()))
-//                .andExpect(jsonPath("$.collection[2].username").value(projectUser.getUsername()));
 
         restUserControllerMockMvc.perform(get("/api/project/{id}/user.json", project.getId())
                         .param("max", "2")
@@ -1190,32 +1074,7 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.collection[0].position[0].filename").hasJsonPath())
                 .andExpect(jsonPath("$.collection[0].position[0].originalFilename").hasJsonPath())
                 .andExpect(jsonPath("$.collection[0].position[0].date").value(persistentUserPosition.getCreated().getTime()));
-
-
     }
-
-//
-//    {
-//        "collection":[
-//        {
-//            "id":4819,
-//                "position":[
-//            {
-//                "id":7353123,
-//                    "image":7353123,
-//                    "filename":"OP605.png",
-//                    "originalFilename":"OP605.png",
-//                    "date":"1645697936329"
-//            }
-//         ]
-//            ....
-//        }
-//   ],
-//        "offset":0,
-//            "perPage":6,
-//            "size":6,
-//            "totalPages":1
-//    }
 
     @Test
     @Transactional
@@ -1231,8 +1090,7 @@ public class UserResourceTests {
 
         PersistentImageConsultation consultation = given_a_persistent_image_consultation(userOnline, builder.given_an_image_instance(project), new Date());
 
-        restUserControllerMockMvc.perform(get("/api/project/{id}/usersActivity.json", project.getId())
-                )
+        restUserControllerMockMvc.perform(get("/api/project/{id}/usersActivity.json", project.getId()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(1)))
@@ -1244,21 +1102,6 @@ public class UserResourceTests {
                 .andExpect(jsonPath("$.collection[0].lastImageName").hasJsonPath())
                 .andExpect(jsonPath("$.collection[0].lastConnection").value(lastConnection.getCreated().getTime()))
                 .andExpect(jsonPath("$.collection[0].frequency").value(1));
-
-
-//        {
-//            "collection": [
-//            {
-//                "id": 4819,
-//                    "username": "rhoyoux",
-//                    "firstname": "Renaud",
-//                    "lastname": "Hoyoux",
-//                    "email": "renaud.hoyoux@cytomine.coop",
-//                    "lastImageId": 7353123,
-//                    "lastImageName": "CMU-1-Small-Region (1).svs",
-//                    "lastConnection": "1645697846414",
-//                    "frequency": 4
-//            },
     }
 
     @Test

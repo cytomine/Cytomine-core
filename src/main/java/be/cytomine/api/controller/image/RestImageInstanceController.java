@@ -25,7 +25,6 @@ import be.cytomine.domain.image.group.ImageGroup;
 import be.cytomine.domain.image.group.ImageGroupImageInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
@@ -46,7 +45,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.locationtech.jts.io.ParseException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.cloud.gateway.mvc.ProxyExchange;
 
 import java.io.IOException;
@@ -343,7 +341,6 @@ public class RestImageInstanceController extends RestCytomineController {
         return imageServerService.label(imageInstance, labelParameter, etag, proxy);
     }
 
-    //
     @RequestMapping(value = "/imageinstance/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<byte[]> crop(
             @PathVariable Long id,
@@ -516,22 +513,6 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
         return responseSuccess(JsonObject.toJsonString(imageInstanceService.computeBounds(project)));
     }
-
-
-//    protected void processElementsBeforeRendering(JsonObject jsonObject) {
-//        boolean filterEnabled = false;
-//        RequestParams requestParams = retrieveRequestParam();
-//
-//        if (requestParams.containsKey("project")) {
-//            Project project = projectService.find(Long.parseLong(requestParams.get("id")))
-//                    .orElseThrow(() -> new ObjectNotFoundException("Project",requestParams.get("id" )));
-//            filterEnabled = project.getBlindMode();
-//        } else if(requestParams.containsKey("id")) { //TODO!!! WTF??? && !(["windowUrl", "cameraUrl", "getReferenceSlice"].contains(params.action.GET))
-////            project = ImageInstance.read(params.long("id"))?.project
-////            if(project) filterEnabled = project.blindMode
-//        }
-//    }
-
 
     protected void filterOneElement(Map<String, Object> element) {
         element.put("instanceFilename", null);

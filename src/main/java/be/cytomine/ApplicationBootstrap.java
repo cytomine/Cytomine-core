@@ -101,7 +101,6 @@ class ApplicationBootstrap {
 
         if (EnvironmentUtils.isTest(environment) && secUserRepository.count() == 0) {
             bootstrapDataService.initData();
-            //noSQLCollectionService.cleanActivityDB() TODO:
             bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", dataset.ADMINEMAIL, dataset.ADMINPASSWORD, List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
 
             // same as superadmin, but a userjob

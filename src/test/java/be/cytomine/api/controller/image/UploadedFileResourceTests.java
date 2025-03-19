@@ -420,32 +420,6 @@ public class UploadedFileResourceTests {
                 .andExpect(jsonPath("$.contentType").hasJsonPath())
                 .andExpect(jsonPath("$.originalFilename").hasJsonPath())
                 .andExpect(jsonPath("$.status").hasJsonPath());
-
-//{
-//   "ext":"",
-//   "parent":29580,
-//   "projects":[
-//      22782
-//   ],
-//   "created":"1636379121035",
-//   "imageServer":154,
-//   "storage":90,
-//   "path":"\/data\/images\/58\/1636379100999\/CMU-2\/CMU-2.mrxs",
-//   "deleted":null,
-//   "filename":"1636379100999\/CMU-2\/CMU-2.mrxs",
-//   "size":1307235712,
-//   "statusText":"DEPLOYED",
-//   "id":29598,
-//   "class":"be.cytomine.image.UploadedFile",
-//   "updated":"1636379124045",
-//   "user":58,
-//   "contentType":"openslide\/mrxs",
-//   "originalFilename":"CMU-2.mrxs",
-//   "status":100
-//}
-
-
-
     }
 
     @Test

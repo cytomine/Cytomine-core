@@ -201,7 +201,6 @@ public class BasicInstanceBuilder {
     }
 
     public static User given_a_not_persisted_user() {
-        //User user2 = new User();
         User user = new User();
         user.setFirstname("firstname");
         user.setLastname("lastname");
@@ -216,7 +215,6 @@ public class BasicInstanceBuilder {
 
 
     public static UserJob given_a_user_job_not_persisted(User creator) {
-        //User user2 = new User();
         UserJob user = new UserJob();
         user.setUsername(randomString());
         user.setUser(creator);

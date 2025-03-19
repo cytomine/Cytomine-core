@@ -20,7 +20,6 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
@@ -39,7 +38,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
 import java.net.URLEncoder;
@@ -67,16 +65,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class SliceInstanceResourceTests {
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
     private BasicInstanceBuilder builder;
 
     @Autowired
     private MockMvc restSliceInstanceControllerMockMvc;
-
-    @Autowired
-    private PropertyRepository propertyRepository;
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
     
@@ -123,28 +115,6 @@ public class SliceInstanceResourceTests {
                 .andExpect(jsonPath("$.time").hasJsonPath())
                 .andExpect(jsonPath("$.updated").hasJsonPath())
                 .andExpect(jsonPath("$.uploadedFile").hasJsonPath());
-
-//        {
-//            "image":39965,
-//                "created":"1636702046099",
-//                "mime":"openslide\/mrxs",
-//                "channel":0,
-//                "project":39933,
-//                "imageServerUrl":"http:\/\/localhost-ims",
-//                "baseSlice":32202,
-//                "path":"\/data\/images\/58\/1636379100999\/CMU-2\/CMU-2.mrxs",
-//                "deleted":null,
-//                "zStack":0,
-//                "rank":0,
-//                "id":39966,
-//                "time":0,
-//                "class":"be.cytomine.image.SliceInstance",
-//                "updated":null,
-//                "uploadedFile":29598
-//        }
-
-
-
     }
 
     @Test

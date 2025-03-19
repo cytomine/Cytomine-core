@@ -166,15 +166,6 @@ public class AlgoAnnotationService extends ModelService {
         return annotationListingService.executeRequest(algoAnnotationListing);
     }
 
-    //TODO:
-//    public List list(Job job, List<String> propertiesToShow) {
-//        securityACLService.check(project,READ);
-//        AlgoAnnotationListing algoAnnotationListing = new AlgoAnnotationListing(entityManager);
-//        algoAnnotationListing.setColumnsToPrint(propertiesToShow);
-//        algoAnnotationListing.setProject(project.getId());
-//        return annotationListingService.executeRequest(algoAnnotationListing);
-//    }
-
     public List listIncluded(ImageInstance image, String geometry, SecUser user, List<Long> terms, AnnotationDomain annotation, List<String> propertiesToShow) {
         securityACLService.check(image.container(), READ);
         AlgoAnnotationListing algoAnnotationListing = new AlgoAnnotationListing(entityManager);

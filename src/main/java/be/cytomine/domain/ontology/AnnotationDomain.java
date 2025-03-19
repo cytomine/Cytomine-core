@@ -61,7 +61,6 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
     protected Project project;
 
     @NotNull
-    //@Type(type = "org.hibernate.spatial.JTSGeometryType")
     @Column(columnDefinition = "geometry")
     protected Geometry location;
 
@@ -81,25 +80,11 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
 
     long countComments = 0L;
 
-//    @Override
-//    public String toJSON() {
-//        return null;
-//    }
-//
-//    @Override
-//    public JsonObject toJsonObject() {
-//        return null;
-//    }
-
     public void beforeCreate() {
         if(project==null) {
             project = image.getProject();
         }
 
-        // TODO: migration
-//        if (slice==null) {
-//            slice = image.getReferenceSlice
-//        }
         this.computeGIS();
         wktLocation = location.toText();
     }
@@ -109,10 +94,6 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
             project = image.getProject();
         }
 
-        // TODO: migration
-//        if (slice==null) {
-//            slice = image.getReferenceSlice
-//        }
         this.computeGIS();
         wktLocation = location.toText();
     }
@@ -194,23 +175,6 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
         return new Point(centroid.getX(), centroid.getY());
     }
 
-
-    // TODO: cannot be perform here with spring
-//    /**
-//     * Get user/algo/reviewed annotation with id
-//     * Check the correct type and return it
-//     * @param id Annotation id
-//     * @return Annotation
-//     */
-//    public static AnnotationDomain getAnnotationDomain(String id, String className = null) {
-//        try {
-//            getAnnotationDomain(Long.parseLong(id), className)
-//        } catch(NumberFormatException e) {
-//            throw new ObjectNotFoundException("Annotation ${id} not found")
-//        }
-//    }
-//
-
     public static Optional<AnnotationDomain> findAnnotationDomain(EntityManager entityManager, Long id) {
         return Optional.ofNullable(getAnnotationDomain(entityManager, id, ""));
     }
@@ -240,11 +204,8 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
                     break;
                 case "be.cytomine.domain.processing.RoiAnnotation":
                     throw new CytomineMethodNotYetImplementedException("migration");
-                    //domain = RoiAnnotation.class;
-                    //break;
             }
         }
-
 
         AnnotationDomain annotation;
         if (domain!=null) {
@@ -253,7 +214,6 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
             annotation = entityManager.find(UserAnnotation.class, id);
             if (annotation==null) annotation = entityManager.find(AlgoAnnotation.class, id);
             if (annotation==null) annotation = entityManager.find(ReviewedAnnotation.class, id);
-//            if (annotation==null) annotation = entityManager.find(RoiAnnotation.class, id);
         }
 
         if (annotation!=null) {
@@ -290,5 +250,4 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
     }
 
     public abstract SecUser user();
-
 }

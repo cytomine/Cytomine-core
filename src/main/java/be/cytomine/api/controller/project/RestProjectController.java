@@ -1,20 +1,14 @@
 package be.cytomine.api.controller.project;
 
-/*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.mail.MessagingException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.command.CommandHistory;
@@ -34,33 +28,26 @@ import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
 import be.cytomine.utils.filters.SearchParameterEntry;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import jakarta.mail.MessagingException;
-import java.util.ArrayList;
-import java.util.List;
-
-@RestController
-@RequestMapping("/api")
 @Slf4j
 @RequiredArgsConstructor
+@RequestMapping("/api")
+@RestController
 public class RestProjectController extends RestCytomineController {
 
-    private final ProjectService projectService;
+    private final OntologyRepository ontologyRepository;
+
     private final ProjectRepository projectRepository;
-
-    private final TaskService taskService;
-
-    private final CurrentUserService currentUserService;
 
     private final CurrentRoleService currentRoleService;
 
-    private final OntologyRepository ontologyRepository;
+    private final CurrentUserService currentUserService;
+
+    private final ProjectService projectService;
+
     private final SecUserService secUserService;
+
+    private final TaskService taskService;
 
     /**
      * List all ontology visible for the current user
@@ -95,7 +82,6 @@ public class RestProjectController extends RestCytomineController {
         return responseSuccess(projectService.list(user, projectSearchExtension, searchParameterEntryList, sort, order, max, offset));
     }
 
-
     @GetMapping("/project/{id}.json")
     public ResponseEntity<String> show(
             @PathVariable Long id
@@ -105,7 +91,6 @@ public class RestProjectController extends RestCytomineController {
                 .map(this::responseSuccess)
                 .orElseGet(() -> responseNotFound("Project", id));
     }
-
 
     @PostMapping("/project.json")
     public ResponseEntity<String> add(@RequestBody JsonObject json, @RequestParam(required = false) Long task) {
@@ -144,7 +129,6 @@ public class RestProjectController extends RestCytomineController {
         List<CommandHistory> commandHistories = projectService.lastAction(project, max.intValue());
         return responseSuccess(commandHistories);
     }
-
 
     @GetMapping("/project/method/lastopened.json")
     public ResponseEntity<String> listLastOpened(
@@ -218,7 +202,6 @@ public class RestProjectController extends RestCytomineController {
         return responseSuccess(JsonObject.toJsonString(projectService.computeBounds(withMembersCount)));
     }
 
-
     @GetMapping({"/commandhistory.json", "/project/{id}/commandhistory.json"})
     public ResponseEntity<String> listCommandHistory(
             @PathVariable(required = false) Long id,
@@ -228,7 +211,6 @@ public class RestProjectController extends RestCytomineController {
             @RequestParam(required = false, defaultValue = "false") Boolean fullData,
             @RequestParam(required = false, defaultValue = "0") Long max,
             @RequestParam(required = false, defaultValue = "0") Long offset
-
     ) {
         log.debug("REST request to list history with project {}", id);
         List<Project> projects = new ArrayList<>();
@@ -243,15 +225,6 @@ public class RestProjectController extends RestCytomineController {
         return responseSuccess(JsonObject.toJsonString(projectService.findCommandHistory(projects, user, max, offset, fullData, startDate, endDate)));
     }
 
-
-
-
-//    @RestApiMethod(description="Invite a not yer existing user to the project")
-//    @RestApiParams(params=[
-//            @RestApiParam(name="id", type="long", paramType = RestApiParamType.PATH,description = "The project id"),
-//            @RestApiParam(name="json", type="string", paramType = RestApiParamType.QUERY,description = "The user name and email of the invited user"),
-//    ])
-//
     @PostMapping("/project/{id}/invitation.json")
     public ResponseEntity<String> inviteNewUser(
             @PathVariable Long id,

@@ -35,7 +35,6 @@ public class TransactionService {
             //A transaction is a simple domain with a id (= transaction id)
             Transaction transaction = new Transaction();
             entityManager.persist(transaction);
-            //entityManager.flush();
             return transaction;
         }
     }

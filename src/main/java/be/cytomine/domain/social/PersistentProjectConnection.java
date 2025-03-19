@@ -25,7 +25,6 @@ import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -38,13 +37,7 @@ import java.util.Map;
 @Getter
 @Setter
 @Document
-//@Entity
-//@CompoundIndex(def = "{'project' : 1, 'created' : -1}")
 public class PersistentProjectConnection extends CytomineSocialDomain implements Cloneable {
-
-        // TODO:
-//    version false
-//    stateless true //don't store data in memory after read&co. These data don't need to be update.
 
     protected Long id;
 
@@ -52,7 +45,6 @@ public class PersistentProjectConnection extends CytomineSocialDomain implements
 
     @Transient
     protected Date updated;
-
 
     @NotNull
     Long user;

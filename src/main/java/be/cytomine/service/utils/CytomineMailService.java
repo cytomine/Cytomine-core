@@ -68,33 +68,6 @@ public class CytomineMailService {
             return;
         }
 
-//        Properties props = new Properties();
-//        props.put("mail.smtp.host",notificationConfiguration.getSmtpHost());
-//        props.put("mail.smtp.port",notificationConfiguration.getSmtpHost());
-//        props.put("mail.transport.protocol", notificationConfiguration.getSmtpProtocol());
-//        props.put("mail.smtp.starttls.enable",notificationConfiguration.getSmtpStarttlsEnable());
-//        props.put("mail.smtp.starttls.required",notificationConfiguration.getSmtpStarttlsRequired());
-//        props.put("mail.smtp.ssl.protocols","TLSv1.2");
-//        props.put("mail.debug",notificationConfiguration.getSmtpDebug());
-
-//        String password = notificationConfiguration.getPassword();
-//        if(password!=null && !password.isEmpty()) {
-//            props.put("mail.smtp.auth", "true" );
-//        } else {
-//            props.put("mail.smtp.auth", "false" );
-//        }
-
-        //Create Mail Sender
-
-
-        //TODO: configure this un a BEAN (JavaMailSender)
-//        sender.setJavaMailProperties(props);
-//        sender.setUsername(defaultEmail);
-//        sender.setPassword(password);
-//        sender.setDefaultEncoding("UTF-8");
-
-
-
         MimeMessage mail = sender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mail, true);
 
@@ -109,11 +82,6 @@ public class CytomineMailService {
         for (Map.Entry<String, File> entry : attachment.entrySet()) {
             helper.addInline(entry.getKey(), entry.getValue());
         }
-
-
-//        for (Byte[] bytes : attachment) {
-//            helper.addInline(UUID.randomUUID().toString(), new ByteArrayResource(bytes)); // id?
-//        }
 
         log.debug("Sending email...");
         log.debug("from " + from);

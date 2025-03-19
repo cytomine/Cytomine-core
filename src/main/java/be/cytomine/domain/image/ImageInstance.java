@@ -161,7 +161,7 @@ public class ImageInstance extends CytomineDomain {
         returnArray.put("numberOfAnnotations", imageInstance.countImageAnnotations);
         returnArray.put("numberOfJobAnnotations", imageInstance.countImageJobAnnotations);
         returnArray.put("numberOfReviewedAnnotations", imageInstance.countImageReviewedAnnotations);
-//
+
         returnArray.put("thumb", UrlApi.getImageInstanceThumbUrlWithMaxSize(imageInstance.id, 512, "png"));
         returnArray.put("preview", UrlApi.getImageInstanceThumbUrlWithMaxSize(imageInstance.id, 1024, "png"));
         returnArray.put("macroURL", UrlApi.getAssociatedImage(imageInstance, "macro", Optional.ofNullable(imageInstance.getBaseImage()).map(AbstractImage::getUploadedFile).map(UploadedFile::getContentType).orElse(null), 512, "png"));
@@ -182,21 +182,6 @@ public class ImageInstance extends CytomineDomain {
     private Long getUserId() {
         return Optional.ofNullable(this.getUser()).map(CytomineDomain::getId).orElse(null);
     }
-
-
-//
-//    def getSliceCoordinates() {
-//        return this.baseImage?.getSliceCoordinates()
-//    }
-//
-//    def getReferenceSliceCoordinate() {
-//        return this.baseImage?.getReferenceSliceCoordinate()
-//    }
-//
-//    def getReferenceSlice() {
-//        def base = this.baseImage?.getReferenceSlice()
-//        return SliceInstance.findByBaseSliceAndImage(base, this)
-//    }
 
     /**
      * Flag to control if image is beeing review, and not yet validated

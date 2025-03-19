@@ -23,22 +23,14 @@ import be.cytomine.domain.security.UserJob;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-import jakarta.persistence.Tuple;
-
 import java.util.Date;
 import java.util.List;
 
 
 public interface AlgoAnnotationRepository extends JpaRepository<AlgoAnnotation, Long>, JpaSpecificationExecutor<AlgoAnnotation>  {
 
-//    List<UserAnnotation> findAllByUserAndImage(User user, ImageInstance imageInstance);
-//
     Long countByProject(Project project);
-//
-//    Long countByUserAndProject(User user, Project project);
-//
-//    Long countByUser(User user);
-//
+
     Long countByProjectAndCreatedAfter(Project project, Date createdMin);
 
     Long countByProjectAndCreatedBefore(Project project, Date createdMax);
@@ -48,28 +40,4 @@ public interface AlgoAnnotationRepository extends JpaRepository<AlgoAnnotation, 
     List<AlgoAnnotation> findAllByImage(ImageInstance image);
 
     List<AlgoAnnotation> findAllByUser(UserJob user);
-
-//
-//    @Query(
-//            value = "SELECT a.id id, a.project_id container, '' url FROM user_annotation a, image_instance ii, abstract_image ai WHERE a.image_id = ii.id AND ii.base_image_id = ai.id AND ai.original_filename not like '%ndpi%svs%' AND GeometryType(a.location) != 'POINT' AND st_area(a.location) < 1500000 ORDER BY st_area(a.location) DESC",
-//            nativeQuery = true)
-//    List<Tuple> listTuplesLight();
-//
-//    default List<AnnotationLight> listLight() {
-//        List<AnnotationLight> annotationLights = new ArrayList<>();
-//        for (Tuple tuple : listTuplesLight()) {
-//            annotationLights.add(new AnnotationLight(
-//                    ((BigInteger)tuple.get("id")).longValue(),
-//                    ((BigInteger)tuple.get("container")).longValue(),
-//                    UrlApi.getUserAnnotationCropWithAnnotationIdWithMaxSize(((BigInteger)tuple.get("id")).longValue(), 256, "png"))
-//            );
-//        }
-//        return annotationLights;
-//    }
-//
-//
-//    @Query(value = "SELECT a.id id, ST_distance(a.location,ST_GeometryFromText(:geometry))  FROM user_annotation a WHERE project_id = :projectId", nativeQuery = true)
-//    List<Tuple> listAnnotationWithDistance(Long projectId, String geometry);
-//
-
 }

@@ -779,11 +779,6 @@ public class ProjectResourceTests {
         assertThat(persistentProjectConnectionRepository.count()).isEqualTo(0);
         given_a_persistent_connection_in_project(builder.given_superadmin(), project, new Date());
         assertThat(persistentProjectConnectionRepository.count()).isEqualTo(1);
-//        restProjectControllerMockMvc.perform(post("/server/ping.json")
-//                        .contentType(MediaType.APPLICATION_JSON)
-//                        .content("{\"project\": \"" + project.getId() + "\"}"))
-//                .andDo(print())
-//                .andExpect(status().isOk());
 
         restProjectControllerMockMvc.perform(get("/api/project/method/lastopened.json"))
                 .andDo(print())
@@ -1081,77 +1076,11 @@ public class ProjectResourceTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value(username));
 
-
         assertThat(forgotPasswordTokenRepository.findAll()).hasSize(1);
-
         assertThat(secUserRepository.findByUsernameLikeIgnoreCase(username)).isPresent();
-
         assertThat(secUserRepository.findByUsernameLikeIgnoreCase(username).get().getPasswordExpired()).isTrue();
-
         assertThat(permissionService.hasACLPermission(project, username, READ)).isTrue();
-
-
-
-
     }
-
-
-//
-//    void testImageNamesOfBlindProject() {
-//        Project project = BasicInstanceBuilder.getProjectNotExist(true)
-//        ImageInstance image = BasicInstanceBuilder.getImageInstanceNotExist(project, true)
-//
-//        def result = ImageInstanceAPI.listByProject(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        def json = JSON.parse(result.data)
-//        assert json.collection instanceof JSONArray
-//        assert json.collection[0].instanceFilename == image.getBlindInstanceFilename()
-//
-//        assert json.collection[0].blindedName instanceof JSONObject.Null
-//
-//        result = ImageInstanceAPI.show(image.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        json = JSON.parse(result.data)
-//
-//        assert json.instanceFilename == image.getBlindInstanceFilename()
-//        assert json.blindedName instanceof JSONObject.Null
-//
-//        project.blindMode = true
-//        project.save(true)
-//
-//        result = ImageInstanceAPI.listByProject(project.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        json = JSON.parse(result.data)
-//        assert json.collection instanceof JSONArray
-//        assert json.collection[0].instanceFilename == image.getBlindInstanceFilename()
-//        assert !(json.collection[0].blindedName instanceof JSONObject.Null)
-//
-//        result = ImageInstanceAPI.show(image.id, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        json = JSON.parse(result.data)
-//
-//        assert json.instanceFilename == image.getBlindInstanceFilename()
-//        assert !(json.blindedName instanceof JSONObject.Null)
-//
-//
-//        User user = BasicInstanceBuilder.getUser()
-//
-//        assert (200 ==ProjectAPI.addUserProject(project.id, user.id,Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD).code)
-//
-//        result = ImageInstanceAPI.listByProject(project.id, user.username, "password")
-//        assert 200 == result.code
-//        json = JSON.parse(result.data)
-//        assert json.collection instanceof JSONArray
-//        assert json.collection[0].instanceFilename instanceof JSONObject.Null
-//        assert !(json.collection[0].blindedName instanceof JSONObject.Null)
-//
-//        result = ImageInstanceAPI.show(image.id, user.username, "password")
-//        assert 200 == result.code
-//        json = JSON.parse(result.data)
-//
-//        assert json.instanceFilename instanceof JSONObject.Null
-//        assert !(json.blindedName instanceof JSONObject.Null)
-//    }
 
     @Autowired
     ProjectConnectionService projectConnectionService;
@@ -1160,5 +1089,4 @@ public class ProjectResourceTests {
         PersistentProjectConnection connection = projectConnectionService.add(user, project, "xxx", "linux", "chrome", "123", created);
         return connection;
     }
-
 }

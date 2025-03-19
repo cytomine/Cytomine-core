@@ -35,11 +35,6 @@ import jakarta.persistence.*;
         discriminatorType = DiscriminatorType.STRING)
 public abstract class Command extends CytomineDomain {
 
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGen")
-//    @SequenceGenerator(name = "myGen", sequenceName = "hibernate_sequence", allocationSize=1)
-//    protected Long id;
-
     /**
      * JSON string with relevant field data
      */
@@ -102,7 +97,6 @@ public abstract class Command extends CytomineDomain {
      */
     protected boolean refuseUndo = false;
 
-
     public String toString() {
         return this.getClass().getSimpleName() +" "+this.id + "[" + this.created + "]";
     }
@@ -128,7 +122,6 @@ public abstract class Command extends CytomineDomain {
     }
 
     public abstract CommandResponse execute(ModelService service);
-
 
     /**
      * Define fields available for JSON response

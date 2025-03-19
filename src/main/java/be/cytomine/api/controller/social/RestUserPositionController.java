@@ -1,20 +1,11 @@
 package be.cytomine.api.controller.social;
 
-/*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+import java.util.Date;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.ImageInstance;
@@ -28,29 +19,19 @@ import be.cytomine.service.dto.AreaDTO;
 import be.cytomine.service.dto.Point;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.SliceInstanceService;
-import be.cytomine.service.middleware.ImageServerService;
-import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.security.SecUserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.social.UserPositionService;
 import be.cytomine.utils.JsonObject;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Date;
-import java.util.List;
 
 /**
  * Controller for user position
  * Position of the user (x,y) on an image for a time
  */
-@RestController
-@RequestMapping("/api")
 @Slf4j
 @RequiredArgsConstructor
+@RequestMapping("/api")
+@RestController
 public class RestUserPositionController extends RestCytomineController {
 
     private final UserPositionService userPositionService;
@@ -64,7 +45,6 @@ public class RestUserPositionController extends RestCytomineController {
     private final SecUserService secUserService;
 
     private final SecurityACLService securityACLService;
-    //{"image":6836067,"zoom":1,"rotation":0,"bottomLeftX":-2344,"bottomLeftY":1032,"bottomRightX":6784,"bottomRightY":1032,"topLeftX":-2344,"topLeftY":2336,"topRightX":6784,"topRightY":2336,"broadcast":false}
 
     @PostMapping("/imageinstance/{id}/position.json")
     public ResponseEntity<String> addFromImageInstance(
@@ -158,7 +138,6 @@ public class RestUserPositionController extends RestCytomineController {
         }
     }
 
-
     @GetMapping("/imageinstance/{image}/online.json")
     public ResponseEntity<String> listOnlineUsersByImage(
             @PathVariable("image") Long imageId,
@@ -174,7 +153,6 @@ public class RestUserPositionController extends RestCytomineController {
         }
         return responseSuccess(JsonObject.of("users", userPositionService.listOnlineUsersByImage(imageInstance, sliceInstance, broadcast)));
     }
-
 
     @GetMapping("/imageinstance/{image}/followers/{user}.json")
     public ResponseEntity<String> listFollowers(

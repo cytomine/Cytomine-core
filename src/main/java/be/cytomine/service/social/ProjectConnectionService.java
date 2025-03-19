@@ -140,10 +140,6 @@ public class ProjectConnectionService {
         return connection;
     }
 
-//    Object lastConnectionInProject(Project project, Long userId, List searchParameters){
-//        return lastConnectionInProject(project, userId, searchParameters, "created", "desc", 0L, 0L);
-//    }
-
     public Optional<PersistentProjectConnection> lastConnectionInProject(Project project, Long userId, String sortProperty, String sortDirection){
         SecUser secUser = secUserRepository.findById(userId).orElseThrow(() -> new ObjectNotFoundException("User", userId));
         securityACLService.checkIsSameUserOrAdminContainer(project, secUser, currentUserService.getCurrentUser());
@@ -157,19 +153,6 @@ public class ProjectConnectionService {
 
     public List<JsonObject> lastConnectionInProject(Project project, List<Long> users, String sortProperty, String sortDirection, Long max, Long offset){
         securityACLService.check(project, WRITE);
-
-//        def match = [project : project.id]
-//        def sp = searchParameters.find{it.operator.equals("in") && it.property.equals("user")}
-//        if(sp) match << [user : [$in :sp.value]]
-//
-//        def aggregation = [
-//                [$match:match],
-//                [$sort : ["$sortProperty": sortDirection.equals("desc") ? -1 : 1]],
-//                [$group : [_id : '$user', created : [$max :'$created']]],
-//                [$skip : offset]
-//        ]
-//        if(max > 0) aggregation.push([$limit : max])
-
 
         List<Bson> matchsFilters = new ArrayList<>();
         matchsFilters.add(match(eq("project", project.getId())));
@@ -210,24 +193,6 @@ public class ProjectConnectionService {
     // Improve : Can be improved if we can do this in mongo directly
     public List<JsonObject> lastConnectionOfGivenUsersInProject(Project project, List<Long> userIds, String sortProperty, String sortDirection, Long max, Long offset){
         List<JsonObject> results = new ArrayList<>();
-
-        //        def connected = PersistentProjectConnection.createCriteria().list(sort: "user", order: sortDirection) {
-//            eq("project", project)
-//            projections {
-//                Projections.groupProperty("user")
-//                property("user")
-//            }
-//        }
-
-//        Criteria criteria = Criteria.where("project").is(project);
-//        criteria.
-//        Projection projection = Projections.groupProperty("user");
-//        criteria.setProjection(projection);
-//        Query query = new Query();
-//        query.addCriteria(criteria);
-//        mongoTemplate.find(criteria)
-//        Criteria criteria = sessionFactory.getCurrentSession().createCriteria(PersistentProjectConnection.class);
-//        criteria.add(Restrictions.eq("project", project));
 
         AggregationResults queryResults = persistentProjectConnectionRepository.retrieve(project.getId(), sortProperty, (sortDirection.equals("desc")? -1 : 1));
         List aggregation = queryResults.getMappedResults();
@@ -273,14 +238,6 @@ public class ProjectConnectionService {
 
     private void fillProjectConnection(PersistentProjectConnection connection, Date before){
         Date after = connection.getCreated();
-//
-//        // collect {it.created.getTime} is really slow. I just want the getTime of PersistentConnection
-//        def db = mongo.getDB(noSQLCollectionService.getDatabaseName())
-//        def connections = db.persistentConnection.aggregate(
-//                [$match: [project: connection.project, user: connection.user, $and : [[created: [$gte: after]],[created: [$lte: before]]]]],
-//                [$sort: [created: 1]],
-//                [$project: [dateInMillis: [$subtract: ['$created', new Date(0L)]]]]
-//        );
 
         AggregationResults connections = projectConnectionRepository.retrieve(connection.getProject(), connection.getUser(), before, after, new Date(0));
         List aggregation = connections.getMappedResults();
@@ -356,15 +313,6 @@ public class ProjectConnectionService {
     public List<JsonObject> numberOfConnectionsByProjectAndUser(Project project, List<Long> users, String sortProperty, String sortDirection, Long max, Long offset) {
         securityACLService.check(project,WRITE);
 
-          // what we want
-          // db.persistentProjectConnection.aggregate([{$match: {project : ID_PROJECT}}, { $group : { _id : {user:"$user"} , number : { $sum : 1 }}}])
-
-        //            def aggregation = [
-//                    [$match : match],
-//                    [$group : [_id : [ user: '$user'], "frequency":[$sum:1]]],
-//                    [$sort : ["$sortProperty": sortDirection.equals("desc") ? -1 : 1]],
-//                    [$skip : offset]
-//            ]
             List<Bson> matchsFilters = new ArrayList<>();
             matchsFilters.add(match(eq("project", project.getId())));
             if (users != null) {
@@ -406,8 +354,6 @@ public class ProjectConnectionService {
                 .into(new ArrayList<>());
         requestResults.forEach(printDocuments());
 
-//
-//        AggregationResults queryResults = persistentProjectConnectionRepository.retrieve(project.getId(), sortProperty, (sortDirection.equals("desc")? -1 : 1));
         List<Long> connected = requestResults.stream().map(x -> (Long)x.get("_id")).collect(Collectors.toList());
 
         List<Long> unconnectedIds =  new ArrayList<>(userIds);
@@ -451,8 +397,6 @@ public class ProjectConnectionService {
 
         List<JsonObject> projectConnections = new ArrayList<>();
 
-        // what we want
-        // db.persistentProjectConnection.aggregate([{ $group : { _id : {project:"$project"} , total : { $sum : 1 }}}])
         AggregationResults aggregationResults = persistentProjectConnectionRepository.countConnectionByProject();
         List<Document> results = (List<Document>)aggregationResults.getRawResults().get("results");
         for (Document result : results) {
@@ -465,8 +409,6 @@ public class ProjectConnectionService {
     public List<JsonObject> numberOfConnectionsByProjectOrderedByHourAndDays(Project project, Long afterThan, SecUser user) {
 
         securityACLService.check(project, WRITE);
-        // what we want
-        //db.persistentProjectConnection.aggregate( {"$match": {$and: [{project : ID_PROJECT}, {created : {$gte : new Date(AFTER) }}]}}, { "$project": { "created": {  "$subtract" : [  "$created",  {  "$add" : [  {"$millisecond" : "$created"}, { "$multiply" : [ {"$second" : "$created"}, 1000 ] }, { "$multiply" : [ {"$minute" : "$created"}, 60, 1000 ] } ] } ] } }  }, { "$project": { "y":{"$year":"$created"}, "m":{"$month":"$created"}, "d":{"$dayOfMonth":"$created"}, "h":{"$hour":"$created"}, "time":"$created" }  },  { "$group":{ "_id": { "year":"$y","month":"$m","day":"$d","hour":"$h"}, time:{"$first":"$time"},  "total":{ "$sum": 1}  }});
 
         Bson projection1 = Document.parse(
                 "{$project : { created : {$subtract:['$created', {$add : [{$millisecond : '$created'}, {$multiply : [{$second : '$created'}, 1000]}, {$multiply : [{$minute : '$created'}, 60000]} ]}]}}}");
@@ -492,22 +434,6 @@ public class ProjectConnectionService {
         for (Document result : results) {
             // TODO evolve when https://jira.mongodb.org/browse/SERVER-6310 is resolved
             // as we groupBy hours in UTC, the GMT + xh30 have problems.
-
-            /*def year = it["_id"]["year"]
-            def month = it["_id"]["month"]
-            def day = it["_id"]["day"]
-            def hour = it["_id"]["hour"]*/
-//            def time = it["time"]
-//            def frequency = it["frequency"]
-
-
-            /*Calendar cal = Calendar.getInstance();
-            cal.set(Calendar.HOUR_OF_DAY, hour);
-            cal.set(Calendar.YEAR, year);
-            cal.set(Calendar.DAY_OF_MONTH, day);
-            cal.set(Calendar.MONTH, month);*/
-
-//            connections << [/*year: year, month: month, day: day, hour: hour, */time : time, frequency: frequency]
 
             connections.add(JsonObject.of("time", result.get("time"), "frequency", result.get("frequency")));
         }
@@ -539,8 +465,6 @@ public class ProjectConnectionService {
         if (beforeThan == null) {
             beforeThan = new Date().getTime();
         }
-        // what we want
-        //db.persistentProjectConnection.aggregate( {"$match": {$and: [{project : ID_PROJECT}, {created : {$gte : new Date(AFTER) }}]}}, { "$project": { "created": {  "$subtract" : [  "$created",  {  "$add" : [  {"$millisecond" : "$created"}, { "$multiply" : [ {"$second" : "$created"}, 1000 ] }, { "$multiply" : [ {"$minute" : "$created"}, 60, 1000 ] } ] } ] } }  }, { "$project": { "y":{"$year":"$created"}, "m":{"$month":"$created"}, "d":{"$dayOfMonth":"$created"}, "h":{"$hour":"$created"}, "time":"$created" }  },  { "$group":{ "_id": { "year":"$y","month":"$m","day":"$d","hour":"$h"}, time:{"$first":"$time"},  "total":{ "$sum": 1}  }});
 
         List<Bson> matchs = new ArrayList<>();
         Bson projection1 = null;

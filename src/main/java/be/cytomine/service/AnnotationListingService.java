@@ -267,15 +267,4 @@ public class AnnotationListingService {
         list.add(firstElement);
         return list;
     }
-//
-//    boolean columnExist(Tuple rs, String column) {
-//        try {
-//            rs.get(column.toLowerCase());
-//            return true;
-//        } catch (IllegalArgumentException exception) {
-//            return false;
-//        }
-//    }
-
-
 }

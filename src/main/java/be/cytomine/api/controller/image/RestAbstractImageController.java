@@ -121,8 +121,8 @@ public class RestAbstractImageController extends RestCytomineController {
         }
 
     }
-//
-//    // TODO:MIGRATION GET params vs POST params!
+
+    // TODO:MIGRATION GET params vs POST params!
     @RequestMapping(value = "/abstractimage/{id}/thumb.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<byte[]> thumb(
             @PathVariable Long id,
@@ -213,7 +213,7 @@ public class RestAbstractImageController extends RestCytomineController {
         String etag = getRequestETag();
         return imageServerService.label(abstractImage, labelParameter, etag, proxy);
     }
-//
+
     @RequestMapping(value = "/abstractimage/{id}/crop.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<byte[]> crop(
             @PathVariable Long id,
@@ -253,7 +253,6 @@ public class RestAbstractImageController extends RestCytomineController {
         CropParameter cropParameter = new CropParameter();
         cropParameter.setGeometry(geometry);
         cropParameter.setLocation(location);
-//        cropParameter.setBoundaries(boundaries);
         cropParameter.setComplete(complete);
         cropParameter.setZoom(zoom);
         cropParameter.setIncreaseArea(increaseArea);

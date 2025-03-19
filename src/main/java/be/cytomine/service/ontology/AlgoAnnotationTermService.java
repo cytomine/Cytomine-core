@@ -67,7 +67,6 @@ public class AlgoAnnotationTermService extends ModelService {
         return AlgoAnnotationTerm.class;
     }
 
-
     public List<AlgoAnnotationTerm> list(AnnotationDomain  annotationDomain) {
         securityACLService.check(annotationDomain.container(),READ);
         return algoAnnotationTermRepository.findAllByAnnotation(annotationDomain);
@@ -76,18 +75,6 @@ public class AlgoAnnotationTermService extends ModelService {
     public long count(Project project) {
         return algoAnnotationTermRepository.countByProject(project);
     }
-
-    //TODO:
-//    def count(Job job) {
-//        securityACLService.check(job.container(),READ)
-//        long total = 0
-//        List<UserJob> users = UserJob.findAllByJob(job)
-//        users.each {
-//            total = total + AlgoAnnotationTerm.countByUserJobAndDeletedIsNull(it)
-//        }
-//        total
-//    }
-
 
     public Optional<AlgoAnnotationTerm> find(AnnotationDomain annotation, Term term, UserJob userJob) {
         securityACLService.check(annotation.container(),READ);
@@ -125,8 +112,6 @@ public class AlgoAnnotationTermService extends ModelService {
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
     }
 
-
-
     public CommandResponse addAlgoAnnotationTerm(AnnotationDomain annotation, Long idTerm, Long idUser, SecUser currentUser, Transaction transaction){
         JsonObject json = JsonObject.of(
                 "annotationClassName", annotation.getClass().getName(),
@@ -136,7 +121,6 @@ public class AlgoAnnotationTermService extends ModelService {
         );
         return executeCommand(new AddCommand(currentUser, transaction), null,json);
     }
-
 
     /**
      * Delete this domain
@@ -168,12 +152,10 @@ public class AlgoAnnotationTermService extends ModelService {
         response.getData().remove("algoannotation");
     }
 
-
     @Override
     public CytomineDomain createFromJSON(JsonObject json) {
         return new AlgoAnnotationTerm().buildDomainFromJson(json, getEntityManager());
     }
-
 
     @Override
     public List<String> getStringParamsI18n(CytomineDomain domain) {
@@ -186,11 +168,7 @@ public class AlgoAnnotationTermService extends ModelService {
         throw new RuntimeException("Update is not implemented for Annotation Term");
     }
 
-
-
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         return;
     }
-
-    // TODO: retrieval migration?
 }

@@ -489,7 +489,6 @@ public class StatsResourceTests {
     @Test
     void stats_image_consultation_evolution() throws Exception {
         Project project = builder.given_a_project();
-//        Project project = builder.given_a_project();
         ImageInstance imageInstance = builder.given_an_image_instance(project);
         given_a_persistent_image_consultation(builder.given_superadmin(), imageInstance, DateUtils.addDays(new Date(), -15));
         given_a_persistent_image_consultation(builder.given_superadmin(), imageInstance, DateUtils.addDays(new Date(), -15));

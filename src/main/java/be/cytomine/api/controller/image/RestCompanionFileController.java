@@ -123,15 +123,4 @@ public class RestCompanionFileController extends RestCytomineController {
         }
 
     }
-
-//    @PostMapping("/profile.json")
-//    public ResponseEntity<String> computeProfile(
-//            @RequestParam(required = false, name = "image") Long imageIdFromParam,
-//            @RequestBody JsonObject json) {
-//        log.debug("REST request to add profile: " + imageIdFromParam);
-//        Long imageId = imageIdFromParam != null ? imageIdFromParam : json.getJSONAttrLong("image");
-//        AbstractImage abstractImage = abstractImageService.find(imageId)
-//                .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", imageId));
-//        return responseSuccess(companionFileService.addProfile(abstractImage));
-//    }
 }

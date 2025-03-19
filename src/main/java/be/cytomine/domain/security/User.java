@@ -34,11 +34,6 @@ import jakarta.validation.constraints.Size;
 @DiscriminatorValue("be.cytomine.domain.security.User")
 public class User extends SecUser {
 
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.AUTO, generator = "myGen")
-//    @SequenceGenerator(name = "myGen", sequenceName = "hibernate_sequence", allocationSize=1)
-//    protected Long id;
-
     @NotNull
     @NotBlank
     @Column(nullable = false)
@@ -101,11 +96,6 @@ public class User extends SecUser {
         return false;
     }
 
-//    public static CytomineDomain buildDomainFromJson(JsonObject json) {
-//        return buildDomainFromJson(json, new User());
-//    }
-//
-//    public static CytomineDomain buildDomainFromJson(JsonObject json, CytomineDomain domain) {
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         User user = (User)this;
         user.id = json.getJSONAttrLong("id",null);
@@ -156,13 +146,6 @@ public class User extends SecUser {
         returnArray.put("user", user.creator);
         return returnArray;
     }
-
-
-//    public static JsonObject getDataFromDomainWithPersonnalData(CytomineDomain domain) {
-//        JsonObject json = User.getDataFromDomain(domain);
-//
-//        return json;
-//    }
 
     @Override
     public String toJSON() {

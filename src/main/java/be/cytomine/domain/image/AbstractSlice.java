@@ -32,8 +32,6 @@ import java.util.Optional;
 @Setter
 public class AbstractSlice extends CytomineDomain {
 
-    //TODO:      sort([time: 'asc', zStack: 'asc', channel: 'asc'])
-
     @ManyToOne
     private AbstractImage image;
 

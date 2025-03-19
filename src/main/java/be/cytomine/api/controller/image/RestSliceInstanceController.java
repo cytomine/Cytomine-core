@@ -1,20 +1,13 @@
 package be.cytomine.api.controller.image;
 
-/*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+import java.io.IOException;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.io.ParseException;
+import org.springframework.cloud.gateway.mvc.ProxyExchange;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.image.ImageInstance;
@@ -26,17 +19,7 @@ import be.cytomine.service.dto.TileParameters;
 import be.cytomine.service.dto.WindowParameter;
 import be.cytomine.service.image.*;
 import be.cytomine.service.middleware.ImageServerService;
-import be.cytomine.service.project.ProjectService;
 import be.cytomine.utils.JsonObject;
-import org.locationtech.jts.io.ParseException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.cloud.gateway.mvc.ProxyExchange;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
 @RestController
 @RequestMapping("/api")
@@ -48,16 +31,7 @@ public class RestSliceInstanceController extends RestCytomineController {
 
     private final ImageInstanceService imageInstanceService;
 
-    private final ProjectService projectService;
-
     private final ImageServerService imageServerService;
-
-    private final UploadedFileService uploadedFileService;
-
-    private final SliceCoordinatesService sliceCoordinatesService;
-
-    private final ImagePropertiesService imagePropertiesService;
-
 
     @GetMapping("/imageinstance/{id}/sliceinstance.json")
     public ResponseEntity<String> listByImageInstance(
@@ -69,7 +43,6 @@ public class RestSliceInstanceController extends RestCytomineController {
         return responseSuccess(sliceInstanceService.list(imageInstance));
     }
 
-
     @GetMapping("/sliceinstance/{id}.json")
     public ResponseEntity<String> show(
             @PathVariable Long id
@@ -79,7 +52,6 @@ public class RestSliceInstanceController extends RestCytomineController {
                 .map(this::responseSuccess)
                 .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", id));
     }
-
 
     @GetMapping("/imageinstance/{id}/{channel}/{zStack}/{time}/sliceinstance.json")
     public ResponseEntity<String> getByImageInstanceAndCoordinates(
@@ -138,7 +110,6 @@ public class RestSliceInstanceController extends RestCytomineController {
         validation is complex as they can accept multiple types: e.g. 'gammas' accept a Double or List<Double> whose
         length is defined by the number of selected channels in 'channels' parameter.
          */
-//        log.debug("REST request get sliceinstance {} normalized tile, zoom: {} / tx: {} / ty: {}", id, z, tx, ty);
 
         SliceInstance sliceInstance = sliceInstanceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("SliceInstance", id));
@@ -161,7 +132,6 @@ public class RestSliceInstanceController extends RestCytomineController {
         return imageServerService.normalizedTile(sliceInstance, tileParameters, etag, proxy);
     }
 
-//
 //    // TODO:MIGRATION GET params vs POST params!
     @RequestMapping(value = "/sliceinstance/{id}/thumb.{format}", method = {RequestMethod.GET, RequestMethod.POST})
     public ResponseEntity<byte[]> thumb(
@@ -322,7 +292,6 @@ public class RestSliceInstanceController extends RestCytomineController {
         return  imageServerService.window(sliceInstance.getBaseSlice(), windowParameter, etag, proxy);
     }
 
-
     @GetMapping("/sliceinstance/{id}/histogram.json")
     public ResponseEntity<String> histogram(
             @PathVariable Long id,
@@ -351,7 +320,6 @@ public class RestSliceInstanceController extends RestCytomineController {
         return responseSuccess(imageServerService.planeHistograms(sliceInstance.getBaseSlice(), nBins, true));
     }
 
-
     @GetMapping("/sliceinstance/{id}/channelhistogram/bounds.json")
     public ResponseEntity<String> channelHistogramBounds(@PathVariable Long id) throws IOException {
         log.debug("REST request to get channelHistogramBounds slice");
@@ -359,103 +327,4 @@ public class RestSliceInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("sliceInstance", id));
         return responseSuccess(imageServerService.planeHistogramBounds(sliceInstance.getBaseSlice(), true));
     }
-
-
-
-
-    //TODO
-
-//    //todo : move into a service
-//    def userAnnotationService
-//    def reviewedAnnotationService
-//    def termService
-//    def secUserService
-//    def annotationListingService
-//    public String getWKTGeometry(SliceInstance sliceInstance, params) {
-//        def geometries = []
-//        if (params.annotations && !params.reviewed) {
-//            def idAnnotations = params.annotations.split(',')
-//            idAnnotations.each { idAnnotation ->
-//                    def annot = userAnnotationService.read(idAnnotation)
-//                if (annot)
-//                    geometries << annot.location
-//            }
-//        }
-//        else if (params.annotations && params.reviewed) {
-//            def idAnnotations = params.annotations.split(',')
-//            idAnnotations.each { idAnnotation ->
-//                    def annot = reviewedAnnotationService.read(idAnnotation)
-//                if (annot)
-//                    geometries << annot.location
-//            }
-//        }
-//        else if (!params.annotations) {
-//            def project = sliceInstance.image.project
-//            List<Long> termsIDS = params.terms?.split(',')?.collect {
-//                Long.parseLong(it)
-//            }
-//            if (!termsIDS) { //don't filter by term, take everything
-//                termsIDS = termService.getAllTermId(project)
-//            }
-//
-//            List<Long> userIDS = params.users?.split(",")?.collect {
-//                Long.parseLong(it)
-//            }
-//            if (!userIDS) { //don't filter by users, take everything
-//                userIDS = secUserService.listLayers(project).collect { it.id}
-//            }
-//            List<Long> sliceIDS = [sliceInstance.id]
-//
-//            log.info params
-//            //Create a geometry corresponding to the ROI of the request (x,y,w,h)
-//            int x
-//            int y
-//            int w
-//            int h
-//            try {
-//                x = params.int('topLeftX')
-//                y = params.int('topLeftY')
-//                w = params.int('width')
-//                h = params.int('height')
-//            }catch (Exception e) {
-//                x = params.int('x')
-//                y = params.int('y')
-//                w = params.int('w')
-//                h = params.int('h')
-//            }
-//            Geometry roiGeometry = GeometryUtils.createBoundingBox(
-//                    x,                                      //minX
-//                    x + w,                                  //maxX
-//                    sliceInstance.baseSlice.image.height - (y + h),    //minX
-//                    sliceInstance.baseSlice.image.height - y           //maxY
-//            )
-//
-//
-//            //Fetch annotations with the requested term on the request image
-//            if (params.review) {
-//                ReviewedAnnotationListing ral = new ReviewedAnnotationListing(
-//                        project: project.id, terms: termsIDS, reviewUsers: userIDS, slices:sliceIDS, bbox:roiGeometry,
-//                        columnToPrint:['basic', 'meta', 'wkt', 'term']
-//                )
-//                def result = annotationListingService.listGeneric(ral)
-//                log.info "annotations=${result.size()}"
-//                geometries = result.collect {
-//                    new WKTReader().read(it["location"])
-//                }
-//
-//            } else {
-//                log.info "roiGeometry=${roiGeometry}"
-//                log.info "termsIDS=${termsIDS}"
-//                log.info "userIDS=${userIDS}"
-//                Collection<UserAnnotation> annotations = userAnnotationService.list(sliceInstance, roiGeometry, termsIDS, userIDS)
-//                log.info "annotations=${annotations.size()}"
-//                geometries = annotations.collect { geometry ->
-//                        geometry.getLocation()
-//                }
-//            }
-//        }
-//        GeometryCollection geometryCollection = new GeometryCollection((Geometry[])geometries, new GeometryFactory())
-//        return new WKTWriter().write(geometryCollection)
-//    }
-
 }

@@ -431,7 +431,6 @@ public class UserPositionServiceTests {
     public void list_followers_for_not_followed_user() {
         User user = builder.given_a_user();
         ImageInstance imageInstance = builder.given_an_image_instance();
-        // WebSocketUserPositionHandler.sessions.put(user.getId().toString(), new ConcurrentWebSocketSessionDecorator[]{new ConcurrentWebSocketSessionDecorator(mock(WebSocketSession.class), 0, 0)});
         List<String> users = userPositionService.listFollowers(user.getId(), imageInstance.getId());
         assertThat(users.size()).isEqualTo(0);
     }

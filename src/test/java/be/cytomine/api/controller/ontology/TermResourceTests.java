@@ -132,36 +132,6 @@ public class TermResourceTests {
                 .andExpect(jsonPath("$.term.id").exists())
                 .andExpect(jsonPath("$.term.name").value(term.getName()))
                 .andExpect(jsonPath("$.term.ontology").value(term.getOntology().getId()));
-
-
-// Current response format with Grails:
-
-//        {
-//            "printMessage":true,
-//                "callback":{
-//            "termID":"7034161",
-//                    "method":"be.cytomine.AddTermCommand",
-//                    "ontologyID":6399460
-//        },
-//            "term":{
-//            "parent":null,
-//                    "deleted":null,
-//                    "color":"#63d7b6",
-//                    "rate":null,
-//                    "created":"1634542439860",
-//                    "name":"pwet",
-//                    "comment":null,
-//                    "id":7034161,
-//                    "class":"be.cytomine.ontology.Term",
-//                    "updated":null,
-//                    "ontology":6399460
-//        },
-//            "message":"Term 7,034,161 (pwet) added in ontology {2}",
-//                "command":7034163
-//        }
-
-
-
     }
 
     @Test
@@ -175,7 +145,6 @@ public class TermResourceTests {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200));
-
     }
 
     @Test

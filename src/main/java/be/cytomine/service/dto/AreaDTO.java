@@ -58,10 +58,5 @@ public class AreaDTO {
         location.setType("polygon");
         location.setCoordinates(toPointList().stream().map(point -> List.of(point.getX(), point.getY())).collect(Collectors.toList()));
         return location;
-
-//        return new GeoJsonPolygon(toPointList().stream()
-//                .map(point ->
-//                        new org.springframework.data.geo.Point(point.getX(), point.getY()))
-//                .collect(Collectors.toList()));
     }
 }

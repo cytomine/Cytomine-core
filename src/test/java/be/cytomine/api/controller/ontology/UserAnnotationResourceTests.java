@@ -125,43 +125,7 @@ public class UserAnnotationResourceTests {
                 .andExpect(jsonPath("$.centroid.x").exists())
                 .andExpect(jsonPath("$.centroid.y").exists())
                 .andExpect(jsonPath("$.term", hasSize(equalTo(1))))
-                .andExpect(jsonPath("$.term[0]").value(userAnnotation.getTerms().get(0).getId().intValue()))
-        ;
-
-//
-//        {
-//            "class": "be.cytomine.ontology.UserAnnotation",
-//                "id": 6897878,
-//                "created": "1631093769980",
-//                "updated": null,
-//                "deleted": null,
-//                "location": "POLYGON ((1244.7739820199815 1890.375, 1240.9930251315277 1851.986300483326, 1229.7954545190048 1815.0728571604468, 1211.6115865413822 1781.053232956964, 1187.1402170474087 1751.2347829525913, 1157.321767043036 1726.7634134586178, 1123.302142839553 1708.5795454809952, 1086.388699516674 1697.3819748684723, 1048 1693.6010179800185, 1009.6113004833259 1697.3819748684723, 972.6978571604469 1708.5795454809952, 938.6782329569638 1726.7634134586178, 908.8597829525912 1751.2347829525913, 884.388413458618 1781.053232956964, 866.2045454809951 1815.072857160447, 855.0069748684722 1851.986300483326, 851.2260179800185 1890.375, 855.0069748684722 1928.763699516674, 866.2045454809951 1965.677142839553, 884.388413458618 1999.696767043036, 908.8597829525913 2029.5152170474087, 938.6782329569639 2053.986586541382, 972.697857160447 2072.170454519005, 1009.611300483326 2083.3680251315277, 1048 2087.1489820199813, 1086.388699516674 2083.3680251315277, 1123.302142839553 2072.170454519005, 1157.3217670430363 2053.986586541382, 1187.1402170474087 2029.5152170474087, 1211.6115865413822 1999.696767043036, 1229.7954545190048 1965.677142839553, 1240.9930251315277 1928.763699516674, 1244.7739820199815 1890.375))",
-//                "image": 6836067,
-//                "geometryCompression": 0,
-//                "project": 6399468,
-//                "container": 6399468,
-//                "user": 6399285,
-//                "nbComments": 0,
-//                "area": 30094.84913286161,
-//                "perimeterUnit": "mm",
-//                "areaUnit": "micron²",
-//                "perimeter": 0.615956769903102,
-//                "centroid": {
-//            "x": 1047.9999999999998,
-//                    "y": 1890.3750000000002
-//        },
-//            "term": [],
-//            "similarity": null,
-//                "rate": null,
-//                "idTerm": null,
-//                "idExpectedTerm": null,
-//                "cropURL": "https://demo.cytomine.com/api/userannotation/6897878/crop.jpg",
-//                "smallCropURL": "https://demo.cytomine.com/api/userannotation/6897878/crop.png?maxSize=256",
-//                "url": "https://demo.cytomine.com/api/userannotation/6897878/crop.jpg",
-//                "imageURL": "https://demo.cytomine.com/#/project/6399468/image/6836067/annotation/6897878",
-//                "reviewed": false
-//        }
-
+                .andExpect(jsonPath("$.term[0]").value(userAnnotation.getTerms().get(0).getId().intValue()));
     }
 
     @Test

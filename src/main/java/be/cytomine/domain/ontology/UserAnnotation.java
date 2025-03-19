@@ -158,32 +158,6 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
         return false;
     }
 
-
-// TODO: seems to be not used
-//    /**
-//     * Get a list of each term link with annotation
-//     * For each term, add all users that add this term
-//     * [{id: x, term: y, user: [a,b,c]}, {...]
-//     */
-//    def usersIdByTerm() {
-//        def results = []
-//        if (this.version != null) {
-//            AnnotationTerm.findAllByUserAnnotationAndDeletedIsNull(this).each { annotationTerm ->
-//                    def map = [:]
-//                map.id = annotationTerm.id
-//                map.term = annotationTerm.term?.id
-//                map.user = [annotationTerm.user?.id]
-//                def item = results.find { it.term == annotationTerm.term?.id }
-//                if (!item) {
-//                    results << map
-//                } else {
-//                    item.user.add(annotationTerm.user.id)
-//                }
-//            }
-//        }
-//        results
-//    }
-
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         UserAnnotation annotation = this;
         annotation.id = json.getJSONAttrLong("id",null);
@@ -249,7 +223,6 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
         returnArray.put("url", UrlApi.getUserAnnotationCropWithAnnotationId(annotation.getId(), "png"));
         returnArray.put("imageURL", UrlApi.getAnnotationURL(annotation.getImage().getProject().getId(), annotation.getImage().getId(), annotation.getId()));
         returnArray.put("reviewed", annotation.hasReviewedAnnotation());
-        // TODO returnArray.put("track", domain?.tracksId());
 
         return returnArray;
     }
@@ -263,6 +236,4 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
     public User userDomainCreator() {
         return user;
     }
-
-
 }

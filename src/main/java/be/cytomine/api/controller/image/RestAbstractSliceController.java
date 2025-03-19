@@ -162,7 +162,6 @@ public class RestAbstractSliceController extends RestCytomineController {
         validation is complex as they can accept multiple types: e.g. 'gammas' accept a Double or List<Double> whose
         length is defined by the number of selected channels in 'channels' parameter.
          */
-//        log.debug("REST request get abstractslice {} normalized tile, zoom: {} / tx: {} / ty: {}", id, z, tx, ty);
 
         AbstractSlice abstractSlice = abstractSliceService.find(id)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractSlice", id));
