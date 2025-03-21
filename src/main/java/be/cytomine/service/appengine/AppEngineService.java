@@ -1,6 +1,5 @@
 package be.cytomine.service.appengine;
 
-import be.cytomine.api.JsonResponseEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
+
+import be.cytomine.controller.JsonResponseEntity;
 
 @Slf4j
 @Service
