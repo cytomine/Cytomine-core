@@ -1,4 +1,4 @@
-package be.cytomine.service.dto;
+package be.cytomine.dto.image;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,19 +16,19 @@ package be.cytomine.service.dto;
 * limitations under the License.
 */
 
-import lombok.*;
-
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
-public class Point {
-    Double x;
-    Double y;
+public class SliceCoordinate {
 
-    public List<Double> toList() {
-        return List.of(x,y);
-    }
+    Integer channel;
+
+    Integer zStack;
+
+    Integer time;
+
 }

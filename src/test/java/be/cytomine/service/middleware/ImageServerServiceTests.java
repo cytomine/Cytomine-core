@@ -22,7 +22,13 @@ import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.UploadedFile;
-import be.cytomine.service.dto.*;
+import be.cytomine.dto.StorageStats;
+import be.cytomine.dto.image.CropParameter;
+import be.cytomine.dto.image.ImageParameter;
+import be.cytomine.dto.image.LabelParameter;
+import be.cytomine.dto.image.TileParameters;
+import be.cytomine.dto.image.WindowParameter;
+
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;

@@ -25,9 +25,10 @@ import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
+import be.cytomine.dto.annotation.AnnotationIndexLightDTO;
 import be.cytomine.repository.ontology.AnnotationIndexRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
-import be.cytomine.service.dto.AnnotationIndexLightDTO;
+
 import org.locationtech.jts.io.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

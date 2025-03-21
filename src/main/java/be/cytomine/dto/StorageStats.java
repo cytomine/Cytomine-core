@@ -1,4 +1,4 @@
-package be.cytomine.service.dto;
+package be.cytomine.dto;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,24 +16,21 @@ package be.cytomine.service.dto;
 * limitations under the License.
 */
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Getter
 @Setter
-public class Kmeans {
+public class StorageStats {
+    Long used;
 
-    Long id;
+    Long available;
 
-    String location;
+    Double usedP;
 
-    List term = new ArrayList();
+    String hostname;
 
-    Long count;
+    String mount;
 
-    Double ratio;
+    String ip;
 }

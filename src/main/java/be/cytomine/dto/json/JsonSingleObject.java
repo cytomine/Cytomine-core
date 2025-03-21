@@ -1,4 +1,4 @@
-package be.cytomine.service.dto;
+package be.cytomine.dto.json;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -17,28 +17,12 @@ package be.cytomine.service.dto;
 */
 
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.EqualsAndHashCode;
 
-@Getter
-@Setter
-public class ImageParameter {
+import be.cytomine.utils.JsonObject;
 
-    private String format;
+@Data
+@EqualsAndHashCode(callSuper=false)
+public class JsonSingleObject extends JsonObject implements JsonInput {
 
-    private Integer maxSize;
-
-    private String colormap;
-
-    private Boolean inverse;
-
-    private Double contrast;
-
-    private Double gamma;
-
-    private Integer bits;
-
-    private Boolean maxBits;
-
-    private Boolean refresh;
 }

@@ -17,9 +17,9 @@ package be.cytomine.api.controller.ontology;
 */
 
 import be.cytomine.api.controller.RestCytomineController;
-import be.cytomine.dto.JsonInput;
-import be.cytomine.dto.JsonMultipleObject;
-import be.cytomine.dto.JsonSingleObject;
+import be.cytomine.dto.json.JsonInput;
+import be.cytomine.dto.json.JsonMultipleObject;
+import be.cytomine.dto.json.JsonSingleObject;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.project.ProjectRepository;

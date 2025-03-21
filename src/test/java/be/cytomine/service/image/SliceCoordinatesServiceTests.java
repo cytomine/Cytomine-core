@@ -20,8 +20,9 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
-import be.cytomine.dto.SliceCoordinate;
-import be.cytomine.dto.SliceCoordinates;
+import be.cytomine.dto.image.SliceCoordinate;
+import be.cytomine.dto.image.SliceCoordinates;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

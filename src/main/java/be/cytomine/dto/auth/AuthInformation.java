@@ -1,4 +1,4 @@
-package be.cytomine.dto;
+package be.cytomine.dto.auth;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,5 +16,24 @@ package be.cytomine.dto;
 * limitations under the License.
 */
 
-public interface JsonInput {
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class AuthInformation {
+
+    private Boolean admin;
+
+    private Boolean user;
+
+    private Boolean guest;
+
+    private Boolean adminByNow;
+
+    private Boolean userByNow;
+
+    private Boolean guestByNow;
+
+
 }

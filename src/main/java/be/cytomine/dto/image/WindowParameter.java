@@ -1,4 +1,4 @@
-package be.cytomine.service.dto;
+package be.cytomine.dto.image;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,51 +16,33 @@ package be.cytomine.service.dto;
 * limitations under the License.
 */
 
-import lombok.Data;
+import java.util.List;
+import java.util.Map;
+
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class CropParameter {
+public class WindowParameter {
 
     private String format;
 
-    private String geometry;
+    private int x;
 
-    private String location;
+    private int y;
 
-    private Boolean complete;
+    private int w;
 
-    private Integer maxSize;
+    private int h;
 
-    private Integer zoom;
+    private boolean withExterior;
 
-    private Double increaseArea;
+    private BoundariesCropParameter boundaries;
 
     private Boolean safe;
 
-    private Boolean square;
-
-    private String type;
-
-    private Boolean draw;
-
-    private Boolean mask;
-
-    private Boolean alphaMask;
-
-    private Boolean drawScaleBar;
-
-    private Double resolution;
-
-    private Double magnification;
-
-    private String colormap;
-
-    private Boolean inverse;
-
-    private Double contrast;
+    private Integer maxSize;
 
     private Double gamma;
 
@@ -72,10 +54,23 @@ public class CropParameter {
 
     private Integer thickness;
 
+    private Integer zoom;
+
+    private String colormap;
+
+    private Boolean inverse;
+
+    private List<Map<String, Object>> geometries;
+
     private String color;
 
-    private Integer jpegQuality;
+    private Boolean complete;
 
-    private BoundariesCropParameter boundaries;
+    private String type;
 
+    private Boolean draw;
+
+    private Boolean mask;
+
+    private Boolean alphaMask;
 }

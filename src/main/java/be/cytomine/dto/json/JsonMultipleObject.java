@@ -1,4 +1,4 @@
-package be.cytomine.dto;
+package be.cytomine.dto.json;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,12 +16,15 @@ package be.cytomine.dto;
 * limitations under the License.
 */
 
-import be.cytomine.utils.JsonObject;
+import java.util.ArrayList;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import be.cytomine.utils.JsonObject;
+
 @Data
 @EqualsAndHashCode(callSuper=false)
-public class JsonSingleObject extends JsonObject implements JsonInput {
+public class JsonMultipleObject extends ArrayList<JsonObject> implements JsonInput {
 
 }

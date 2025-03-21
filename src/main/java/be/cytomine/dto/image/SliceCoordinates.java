@@ -1,4 +1,4 @@
-package be.cytomine.dto;
+package be.cytomine.dto.image;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,16 +16,21 @@ package be.cytomine.dto;
 * limitations under the License.
 */
 
-import be.cytomine.utils.JsonObject;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.hibernate.mapping.Array;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.util.ArrayList;
 import java.util.List;
 
-@Data
-@EqualsAndHashCode(callSuper=false)
-public class JsonMultipleObject extends ArrayList<JsonObject> implements JsonInput {
+@Getter
+@Setter
+@AllArgsConstructor
+public class SliceCoordinates {
+
+    List<Integer> channels;
+
+    List<Integer> zStacks;
+
+    List<Integer> times;
 
 }

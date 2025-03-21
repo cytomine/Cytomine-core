@@ -16,16 +16,23 @@ package be.cytomine.dto;
 * limitations under the License.
 */
 
-import lombok.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class AnnotationLight {
-    private Long id;
-    private Long container;
-    private String url;
+public class Kmeans {
 
+    Long id;
 
+    String location;
+
+    List term = new ArrayList();
+
+    Long count;
+
+    Double ratio;
 }

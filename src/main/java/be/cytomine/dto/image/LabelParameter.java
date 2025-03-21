@@ -1,4 +1,4 @@
-package be.cytomine.dto;
+package be.cytomine.dto.image;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,20 +16,17 @@ package be.cytomine.dto;
 * limitations under the License.
 */
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
-public class SliceCoordinate {
+public class LabelParameter {
 
-    Integer channel;
+    private String format;
 
-    Integer zStack;
+    private String label;
 
-    Integer time;
+    private Integer maxSize;
 
 }

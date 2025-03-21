@@ -1,4 +1,4 @@
-package be.cytomine.dto;
+package be.cytomine.dto.json;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,22 +16,5 @@ package be.cytomine.dto;
 * limitations under the License.
 */
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.util.List;
-
-@Getter
-@Setter
-@AllArgsConstructor
-public class SliceCoordinates {
-
-    List<Integer> channels;
-
-    List<Integer> zStacks;
-
-    List<Integer> times;
-
+public interface JsonInput {
 }

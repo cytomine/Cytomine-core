@@ -23,7 +23,7 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.dto.AuthInformation;
+import be.cytomine.dto.auth.AuthInformation;
 import be.cytomine.exceptions.AuthenticationException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;

@@ -1,4 +1,4 @@
-package be.cytomine.service.dto;
+package be.cytomine.dto.image;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,22 +16,18 @@ package be.cytomine.service.dto;
 * limitations under the License.
 */
 
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class StorageStats {
-    Long used;
+public class BoundariesCropParameter {
 
-    Long available;
+    private Integer topLeftX;
 
-    Double usedP;
+    private Integer topLeftY;
 
-    String hostname;
+    private Integer width;
 
-    String mount;
-
-    String ip;
+    private Integer height;
 }

@@ -1,4 +1,4 @@
-package be.cytomine.service.dto;
+package be.cytomine.dto.image;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,7 +16,19 @@ package be.cytomine.service.dto;
 * limitations under the License.
 */
 
-import java.util.LinkedHashMap;
+import java.util.List;
 
-public class AnnotationResult extends LinkedHashMap<String, Object>  {
+import lombok.*;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class Point {
+    Double x;
+    Double y;
+
+    public List<Double> toList() {
+        return List.of(x,y);
+    }
 }

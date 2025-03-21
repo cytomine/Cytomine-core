@@ -1,4 +1,4 @@
-package be.cytomine.service.dto;
+package be.cytomine.dto.annotation;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,19 +16,17 @@ package be.cytomine.service.dto;
 * limitations under the License.
 */
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.locationtech.jts.geom.Geometry;
 
 @Getter
 @Setter
-public class BoundariesCropParameter {
+@AllArgsConstructor
+public class SimplifiedAnnotation {
 
-    private Integer topLeftX;
+    Geometry newAnnotation;
 
-    private Integer topLeftY;
-
-    private Integer width;
-
-    private Integer height;
+    Double rate;
 }

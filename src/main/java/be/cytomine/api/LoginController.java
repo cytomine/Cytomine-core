@@ -32,7 +32,7 @@ import be.cytomine.domain.security.AuthWithToken;
 import be.cytomine.domain.security.ForgotPasswordToken;
 import be.cytomine.domain.security.SecRole;
 import be.cytomine.domain.security.User;
-import be.cytomine.dto.LoginVM;
+import be.cytomine.dto.auth.LoginVM;
 import be.cytomine.config.security.JWTFilter;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;

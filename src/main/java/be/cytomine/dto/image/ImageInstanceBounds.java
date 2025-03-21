@@ -1,11 +1,13 @@
-package be.cytomine.service.dto;
+package be.cytomine.dto.image;
+
+import java.util.Date;
+
+import lombok.Getter;
 
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.dto.AbstractBounds;
 import be.cytomine.utils.MinMax;
-import lombok.Getter;
-
-import java.util.Date;
 
 @Getter
 public class ImageInstanceBounds extends AbstractBounds {

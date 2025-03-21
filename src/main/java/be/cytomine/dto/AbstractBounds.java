@@ -1,4 +1,4 @@
-package be.cytomine.service.dto;
+package be.cytomine.dto;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,14 +16,12 @@ package be.cytomine.service.dto;
 * limitations under the License.
 */
 
-import be.cytomine.domain.image.AbstractImage;
-import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.utils.MinMax;
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import be.cytomine.utils.MinMax;
 
 @Getter
 public class AbstractBounds {

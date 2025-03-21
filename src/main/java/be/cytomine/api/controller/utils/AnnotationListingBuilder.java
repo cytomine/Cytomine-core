@@ -18,12 +18,12 @@ package be.cytomine.api.controller.utils;
 
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.dto.annotation.AnnotationResult;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.*;
 import be.cytomine.service.AnnotationListingService;
-import be.cytomine.service.dto.AnnotationResult;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;

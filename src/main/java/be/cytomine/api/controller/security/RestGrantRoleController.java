@@ -18,7 +18,7 @@ package be.cytomine.api.controller.security;
 
 import be.cytomine.api.controller.RestCytomineController;
 import be.cytomine.domain.security.SecUser;
-import be.cytomine.dto.AuthInformation;
+import be.cytomine.dto.auth.AuthInformation;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.utils.JsonObject;

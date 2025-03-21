@@ -1,4 +1,4 @@
-package be.cytomine.service.dto;
+package be.cytomine.dto.annotation;
 
 public interface AnnotationIndexLightDTO {
 

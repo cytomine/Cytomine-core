@@ -1,4 +1,4 @@
-package be.cytomine.dto;
+package be.cytomine.dto.annotation;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,25 +16,16 @@ package be.cytomine.dto;
 * limitations under the License.
 */
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
-public class AuthInformation {
-
-    private Boolean admin;
-
-    private Boolean user;
-
-    private Boolean guest;
-
-    private Boolean adminByNow;
-
-    private Boolean userByNow;
-
-    private Boolean guestByNow;
+@NoArgsConstructor
+@AllArgsConstructor
+public class AnnotationLight {
+    private Long id;
+    private Long container;
+    private String url;
 
 
 }

@@ -46,12 +46,12 @@ import be.cytomine.domain.ontology.SharedAnnotation;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.security.User;
-import be.cytomine.dto.AnnotationLight;
+import be.cytomine.dto.annotation.AnnotationLight;
+import be.cytomine.dto.annotation.AnnotationResult;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.CommandService;
-import be.cytomine.service.dto.AnnotationResult;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 

@@ -1,4 +1,4 @@
-package be.cytomine.dto;
+package be.cytomine.dto.auth;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.

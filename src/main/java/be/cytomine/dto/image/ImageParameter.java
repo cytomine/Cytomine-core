@@ -1,4 +1,4 @@
-package be.cytomine.dto;
+package be.cytomine.dto.image;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,18 +16,28 @@ package be.cytomine.dto;
 * limitations under the License.
 */
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.locationtech.jts.geom.Geometry;
 
 @Getter
 @Setter
-@AllArgsConstructor
-public class SimplifiedAnnotation {
+public class ImageParameter {
 
-    Geometry newAnnotation;
+    private String format;
 
-    Double rate;
+    private Integer maxSize;
+
+    private String colormap;
+
+    private Boolean inverse;
+
+    private Double contrast;
+
+    private Double gamma;
+
+    private Integer bits;
+
+    private Boolean maxBits;
+
+    private Boolean refresh;
 }

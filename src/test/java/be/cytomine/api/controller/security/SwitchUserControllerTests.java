@@ -20,7 +20,7 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.config.security.JWTFilter;
 import be.cytomine.domain.security.User;
-import be.cytomine.dto.LoginVM;
+import be.cytomine.dto.auth.LoginVM;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.security.jwt.TokenProvider;
 import be.cytomine.security.jwt.TokenType;

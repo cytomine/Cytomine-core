@@ -1,4 +1,4 @@
-package be.cytomine.service.dto;
+package be.cytomine.dto.image;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,16 +16,16 @@ package be.cytomine.service.dto;
 * limitations under the License.
 */
 
-import be.cytomine.domain.social.MongodbLocation;
-import be.cytomine.utils.JsonObject;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.mongodb.core.geo.GeoJsonPolygon;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import be.cytomine.domain.social.MongodbLocation;
 
 @Getter
 @Setter

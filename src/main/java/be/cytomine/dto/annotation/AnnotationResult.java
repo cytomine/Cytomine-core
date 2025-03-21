@@ -1,4 +1,4 @@
-package be.cytomine.service.dto;
+package be.cytomine.dto.annotation;
 
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
@@ -16,18 +16,7 @@ package be.cytomine.service.dto;
 * limitations under the License.
 */
 
-import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import java.util.LinkedHashMap;
 
-@Getter
-@Setter
-public class LabelParameter {
-
-    private String format;
-
-    private String label;
-
-    private Integer maxSize;
-
+public class AnnotationResult extends LinkedHashMap<String, Object>  {
 }

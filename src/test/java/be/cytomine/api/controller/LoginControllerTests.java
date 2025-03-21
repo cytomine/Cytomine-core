@@ -20,7 +20,7 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.security.ForgotPasswordToken;
 import be.cytomine.domain.security.User;
-import be.cytomine.dto.LoginVM;
+import be.cytomine.dto.auth.LoginVM;
 import be.cytomine.repository.security.ForgotPasswordTokenRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.config.security.JWTFilter;
