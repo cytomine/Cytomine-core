@@ -18,8 +18,8 @@ package be.cytomine.service.ontology;
 
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.dto.annotation.AnnotationIndexLightDTO;
 import be.cytomine.repository.ontology.AnnotationIndexRepository;
-import be.cytomine.service.dto.AnnotationIndexLightDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

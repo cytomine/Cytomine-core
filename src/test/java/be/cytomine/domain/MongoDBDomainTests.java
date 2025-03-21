@@ -23,8 +23,9 @@ import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.*;
+import be.cytomine.dto.image.AreaDTO;
 import be.cytomine.repositorynosql.social.*;
-import be.cytomine.service.dto.AreaDTO;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.client.ListIndexesIterable;
@@ -222,10 +223,10 @@ public class MongoDBDomainTests {
         lastPosition.setImage(29240L);
         lastPosition.setImageName("CMU-1-Small-Region (1).svs");
         lastPosition.setLocation(new AreaDTO(
-                new be.cytomine.service.dto.Point(-109d,2548d),
-                new be.cytomine.service.dto.Point(683d,2548d),
-                new be.cytomine.service.dto.Point(683d,2028d),
-                new be.cytomine.service.dto.Point(-109d,2028d)
+                new be.cytomine.dto.image.Point(-109d,2548d),
+                new be.cytomine.dto.image.Point(683d,2548d),
+                new be.cytomine.dto.image.Point(683d,2028d),
+                new be.cytomine.dto.image.Point(-109d,2028d)
         ).toMongodbLocation().getCoordinates());
         lastPosition.setProject(22782L);
         lastPosition.setRotation(0d);
@@ -479,10 +480,10 @@ public class MongoDBDomainTests {
         lastPosition.setImage(imageInstance.getId());
         lastPosition.setImageName("CMU-1-Small-Region (1).svs");
         lastPosition.setLocation(new AreaDTO(
-                new be.cytomine.service.dto.Point(-3338d,3128d),
-                new be.cytomine.service.dto.Point(5558d,3128d),
-                new be.cytomine.service.dto.Point(5558d,-160d),
-                new be.cytomine.service.dto.Point(-3338d,-160d)
+                new be.cytomine.dto.image.Point(-3338d,3128d),
+                new be.cytomine.dto.image.Point(5558d,3128d),
+                new be.cytomine.dto.image.Point(5558d,-160d),
+                new be.cytomine.dto.image.Point(-3338d,-160d)
         ).toMongodbLocation().getCoordinates());
         lastPosition.setProject(project.getId());
         lastPosition.setRotation(0d);

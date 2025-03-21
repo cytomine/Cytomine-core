@@ -1,5 +1,8 @@
 package be.cytomine.service;
 
+import be.cytomine.dto.annotation.AnnotationResult;
+import be.cytomine.dto.image.Point;
+
 /*
  * Copyright (c) 2009-2022. Authors: see NOTICE file.
  *
@@ -20,8 +23,6 @@ import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.AlgoAnnotationListing;
 import be.cytomine.repository.AnnotationListing;
 import be.cytomine.repository.UserAnnotationListing;
-import be.cytomine.service.dto.AnnotationResult;
-import be.cytomine.service.dto.Point;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.utils.KmeansGeometryService;
 import be.cytomine.utils.GisUtils;

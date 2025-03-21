@@ -20,7 +20,8 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.TestUtils;
 import be.cytomine.domain.ontology.UserAnnotation;
-import be.cytomine.dto.SimplifiedAnnotation;
+import be.cytomine.dto.annotation.SimplifiedAnnotation;
+
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.MultiPolygon;
 import org.locationtech.jts.geom.Polygon;

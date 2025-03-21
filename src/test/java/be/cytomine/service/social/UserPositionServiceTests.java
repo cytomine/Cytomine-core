@@ -23,12 +23,12 @@ import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.domain.social.PersistentUserPosition;
-
+import be.cytomine.dto.image.AreaDTO;
+import be.cytomine.dto.image.Point;
 import be.cytomine.repositorynosql.social.LastUserPositionRepository;
 import be.cytomine.repositorynosql.social.PersistentUserPositionRepository;
 import be.cytomine.service.database.SequenceService;
-import be.cytomine.service.dto.AreaDTO;
-import be.cytomine.service.dto.Point;
+
 import com.mongodb.client.MongoClient;
 import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.api.Assertions;
@@ -89,17 +89,17 @@ public class UserPositionServiceTests {
     }
 
     public static final AreaDTO USER_VIEW = new AreaDTO(
-            new be.cytomine.service.dto.Point(1000d, 1000d),
-            new be.cytomine.service.dto.Point(4000d, 1000d),
-            new be.cytomine.service.dto.Point(4000d, 4000d),
-            new be.cytomine.service.dto.Point(1000d, 4000d)
+            new be.cytomine.dto.image.Point(1000d, 1000d),
+            new be.cytomine.dto.image.Point(4000d, 1000d),
+            new be.cytomine.dto.image.Point(4000d, 4000d),
+            new be.cytomine.dto.image.Point(1000d, 4000d)
     );
 
     public static final AreaDTO ANOTHER_USER_VIEW = new AreaDTO(
-            new be.cytomine.service.dto.Point(3000d, 3000d),
-            new be.cytomine.service.dto.Point(9000d, 3000d),
-            new be.cytomine.service.dto.Point(9000d, 9000d),
-            new be.cytomine.service.dto.Point(3000d, 9000d)
+            new be.cytomine.dto.image.Point(3000d, 3000d),
+            new be.cytomine.dto.image.Point(9000d, 3000d),
+            new be.cytomine.dto.image.Point(9000d, 9000d),
+            new be.cytomine.dto.image.Point(3000d, 9000d)
     );
 
     PersistentUserPosition given_a_persistent_user_position(Date creation, User user, SliceInstance sliceInstance) {

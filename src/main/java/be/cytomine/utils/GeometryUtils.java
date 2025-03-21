@@ -1,5 +1,7 @@
 package be.cytomine.utils;
 
+import be.cytomine.dto.image.BoundariesCropParameter;
+
 /*
 * Copyright (c) 2009-2022. Authors: see NOTICE file.
 *
@@ -17,7 +19,7 @@ package be.cytomine.utils;
 */
 
 import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.service.dto.BoundariesCropParameter;
+
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
