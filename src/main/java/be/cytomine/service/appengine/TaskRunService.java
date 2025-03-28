@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -15,13 +17,19 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import be.cytomine.domain.annotation.AnnotationLayer;
 import be.cytomine.domain.appengine.TaskRun;
+import be.cytomine.domain.appengine.TaskRunLayer;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.dto.appengine.task.TaskRunValue;
 import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.repository.appengine.TaskRunLayerRepository;
 import be.cytomine.repository.appengine.TaskRunRepository;
 import be.cytomine.service.CurrentUserService;
+import be.cytomine.service.annotation.AnnotationLayerService;
+import be.cytomine.service.annotation.AnnotationService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.security.SecurityACLService;
@@ -33,6 +41,10 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 @RequiredArgsConstructor
 @Service
 public class TaskRunService {
+
+    private final AnnotationService annotationService;
+
+    private final AnnotationLayerService annotationLayerService;
 
     private final AppEngineService appEngineService;
 
@@ -47,6 +59,8 @@ public class TaskRunService {
     private final UserAnnotationService userAnnotationService;
 
     private final TaskRunRepository taskRunRepository;
+
+    private final TaskRunLayerRepository taskRunLayerRepository;
 
     public ResponseEntity<String> addTaskRun(Long projectId, String uri) {
         Project project = projectService.get(projectId);
@@ -138,7 +152,43 @@ public class TaskRunService {
 
     public ResponseEntity<String> getOutputs(Long projectId, UUID taskRunId) {
         checkTaskRun(projectId, taskRunId);
-        return appEngineService.get("task-runs/" + taskRunId.toString() + "/outputs");
+
+        ResponseEntity<String> response = appEngineService.get("task-runs/" + taskRunId.toString() + "/outputs");
+        Optional<TaskRun> taskRun = taskRunRepository.findTaskRunByProjectIdAndTaskRunId(projectId, taskRunId);
+        if (taskRun.isEmpty()) {
+            throw new ObjectNotFoundException("TaskRun", taskRunId);
+        }
+
+        List<TaskRunValue> outputs = new ArrayList<>();
+        try {
+            outputs = new ObjectMapper().readValue(response.getBody(), new TypeReference<List<TaskRunValue>>() {});
+        } catch (JsonProcessingException e) {
+            throw new ObjectNotFoundException("TaskRun", taskRunId);
+        }
+
+        List<String> geometries = outputs
+            .stream()
+            .map(output -> output.getValue())
+            .filter(value -> value instanceof String geometry && geometryService.isGeometry(geometry))
+            .map(value -> (String) value)
+            .toList();
+
+        if (!geometries.isEmpty()) {
+            String layerName = "task-run-" + taskRunId.toString();
+            AnnotationLayer annotationLayer = annotationLayerService.createAnnotationLayer(layerName);
+
+            for (String geometry : geometries) {
+                annotationService.createAnnotation(annotationLayer, geometryService.GeoJSONToWKT(geometry));
+            }
+
+            TaskRunLayer taskRunLayer = new TaskRunLayer();
+            taskRunLayer.setAnnotationLayer(annotationLayer);
+            taskRunLayer.setTaskRun(taskRun.get());
+            taskRunLayer.setImage(taskRun.get().getImage());
+            taskRunLayerRepository.saveAndFlush(taskRunLayer);
+        }
+
+        return response;
     }
 
     public ResponseEntity<String> getInputs(Long projectId, UUID taskRunId) {
