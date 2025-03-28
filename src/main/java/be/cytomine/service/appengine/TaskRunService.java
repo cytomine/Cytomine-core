@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import be.cytomine.domain.annotation.AnnotationLayer;
 import be.cytomine.domain.appengine.TaskRun;
 import be.cytomine.domain.appengine.TaskRunLayer;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
@@ -30,6 +31,7 @@ import be.cytomine.repository.appengine.TaskRunRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.annotation.AnnotationLayerService;
 import be.cytomine.service.annotation.AnnotationService;
+import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.security.SecurityACLService;
@@ -52,6 +54,8 @@ public class TaskRunService {
 
     private final GeometryService geometryService;
 
+    private final ImageInstanceService imageInstanceService;
+
     private final ProjectService projectService;
 
     private final SecurityACLService securityACLService;
@@ -62,7 +66,7 @@ public class TaskRunService {
 
     private final TaskRunLayerRepository taskRunLayerRepository;
 
-    public ResponseEntity<String> addTaskRun(Long projectId, String uri) {
+    public ResponseEntity<String> addTaskRun(Long projectId, String uri, JsonNode body) {
         Project project = projectService.get(projectId);
         SecUser currentUser = currentUserService.getCurrentUser();
 
@@ -84,11 +88,13 @@ public class TaskRunService {
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Error parsing JSON response");
         }
+        ImageInstance image = imageInstanceService.get(body.get("image").asLong());
 
         TaskRun taskRun = new TaskRun();
         taskRun.setUser(currentUser);
         taskRun.setProject(project);
         taskRun.setTaskRunId(taskId);
+        taskRun.setImage(image);
         taskRunRepository.save(taskRun);
 
         // We return the App engine response. Should we include information from Cytomine (project ID, user ID, created, ... ?)

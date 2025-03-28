@@ -1,11 +1,18 @@
 package be.cytomine.controller.appengine;
 
-import be.cytomine.BasicInstanceBuilder;
-import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.appengine.TaskRun;
-import be.cytomine.repository.appengine.TaskRunRepository;
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -17,26 +24,20 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
-import java.util.UUID;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import be.cytomine.BasicInstanceBuilder;
+import be.cytomine.CytomineCoreApplication;
+import be.cytomine.domain.appengine.TaskRun;
+import be.cytomine.repository.appengine.TaskRunRepository;
+import jakarta.transaction.Transactional;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
 @WithMockUser(username = "superadmin")
 @Transactional
 public class TaskRunResourceTests {
-
-    @Autowired
-    private EntityManager em;
 
     @Autowired
     private TaskRunRepository taskRunRepository;
@@ -59,9 +60,7 @@ public class TaskRunResourceTests {
 
     @AfterAll
     public static void afterAll() {
-        try {
-            wireMockServer.stop();
-        } catch (Exception e) {}
+        wireMockServer.stop();
     }
 
     @Test
@@ -70,6 +69,7 @@ public class TaskRunResourceTests {
         TaskRun taskRun = builder.given_a_not_persisted_task_run();
 
         String taskId = UUID.randomUUID().toString();
+        String queryBody = "{\"image\": \" " + taskRun.getImage().getId() + "\"}";
 
         String mockResponse = """
                 {
@@ -99,12 +99,14 @@ public class TaskRunResourceTests {
                 )
         );
 
-        restTaskRunControllerMockMvc.perform(post("/api/app-engine/project/" + taskRun.getProject().getId() + "/tasks/"+ taskId + "/runs"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
-                .andExpect(jsonPath("$.task").exists())
-                .andExpect(jsonPath("$.state").exists());
+        restTaskRunControllerMockMvc.perform(post("/api/app-engine/project/" + taskRun.getProject().getId() + "/tasks/"+ taskId + "/runs")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(queryBody))
+            .andDo(print())
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
+            .andExpect(jsonPath("$.task").exists())
+            .andExpect(jsonPath("$.state").exists());
     }
 
     @Test
@@ -115,7 +117,7 @@ public class TaskRunResourceTests {
         UUID taskRunId = taskRun.getTaskRunId();
 
         String paramName = "my_param";
-        String queryBody = "{\"value\": 0, \"param_name\": \"" + paramName + "\"}";
+        String queryBody = "{\"value\": 0, \"param_name\": \"" + paramName + "\", \"type\": \"integer\"}";
         String mockResponse = "{\"value\": 0, \"param_name\": \"" + paramName + "\", \"task_run_id\": \"" + taskRunId + "\"}";
         String appEngineUriSection = "task-runs/" + taskRunId + "/input-provisions/" + paramName;
         configureFor("localhost", 8888);
@@ -150,7 +152,7 @@ public class TaskRunResourceTests {
          * error and it should have no consequence unless we start sniffing the json object in the core endpoint
          * for provisioning.
          **/
-        String queryBody = "[{\"value\": 0, \"param_name\": \"" + paramName + "\"}]";
+        String queryBody = "[{\"value\": 0, \"param_name\": \"" + paramName + "\", \"type\": \"integer\"}]";
         String mockResponse = "[{\"value\": 0, \"param_name\": \"" + paramName + "\", \"task_run_id\": \"" + taskRunId + "\"}]";
         String appEngineUriSection = "task-runs/" + taskRunId + "/input-provisions";
         configureFor("localhost", 8888);

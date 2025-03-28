@@ -28,18 +28,21 @@ public class TaskRunController {
     @PostMapping("/project/{project}/tasks/{task}/runs")
     public ResponseEntity<String> add(
         @PathVariable Long project,
-        @PathVariable UUID task
+        @PathVariable UUID task,
+        @RequestBody JsonNode body
     ) {
-        return taskRunService.addTaskRun(project, "tasks/" + task + "/runs");
+        return taskRunService.addTaskRun(project, "tasks/" + task + "/runs", body);
     }
 
     @PostMapping("/project/{project}/tasks/{namespace}/{version}/runs")
     public ResponseEntity<String> add(
         @PathVariable Long project,
         @PathVariable String namespace,
-        @PathVariable String version
+        @PathVariable String version,
+        @RequestBody JsonNode body
     ) {
-        return taskRunService.addTaskRun(project, "tasks/" + namespace + "/" + version + "/runs");
+        String uri = "tasks/" + namespace + "/" + version + "/runs";
+        return taskRunService.addTaskRun(project, uri, body);
     }
 
     @GetMapping("/project/{project}/task-runs/{task}")
