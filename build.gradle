@@ -99,6 +99,7 @@ dependencies {
 	// See https://github.com/vladmihalcea/hypersistence-utils for related Hibernate version package
 	implementation 'io.hypersistence:hypersistence-utils-hibernate-62:3.7.3'
 	implementation 'org.locationtech.jts:jts-core:1.19.0'
+	implementation 'org.locationtech.jts.io:jts-io-common:1.19.0'
 
 	// Reports (PDF, CSV, Excel, ...)
 	implementation 'org.apache.pdfbox:pdfbox:2.0.25'

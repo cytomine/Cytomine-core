@@ -1,50 +1,57 @@
 package be.cytomine.service.appengine;
 
-import be.cytomine.domain.appengine.TaskRun;
-import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.repository.appengine.TaskRunRepository;
-import be.cytomine.service.CurrentUserService;
-import be.cytomine.service.project.ProjectService;
-import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.utils.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.Objects;
+import be.cytomine.domain.appengine.TaskRun;
+import be.cytomine.domain.ontology.UserAnnotation;
+import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.SecUser;
+import be.cytomine.exceptions.ObjectNotFoundException;
+import be.cytomine.repository.appengine.TaskRunRepository;
+import be.cytomine.service.CurrentUserService;
+import be.cytomine.service.ontology.UserAnnotationService;
+import be.cytomine.service.project.ProjectService;
+import be.cytomine.service.security.SecurityACLService;
+import be.cytomine.service.utils.GeometryService;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Slf4j
+@RequiredArgsConstructor
 @Service
 public class TaskRunService {
 
-    @Autowired
-    private CurrentUserService currentUserService;
+    private final AppEngineService appEngineService;
 
-    @Autowired
-    private SecurityACLService securityACLService;
+    private final CurrentUserService currentUserService;
 
-    @Autowired
-    private AppEngineService appEngineService;
+    private final GeometryService geometryService;
 
-    @Autowired
-    private TaskRunRepository taskRunRepository;
+    private final ProjectService projectService;
 
-    @Autowired
-    private ProjectService projectService;
+    private final SecurityACLService securityACLService;
+
+    private final UserAnnotationService userAnnotationService;
+
+    private final TaskRunRepository taskRunRepository;
 
     public ResponseEntity<String> addTaskRun(Long projectId, String uri) {
         Project project = projectService.get(projectId);
         SecUser currentUser = currentUserService.getCurrentUser();
+
         securityACLService.checkUser(currentUser);
         securityACLService.check(project, READ);
         securityACLService.checkIsNotReadOnly(project);
@@ -54,8 +61,15 @@ public class TaskRunService {
             return response;
         }
 
-        JsonObject jsonResponse = Objects.requireNonNull(JsonObject.toJsonObject(response.getBody()));
-        UUID taskId = UUID.fromString(jsonResponse.getJSONAttrStr("id", true));
+        UUID taskId = null;
+        try {
+            JsonNode jsonResponse = new ObjectMapper().readTree(response.getBody());
+            taskId = UUID.fromString(jsonResponse.path("id").asText());
+        } catch (Exception e) {
+            return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error parsing JSON response");
+        }
 
         TaskRun taskRun = new TaskRun();
         taskRun.setUser(currentUser);
@@ -81,32 +95,53 @@ public class TaskRunService {
         securityACLService.checkIsNotReadOnly(project);
     }
 
-    public ResponseEntity<String> batchProvisionTaskRun(ArrayList<JsonObject> json, Long projectId, UUID taskRunId) {
-        checkTaskRun(projectId, taskRunId);
-        return appEngineService.put("task-runs/" + taskRunId.toString() + "/input-provisions", json, MediaType.APPLICATION_JSON);
+    private List<JsonNode> processProvisions(List<JsonNode> json) {
+        List<JsonNode> requestBody = new ArrayList<>();
+
+        for (JsonNode provision : json) {
+            ObjectNode processedProvision = provision.deepCopy();
+            processedProvision.remove("type");
+
+            // Process the input if it is an annotation type
+            if (provision.get("type").asText().equals("geometry")) {
+                Long annotationId = provision.get("value").asLong();
+                UserAnnotation annotation = userAnnotationService.get(annotationId);
+                processedProvision.put("value", geometryService.WKTToGeoJSON(annotation.getWktLocation()));
+            }
+
+            requestBody.add(processedProvision);
+        }
+
+        return requestBody;
     }
 
-    public ResponseEntity<String> provisionTaskRun(JsonObject json, long projectId, UUID taskRunId, String paramName) {
+    public ResponseEntity<String> batchProvisionTaskRun(List<JsonNode> requestBody, Long projectId, UUID taskRunId) {
+        checkTaskRun(projectId, taskRunId);
+        List<JsonNode> body = processProvisions(requestBody);
+        return appEngineService.put("task-runs/" + taskRunId + "/input-provisions", body, MediaType.APPLICATION_JSON);
+    }
+
+    public ResponseEntity<String> provisionTaskRun(JsonNode json, Long projectId, UUID taskRunId, String paramName) {
         checkTaskRun(projectId, taskRunId);
         return appEngineService.put("task-runs/" + taskRunId.toString() + "/input-provisions/" + paramName, json, MediaType.APPLICATION_JSON);
     }
 
-    public ResponseEntity<?> getTask(long projectId, UUID taskRunId) {
+    public ResponseEntity<String> getTaskRun(Long projectId, UUID taskRunId) {
         checkTaskRun(projectId, taskRunId);
-        return appEngineService.get("task-runs/" + taskRunId.toString());
+        return appEngineService.get("task-runs/" + taskRunId);
     }
 
-    public ResponseEntity<?> postStateAction(JsonObject json, long projectId, UUID taskRunId) {
+    public ResponseEntity<String> postStateAction(JsonNode body, Long projectId, UUID taskRunId) {
         checkTaskRun(projectId, taskRunId);
-        return appEngineService.post("task-runs/" + taskRunId.toString() + "/state-actions", json, MediaType.APPLICATION_JSON);
+        return appEngineService.post("task-runs/" + taskRunId.toString() + "/state-actions", body, MediaType.APPLICATION_JSON);
     }
 
-    public ResponseEntity<?> getOutputs(long projectId, UUID taskRunId) {
+    public ResponseEntity<String> getOutputs(Long projectId, UUID taskRunId) {
         checkTaskRun(projectId, taskRunId);
         return appEngineService.get("task-runs/" + taskRunId.toString() + "/outputs");
     }
 
-    public ResponseEntity<?> getInputs(long projectId, UUID taskRunId) {
+    public ResponseEntity<String> getInputs(Long projectId, UUID taskRunId) {
         checkTaskRun(projectId, taskRunId);
         return appEngineService.get("task-runs/" + taskRunId.toString() + "/inputs");
     }
