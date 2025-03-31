@@ -1,7 +1,6 @@
 package be.cytomine.service.annotation;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
@@ -29,7 +28,5 @@ public class AnnotationService {
         return annotationRepository.findById(id);
     }
 
-    public List<Annotation> findByLayer(AnnotationLayer layer) {
-        return annotationRepository.findAllByAnnotationLayer(layer);
-    }
+
 }
