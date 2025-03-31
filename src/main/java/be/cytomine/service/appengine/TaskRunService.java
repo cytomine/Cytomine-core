@@ -102,7 +102,7 @@ public class TaskRunService {
     }
 
     private void checkTaskRun(Long projectId, UUID taskRunId) {
-        Optional<TaskRun> taskRun = taskRunRepository.findTaskRunByProjectIdAndTaskRunId(projectId, taskRunId);
+        Optional<TaskRun> taskRun = taskRunRepository.findByProjectIdAndTaskRunId(projectId, taskRunId);
         if (taskRun.isEmpty()) {
             throw new ObjectNotFoundException("TaskRun", taskRunId);
         }
@@ -160,7 +160,7 @@ public class TaskRunService {
         checkTaskRun(projectId, taskRunId);
 
         ResponseEntity<String> response = appEngineService.get("task-runs/" + taskRunId.toString() + "/outputs");
-        Optional<TaskRun> taskRun = taskRunRepository.findTaskRunByProjectIdAndTaskRunId(projectId, taskRunId);
+        Optional<TaskRun> taskRun = taskRunRepository.findByProjectIdAndTaskRunId(projectId, taskRunId);
         if (taskRun.isEmpty()) {
             throw new ObjectNotFoundException("TaskRun", taskRunId);
         }
@@ -169,7 +169,7 @@ public class TaskRunService {
         try {
             outputs = new ObjectMapper().readValue(response.getBody(), new TypeReference<List<TaskRunValue>>() {});
         } catch (JsonProcessingException e) {
-            throw new ObjectNotFoundException("TaskRun", taskRunId);
+            throw new ObjectNotFoundException("Outputs from", taskRunId);
         }
 
         List<String> geometries = outputs

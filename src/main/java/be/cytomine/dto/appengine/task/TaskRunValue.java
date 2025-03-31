@@ -21,5 +21,7 @@ public class TaskRunValue {
     @JsonProperty("param_name")
     private String parameterName;
 
+    private String type;
+
     private Object value;
 }
