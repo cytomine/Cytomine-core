@@ -27,6 +27,4 @@ public class AnnotationService {
     public Optional<Annotation> find(Long id) {
         return annotationRepository.findById(id);
     }
-
-
 }

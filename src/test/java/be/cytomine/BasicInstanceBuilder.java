@@ -15,6 +15,8 @@ import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.annotation.Annotation;
+import be.cytomine.domain.annotation.AnnotationLayer;
 import be.cytomine.domain.appengine.TaskRun;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.group.ImageGroup;
@@ -1138,5 +1140,30 @@ public class BasicInstanceBuilder {
 
     public TaskRun given_a_task_run() {
         return persistAndReturn(given_a_not_persisted_task_run(given_a_project(), UUID.randomUUID(), given_an_image_instance()));
+    }
+
+    public AnnotationLayer given_a_not_persisted_annotation_layer() {
+        AnnotationLayer annotationLayer = new AnnotationLayer();
+        annotationLayer.setName(randomString());
+        return annotationLayer;
+    }
+
+    public AnnotationLayer given_a_persisted_annotation_layer() {
+        return persistAndReturn(given_a_not_persisted_annotation_layer());
+    }
+
+    public Annotation given_a_not_persisted_annotation(AnnotationLayer annotationLayer) {
+        Annotation annotation = new Annotation();
+        annotation.setAnnotationLayer(annotationLayer);
+        annotation.setLocation("{\"type\": \"Point\",\"coordinates\": [0, 0]}".getBytes());
+        return annotation;
+    }
+
+    public Annotation given_a_not_persisted_annotation() {
+        return given_a_not_persisted_annotation(given_a_persisted_annotation_layer());
+    }
+
+    public Annotation given_a_persisted_annotation() {
+        return persistAndReturn(given_a_not_persisted_annotation());
     }
 }
