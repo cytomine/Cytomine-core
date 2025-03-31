@@ -25,13 +25,13 @@ public class AnnotationLayerController {
     private final AnnotationLayerService annotationLayerService;
 
     @GetMapping("/image-instances/{id}/annotation-layers")
-    public ResponseEntity<List<AnnotationLayer>> getAnnotationLayersForImage(@PathVariable Long id) {
+    public ResponseEntity<List<AnnotationLayer>> getAnnotationLayersByImage(@PathVariable Long id) {
         log.info("Retrieve all annotation layers for image instance {}", id);
         return ResponseEntity.ok(annotationLayerService.findByTaskRunLayer(id));
     }
 
     @GetMapping("/annotation-layers/{id}/annotations")
-    public ResponseEntity<List<Annotation>> getAnnotationsForLayer(@PathVariable Long id) {
+    public ResponseEntity<List<Annotation>> getAnnotationsByLayer(@PathVariable Long id) {
         log.info("Retrieve all annotations for annotation layer {}", id);
 
         AnnotationLayer layer = annotationLayerService

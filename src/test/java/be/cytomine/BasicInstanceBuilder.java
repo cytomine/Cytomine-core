@@ -2,6 +2,7 @@ package be.cytomine;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 
 import jakarta.persistence.EntityManager;
@@ -18,6 +19,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.annotation.Annotation;
 import be.cytomine.domain.annotation.AnnotationLayer;
 import be.cytomine.domain.appengine.TaskRun;
+import be.cytomine.domain.appengine.TaskRunLayer;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.group.ImageGroup;
 import be.cytomine.domain.image.group.ImageGroupImageInstance;
@@ -1165,5 +1167,23 @@ public class BasicInstanceBuilder {
 
     public Annotation given_a_persisted_annotation() {
         return persistAndReturn(given_a_not_persisted_annotation());
+    }
+
+    public TaskRunLayer given_a_not_persisted_task_run_layer(AnnotationLayer annotationLayer, TaskRun taskRun, ImageInstance image) {
+        TaskRunLayer taskRunLayer = new TaskRunLayer();
+        taskRunLayer.setAnnotationLayer(annotationLayer);
+        taskRunLayer.setTaskRun(taskRun);
+        taskRunLayer.setImage(image);
+        taskRunLayer.setXOffset(new Random().nextInt(100));
+        taskRunLayer.setYOffset(new Random().nextInt(100));
+        return taskRunLayer;
+    }
+
+    public TaskRunLayer given_a_not_persisted_task_run_layer() {
+        return given_a_not_persisted_task_run_layer(given_a_persisted_annotation_layer(), given_a_task_run(), given_an_image_instance());
+    }
+
+    public TaskRunLayer given_a_persisted_task_run_layer() {
+        return persistAndReturn(given_a_not_persisted_task_run_layer());
     }
 }

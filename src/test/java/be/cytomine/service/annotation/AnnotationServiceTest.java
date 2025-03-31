@@ -32,9 +32,9 @@ public class AnnotationServiceTest {
     @InjectMocks
     private AnnotationService annotationService;
 
-    private static AnnotationLayer mockAnnotationLayer;
-
     private static Annotation mockAnnotation;
+
+    private static AnnotationLayer mockAnnotationLayer;
 
     private static String mockGeometry;
 
