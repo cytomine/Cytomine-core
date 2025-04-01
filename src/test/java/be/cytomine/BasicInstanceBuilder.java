@@ -1,23 +1,25 @@
 package be.cytomine;
 
-/*
-* Copyright (c) 2009-2022. Authors: see NOTICE file.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.UUID;
+
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
+import org.springframework.security.acls.model.Permission;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.annotation.Annotation;
+import be.cytomine.domain.annotation.AnnotationLayer;
 import be.cytomine.domain.appengine.TaskRun;
+import be.cytomine.domain.appengine.TaskRunLayer;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.group.ImageGroup;
 import be.cytomine.domain.image.group.ImageGroupImageInstance;
@@ -35,27 +37,12 @@ import be.cytomine.repository.image.MimeRepository;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.service.PermissionService;
-import org.locationtech.jts.io.ParseException;
-import org.locationtech.jts.io.WKTReader;
-import org.springframework.security.acls.model.Permission;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallbackWithoutResult;
-import org.springframework.transaction.support.TransactionTemplate;
-
-import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 
 @Component
 @Transactional
 public class BasicInstanceBuilder {
-
-    private User SUPERADMIN;
 
     public static final String ROLE_SUPER_ADMIN = "ROLE_SUPER_ADMIN";
 
@@ -1141,18 +1128,62 @@ public class BasicInstanceBuilder {
     }
 
     public TaskRun given_a_not_persisted_task_run() {
-        return given_a_not_persisted_task_run(given_a_project(), UUID.randomUUID());
+        return given_a_not_persisted_task_run(given_a_project(), UUID.randomUUID(), given_an_image_instance());
     }
 
-    public TaskRun given_a_not_persisted_task_run(Project project, UUID taskRunId) {
+    public TaskRun given_a_not_persisted_task_run(Project project, UUID taskRunId, ImageInstance image) {
         TaskRun taskRun = new TaskRun();
         taskRun.setProject(project);
         taskRun.setUser(given_superadmin());
         taskRun.setTaskRunId(taskRunId);
+        taskRun.setImage(image);
         return taskRun;
     }
 
     public TaskRun given_a_task_run() {
-        return persistAndReturn(given_a_not_persisted_task_run(given_a_project(), UUID.randomUUID()));
+        return persistAndReturn(given_a_not_persisted_task_run(given_a_project(), UUID.randomUUID(), given_an_image_instance()));
+    }
+
+    public AnnotationLayer given_a_not_persisted_annotation_layer() {
+        AnnotationLayer annotationLayer = new AnnotationLayer();
+        annotationLayer.setName(randomString());
+        return annotationLayer;
+    }
+
+    public AnnotationLayer given_a_persisted_annotation_layer() {
+        return persistAndReturn(given_a_not_persisted_annotation_layer());
+    }
+
+    public Annotation given_a_not_persisted_annotation(AnnotationLayer annotationLayer) {
+        Annotation annotation = new Annotation();
+        annotation.setAnnotationLayer(annotationLayer);
+        annotation.setLocation("{\"type\": \"Point\",\"coordinates\": [0, 0]}".getBytes());
+        return annotation;
+    }
+
+    public Annotation given_a_not_persisted_annotation() {
+        return given_a_not_persisted_annotation(given_a_persisted_annotation_layer());
+    }
+
+    public Annotation given_a_persisted_annotation() {
+        return persistAndReturn(given_a_not_persisted_annotation());
+    }
+
+    public TaskRunLayer given_a_not_persisted_task_run_layer(AnnotationLayer annotationLayer, TaskRun taskRun, ImageInstance image) {
+        TaskRunLayer taskRunLayer = new TaskRunLayer();
+        taskRunLayer.setAnnotationLayer(annotationLayer);
+        taskRunLayer.setTaskRun(taskRun);
+        taskRunLayer.setImage(image);
+        taskRunLayer.setXOffset(new Random().nextInt(100));
+        taskRunLayer.setYOffset(new Random().nextInt(100));
+        return taskRunLayer;
+    }
+
+    public TaskRunLayer given_a_not_persisted_task_run_layer() {
+        return given_a_not_persisted_task_run_layer(given_a_persisted_annotation_layer(), given_a_task_run(), given_an_image_instance());
+    }
+
+    public TaskRunLayer given_a_persisted_task_run_layer() {
+        return persistAndReturn(given_a_not_persisted_task_run_layer());
     }
 }

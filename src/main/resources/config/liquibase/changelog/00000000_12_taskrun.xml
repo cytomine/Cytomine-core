@@ -24,6 +24,9 @@
             <column name="task_run_id" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
+            <column name="image_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         
         <createIndex indexName="task_run_project_id_index" tableName="task_run">
@@ -31,5 +34,6 @@
         </createIndex>
         <addForeignKeyConstraint baseColumnNames="project_id" baseTableName="task_run" constraintName="fk_6fgy0dijeaodgnjaksl7rlf3ijo" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="project" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="task_run" constraintName="fk_tc70uewrdpmbdsgiryjl2ev12b9s" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="sec_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="image_id" baseTableName="task_run" constraintName="fk_td81uexseqqncedihzxm3fv13d8t" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="image_instance" validate="true"/>
     </changeSet>
 </databaseChangeLog>

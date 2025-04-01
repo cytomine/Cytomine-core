@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import be.cytomine.converter.UUIDConverter;
 import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.utils.JsonObject;
@@ -24,6 +25,9 @@ public class TaskRun extends CytomineDomain {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private SecUser user; // launcher
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private ImageInstance image;
 
     @NotNull
     @Column(nullable = false)

@@ -44,4 +44,6 @@
 
     <include file="/config/liquibase/changelog/00000000_12_taskrun.xml" relativeToChangelogFile="false"/>
 
+    <include file="/config/liquibase/changelog/2025-03-28-geometry.xml" relativeToChangelogFile="false"/>
+
 </databaseChangeLog>
