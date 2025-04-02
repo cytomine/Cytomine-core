@@ -33,12 +33,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -46,9 +43,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @WithMockUser(username = "superadmin")
 public class AnnotationTermResourceTests {
-
-    @Autowired
-    private EntityManager em;
 
     @Autowired
     private BasicInstanceBuilder builder;
@@ -67,7 +61,6 @@ public class AnnotationTermResourceTests {
     public void list_by_user_annotation() throws Exception {
         AnnotationTerm annotationTerm = builder.given_an_annotation_term();
         restAnnotationTermControllerMockMvc.perform(get("/api/annotation/{id}/term.json", annotationTerm.getUserAnnotation().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(1)))
                 .andExpect(jsonPath("$.collection[?(@.id=='"+annotationTerm.getId()+"')]").exists());
@@ -79,14 +72,12 @@ public class AnnotationTermResourceTests {
         AnnotationTerm annotationTerm = builder.given_an_annotation_term();
         restAnnotationTermControllerMockMvc.perform(get("/api/annotation/{id}/term.json", annotationTerm.getUserAnnotation().getId())
                         .param("idUser", annotationTerm.getUser().getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(1)))
                 .andExpect(jsonPath("$.collection[?(@.id=='"+annotationTerm.getId()+"')]").exists());
 
         restAnnotationTermControllerMockMvc.perform(get("/api/annotation/{id}/term.json", annotationTerm.getUserAnnotation().getId())
                         .param("idUser", builder.given_a_user().getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(0)));
     }
@@ -96,7 +87,6 @@ public class AnnotationTermResourceTests {
     public void list_by_algo_annotation() throws Exception {
         AlgoAnnotationTerm algoAnnotationTerm = builder.given_an_algo_annotation_term();
         restAnnotationTermControllerMockMvc.perform(get("/api/annotation/{id}/term.json", algoAnnotationTerm.getAnnotationIdent()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(1)))
                 .andExpect(jsonPath("$.collection[?(@.id=='"+algoAnnotationTerm.getId()+"')]").exists());
@@ -108,7 +98,6 @@ public class AnnotationTermResourceTests {
         ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
         reviewedAnnotation.getTerms().add(builder.given_a_term(reviewedAnnotation.getProject().getOntology()));
         restAnnotationTermControllerMockMvc.perform(get("/api/annotation/{id}/term.json", reviewedAnnotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(1)))
                 .andExpect(jsonPath("$.collection[?(@.term=='"+reviewedAnnotation.getTerms().get(0).getId()+"')]").exists());
@@ -121,13 +110,11 @@ public class AnnotationTermResourceTests {
         AnnotationTerm annotationTerm = builder.given_an_annotation_term();
         restAnnotationTermControllerMockMvc.perform(get("/api/annotation/{idAnnotation}/notuser/{idNotUser}/term.json",
                         annotationTerm.getUserAnnotation().getId(), annotationTerm.getUser().getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(0)));
 
         restAnnotationTermControllerMockMvc.perform(get("/api/annotation/{idAnnotation}/notuser/{idNotUser}/term.json",
                         annotationTerm.getUserAnnotation().getId(), builder.given_a_user().getId())) // this user has not defined anything
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(1)))
                 .andExpect(jsonPath("$.collection[?(@.id=='"+annotationTerm.getId()+"')]").exists());
@@ -142,7 +129,6 @@ public class AnnotationTermResourceTests {
         restAnnotationTermControllerMockMvc.perform(get("/api/annotation/{idAnnotation}/term/{idTerm}.json",
                         annotationTerm.getUserAnnotation().getId(),
                         annotationTerm.getTerm().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userannotation").value(annotationTerm.getUserAnnotation().getId().intValue()))
                 .andExpect(jsonPath("$.term").value(annotationTerm.getTerm().getId().intValue()))
@@ -159,7 +145,6 @@ public class AnnotationTermResourceTests {
                         annotationTerm.getUserAnnotation().getId(),
                         annotationTerm.getTerm().getId(),
                         annotationTerm.getUser().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userannotation").value(annotationTerm.getUserAnnotation().getId().intValue()))
                 .andExpect(jsonPath("$.term").value(annotationTerm.getTerm().getId().intValue()))
@@ -174,7 +159,6 @@ public class AnnotationTermResourceTests {
         restAnnotationTermControllerMockMvc.perform(get("/api/annotation/{idAnnotation}/term/{idTerm}.json",
                         0,
                         annotationTerm.getTerm().getId()))
-                .andDo(print())
                 .andExpect(status().is4xxClientError())
         ;
     }
@@ -187,7 +171,6 @@ public class AnnotationTermResourceTests {
         restAnnotationTermControllerMockMvc.perform(post("/api/annotation/{idAnnotation}/term/{idTerm}.json", annotationTerm.getUserAnnotation().getId(),annotationTerm.getTerm().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotationTerm.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -209,7 +192,6 @@ public class AnnotationTermResourceTests {
         restAnnotationTermControllerMockMvc.perform(post("/api/annotation/{idAnnotation}/term/{idTerm}.json", annotationTerm.getUserAnnotation().getId(),annotationTerm.getTerm().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotationTerm.toJSON()))
-                .andDo(print())
                 .andExpect(status().isBadRequest());
 
     }
@@ -222,7 +204,6 @@ public class AnnotationTermResourceTests {
         restAnnotationTermControllerMockMvc.perform(post("/api/annotation/{idAnnotation}/term/{idTerm}.json", annotationTerm.getUserAnnotation().getId(),annotationTerm.getTerm().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().is4xxClientError());
 
     }
@@ -235,7 +216,6 @@ public class AnnotationTermResourceTests {
         restAnnotationTermControllerMockMvc.perform(post("/api/annotation/{idAnnotation}/term/{idTerm}.json", annotationTerm.getTerm().getId(), 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotationTerm.toJSON()))
-                .andDo(print())
                 .andExpect(status().isBadRequest());
 
     }
@@ -250,7 +230,6 @@ public class AnnotationTermResourceTests {
         restAnnotationTermControllerMockMvc.perform(post("/api/annotation/{idAnnotation}/term/{idTerm}.json", algoAnnotationTerm.getAnnotationIdent(),algoAnnotationTerm.getTerm().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(algoAnnotationTerm.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -280,7 +259,6 @@ public class AnnotationTermResourceTests {
                         annotationTerm.getUserAnnotation().getId(),annotationTerm.getTerm().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotationTerm.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -324,7 +302,6 @@ public class AnnotationTermResourceTests {
                         .param("clearForAll", "true")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotationTerm.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -357,7 +334,6 @@ public class AnnotationTermResourceTests {
                         annotationTerm.getUserAnnotation().getId(), annotationTerm.getTerm().getId(), annotationTerm.getUser().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotationTerm.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -376,7 +352,6 @@ public class AnnotationTermResourceTests {
                         annotationTerm.getUserAnnotation().getId(), annotationTerm.getTerm().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotationTerm.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())

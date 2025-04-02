@@ -62,7 +62,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
@@ -113,7 +112,6 @@ public class UserAnnotationResourceTests {
         builder.given_an_annotation_term(userAnnotation);
         em.refresh(userAnnotation);
         restUserAnnotationControllerMockMvc.perform(get("/api/userannotation/{id}.json", userAnnotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userAnnotation.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.ontology.UserAnnotation"))
@@ -132,7 +130,6 @@ public class UserAnnotationResourceTests {
     @Transactional
     public void get_a_user_annotation_not_exists() throws Exception {
         restUserAnnotationControllerMockMvc.perform(get("/api/userannotation/{id}.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -142,7 +139,6 @@ public class UserAnnotationResourceTests {
     public void list_annotations_light() throws Exception {
         UserAnnotation userAnnotation = builder.given_a_user_annotation();
         restUserAnnotationControllerMockMvc.perform(get("/api/userannotation.json", userAnnotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=='"+userAnnotation.getId()+"')]").exists());
     }
@@ -153,13 +149,11 @@ public class UserAnnotationResourceTests {
     public void count_annotations_by_user() throws Exception {
         UserAnnotation userAnnotation = builder.given_a_user_annotation();
         restUserAnnotationControllerMockMvc.perform(get("/api/user/{idUser}/userannotation/count.json", userAnnotation.getUser().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(greaterThan(0)));
 
         User newUser = builder.given_a_user();
         restUserAnnotationControllerMockMvc.perform(get("/api/user/{idUser}/userannotation/count.json", newUser.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(0));
     }
@@ -170,14 +164,12 @@ public class UserAnnotationResourceTests {
         UserAnnotation userAnnotation = builder.given_a_user_annotation();
         restUserAnnotationControllerMockMvc.perform(get("/api/user/{idUser}/userannotation/count.json", userAnnotation.getUser().getId())
                         .param("project", userAnnotation.getProject().getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(greaterThan(0)));
 
         Project projectWithoutAnnotation = builder.given_a_project();
         restUserAnnotationControllerMockMvc.perform(get("/api/user/{idUser}/userannotation/count.json", userAnnotation.getUser().getId())
                         .param("project", projectWithoutAnnotation.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(0));
     }
@@ -196,37 +188,31 @@ public class UserAnnotationResourceTests {
         restUserAnnotationControllerMockMvc.perform(get("/api/project/{idProject}/userannotation/count.json", oldUserAnnotation.getProject().getId())
                         .param("startDate", String.valueOf(oldUserAnnotation.getCreated().getTime()))
                         .param("endDate", String.valueOf(newUserAnnotation.getCreated().getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(2));
 
         restUserAnnotationControllerMockMvc.perform(get("/api/project/{idProject}/userannotation/count.json", oldUserAnnotation.getProject().getId())
                         .param("startDate", String.valueOf(DateUtils.addSeconds(oldUserAnnotation.getCreated(),-1).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(2));
 
         restUserAnnotationControllerMockMvc.perform(get("/api/project/{idProject}/userannotation/count.json", oldUserAnnotation.getProject().getId())
                         .param("endDate", String.valueOf(DateUtils.addSeconds(newUserAnnotation.getCreated(),1).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(2));
 
         restUserAnnotationControllerMockMvc.perform(get("/api/project/{idProject}/userannotation/count.json", oldUserAnnotation.getProject().getId())
                         .param("startDate", String.valueOf(DateUtils.addSeconds(newUserAnnotation.getCreated(),-1).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(1));
 
         restUserAnnotationControllerMockMvc.perform(get("/api/project/{idProject}/userannotation/count.json", oldUserAnnotation.getProject().getId())
                         .param("endDate", String.valueOf(DateUtils.addSeconds(oldUserAnnotation.getCreated(),1).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(1));
 
         restUserAnnotationControllerMockMvc.perform(get("/api/project/{idProject}/userannotation/count.json", oldUserAnnotation.getProject().getId())
                         .param("endDate", String.valueOf(DateUtils.addDays(oldUserAnnotation.getCreated(), -2).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(0));
     }
@@ -258,7 +244,6 @@ public class UserAnnotationResourceTests {
                         .param("reviewed", "false")
                         .param("terms", this.term.getId().toString())
                         .param("images", this.image.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", "application/pdf"))
                 .andReturn();
@@ -288,7 +273,6 @@ public class UserAnnotationResourceTests {
                         .param("reviewed", "false")
                         .param("terms", this.term.getId().toString())
                         .param("images", this.image.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
     }
@@ -301,7 +285,6 @@ public class UserAnnotationResourceTests {
         restUserAnnotationControllerMockMvc.perform(post("/api/userannotation.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -323,7 +306,6 @@ public class UserAnnotationResourceTests {
         restUserAnnotationControllerMockMvc.perform(post("/api/userannotation.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().is4xxClientError());
     }
 
@@ -337,7 +319,6 @@ public class UserAnnotationResourceTests {
         restUserAnnotationControllerMockMvc.perform(post("/api/userannotation.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.annotation.project").value(userAnnotation.getProject().getId()));
         // => project is retrieve from slice/image
@@ -356,7 +337,6 @@ public class UserAnnotationResourceTests {
         restUserAnnotationControllerMockMvc.perform(post("/api/userannotation.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.annotation.term", hasSize(2)));
     }
@@ -369,7 +349,6 @@ public class UserAnnotationResourceTests {
         restUserAnnotationControllerMockMvc.perform(put("/api/userannotation/{id}.json", userAnnotation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -389,7 +368,6 @@ public class UserAnnotationResourceTests {
         restUserAnnotationControllerMockMvc.perform(delete("/api/userannotation/{id}.json", userAnnotation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -409,7 +387,6 @@ public class UserAnnotationResourceTests {
         restUserAnnotationControllerMockMvc.perform(delete("/api/userannotation/{id}.json", 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());
@@ -440,7 +417,6 @@ public class UserAnnotationResourceTests {
         );
 
         MvcResult mvcResult = restUserAnnotationControllerMockMvc.perform(get("/api/userannotation/{id}/crop.png?maxSize=512", annotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -470,7 +446,6 @@ public class UserAnnotationResourceTests {
         );
 
         MvcResult mvcResult = restUserAnnotationControllerMockMvc.perform(get("/api/userannotation/{id}/mask.png?maxSize=512", annotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -501,7 +476,6 @@ public class UserAnnotationResourceTests {
         );
 
         MvcResult mvcResult = restUserAnnotationControllerMockMvc.perform(get("/api/userannotation/{id}/alphamask.png", annotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -539,7 +513,6 @@ public class UserAnnotationResourceTests {
         restUserAnnotationControllerMockMvc.perform(post("/api/userannotation/{id}/comment.json", annotation.getAnnotationIdent())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -556,7 +529,6 @@ public class UserAnnotationResourceTests {
         SharedAnnotation comment = builder.given_a_shared_annotation(userAnnotation);
 
         restUserAnnotationControllerMockMvc.perform(get("/api/userannotation/{annotation}/comment/{id}.json", userAnnotation.getId(), comment.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(comment.getId()));
     }
@@ -568,7 +540,6 @@ public class UserAnnotationResourceTests {
         SharedAnnotation comment = builder.given_a_shared_annotation(userAnnotation);
 
         restUserAnnotationControllerMockMvc.perform(get("/api/userannotation/{annotation}/comment.json", userAnnotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size").value(equalTo(1)));
     }
@@ -583,14 +554,12 @@ public class UserAnnotationResourceTests {
 
         restUserAnnotationControllerMockMvc.perform(get("/api/userannotation/{annotation}/comment.json", userAnnotation.getId())
                         .param("max", "3").param("offset", "0"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size").value(equalTo(3)))
                 .andExpect(jsonPath("$.collection", hasSize(3)));
 
         restUserAnnotationControllerMockMvc.perform(get("/api/userannotation/{annotation}/comment.json", userAnnotation.getId())
                         .param("max", "1").param( "offset", "2"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size").value(equalTo(3)))
                 .andExpect(jsonPath("$.collection", hasSize(1)));

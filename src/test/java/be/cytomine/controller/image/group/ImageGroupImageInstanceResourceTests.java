@@ -19,7 +19,6 @@ import be.cytomine.domain.image.group.ImageGroupImageInstance;
 import be.cytomine.domain.project.Project;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -44,9 +43,7 @@ public class ImageGroupImageInstanceResourceTests {
 
     @AfterAll
     public static void afterAll() {
-        try {
-            wireMockServer.stop();
-        } catch (Exception e) { }
+        wireMockServer.stop();
     }
 
     @Test
@@ -54,7 +51,6 @@ public class ImageGroupImageInstanceResourceTests {
     public void list_imagegroup_imageinstance_by_imageinstance() throws Exception {
         ImageGroupImageInstance igii = builder.given_an_imagegroup_imageinstance();
         restImageGroupImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/imagegroupimageinstance.json", igii.getImage().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + igii.getId() + ")]").exists());
     }
@@ -66,7 +62,6 @@ public class ImageGroupImageInstanceResourceTests {
         restImageGroupImageInstanceControllerMockMvc.perform(post("/api/imagegroup/{group}/imageinstance/{image}.json", igii.getGroup().getId(), igii.getImage().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(igii.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -81,7 +76,6 @@ public class ImageGroupImageInstanceResourceTests {
     public void delete_imagegroup_imageinstance() throws Exception {
         ImageGroupImageInstance igii = builder.given_an_imagegroup_imageinstance();
         restImageGroupImageInstanceControllerMockMvc.perform(delete("/api/imagegroup/{group}/imageinstance/{image}.json", igii.getGroup().getId(), igii.getImage().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -100,7 +94,6 @@ public class ImageGroupImageInstanceResourceTests {
         ImageGroupImageInstance curr_igii = builder.given_an_imagegroup_imageinstance(group, builder.given_an_image_instance(project));
         ImageGroupImageInstance prev_igii = builder.given_an_imagegroup_imageinstance(group, builder.given_an_image_instance(project));
         restImageGroupImageInstanceControllerMockMvc.perform(get("/api/imagegroup/{group}/imageinstance/{image}/previous.json", curr_igii.getGroup().getId(), curr_igii.getImage().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(prev_igii.getImage().getId()));
     }
@@ -113,7 +106,6 @@ public class ImageGroupImageInstanceResourceTests {
         ImageGroupImageInstance curr_igii = builder.given_an_imagegroup_imageinstance(group, builder.given_an_image_instance(project));
         ImageGroupImageInstance next_igii = builder.given_an_imagegroup_imageinstance(group, builder.given_an_image_instance(project));
         restImageGroupImageInstanceControllerMockMvc.perform(get("/api/imagegroup/{group}/imageinstance/{image}/next.json", curr_igii.getGroup().getId(), curr_igii.getImage().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(next_igii.getImage().getId()));
     }

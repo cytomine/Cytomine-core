@@ -55,7 +55,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -100,52 +99,44 @@ public class AbstractImageResourceTests {
 
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThanOrEqualTo(2))))
                 .andExpect(jsonPath("$.collection[?(@.id=="+img500Width.getId()+")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id=="+img501Width.getId()+")]").exists());
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json").param("width[lte]", "501"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThanOrEqualTo(2))))
                 .andExpect(jsonPath("$.collection[?(@.id=="+img500Width.getId()+")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id=="+img501Width.getId()+")]").exists());
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json").param("width[gte]", "500"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThanOrEqualTo(2))))
                 .andExpect(jsonPath("$.collection[?(@.id=="+img500Width.getId()+")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id=="+img501Width.getId()+")]").exists());
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json").param("width[lte]", String.valueOf(Integer.MAX_VALUE)))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=="+img500Width.getId()+")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id=="+img501Width.getId()+")]").exists());
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json").param("width[gte]","501"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=="+img500Width.getId()+")]").doesNotExist())
                 .andExpect(jsonPath("$.collection[?(@.id=="+img501Width.getId()+")]").exists());
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json").param("width[lte]","500"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=="+img500Width.getId()+")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id=="+img501Width.getId()+")]").doesNotExist());
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json").param("width[equals]","500"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=="+img500Width.getId()+")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id=="+img501Width.getId()+")]").doesNotExist());
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json").param("width[equals]","100"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=="+img500Width.getId()+")]").doesNotExist())
                 .andExpect(jsonPath("$.collection[?(@.id=="+img501Width.getId()+")]").doesNotExist());
@@ -169,7 +160,6 @@ public class AbstractImageResourceTests {
         builder.given_an_image_instance(imageInProject1And2, project2);
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThanOrEqualTo(3))))
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")]").exists())
@@ -177,21 +167,18 @@ public class AbstractImageResourceTests {
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1And2.getId() + ")]").exists());
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json").param("project", String.valueOf(project1.getId())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")].inProject").value(true))
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject2.getId() + ")].inProject").value(false))
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1And2.getId() + ")].inProject").value(true));
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json").param("project", String.valueOf(project2.getId())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")].inProject").value(false))
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject2.getId() + ")].inProject").value(true))
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1And2.getId() + ")].inProject").value(true));
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json").param("project", String.valueOf(anotherProject.getId())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")].inProject").value(false))
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject2.getId() + ")].inProject").value(false))
@@ -214,7 +201,6 @@ public class AbstractImageResourceTests {
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json")// default sorting must be created desc
                         .param("width[equals]", String.valueOf(width)))
 
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))))
                 .andExpect(jsonPath("$.collection[0].id").value(image3.getId()))
@@ -226,7 +212,6 @@ public class AbstractImageResourceTests {
                         .param("order", "asc")
                         .param("width[equals]", String.valueOf(width))
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[0].id").value(image1.getId()))
                 .andExpect(jsonPath("$.collection[1].id").value(image2.getId()))
@@ -237,7 +222,6 @@ public class AbstractImageResourceTests {
                         .param("order", "desc")
                         .param("width[equals]", String.valueOf(width))
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[0].id").value(image3.getId()))
                 .andExpect(jsonPath("$.collection[1].id").value(image2.getId()))
@@ -253,7 +237,6 @@ public class AbstractImageResourceTests {
         MvcResult mvcResult = restAbstractImageControllerMockMvc.perform(get("/api/abstractimage.json")
                         .param("sort", "width")
                         .param("order", "desc"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         Map<String, Object> map = JsonObject.toMap(mvcResult.getResponse().getContentAsString());
@@ -285,7 +268,6 @@ public class AbstractImageResourceTests {
                         .param("max", "0")
                         .param("width[equals]",  String.valueOf(width))
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThanOrEqualTo(3)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.collection[0].id").value(image3.getId()))
@@ -302,7 +284,6 @@ public class AbstractImageResourceTests {
                         .param("max", "1")
                         .param("width[equals]",  String.valueOf(width))
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.collection[0].id").value(image3.getId()))
@@ -317,7 +298,6 @@ public class AbstractImageResourceTests {
                         .param("max", "1")
                         .param("width[equals]",  String.valueOf(width))
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.collection[0].id").value(image2.getId()))
@@ -330,7 +310,6 @@ public class AbstractImageResourceTests {
                         .param("offset", "1")
                         .param("max", "0")
                         .param("width[equals]", String.valueOf(width)))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(2)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.collection[0].id").value(image2.getId()))
@@ -345,7 +324,6 @@ public class AbstractImageResourceTests {
                         .param("offset", "0")
                         .param("max", "500")
                         .param("width[equals]", String.valueOf(width)))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.collection[0].id").value(image3.getId()))
@@ -361,7 +339,6 @@ public class AbstractImageResourceTests {
                         .param("offset", "500")
                         .param("max", "0")
                         .param("width[equals]", String.valueOf(width)))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(0)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.offset").value(500))
@@ -381,7 +358,6 @@ public class AbstractImageResourceTests {
         String serverUrl = applicationProperties.getServerURL();
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(image.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.image.AbstractImage"))
@@ -407,7 +383,6 @@ public class AbstractImageResourceTests {
     @Transactional
     public void get_an_abstract_image_not_exist() throws Exception {
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors.message").exists());
     }
@@ -418,7 +393,6 @@ public class AbstractImageResourceTests {
         AbstractImage image = builder.given_an_abstract_image();
 
         restAbstractImageControllerMockMvc.perform(get("/api/uploadedfile/{id}/abstractimage.json", image.getUploadedFile().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(image.getId().intValue()));
     }
@@ -431,7 +405,6 @@ public class AbstractImageResourceTests {
         restAbstractImageControllerMockMvc.perform(post("/api/abstractimage.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(abstractImage.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -451,7 +424,6 @@ public class AbstractImageResourceTests {
         restAbstractImageControllerMockMvc.perform(put("/api/abstractimage/{id}.json", abstractImage.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -471,7 +443,6 @@ public class AbstractImageResourceTests {
     public void delete_abstract_image() throws Exception {
         AbstractImage abstractImage = builder.given_an_abstract_image();
         restAbstractImageControllerMockMvc.perform(delete("/api/abstractimage/{id}.json", abstractImage.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -492,7 +463,6 @@ public class AbstractImageResourceTests {
         AbstractImage imageWithoutImageInstance = builder.given_an_abstract_image();
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/unused.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageWithImageInstance.getId() + ")]").doesNotExist())
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageWithoutImageInstance.getId() + ")]").exists());
@@ -505,7 +475,6 @@ public class AbstractImageResourceTests {
         AbstractImage image = builder.given_an_abstract_image();
 
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/user.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(builder.given_superadmin().getId()));
     }
@@ -514,7 +483,6 @@ public class AbstractImageResourceTests {
     @Transactional
     public void get_abstract_image_uploader_for_abstract_image_not_exist() throws Exception {
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/user.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -538,7 +506,6 @@ public class AbstractImageResourceTests {
         );
 
         MvcResult mvcResult = restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/thumb.png?maxSize=512", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -549,7 +516,6 @@ public class AbstractImageResourceTests {
     @Transactional
     public void get_abstract_image_thumb_if_image_not_exist() throws Exception {
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/thumb.png", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors").exists());
     }
@@ -573,7 +539,6 @@ public class AbstractImageResourceTests {
         );
 
         MvcResult mvcResult = restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/preview.png?maxSize=1024", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -592,7 +557,6 @@ public class AbstractImageResourceTests {
                 )
         );
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/associated.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))))
                 .andExpect(jsonPath("$.collection", containsInAnyOrder("label","macro","thumbnail")));
@@ -620,7 +584,6 @@ public class AbstractImageResourceTests {
 
         MvcResult mvcResult = restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/associated/{label}.png", image.getId(), "macro")
                         .param("maxSize", "512"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -656,7 +619,6 @@ public class AbstractImageResourceTests {
 
         MvcResult mvcResult = restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/crop.png", image.getId())
                         .param("location", "POLYGON((1 1,50 10,50 50,10 50,1 1))"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -687,7 +649,6 @@ public class AbstractImageResourceTests {
         );
 
         MvcResult mvcResult = restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/window-10-20-30-40.png", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -718,7 +679,6 @@ public class AbstractImageResourceTests {
         );
 
         MvcResult mvcResult = restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/download", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
@@ -744,7 +704,6 @@ public class AbstractImageResourceTests {
                 )
         );
         restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/metadata.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(11))))
                 .andExpect(jsonPath("$.collection[?(@.key==\"ProfileClass\")]").exists());
@@ -819,7 +778,6 @@ public class AbstractImageResourceTests {
         );
 
         restAbstractImageControllerMockMvc.perform(post("/api/abstractimage/{id}/properties/regenerate.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk());
 
         assertThat(image.getWidth()).isEqualTo(30720);

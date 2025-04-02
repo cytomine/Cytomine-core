@@ -19,7 +19,6 @@ package be.cytomine.controller.image;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.CompanionFile;
-import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.junit.jupiter.api.AfterAll;
@@ -33,15 +32,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -52,7 +46,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -63,16 +56,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class CompanionFileResourceTests {
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
     private BasicInstanceBuilder builder;
 
     @Autowired
     private MockMvc restCompanionFileControllerMockMvc;
-
-    @Autowired
-    private PropertyRepository propertyRepository;
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
 
@@ -95,7 +82,6 @@ public class CompanionFileResourceTests {
         CompanionFile companionFile = builder.given_a_companion_file(builder.given_an_abstract_image());
 
         restCompanionFileControllerMockMvc.perform(get("/api/abstractimage/{id}/companionfile.json", companionFile.getImage().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThanOrEqualTo(1))))
                 .andExpect(jsonPath("$.collection[?(@.id=="+companionFile.getId()+")]").exists());
@@ -108,7 +94,6 @@ public class CompanionFileResourceTests {
         CompanionFile companionFile = builder.given_a_companion_file(builder.given_an_abstract_image());
 
         restCompanionFileControllerMockMvc.perform(get("/api/uploadedfile/{id}/companionfile.json", companionFile.getUploadedFile().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThanOrEqualTo(1))))
                 .andExpect(jsonPath("$.collection[?(@.id=="+companionFile.getId()+")]").exists());
@@ -121,7 +106,6 @@ public class CompanionFileResourceTests {
         CompanionFile image = builder.given_a_companion_file(builder.given_an_abstract_image());
 
         restCompanionFileControllerMockMvc.perform(get("/api/companionfile/{id}.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(image.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.image.CompanionFile"))
@@ -136,7 +120,6 @@ public class CompanionFileResourceTests {
     @Transactional
     public void get_an_companion_file_not_exist() throws Exception {
         restCompanionFileControllerMockMvc.perform(get("/api/companionfile/{id}.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors.message").exists());
     }
@@ -148,7 +131,6 @@ public class CompanionFileResourceTests {
                 builder.given_a_companion_file(builder.given_an_abstract_image());
 
         restCompanionFileControllerMockMvc.perform(get("/api/uploadedfile/{id}/companionfile.json", image.getUploadedFile().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThanOrEqualTo(1))))
                 .andExpect(jsonPath("$.collection[?(@.id=="+image.getId()+")]").exists());
@@ -162,7 +144,6 @@ public class CompanionFileResourceTests {
         restCompanionFileControllerMockMvc.perform(post("/api/companionfile.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(companionFile.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -182,7 +163,6 @@ public class CompanionFileResourceTests {
         restCompanionFileControllerMockMvc.perform(put("/api/companionfile/{id}.json", companionFile.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -202,7 +182,6 @@ public class CompanionFileResourceTests {
     public void delete_companion_file() throws Exception {
         CompanionFile companionFile = builder.given_a_companion_file(builder.given_an_abstract_image());
         restCompanionFileControllerMockMvc.perform(delete("/api/companionfile/{id}.json", companionFile.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -221,7 +200,6 @@ public class CompanionFileResourceTests {
         CompanionFile companionFile = builder.given_a_companion_file(builder.given_an_abstract_image());
 
         restCompanionFileControllerMockMvc.perform(get("/api/companionfile/{id}/user.json", companionFile.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(builder.given_superadmin().getId()));
     }
@@ -230,7 +208,6 @@ public class CompanionFileResourceTests {
     @Transactional
     public void get_companion_file_uploader_with_unexisting_companion_file() throws Exception {
         restCompanionFileControllerMockMvc.perform(get("/api/companionfile/{id}/user.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -253,7 +230,6 @@ public class CompanionFileResourceTests {
         );
 
         MvcResult mvcResult = restCompanionFileControllerMockMvc.perform(get("/api/companionfile/{id}/download", companionFile.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);

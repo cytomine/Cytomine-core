@@ -33,7 +33,6 @@ import jakarta.persistence.EntityManager;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,7 +55,6 @@ public class ProjectDefaultLayerResourceTests {
     public void list_all_project_default_layers() throws Exception {
         ProjectDefaultLayer projectDefaultLayer = builder.given_a_project_default_layer();
         restProjectDefaultLayerControllerMockMvc.perform(get("/api/project/{id}/defaultlayer.json", projectDefaultLayer.getProject().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.id=='"+projectDefaultLayer.getId()+"')]").exists());
@@ -68,7 +66,6 @@ public class ProjectDefaultLayerResourceTests {
     public void list_all_project_default_layers_for_unexisting_project() throws Exception {
         ProjectDefaultLayer projectDefaultLayer = builder.given_a_project_default_layer();
         restProjectDefaultLayerControllerMockMvc.perform(get("/api/project/{id}/defaultlayer.json", 0L))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -79,7 +76,6 @@ public class ProjectDefaultLayerResourceTests {
 
         restProjectDefaultLayerControllerMockMvc.perform(get("/api/project/{project}/defaultlayer/{id}.json",
                         projectDefaultLayer.getProject().getId(), projectDefaultLayer.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(projectDefaultLayer.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.project.ProjectDefaultLayer"))
@@ -97,7 +93,6 @@ public class ProjectDefaultLayerResourceTests {
 
         restProjectDefaultLayerControllerMockMvc.perform(get("/api/project/{project}/defaultlayer/{id}.json",
                         projectDefaultLayer.getProject().getId(), 0))
-                .andDo(print())
                 .andExpect(status().isNotFound())
         ;
     }
@@ -110,7 +105,6 @@ public class ProjectDefaultLayerResourceTests {
 
         restProjectDefaultLayerControllerMockMvc.perform(get("/api/project/{project}/defaultlayer/{id}.json",
                          0, projectDefaultLayer.getId()))
-                .andDo(print())
                 .andExpect(status().isNotFound())
         ;
     }
@@ -122,7 +116,6 @@ public class ProjectDefaultLayerResourceTests {
         restProjectDefaultLayerControllerMockMvc.perform(post("/api/project/{id}/defaultlayer.json", projectDefaultLayer.getProject().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(projectDefaultLayer.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -141,7 +134,6 @@ public class ProjectDefaultLayerResourceTests {
         restProjectDefaultLayerControllerMockMvc.perform(post("/api/project/{id}/defaultlayer.json", projectDefaultLayer.getProject().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(projectDefaultLayer.toJSON()))
-                .andDo(print())
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false));
     }
@@ -154,7 +146,6 @@ public class ProjectDefaultLayerResourceTests {
                         projectDefaultLayer.getProject().getId(),projectDefaultLayer.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(projectDefaultLayer.toJsonObject().withChange("hideByDefault", true).toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -175,7 +166,6 @@ public class ProjectDefaultLayerResourceTests {
         restProjectDefaultLayerControllerMockMvc.perform(put("/api/project/{project}/defaultlayer/{id}.json", 0, 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(projectDefaultLayer.toJSON()))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());
@@ -190,7 +180,6 @@ public class ProjectDefaultLayerResourceTests {
                         projectDefaultLayer.getProject().getId(),projectDefaultLayer.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(projectDefaultLayer.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -205,7 +194,6 @@ public class ProjectDefaultLayerResourceTests {
     public void fail_when_delete_projectDefaultLayer_not_exists() throws Exception {
         restProjectDefaultLayerControllerMockMvc.perform(delete("/api/project/{project}/defaultlayer/{id}.json",  0,0)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());

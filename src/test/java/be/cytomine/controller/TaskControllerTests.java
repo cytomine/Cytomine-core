@@ -30,14 +30,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-
 import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
@@ -58,19 +54,15 @@ public class TaskControllerTests {
         MvcResult response = restCommandControllerMockMvc.perform(post("/api/task.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonObject.of("project", project.getId()).toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
 
         JsonObject responseObject = JsonObject.toJsonObject(response.getResponse().getContentAsString());
         Integer id = (Integer)((Map<String,Object>)responseObject.get("task")).get("id");
 
         restCommandControllerMockMvc.perform(get("/api/task/{id}.json", id))
-                .andDo(print())
                 .andExpect(status().isOk());
 
         restCommandControllerMockMvc.perform(get("/api/project/{project}/task/comment.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk());
-
     }
 }

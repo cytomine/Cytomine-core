@@ -22,7 +22,6 @@ import be.cytomine.utils.JsonObject;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -59,7 +58,6 @@ public class AnnotationGroupResourceTests {
         restAnnotationGroupControllerMockMvc.perform(post("/api/annotationgroup.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotationGroup.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -81,7 +79,6 @@ public class AnnotationGroupResourceTests {
         restAnnotationGroupControllerMockMvc.perform(put("/api/annotationgroup/{id}.json", annotationGroup.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -98,7 +95,6 @@ public class AnnotationGroupResourceTests {
     public void delete_annotation_group() throws Exception {
         AnnotationGroup annotationGroup = builder.given_an_annotation_group();
         restAnnotationGroupControllerMockMvc.perform(delete("/api/annotationgroup/{id}.json", annotationGroup.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -114,7 +110,6 @@ public class AnnotationGroupResourceTests {
     public void list_annotation_group_by_project() throws Exception {
         AnnotationGroup annotationGroup = builder.given_an_annotation_group();
         restAnnotationGroupControllerMockMvc.perform(get("/api/project/{id}/annotationgroup.json", annotationGroup.getProject().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + annotationGroup.getId() + ")]").exists());
     }
@@ -124,7 +119,6 @@ public class AnnotationGroupResourceTests {
     public void list_annotation_group_by_image_group() throws Exception {
         AnnotationGroup annotationGroup = builder.given_an_annotation_group();
         restAnnotationGroupControllerMockMvc.perform(get("/api/imagegroup/{id}/annotationgroup.json", annotationGroup.getImageGroup().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + annotationGroup.getId() + ")]").exists());
     }
@@ -137,7 +131,6 @@ public class AnnotationGroupResourceTests {
         AnnotationGroup annotationGroup = builder.given_an_annotation_group(project, imageGroup);
         AnnotationGroup annotationGroupToMerge = builder.given_an_annotation_group(project, imageGroup);
         restAnnotationGroupControllerMockMvc.perform(post("/api/annotationgroup/{id}/annotationgroup/{mergedId}/merge.json", annotationGroup.getId(), annotationGroupToMerge.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())

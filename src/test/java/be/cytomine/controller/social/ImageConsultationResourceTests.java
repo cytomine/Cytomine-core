@@ -25,9 +25,7 @@ import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.PersistentImageConsultation;
 import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
-import be.cytomine.service.image.SliceCoordinatesService;
 import be.cytomine.service.social.ImageConsultationService;
-import be.cytomine.service.social.UserPositionService;
 import be.cytomine.utils.JsonObject;
 import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -50,7 +48,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
@@ -66,25 +63,18 @@ public class ImageConsultationResourceTests {
     private MockMvc restImageConsultationControllerMockMvc;
 
     @Autowired
-    PersistentImageConsultationRepository persistentImageConsultationRepository;
+    private PersistentImageConsultationRepository persistentImageConsultationRepository;
 
     @Autowired
-    ImageConsultationService imageConsultationService;
+    private ImageConsultationService imageConsultationService;
 
     @Autowired
-    UserPositionService userPositionService;
-
-    @Autowired
-    SliceCoordinatesService sliceCoordinatesService;
-
-    @Autowired
-    ApplicationProperties applicationProperties;
+    private ApplicationProperties applicationProperties;
 
     @BeforeEach
     public void cleanDB() {
         persistentImageConsultationRepository.deleteAll();
     }
-
 
     PersistentImageConsultation given_a_persistent_image_consultation(SecUser user, ImageInstance imageInstance, Date created) {
         return imageConsultationService.add(user, imageInstance.getId(), "xxx", "mode", created);
@@ -105,7 +95,6 @@ public class ImageConsultationResourceTests {
         restImageConsultationControllerMockMvc.perform(post("/api/imageinstance/{id}/consultation.json", imageInstance.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.social.PersistentImageConsultation"))
                 .andExpect(jsonPath("$.user").value(user.getId()))
@@ -131,7 +120,6 @@ public class ImageConsultationResourceTests {
         given_a_persistent_image_consultation(user, imageInstance2, DateUtils.addSeconds(new Date(), -2));
 
         restImageConsultationControllerMockMvc.perform(get("/api/project/{image}/lastImages.json", imageInstance1.getProject().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].image").value(imageInstance2.getId()));
@@ -153,7 +141,6 @@ public class ImageConsultationResourceTests {
 
         restImageConsultationControllerMockMvc.perform(get("/api/imageinstance/method/lastopened.json")
                         .param("max", "10"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(2))))
                 .andExpect(jsonPath("$.collection[0].id").value(imageInstance2.getId()))
@@ -161,7 +148,6 @@ public class ImageConsultationResourceTests {
 
         restImageConsultationControllerMockMvc.perform(get("/api/imageinstance/method/lastopened.json")
                         .param("max", "1"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].id").value(imageInstance2.getId()));
@@ -176,7 +162,6 @@ public class ImageConsultationResourceTests {
 
 
         restImageConsultationControllerMockMvc.perform(get("/api/imageinstance/method/lastopened.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
 
@@ -196,7 +181,6 @@ public class ImageConsultationResourceTests {
         restImageConsultationControllerMockMvc.perform(get("/api/project/{project}/user/{user}/imageconsultation.json",
                         imageInstance1.getProject().getId().toString(), user.getId().toString())
                         .param("distinctImages", "true"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(2))))
                 .andExpect(jsonPath("$.collection[0].image").value(imageInstance2.getId()))
@@ -205,7 +189,6 @@ public class ImageConsultationResourceTests {
         restImageConsultationControllerMockMvc.perform(get("/api/project/{project}/user/{user}/imageconsultation.json",
                         imageInstance1.getProject().getId().toString(), builder.given_a_user().getId().toString())
                         .param("distinctImages", "true"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
     }
@@ -220,7 +203,6 @@ public class ImageConsultationResourceTests {
         restImageConsultationControllerMockMvc.perform(get("/api/imageconsultation/resume.json")
                         .param("project", imageInstance1.getProject().getId().toString())
                         .param("user", user.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
 
@@ -240,7 +222,6 @@ public class ImageConsultationResourceTests {
         restImageConsultationControllerMockMvc.perform(get("/api/imageconsultation/resume.json")
                         .param("project", imageInstance1.getProject().getId().toString())
                         .param("user", user.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].frequency").value(2));
@@ -263,7 +244,6 @@ public class ImageConsultationResourceTests {
                         .param("project", imageInstance1.getProject().getId().toString())
                         .param("user", user.getId().toString())
                         .param("export", "csv"))
-                .andDo(print())
                 .andExpect(header().string("Content-Type", "text/csv"))
                 .andExpect(status().isOk()).andReturn();
 
@@ -292,25 +272,21 @@ public class ImageConsultationResourceTests {
         restImageConsultationControllerMockMvc.perform(get("/api/project/{project}/imageconsultation/count.json", imageInstance1.getProject().getId())
                         .param("startDate", ""+DateUtils.addDays(new Date(), -10).getTime())
                         .param("endDate", ""+DateUtils.addDays(new Date(), 10).getTime()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value("1"));
 
         restImageConsultationControllerMockMvc.perform(get("/api/project/{project}/imageconsultation/count.json", imageInstance1.getProject().getId())
                         .param("endDate", ""+DateUtils.addDays(new Date(), -5).getTime()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value("0"));
 
         restImageConsultationControllerMockMvc.perform(get("/api/project/{project}/imageconsultation/count.json", imageInstance1.getProject().getId())
                         .param("startDate", ""+DateUtils.addDays(new Date(), -1).getTime()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value("0"));
 
         restImageConsultationControllerMockMvc.perform(get("/api/project/{project}/imageconsultation/count.json", imageInstance1.getProject().getId())
                         .param("startDate", ""+DateUtils.addDays(new Date(), -10).getTime()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value("1"));
 

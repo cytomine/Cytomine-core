@@ -33,7 +33,6 @@ import jakarta.persistence.EntityManager;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,7 +55,6 @@ public class RelationTermResourceTests {
     public void list_by_term_position_1() throws Exception {
         RelationTerm relationTerm = builder.given_a_relation_term();
         restRelationTermControllerMockMvc.perform(get("/api/relation/term/{i}/{id}.json", "1", relationTerm.getTerm1().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(1)))
                 .andExpect(jsonPath("$.collection[?(@.id=='"+relationTerm.getId()+"')]").exists());
@@ -67,7 +65,6 @@ public class RelationTermResourceTests {
     public void list_by_term_position_2() throws Exception {
         RelationTerm relationTerm = builder.given_a_relation_term();
         restRelationTermControllerMockMvc.perform(get("/api/relation/term/{i}/{id}.json", "2", relationTerm.getTerm1().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(0)));
     }
@@ -77,7 +74,6 @@ public class RelationTermResourceTests {
     public void list_by_term() throws Exception {
         RelationTerm relationTerm = builder.given_a_relation_term();
         restRelationTermControllerMockMvc.perform(get("/api/relation/term/{id}.json",  relationTerm.getTerm1().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(1)))
                 .andExpect(jsonPath("$.collection[?(@.id=='"+relationTerm.getId()+"')]").exists());
@@ -93,7 +89,6 @@ public class RelationTermResourceTests {
         RelationTerm relationTerm = builder.given_a_relation_term();
 
         restRelationTermControllerMockMvc.perform(get("/api/relation/{idRelation}/term1/{idTerm1}/term2/{idTerm2}.json", relationTerm.getRelation().getId(), relationTerm.getTerm1().getId(), relationTerm.getTerm2().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(relationTerm.getId().intValue()))
                 .andExpect(jsonPath("$.term1").value(relationTerm.getTerm1().getId().intValue()))
@@ -108,7 +103,6 @@ public class RelationTermResourceTests {
         RelationTerm relationTerm = builder.given_a_relation_term();
 
         restRelationTermControllerMockMvc.perform(get("/api/relation/parent/term1/{idTerm1}/term2/{idTerm2}.json", relationTerm.getTerm1().getId(), relationTerm.getTerm2().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(relationTerm.getId().intValue()))
                 .andExpect(jsonPath("$.term1").value(relationTerm.getTerm1().getId().intValue()))
@@ -125,7 +119,6 @@ public class RelationTermResourceTests {
         restRelationTermControllerMockMvc.perform(post("/api/relation/parent/term.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(relationTerm.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -148,7 +141,6 @@ public class RelationTermResourceTests {
         restRelationTermControllerMockMvc.perform(delete("/api/relation/{idRelation}/term1/{idTerm1}/term2/{idTerm2}.json", relationTerm.getRelation().getId(), relationTerm.getTerm1().getId(), relationTerm.getTerm2().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(relationTerm.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -166,7 +158,6 @@ public class RelationTermResourceTests {
         restRelationTermControllerMockMvc.perform(delete("/api/relation/parent/term1/{idTerm1}/term2/{idTerm2}.json", relationTerm.getTerm1().getId(), relationTerm.getTerm2().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(relationTerm.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -185,10 +176,8 @@ public class RelationTermResourceTests {
         restRelationTermControllerMockMvc.perform(delete("/api/relation/{idRelation}/term1/{idTerm1}/term2/{idTerm2}.json", relationTerm.getRelation().getId(), relationTerm.getTerm1().getId(), relationTerm.getTerm2().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(relationTerm.toJSON()))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());
     }
-
 }

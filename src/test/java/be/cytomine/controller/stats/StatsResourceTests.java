@@ -27,16 +27,9 @@ import be.cytomine.domain.social.AnnotationAction;
 import be.cytomine.domain.social.PersistentImageConsultation;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.repositorynosql.social.*;
-import be.cytomine.service.CommandService;
-import be.cytomine.service.PermissionService;
-import be.cytomine.service.command.TransactionService;
-import be.cytomine.service.database.SequenceService;
-import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.social.AnnotationActionService;
 import be.cytomine.service.social.ImageConsultationService;
 import be.cytomine.service.social.ProjectConnectionService;
-import be.cytomine.service.social.UserPositionService;
-import be.cytomine.service.stats.StatsService;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.apache.commons.lang3.time.DateUtils;
@@ -55,11 +48,9 @@ import jakarta.persistence.EntityManager;
 import java.util.Date;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -71,65 +62,43 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class StatsResourceTests {
 
     @Autowired
-    BasicInstanceBuilder builder;
+    private BasicInstanceBuilder builder;
 
     @Autowired
-    CommandService commandService;
+    private EntityManager entityManager;
 
     @Autowired
-    TransactionService transactionService;
+    private ImageConsultationService imageConsultationService;
 
     @Autowired
-    SecurityACLService securityACLService;
+    private ProjectConnectionService projectConnectionService;
 
     @Autowired
-    PermissionService permissionService;
+    private PersistentConnectionRepository persistentConnectionRepository;
 
     @Autowired
-    EntityManager entityManager;
+    private LastConnectionRepository lastConnectionRepository;
 
     @Autowired
-    StatsService statsService;
+    private PersistentImageConsultationRepository persistentImageConsultationRepository;
 
     @Autowired
-    ImageConsultationService imageConsultationService;
+    private PersistentProjectConnectionRepository persistentProjectConnectionRepository;
 
     @Autowired
-    ProjectConnectionService projectConnectionService;
+    private ProjectConnectionRepository projectConnectionRepository;
 
     @Autowired
-    PersistentConnectionRepository persistentConnectionRepository;
+    private PersistentUserPositionRepository persistentUserPositionRepository;
 
     @Autowired
-    LastConnectionRepository lastConnectionRepository;
+    private LastUserPositionRepository lastUserPositionRepository;
 
     @Autowired
-    PersistentImageConsultationRepository persistentImageConsultationRepository;
-
-    @Autowired
-    PersistentProjectConnectionRepository persistentProjectConnectionRepository;
-
-    @Autowired
-    ProjectConnectionRepository projectConnectionRepository;
-
-    @Autowired
-    PersistentUserPositionRepository persistentUserPositionRepository;
-
-    @Autowired
-    LastUserPositionRepository lastUserPositionRepository;
-
-    @Autowired
-    SequenceService sequenceService;
-
-    @Autowired
-    UserPositionService userPositionService;
-
-    @Autowired
-    AnnotationActionService annotationActionService;
+    private AnnotationActionService annotationActionService;
 
     @Autowired
     private MockMvc restStatsControllerMockMvc;
-
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
 
@@ -182,7 +151,6 @@ public class StatsResourceTests {
         Project project = builder.given_a_project();
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/term.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))));
 
@@ -190,7 +158,6 @@ public class StatsResourceTests {
         entityManager.refresh(project.getOntology());
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/term.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(2))))
                 .andExpect(jsonPath("$.collection[?(@.key=='"+annotationTerm.getTerm().getName()+"')].id").value(annotationTerm.getTerm().getId().intValue()))
@@ -199,7 +166,6 @@ public class StatsResourceTests {
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/term.json", project.getId())
                         .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -10).getTime()))
                         .param("endDate", String.valueOf(new Date().getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(2))));
     }
@@ -220,7 +186,6 @@ public class StatsResourceTests {
         builder.persistAndReturn(annotation2);
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/user.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].id").value(builder.given_superadmin().getId().intValue()))
@@ -230,7 +195,6 @@ public class StatsResourceTests {
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/user.json", project.getId())
                     .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -20).getTime()))
                     .param("endDate", String.valueOf(DateUtils.addDays(new Date(), -10).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -239,21 +203,18 @@ public class StatsResourceTests {
         Project project = builder.given_a_project();
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/termslide.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))));
 
         Term term = builder.given_a_term(project.getOntology());
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/termslide.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(2))));
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/termslide.json", project.getId())
                         .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -20).getTime()))
                         .param("endDate", String.valueOf(DateUtils.addDays(new Date(), -10).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -262,7 +223,6 @@ public class StatsResourceTests {
         Project project = builder.given_a_project();
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/termimage.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
 
@@ -270,7 +230,6 @@ public class StatsResourceTests {
         entityManager.refresh(project.getOntology());
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/termimage.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].countAnnotations").value(1));
@@ -278,7 +237,6 @@ public class StatsResourceTests {
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/termimage.json", project.getId())
                         .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -20).getTime()))
                         .param("endDate", String.valueOf(DateUtils.addDays(new Date(), -10).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -290,7 +248,6 @@ public class StatsResourceTests {
         builder.addUserToProject(project, "superadmin");
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/userslide.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].id").value(builder.given_superadmin().getId()))
@@ -305,7 +262,6 @@ public class StatsResourceTests {
         builder.persistAndReturn(annotation2);
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/userslide.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].id").value(builder.given_superadmin().getId()))
@@ -315,7 +271,6 @@ public class StatsResourceTests {
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/userslide.json", project.getId())
                         .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -20).getTime()))
                         .param("endDate", String.valueOf(DateUtils.addDays(new Date(), -10).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -337,7 +292,6 @@ public class StatsResourceTests {
         List<JsonObject> terms;
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/userannotations.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].id").value(builder.given_superadmin().getId()))
@@ -359,17 +313,14 @@ public class StatsResourceTests {
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/annotationevolution.json", project.getId())
                         .param("daysRange", "7")
                         .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -18).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))));
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/annotationevolution.json", project.getId())
                         .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -20).getTime()))
                         .param("endDate", String.valueOf(DateUtils.addDays(new Date(), -10).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
-
 
     @Test
     void stats_algo_annotation_evolution() throws Exception {
@@ -383,17 +334,14 @@ public class StatsResourceTests {
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/algoannotationevolution.json", project.getId())
                         .param("daysRange", "7"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))));
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/algoannotationevolution.json", project.getId())
                         .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -20).getTime()))
                         .param("endDate", String.valueOf(DateUtils.addDays(new Date(), -10).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
-
 
     @Test
     void stats_reviewed_annotation_evolution() throws Exception {
@@ -406,16 +354,13 @@ public class StatsResourceTests {
         builder.persistAndReturn(annotation2);
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/reviewedannotationevolution.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk());
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/reviewedannotationevolution.json", project.getId())
                         .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -20).getTime()))
                         .param("endDate", String.valueOf(DateUtils.addDays(new Date(), -10).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
-
 
     @Test
     void stats_annotation_term_by_project() throws Exception {
@@ -425,49 +370,37 @@ public class StatsResourceTests {
         entityManager.refresh(annotationTerm.getUserAnnotation());
 
         restStatsControllerMockMvc.perform(get("/api/term/{id}/project/stat.json", annotationTerm.getTerm().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].key").value(project.getName()))
                 .andExpect(jsonPath("$.collection[0].value").value(1L));
-
-
     }
 
     @Test
     void number_of_connections() throws Exception {
         restStatsControllerMockMvc.perform(get("/api/total/project/connections.json"))
-                .andDo(print())
                 .andExpect(status().isOk());
-
     }
-
-
 
     @Test
     void stats_domain_count() throws Exception {
         UserAnnotation annotation = builder.given_a_user_annotation();
 
         restStatsControllerMockMvc.perform(get("/api/total/{domain}.json", annotation.getClass().getName()))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
-
 
     @Test
     void current_stats() throws Exception {
         restStatsControllerMockMvc.perform(get("/api/stats/currentStats.json"))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
     @Test
     void allGlobalStats() throws Exception {
         restStatsControllerMockMvc.perform(get("/api/stats/all.json"))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
-
 
     @Test
     void stats_connection_evolution() throws Exception {
@@ -479,12 +412,9 @@ public class StatsResourceTests {
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/connectionsevolution.json", project.getId())
                         .param("daysRange", "7")
                         .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -18).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))));
-
     }
-
 
     @Test
     void stats_image_consultation_evolution() throws Exception {
@@ -494,16 +424,12 @@ public class StatsResourceTests {
         given_a_persistent_image_consultation(builder.given_superadmin(), imageInstance, DateUtils.addDays(new Date(), -15));
         given_a_persistent_image_consultation(builder.given_superadmin(), imageInstance, DateUtils.addDays(new Date(), -5));
 
-
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/imageconsultationsevolution.json", project.getId())
                         .param("daysRange", "7")
                         .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -18).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))));
-
     }
-
 
     @Test
     void stats_annotation_Action_evolution() throws Exception {
@@ -514,16 +440,10 @@ public class StatsResourceTests {
         given_a_persistent_annotation_action(DateUtils.addDays(new Date(), -15), annotation, builder.given_superadmin(), "select");
         given_a_persistent_annotation_action(DateUtils.addDays(new Date(), -5), annotation, builder.given_superadmin(), "select");
 
-
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/annotationactionsevolution.json", project.getId())
                     .param("daysRange", "7")
                     .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -18).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))));
-
     }
-
-
-    
 }

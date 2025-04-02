@@ -40,8 +40,6 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
@@ -50,19 +48,14 @@ import java.util.Map;
 
 import static be.cytomine.security.jwt.TokenType.SHORT_TERM;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.jmx.export.naming.IdentityNamingStrategy.TYPE_KEY;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
 public class ServerControllerTests {
-
-    @Autowired
-    private EntityManager em;
 
     @Autowired
     private BasicInstanceBuilder builder;
@@ -96,10 +89,9 @@ public class ServerControllerTests {
     @Transactional
     @WithMockUser(username = "superadmin")
     public void ping_as_auth() throws Exception {
-        ResultActions resultActions = restConfigurationControllerMockMvc.perform(post("/server/ping.json")
+        restConfigurationControllerMockMvc.perform(post("/server/ping.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"project\": null}"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(MockMvcResultMatchers.header().string("Content-type", "application/json"))
                 .andExpect(jsonPath("$.alive").value(true))
@@ -120,7 +112,6 @@ public class ServerControllerTests {
     @WithMockUser(username = "superadmin")
     public void ping_as_auth_with_get() throws Exception {
         restConfigurationControllerMockMvc.perform(get("/server/ping.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alive").value(true))
                 .andExpect(jsonPath("$.authenticated").value(true))
@@ -143,7 +134,6 @@ public class ServerControllerTests {
         ResultActions resultActions = restConfigurationControllerMockMvc.perform(post("/server/ping.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"project\": null}"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.authenticated").value(true))
                 .andExpect(jsonPath("$.shortTermToken").exists())
@@ -169,7 +159,6 @@ public class ServerControllerTests {
         restConfigurationControllerMockMvc.perform(post("/server/ping.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"project\": "+project.getId()+"}"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alive").value(true))
                 .andExpect(jsonPath("$.authenticated").value(true))
@@ -190,7 +179,6 @@ public class ServerControllerTests {
         restConfigurationControllerMockMvc.perform(post("/server/ping.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"project\": null}"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alive").value(true))
                 .andExpect(jsonPath("$.authenticated").value(false))
@@ -206,7 +194,6 @@ public class ServerControllerTests {
     @Transactional
     public void check_status() throws Exception {
         restConfigurationControllerMockMvc.perform(get("/status.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.alive").value(true))
                 .andExpect(jsonPath("$.version").hasJsonPath())

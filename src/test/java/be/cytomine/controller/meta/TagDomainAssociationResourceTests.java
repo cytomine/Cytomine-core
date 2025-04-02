@@ -21,7 +21,6 @@ import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.meta.Tag;
 import be.cytomine.domain.meta.TagDomainAssociation;
 import be.cytomine.domain.project.Project;
-import be.cytomine.repository.meta.TagDomainAssociationRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -30,14 +29,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.WebApplicationContext;
 
-import jakarta.persistence.EntityManager;
-
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -47,39 +41,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class TagDomainAssociationResourceTests {
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
     private BasicInstanceBuilder builder;
 
     @Autowired
     private MockMvc restTagDomainAssociationControllerMockMvc;
-
-    @Autowired
-    private WebApplicationContext webApplicationContext;
-
-    @Autowired
-    private TagDomainAssociationRepository tagDomainAssociationRepository;
-
 
     @Test
     @Transactional
     public void get_a_tag_domain_association() throws Exception {
         TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), builder.given_a_project());
         restTagDomainAssociationControllerMockMvc.perform(get("/api/tag_domain_association/{id}.json", tagDomainAssociation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(tagDomainAssociation.getId().intValue()))
-        ;
+                .andExpect(jsonPath("$.id").value(tagDomainAssociation.getId().intValue()));
     }
 
     @Test
     @Transactional
     public void get_an_tag_domain_association_does_not_exists() throws Exception {
         restTagDomainAssociationControllerMockMvc.perform(get("/api/tag_domain_association/{id}.json", 0L))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-        ;
+                .andExpect(status().isNotFound());
     }
     
     @Test
@@ -87,7 +67,6 @@ public class TagDomainAssociationResourceTests {
     public void list_all_tag_domain_association() throws Exception {
         TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), builder.given_a_project());
         restTagDomainAssociationControllerMockMvc.perform(get("/api/tag_domain_association.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.domainIdent=='" + tagDomainAssociation.getDomainIdent() + "')]").exists());
@@ -101,7 +80,6 @@ public class TagDomainAssociationResourceTests {
         TagDomainAssociation tagDomainAssociationWithAnotherTagAndAnnotherDomain = builder.given_a_tag_association(builder.given_a_tag(), builder.given_a_project());
         restTagDomainAssociationControllerMockMvc.perform(get("/api/tag_domain_association.json")
                         .param("tag[equals]", tagDomainAssociation.getTag().getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.tag=='" + tagDomainAssociation.getTag().getId() + "')]").exists())
@@ -109,7 +87,6 @@ public class TagDomainAssociationResourceTests {
 
         restTagDomainAssociationControllerMockMvc.perform(get("/api/tag_domain_association.json")
                         .param("tag[in]", tagDomainAssociation.getTag().getId().toString() + "," + tagDomainAssociationWithAnotherTagAndAnnotherDomain.getTag().getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.tag=='" + tagDomainAssociation.getTag().getId() + "')]").exists())
@@ -117,7 +94,6 @@ public class TagDomainAssociationResourceTests {
 
         restTagDomainAssociationControllerMockMvc.perform(get("/api/tag_domain_association.json")
                         .param("domainIdent[equals]", tagDomainAssociation.getDomainIdent().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.tag=='" + tagDomainAssociation.getTag().getId() + "')]").exists())
@@ -141,7 +117,6 @@ public class TagDomainAssociationResourceTests {
                         .param("max", "3")
                         .param("offset", "0")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))))
                 .andExpect(jsonPath("$.collection[0].id").value(t1.getId()))
@@ -153,7 +128,6 @@ public class TagDomainAssociationResourceTests {
                         .param("max", "1")
                         .param("offset", "0")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].id").value(t1.getId()));
@@ -163,7 +137,6 @@ public class TagDomainAssociationResourceTests {
                         .param("max", "1")
                         .param("offset", "1")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].id").value(t2.getId()));
@@ -173,7 +146,6 @@ public class TagDomainAssociationResourceTests {
                         .param("max", "3")
                         .param("offset", "3")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(2))))
                 .andExpect(jsonPath("$.collection[0].id").value(t4.getId()))
@@ -186,7 +158,6 @@ public class TagDomainAssociationResourceTests {
     public void list_tag_domain_associations_by_domain() throws Exception {
         TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), builder.given_a_project());
         restTagDomainAssociationControllerMockMvc.perform(get("/api/domain/{domainClassName}/{domainIdent}/tag_domain_association.json", tagDomainAssociation.getDomainClassName(), tagDomainAssociation.getDomainIdent()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[0].id").value(tagDomainAssociation.getId().intValue()));
@@ -197,7 +168,6 @@ public class TagDomainAssociationResourceTests {
     public void list_tag_domain_associations_by_domain_does_not_exists() throws Exception {
         TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), builder.given_a_project());
         restTagDomainAssociationControllerMockMvc.perform(get("/api/domain/{domainClassName}/{domainIdent}/tag_domain_association.json", tagDomainAssociation.getDomainClassName(), 0))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -209,7 +179,6 @@ public class TagDomainAssociationResourceTests {
         restTagDomainAssociationControllerMockMvc.perform(post("/api/domain/{domainClassName}/{domainIdent}/tag_domain_association.json", tagDomainAssociation.getDomainClassName(), tagDomainAssociation.getDomainIdent())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(tagDomainAssociation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -227,7 +196,6 @@ public class TagDomainAssociationResourceTests {
         restTagDomainAssociationControllerMockMvc.perform(post("/api/tag_domain_association.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(tagDomainAssociation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -244,7 +212,6 @@ public class TagDomainAssociationResourceTests {
         TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), project);
         restTagDomainAssociationControllerMockMvc.perform(delete("/api/tag_domain_association/{id}.json", tagDomainAssociation.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 }

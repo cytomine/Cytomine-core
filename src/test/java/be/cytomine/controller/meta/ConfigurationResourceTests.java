@@ -16,9 +16,6 @@ package be.cytomine.controller.meta;
 * limitations under the License.
 */
 
-import be.cytomine.BasicInstanceBuilder;
-import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.meta.Configuration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -28,12 +25,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
+import be.cytomine.BasicInstanceBuilder;
+import be.cytomine.CytomineCoreApplication;
+import be.cytomine.domain.meta.Configuration;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,9 +39,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @WithMockUser(username = "superadmin")
 public class ConfigurationResourceTests {
-
-    @Autowired
-    private EntityManager em;
 
     @Autowired
     private BasicInstanceBuilder builder;
@@ -56,12 +51,10 @@ public class ConfigurationResourceTests {
     public void list_all_configs() throws Exception {
         Configuration configuration = builder.given_a_configuration("xxx");
         restConfigurationControllerMockMvc.perform(get("/api/configuration.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.key=='"+configuration.getKey()+"')]").exists());
     }
-
 
     @Test
     @Transactional
@@ -69,7 +62,6 @@ public class ConfigurationResourceTests {
         Configuration configuration = builder.given_a_configuration("xxx");
 
         restConfigurationControllerMockMvc.perform(get("/api/configuration/key/{key}.json", configuration.getKey()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(configuration.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.meta.Configuration"))
@@ -88,7 +80,6 @@ public class ConfigurationResourceTests {
         restConfigurationControllerMockMvc.perform(post("/api/configuration.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(configuration.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -98,9 +89,7 @@ public class ConfigurationResourceTests {
                 .andExpect(jsonPath("$.command").exists())
                 .andExpect(jsonPath("$.configuration.id").exists())
                 .andExpect(jsonPath("$.configuration.key").value(configuration.getKey()));
-
     }
-
 
     @Test
     @Transactional
@@ -109,7 +98,6 @@ public class ConfigurationResourceTests {
         restConfigurationControllerMockMvc.perform(put("/api/configuration/key/{key}.json", configuration.getKey())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(configuration.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -119,7 +107,6 @@ public class ConfigurationResourceTests {
                 .andExpect(jsonPath("$.command").exists())
                 .andExpect(jsonPath("$.configuration.id").exists())
                 .andExpect(jsonPath("$.configuration.key").value("xxx"));
-
     }
 
     @Test
@@ -129,7 +116,6 @@ public class ConfigurationResourceTests {
         restConfigurationControllerMockMvc.perform(delete("/api/configuration/key/{key}.json", configuration.getKey())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(configuration.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -146,9 +132,7 @@ public class ConfigurationResourceTests {
     public void fail_when_delete_configuration_not_exists() throws Exception {
         restConfigurationControllerMockMvc.perform(delete("/api/configuration/key/{key}.json", "0")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors").exists());
     }
-
 }

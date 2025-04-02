@@ -37,7 +37,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -63,7 +62,6 @@ public class SecUserSecRoleResourceTests {
     public void list_roles() throws Exception {
 
         restSecUserSecRoleControllerMockMvc.perform(get("/api/user/{user}/role.json", builder.given_superadmin().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThanOrEqualTo(1))))
                 .andExpect(jsonPath("$.collection[?(@.authority=='ROLE_SUPER_ADMIN')]").exists());
@@ -75,7 +73,6 @@ public class SecUserSecRoleResourceTests {
 
         restSecUserSecRoleControllerMockMvc.perform(get("/api/user/{user}/role.json", builder.given_superadmin().getId())
                         .param("highest", "true"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(1)))
                 .andExpect(jsonPath("$.collection[?(@.authority=='ROLE_SUPER_ADMIN')]").exists());
@@ -86,7 +83,6 @@ public class SecUserSecRoleResourceTests {
     public void get_roles() throws Exception {
         restSecUserSecRoleControllerMockMvc.perform(get("/api/user/{user}/role/{role}.json",
                         builder.given_superadmin().getId(), secRoleRepository.getSuperAdmin().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.authority").value( "ROLE_SUPER_ADMIN"));
     }
@@ -96,7 +92,6 @@ public class SecUserSecRoleResourceTests {
     public void get_role_with_unexisting_user() throws Exception {
         restSecUserSecRoleControllerMockMvc.perform(get("/api/user/{user}/role/{role}.json",
                         builder.given_superadmin().getId(), 0L))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -105,7 +100,6 @@ public class SecUserSecRoleResourceTests {
     public void get_role_with_unexisting_role() throws Exception {
         restSecUserSecRoleControllerMockMvc.perform(get("/api/user/{user}/role/{role}.json",
                         0L, secRoleRepository.getSuperAdmin().getId()))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -118,7 +112,6 @@ public class SecUserSecRoleResourceTests {
          restSecUserSecRoleControllerMockMvc.perform(post("/api/user/{user}/role.json", user.getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(secUserSecRole.toJSON()))
-            .andDo(print())
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.printMessage").value(true))
             .andExpect(jsonPath("$.callback").exists())
@@ -138,7 +131,6 @@ public class SecUserSecRoleResourceTests {
         restSecUserSecRoleControllerMockMvc.perform(delete("/api/user/{user}/role/{role}.json", user.getId(), secUserSecRole.getSecRole().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(secUserSecRole.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists());
@@ -151,7 +143,6 @@ public class SecUserSecRoleResourceTests {
         restSecUserSecRoleControllerMockMvc.perform(delete("/api/relation/parent/term1/{idTerm1}/term2/{idTerm2}.json", relationTerm.getTerm1().getId(), relationTerm.getTerm2().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(relationTerm.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -169,7 +160,6 @@ public class SecUserSecRoleResourceTests {
 
         restSecUserSecRoleControllerMockMvc.perform(put("/api/user/{user}/role/{role}/define.json", user.getId(), secRoleRepository.getAdmin().getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isOk());
 
         em.refresh(user);

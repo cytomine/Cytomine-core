@@ -20,8 +20,6 @@ import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.config.security.JWTFilter;
 import be.cytomine.domain.security.User;
-import be.cytomine.dto.auth.LoginVM;
-import be.cytomine.repository.security.UserRepository;
 import be.cytomine.security.jwt.TokenProvider;
 import be.cytomine.security.jwt.TokenType;
 import be.cytomine.service.CurrentRoleService;
@@ -32,10 +30,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -44,23 +40,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
 class SwitchUserControllerTests {
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private TokenProvider tokenProvider;
@@ -101,7 +88,6 @@ class SwitchUserControllerTests {
 
         mockMvc.perform(get("/session/admin/open.json")
                 .header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt))
-                .andDo(print())
                 .andExpect(status().isOk());
 
         MvcResult mvcResult = mockMvc
@@ -123,7 +109,6 @@ class SwitchUserControllerTests {
                 .andExpect(jsonPath("$.username").value("user"))
                 .andExpect(jsonPath("$.isSwitched").value(true))
                 .andExpect(jsonPath("$.realUser").value("admin"));
-
     }
 
     @Test
@@ -138,28 +123,22 @@ class SwitchUserControllerTests {
         );
         String jwt = tokenProvider.createToken(authentication, TokenType.SESSION);
 
-        MvcResult mvcResult = mockMvc
-                .perform(post("/api/login/impersonate")
+        mockMvc.perform(post("/api/login/impersonate")
                         .header(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt)
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=user"))
                 .andExpect(jsonPath("$.id_token").doesNotHaveJsonPath())
                 .andExpect(status().isForbidden()).andReturn();
-
-
-
     }
 
     @Test
     @Transactional
     @WithMockUser(username = "admin")
     void switch_user_workflow_refuse_for_admin_with_no_admin_session() throws Exception {
-        MvcResult mvcResult = mockMvc
-                .perform(post("/api/login/impersonate")
+        mockMvc.perform(post("/api/login/impersonate")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .content("username=user"))
                 .andExpect(jsonPath("$.id_token").doesNotHaveJsonPath())
                 .andExpect(status().isForbidden()).andReturn();
-
     }
 }

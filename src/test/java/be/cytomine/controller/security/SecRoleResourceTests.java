@@ -26,21 +26,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-
-import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
 @WithMockUser(username = "superadmin")
 public class SecRoleResourceTests {
-
-    @Autowired
-    private EntityManager em;
 
     @Autowired
     private BasicInstanceBuilder builder;
@@ -52,18 +44,13 @@ public class SecRoleResourceTests {
     @Transactional
     public void list_all_roles() throws Exception {
         restSecRoleControllerMockMvc.perform(get("/api/role.json"))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
-
 
     @Test
     @Transactional
     public void get_a_projectDefaultLayer() throws Exception {
         restSecRoleControllerMockMvc.perform(get("/api/role/{id}.json", builder.given_a_user_role().getSecRole().getId()))
-                .andDo(print())
                 .andExpect(status().isOk());
-        ;
     }
-
 }

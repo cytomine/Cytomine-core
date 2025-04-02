@@ -16,8 +16,6 @@ package be.cytomine.controller.processing;
 * limitations under the License.
 */
 
-import be.cytomine.BasicInstanceBuilder;
-import be.cytomine.CytomineCoreApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,12 +24,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
+import be.cytomine.CytomineCoreApplication;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,22 +38,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class ImageFilterResourceTests {
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
-    private BasicInstanceBuilder builder;
-
-    @Autowired
     private MockMvc restImageFilterMockMvc;
 
     @Test
     @Transactional
     public void list_all() throws Exception {
         restImageFilterMockMvc.perform(get("/api/imagefilter.json"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
-                .andExpect(jsonPath("$.collection[?(@.name=='Binary')]").exists());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
+            .andExpect(jsonPath("$.collection[?(@.name=='Binary')]").exists());
     }
-
 }

@@ -23,8 +23,6 @@ import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.*;
-import be.cytomine.service.CommandService;
-import be.cytomine.service.ontology.AlgoAnnotationService;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
@@ -52,7 +50,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.*;
@@ -60,7 +57,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -76,16 +72,9 @@ public class AlgoAnnotationResourceTests {
     private BasicInstanceBuilder builder;
 
     @Autowired
-    private CommandService commandService;
-
-    @Autowired
     private MockMvc restAlgoAnnotationControllerMockMvc;
 
-    @Autowired
-    private AlgoAnnotationService algoAnnotationService;
-
     private static WireMockServer wireMockServer = new WireMockServer(8888);
-
 
     @BeforeAll
     public static void beforeAll() {
@@ -107,7 +96,6 @@ public class AlgoAnnotationResourceTests {
         em.refresh(algoAnnotationTerm);
         AlgoAnnotation algoAnnotation = em.find(AlgoAnnotation.class, algoAnnotationTerm.getAnnotationIdent());
         restAlgoAnnotationControllerMockMvc.perform(get("/api/algoannotation/{id}.json", algoAnnotationTerm.getAnnotationIdent()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(algoAnnotation.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.ontology.AlgoAnnotation"))
@@ -126,7 +114,6 @@ public class AlgoAnnotationResourceTests {
     @Transactional
     public void get_a_algo_annotation_not_exists() throws Exception {
         restAlgoAnnotationControllerMockMvc.perform(get("/api/algoannotation/{id}.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -138,7 +125,6 @@ public class AlgoAnnotationResourceTests {
         AlgoAnnotation algoAnnotation = builder.given_a_algo_annotation();
         builder.addUserToProject(algoAnnotation.getProject(), builder.given_superadmin().getUsername());
         restAlgoAnnotationControllerMockMvc.perform(get("/api/algoannotation.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=='"+algoAnnotation.getId()+"')]").exists());
     }
@@ -156,37 +142,31 @@ public class AlgoAnnotationResourceTests {
         restAlgoAnnotationControllerMockMvc.perform(get("/api/project/{idProject}/algoannotation/count.json", oldAlgoAnnotation.getProject().getId())
                         .param("startDate", String.valueOf(oldAlgoAnnotation.getCreated().getTime()))
                         .param("endDate", String.valueOf(newAlgoAnnotation.getCreated().getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(2));
 
         restAlgoAnnotationControllerMockMvc.perform(get("/api/project/{idProject}/algoannotation/count.json", oldAlgoAnnotation.getProject().getId())
                         .param("startDate", String.valueOf(DateUtils.addSeconds(oldAlgoAnnotation.getCreated(),-1).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(2));
 
         restAlgoAnnotationControllerMockMvc.perform(get("/api/project/{idProject}/algoannotation/count.json", oldAlgoAnnotation.getProject().getId())
                         .param("endDate", String.valueOf(DateUtils.addSeconds(newAlgoAnnotation.getCreated(),1).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(2));
 
         restAlgoAnnotationControllerMockMvc.perform(get("/api/project/{idProject}/algoannotation/count.json", oldAlgoAnnotation.getProject().getId())
                         .param("startDate", String.valueOf(DateUtils.addSeconds(newAlgoAnnotation.getCreated(),-1).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(1));
 
         restAlgoAnnotationControllerMockMvc.perform(get("/api/project/{idProject}/algoannotation/count.json", oldAlgoAnnotation.getProject().getId())
                         .param("endDate", String.valueOf(DateUtils.addSeconds(oldAlgoAnnotation.getCreated(),1).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(1));
 
         restAlgoAnnotationControllerMockMvc.perform(get("/api/project/{idProject}/algoannotation/count.json", oldAlgoAnnotation.getProject().getId())
                         .param("endDate", String.valueOf(DateUtils.addDays(oldAlgoAnnotation.getCreated(), -2).getTime())))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value(0));
     }
@@ -198,7 +178,6 @@ public class AlgoAnnotationResourceTests {
         restAlgoAnnotationControllerMockMvc.perform(post("/api/algoannotation.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(algoAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -222,7 +201,6 @@ public class AlgoAnnotationResourceTests {
         restAlgoAnnotationControllerMockMvc.perform(post("/api/algoannotation.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().is4xxClientError());
     }
 
@@ -235,7 +213,6 @@ public class AlgoAnnotationResourceTests {
         restAlgoAnnotationControllerMockMvc.perform(post("/api/algoannotation.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.annotation.project").value(algoAnnotation.getProject().getId()));
         // => project is retrieve from slice/image
@@ -252,7 +229,6 @@ public class AlgoAnnotationResourceTests {
         restAlgoAnnotationControllerMockMvc.perform(post("/api/algoannotation.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.annotation.term", hasSize(2)));
     }
@@ -265,7 +241,6 @@ public class AlgoAnnotationResourceTests {
         restAlgoAnnotationControllerMockMvc.perform(put("/api/algoannotation/{id}.json", algoAnnotation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(algoAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -285,7 +260,6 @@ public class AlgoAnnotationResourceTests {
         restAlgoAnnotationControllerMockMvc.perform(delete("/api/algoannotation/{id}.json", algoAnnotation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(algoAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -305,7 +279,6 @@ public class AlgoAnnotationResourceTests {
         restAlgoAnnotationControllerMockMvc.perform(delete("/api/algoannotation/{id}.json", 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(algoAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());
@@ -336,7 +309,6 @@ public class AlgoAnnotationResourceTests {
 
 
         MvcResult mvcResult = restAlgoAnnotationControllerMockMvc.perform(get("/api/algoannotation/{id}/crop.png?maxSize=512", annotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -365,7 +337,6 @@ public class AlgoAnnotationResourceTests {
         );
 
         MvcResult mvcResult = restAlgoAnnotationControllerMockMvc.perform(get("/api/algoannotation/{id}/mask.png", annotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -396,7 +367,6 @@ public class AlgoAnnotationResourceTests {
         );
 
         MvcResult mvcResult = restAlgoAnnotationControllerMockMvc.perform(get("/api/algoannotation/{id}/alphamask.png", annotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -436,7 +406,6 @@ public class AlgoAnnotationResourceTests {
         restAlgoAnnotationControllerMockMvc.perform(post("/api/algoannotation/{id}/comment.json", annotation.getAnnotationIdent())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -454,7 +423,6 @@ public class AlgoAnnotationResourceTests {
         SharedAnnotation comment = builder.given_a_shared_annotation(algoAnnotation);
 
         restAlgoAnnotationControllerMockMvc.perform(get("/api/algoannotation/{annotation}/comment/{id}.json", algoAnnotation.getId(), comment.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(comment.getId()));
     }
@@ -467,7 +435,6 @@ public class AlgoAnnotationResourceTests {
         SharedAnnotation comment = builder.given_a_shared_annotation(algoAnnotation);
 
         restAlgoAnnotationControllerMockMvc.perform(get("/api/algoannotation/{annotation}/comment.json", algoAnnotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.size").value(equalTo(1)));
     }

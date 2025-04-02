@@ -27,7 +27,6 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.annotation.AnnotationIndexLightDTO;
 import be.cytomine.repository.ontology.AnnotationIndexRepository;
-import be.cytomine.repository.ontology.UserAnnotationRepository;
 
 import org.locationtech.jts.io.ParseException;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,10 +45,7 @@ import jakarta.transaction.Transactional;
 
 import java.util.List;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -64,9 +60,6 @@ public class AnnotationIndexResourceTests {
 
     @Autowired
     private BasicInstanceBuilder builder;
-
-    @Autowired
-    private UserAnnotationRepository userAnnotationRepository;
 
     @Autowired
     private MockMvc restAnnotationIndexControllerMockMvc;
@@ -87,7 +80,6 @@ public class AnnotationIndexResourceTests {
     UserAnnotation a3;
     UserAnnotation a4;
 
-
     void createAnnotationSet() throws ParseException {
         project = builder.given_a_project();
         image = builder.given_an_image_instance(project);
@@ -102,6 +94,7 @@ public class AnnotationIndexResourceTests {
         a4 =  builder.given_a_user_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, null);
         em.flush();
     }
+
     @BeforeEach
     public void BeforeEach() throws ParseException {
         this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
@@ -123,17 +116,10 @@ public class AnnotationIndexResourceTests {
         List<AnnotationIndexLightDTO> slices = annotationIndexRepository.findAllBySlice(slice);
         List<AnnotationIndexLightDTO> slicesLight = annotationIndexRepository.findAllLightBySliceInstance(slice.getId());
         restAnnotationIndexControllerMockMvc.perform(get("/api/sliceinstance/{id}/annotationindex.json", slice.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")].slice").value(slice.getId().intValue()))
                 .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")].countAnnotation").value(4))
-                .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")].countReviewedAnnotation").value(0))
-                .andReturn();
+                .andExpect(jsonPath("$.collection[?(@.user==" + me.getId() + ")].countReviewedAnnotation").value(0));
     }
-
-
-
-
-
 }

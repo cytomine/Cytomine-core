@@ -31,23 +31,17 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
 public class CustomUIControllerTests {
-
-    @Autowired
-    private EntityManager em;
 
     @Autowired
     private BasicInstanceBuilder builder;
@@ -66,8 +60,6 @@ public class CustomUIControllerTests {
         lastConnectionRepository.deleteAll();
     }
 
-
-
     @Test
     @Transactional
     @WithMockUser(username = "user")
@@ -83,7 +75,6 @@ public class CustomUIControllerTests {
     @WithMockUser(username = "superadmin")
     public void retrieve_global_custom_ui_as_superadmin() throws Exception {
         restConfigurationControllerMockMvc.perform(get("/api/custom-ui/config.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.activity").value(true))
                 .andExpect(jsonPath("$.admin").value(true))
@@ -104,7 +95,6 @@ public class CustomUIControllerTests {
     @WithMockUser(username = "user")
     public void retrieve_global_custom_ui_as_user() throws Exception {
         restConfigurationControllerMockMvc.perform(get("/api/custom-ui/config.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.activity").value(true))
                 .andExpect(jsonPath("$.admin").value(false))
@@ -125,7 +115,6 @@ public class CustomUIControllerTests {
         Project project = builder.given_a_project();
         restConfigurationControllerMockMvc.perform(get("/api/custom-ui/config.json")
                     .param("project", project.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.admin").value(true)) //1 global
                 .andExpect(jsonPath("$.project-images-tab").value(true)) // 1project
@@ -140,7 +129,6 @@ public class CustomUIControllerTests {
         builder.addUserToProject(project, "user", READ);
         restConfigurationControllerMockMvc.perform(get("/api/custom-ui/config.json")
                         .param("project", project.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.project-jobs-tab").value(false))
         ;
@@ -154,7 +142,6 @@ public class CustomUIControllerTests {
         builder.addUserToProject(project, "user", ADMINISTRATION);
         restConfigurationControllerMockMvc.perform(get("/api/custom-ui/config.json")
                         .param("project", project.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.project-jobs-tab").value(false))
         ;
@@ -167,7 +154,6 @@ public class CustomUIControllerTests {
     public void retrieve_project_custom_ui_as_superadmin() throws Exception {
         Project project = builder.given_a_project();
         restConfigurationControllerMockMvc.perform(get("/api/custom-ui/project/{project}.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.project-images-tab.ADMIN_PROJECT").value(true))
                 .andExpect(jsonPath("$.project-explore-hide-tools.ADMIN_PROJECT").value(true))
@@ -494,7 +480,6 @@ public class CustomUIControllerTests {
         restConfigurationControllerMockMvc.perform(post("/api/custom-ui/project/{project}.json", project.getId())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(customUI))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.project-users-heatmap-graph.ADMIN_PROJECT").value(true))
                 .andExpect(jsonPath("$.project-users-heatmap-graph.CONTRIBUTOR_PROJECT").value(false))
@@ -504,7 +489,6 @@ public class CustomUIControllerTests {
         restConfigurationControllerMockMvc.perform(post("/api/custom-ui/project/{project}.json", project.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(customUI))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.project-users-heatmap-graph.ADMIN_PROJECT").value(true))
                 .andExpect(jsonPath("$.project-users-heatmap-graph.CONTRIBUTOR_PROJECT").value(false))
