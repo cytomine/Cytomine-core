@@ -1,5 +1,6 @@
 package be.cytomine.service.appengine;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -167,6 +168,8 @@ public class TaskRunService {
     public ResponseEntity<String> provisionTaskRun(JsonNode json, Long projectId, UUID taskRunId, String parameterName) {
         checkTaskRun(projectId, taskRunId);
 
+        String uri = "task-runs/" + taskRunId.toString() + "/input-provisions/" + parameterName;
+
         if (json.get("type").asText().equals("image")) {
             Long annotationId = json.get("value").asLong();
             UserAnnotation annotation = userAnnotationService.get(annotationId);
@@ -179,7 +182,30 @@ public class TaskRunService {
                 }
             });
 
-            return appEngineService.put("task-runs/" + taskRunId + "/input-provisions/" + parameterName, body, MediaType.MULTIPART_FORM_DATA);
+            return appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
+        }
+
+        if (json.get("type").asText().equals("wsi")) {
+            Long imageId = json.get("value").asLong();
+            ImageInstance ii = imageInstanceService.find(imageId)
+                    .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
+
+            ResponseEntity<byte[]> response = null;
+            try {
+                response = imageServerService.download(ii.getBaseImage(), null);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("file", new ByteArrayResource(response.getBody()) {
+                @Override
+                public String getFilename() {
+                    return ii.getBaseImage().getOriginalFilename();
+                }
+            });
+
+            return appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
         }
 
         ObjectNode provision = json.deepCopy();
@@ -191,7 +217,7 @@ public class TaskRunService {
 
         provision.remove("type");
 
-        return appEngineService.put("task-runs/" + taskRunId + "/input-provisions/" + parameterName, provision, MediaType.APPLICATION_JSON);
+        return appEngineService.put(uri, provision, MediaType.APPLICATION_JSON);
     }
 
     public ResponseEntity<String> getTaskRun(Long projectId, UUID taskRunId) {
