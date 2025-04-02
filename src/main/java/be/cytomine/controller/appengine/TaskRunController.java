@@ -66,7 +66,7 @@ public class TaskRunController {
     }
 
     @PutMapping(
-        value = "/project/{project}/task-runs/{task}/input-provisions/{param_name}",
+        value = "/project/{project}/task-runs/{task}/input-provisions/{parameter_name}",
         consumes = MediaType.APPLICATION_JSON_VALUE
     )
     public ResponseEntity<String> provision(
