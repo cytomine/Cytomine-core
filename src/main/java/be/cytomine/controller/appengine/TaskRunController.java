@@ -62,11 +62,11 @@ public class TaskRunController {
         return taskRunService.batchProvisionTaskRun(body, project, task);
     }
 
-    @PutMapping("/project/{project}/task-runs/{task}/input-provisions/{parameter-name}")
+    @PutMapping("/project/{project}/task-runs/{task}/input-provisions/{parameter_name}")
     public ResponseEntity<String> provision(
-        @PathVariable("parameter-name") String parameterName,
         @PathVariable Long project,
         @PathVariable UUID task,
+        @PathVariable("parameter_name") String parameterName,
         @RequestBody JsonNode json
     ) {
         return taskRunService.provisionTaskRun(json, project, task, parameterName);
@@ -81,6 +81,23 @@ public class TaskRunController {
         return taskRunService.postStateAction(body, project, task);
     }
 
+    @GetMapping("/project/{project}/task-runs/{task}/inputs")
+    public ResponseEntity<String> getInputs(
+        @PathVariable Long project,
+        @PathVariable UUID task
+    ) {
+        return taskRunService.getInputs(project, task);
+    }
+
+    @GetMapping("/project/{project}/task-runs/{task}/input/{parameter_name}")
+    public ResponseEntity<byte[]> getTaskRunInputParameter(
+            @PathVariable Long project,
+            @PathVariable UUID task,
+            @PathVariable("parameter_name") String parameterName
+    ) {
+        return taskRunService.getTaskRunIOParameter(project, task, parameterName, "input");
+    }
+
     @GetMapping("/project/{project}/task-runs/{task}/outputs")
     public ResponseEntity<String> getOutputs(
         @PathVariable Long project,
@@ -89,11 +106,12 @@ public class TaskRunController {
         return taskRunService.getOutputs(project, task);
     }
 
-    @GetMapping("/project/{project}/task-runs/{task}/inputs")
-    public ResponseEntity<String> getInputs(
-        @PathVariable Long project,
-        @PathVariable UUID task
+    @GetMapping("/project/{project}/task-runs/{task}/output/{parameter_name}")
+    public ResponseEntity<byte[]> getTaskRunOutputParameter(
+            @PathVariable Long project,
+            @PathVariable UUID task,
+            @PathVariable("parameter_name") String parameterName
     ) {
-        return taskRunService.getInputs(project, task);
+        return taskRunService.getTaskRunIOParameter(project, task, parameterName, "output");
     }
 }

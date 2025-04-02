@@ -12,19 +12,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import be.cytomine.domain.annotation.AnnotationLayer;
 import be.cytomine.domain.appengine.TaskRun;
 import be.cytomine.domain.appengine.TaskRunLayer;
 import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
 import be.cytomine.dto.appengine.task.TaskRunValue;
+import be.cytomine.dto.image.CropParameter;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.appengine.TaskRunLayerRepository;
 import be.cytomine.repository.appengine.TaskRunRepository;
@@ -32,6 +37,7 @@ import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.annotation.AnnotationLayerService;
 import be.cytomine.service.annotation.AnnotationService;
 import be.cytomine.service.image.ImageInstanceService;
+import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.security.SecurityACLService;
@@ -55,6 +61,8 @@ public class TaskRunService {
     private final GeometryService geometryService;
 
     private final ImageInstanceService imageInstanceService;
+
+    private final ImageServerService imageServerService;
 
     private final ProjectService projectService;
 
@@ -141,9 +149,49 @@ public class TaskRunService {
         return appEngineService.put("task-runs/" + taskRunId + "/input-provisions", body, MediaType.APPLICATION_JSON);
     }
 
-    public ResponseEntity<String> provisionTaskRun(JsonNode json, Long projectId, UUID taskRunId, String paramName) {
+    private byte[] getImageAnnotation(AnnotationDomain annotation) {
+        CropParameter parameters = new CropParameter();
+        parameters.setComplete(true);
+        parameters.setDraw(true);
+        parameters.setFormat("png");
+        parameters.setLocation(annotation.getWktLocation());
+
+        try {
+            ResponseEntity<byte[]> response = imageServerService.crop(annotation, parameters, null, null);
+            return response.getBody();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public ResponseEntity<String> provisionTaskRun(JsonNode json, Long projectId, UUID taskRunId, String parameterName) {
         checkTaskRun(projectId, taskRunId);
-        return appEngineService.put("task-runs/" + taskRunId.toString() + "/input-provisions/" + paramName, json, MediaType.APPLICATION_JSON);
+
+        if (json.get("type").asText().equals("image")) {
+            Long annotationId = json.get("value").asLong();
+            UserAnnotation annotation = userAnnotationService.get(annotationId);
+
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("file", new ByteArrayResource(getImageAnnotation(annotation)) {
+                @Override
+                public String getFilename() {
+                    return annotationId + ".png";
+                }
+            });
+
+            return appEngineService.put("task-runs/" + taskRunId + "/input-provisions/" + parameterName, body, MediaType.MULTIPART_FORM_DATA);
+        }
+
+        ObjectNode provision = json.deepCopy();
+        if (provision.get("type").asText().equals("geometry")) {
+            Long annotationId = provision.get("value").asLong();
+            UserAnnotation annotation = userAnnotationService.get(annotationId);
+            provision.put("value", geometryService.WKTToGeoJSON(annotation.getWktLocation()));
+        }
+
+        provision.remove("type");
+
+        return appEngineService.put("task-runs/" + taskRunId + "/input-provisions/" + parameterName, provision, MediaType.APPLICATION_JSON);
     }
 
     public ResponseEntity<String> getTaskRun(Long projectId, UUID taskRunId) {
@@ -153,13 +201,13 @@ public class TaskRunService {
 
     public ResponseEntity<String> postStateAction(JsonNode body, Long projectId, UUID taskRunId) {
         checkTaskRun(projectId, taskRunId);
-        return appEngineService.post("task-runs/" + taskRunId.toString() + "/state-actions", body, MediaType.APPLICATION_JSON);
+        return appEngineService.post("task-runs/" + taskRunId + "/state-actions", body, MediaType.APPLICATION_JSON);
     }
 
     public ResponseEntity<String> getOutputs(Long projectId, UUID taskRunId) {
         checkTaskRun(projectId, taskRunId);
 
-        ResponseEntity<String> response = appEngineService.get("task-runs/" + taskRunId.toString() + "/outputs");
+        ResponseEntity<String> response = appEngineService.get("task-runs/" + taskRunId + "/outputs");
         Optional<TaskRun> taskRun = taskRunRepository.findByProjectIdAndTaskRunId(projectId, taskRunId);
         if (taskRun.isEmpty()) {
             throw new ObjectNotFoundException("TaskRun", taskRunId);
@@ -180,7 +228,7 @@ public class TaskRunService {
             .toList();
 
         if (!geometries.isEmpty()) {
-            String layerName = "task-run-" + taskRunId.toString();
+            String layerName = "task-run-" + taskRunId;
             AnnotationLayer annotationLayer = annotationLayerService.createAnnotationLayer(layerName);
 
             for (String geometry : geometries) {
@@ -199,6 +247,11 @@ public class TaskRunService {
 
     public ResponseEntity<String> getInputs(Long projectId, UUID taskRunId) {
         checkTaskRun(projectId, taskRunId);
-        return appEngineService.get("task-runs/" + taskRunId.toString() + "/inputs");
+        return appEngineService.get("task-runs/" + taskRunId + "/inputs");
+    }
+
+    public ResponseEntity<byte[]> getTaskRunIOParameter(Long projectId, UUID taskRunId, String parameterName, String type) {
+        checkTaskRun(projectId, taskRunId);
+        return appEngineService.getByte("task-runs/" + taskRunId + "/" + type + "/" + parameterName);
     }
 }
