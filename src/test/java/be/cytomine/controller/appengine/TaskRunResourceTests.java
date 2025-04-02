@@ -1,18 +1,14 @@
 package be.cytomine.controller.appengine;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -24,14 +20,20 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
-
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.appengine.TaskRun;
 import be.cytomine.repository.appengine.TaskRunRepository;
-import jakarta.transaction.Transactional;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
@@ -40,13 +42,13 @@ import jakarta.transaction.Transactional;
 public class TaskRunResourceTests {
 
     @Autowired
-    private TaskRunRepository taskRunRepository;
-
-    @Autowired
     private BasicInstanceBuilder builder;
 
     @Autowired
-    private MockMvc restTaskRunControllerMockMvc;
+    private TaskRunRepository taskRunRepository;
+
+    @Autowired
+    private MockMvc mockMvc;
 
     @Value("${application.appEngine.apiBasePath}")
     private String apiBasePath;
@@ -56,6 +58,7 @@ public class TaskRunResourceTests {
     @BeforeAll
     public static void beforeAll() {
         wireMockServer.start();
+        configureFor("localhost", 8888);
     }
 
     @AfterAll
@@ -67,46 +70,43 @@ public class TaskRunResourceTests {
     @Transactional
     public void add_valid_task_run() throws Exception {
         TaskRun taskRun = builder.given_a_not_persisted_task_run();
-
+        taskRun.setTaskRunId(UUID.randomUUID());
         String taskId = UUID.randomUUID().toString();
-        String queryBody = "{\"image\": \" " + taskRun.getImage().getId() + "\"}";
+        String queryBody = "{\"image\": \"" + taskRun.getImage().getId() + "\"}";
 
-        String mockResponse = """
-                {
-                  "task": {
-                    "name": "string",
-                    "namespace": "string",
-                    "version": "string",
-                    "description": "string",
-                    "authors": [
-                      {
-                        "first_name": "string",
-                        "last_name": "string",
-                        "organization": "string",
-                        "email": "string",
-                        "is_contact": true
-                      }
-                    ]
-                  },
-                  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-                  "state": "created"
-                }""";
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> mockResponseMap = Map.of(
+            "task", Map.of(
+                "name", "string",
+                "namespace", "string",
+                "version", "string",
+                "description", "string",
+                "authors", List.of(Map.of(
+                    "first_name", "string",
+                    "last_name", "string",
+                    "organization", "string",
+                    "email", "string",
+                    "is_contact", true
+                ))
+            ),
+            "id", taskRun.getTaskRunId().toString(),
+            "state", "created"
+        );
+        String mockResponse = objectMapper.writeValueAsString(mockResponseMap);
 
-        configureFor("localhost", 8888);
         stubFor(WireMock.post(urlEqualTo(apiBasePath + "tasks/" + taskId + "/runs"))
-                .willReturn(
-                        aResponse().withBody(mockResponse)
-                )
+            .willReturn(
+                aResponse().withBody(mockResponse).withHeader("Content-Type", "application/json")
+            )
         );
 
-        restTaskRunControllerMockMvc.perform(post("/api/app-engine/project/" + taskRun.getProject().getId() + "/tasks/"+ taskId + "/runs")
+        mockMvc.perform(post("/api/app-engine/project/" + taskRun.getProject().getId() + "/tasks/"+ taskId + "/runs")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(queryBody))
-            .andDo(print())
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value("3fa85f64-5717-4562-b3fc-2c963f66afa6"))
-            .andExpect(jsonPath("$.task").exists())
-            .andExpect(jsonPath("$.state").exists());
+            .andExpect(jsonPath("$.id").value(taskRun.getTaskRunId().toString()))
+            .andExpect(jsonPath("$.state").value("created"))
+            .andExpect(jsonPath("$.task").isNotEmpty());
     }
 
     @Test
@@ -120,21 +120,19 @@ public class TaskRunResourceTests {
         String queryBody = "{\"value\": 0, \"param_name\": \"" + paramName + "\", \"type\": \"integer\"}";
         String mockResponse = "{\"value\": 0, \"param_name\": \"" + paramName + "\", \"task_run_id\": \"" + taskRunId + "\"}";
         String appEngineUriSection = "task-runs/" + taskRunId + "/input-provisions/" + paramName;
-        configureFor("localhost", 8888);
         stubFor(WireMock.put(urlEqualTo(apiBasePath + appEngineUriSection))
-                .willReturn(
-                        aResponse().withBody(mockResponse)
-                )
+            .willReturn(
+                aResponse().withBody(mockResponse)
+            )
         );
 
-        restTaskRunControllerMockMvc.perform(put("/api/app-engine/project/" + taskRun.getProject().getId() + "/" + appEngineUriSection)
+        mockMvc.perform(put("/api/app-engine/project/" + taskRun.getProject().getId() + "/" + appEngineUriSection)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(queryBody))
-                .andDo(print())
-                .andExpect(status().isOk())
+            .andExpect(status().isOk())
                 .andExpect(jsonPath("$.task_run_id").value(taskRunId.toString()))
-                .andExpect(jsonPath("$.param_name").exists())
-                .andExpect(jsonPath("$.value").exists());
+                .andExpect(jsonPath("$.param_name").value(paramName))
+                .andExpect(jsonPath("$.value").value(0));
     }
 
     @Test
@@ -155,21 +153,19 @@ public class TaskRunResourceTests {
         String queryBody = "[{\"value\": 0, \"param_name\": \"" + paramName + "\", \"type\": \"integer\"}]";
         String mockResponse = "[{\"value\": 0, \"param_name\": \"" + paramName + "\", \"task_run_id\": \"" + taskRunId + "\"}]";
         String appEngineUriSection = "task-runs/" + taskRunId + "/input-provisions";
-        configureFor("localhost", 8888);
         stubFor(WireMock.put(urlEqualTo(apiBasePath + appEngineUriSection))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
         );
 
-        restTaskRunControllerMockMvc.perform(put("/api/app-engine/project/" + taskRun.getProject().getId() + "/" + appEngineUriSection)
+        mockMvc.perform(put("/api/app-engine/project/" + taskRun.getProject().getId() + "/" + appEngineUriSection)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(queryBody))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("[0].task_run_id").value(taskRunId.toString()))
-                .andExpect(jsonPath("[0].param_name").exists())
-                .andExpect(jsonPath("[0].value").exists());
+                .andExpect(jsonPath("[0].param_name").value(paramName))
+                .andExpect(jsonPath("[0].value").value(0));
     }
 
     @Test
@@ -180,20 +176,18 @@ public class TaskRunResourceTests {
         UUID taskRunId = taskRun.getTaskRunId();
         String mockResponse = getTaskRunBody(taskRunId);
         String appEngineUriSection = "task-runs/" + taskRunId;
-        configureFor("localhost", 8888);
         stubFor(WireMock.get(urlEqualTo(apiBasePath + appEngineUriSection))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
         );
 
-        restTaskRunControllerMockMvc.perform(get("/api/app-engine/project/" + taskRun.getProject().getId() + "/" + appEngineUriSection)
+        mockMvc.perform(get("/api/app-engine/project/" + taskRun.getProject().getId() + "/" + appEngineUriSection)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("id").value(taskRunId.toString()))
-                .andExpect(jsonPath("task").exists())
-                .andExpect(jsonPath("state").exists());
+                .andExpect(jsonPath("state").value("CREATED"))
+                .andExpect(jsonPath("task").isNotEmpty());
     }
 
     @Test
@@ -205,47 +199,53 @@ public class TaskRunResourceTests {
         String queryBody = "{\"desired\": \"running\"}";
         String mockResponse = getTaskRunBody(taskRunId);
         String appEngineUriSection = "task-runs/" + taskRunId + "/state-actions";
-        configureFor("localhost", 8888);
         stubFor(WireMock.post(urlEqualTo(apiBasePath + appEngineUriSection))
                 .willReturn(
                         aResponse().withBody(mockResponse)
                 )
         );
 
-        restTaskRunControllerMockMvc.perform(post("/api/app-engine/project/" + taskRun.getProject().getId() + "/" + appEngineUriSection)
+        mockMvc.perform(post("/api/app-engine/project/" + taskRun.getProject().getId() + "/" + appEngineUriSection)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(queryBody))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("id").value(taskRunId.toString()))
-                .andExpect(jsonPath("task").exists())
-                .andExpect(jsonPath("state").exists());
+                .andExpect(jsonPath("state").value("CREATED"))
+                .andExpect(jsonPath("task").isNotEmpty());
     }
 
     protected String getTaskRunBody(UUID taskRunId) {
-        return "{\n" +
-            "  \"task\": {\n" +
-            "    \"name\": \"string\",\n" +
-            "    \"namespace\": \"string\",\n" +
-            "    \"version\": \"string\",\n" +
-            "    \"description\": \"string\",\n" +
-            "    \"authors\": [\n" +
-            "      {\n" +
-            "        \"first_name\": \"string\",\n" +
-            "        \"last_name\": \"string\",\n" +
-            "        \"organization\": \"string\",\n" +
-            "        \"email\": \"string\",\n" +
-            "        \"is_contact\": true\n" +
-            "      }\n" +
-            "    ]\n" +
-            "  },\n" +
-            "  \"id\": \"" + taskRunId.toString() + "\",\n" +
-            "  \"state\": \"CREATED\",\n" +
-            "  \"created_at\": \"2023-12-20T10:49:21.272Z\",\n" +
-            "  \"updated_at\": \"2023-12-20T10:49:21.272Z\",\n" +
-            "  \"last_state_transition_at\": \"2023-12-20T10:49:21.272Z\"\n" +
-            "}";
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        Map<String, Object> task = Map.of(
+            "name", "string",
+            "namespace", "string",
+            "version", "string",
+            "description", "string",
+            "authors", List.of(
+                Map.of(
+                    "first_name", "string",
+                    "last_name", "string",
+                    "organization", "string",
+                    "email", "string",
+                    "is_contact", true
+                )
+            )
+        );
+
+        Map<String, Object> taskRunBody = Map.of(
+            "task", task,
+            "id", taskRunId.toString(),
+            "state", "CREATED",
+            "created_at", "2023-12-20T10:49:21.272Z",
+            "updated_at", "2023-12-20T10:49:21.272Z",
+            "last_state_transition_at", "2023-12-20T10:49:21.272Z"
+        );
+
+        try {
+            return objectMapper.writeValueAsString(taskRunBody);
+        } catch (JsonProcessingException e) {
+            return "";
+        }
     }
 }
-
-
