@@ -16,8 +16,6 @@ package be.cytomine.controller.middleware;
 * limitations under the License.
 */
 
-import be.cytomine.BasicInstanceBuilder;
-import be.cytomine.CytomineCoreApplication;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,7 +27,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
+import be.cytomine.CytomineCoreApplication;
 
 import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -37,7 +35,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -47,14 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class ImageServerResourceTests {
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
-    private BasicInstanceBuilder builder;
-
-    @Autowired
     private MockMvc restImageserverControllerMockMvc;
-
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
 
@@ -70,8 +60,6 @@ public class ImageServerResourceTests {
         } catch (Exception e) {
         }
     }
-
-
 
     @Test
     @Transactional
@@ -114,11 +102,9 @@ public class ImageServerResourceTests {
                 )
         );
         restImageserverControllerMockMvc.perform(get("/api/imageserver/format.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.id=='MRXS')]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id=='VMS')].remarks").value("One .vms file, one .opt optimization file and several .jpg with same name, packed in an archive. "));
     }
-
 }

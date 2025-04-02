@@ -28,12 +28,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,9 +38,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @WithMockUser(username = "superadmin")
 public class ProjectRepresentativeUserResourceTests {
-
-    @Autowired
-    private EntityManager em;
 
     @Autowired
     private BasicInstanceBuilder builder;
@@ -56,18 +50,15 @@ public class ProjectRepresentativeUserResourceTests {
     public void list_all_project_representative_users() throws Exception {
         ProjectRepresentativeUser projectRepresentativeUser = builder.given_a_project_representative_user();
         restProjectRepresentativeUserControllerMockMvc.perform(get("/api/project/{id}/representative.json", projectRepresentativeUser.getProject().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.id=='"+projectRepresentativeUser.getId()+"')]").exists());
     }
 
-
     @Test
     @Transactional
     public void list_all_project_representative_users_for_unexisting_project() throws Exception {
         restProjectRepresentativeUserControllerMockMvc.perform(get("/api/project/{id}/representative.json", 0L))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -78,15 +69,12 @@ public class ProjectRepresentativeUserResourceTests {
 
         restProjectRepresentativeUserControllerMockMvc.perform(get("/api/project/{project}/representative/{id}.json",
                         projectRepresentativeUser.getProject().getId(), projectRepresentativeUser.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(projectRepresentativeUser.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.project.ProjectRepresentativeUser"))
                 .andExpect(jsonPath("$.user").value(projectRepresentativeUser.getUser().getId()))
-                .andExpect(jsonPath("$.project").value(projectRepresentativeUser.getProject().getId()))
-        ;
+                .andExpect(jsonPath("$.project").value(projectRepresentativeUser.getProject().getId()));
     }
-
 
     @Test
     @Transactional
@@ -95,11 +83,8 @@ public class ProjectRepresentativeUserResourceTests {
 
         restProjectRepresentativeUserControllerMockMvc.perform(get("/api/project/{project}/representative/{id}.json",
                         projectRepresentativeUser.getProject().getId(), 0))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-        ;
+                .andExpect(status().isNotFound());
     }
-
 
     @Test
     @Transactional
@@ -108,11 +93,9 @@ public class ProjectRepresentativeUserResourceTests {
 
         restProjectRepresentativeUserControllerMockMvc.perform(get("/api/project/{project}/representative/{id}.json",
                          0, projectRepresentativeUser.getId()))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-        ;
+                .andExpect(status().isNotFound());
     }
-    
+
     @Test
     @Transactional
     public void add_valid_projectRepresentativeUser() throws Exception {
@@ -120,7 +103,6 @@ public class ProjectRepresentativeUserResourceTests {
         restProjectRepresentativeUserControllerMockMvc.perform(post("/api/project/{id}/representative.json", projectRepresentativeUser.getProject().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(projectRepresentativeUser.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -128,7 +110,6 @@ public class ProjectRepresentativeUserResourceTests {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.command").exists())
                 .andExpect(jsonPath("$.projectrepresentativeuser.id").exists());
-
     }
 
     @Test
@@ -139,7 +120,6 @@ public class ProjectRepresentativeUserResourceTests {
         restProjectRepresentativeUserControllerMockMvc.perform(post("/api/project/{id}/representative.json", projectRepresentativeUser.getProject().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(projectRepresentativeUser.toJSON()))
-                .andDo(print())
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false));
     }
@@ -155,7 +135,6 @@ public class ProjectRepresentativeUserResourceTests {
                         projectRepresentativeUser.getProject().getId(),projectRepresentativeUser.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(projectRepresentativeUser.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -163,7 +142,6 @@ public class ProjectRepresentativeUserResourceTests {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.command").exists());
     }
-
 
     @Test
     @Transactional
@@ -177,7 +155,6 @@ public class ProjectRepresentativeUserResourceTests {
                         .param("user", projectRepresentativeUser.getUser().getId().toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(projectRepresentativeUser.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -191,7 +168,6 @@ public class ProjectRepresentativeUserResourceTests {
     public void fail_when_delete_projectRepresentativeUser_not_exists() throws Exception {
         restProjectRepresentativeUserControllerMockMvc.perform(delete("/api/project/{project}/representative/{id}.json",  0,0)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors").exists());
     }
@@ -202,7 +178,6 @@ public class ProjectRepresentativeUserResourceTests {
         restProjectRepresentativeUserControllerMockMvc.perform(delete("/api/project/{project}/representative.json",  0)
                         .param("user", builder.given_superadmin().getId().toString())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors").exists());
     }
@@ -213,7 +188,6 @@ public class ProjectRepresentativeUserResourceTests {
         restProjectRepresentativeUserControllerMockMvc.perform(delete("/api/project/{project}/representative.json",  builder.given_a_project().getId())
                         .param("user", "0")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors").exists());
     }

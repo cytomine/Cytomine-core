@@ -28,12 +28,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,9 +38,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @WithMockUser(username = "superadmin")
 public class AnnotationTrackResourceTests {
-
-    @Autowired
-    private EntityManager em;
 
     @Autowired
     private BasicInstanceBuilder builder;
@@ -56,7 +50,6 @@ public class AnnotationTrackResourceTests {
     public void list_all_annotationTracks_by_track() throws Exception {
         AnnotationTrack annotationTrack = builder.given_a_annotation_track();
         restAnnotationTrackControllerMockMvc.perform(get("/api/track/{id}/annotationtrack.json", annotationTrack.getTrack().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))));
     }
@@ -65,7 +58,6 @@ public class AnnotationTrackResourceTests {
     @Transactional
     public void list_all_annotationTracks_by_track_not_exists() throws Exception {
         restAnnotationTrackControllerMockMvc.perform(get("/api/track/{id}/annotationtrack.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -74,7 +66,6 @@ public class AnnotationTrackResourceTests {
     public void list_all_annotationTracks_by_annotation() throws Exception {
         AnnotationTrack annotationTrack = builder.given_a_annotation_track();
         restAnnotationTrackControllerMockMvc.perform(get("/api/annotation/{id}/annotationtrack.json", annotationTrack.getAnnotationIdent()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))));
     }
@@ -84,10 +75,8 @@ public class AnnotationTrackResourceTests {
     public void get_a_annotationTrack() throws Exception {
         AnnotationTrack annotationTrack = builder.given_a_annotation_track();
         restAnnotationTrackControllerMockMvc.perform(get("/api/annotationtrack/{annotation}/{track}.json", annotationTrack.getAnnotationIdent(), annotationTrack.getTrack().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(annotationTrack.getId().intValue()))
-        ;
+                .andExpect(jsonPath("$.id").value(annotationTrack.getId().intValue()));
     }
 
     @Test
@@ -95,9 +84,7 @@ public class AnnotationTrackResourceTests {
     public void get_a_annotationTrack_annotation_not_exists() throws Exception {
         AnnotationTrack annotationTrack = builder.given_a_annotation_track();
         restAnnotationTrackControllerMockMvc.perform(get("/api/annotationtrack/{annotation}/{track}.json", 0, annotationTrack.getTrack().getId()))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-        ;
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -105,9 +92,7 @@ public class AnnotationTrackResourceTests {
     public void get_a_annotationTrack_track_not_exists() throws Exception {
         AnnotationTrack annotationTrack = builder.given_a_annotation_track();
         restAnnotationTrackControllerMockMvc.perform(get("/api/annotationtrack/{annotation}/{track}.json", annotationTrack.getAnnotationIdent(), 0))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-        ;
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -115,9 +100,7 @@ public class AnnotationTrackResourceTests {
     public void get_a_annotationTrack_not_exists() throws Exception {
         AnnotationTrack annotationTrack = builder.given_a_not_persisted_annotation_track();
         restAnnotationTrackControllerMockMvc.perform(get("/api/annotationtrack/{annotation}/{track}.json", annotationTrack.getAnnotationIdent(), annotationTrack.getTrack().getId()))
-                .andDo(print())
-                .andExpect(status().isNotFound())
-        ;
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -127,7 +110,6 @@ public class AnnotationTrackResourceTests {
         restAnnotationTrackControllerMockMvc.perform(post("/api/annotationtrack.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotationTrack.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -145,7 +127,6 @@ public class AnnotationTrackResourceTests {
         restAnnotationTrackControllerMockMvc.perform(delete("/api/annotationtrack/{annotation}/{track}.json", annotationTrack.getAnnotationIdent(), annotationTrack.getTrack().getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotationTrack.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -154,7 +135,6 @@ public class AnnotationTrackResourceTests {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.command").exists())
                 .andExpect(jsonPath("$.annotationtrack.id").exists());
-
     }
 
     @Test
@@ -164,10 +144,8 @@ public class AnnotationTrackResourceTests {
         restAnnotationTrackControllerMockMvc.perform(delete("/api/annotationtrack/{annotation}/{track}.json", 0, 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotationTrack.toJSON()))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());
-
     }
 }

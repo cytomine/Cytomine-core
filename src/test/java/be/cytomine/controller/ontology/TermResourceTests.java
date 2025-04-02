@@ -41,7 +41,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -64,7 +63,6 @@ public class TermResourceTests {
     public void list_all_terms() throws Exception {
         Term term = builder.given_a_term();
         restTermControllerMockMvc.perform(get("/api/term.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.name=='"+term.getName()+"')].ontology").value(term.getOntology().getId().intValue()));
@@ -79,7 +77,6 @@ public class TermResourceTests {
         builder.given_a_relation_term(parent, term);
         em.refresh(term);
         restTermControllerMockMvc.perform(get("/api/term/{id}.json", term.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(term.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.ontology.Term"))
@@ -95,7 +92,6 @@ public class TermResourceTests {
     public void list_terms_by_ontology() throws Exception {
         Term term = builder.given_a_term();
         restTermControllerMockMvc.perform(get("/api/ontology/{id}/term.json", term.getOntology().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.name=='"+term.getName()+"')].ontology").value(term.getOntology().getId().intValue()));
@@ -107,7 +103,6 @@ public class TermResourceTests {
         Term term = builder.given_a_term();
         Project project = builder.given_a_project_with_ontology(term.getOntology());
         restTermControllerMockMvc.perform(get("/api/project/{id}/term.json", project.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.name=='"+term.getName()+"')].ontology").value(term.getOntology().getId().intValue()));
@@ -120,7 +115,6 @@ public class TermResourceTests {
         restTermControllerMockMvc.perform(post("/api/term.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -142,7 +136,6 @@ public class TermResourceTests {
         restTermControllerMockMvc.perform(post("/api/term.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonObject.toJsonString(List.of(term1.toJsonObject(),term2.toJsonObject()))))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200));
     }
@@ -155,7 +148,6 @@ public class TermResourceTests {
         restTermControllerMockMvc.perform(post("/api/term.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
-                .andDo(print())
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").value("Term " + term.getName() + " already exist in this ontology!"));
@@ -168,7 +160,6 @@ public class TermResourceTests {
         restTermControllerMockMvc.perform(post("/api/term.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
-                .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").value("Ontology is mandatory for term creation"));
@@ -182,7 +173,6 @@ public class TermResourceTests {
         restTermControllerMockMvc.perform(post("/api/term.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
-                .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
@@ -194,7 +184,6 @@ public class TermResourceTests {
         restTermControllerMockMvc.perform(put("/api/term/{id}.json", term.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -218,7 +207,6 @@ public class TermResourceTests {
         restTermControllerMockMvc.perform(put("/api/term/{id}.json", 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());
@@ -232,7 +220,6 @@ public class TermResourceTests {
         restTermControllerMockMvc.perform(delete("/api/term/{id}.json", term.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -254,7 +241,6 @@ public class TermResourceTests {
         restTermControllerMockMvc.perform(delete("/api/term/{id}.json", 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(term.toJSON()))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());

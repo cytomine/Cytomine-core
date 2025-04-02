@@ -33,7 +33,6 @@ import jakarta.persistence.EntityManager;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -56,7 +55,6 @@ public class TagResourceTests {
     public void list_all_tags() throws Exception {
         Tag tag = builder.given_a_tag();
         restTagControllerMockMvc.perform(get("/api/tag.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.name=='"+tag.getName()+"')]").exists());
@@ -68,7 +66,6 @@ public class TagResourceTests {
         Tag tag = builder.given_a_tag();
 
         restTagControllerMockMvc.perform(get("/api/tag/{id}.json", tag.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(tag.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.meta.Tag"))
@@ -86,7 +83,6 @@ public class TagResourceTests {
         restTagControllerMockMvc.perform(post("/api/tag.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(tag.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -107,7 +103,6 @@ public class TagResourceTests {
         restTagControllerMockMvc.perform(post("/api/tag.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(tag.toJSON()))
-                .andDo(print())
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false));
     }
@@ -119,7 +114,6 @@ public class TagResourceTests {
         restTagControllerMockMvc.perform(post("/api/tag.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(tag.toJSON()))
-                .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
@@ -131,7 +125,6 @@ public class TagResourceTests {
         restTagControllerMockMvc.perform(put("/api/tag/{id}.json", tag.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(tag.toJsonObject().withChange("name", "new name").toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -153,7 +146,6 @@ public class TagResourceTests {
         restTagControllerMockMvc.perform(put("/api/tag/{id}.json", 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(tag.toJSON()))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());
@@ -167,7 +159,6 @@ public class TagResourceTests {
         restTagControllerMockMvc.perform(delete("/api/tag/{id}.json", tag.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(tag.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -184,7 +175,6 @@ public class TagResourceTests {
     public void fail_when_delete_tag_not_exists() throws Exception {
         restTagControllerMockMvc.perform(delete("/api/tag/{id}.json", 0)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());

@@ -2,18 +2,14 @@ package be.cytomine;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryMXBean;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.*;
 import org.springframework.stereotype.Component;
@@ -31,7 +27,6 @@ import be.cytomine.service.database.BootstrapTestsDataService;
 import be.cytomine.service.database.BootstrapUtilsService;
 import be.cytomine.service.utils.Dataset;
 import be.cytomine.utils.EnvironmentUtils;
-import be.cytomine.utils.StringUtils;
 
 import static be.cytomine.service.database.BootstrapTestsDataService.*;
 
@@ -42,8 +37,6 @@ import static be.cytomine.service.database.BootstrapTestsDataService.*;
 @EnableConfigurationProperties({LiquibaseProperties.class, ApplicationProperties.class})
 @Transactional
 class ApplicationBootstrap {
-
-    private final ApplicationContext applicationContext;
 
     private final Environment environment;
 
@@ -63,8 +56,6 @@ class ApplicationBootstrap {
 
     @PostConstruct
     public void init() {
-
-        printConfiguration();
 
         initialSetupMigration.changeSet();
 
@@ -137,33 +128,5 @@ class ApplicationBootstrap {
         log.info ("#############################################################################");
         log.info ("###################              READY              #########################");
         log.info ("#############################################################################");
-    }
-
-    private void printConfiguration() {
-        log.info("Cytomine-core: " + applicationProperties.getVersion());
-        MemoryMXBean memoryBean = ManagementFactory.getMemoryMXBean();
-        log.info("*************** SYSTEM CONFIGURATION ******************");
-        log.info("Max memory:" + memoryBean.getHeapMemoryUsage().getMax() / (1024 * 1024) + "MB");
-        log.info("Used memory:" + memoryBean.getHeapMemoryUsage().getUsed() / (1024 * 1024) + "MB");
-        log.info("Init memory:" + memoryBean.getHeapMemoryUsage().getInit() / (1024 * 1024) + "MB");
-        log.info("Default charset: " + Charset.defaultCharset());
-        log.info("*************** APPLICATION CONFIGURATION ******************");
-        log.info(applicationProperties.toString());
-         final Environment env = applicationContext.getEnvironment();
-
-        log.info("====== Environment and configuration ======");
-        log.info("Active profiles: {}", Arrays.toString(env.getActiveProfiles()));
-        MutablePropertySources sources = ((AbstractEnvironment) env).getPropertySources();
-        StreamSupport.stream(sources.spliterator(), false)
-                .filter(ps -> ps instanceof EnumerablePropertySource<?>)
-                .map(ps -> ((EnumerablePropertySource<?>) ps).getPropertyNames())
-                .flatMap(Arrays::stream)
-                .distinct()
-                .sorted()
-                .forEach(prop -> log.info("ACTIVE {}: {}", prop, mustBeObscurify(prop) ? StringUtils.obscurify(env.getProperty(prop), 2) : env.getProperty(prop)));
-    }
-
-    private boolean mustBeObscurify(String prop) {
-        return (prop.toLowerCase().contains("credentials") || prop.toLowerCase().contains("password") || prop.toLowerCase().contains("privatekey") || prop.toLowerCase().contains("secret"));
     }
 }

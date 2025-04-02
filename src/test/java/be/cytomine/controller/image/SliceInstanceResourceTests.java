@@ -54,7 +54,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -90,7 +89,6 @@ public class SliceInstanceResourceTests {
         SliceInstance sliceInstance = builder.given_a_slice_instance();
 
         restSliceInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/sliceinstance.json", sliceInstance.getImage().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=="+sliceInstance.getId()+")]").exists());
     }
@@ -101,7 +99,6 @@ public class SliceInstanceResourceTests {
         SliceInstance image = given_test_slice_instance();
 
         restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(image.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.image.SliceInstance"))
@@ -121,7 +118,6 @@ public class SliceInstanceResourceTests {
     @Transactional
     public void get_an_slice_instance_not_exist() throws Exception {
         restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors.message").exists());
     }
@@ -134,7 +130,6 @@ public class SliceInstanceResourceTests {
 
         restSliceInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/{channel}/{zStack}/{time}/sliceinstance.json",
                         image.getImage().getId(), image.getBaseSlice().getChannel(), image.getBaseSlice().getZStack(), image.getBaseSlice().getTime()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(image.getId().intValue()));
     }
@@ -146,7 +141,6 @@ public class SliceInstanceResourceTests {
         restSliceInstanceControllerMockMvc.perform(post("/api/sliceinstance.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(sliceInstance.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -165,7 +159,6 @@ public class SliceInstanceResourceTests {
         restSliceInstanceControllerMockMvc.perform(put("/api/sliceinstance/{id}.json", sliceInstance.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -184,7 +177,6 @@ public class SliceInstanceResourceTests {
     public void delete_slice_instance() throws Exception {
         SliceInstance sliceInstance = builder.given_a_slice_instance();
         restSliceInstanceControllerMockMvc.perform(delete("/api/sliceinstance/{id}.json", sliceInstance.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -210,7 +202,6 @@ public class SliceInstanceResourceTests {
         );
 
         MvcResult mvcResult = restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/thumb.png?maxSize=512", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -221,7 +212,6 @@ public class SliceInstanceResourceTests {
     @Transactional
     public void get_slice_instance_thumb_if_image_not_exist() throws Exception {
         restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/thumb.png", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors").exists());
     }
@@ -239,7 +229,6 @@ public class SliceInstanceResourceTests {
         );
 
         MvcResult mvcResult = restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/normalized-tile/zoom/{z}/tx/{tx}/ty/{ty}.jpg?filters=binary", image.getId(), 2, 4, 6))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -250,7 +239,6 @@ public class SliceInstanceResourceTests {
     @Transactional
     public void get_slice_instance_tile_if_image_not_exist() throws Exception {
         restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/normalized-tile/zoom/{z}/tx/{tx}/ty/{ty}.jpg?filters=binary", 0, 2, 4, 6))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors").exists());
     }
@@ -279,7 +267,6 @@ public class SliceInstanceResourceTests {
 
         MvcResult mvcResult = restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/crop.png", image.getId())
                         .param("location", "POLYGON((1 1,50 10,50 50,10 50,1 1))"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -307,7 +294,6 @@ public class SliceInstanceResourceTests {
 
 
         MvcResult mvcResult = restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/window-10-20-30-40.png", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -357,7 +343,6 @@ public class SliceInstanceResourceTests {
         );
 
         restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/histogram.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].lastBin").value("255"))
@@ -384,7 +369,6 @@ public class SliceInstanceResourceTests {
         );
 
         restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/histogram/bounds.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].color").value("#f00"));
@@ -426,7 +410,6 @@ public class SliceInstanceResourceTests {
         );
 
         restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/channelhistogram.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].type").value("FAST"));
@@ -453,7 +436,6 @@ public class SliceInstanceResourceTests {
         );
 
         restSliceInstanceControllerMockMvc.perform(get("/api/sliceinstance/{id}/channelhistogram/bounds.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))))
                 .andExpect(jsonPath("$.collection[0].color").value("#f00"));

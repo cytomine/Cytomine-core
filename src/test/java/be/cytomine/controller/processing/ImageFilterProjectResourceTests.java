@@ -16,9 +16,6 @@ package be.cytomine.controller.processing;
 * limitations under the License.
 */
 
-import be.cytomine.BasicInstanceBuilder;
-import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.processing.ImageFilterProject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -28,12 +25,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
+import be.cytomine.BasicInstanceBuilder;
+import be.cytomine.CytomineCoreApplication;
+import be.cytomine.domain.processing.ImageFilterProject;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,9 +39,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @WithMockUser(username = "superadmin")
 public class ImageFilterProjectResourceTests {
-
-    @Autowired
-    private EntityManager em;
 
     @Autowired
     private BasicInstanceBuilder builder;
@@ -56,7 +51,6 @@ public class ImageFilterProjectResourceTests {
     public void list_all() throws Exception {
         ImageFilterProject imageFilterProject = builder.given_a_image_filter_project();
         restImageFilterProjectMockMvc.perform(get("/api/imagefilterproject.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.name=='"+imageFilterProject.getImageFilter().getName()+"')]").exists());
@@ -67,7 +61,6 @@ public class ImageFilterProjectResourceTests {
     public void list_by_project() throws Exception {
         ImageFilterProject imageFilterProject = builder.given_a_image_filter_project();
         restImageFilterProjectMockMvc.perform(get("/api/project/{id}/imagefilterproject.json", imageFilterProject.getProject().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.id=='"+imageFilterProject.getId()+"')]").exists());
@@ -77,7 +70,6 @@ public class ImageFilterProjectResourceTests {
     @Transactional
     public void list_by_unexisting_project() throws Exception {
         restImageFilterProjectMockMvc.perform(get("/api/project/{id}/imagefilterproject.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -88,14 +80,12 @@ public class ImageFilterProjectResourceTests {
         restImageFilterProjectMockMvc.perform(post("/api/imagefilterproject.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(imageFilterProject.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.command").exists())
                 .andExpect(jsonPath("$.imagefilterproject.id").exists());
-
     }
 
     @Test
@@ -105,9 +95,7 @@ public class ImageFilterProjectResourceTests {
         builder.persistAndReturn(imageFilterProject);
         restImageFilterProjectMockMvc.perform(delete("/api/imagefilterproject/{id}.json", imageFilterProject.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isOk());
-
     }
 
     @Test
@@ -115,9 +103,6 @@ public class ImageFilterProjectResourceTests {
     public void delete_unexisting_imageFilterProject() throws Exception {
         restImageFilterProjectMockMvc.perform(delete("/api/imageFilterProject/{id}.json", 0)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isNotFound());
-
     }
-
 }

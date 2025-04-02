@@ -28,12 +28,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,9 +38,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @WithMockUser(username = "superadmin")
 public class TrackResourceTests {
-
-    @Autowired
-    private EntityManager em;
 
     @Autowired
     private BasicInstanceBuilder builder;
@@ -56,7 +50,6 @@ public class TrackResourceTests {
     public void list_tracks_by_imageinstance() throws Exception {
         Track track = builder.given_a_track();
         restTrackControllerMockMvc.perform(get("/api/imageinstance/{id}/track.json", track.getImage().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.name=='"+track.getName()+"')]").exists());
@@ -66,7 +59,6 @@ public class TrackResourceTests {
     @Transactional
     public void list_tracks_by_imageinstance_not_exists() throws Exception {
         restTrackControllerMockMvc.perform(get("/api/imageinstance/{id}/track.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -75,7 +67,6 @@ public class TrackResourceTests {
     public void list_tracks_by_project() throws Exception {
         Track track = builder.given_a_track();
         restTrackControllerMockMvc.perform(get("/api/project/{id}/track.json", track.getProject().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.name=='"+track.getName()+"')]").exists());
@@ -85,7 +76,6 @@ public class TrackResourceTests {
     @Transactional
     public void list_tracks_by_project_not_exists() throws Exception {
         restTrackControllerMockMvc.perform(get("/api/project/{id}/track.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -94,7 +84,6 @@ public class TrackResourceTests {
     public void get_a_track() throws Exception {
         Track track = builder.given_a_track();
         restTrackControllerMockMvc.perform(get("/api/track/{id}.json", track.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(track.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.ontology.Track"))
@@ -107,7 +96,6 @@ public class TrackResourceTests {
     @Transactional
     public void get_an_unexisting_track() throws Exception {
         restTrackControllerMockMvc.perform(get("/api/track/{id}.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -119,7 +107,6 @@ public class TrackResourceTests {
         restTrackControllerMockMvc.perform(post("/api/track.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(track.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -138,7 +125,6 @@ public class TrackResourceTests {
         restTrackControllerMockMvc.perform(put("/api/track/{id}.json", track.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(track.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -158,7 +144,6 @@ public class TrackResourceTests {
         restTrackControllerMockMvc.perform(delete("/api/track/{id}.json", track.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(track.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())

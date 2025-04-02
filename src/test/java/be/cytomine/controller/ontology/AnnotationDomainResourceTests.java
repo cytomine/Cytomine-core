@@ -67,7 +67,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
@@ -165,7 +164,6 @@ public class AnnotationDomainResourceTests {
         MvcResult result;
         result = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
                         .param("image", this.image.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andReturn();
@@ -177,7 +175,6 @@ public class AnnotationDomainResourceTests {
                         .param("showBasic", "true")
                         .param("showWKT", "true")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andReturn();
@@ -190,7 +187,6 @@ public class AnnotationDomainResourceTests {
                         .param("showDefault", "true")
                         .param("hideMeta", "true")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andReturn();
@@ -202,7 +198,6 @@ public class AnnotationDomainResourceTests {
                         .param("showBasic", "true")
                         .param("showImage", "true")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andReturn();
@@ -216,7 +211,6 @@ public class AnnotationDomainResourceTests {
                         .param("hideBasic", "true")
                         .param("hideMeta", "true")
                 )
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andReturn();
     }
@@ -227,7 +221,6 @@ public class AnnotationDomainResourceTests {
         a4.setImage(builder.given_an_image_instance(project));
         restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
                         .param("image", this.image.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").exists())
@@ -244,7 +237,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
                         .param("project", this.project.getId().toString())
                         .param("noTerm", "true"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").doesNotExist())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").doesNotExist())
@@ -268,7 +260,6 @@ public class AnnotationDomainResourceTests {
                         .param("baseAnnotation", a1.getId().toString())
                         .param("maxDistanceBaseAnnotation", "11")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").exists())
@@ -281,7 +272,6 @@ public class AnnotationDomainResourceTests {
                         .param("baseAnnotation", a1.getLocation().toText())
                         .param("maxDistanceBaseAnnotation", "11")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").exists())
@@ -302,7 +292,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
                         .param("image", this.image.getId().toString())
                         .param("user", this.me.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").doesNotExist())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").doesNotExist())
@@ -332,7 +321,6 @@ public class AnnotationDomainResourceTests {
                         .param("bbox", polygonIncluding_A1_A2_A3)
                         .param("notReviewedOnly", "true")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").exists())
@@ -348,7 +336,6 @@ public class AnnotationDomainResourceTests {
                         .param("notReviewedOnly", "true")
                         .param("kmeansValue", "1")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").exists())
@@ -363,7 +350,6 @@ public class AnnotationDomainResourceTests {
                         .param("notReviewedOnly", "true")
                         .param("kmeansValue", "2")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").exists())
@@ -378,7 +364,6 @@ public class AnnotationDomainResourceTests {
                         .param("notReviewedOnly", "true")
                         .param("kmeansValue", "3")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").exists())
@@ -399,7 +384,6 @@ public class AnnotationDomainResourceTests {
                         .param("user", this.me.getId().toString())
                         .param("term", this.term.getId().toString())
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").doesNotExist()) //  wrong image
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").doesNotExist()) //wrong user
@@ -428,7 +412,6 @@ public class AnnotationDomainResourceTests {
                         .param("user", this.me.getId().toString())
                         .param("image", this.image.getId().toString())
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").exists())
@@ -441,7 +424,6 @@ public class AnnotationDomainResourceTests {
                         .param("user", this.me.getId().toString())
                         .param("image", this.image.getId().toString())
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").exists())
@@ -456,7 +438,6 @@ public class AnnotationDomainResourceTests {
                         .param("user", this.me.getId().toString())
                         .param("image", this.image.getId().toString())
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").exists())
@@ -471,7 +452,6 @@ public class AnnotationDomainResourceTests {
                         .param("image", this.image.getId().toString())
                         .param("excludedAnnotation", intersectAnnotation.getId().toString())
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").exists())
@@ -501,7 +481,6 @@ public class AnnotationDomainResourceTests {
                         .param("project", project.getId().toString())
                         .param("max", "10")
                         .param("offset", "0"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.perPage").value(8))
                 .andExpect(jsonPath("$.offset").value(0))
@@ -522,7 +501,6 @@ public class AnnotationDomainResourceTests {
                         .param("project", project.getId().toString())
                         .param("max", "5")
                         .param("offset", "0"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.perPage").value(5))
                 .andExpect(jsonPath("$.offset").value(0))
@@ -537,7 +515,6 @@ public class AnnotationDomainResourceTests {
                         .param("project", project.getId().toString())
                         .param("max", "5")
                         .param("offset", "5"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.perPage").value(5))
                 .andExpect(jsonPath("$.offset").value(5))
@@ -557,7 +534,6 @@ public class AnnotationDomainResourceTests {
                         .param("user", this.me.getId().toString())
                         .param("image", this.image.getId().toString())
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").doesNotExist())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").doesNotExist())
@@ -576,7 +552,6 @@ public class AnnotationDomainResourceTests {
                         .param("user", this.me.getId().toString())
                         .param("image", this.image.getId().toString())
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").doesNotExist())
@@ -600,7 +575,6 @@ public class AnnotationDomainResourceTests {
                         .param("user", this.me.getId().toString())
                         .param("image", this.image.getId().toString())
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a2.getId() + ")]").doesNotExist())
@@ -634,7 +608,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/search.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + userAnnotation.getId() + ")]").exists())
                 .andReturn();
@@ -651,7 +624,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
                         .param("image", algoAnnotation.getImage().getId().toString())
                         .param("user", algoAnnotation.getUser().getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + algoAnnotation.getId() + ")]").exists())
                 .andReturn();
@@ -666,7 +638,6 @@ public class AnnotationDomainResourceTests {
         result = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
                         .param("image", this.image.getId().toString())
                         .param("reviewed", "true"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + a1.getId() + ")]").doesNotExist())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
@@ -680,7 +651,6 @@ public class AnnotationDomainResourceTests {
                         .param("showWKT", "true")
                         .param("reviewed", "true")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
                 .andReturn();
@@ -694,7 +664,6 @@ public class AnnotationDomainResourceTests {
                         .param("hideMeta", "true")
                         .param("reviewed", "true")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
                 .andReturn();
@@ -707,7 +676,6 @@ public class AnnotationDomainResourceTests {
                         .param("showImage", "true")
                         .param("reviewed", "true")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
                 .andReturn();
@@ -722,7 +690,6 @@ public class AnnotationDomainResourceTests {
                         .param("hideMeta", "true")
                         .param("reviewed", "true")
                 )
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andReturn();
     }
@@ -735,7 +702,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
                         .param("reviewed", "true")
                         .param("image", this.image.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
@@ -754,7 +720,6 @@ public class AnnotationDomainResourceTests {
                         .param("reviewed", "true")
                         .param("project", this.project.getId().toString())
                         .param("noTerm", "true"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").doesNotExist())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").doesNotExist())
@@ -779,7 +744,6 @@ public class AnnotationDomainResourceTests {
                         .param("baseAnnotation", r1.getId().toString())
                         .param("maxDistanceBaseAnnotation", "11")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
@@ -793,7 +757,6 @@ public class AnnotationDomainResourceTests {
                         .param("baseAnnotation", r1.getLocation().toText())
                         .param("maxDistanceBaseAnnotation", "11")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
@@ -815,7 +778,6 @@ public class AnnotationDomainResourceTests {
                         .param("reviewed", "true")
                         .param("image", this.image.getId().toString())
                         .param("user", this.me.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").doesNotExist())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").doesNotExist())
@@ -846,7 +808,6 @@ public class AnnotationDomainResourceTests {
                         .param("bbox", polygonIncluding_A1_A2_A3)
                         .param("notReviewedOnly", "true")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
@@ -863,7 +824,6 @@ public class AnnotationDomainResourceTests {
                         .param("notReviewedOnly", "true")
                         .param("kmeansValue", "1")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
@@ -879,7 +839,6 @@ public class AnnotationDomainResourceTests {
                         .param("notReviewedOnly", "true")
                         .param("kmeansValue", "2")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
@@ -895,7 +854,6 @@ public class AnnotationDomainResourceTests {
                         .param("notReviewedOnly", "true")
                         .param("kmeansValue", "3")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").exists())
@@ -918,7 +876,6 @@ public class AnnotationDomainResourceTests {
                         .param("user", this.me.getId().toString())
                         .param("term", this.term.getId().toString())
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").doesNotExist()) //  wrong image
                 .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").doesNotExist()) //wrong user
@@ -936,7 +893,6 @@ public class AnnotationDomainResourceTests {
                         .param("reviewUsers", this.me.getId().toString())
                         .param("term", this.term.getId().toString())
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").doesNotExist()) //wrong user
                 .andReturn();
@@ -953,7 +909,6 @@ public class AnnotationDomainResourceTests {
                         .param("user", this.me.getId().toString())
                         .param("image", this.image.getId().toString())
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").doesNotExist())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").doesNotExist())
@@ -973,7 +928,6 @@ public class AnnotationDomainResourceTests {
                         .param("user", this.me.getId().toString())
                         .param("image", this.image.getId().toString())
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + r2.getId() + ")]").doesNotExist())
@@ -1006,7 +960,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/search.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + reviewedAnnotation.getId() + ")]").exists())
                 .andReturn();
@@ -1029,7 +982,6 @@ public class AnnotationDomainResourceTests {
     @Transactional
     public void download_user_annotation_reports_for_all_users() throws Exception {
         MvcResult mvcResult = performDownload("csv", "", false)
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         Object[] users = getUsersFromResult(mvcResult).stream().distinct().toArray();
@@ -1040,7 +992,6 @@ public class AnnotationDomainResourceTests {
     @Transactional
     public void download_user_annotation_reports_for_specific_user() throws Exception {
         MvcResult mvcResult = performDownload("csv", this.randomUser.getId().toString(), false)
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         Object[] users = getUsersFromResult(mvcResult).stream().distinct().toArray();
@@ -1051,7 +1002,6 @@ public class AnnotationDomainResourceTests {
     @Transactional
     public void download_reviewed_annotation() throws Exception {
         MvcResult mvcResult = performDownload("csv", this.randomUser.getId().toString(), true)
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         String[] rows = mvcResult.getResponse().getContentAsString().split("\n");
@@ -1064,7 +1014,6 @@ public class AnnotationDomainResourceTests {
     @Transactional
     public void download_csv_reports() throws Exception {
         performDownload("csv", "", false)
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", "text/csv"))
                 .andReturn();
@@ -1074,7 +1023,6 @@ public class AnnotationDomainResourceTests {
     @Transactional
     public void download_xls_reports() throws Exception {
         performDownload("xls", this.me.getId().toString(), false)
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", "application/octet-stream"))
                 .andReturn();
@@ -1084,7 +1032,6 @@ public class AnnotationDomainResourceTests {
     @Transactional
     public void download_pdf_reports() throws Exception {
         performDownload("pdf", this.me.getId().toString(), false)
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", "application/pdf"))
                 .andReturn();
@@ -1127,7 +1074,6 @@ public class AnnotationDomainResourceTests {
         );
 
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}/crop.png?maxSize=512", annotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -1156,7 +1102,6 @@ public class AnnotationDomainResourceTests {
         );
 
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}/crop.png?maxSize=512", annotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -1186,7 +1131,6 @@ public class AnnotationDomainResourceTests {
         );
 
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}/crop.png?maxSize=512", annotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -1198,7 +1142,6 @@ public class AnnotationDomainResourceTests {
     public void show_valid_user_annotation() throws Exception {
         UserAnnotation annotation = builder.given_a_user_annotation();
         restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}.json", annotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(annotation.getId()));
     }
@@ -1208,7 +1151,6 @@ public class AnnotationDomainResourceTests {
     public void show_valid_reviewed_annotation() throws Exception {
         ReviewedAnnotation annotation = builder.given_a_reviewed_annotation();
         restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}.json", annotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(annotation.getId()));
     }
@@ -1218,7 +1160,6 @@ public class AnnotationDomainResourceTests {
     public void show_valid_algo_annotation() throws Exception {
         AlgoAnnotation annotation = builder.given_a_algo_annotation();
         restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}.json", annotation.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(annotation.getId()));
     }
@@ -1227,7 +1168,6 @@ public class AnnotationDomainResourceTests {
     @Transactional
     public void show_an_unexisting_annotation() throws Exception {
         restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -1239,7 +1179,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(post("/api/annotation.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -1260,7 +1199,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(post("/api/annotation.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(JsonObject.toJsonString(List.of(userAnnotation1.toJsonObject(), userAnnotation2.toJsonObject(), userAnnotation3.toJsonObject()))))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -1275,7 +1213,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(post("/api/annotation.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(algoAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -1295,7 +1232,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(put("/api/annotation/{id}.json", userAnnotation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -1315,7 +1251,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(put("/api/annotation/{id}.json", reviewedAnnotation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(reviewedAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -1332,7 +1267,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(put("/api/annotation/{id}.json", annotation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -1352,7 +1286,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(delete("/api/annotation/{id}.json", userAnnotation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(userAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -1372,7 +1305,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(delete("/api/reviewedannotation/{id}.json", reviewedAnnotation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(reviewedAnnotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -1391,7 +1323,6 @@ public class AnnotationDomainResourceTests {
         restAnnotationDomainControllerMockMvc.perform(delete("/api/annotation/{id}.json", annotation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(annotation.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -1407,7 +1338,6 @@ public class AnnotationDomainResourceTests {
     public void delete_unexisting_annotation() throws Exception {
         AlgoAnnotation annotation = builder.given_a_algo_annotation();
         restAnnotationDomainControllerMockMvc.perform(delete("/api/annotation/{id}.json",0))
-                .andDo(print())
                 .andExpect(status().isNotFound());
 
     }
@@ -1518,7 +1448,6 @@ public class AnnotationDomainResourceTests {
 
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/{id}/fill.json", annotation.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
 
         assertThat(annotation.getLocation().toText())
@@ -1535,7 +1464,6 @@ public class AnnotationDomainResourceTests {
 
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/{id}/fill.json", annotation.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
 
         assertThat(annotation.getLocation().toText())
@@ -1552,7 +1480,6 @@ public class AnnotationDomainResourceTests {
 
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/{id}/fill.json", annotation.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
 
         assertThat(annotation.getLocation().toText())
@@ -1565,7 +1492,6 @@ public class AnnotationDomainResourceTests {
 
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/{id}/fill.json", 0)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isNotFound()).andReturn();
     }
 
@@ -1582,7 +1508,6 @@ public class AnnotationDomainResourceTests {
 
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/{id}/fill.json", annotation.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
 
         assertThat(annotation.getLocation().toText().replaceAll(" ",""))
@@ -1615,7 +1540,6 @@ public class AnnotationDomainResourceTests {
 
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/{id}/fill.json", annotation.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
 
         em.refresh(annotation);
@@ -1655,7 +1579,6 @@ public class AnnotationDomainResourceTests {
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotationcorrection.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
 
         assert new WKTReader().read(expectedLocation).equals(annotation.getLocation());
@@ -1683,7 +1606,6 @@ public class AnnotationDomainResourceTests {
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotationcorrection.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.toJsonString()))
-                .andDo(print())
                 .andExpect(status().is4xxClientError()).andReturn();
     }
 
@@ -1716,7 +1638,6 @@ public class AnnotationDomainResourceTests {
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotationcorrection.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
 
         assert new WKTReader().read(expectedLocation).equals(annotation.getLocation());
@@ -1763,7 +1684,6 @@ public class AnnotationDomainResourceTests {
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotationcorrection.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
         Map<String, Object> map = JsonObject.toMap(mvcResult.getResponse().getContentAsString());
         Map<String, Object> annotation = (Map<String, Object>)(reviewMode? map.get("reviewedannotation") : map.get("annotation"));

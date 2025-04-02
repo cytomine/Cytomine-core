@@ -23,7 +23,6 @@ import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
-import be.cytomine.service.database.SequenceService;
 import be.cytomine.service.social.ProjectConnectionService;
 import be.cytomine.utils.JsonObject;
 import org.apache.commons.lang3.time.DateUtils;
@@ -40,14 +39,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
 import java.util.Date;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -58,33 +55,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class ProjectConnectionResourceTests {
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
     private BasicInstanceBuilder builder;
 
     @Autowired
     private MockMvc restProjectConnectionControllerMockMvc;
 
+    @Autowired
+    private PersistentProjectConnectionRepository persistentProjectConnectionRepository;
 
     @Autowired
-    PersistentProjectConnectionRepository persistentProjectConnectionRepository;
+    private LastConnectionRepository lastConnectionRepository;
 
     @Autowired
-    LastConnectionRepository lastConnectionRepository;
-
-    @Autowired
-    ProjectConnectionService projectConnectionService;
-
-    @Autowired
-    SequenceService sequenceService;
+    private ProjectConnectionService projectConnectionService;
 
     @BeforeEach
     public void cleanDB() {
         persistentProjectConnectionRepository.deleteAll();
         lastConnectionRepository.deleteAll();
     }
-
 
     PersistentProjectConnection given_a_persistent_connection_in_project(User user, Project project) {
         PersistentProjectConnection connection = projectConnectionService.add(user, project, "xxx", "linux", "chrome", "123");
@@ -95,7 +84,6 @@ public class ProjectConnectionResourceTests {
         PersistentProjectConnection connection = projectConnectionService.add(user, project, "xxx", "linux", "chrome", "123", created);
         return connection;
     }
-
 
     @Test
     @Transactional
@@ -113,7 +101,6 @@ public class ProjectConnectionResourceTests {
         restProjectConnectionControllerMockMvc.perform(post("/api/project/{id}/userconnection.json", project.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.social.PersistentProjectConnection"))
                 .andExpect(jsonPath("$.user").value(user.getId()))
@@ -133,7 +120,6 @@ public class ProjectConnectionResourceTests {
         given_a_persistent_connection_in_project(user, project1, DateUtils.addSeconds(new Date(), -2));
 
         restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/userconnection/{user}.json", project1.getId(), user.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(2))));
     }
@@ -150,7 +136,6 @@ public class ProjectConnectionResourceTests {
         given_a_persistent_connection_in_project(user, project1, DateUtils.addSeconds(new Date(), -1));
 
         restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/lastConnection.json", project1.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(2))));
     }
@@ -165,7 +150,6 @@ public class ProjectConnectionResourceTests {
         given_a_persistent_connection_in_project(user, project1, DateUtils.addSeconds(new Date(), -2));
 
         restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/lastConnection.json", project1.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].user").value(user.getId()));
@@ -181,7 +165,6 @@ public class ProjectConnectionResourceTests {
         given_a_persistent_connection_in_project(user, project1, DateUtils.addSeconds(new Date(), -2));
 
         restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/lastConnection/{user}.json", project1.getId(), user.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))))
                 .andExpect(jsonPath("$.collection[0].user").value(user.getId()));
@@ -197,7 +180,6 @@ public class ProjectConnectionResourceTests {
         given_a_persistent_connection_in_project(user, project1, DateUtils.addSeconds(new Date(), -2));
 
         restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/connectionFrequency.json", project1.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[0].frequency").value(2));
     }
@@ -213,7 +195,6 @@ public class ProjectConnectionResourceTests {
 
         restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/connectionFrequency.json", project1.getId())
                         .param("heatmap", "true"))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -228,7 +209,6 @@ public class ProjectConnectionResourceTests {
 
         restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/connectionFrequency.json", project1.getId())
                         .param("period", "week"))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -243,7 +223,6 @@ public class ProjectConnectionResourceTests {
         given_a_persistent_connection_in_project(user, project1, DateUtils.addSeconds(new Date(), -2));
 
         restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/connectionFrequency/{user}.json", project1.getId(), user.getId()))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -258,7 +237,6 @@ public class ProjectConnectionResourceTests {
 
         restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/connectionFrequency/{user}.json", project1.getId(), user.getId())
                         .param("heatmap", "true"))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -273,7 +251,6 @@ public class ProjectConnectionResourceTests {
 
         restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/connectionFrequency/{user}.json", project1.getId(), user.getId())
                         .param("period", "week"))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -288,7 +265,6 @@ public class ProjectConnectionResourceTests {
 
         restProjectConnectionControllerMockMvc.perform(get("/api/connectionFrequency.json")
                         .param("period", "week"))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -303,7 +279,6 @@ public class ProjectConnectionResourceTests {
 
         restProjectConnectionControllerMockMvc.perform(get("/api/averageConnections.json")
                 .param("period", "week"))
-                .andDo(print())
                 .andExpect(status().isOk());
 
     }
@@ -318,7 +293,6 @@ public class ProjectConnectionResourceTests {
         given_a_persistent_connection_in_project(user, project1, DateUtils.addSeconds(new Date(), -2));
 
         restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/userconnection/count.json", project1.getId()))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -332,7 +306,6 @@ public class ProjectConnectionResourceTests {
         given_a_persistent_connection_in_project(user, project1, DateUtils.addSeconds(new Date(), -2));
 
         restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/connectionHistory/{user}.json", project1.getId(), user.getId()))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -349,7 +322,6 @@ public class ProjectConnectionResourceTests {
 
         MvcResult mvcResult = restProjectConnectionControllerMockMvc.perform(get("/api/project/{project}/connectionHistory/{user}.json", project1.getId(), user.getId())
                         .param("export", "csv"))
-                .andDo(print())
                 .andExpect(status().isOk()).andReturn();
 
         String[] rows = mvcResult.getResponse().getContentAsString().split("\n");
@@ -378,7 +350,6 @@ public class ProjectConnectionResourceTests {
         PersistentProjectConnection connection = given_a_persistent_connection_in_project(user, project1, DateUtils.addSeconds(new Date(), -3));
 
         restProjectConnectionControllerMockMvc.perform(get("/api/projectConnection/{id}.json", connection.getId()))
-                .andDo(print())
                 .andExpect(status().isOk());
 
     }
@@ -394,7 +365,6 @@ public class ProjectConnectionResourceTests {
 
         restProjectConnectionControllerMockMvc.perform(get("/api/projectConnection/{id}.json", connection.getId())
                         .param("export", "csv"))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 

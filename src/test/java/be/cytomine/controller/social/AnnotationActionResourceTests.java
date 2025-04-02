@@ -24,7 +24,6 @@ import be.cytomine.domain.social.AnnotationAction;
 import be.cytomine.repositorynosql.social.AnnotationActionRepository;
 import be.cytomine.service.social.AnnotationActionService;
 import be.cytomine.utils.JsonObject;
-import com.mongodb.client.MongoClient;
 import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,15 +36,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
 import java.util.Date;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -55,23 +51,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AnnotationActionResourceTests {
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
     private BasicInstanceBuilder builder;
 
     @Autowired
     private MockMvc restUserPositionControllerMockMvc;
 
     @Autowired
-    AnnotationActionRepository annotationActionRepository;
+    private AnnotationActionRepository annotationActionRepository;
 
     @Autowired
-    AnnotationActionService annotationActionService;
-
-    @Autowired
-    MongoClient mongoClient;
-
+    private AnnotationActionService annotationActionService;
 
     @BeforeEach
     public void cleanDB() {
@@ -89,8 +78,6 @@ public class AnnotationActionResourceTests {
         return annotationAction;
     }
 
-
-
     @Test
     public void add_action_for_annotation() throws Exception {
         AssertionsForClassTypes.assertThat(annotationActionRepository.count()).isEqualTo(0);
@@ -104,7 +91,6 @@ public class AnnotationActionResourceTests {
         restUserPositionControllerMockMvc.perform(post("/api/annotation_action.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.class").value( "be.cytomine.domain.social.AnnotationAction"))
                 .andExpect(jsonPath("$.class").value( "be.cytomine.domain.social.AnnotationAction"))
@@ -132,13 +118,11 @@ public class AnnotationActionResourceTests {
 
         restUserPositionControllerMockMvc.perform(get("/api/imageinstance/{image}/annotation_action.json", annotationDomain.getImage().getId())
                         .param("user", user.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))));
 
         restUserPositionControllerMockMvc.perform(get("/api/imageinstance/{image}/annotation_action.json", builder.given_an_image_instance().getId())
                     .param("user", user.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
     }
@@ -153,13 +137,11 @@ public class AnnotationActionResourceTests {
 
         restUserPositionControllerMockMvc.perform(get("/api/sliceinstance/{image}/annotation_action.json", annotationDomain.getSlice().getId())
                     .param("user", user.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1))));
 
         restUserPositionControllerMockMvc.perform(get("/api/sliceinstance/{image}/annotation_action.json", builder.given_a_slice_instance().getId())
                     .param("user", user.getId().toString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(0))));
     }
@@ -174,25 +156,21 @@ public class AnnotationActionResourceTests {
         restUserPositionControllerMockMvc.perform(get("/api/project/{project}/annotation_action/count.json", annotationDomain.getProject().getId())
                         .param("startDate", ""+DateUtils.addDays(new Date(), -10).getTime())
                         .param("endDate", ""+DateUtils.addDays(new Date(), 10).getTime()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value("1"));
 
         restUserPositionControllerMockMvc.perform(get("/api/project/{project}/annotation_action/count.json", annotationDomain.getProject().getId())
                         .param("endDate", ""+DateUtils.addDays(new Date(), -5).getTime()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value("0"));
 
         restUserPositionControllerMockMvc.perform(get("/api/project/{project}/annotation_action/count.json", annotationDomain.getProject().getId())
                         .param("startDate", ""+DateUtils.addDays(new Date(), -1).getTime()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value("0"));
 
         restUserPositionControllerMockMvc.perform(get("/api/project/{project}/annotation_action/count.json", annotationDomain.getProject().getId())
                         .param("startDate", ""+DateUtils.addDays(new Date(), -10).getTime()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.total").value("1"));
 

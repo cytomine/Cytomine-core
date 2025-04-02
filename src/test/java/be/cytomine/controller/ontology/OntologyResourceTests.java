@@ -35,7 +35,6 @@ import jakarta.persistence.EntityManager;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -58,7 +57,6 @@ public class OntologyResourceTests {
     public void list_all_ontologies() throws Exception {
         Ontology ontology = builder.given_an_ontology();
         restOntologyControllerMockMvc.perform(get("/api/ontology.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.name=='"+ontology.getName()+"')]").exists())
@@ -70,7 +68,6 @@ public class OntologyResourceTests {
     public void list_all_ontologies_light() throws Exception {
         Ontology ontology = builder.given_an_ontology();
         restOntologyControllerMockMvc.perform(get("/api/ontology.json").param("light", "true"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.name=='"+ontology.getName()+"')]").exists())
@@ -98,7 +95,6 @@ public class OntologyResourceTests {
         em.refresh(directChild);
 
         restOntologyControllerMockMvc.perform(get("/api/ontology/{id}.json", ontology.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(ontology.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.ontology.Ontology"))
@@ -149,7 +145,6 @@ public class OntologyResourceTests {
         restOntologyControllerMockMvc.perform(post("/api/ontology.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ontology.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -170,7 +165,6 @@ public class OntologyResourceTests {
         restOntologyControllerMockMvc.perform(post("/api/ontology.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ontology.toJSON()))
-                .andDo(print())
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.success").value(false));
     }
@@ -183,7 +177,6 @@ public class OntologyResourceTests {
         restOntologyControllerMockMvc.perform(post("/api/ontology.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ontology.toJSON()))
-                .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
@@ -195,7 +188,6 @@ public class OntologyResourceTests {
         restOntologyControllerMockMvc.perform(put("/api/ontology/{id}.json", ontology.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ontology.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -217,7 +209,6 @@ public class OntologyResourceTests {
         restOntologyControllerMockMvc.perform(put("/api/ontology/{id}.json", 0)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ontology.toJSON()))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());
@@ -231,7 +222,6 @@ public class OntologyResourceTests {
         restOntologyControllerMockMvc.perform(delete("/api/ontology/{id}.json", ontology.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(ontology.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -248,7 +238,6 @@ public class OntologyResourceTests {
     public void fail_when_delete_ontology_not_exists() throws Exception {
         restOntologyControllerMockMvc.perform(delete("/api/ontology/{id}.json", 0)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());

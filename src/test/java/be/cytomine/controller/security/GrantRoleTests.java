@@ -16,8 +16,6 @@ package be.cytomine.controller.security;
 * limitations under the License.
 */
 
-import be.cytomine.BasicInstanceBuilder;
-import be.cytomine.CytomineCoreApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,12 +24,9 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import jakarta.persistence.EntityManager;
-import jakarta.servlet.http.HttpSession;
+import be.cytomine.CytomineCoreApplication;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,17 +36,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class GrantRoleTests {
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
-    private BasicInstanceBuilder builder;
-
-    @Autowired
     private MockMvc restGrandRoleControllerMockMvc;
 
     protected MockHttpSession session;
-//
-//    protected MockHttpServletRequest request;
 
     @Test
     @WithMockUser(username = "admin")
@@ -60,38 +47,29 @@ public class GrantRoleTests {
 
         restGrandRoleControllerMockMvc.perform(get("/session/admin/info.json")
                 .session(session))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.adminByNow").value(false))
                 .andExpect(jsonPath("$.userByNow").value(true));
 
-
         restGrandRoleControllerMockMvc.perform(get("/session/admin/open.json")
                         .session(session))
-                .andDo(print())
                 .andExpect(status().isOk());
-
 
         restGrandRoleControllerMockMvc.perform(get("/session/admin/info.json")
                         .session(session))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.adminByNow").value(true))
                 .andExpect(jsonPath("$.userByNow").value(true));
 
-
         restGrandRoleControllerMockMvc.perform(get("/session/admin/close.json")
                         .session(session))
-                .andDo(print())
                 .andExpect(status().isOk());
 
         restGrandRoleControllerMockMvc.perform(get("/session/admin/info.json")
                         .session(session))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.adminByNow").value(false))
                 .andExpect(jsonPath("$.userByNow").value(true));
-
 
         endSession();
     }
@@ -104,6 +82,4 @@ public class GrantRoleTests {
         session.clearAttributes();
         session = null;
     }
-
-
 }

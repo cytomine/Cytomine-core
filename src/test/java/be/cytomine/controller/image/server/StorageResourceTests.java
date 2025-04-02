@@ -28,12 +28,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -41,9 +38,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @WithMockUser(username = "superadmin")
 public class StorageResourceTests {
-
-    @Autowired
-    private EntityManager em;
 
     @Autowired
     private BasicInstanceBuilder builder;
@@ -57,7 +51,6 @@ public class StorageResourceTests {
         Storage storage = builder.given_a_storage();
         Storage otherUserStorage = builder.given_a_storage(builder.given_a_user());
         restStorageControllerMockMvc.perform(get("/api/storage.json"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.name=='"+storage.getName()+"')]").exists())
@@ -70,7 +63,6 @@ public class StorageResourceTests {
         Storage storage = builder.given_a_storage();
         Storage otherUserStorage = builder.given_a_storage(builder.given_a_user());
         restStorageControllerMockMvc.perform(get("/api/storage.json").param("all", "true"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
                 .andExpect(jsonPath("$.collection[?(@.name=='"+storage.getName()+"')]").exists())
@@ -83,7 +75,6 @@ public class StorageResourceTests {
         Storage storage = builder.given_a_storage();
 
         restStorageControllerMockMvc.perform(get("/api/storage/{id}.json", storage.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(storage.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.image.server.Storage"))
@@ -100,7 +91,6 @@ public class StorageResourceTests {
         restStorageControllerMockMvc.perform(post("/api/storage.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(storage.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -121,7 +111,6 @@ public class StorageResourceTests {
         restStorageControllerMockMvc.perform(post("/api/storage.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(storage.toJSON()))
-                .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false));
     }
@@ -133,7 +122,6 @@ public class StorageResourceTests {
         restStorageControllerMockMvc.perform(put("/api/storage/{id}.json", storage.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(storage.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -153,7 +141,6 @@ public class StorageResourceTests {
         restStorageControllerMockMvc.perform(delete("/api/storage/{id}.json", storage.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(storage.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -170,7 +157,6 @@ public class StorageResourceTests {
     public void fail_when_delete_storage_not_exists() throws Exception {
         restStorageControllerMockMvc.perform(delete("/api/storage/{id}.json", 0)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errors").exists());

@@ -25,7 +25,6 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
-import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.repository.security.SecUserRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -46,7 +45,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -62,7 +60,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -73,22 +70,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class ImageInstanceResourceTests {
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
     private BasicInstanceBuilder builder;
 
     @Autowired
     private MockMvc restImageInstanceControllerMockMvc;
 
     @Autowired
-    private PropertyRepository propertyRepository;
-
-    @Autowired
     private ApplicationProperties applicationProperties;
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
-    
 
     @BeforeAll
     public static void beforeAll() {
@@ -124,7 +114,6 @@ public class ImageInstanceResourceTests {
         ImageInstance image = given_test_image_instance();
         String serverUrl = applicationProperties.getServerURL();
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(image.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.image.ImageInstance"))
@@ -163,7 +152,6 @@ public class ImageInstanceResourceTests {
         image.getProject().setBlindMode(true);
 
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(image.getId().intValue()))
                 .andExpect(jsonPath("$.instanceFilename").doesNotExist())
@@ -178,7 +166,6 @@ public class ImageInstanceResourceTests {
     @Transactional
     public void get_an_image_instance_not_exist() throws Exception {
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors.message").exists());
     }
@@ -189,7 +176,6 @@ public class ImageInstanceResourceTests {
     public void get_slice_instance_reference() throws Exception {
         ImageInstance image = given_test_image_instance();
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/sliceinstance/reference.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk());
     }
 
@@ -203,7 +189,6 @@ public class ImageInstanceResourceTests {
         image.setPhysicalSizeX(null);
         image.setPhysicalSizeY(0.5);
         restImageInstanceControllerMockMvc.perform(get("/api/project/{id}/bounds/imageinstance.json", image.getProject().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.reviewStart.min").value(1636702044534L))
                 .andExpect(jsonPath("$.reviewStart.max").value(1636702044534L))
@@ -232,18 +217,15 @@ public class ImageInstanceResourceTests {
         builder.addUserToProject(image.getProject(), user.getUsername(), BasePermission.WRITE); // contributor
 
         restImageInstanceControllerMockMvc.perform(get("/api/user/{id}/imageinstance.json", user.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=="+image.getId()+")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id=="+imageFromOtherProjectNotAccessibleForUser.getId()+")]").doesNotExist());
 
         restImageInstanceControllerMockMvc.perform(get("/api/user/{id}/imageinstance.json", user.getId()).param("width[lte]", "500"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=="+image.getId()+")]").exists());
 
         restImageInstanceControllerMockMvc.perform(get("/api/user/{id}/imageinstance.json", user.getId()).param("width[gte]", "501"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=="+image.getId()+")]").doesNotExist());
     }
@@ -261,7 +243,6 @@ public class ImageInstanceResourceTests {
 
 
         restImageInstanceControllerMockMvc.perform(get("/api/user/{id}/imageinstance/light.json", user.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=="+image.getId()+")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id=="+imageFromOtherProjectNotAccessibleForUser.getId()+")]").doesNotExist());
@@ -280,14 +261,12 @@ public class ImageInstanceResourceTests {
 
 
         restImageInstanceControllerMockMvc.perform(get("/api/project/{id}/imageinstance.json", project1.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInAnotherProject.getId() + ")]").doesNotExist());
 
         restImageInstanceControllerMockMvc.perform(get("/api/project/{id}/imageinstance.json", project1.getId())
                         .param("light", "true"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInAnotherProject.getId() + ")]").doesNotExist());
@@ -308,7 +287,6 @@ public class ImageInstanceResourceTests {
 
         restImageInstanceControllerMockMvc.perform(get("/api/project/{id}/imageinstance.json", project1.getId())
                         .param("light", "true"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + imageInProject1.getId() + ")].instanceFilename").value(imageInProject1.getBlindInstanceFilename()))
@@ -328,7 +306,6 @@ public class ImageInstanceResourceTests {
         image.getProject().setBlindMode(true);
 
         restImageInstanceControllerMockMvc.perform(get("/api/project/{id}/imageinstance.json", image.getProject().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + image.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[0].filename").isEmpty());
@@ -347,13 +324,11 @@ public class ImageInstanceResourceTests {
 
         restImageInstanceControllerMockMvc.perform(get("/api/project/{id}/imageinstance.json", project1.getId())
                         .param("tree", "true"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.children", hasSize(2)));
 
         restImageInstanceControllerMockMvc.perform(get("/api/project/{id}/imageinstance.json", project1.getId())
                     .param("tree", "true").param("max", "1"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.children", hasSize(1)));
     }
@@ -376,7 +351,6 @@ public class ImageInstanceResourceTests {
                         .param("order", "desc")
                         .param("numberOfAnnotations[lte]", "5")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + image1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + image2.getId() + ")]").exists());
@@ -388,7 +362,6 @@ public class ImageInstanceResourceTests {
                         .param("order", "desc")
                         .param("numberOfAnnotations[lte]", "3")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + image1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + image2.getId() + ")]").doesNotExist());
@@ -401,7 +374,6 @@ public class ImageInstanceResourceTests {
                         .param("numberOfAnnotations[lte]", "4")
                         .param("numberOfAnnotations[gte]", "2")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + image1.getId() + ")]").exists())
                 .andExpect(jsonPath("$.collection[?(@.id==" + image2.getId() + ")]").exists());
@@ -414,7 +386,6 @@ public class ImageInstanceResourceTests {
                         .param("numberOfAnnotations[lte]", "4")
                         .param("numberOfAnnotations[gte]", "3")
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id==" + image1.getId() + ")]").doesNotExist())
                 .andExpect(jsonPath("$.collection[?(@.id==" + image2.getId() + ")]").exists());
@@ -439,7 +410,6 @@ public class ImageInstanceResourceTests {
                         .param("max", "0")
                         .param("width[equals]",  String.valueOf(width))
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThanOrEqualTo(3)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.collection[0].id").value(image3.getId()))
@@ -456,7 +426,6 @@ public class ImageInstanceResourceTests {
                         .param("max", "1")
                         .param("width[equals]",  String.valueOf(width))
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.collection[0].id").value(image3.getId()))
@@ -471,7 +440,6 @@ public class ImageInstanceResourceTests {
                         .param("max", "1")
                         .param("width[equals]",  String.valueOf(width))
                 )
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(1)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.collection[0].id").value(image2.getId()))
@@ -484,7 +452,6 @@ public class ImageInstanceResourceTests {
                         .param("offset", "1")
                         .param("max", "0")
                         .param("width[equals]", String.valueOf(width)))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(2)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.collection[0].id").value(image2.getId()))
@@ -499,7 +466,6 @@ public class ImageInstanceResourceTests {
                         .param("offset", "0")
                         .param("max", "500")
                         .param("width[equals]", String.valueOf(width)))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.collection[0].id").value(image3.getId()))
@@ -515,7 +481,6 @@ public class ImageInstanceResourceTests {
                         .param("offset", "500")
                         .param("max", "0")
                         .param("width[equals]", String.valueOf(width)))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(0)))) // default sorting must be created desc
                 .andExpect(jsonPath("$.offset").value(500))
@@ -540,12 +505,10 @@ public class ImageInstanceResourceTests {
         );
 
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/next.json", imageInstance2.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(imageInstance1.getId().intValue()));
 
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/next.json", imageInstance1.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
     }
@@ -562,12 +525,10 @@ public class ImageInstanceResourceTests {
         );
 
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/previous.json", imageInstance1.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(imageInstance2.getId().intValue()));
 
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/previous.json", imageInstance2.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
     }
@@ -581,7 +542,6 @@ public class ImageInstanceResourceTests {
         restImageInstanceControllerMockMvc.perform(post("/api/imageinstance.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(imageInstance.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -602,7 +562,6 @@ public class ImageInstanceResourceTests {
         restImageInstanceControllerMockMvc.perform(put("/api/imageinstance/{id}.json", imageInstance.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -622,7 +581,6 @@ public class ImageInstanceResourceTests {
     public void delete_image_instance() throws Exception {
         ImageInstance imageInstance = builder.given_an_image_instance();
         restImageInstanceControllerMockMvc.perform(delete("/api/imageinstance/{id}.json", imageInstance.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -651,7 +609,6 @@ public class ImageInstanceResourceTests {
         );
 
         MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/thumb.png?maxSize=512", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -662,7 +619,6 @@ public class ImageInstanceResourceTests {
     @Transactional
     public void get_image_instance_thumb_if_image_not_exist() throws Exception {
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/thumb.png", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors").exists());
     }
@@ -683,7 +639,6 @@ public class ImageInstanceResourceTests {
         );
 
         MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/preview.png?maxSize=1024", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -702,7 +657,6 @@ public class ImageInstanceResourceTests {
                 )
         );
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/associated.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))))
                 .andExpect(jsonPath("$.collection", containsInAnyOrder("label","macro","thumbnail")));
@@ -728,7 +682,6 @@ public class ImageInstanceResourceTests {
 
         MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/associated/{label}.png", image.getId(), "macro")
                         .param("maxSize", "512"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -759,7 +712,6 @@ public class ImageInstanceResourceTests {
 
         MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/crop.png?maxSize=512", image.getId())
                         .param("location", "POLYGON((1 1,50 10,50 50,10 50,1 1))"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -787,7 +739,6 @@ public class ImageInstanceResourceTests {
         );
 
         MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/window-10-20-30-40.png", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -816,7 +767,6 @@ public class ImageInstanceResourceTests {
                 )
         );
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/metadata.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(11))))
                 .andExpect(jsonPath("$.collection[?(@.key==\"ProfileClass\")]").exists());
@@ -837,7 +787,6 @@ public class ImageInstanceResourceTests {
         );
 
         MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/download", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
@@ -862,7 +811,6 @@ public class ImageInstanceResourceTests {
         );
 
         MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/download", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
@@ -870,18 +818,10 @@ public class ImageInstanceResourceTests {
 
         image.getProject().setAreImagesDownloadable(false);
 
-        mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/download", image.getId()))
-                .andDo(print()).andReturn();
+        mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/download", image.getId())).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(403);
         assertThat(mvcResult.getResponse().getContentAsByteArray()).isNotEqualTo(mockResponse);
     }
-
-
-
-
-
-
-
 
     @Test
     @Transactional
@@ -918,12 +858,10 @@ public class ImageInstanceResourceTests {
                 )
         );
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/histogram.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.lastBin").value("255"))
                 .andExpect(jsonPath("$.histogram[0]").value(168366));
     }
-
 
     @Test
     @Transactional
@@ -942,7 +880,6 @@ public class ImageInstanceResourceTests {
                 )
         );
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/histogram/bounds.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.type").value("FAST"));
     }
@@ -967,7 +904,6 @@ public class ImageInstanceResourceTests {
         );
 
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/channelhistogram.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))))
                 .andExpect(jsonPath("$.collection[0].lastBin").value(255));
@@ -997,7 +933,6 @@ public class ImageInstanceResourceTests {
         );
 
         restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/channelhistogram/bounds.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))))
                 .andExpect(jsonPath("$.collection[0].color").value("#f00"));

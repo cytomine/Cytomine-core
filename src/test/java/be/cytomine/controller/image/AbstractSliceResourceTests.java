@@ -19,7 +19,6 @@ package be.cytomine.controller.image;
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.AbstractSlice;
-import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.utils.JsonObject;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
@@ -38,7 +37,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -53,7 +51,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -64,16 +61,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AbstractSliceResourceTests {
 
     @Autowired
-    private EntityManager em;
-
-    @Autowired
     private BasicInstanceBuilder builder;
 
     @Autowired
     private MockMvc restAbstractSliceControllerMockMvc;
-
-    @Autowired
-    private PropertyRepository propertyRepository;
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
     
@@ -95,7 +86,6 @@ public class AbstractSliceResourceTests {
         AbstractSlice abstractSlice = builder.given_an_abstract_slice();
 
         restAbstractSliceControllerMockMvc.perform(get("/api/abstractimage/{id}/abstractslice.json", abstractSlice.getImageId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=="+abstractSlice.getId()+")]").exists());
     }
@@ -106,7 +96,6 @@ public class AbstractSliceResourceTests {
         AbstractSlice abstractSlice = builder.given_an_abstract_slice();
 
         restAbstractSliceControllerMockMvc.perform(get("/api/uploadedfile/{id}/abstractslice.json", abstractSlice.getUploadedFile().getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection[?(@.id=="+abstractSlice.getId()+")]").exists());
     }
@@ -117,7 +106,6 @@ public class AbstractSliceResourceTests {
         AbstractSlice image = given_test_abstract_slice();
 
         restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(image.getId().intValue()))
                 .andExpect(jsonPath("$.class").value("be.cytomine.domain.image.AbstractSlice"))
@@ -135,7 +123,6 @@ public class AbstractSliceResourceTests {
     @Transactional
     public void get_an_abstract_slice_not_exist() throws Exception {
         restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors.message").exists());
     }
@@ -148,7 +135,6 @@ public class AbstractSliceResourceTests {
 
         restAbstractSliceControllerMockMvc.perform(get("/api/abstractimage/{id}/{channel}/{zStack}/{time}/abstractslice.json",
                         image.getImage().getId(), image.getChannel(), image.getZStack(), image.getTime()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(image.getId().intValue()));
     }
@@ -160,7 +146,6 @@ public class AbstractSliceResourceTests {
         restAbstractSliceControllerMockMvc.perform(post("/api/abstractslice.json")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(abstractSlice.toJSON()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -180,7 +165,6 @@ public class AbstractSliceResourceTests {
         restAbstractSliceControllerMockMvc.perform(put("/api/abstractslice/{id}.json", abstractSlice.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(jsonObject.toJsonString()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -200,7 +184,6 @@ public class AbstractSliceResourceTests {
     public void delete_abstract_slice() throws Exception {
         AbstractSlice abstractSlice = builder.given_an_abstract_slice();
         restAbstractSliceControllerMockMvc.perform(delete("/api/abstractslice/{id}.json", abstractSlice.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists())
@@ -220,7 +203,6 @@ public class AbstractSliceResourceTests {
         AbstractSlice image = builder.given_an_abstract_slice();
 
         restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/user.json", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(builder.given_superadmin().getId()));
     }
@@ -229,7 +211,6 @@ public class AbstractSliceResourceTests {
     @Transactional
     public void get_abstract_slice_uploader_when_abstract_slice_does_not_exists() throws Exception {
         restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/user.json", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
@@ -248,7 +229,6 @@ public class AbstractSliceResourceTests {
         );
 
         MvcResult mvcResult = restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/thumb.png?maxSize=512", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -259,7 +239,6 @@ public class AbstractSliceResourceTests {
     @Transactional
     public void get_abstract_slice_thumb_if_image_not_exist() throws Exception {
         restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/thumb.png", 0))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors").exists());
     }
@@ -278,7 +257,6 @@ public class AbstractSliceResourceTests {
         );
 
         MvcResult mvcResult = restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/normalized-tile/zoom/{z}/tx/{tx}/ty/{ty}.jpg?filters=binary&channels=0", image.getId(), 2, 4, 6))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -289,7 +267,6 @@ public class AbstractSliceResourceTests {
     @Transactional
     public void get_abstract_slice_tile_if_image_not_exist() throws Exception {
         restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/normalized-tile/zoom/{z}/tx/{tx}/ty/{ty}.jpg?filters=binary", 0, 2, 4, 6))
-                .andDo(print())
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors").exists());
     }
@@ -319,7 +296,6 @@ public class AbstractSliceResourceTests {
 
         MvcResult mvcResult = restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/crop.png", image.getId())
                         .param("location", "POLYGON((1 1,50 10,50 50,10 50,1 1))"))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -346,7 +322,6 @@ public class AbstractSliceResourceTests {
         );
 
         MvcResult mvcResult = restAbstractSliceControllerMockMvc.perform(get("/api/abstractslice/{id}/window-10-20-30-40.png", image.getId()))
-                .andDo(print())
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
