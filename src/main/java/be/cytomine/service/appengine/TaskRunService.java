@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
 
 import be.cytomine.domain.annotation.AnnotationLayer;
 import be.cytomine.domain.appengine.TaskRun;
@@ -218,6 +219,17 @@ public class TaskRunService {
         provision.remove("type");
 
         return appEngineService.put(uri, provision, MediaType.APPLICATION_JSON);
+    }
+
+    public ResponseEntity<String> provisionBinaryData(MultipartFile file, Long projectId, UUID taskRunId, String parameterName) {
+        checkTaskRun(projectId, taskRunId);
+
+        String uri = "task-runs/" + taskRunId + "/input-provisions/" + parameterName;
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", file.getResource());
+
+        return appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
     }
 
     public ResponseEntity<String> getTaskRun(Long projectId, UUID taskRunId) {
