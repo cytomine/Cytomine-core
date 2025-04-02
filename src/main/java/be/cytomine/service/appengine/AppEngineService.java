@@ -32,6 +32,14 @@ public class AppEngineService {
         }
     }
 
+    public ResponseEntity<byte[]> getByte(String uri) {
+        try {
+            return new RestTemplate().getForEntity(buildFullUrl(uri), byte[].class);
+        } catch (HttpClientErrorException | HttpServerErrorException.InternalServerError e) {
+            return JsonResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsByteArray());
+        }
+    }
+
     public <B> ResponseEntity<String> sendWithBody(HttpMethod method, String uri, B body, MediaType contentType) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(contentType);
