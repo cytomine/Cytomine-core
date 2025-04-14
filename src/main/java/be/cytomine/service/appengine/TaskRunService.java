@@ -2,7 +2,10 @@ package be.cytomine.service.appengine;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -170,41 +174,61 @@ public class TaskRunService {
         checkTaskRun(projectId, taskRunId);
 
         String uri = "task-runs/" + taskRunId.toString() + "/input-provisions/" + parameterName;
+        String arrayTypeUri = "task-runs/" + taskRunId.toString() + "/input-provisions/" + parameterName + "/indexes";
+        ObjectMapper mapper = new ObjectMapper();
+
+        if (json.get("type").isObject() && json.get("type").get("id").asText().equals("array")) {
+            String subtype = json.get("type").get("subtype").asText();
+
+            Long[] itemsArray = mapper.convertValue(json.get("value"), Long[].class);
+
+            if (subtype.equals("image")) {
+                for (int i = 0; i < itemsArray.length; i++) {
+                    Long annotationId = itemsArray[i];
+                    MultiValueMap<String, Object> body = prepareImage(annotationId);
+
+                    ResponseEntity<String> response = provisionCollectionItem(arrayTypeUri, i, body);
+                    if (response != null) return response;
+                }
+            }
+            if (subtype.equals("wsi")) {
+                for (int i = 0; i < itemsArray.length; i++) {
+                    Long imageId = itemsArray[i];
+                    MultiValueMap<String, Object> body = processWsi(imageId);
+
+                    ResponseEntity<String> response = provisionCollectionItem(arrayTypeUri, i, body);
+                    if (response != null) return response;
+                }
+            }
+            if (subtype.equals("geometry")) {
+                ObjectNode provision = json.deepCopy();
+                provision.remove("type");
+                provision.remove("value");
+
+                ArrayNode valueListNode = mapper.createArrayNode();
+                for (int i = 0; i < itemsArray.length; i++) {
+                    Long annotationId = itemsArray[i];
+                    UserAnnotation annotation = userAnnotationService.get(annotationId);
+
+                    ObjectNode itemJsonObject = mapper.createObjectNode();
+                    itemJsonObject.put("index", i);
+                    itemJsonObject.put("value", geometryService.WKTToGeoJSON(annotation.getWktLocation()));
+
+                    valueListNode.add(itemJsonObject);
+                }
+            }
+        }
 
         if (json.get("type").asText().equals("image")) {
             Long annotationId = json.get("value").asLong();
-            UserAnnotation annotation = userAnnotationService.get(annotationId);
-
-            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("file", new ByteArrayResource(getImageAnnotation(annotation)) {
-                @Override
-                public String getFilename() {
-                    return annotationId + ".png";
-                }
-            });
+            MultiValueMap<String, Object> body = prepareImage(annotationId);
 
             return appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
         }
 
         if (json.get("type").asText().equals("wsi")) {
             Long imageId = json.get("value").asLong();
-            ImageInstance ii = imageInstanceService.find(imageId)
-                    .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
-
-            ResponseEntity<byte[]> response = null;
-            try {
-                response = imageServerService.download(ii.getBaseImage(), null);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("file", new ByteArrayResource(response.getBody()) {
-                @Override
-                public String getFilename() {
-                    return ii.getBaseImage().getOriginalFilename();
-                }
-            });
+            MultiValueMap<String, Object> body = processWsi(imageId);
 
             return appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
         }
@@ -219,6 +243,57 @@ public class TaskRunService {
         provision.remove("type");
 
         return appEngineService.put(uri, provision, MediaType.APPLICATION_JSON);
+    }
+
+    private ResponseEntity<String> provisionCollectionItem(String arrayTypeUri, int i,
+                                                           MultiValueMap<String, Object> body)
+    {
+        Map<String, String> params = new HashMap<>();
+        params.put("value", String.valueOf(i));
+
+        ResponseEntity<String> response = appEngineService.putWithParams(arrayTypeUri, body, MediaType.MULTIPART_FORM_DATA, params);
+        if (response.getStatusCode() != HttpStatus.OK) {
+            return response;
+        }
+        return null;
+    }
+
+    private MultiValueMap<String, Object> prepareImage(Long annotationId)
+    {
+        UserAnnotation annotation = userAnnotationService.get(annotationId);
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new ByteArrayResource(
+            Objects.requireNonNull(getImageAnnotation(annotation))) {
+            @Override
+            public String getFilename() {
+                return annotationId + ".png";
+            }
+        });
+        return body;
+    }
+
+    private MultiValueMap<String, Object> processWsi(Long imageId)
+    {
+        ImageInstance ii = imageInstanceService.find(imageId)
+            .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
+
+        ResponseEntity<byte[]> response = null;
+        try {
+            response = imageServerService.download(ii.getBaseImage(), null);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new ByteArrayResource(response.getBody()) {
+            @Override
+            public String getFilename() {
+                return ii.getBaseImage().getOriginalFilename();
+            }
+        });
+
+        return body;
     }
 
     public ResponseEntity<String> provisionBinaryData(MultipartFile file, Long projectId, UUID taskRunId, String parameterName) {
