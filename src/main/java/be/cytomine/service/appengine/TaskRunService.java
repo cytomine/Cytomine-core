@@ -34,6 +34,7 @@ import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.SecUser;
+import be.cytomine.dto.appengine.task.TaskRunDetail;
 import be.cytomine.dto.appengine.task.TaskRunValue;
 import be.cytomine.dto.image.CropParameter;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -113,6 +114,27 @@ public class TaskRunService {
 
         // We return the App engine response. Should we include information from Cytomine (project ID, user ID, created, ... ?)
         return response;
+    }
+
+    public List<TaskRunDetail> getTaskRuns(Long projectId) {
+        SecUser currentUser = currentUserService.getCurrentUser();
+        Project project = projectService.find(projectId)
+            .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
+
+        securityACLService.checkUser(currentUser);
+        securityACLService.check(project, READ);
+
+        List<TaskRun> taskRuns = taskRunRepository.findAllByProjectId(projectId);
+        List<TaskRunDetail> taskRunDetails = taskRuns.stream()
+            .map(taskRun -> new TaskRunDetail(
+                taskRun.getProject().getId(),
+                taskRun.getUser().getId(),
+                taskRun.getImage().getId(),
+                taskRun.getTaskRunId().toString()
+            ))
+            .toList();
+
+        return taskRunDetails;
     }
 
     private void checkTaskRun(Long projectId, UUID taskRunId) {

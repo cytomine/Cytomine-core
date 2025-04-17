@@ -21,6 +21,7 @@ import be.cytomine.repository.ontology.OntologyRepository;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
+import be.cytomine.service.appengine.TaskRunService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.search.ProjectSearchExtension;
 import be.cytomine.service.security.SecUserService;
@@ -46,6 +47,8 @@ public class RestProjectController extends RestCytomineController {
     private final ProjectService projectService;
 
     private final SecUserService secUserService;
+
+    private final TaskRunService taskRunService;
 
     private final TaskService taskService;
 
@@ -237,5 +240,11 @@ public class RestProjectController extends RestCytomineController {
                 json.getJSONAttrStr("lastname", "lastname"),
                 json.getJSONAttrStr("mail"));
         return responseSuccess(user);
+    }
+
+    @GetMapping("/project/{id}/task-runs")
+    public ResponseEntity<?> getTaskRuns(@PathVariable Long id) {
+        log.debug("Request to retrieve Task Runs for project {}", id);
+        return ResponseEntity.ok(taskRunService.getTaskRuns(id));
     }
 }
