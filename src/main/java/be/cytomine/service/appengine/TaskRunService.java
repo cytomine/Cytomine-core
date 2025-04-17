@@ -131,16 +131,41 @@ public class TaskRunService {
 
     private List<JsonNode> processProvisions(List<JsonNode> json) {
         List<JsonNode> requestBody = new ArrayList<>();
+        ObjectMapper mapper = new ObjectMapper();
 
         for (JsonNode provision : json) {
             ObjectNode processedProvision = provision.deepCopy();
             processedProvision.remove("type");
 
             // Process the input if it is an annotation type
-            if (provision.get("type").asText().equals("geometry")) {
+            if (provision.get("type").get("id").asText().equals("geometry")) {
                 Long annotationId = provision.get("value").asLong();
                 UserAnnotation annotation = userAnnotationService.get(annotationId);
                 processedProvision.put("value", geometryService.WKTToGeoJSON(annotation.getWktLocation()));
+            }
+
+            if (provision.get("type").get("id").asText().equals("array") && provision.get("value").isArray()) {
+                int index = 0;
+                ArrayNode valueListNode = mapper.createArrayNode();
+                boolean subTypeIsGeometry = false;
+                if (provision.get("type").get("subType").get("id").asText().equals("geometry")) {
+                    subTypeIsGeometry = true;
+                }
+                for (JsonNode element : provision.get("value")) {
+                    ObjectNode itemJsonObject = mapper.createObjectNode();
+                    itemJsonObject.put("index", index);
+
+                    if (subTypeIsGeometry) {
+                        Long annotationId = element.asLong();
+                        UserAnnotation annotation = userAnnotationService.get(annotationId);
+                        itemJsonObject.put("value", geometryService.WKTToGeoJSON(annotation.getWktLocation()));
+                    } else {
+                        itemJsonObject.set("value", element);
+                    }
+                    valueListNode.add(itemJsonObject);
+                    index++;
+                }
+                processedProvision.set("value", valueListNode);
             }
 
             requestBody.add(processedProvision);
