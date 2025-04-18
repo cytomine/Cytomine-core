@@ -387,20 +387,51 @@ public class TaskRunService {
             .map(value -> (String) value)
             .toList();
 
+        String layerName = "task-run-" + taskRunId;
+        AnnotationLayer annotationLayer = annotationLayerService.createAnnotationLayer(layerName);
+        TaskRunLayer taskRunLayer = new TaskRunLayer();
+        boolean updated = false;
+
         if (!geometries.isEmpty()) {
-            String layerName = "task-run-" + taskRunId;
-            AnnotationLayer annotationLayer = annotationLayerService.createAnnotationLayer(layerName);
 
             for (String geometry : geometries) {
                 annotationService.createAnnotation(annotationLayer, geometryService.GeoJSONToWKT(geometry));
             }
 
-            TaskRunLayer taskRunLayer = new TaskRunLayer();
+
             taskRunLayer.setAnnotationLayer(annotationLayer);
             taskRunLayer.setTaskRun(taskRun.get());
             taskRunLayer.setImage(taskRun.get().getImage());
+            updated = true;
+        }
+
+        List<TaskRunValue> geoArrayValues = outputs
+                .stream()
+                .filter(output -> output.getType().equals("ARRAY"))
+                .toList();
+
+        if (!geoArrayValues.isEmpty()) {
+
+            for (TaskRunValue arrayValue : geoArrayValues) {
+                    JsonNode items = new ObjectMapper().convertValue(arrayValue.getValue(), JsonNode.class);
+                    for (JsonNode item : items) {
+                        if (geometryService.isGeometry(item.get("value").asText())) {
+                            updated = true;
+                            annotationService.createAnnotation(annotationLayer, geometryService.GeoJSONToWKT(item.get("value").asText()));
+                        }
+                    }
+            }
+
+            taskRunLayer.setAnnotationLayer(annotationLayer);
+            taskRunLayer.setTaskRun(taskRun.get());
+            taskRunLayer.setImage(taskRun.get().getImage());
+
+        }
+
+        if (updated) {
             taskRunLayerRepository.saveAndFlush(taskRunLayer);
         }
+
 
         return response;
     }
