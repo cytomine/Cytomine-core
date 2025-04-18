@@ -117,7 +117,7 @@ public class TaskRunResourceTests {
         UUID taskRunId = taskRun.getTaskRunId();
 
         String paramName = "my_param";
-        String queryBody = "{\"value\": 0, \"param_name\": \"" + paramName + "\", \"type\": \"integer\"}";
+        String queryBody = "{\"value\": 0, \"param_name\": \"" + paramName + "\", \"type\": { \"id\" : \"integer\"}}";
         String mockResponse = "{\"value\": 0, \"param_name\": \"" + paramName + "\", \"task_run_id\": \"" + taskRunId + "\"}";
         String appEngineUriSection = "task-runs/" + taskRunId + "/input-provisions/" + paramName;
         stubFor(WireMock.put(urlEqualTo(apiBasePath + appEngineUriSection))
@@ -150,7 +150,7 @@ public class TaskRunResourceTests {
          * error and it should have no consequence unless we start sniffing the json object in the core endpoint
          * for provisioning.
          **/
-        String queryBody = "[{\"value\": 0, \"param_name\": \"" + paramName + "\", \"type\": \"integer\"}]";
+        String queryBody = "[{\"value\": 0, \"param_name\": \"" + paramName + "\", \"type\": { \"id\" : \"integer\"}}]";
         String mockResponse = "[{\"value\": 0, \"param_name\": \"" + paramName + "\", \"task_run_id\": \"" + taskRunId + "\"}]";
         String appEngineUriSection = "task-runs/" + taskRunId + "/input-provisions";
         stubFor(WireMock.put(urlEqualTo(apiBasePath + appEngineUriSection))

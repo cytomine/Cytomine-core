@@ -2,7 +2,10 @@ package be.cytomine.service.appengine;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -10,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -149,16 +153,41 @@ public class TaskRunService {
 
     private List<JsonNode> processProvisions(List<JsonNode> json) {
         List<JsonNode> requestBody = new ArrayList<>();
+        ObjectMapper mapper = new ObjectMapper();
 
         for (JsonNode provision : json) {
             ObjectNode processedProvision = provision.deepCopy();
             processedProvision.remove("type");
 
             // Process the input if it is an annotation type
-            if (provision.get("type").asText().equals("geometry")) {
+            if (provision.get("type").get("id").asText().equals("geometry")) {
                 Long annotationId = provision.get("value").asLong();
                 UserAnnotation annotation = userAnnotationService.get(annotationId);
                 processedProvision.put("value", geometryService.WKTToGeoJSON(annotation.getWktLocation()));
+            }
+
+            if (provision.get("type").get("id").asText().equals("array") && provision.get("value").isArray()) {
+                int index = 0;
+                ArrayNode valueListNode = mapper.createArrayNode();
+                boolean subTypeIsGeometry = false;
+                if (provision.get("type").get("subType").get("id").asText().equals("geometry")) {
+                    subTypeIsGeometry = true;
+                }
+                for (JsonNode element : provision.get("value")) {
+                    ObjectNode itemJsonObject = mapper.createObjectNode();
+                    itemJsonObject.put("index", index);
+
+                    if (subTypeIsGeometry) {
+                        Long annotationId = element.asLong();
+                        UserAnnotation annotation = userAnnotationService.get(annotationId);
+                        itemJsonObject.put("value", geometryService.WKTToGeoJSON(annotation.getWktLocation()));
+                    } else {
+                        itemJsonObject.set("value", element);
+                    }
+                    valueListNode.add(itemJsonObject);
+                    index++;
+                }
+                processedProvision.set("value", valueListNode);
             }
 
             requestBody.add(processedProvision);
@@ -192,47 +221,67 @@ public class TaskRunService {
         checkTaskRun(projectId, taskRunId);
 
         String uri = "task-runs/" + taskRunId.toString() + "/input-provisions/" + parameterName;
+        String arrayTypeUri = "task-runs/" + taskRunId.toString() + "/input-provisions/" + parameterName + "/indexes";
+        ObjectMapper mapper = new ObjectMapper();
 
-        if (json.get("type").asText().equals("image")) {
-            Long annotationId = json.get("value").asLong();
-            UserAnnotation annotation = userAnnotationService.get(annotationId);
+        if (json.get("type").isObject() && json.get("type").get("id").asText().equals("array")) {
+            String subtype = json.get("type").get("subtype").get("id").asText();
 
-            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("file", new ByteArrayResource(getImageAnnotation(annotation)) {
-                @Override
-                public String getFilename() {
-                    return annotationId + ".png";
+            Long[] itemsArray = mapper.convertValue(json.get("value"), Long[].class);
+
+            if (subtype.equals("image")) {
+                for (int i = 0; i < itemsArray.length; i++) {
+                    Long annotationId = itemsArray[i];
+                    MultiValueMap<String, Object> body = prepareImage(annotationId);
+
+                    ResponseEntity<String> response = provisionCollectionItem(arrayTypeUri, i, body);
+                    if (response != null) return response;
                 }
-            });
+            }
+            if (subtype.equals("wsi")) {
+                for (int i = 0; i < itemsArray.length; i++) {
+                    Long imageId = itemsArray[i];
+                    MultiValueMap<String, Object> body = processWsi(imageId);
+
+                    ResponseEntity<String> response = provisionCollectionItem(arrayTypeUri, i, body);
+                    if (response != null) return response;
+                }
+            }
+            if (subtype.equals("geometry")) {
+                ObjectNode provision = json.deepCopy();
+                provision.remove("type");
+                provision.remove("value");
+
+                ArrayNode valueListNode = mapper.createArrayNode();
+                for (int i = 0; i < itemsArray.length; i++) {
+                    Long annotationId = itemsArray[i];
+                    UserAnnotation annotation = userAnnotationService.get(annotationId);
+
+                    ObjectNode itemJsonObject = mapper.createObjectNode();
+                    itemJsonObject.put("index", i);
+                    itemJsonObject.put("value", geometryService.WKTToGeoJSON(annotation.getWktLocation()));
+
+                    valueListNode.add(itemJsonObject);
+                }
+            }
+        }
+
+        if (json.get("type").get("id").asText().equals("image")) {
+            Long annotationId = json.get("value").asLong();
+            MultiValueMap<String, Object> body = prepareImage(annotationId);
 
             return appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
         }
 
-        if (json.get("type").asText().equals("wsi")) {
+        if (json.get("type").get("id").asText().equals("wsi")) {
             Long imageId = json.get("value").asLong();
-            ImageInstance ii = imageInstanceService.find(imageId)
-                    .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
-
-            ResponseEntity<byte[]> response = null;
-            try {
-                response = imageServerService.download(ii.getBaseImage(), null);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("file", new ByteArrayResource(response.getBody()) {
-                @Override
-                public String getFilename() {
-                    return ii.getBaseImage().getOriginalFilename();
-                }
-            });
+            MultiValueMap<String, Object> body = processWsi(imageId);
 
             return appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
         }
 
         ObjectNode provision = json.deepCopy();
-        if (provision.get("type").asText().equals("geometry")) {
+        if (provision.get("type").get("id").asText().equals("geometry")) {
             Long annotationId = provision.get("value").asLong();
             UserAnnotation annotation = userAnnotationService.get(annotationId);
             provision.put("value", geometryService.WKTToGeoJSON(annotation.getWktLocation()));
@@ -241,6 +290,57 @@ public class TaskRunService {
         provision.remove("type");
 
         return appEngineService.put(uri, provision, MediaType.APPLICATION_JSON);
+    }
+
+    private ResponseEntity<String> provisionCollectionItem(String arrayTypeUri, int i,
+                                                           MultiValueMap<String, Object> body)
+    {
+        Map<String, String> params = new HashMap<>();
+        params.put("value", String.valueOf(i));
+
+        ResponseEntity<String> response = appEngineService.putWithParams(arrayTypeUri, body, MediaType.MULTIPART_FORM_DATA, params);
+        if (response.getStatusCode() != HttpStatus.OK) {
+            return response;
+        }
+        return null;
+    }
+
+    private MultiValueMap<String, Object> prepareImage(Long annotationId)
+    {
+        UserAnnotation annotation = userAnnotationService.get(annotationId);
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new ByteArrayResource(
+            Objects.requireNonNull(getImageAnnotation(annotation))) {
+            @Override
+            public String getFilename() {
+                return annotationId + ".png";
+            }
+        });
+        return body;
+    }
+
+    private MultiValueMap<String, Object> processWsi(Long imageId)
+    {
+        ImageInstance ii = imageInstanceService.find(imageId)
+            .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
+
+        ResponseEntity<byte[]> response = null;
+        try {
+            response = imageServerService.download(ii.getBaseImage(), null);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", new ByteArrayResource(response.getBody()) {
+            @Override
+            public String getFilename() {
+                return ii.getBaseImage().getOriginalFilename();
+            }
+        });
+
+        return body;
     }
 
     public ResponseEntity<String> provisionBinaryData(MultipartFile file, Long projectId, UUID taskRunId, String parameterName) {
@@ -287,20 +387,55 @@ public class TaskRunService {
             .map(value -> (String) value)
             .toList();
 
-        if (!geometries.isEmpty()) {
-            String layerName = "task-run-" + taskRunId;
-            AnnotationLayer annotationLayer = annotationLayerService.createAnnotationLayer(layerName);
+        String layerName = "task-run-" + taskRunId;
+        AnnotationLayer annotationLayer = null;
+        TaskRunLayer taskRunLayer = new TaskRunLayer();
+        boolean updated = false;
 
+        if (!geometries.isEmpty()) {
+            annotationLayer = annotationLayerService.createAnnotationLayer(layerName);
             for (String geometry : geometries) {
                 annotationService.createAnnotation(annotationLayer, geometryService.GeoJSONToWKT(geometry));
             }
 
-            TaskRunLayer taskRunLayer = new TaskRunLayer();
+
             taskRunLayer.setAnnotationLayer(annotationLayer);
             taskRunLayer.setTaskRun(taskRun.get());
             taskRunLayer.setImage(taskRun.get().getImage());
+            updated = true;
+        }
+
+        List<TaskRunValue> geoArrayValues = outputs
+                .stream()
+                .filter(output -> output.getType().equals("ARRAY"))
+                .toList();
+
+        if (!geoArrayValues.isEmpty()) {
+
+            if (annotationLayer == null) {
+                annotationLayer = annotationLayerService.createAnnotationLayer(layerName);
+            }
+
+            for (TaskRunValue arrayValue : geoArrayValues) {
+                    JsonNode items = new ObjectMapper().convertValue(arrayValue.getValue(), JsonNode.class);
+                    for (JsonNode item : items) {
+                        if (geometryService.isGeometry(item.get("value").asText())) {
+                            updated = true;
+                            annotationService.createAnnotation(annotationLayer, geometryService.GeoJSONToWKT(item.get("value").asText()));
+                        }
+                    }
+            }
+
+            taskRunLayer.setAnnotationLayer(annotationLayer);
+            taskRunLayer.setTaskRun(taskRun.get());
+            taskRunLayer.setImage(taskRun.get().getImage());
+
+        }
+
+        if (updated) {
             taskRunLayerRepository.saveAndFlush(taskRunLayer);
         }
+
 
         return response;
     }

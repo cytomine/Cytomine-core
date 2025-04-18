@@ -1,5 +1,7 @@
 package be.cytomine.service.appengine;
 
+import java.util.Map;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +12,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import be.cytomine.controller.JsonResponseEntity;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Slf4j
 @Service
@@ -64,5 +67,19 @@ public class AppEngineService {
 
     public <B> ResponseEntity<String> put(String uri, B body, MediaType contentType) {
         return sendWithBody(HttpMethod.PUT, uri, body, contentType);
+    }
+
+    public <B> ResponseEntity<String> putWithParams(String uri, B body, MediaType contentType, Map<String, String> queryParams) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(uri);
+        if (queryParams != null) {
+            queryParams.forEach(builder::queryParam);
+        }
+        String finalUrl = builder.toUriString();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(contentType);
+
+        HttpEntity<B> requestEntity = new HttpEntity<>(body, headers);
+
+        return new RestTemplate().exchange(buildFullUrl(finalUrl), HttpMethod.PUT, requestEntity, String.class);
     }
 }
