@@ -388,12 +388,12 @@ public class TaskRunService {
             .toList();
 
         String layerName = "task-run-" + taskRunId;
-        AnnotationLayer annotationLayer = annotationLayerService.createAnnotationLayer(layerName);
+        AnnotationLayer annotationLayer = null;
         TaskRunLayer taskRunLayer = new TaskRunLayer();
         boolean updated = false;
 
         if (!geometries.isEmpty()) {
-
+            annotationLayer = annotationLayerService.createAnnotationLayer(layerName);
             for (String geometry : geometries) {
                 annotationService.createAnnotation(annotationLayer, geometryService.GeoJSONToWKT(geometry));
             }
@@ -411,6 +411,10 @@ public class TaskRunService {
                 .toList();
 
         if (!geoArrayValues.isEmpty()) {
+
+            if (annotationLayer == null) {
+                annotationLayer = annotationLayerService.createAnnotationLayer(layerName);
+            }
 
             for (TaskRunValue arrayValue : geoArrayValues) {
                     JsonNode items = new ObjectMapper().convertValue(arrayValue.getValue(), JsonNode.class);
