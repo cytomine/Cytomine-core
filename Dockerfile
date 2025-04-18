@@ -19,7 +19,7 @@ RUN mkdir -p /opt/gradle/.gradle
 ENV GRADLE_USER_HOME=/opt/gradle/.gradle
 
 WORKDIR /app
-COPY ../build.gradle /app/build.gradle
+COPY ./build.gradle /app/build.gradle
 
 RUN gradle clean build --no-daemon --console=verbose
 
@@ -31,8 +31,8 @@ ENV GRADLE_USER_HOME=/opt/gradle/.gradle
 COPY --from=deps-downloader /opt/gradle/.gradle /opt/gradle/.gradle
 
 WORKDIR /app
-COPY ../src /app/src
-COPY ../build.gradle /app/build.gradle
+COPY ./src /app/src
+COPY ./build.gradle /app/build.gradle
 
 ARG CORE_VERSION
 ENV CORE_VERSION=$CORE_VERSION
