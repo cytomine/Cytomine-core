@@ -225,7 +225,7 @@ public class TaskRunService {
         ObjectMapper mapper = new ObjectMapper();
 
         if (json.get("type").isObject() && json.get("type").get("id").asText().equals("array")) {
-            String subtype = json.get("type").get("subtype").asText();
+            String subtype = json.get("type").get("subtype").get("id").asText();
 
             Long[] itemsArray = mapper.convertValue(json.get("value"), Long[].class);
 
@@ -266,14 +266,14 @@ public class TaskRunService {
             }
         }
 
-        if (json.get("type").asText().equals("image")) {
+        if (json.get("type").get("id").asText().equals("image")) {
             Long annotationId = json.get("value").asLong();
             MultiValueMap<String, Object> body = prepareImage(annotationId);
 
             return appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
         }
 
-        if (json.get("type").asText().equals("wsi")) {
+        if (json.get("type").get("id").asText().equals("wsi")) {
             Long imageId = json.get("value").asLong();
             MultiValueMap<String, Object> body = processWsi(imageId);
 
@@ -281,7 +281,7 @@ public class TaskRunService {
         }
 
         ObjectNode provision = json.deepCopy();
-        if (provision.get("type").asText().equals("geometry")) {
+        if (provision.get("type").get("id").asText().equals("geometry")) {
             Long annotationId = provision.get("value").asLong();
             UserAnnotation annotation = userAnnotationService.get(annotationId);
             provision.put("value", geometryService.WKTToGeoJSON(annotation.getWktLocation()));
