@@ -1,7 +1,7 @@
 # List ARGs here for better readability.
 ARG CORE_VERSION
 ARG CORE_REVISION
-ARG ENTRYPOINT_SCRIPTS_VERSION=1.0.0
+ARG ENTRYPOINT_SCRIPTS_VERSION=1.4.0
 ARG GRADLE_VERSION=7.2-jdk17-alpine
 ARG GRADLE_DEV_VERSION=7.6.4-jdk17-jammy
 ARG OPENJDK_VERSION=17-slim-bullseye
@@ -42,7 +42,7 @@ RUN sed -i -- 's/version: 0.0.0/version: '$CORE_VERSION'/g' /app/src/main/resour
 
 #######################################################################################
 ## Stage: entrypoint script. Use a multi-stage because COPY --from cannot interpolate variables
-FROM cytomineuliege/entrypoint-scripts:${ENTRYPOINT_SCRIPTS_VERSION} AS entrypoint-scripts
+FROM cytomine/entrypoint-scripts:${ENTRYPOINT_SCRIPTS_VERSION} AS entrypoint-scripts
 
 #######################################################################################
 ## Stage: Cytomine core development image
@@ -75,10 +75,10 @@ ARG ENTRYPOINT_SCRIPTS_VERSION
 ARG GRADLE_VERSION
 ARG OPENJDK_VERSION
 
-LABEL org.opencontainers.image.authors="uliege@cytomine.org" \
+LABEL org.opencontainers.image.authors="dev@cytomine.com" \
       org.opencontainers.image.url="https://uliege.cytomine.org/" \
-      org.opencontainers.image.documentation="https://doc.uliege.cytomine.org/" \
-      org.opencontainers.image.source="https://github.com/Cytomine-ULiege/Cytomine-core" \
+      org.opencontainers.image.documentation="https://doc.cytomine.com/" \
+      org.opencontainers.image.source="https://github.com/cytomine/Cytomine-core" \
       org.opencontainers.image.vendor="Cytomine ULiège" \
       org.opencontainers.image.version="${CORE_VERSION}" \
       org.opencontainers.image.revision="${CORE_REVISION}" \
