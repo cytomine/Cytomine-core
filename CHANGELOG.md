@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.1.1] - 2025-05-09
+
 ### Fixed
 
 - Fix image input for App Engine to support both simple images and cropped regions defined by an annotation
@@ -31,5 +33,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Legacy software support
 - RabbitMQ message queue support
 
-[Unreleased]: https://github.com/cytomine/Cytomine-core/compare/5.1.0..HEAD
+[Unreleased]: https://github.com/cytomine/Cytomine-core/compare/5.1.1..HEAD
+[5.1.1]: https://github.com/cytomine/Cytomine-core/releases/tag/5.1.1
 [5.1.0]: https://github.com/cytomine/Cytomine-core/releases/tag/5.1.0
