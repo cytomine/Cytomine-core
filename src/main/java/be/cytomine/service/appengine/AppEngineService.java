@@ -1,5 +1,11 @@
 package be.cytomine.service.appengine;
 
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
@@ -7,16 +13,18 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import be.cytomine.controller.JsonResponseEntity;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @Slf4j
 @Service
 public class AppEngineService {
+
     @Value("${application.internalProxyURL}")
     private String internalProxyUrl;
 
@@ -40,6 +48,27 @@ public class AppEngineService {
             return new RestTemplate().getForEntity(buildFullUrl(uri), byte[].class);
         } catch (HttpClientErrorException | HttpServerErrorException.InternalServerError e) {
             return JsonResponseEntity.status(e.getStatusCode()).body(e.getResponseBodyAsByteArray());
+        }
+    }
+
+    public InputStream getStream(String uri) {
+        try {
+            Path tempFile = Files.createTempFile("image", ".tmp");
+
+            return new RestTemplate().execute(
+                buildFullUrl(uri),
+                HttpMethod.GET,
+                null,
+                response -> {
+                    try (InputStream in = response.getBody();
+                         OutputStream out = new FileOutputStream(tempFile.toFile())) {
+                        StreamUtils.copy(in, out);
+                        return Files.newInputStream(tempFile);
+                    }
+                }
+            );
+        } catch (IOException e) {
+            throw new RuntimeException("Error fetching the stream", e);
         }
     }
 

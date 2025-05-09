@@ -1,11 +1,14 @@
 package be.cytomine.controller.appengine;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import be.cytomine.service.appengine.TaskRunService;
 
@@ -109,12 +113,27 @@ public class TaskRunController {
     }
 
     @GetMapping("/project/{project}/task-runs/{task}/input/{parameter_name}")
-    public ResponseEntity<byte[]> getTaskRunInputParameter(
+    public ResponseEntity<StreamingResponseBody> getTaskRunInputParameter(
             @PathVariable Long project,
             @PathVariable UUID task,
             @PathVariable("parameter_name") String parameterName
     ) {
-        return taskRunService.getTaskRunIOParameter(project, task, parameterName, "input");
+        InputStream is = taskRunService.getTaskRunIOParameter(project, task, parameterName, "input");
+
+        StreamingResponseBody stream = os -> {
+            try {
+                is.transferTo(os);
+            } catch (IOException e) {
+                throw new RuntimeException("Error while copying the file", e);
+            } finally {
+                is.close();
+            }
+        };
+
+        return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + parameterName + "\"")
+            .body(stream);
     }
 
     @GetMapping("/project/{project}/task-runs/{task}/outputs")
@@ -126,11 +145,26 @@ public class TaskRunController {
     }
 
     @GetMapping("/project/{project}/task-runs/{task}/output/{parameter_name}")
-    public ResponseEntity<byte[]> getTaskRunOutputParameter(
+    public ResponseEntity<StreamingResponseBody> getTaskRunOutputParameter(
             @PathVariable Long project,
             @PathVariable UUID task,
             @PathVariable("parameter_name") String parameterName
     ) {
-        return taskRunService.getTaskRunIOParameter(project, task, parameterName, "output");
+        InputStream is = taskRunService.getTaskRunIOParameter(project, task, parameterName, "output");
+
+        StreamingResponseBody stream = os -> {
+            try {
+                is.transferTo(os);
+            } catch (IOException e) {
+                throw new RuntimeException("Error while copying the file", e);
+            } finally {
+                is.close();
+            }
+        };
+
+        return ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + parameterName + "\"")
+            .body(stream);
     }
 }
