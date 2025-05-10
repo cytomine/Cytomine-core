@@ -292,17 +292,27 @@ public class TaskRunService {
             JsonNode value = json.get("value");
             String type = value.get("type").asText();
             Long id = value.get("id").asLong();
+            File wsi = null;
 
             MultiValueMap<String, Object> body = null;
             if (type.equals("annotation")) {
                 body = prepareImage(id);
             } else if (type.equals("image")) {
-                body = processWsi(id);
+                wsi = downloadWsi(id);
+
+                body = new LinkedMultiValueMap<>();
+                body.add("file", new FileSystemResource(wsi));
             } else {
                 throw new IllegalArgumentException("Unsupported type: " + type);
             }
 
-            return appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
+            ResponseEntity<String> response = appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
+
+            if (wsi != null) {
+                wsi.delete();
+            }
+
+            return response;
         }
 
         if (json.get("type").get("id").asText().equals("wsi")) {
