@@ -1,11 +1,11 @@
 package be.cytomine.service.appengine;
 
+import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
@@ -51,25 +51,24 @@ public class AppEngineService {
         }
     }
 
-    public InputStream getStream(String uri) {
-        try {
-            Path tempFile = Files.createTempFile("image", ".tmp");
+    public File getStreamedFile(String uri) {
+        Path filePath = Paths.get("downloaded_" + System.currentTimeMillis() + ".tmp");
+        File targetFile = filePath.toFile();
 
-            return new RestTemplate().execute(
-                buildFullUrl(uri),
-                HttpMethod.GET,
-                null,
-                response -> {
-                    try (InputStream in = response.getBody();
-                         OutputStream out = new FileOutputStream(tempFile.toFile())) {
-                        StreamUtils.copy(in, out);
-                        return Files.newInputStream(tempFile);
-                    }
+        new RestTemplate().execute(
+            buildFullUrl(uri),
+            HttpMethod.GET,
+            null,
+            response -> {
+                try (InputStream in = response.getBody();
+                        OutputStream out = new FileOutputStream(targetFile)) {
+                    StreamUtils.copy(in, out);
+                    return null;
                 }
-            );
-        } catch (IOException e) {
-            throw new RuntimeException("Error fetching the stream", e);
-        }
+            }
+        );
+
+        return targetFile;
     }
 
     public <B> ResponseEntity<String> sendWithBody(HttpMethod method, String uri, B body, MediaType contentType) {

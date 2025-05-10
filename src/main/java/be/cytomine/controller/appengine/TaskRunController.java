@@ -1,11 +1,15 @@
 package be.cytomine.controller.appengine;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpHeaders;
@@ -20,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import be.cytomine.service.appengine.TaskRunService;
 
@@ -113,27 +116,28 @@ public class TaskRunController {
     }
 
     @GetMapping("/project/{project}/task-runs/{task}/input/{parameter_name}")
-    public ResponseEntity<StreamingResponseBody> getTaskRunInputParameter(
+    public void getTaskRunInputParameter(
             @PathVariable Long project,
             @PathVariable UUID task,
-            @PathVariable("parameter_name") String parameterName
+            @PathVariable("parameter_name") String parameterName,
+            HttpServletResponse response
     ) {
-        InputStream is = taskRunService.getTaskRunIOParameter(project, task, parameterName, "input");
+        File file = taskRunService.getTaskRunIOParameter(project, task, parameterName, "input");
+        try (InputStream is = new FileInputStream(file);
+             OutputStream os = response.getOutputStream()) {
 
-        StreamingResponseBody stream = os -> {
-            try {
-                is.transferTo(os);
-            } catch (IOException e) {
-                throw new RuntimeException("Error while copying the file", e);
-            } finally {
-                is.close();
-            }
-        };
+            response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + parameterName + "\"");
+            response.setHeader(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate");
+            response.setHeader(HttpHeaders.PRAGMA, "no-cache");
+            response.setHeader(HttpHeaders.EXPIRES, "0");
 
-        return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_OCTET_STREAM)
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + parameterName + "\"")
-            .body(stream);
+            is.transferTo(os);
+            os.flush();
+            file.delete();
+        } catch (IOException e) {
+            throw new RuntimeException("Error while streaming the input parameter", e);
+        }
     }
 
     @GetMapping("/project/{project}/task-runs/{task}/outputs")
@@ -145,26 +149,27 @@ public class TaskRunController {
     }
 
     @GetMapping("/project/{project}/task-runs/{task}/output/{parameter_name}")
-    public ResponseEntity<StreamingResponseBody> getTaskRunOutputParameter(
+    public void getTaskRunOutputParameter(
             @PathVariable Long project,
             @PathVariable UUID task,
-            @PathVariable("parameter_name") String parameterName
+            @PathVariable("parameter_name") String parameterName,
+            HttpServletResponse response
     ) {
-        InputStream is = taskRunService.getTaskRunIOParameter(project, task, parameterName, "output");
+        File file = taskRunService.getTaskRunIOParameter(project, task, parameterName, "output");
+        try (InputStream is = new FileInputStream(file);
+             OutputStream os = response.getOutputStream()) {
 
-        StreamingResponseBody stream = os -> {
-            try {
-                is.transferTo(os);
-            } catch (IOException e) {
-                throw new RuntimeException("Error while copying the file", e);
-            } finally {
-                is.close();
-            }
-        };
+            response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + parameterName + "\"");
+            response.setHeader(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, must-revalidate");
+            response.setHeader(HttpHeaders.PRAGMA, "no-cache");
+            response.setHeader(HttpHeaders.EXPIRES, "0");
 
-        return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_OCTET_STREAM)
-            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + parameterName + "\"")
-            .body(stream);
+            is.transferTo(os);
+            os.flush();
+            file.delete();
+        } catch (IOException e) {
+            throw new RuntimeException("Error while streaming the output parameter", e);
+        }
     }
 }
