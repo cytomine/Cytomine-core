@@ -2,14 +2,13 @@ package be.cytomine.service.appengine;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -256,10 +255,18 @@ public class TaskRunService {
             if (subtype.equals("wsi")) {
                 for (int i = 0; i < itemsArray.length; i++) {
                     Long imageId = itemsArray[i];
-                    MultiValueMap<String, Object> body = processWsi(imageId);
+                    File wsi = downloadWsi(imageId);
+
+                    MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+                    body.add("file", new FileSystemResource(wsi));
 
                     ResponseEntity<String> response = provisionCollectionItem(arrayTypeUri, i, body);
-                    if (response != null) return response;
+
+                    wsi.delete();
+
+                    if (response != null) {
+                        return response;
+                    }
                 }
             }
             if (subtype.equals("geometry")) {
@@ -290,9 +297,16 @@ public class TaskRunService {
 
         if (json.get("type").get("id").asText().equals("wsi")) {
             Long imageId = json.get("value").asLong();
-            MultiValueMap<String, Object> body = processWsi(imageId);
+            File wsi = downloadWsi(imageId);
 
-            return appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("file", new FileSystemResource(wsi));
+
+            ResponseEntity<String> response = appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
+
+            wsi.delete();
+
+            return response;
         }
 
         ObjectNode provision = json.deepCopy();
@@ -334,7 +348,7 @@ public class TaskRunService {
         return body;
     }
 
-    public void downloadFile(URI uri, File destinationFile) {
+    public File downloadFile(URI uri, File destinationFile) {
         ResponseExtractor<Void> responseExtractor = response -> {
             try (InputStream in = response.getBody();
                  OutputStream out = new FileOutputStream(destinationFile)) {
@@ -344,9 +358,11 @@ public class TaskRunService {
         };
 
         new RestTemplate().execute(uri, HttpMethod.GET, null, responseExtractor);
+
+        return destinationFile;
     }
 
-    private MultiValueMap<String, Object> processWsi(Long imageId) {
+    private File downloadWsi(Long imageId) {
         ImageInstance ii = imageInstanceService.find(imageId)
             .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
 
@@ -361,18 +377,9 @@ public class TaskRunService {
             .build()
             .toUri();
 
-        Path tempFile = null;
-        try {
-            tempFile = Files.createTempFile("wsi-", ".tif");
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create temporary file", e);
-        }
+        Path filePath = Paths.get(ii.getBaseImage().getOriginalFilename());
 
-        downloadFile(uri, tempFile.toFile());
-
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", new FileSystemResource(tempFile.toFile()));
-        return body;
+        return downloadFile(uri, filePath.toFile());
     }
 
     public ResponseEntity<String> provisionBinaryData(MultipartFile file, Long projectId, UUID taskRunId, String parameterName) {
