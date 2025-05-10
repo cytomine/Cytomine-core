@@ -1,6 +1,14 @@
 package be.cytomine.service.appengine;
 
-import java.io.IOException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,13 +26,19 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StreamUtils;
+import org.springframework.web.client.ResponseExtractor;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import be.cytomine.domain.annotation.AnnotationLayer;
 import be.cytomine.domain.appengine.TaskRun;
@@ -241,10 +255,18 @@ public class TaskRunService {
             if (subtype.equals("wsi")) {
                 for (int i = 0; i < itemsArray.length; i++) {
                     Long imageId = itemsArray[i];
-                    MultiValueMap<String, Object> body = processWsi(imageId);
+                    File wsi = downloadWsi(imageId);
+
+                    MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+                    body.add("file", new FileSystemResource(wsi));
 
                     ResponseEntity<String> response = provisionCollectionItem(arrayTypeUri, i, body);
-                    if (response != null) return response;
+
+                    wsi.delete();
+
+                    if (response != null) {
+                        return response;
+                    }
                 }
             }
             if (subtype.equals("geometry")) {
@@ -270,24 +292,41 @@ public class TaskRunService {
             JsonNode value = json.get("value");
             String type = value.get("type").asText();
             Long id = value.get("id").asLong();
+            File wsi = null;
 
             MultiValueMap<String, Object> body = null;
             if (type.equals("annotation")) {
                 body = prepareImage(id);
             } else if (type.equals("image")) {
-                body = processWsi(id);
+                wsi = downloadWsi(id);
+
+                body = new LinkedMultiValueMap<>();
+                body.add("file", new FileSystemResource(wsi));
             } else {
                 throw new IllegalArgumentException("Unsupported type: " + type);
             }
 
-            return appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
+            ResponseEntity<String> response = appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
+
+            if (wsi != null) {
+                wsi.delete();
+            }
+
+            return response;
         }
 
         if (json.get("type").get("id").asText().equals("wsi")) {
             Long imageId = json.get("value").asLong();
-            MultiValueMap<String, Object> body = processWsi(imageId);
+            File wsi = downloadWsi(imageId);
 
-            return appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
+            MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+            body.add("file", new FileSystemResource(wsi));
+
+            ResponseEntity<String> response = appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
+
+            wsi.delete();
+
+            return response;
         }
 
         ObjectNode provision = json.deepCopy();
@@ -315,8 +354,7 @@ public class TaskRunService {
         return null;
     }
 
-    private MultiValueMap<String, Object> prepareImage(Long annotationId)
-    {
+    private MultiValueMap<String, Object> prepareImage(Long annotationId) {
         UserAnnotation annotation = userAnnotationService.get(annotationId);
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -330,27 +368,38 @@ public class TaskRunService {
         return body;
     }
 
-    private MultiValueMap<String, Object> processWsi(Long imageId)
-    {
+    public File downloadFile(URI uri, File destinationFile) {
+        ResponseExtractor<Void> responseExtractor = response -> {
+            try (InputStream in = response.getBody();
+                 OutputStream out = new FileOutputStream(destinationFile)) {
+                StreamUtils.copy(in, out);
+                return null;
+            }
+        };
+
+        new RestTemplate().execute(uri, HttpMethod.GET, null, responseExtractor);
+
+        return destinationFile;
+    }
+
+    private File downloadWsi(Long imageId) {
         ImageInstance ii = imageInstanceService.find(imageId)
             .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
 
-        ResponseEntity<byte[]> response = null;
-        try {
-            response = imageServerService.download(ii.getBaseImage(), null);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String imagePath = URLEncoder
+            .encode(ii.getBaseImage().getPath(), StandardCharsets.UTF_8)
+            .replace("%2F", "/");
 
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", new ByteArrayResource(response.getBody()) {
-            @Override
-            public String getFilename() {
-                return ii.getBaseImage().getOriginalFilename();
-            }
-        });
+        URI uri = UriComponentsBuilder
+            .fromHttpUrl(imageServerService.internalImageServerURL())
+            .pathSegment("image", imagePath, "export")
+            .queryParam("filename", ii.getBaseImage().getOriginalFilename())
+            .build()
+            .toUri();
 
-        return body;
+        Path filePath = Paths.get(ii.getBaseImage().getOriginalFilename());
+
+        return downloadFile(uri, filePath.toFile());
     }
 
     public ResponseEntity<String> provisionBinaryData(MultipartFile file, Long projectId, UUID taskRunId, String parameterName) {
@@ -455,8 +504,8 @@ public class TaskRunService {
         return appEngineService.get("task-runs/" + taskRunId + "/inputs");
     }
 
-    public ResponseEntity<byte[]> getTaskRunIOParameter(Long projectId, UUID taskRunId, String parameterName, String type) {
+    public File getTaskRunIOParameter(Long projectId, UUID taskRunId, String parameterName, String type) {
         checkTaskRun(projectId, taskRunId);
-        return appEngineService.getByte("task-runs/" + taskRunId + "/" + type + "/" + parameterName);
+        return appEngineService.getStreamedFile("task-runs/" + taskRunId + "/" + type + "/" + parameterName);
     }
 }
