@@ -289,8 +289,18 @@ public class TaskRunService {
         }
 
         if (json.get("type").get("id").asText().equals("image")) {
-            Long annotationId = json.get("value").asLong();
-            MultiValueMap<String, Object> body = prepareImage(annotationId);
+            JsonNode value = json.get("value");
+            String type = value.get("type").asText();
+            Long id = value.get("id").asLong();
+
+            MultiValueMap<String, Object> body = null;
+            if (type.equals("annotation")) {
+                body = prepareImage(id);
+            } else if (type.equals("image")) {
+                body = processWsi(id);
+            } else {
+                throw new IllegalArgumentException("Unsupported type: " + type);
+            }
 
             return appEngineService.put(uri, body, MediaType.MULTIPART_FORM_DATA);
         }
