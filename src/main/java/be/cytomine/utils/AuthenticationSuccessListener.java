@@ -5,6 +5,7 @@ import be.cytomine.domain.security.User;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
+import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.image.server.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
@@ -29,19 +30,23 @@ public class AuthenticationSuccessListener implements ApplicationListener<Authen
     @Autowired
     private StorageService storageService;
 
+    @Autowired
+    private CurrentRoleService currentRoleService;
+
     @Override
     public void onApplicationEvent(AuthenticationSuccessEvent event) {
 
         if (event.getAuthentication() instanceof JwtAuthenticationToken jwtAuthenticationToken)
-            saveUserOfToken(jwtAuthenticationToken, extractRolesFromAuthentication(jwtAuthenticationToken));
+            saveUserOfToken(jwtAuthenticationToken);
 
     }
 
-    private void saveUserOfToken(JwtAuthenticationToken jwtAuthenticationToken, Set<String> rolesFromAuthentication) {
-
+    private void saveUserOfToken(JwtAuthenticationToken jwtAuthenticationToken) {
+        Set<String> rolesFromAuthentication = extractRolesFromAuthentication(jwtAuthenticationToken);
         Map<String, Object> tokenAttributes = jwtAuthenticationToken.getTokenAttributes();
         UUID sub = UUID.fromString(tokenAttributes.get("sub").toString());
-        if (userRepository.findByReference(sub.toString()).isEmpty()) {
+        Optional<User> userByReference = userRepository.findByReference(sub.toString());
+        if (userByReference.isEmpty()) {
             User newUser = new User();
             newUser.setUsername(jwtAuthenticationToken.getName());
             newUser.setReference(sub.toString());
@@ -61,6 +66,20 @@ public class AuthenticationSuccessListener implements ApplicationListener<Authen
             // create storage for the user
             storageService.initUserStorage(savedUser);
 
+            // activate admin session for user
+            savedUser = userRepository.findByReference(sub.toString()).orElse(null);
+            if (currentRoleService.hasCurrentUserAdminRole(savedUser)) {
+                currentRoleService.activeAdminSession(savedUser,jwtAuthenticationToken);
+            }
+
+
+        } else {
+            // update authorities
+            User user = userByReference.get();
+
+            if (currentRoleService.hasCurrentUserAdminRole(user)) {
+                currentRoleService.activeAdminSession(user,jwtAuthenticationToken);
+            }
         }
     }
 

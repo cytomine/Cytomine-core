@@ -134,6 +134,7 @@ public class RestAbstractImageController extends RestCytomineController {
             @RequestParam(required = false) Double contrast,
             @RequestParam(required = false) Double gamma,
             @RequestParam(required = false) String bits,
+            @RequestParam(required = false) String Authorization,
 
             ProxyExchange<byte[]> proxy
     ) throws IOException {
@@ -149,7 +150,7 @@ public class RestAbstractImageController extends RestCytomineController {
         thumbParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         thumbParameter.setRefresh(refresh);
 
-        AbstractImage abstractImage = abstractImageService.find(id)
+        AbstractImage abstractImage = abstractImageService.find(id, Authorization)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
         String etag = getRequestETag();
         return imageServerService.thumb(sliceCoordinatesService.getReferenceSlice(abstractImage), thumbParameter, etag, proxy);

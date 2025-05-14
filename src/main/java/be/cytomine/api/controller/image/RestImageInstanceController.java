@@ -184,6 +184,7 @@ public class RestImageInstanceController extends RestCytomineController {
             @RequestParam(required = false) Double contrast,
             @RequestParam(required = false) Double gamma,
             @RequestParam(required = false) String bits,
+            @RequestParam(required = false) String Authorization,
 
             ProxyExchange<byte[]> proxy
     ) throws IOException {
@@ -197,7 +198,7 @@ public class RestImageInstanceController extends RestCytomineController {
         thumbParameter.setGamma(gamma);
         thumbParameter.setMaxBits(bits!=null && bits.equals("max"));
         thumbParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
-        ImageInstance imageInstance = imageInstanceService.find(id)
+        ImageInstance imageInstance = imageInstanceService.find(id, Authorization)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
 
         String etag = getRequestETag();

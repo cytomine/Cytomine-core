@@ -58,6 +58,8 @@ public class SecurityConfiguration {
                 )
                 .authorizeHttpRequests((authorizeHttpRequests) ->
                         authorizeHttpRequests
+                                .requestMatchers(new AntPathRequestMatcher("/api/abstractimage/**")).permitAll()
+                                .requestMatchers(new AntPathRequestMatcher("/api/imageinstance/**")).permitAll()
                                 .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
                                 .requestMatchers("/session/admin/info.json").authenticated()
                                 .requestMatchers("/session/admin/open.json").authenticated()

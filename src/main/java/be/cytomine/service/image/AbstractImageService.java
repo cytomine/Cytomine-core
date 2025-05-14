@@ -33,10 +33,7 @@ import be.cytomine.service.ModelService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.meta.AttachedFileService;
 import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.utils.CommandResponse;
-import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.StringUtils;
-import be.cytomine.utils.Task;
+import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SQLSearchParameter;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import be.cytomine.utils.filters.SpecificationBuilder;
@@ -117,6 +114,15 @@ public class AbstractImageService extends ModelService {
     public Optional<AbstractImage> find(Long id) {
         Optional<AbstractImage> abstractImage = abstractImageRepository.findById(id);
         abstractImage.ifPresent(image -> securityACLService.check(image.container(),READ));
+        return abstractImage;
+    }
+
+    public Optional<AbstractImage> find(Long id, String authHeader) {
+        Optional<AbstractImage> abstractImage = abstractImageRepository.findById(id);
+        String token = authHeader.replace("Bearer ", "");
+        String username = TokenUtils.getUsernameFromToken(token);
+        User user = currentUserService.getCurrentUser(username);
+        abstractImage.ifPresent(image -> securityACLService.check(image.container(),READ, user));
         return abstractImage;
     }
 

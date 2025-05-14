@@ -27,6 +27,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -59,6 +60,14 @@ public class CurrentRoleService {
             UsernamePasswordAuthenticationToken newAuth = new UsernamePasswordAuthenticationToken(auth.getPrincipal(),auth.getCredentials(),authorities);
             newAuth.setDetails(user);
             SecurityContextHolder.getContext().setAuthentication(newAuth);
+        } else {
+            throw new ForbiddenException("You are not an admin!");
+        }
+    }
+
+    public void activeAdminSession(User user , JwtAuthenticationToken jwtAuthenticationToken) {
+        if(hasCurrentUserAdminRole(user)) {
+            currentAdmins.put(user.getUsername(), new Date());
         } else {
             throw new ForbiddenException("You are not an admin!");
         }

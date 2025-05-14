@@ -65,6 +65,10 @@ public class CurrentUserService {
         return user;
     }
 
+    public User getCurrentUser(String username) {
+        return userRepository.findByUsernameLikeIgnoreCase(username).orElseThrow(() -> new ServerException("Cannot find current user with username " + username));
+    }
+
     public static Optional<CurrentUser> getSecurityCurrentUser() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(extractCurrentUser(securityContext.getAuthentication()));
