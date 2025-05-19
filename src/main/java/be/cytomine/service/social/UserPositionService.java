@@ -23,13 +23,13 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.domain.social.PersistentUserPosition;
+import be.cytomine.dto.image.AreaDTO;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.repositorynosql.social.*;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.database.SequenceService;
-import be.cytomine.service.dto.AreaDTO;
 import be.cytomine.service.security.UserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
@@ -163,16 +163,6 @@ public class UserPositionService {
         position.setUpdated(created);
         position.setImageName(imageInstance.getBlindInstanceFilename());
         lastUserPositionRepository.insert(position);
-
-        // It used to be WS through HTTP polling.
-        // It probably can be removed at some point.
-        //if(lastPosition.isPresent() && !LastUserPosition.isSameLocation(lastPosition.get().getLocation(), currentLocation)){
-        //    try{
-        //        webSocketUserPositionHandler.sendPositionToFollowers(user.getId().toString(), imageInstance.getId().toString(), position.toJsonObject().toJsonString());
-        //    }catch (ServerException e){
-        //        log.error(e.getMessage());
-        //    }
-        //}
 
         PersistentUserPosition persistedPosition = new PersistentUserPosition();
         persistedPosition.setId(sequenceService.generateID());

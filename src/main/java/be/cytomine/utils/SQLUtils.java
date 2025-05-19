@@ -42,28 +42,6 @@ public class SQLUtils {
         }
     }
 
-//    public static Map<String, Object> keysToCamelCase(Map<String, Object> m) {
-//        Map<String, Object> newMap = new HashMap<>();
-//
-//        for (Map.Entry<String, Object> entry : m.entrySet()) {
-//            newMap.put(toCamelCase(entry.getKey()), entry.getValue());
-//        }
-//        return newMap;
-//    }
-//
-//    public static Map<String, Object> keysToCamelCase(Map<String, Object> m) {
-//        Map<String, Object> newMap = new HashMap<>();
-//
-//        for (Map.Entry<String, Object> entry : m.entrySet()) {
-//            newMap.put(toCamelCase(entry.getKey()), entry.getValue());
-//        }
-//        return newMap;
-//    }
-
-//    public static String toSnakeCase(String text) {
-//        return CaseUtils.toSnakeCase(text).toLowerCase();
-//    }
-
     public static String toSnakeCase(String str)
     {
 

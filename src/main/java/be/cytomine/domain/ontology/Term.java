@@ -56,17 +56,6 @@ public class Term extends CytomineDomain {
 
     private String color;
 
-
-//    @PrePersist
-//    public void beforeCreate() {
-//        super.beforeInsert();
-//    }
-//
-//    @PreUpdate
-//    public void beforeUpdate() {
-//        super.beforeUpdate();
-//    }
-
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         Term term = this;
         term.id = json.getJSONAttrLong("id",null);

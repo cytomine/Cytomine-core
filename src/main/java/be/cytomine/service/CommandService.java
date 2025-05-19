@@ -67,31 +67,6 @@ public class CommandService {
     static final int SUCCESS_EDIT_CODE = 200;
     static final int SUCCESS_DELETE_CODE = 200;
 
-
-//    /**
-//     * Execute an 'addcommand' c with json data
-//     * Store command in undo stack if necessary and in command history
-//     */
-//    CommandResponse processCommand(AddCommand c) throws CytomineException {
-//        return processCommand(c, SUCCESS_ADD_CODE);
-//    }
-//
-//    /**
-//     * Execute an 'editcommand' c with json data
-//     * Store command in undo stack if necessary and in command history
-//     */
-//    CommandResponse processCommand(EditCommand c) throws CytomineException {
-//        return processCommand(c, SUCCESS_EDIT_CODE);
-//    }
-//
-//    /**
-//     * Execute a 'deletecommand' c with json data
-//     * Store command in undo stack if necessary and in command history
-//     */
-//    CommandResponse processCommand(DeleteCommand c) throws CytomineException {
-//        return processCommand(c, SUCCESS_DELETE_CODE);
-//    }
-
     CommandResponse processCommand(Command c, ModelService service) throws CytomineException {
         if (c instanceof AddCommand) {
             return processCommand(c, service, SUCCESS_ADD_CODE);

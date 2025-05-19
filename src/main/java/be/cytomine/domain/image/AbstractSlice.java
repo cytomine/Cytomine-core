@@ -32,8 +32,6 @@ import java.util.Optional;
 @Setter
 public class AbstractSlice extends CytomineDomain {
 
-    //TODO:      sort([time: 'asc', zStack: 'asc', channel: 'asc'])
-
     @ManyToOne
     private AbstractImage image;
 
@@ -53,6 +51,8 @@ public class AbstractSlice extends CytomineDomain {
 
     private String channelColor;
 
+    private String zName;
+
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         AbstractSlice abstractSlice = this;
         abstractSlice.id = json.getJSONAttrLong("id",null);
@@ -63,13 +63,14 @@ public class AbstractSlice extends CytomineDomain {
         abstractSlice.image = (AbstractImage) json.getJSONAttrDomain(entityManager, "image", new AbstractImage(), true);
         abstractSlice.mime = (Mime) json.getJSONAttrDomain(entityManager, "mime", new Mime(), "mimeType", "String", false);
 
-        
         abstractSlice.channel = json.getJSONAttrInteger("channel", 0);
         abstractSlice.zStack = json.getJSONAttrInteger("zStack", 0);
         abstractSlice.time = json.getJSONAttrInteger("time", 0);
 
         abstractSlice.channelName = json.getJSONAttrStr("channelName", false);
         abstractSlice.channelColor = json.getJSONAttrStr("channelColor", false);
+
+        abstractSlice.zName = json.getJSONAttrStr("zName", false);
 
         return abstractSlice;
     }
@@ -89,6 +90,8 @@ public class AbstractSlice extends CytomineDomain {
 
         returnArray.put("channelName", abstractSlice.getChannelName());
         returnArray.put("channelColor", abstractSlice.getChannelColor());
+
+        returnArray.put("zName", abstractSlice.getZName());
 
         return returnArray;
     }

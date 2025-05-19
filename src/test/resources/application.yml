@@ -1,4 +1,8 @@
 spring:
+  profiles:
+    active: test
+    include: custom-ui
+
   security:
     oauth2:
       client:
@@ -21,7 +25,6 @@ spring:
           jws-algorithms: RS256
           jwk-set-uri: http://localhost:8888/
   main:
-    #    lazy-initialization: true
     allow-circular-references: true
 
   datasource:
@@ -32,6 +35,7 @@ spring:
     hikari:
       poolName: Hikari
       auto-commit: false
+
   jpa:
     show-sql: false
     properties:
@@ -42,8 +46,6 @@ spring:
 
   liquibase:
     change-log: classpath:config/liquibase/master.xml
-  profiles:
-    active: test
 
   data:
     mongodb:
@@ -53,6 +55,12 @@ spring:
       database: ${MONGO_DB_NAME:cytomine}
       port: ${MONGO_PORT:27017}
       host: ${MONGO_HOST:localhost}
+
+  mail:
+    host: disabled
+    port: 587
+    username: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: postmaster@sandboxdcb41...5909.mailgun.org
+    password: CONFIGURE_YOUR_MAILGUN_CREDENTIALS # example: 0da253cf5...24-4662f38e
 
 mongock:
   migration-scan-package:
@@ -66,7 +74,6 @@ javamelody:
 logging:
   level:
     org.springframework.data.mongodb.core.MongoTemplate: DEBUG
-#    org.hibernate.type.descriptor.sql: TRACE
 
 application:
   serverId: default
@@ -79,6 +86,10 @@ application:
   superAdminPublicKey: superAdminPublicKey
   ImageServerPrivateKey: imageServerPrivateKey
   ImageServerPublicKey: imageServerPublicKey
+  instanceHostWebsite: instanceHostWebsite.com
+  instanceHostSupportMail: instanceHostSupportMail@email.com
+  instanceHostPhoneNumber: 0999999999
+
 
   appEngine:
     enabled: ${APPENGINE_ENABLED:true}
@@ -93,8 +104,6 @@ application:
       token-validity-in-seconds-for-remember-me: ${TOKEN_VALIDITY_IN_SECONDS_REMEMBER_ME:2592000}
       token-validity-in-seconds-for-short-term: ${TOKEN_VALIDITY_IN_SECONDS_SHORT_TERM:300}
 
-
-  defaultLanguage: ENGLISH
   internalProxyURL: ${INTERNAL_PROXY_URL:http://localhost:8888}
   annotation:
     maxNumberOfPoint: 200

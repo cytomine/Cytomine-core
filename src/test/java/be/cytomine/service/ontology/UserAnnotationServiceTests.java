@@ -16,6 +16,23 @@ package be.cytomine.service.ontology;
 * limitations under the License.
 */
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
+import org.apache.commons.lang3.time.DateUtils;
+import org.assertj.core.api.AssertionsForClassTypes;
+import org.junit.jupiter.api.*;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
+
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
 import be.cytomine.TestUtils;
@@ -24,39 +41,21 @@ import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.meta.Description;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.meta.TagDomainAssociation;
-import be.cytomine.domain.ontology.*;
+import be.cytomine.domain.ontology.AnnotationTrack;
+import be.cytomine.domain.ontology.SharedAnnotation;
+import be.cytomine.domain.ontology.Term;
+import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.security.User;
-import be.cytomine.dto.AnnotationLight;
+import be.cytomine.dto.annotation.AnnotationLight;
+import be.cytomine.dto.annotation.AnnotationResult;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.CommandService;
-import be.cytomine.service.command.TransactionService;
-import be.cytomine.service.dto.AnnotationResult;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
-import org.locationtech.jts.io.ParseException;
-import org.locationtech.jts.io.WKTReader;
-import org.apache.commons.lang3.time.DateUtils;
-import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.test.context.support.WithMockUser;
-
-import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 
 @SpringBootTest(classes = CytomineCoreApplication.class)
 @AutoConfigureMockMvc
@@ -75,9 +74,6 @@ public class UserAnnotationServiceTests {
 
     @Autowired
     CommandService commandService;
-
-    @Autowired
-    TransactionService transactionService;
 
     @Autowired
     EntityManager entityManager;
@@ -279,6 +275,7 @@ public class UserAnnotationServiceTests {
     void add_big_user_annotation_with_max_number_of_points() throws ParseException {
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation();
         userAnnotation.setLocation(new WKTReader().read(TestUtils.getResourceFileAsString("dataset/very_big_annotation.txt")));
+
         JsonObject jsonObject = userAnnotation.toJsonObject();
         jsonObject.put("maxPoint", 100);
         CommandResponse commandResponse = userAnnotationService.add(jsonObject);
@@ -305,8 +302,10 @@ public class UserAnnotationServiceTests {
         userAnnotation.setLocation(new WKTReader().read(
                 "LINESTRING( 181.05636403199998 324.87936288, 208.31216076799996 303.464094016)"
         ));
+
         JsonObject jsonObject = userAnnotation.toJsonObject();
         CommandResponse commandResponse = userAnnotationService.add(jsonObject);
+
         assertThat(commandResponse.getStatus()).isEqualTo(200);
         assertThat(((UserAnnotation)commandResponse.getObject()).getLocation().toText())
                 .isEqualTo("LINESTRING (181.05636403199998 324.87936288, 208.31216076799996 303.464094016)");
@@ -321,7 +320,6 @@ public class UserAnnotationServiceTests {
         jsonObject.remove("project");
         CommandResponse commandResponse = userAnnotationService.add(jsonObject);
         assertThat(commandResponse.getStatus()).isEqualTo(200); // project is retrieve from image/slice
-
     }
 
 
@@ -377,6 +375,7 @@ public class UserAnnotationServiceTests {
                 userAnnotation.getImage().getBaseImage().getWidth() + " 0," +
                 "-1 -1))"));
         JsonObject jsonObject = userAnnotation.toJsonObject();
+
         CommandResponse commandResponse = userAnnotationService.add(jsonObject);
         assertThat(commandResponse.getStatus()).isEqualTo(200);
 
@@ -421,11 +420,13 @@ public class UserAnnotationServiceTests {
     }
 
     @Test
-    void add_user_annotation_slice_null_retrieve_reference_slice() throws ParseException {
+    void add_user_annotation_slice_null_retrieve_reference_slice() {
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation();
+
         JsonObject jsonObject = userAnnotation.toJsonObject();
         jsonObject.put("slice", null);
         CommandResponse commandResponse = userAnnotationService.add(jsonObject);
+
         assertThat(commandResponse.getStatus()).isEqualTo(200); //referenceSlice is taken
     }
 
@@ -531,6 +532,7 @@ public class UserAnnotationServiceTests {
     @Test
     void delete_user_annotation_with_terms() {
         UserAnnotation userAnnotation = builder.given_a_not_persisted_user_annotation();
+
         Term term1 = builder.given_a_term(userAnnotation.getProject().getOntology());
         Term term2 = builder.given_a_term(userAnnotation.getProject().getOntology());
 
@@ -545,7 +547,6 @@ public class UserAnnotationServiceTests {
         AssertionsForClassTypes.assertThat(commandResponse).isNotNull();
         AssertionsForClassTypes.assertThat(commandResponse.getStatus()).isEqualTo(200);
         AssertionsForClassTypes.assertThat(userAnnotationService.find(userAnnotation.getId()).isEmpty());
-
     }
 
     @Test

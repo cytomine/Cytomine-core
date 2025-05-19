@@ -311,22 +311,6 @@ public class AbstractImageService extends ModelService {
 
     }
 
-    private boolean hasProfile(AbstractImage image) {
-        return companionFileRepository.countByImageAndType(image, "HDF5")>0;
-    }
-
-
-
-    /**
-     * Get all image servers for an image id
-     */
-//    @Deprecated
-//    List<String> imageServers(Long abstractImageId) {
-//        AbstractImage image = find(abstractImageId).orElseThrow(() -> new ObjectNotFoundException("AbstractImage", abstractImageId));
-//        AbstractSlice slice = getReferenceSlice();
-//        return [imageServersURLs : [slice?.uploadedFile?.imageServer?.url + "/slice/tile?zoomify=" + slice?.path]]
-//    }
-
     @Override
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
         return List.of(domain.getId(), StringUtils.getBlankIfNull(((AbstractImage) domain).getOriginalFilename()));
@@ -339,7 +323,6 @@ public class AbstractImageService extends ModelService {
         deleteDependentAttachedFile((AbstractImage)domain, transaction, task);
         deleteDependentNestedImageInstance((AbstractImage)domain, transaction, task);
     }
-
 
     private void  deleteDependentAbstractSlice(AbstractImage ai, Transaction transaction, Task task) {
         List<AbstractSlice> slices = abstractSliceRepository.findAllByImage(ai);
@@ -356,7 +339,6 @@ public class AbstractImageService extends ModelService {
                     "in projects " + images.stream().map(x -> x.getProject().getName()).collect(Collectors.joining(",")));
         }
     }
-
 
     private void deleteDependentCompanionFile (AbstractImage ai, Transaction transaction, Task task) {
         List<CompanionFile> companionFiles = companionFileRepository.findAllByImage(ai);

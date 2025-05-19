@@ -22,7 +22,13 @@ import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
 import be.cytomine.domain.image.UploadedFile;
-import be.cytomine.service.dto.*;
+import be.cytomine.dto.StorageStats;
+import be.cytomine.dto.image.CropParameter;
+import be.cytomine.dto.image.ImageParameter;
+import be.cytomine.dto.image.LabelParameter;
+import be.cytomine.dto.image.TileParameters;
+import be.cytomine.dto.image.WindowParameter;
+
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
@@ -426,7 +432,6 @@ public class ImageServerServiceTests {
         configureFor("localhost", 8888);
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
 
-        //String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/annotation/drawing?context_factor=1.25&annotations=%7B%22geometry%22%3A%22POLYGON+%28%281+1%2C+50+10%2C+50+50%2C+10+50%2C+1+1%29%29%22%2C%22stroke_color%22%3Anull%2C%22stroke_width%22%3Anull%7D&level=0&z_slices=0&timepoints=0";
         String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/annotation/drawing";
         String geometry = new WKTReader().read("POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))").norm().toString();
         String body = "{\"level\":0,\"z_slices\":0,\"annotations\":[{\"geometry\":\"" + geometry +"\",\"stroke_color\":null,\"stroke_width\":null}],\"timepoints\":0,\"context_factor\":1.25}";
@@ -446,7 +451,6 @@ public class ImageServerServiceTests {
         cropParameter.setDraw(true);
         cropParameter.setIncreaseArea(1.25);
         cropParameter.setComplete(true);
-        //draw=true&complete=true&increaseArea=1.25
 
         byte[] crop = null;
         try {
@@ -472,8 +476,6 @@ public class ImageServerServiceTests {
         AbstractSlice slice = builder.given_an_abstract_slice(image, 0, 0, 0);
         slice.setUploadedFile(image.getUploadedFile());
         byte[] mockResponse = UUID.randomUUID().toString().getBytes(); // we don't care about the response content, we just check that core build a valid ims url and return the content
-
-        //http://localhost-ims/image/1650442012355/2021-12-17-114138.jpg/window?region=[left:1, top:2, width:3, height:4]&level=0
 
         configureFor("localhost", 8888);
         String url = "/image/" + URLEncoder.encode(image.getPath(), StandardCharsets.UTF_8).replace("%2F", "/") + "/window";

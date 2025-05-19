@@ -1,22 +1,16 @@
 package be.cytomine.authorization.appengine;
 
+import java.util.Optional;
+import java.util.UUID;
 
-import be.cytomine.BasicInstanceBuilder;
-import be.cytomine.CytomineCoreApplication;
-import be.cytomine.authorization.CRDAuthorizationTest;
-import be.cytomine.domain.appengine.TaskRun;
-import be.cytomine.domain.project.EditingMode;
-import be.cytomine.service.PermissionService;
-import be.cytomine.service.appengine.TaskRunService;
-import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.utils.JsonObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.opentest4j.TestSkippedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,11 +18,14 @@ import org.springframework.security.acls.model.Permission;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-import java.util.UUID;
+import be.cytomine.BasicInstanceBuilder;
+import be.cytomine.CytomineCoreApplication;
+import be.cytomine.authorization.CRDAuthorizationTest;
+import be.cytomine.domain.appengine.TaskRun;
+import be.cytomine.domain.project.EditingMode;
+import be.cytomine.service.appengine.TaskRunService;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @AutoConfigureMockMvc
@@ -36,21 +33,15 @@ import static org.springframework.security.acls.domain.BasePermission.READ;
 @Transactional
 public class TaskRunAuthorizationTest extends CRDAuthorizationTest {
 
-    private TaskRun taskRun = null;
+    @Autowired
+    private BasicInstanceBuilder builder;
 
     @Autowired
-    TaskRunService taskRunService;
-
-    @Autowired
-    BasicInstanceBuilder builder;
-
-    @Autowired
-    SecurityACLService securityACLService;
-
-    @Autowired
-    PermissionService permissionService;
+    private TaskRunService taskRunService;
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
+
+    private TaskRun taskRun = null;
 
     @BeforeAll
     public static void beforeAll() {
@@ -59,9 +50,7 @@ public class TaskRunAuthorizationTest extends CRDAuthorizationTest {
 
     @AfterAll
     public static void afterAll() {
-        try {
-            wireMockServer.stop();
-        } catch (Exception e) {}
+        wireMockServer.stop();
     }
 
     @BeforeEach
@@ -99,7 +88,6 @@ public class TaskRunAuthorizationTest extends CRDAuthorizationTest {
 
     @Override
     protected void when_i_delete_domain() {
-        TaskRun taskRunToDelete = taskRun;
         //TODO: taskRunService.delete(taskRunToDelete, null, null, true);
     }
 
@@ -144,7 +132,10 @@ public class TaskRunAuthorizationTest extends CRDAuthorizationTest {
                 )
         );
 
-        taskRunService.addTaskRun(taskRun.getProject().getId(), "/tasks/" + taskId.toString() + "/runs");
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectNode body = objectMapper.createObjectNode().put("image", taskRun.getImage().getId());
+
+        taskRunService.addTaskRun(taskRun.getProject().getId(), "/tasks/" + taskId + "/runs", body);
     }
 
     @Override

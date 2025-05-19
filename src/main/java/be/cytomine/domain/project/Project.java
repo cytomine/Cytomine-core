@@ -36,14 +36,6 @@ public class Project extends CytomineDomain {
     @JoinColumn(name = "ontology_id", nullable = true)
     private Ontology ontology;
 
-//    @OneToMany(mappedBy="project")
-//    @LazyCollection(LazyCollectionOption.EXTRA)
-////    @JoinColumn(referencedColumnName = "ontology_id", nullable = true)
-//    private Set<UserAnnotation> userAnnotations;
-
-//    @OneToMany(mappedBy="project", fetch = FetchType.LAZY)
-//    private Set<CommandHistory> commandHistories;
-
     @OneToMany(mappedBy = "project")
     private Set<ProjectRepresentativeUser> representativeUsers;
 

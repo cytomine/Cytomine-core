@@ -20,6 +20,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.AnnotationDomain;
+import be.cytomine.domain.ontology.AnnotationGroup;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.Track;
 import be.cytomine.domain.project.Project;
@@ -64,6 +65,9 @@ public abstract class AnnotationListing {
     Long beforeSlice = null;
     Long afterSlice = null;
     Long sliceDimension = null;
+
+    Long annotationGroup = null;
+    List<Long> annotationGroups = null;
 
     Long user = null;
 
@@ -233,6 +237,9 @@ public abstract class AnnotationListing {
                         getTrackConst() +
                         getTracksConst() +
                         getBeforeOrAfterSliceConst() +
+
+                        getGroupConst() +
+                        getGroupsConst() +
 
                         getUsersForTermConst() +
 
@@ -518,6 +525,28 @@ public abstract class AnnotationListing {
         } else {
             return "";
         }
+    }
+
+    String getGroupConst() {
+        if (annotationGroup == null) {
+            return "";
+        }
+
+        if (entityManager.find(AnnotationGroup.class, annotationGroup) != null) {
+            throw new ObjectNotFoundException("Annotation group  " + annotationGroup + " does not exists!");
+        }
+
+        addIfMissingColumn("group");
+        return " AND al1.group_id = " + annotationGroup + "\n";
+    }
+
+    String getGroupsConst() {
+        if (annotationGroups == null) {
+            return "";
+        }
+
+        addIfMissingColumn("group");
+        return " AND al1.group_id IN (" + joinValues(annotationGroups) + ")\n";
     }
 
     String getTagConst() {

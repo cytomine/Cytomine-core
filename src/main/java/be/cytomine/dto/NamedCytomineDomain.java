@@ -16,7 +16,6 @@ package be.cytomine.dto;
 * limitations under the License.
 */
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;

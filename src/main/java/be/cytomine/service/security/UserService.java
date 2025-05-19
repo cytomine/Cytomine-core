@@ -26,8 +26,8 @@ import be.cytomine.domain.project.ProjectDefaultLayer;
 import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.*;
 import be.cytomine.domain.social.LastConnection;
-import be.cytomine.dto.AuthInformation;
 import be.cytomine.dto.NamedCytomineDomain;
+import be.cytomine.dto.auth.AuthInformation;
 import be.cytomine.exceptions.*;
 import be.cytomine.repository.command.CommandHistoryRepository;
 import be.cytomine.repository.command.CommandRepository;
@@ -308,7 +308,6 @@ public class UserService extends ModelService {
         }
 
         Query query = getEntityManager().createNativeQuery(request, Tuple.class);
-//        Map<String, Object> mapParams = sqlSearchConditions.getSqlParameters();
         for (Map.Entry<String, Object> entry : mapParams.entrySet()) {
             query.setParameter(entry.getKey(), entry.getValue());
         }
@@ -490,14 +489,6 @@ public class UserService extends ModelService {
 
         String request = select + from + where + groupBy + having + order;
 
-//        if (max > 0) {
-//            request += " LIMIT " + max;
-//        }
-//        if (offset > 0) {
-//            request += " OFFSET " + offset;
-//        }
-
-
         Query query = getEntityManager().createQuery(request, Object[].class);
 
         if (max>0) {
@@ -615,6 +606,7 @@ public class UserService extends ModelService {
         if (humanUsers.contains(currentUser) && layersFormatted.stream().noneMatch(x -> x.getJSONAttrLong("id").equals(currentUser.getId()))) {
             layersFormatted.add(currentUser.toJsonObject());
         }
+
         return layersFormatted;
     }
 
@@ -849,13 +841,6 @@ public class UserService extends ModelService {
         if (userWithSameUsername.isPresent() && !Objects.equals(userWithSameUsername.get().getId(), user.getId())) {
             throw new AlreadyExistException("User " + user.getUsername() + " already exist!");
         }
-        // grails version allow this, should we allow users with same email?
-//        if (domain instanceof User) {
-//            Optional<User> userWithSameEmail = userRepository.findByEmailLikeIgnoreCase(((User)user).getEmail());
-//            if (userWithSameEmail.isPresent() && !Objects.equals(userWithSameEmail.get().getId(), user.getId())) {
-//                throw new AlreadyExistException("User with email " + ((User)user).getEmail() + " already exist!");
-//            }
-//        }
     }
 
 
@@ -1100,9 +1085,6 @@ public class UserService extends ModelService {
     public void deleteDependentSharedAnnotation(User user, Transaction transaction, Task task) {
         if (user instanceof User) {
             //TODO:: implement cascade deleteting/update for shared annotation
-//            if(SharedAnnotation.findAllBySender(user)) {
-//                throw new ConstraintException("This user has send/receive annotation comments. We cannot delete it! ")
-//            }
             throw new CytomineMethodNotYetImplementedException("todo");
         }
     }
@@ -1110,16 +1092,6 @@ public class UserService extends ModelService {
     public void deleteDependentHasManySharedAnnotation(User user, Transaction transaction, Task task) {
         if (user instanceof User) {
             //TODO:: implement cascade deleteting/update for shared annotation
-//           public void criteria = SharedAnnotation.createCriteria()
-//           public void results = criteria.list {
-//                receivers {
-//                    inList("id", user.id)
-//                }
-//            }
-//
-//            if(!results.isEmpty()) {
-//                throw new ConstraintException("This user has send/receive annotation comments. We cannot delete it! ")
-//            }
             throw new CytomineMethodNotYetImplementedException("todo");
         }
     }

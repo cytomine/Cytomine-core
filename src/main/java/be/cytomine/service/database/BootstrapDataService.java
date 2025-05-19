@@ -56,7 +56,6 @@ public class BootstrapDataService {
 
         initImageFilters();
 
-
         bootstrapUtilsService.createMime("tif", "image/pyrtiff");
         bootstrapUtilsService.createMime("jp2", "image/jp2");
         bootstrapUtilsService.createMime("ndpi", "openslide/ndpi");

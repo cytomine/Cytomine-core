@@ -29,7 +29,6 @@ import jakarta.persistence.*;
 @Setter
 public class UndoStackItem extends CytomineDomain {
 
-
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "command_id", nullable = false)
     protected Command command;
@@ -54,16 +53,6 @@ public class UndoStackItem extends CytomineDomain {
         this.setUser(redoStackItem.getUser());
         this.setTransaction(redoStackItem.getTransaction());
     }
-//
-//    @PrePersist
-//    public void beforeCreate() {
-//        super.beforeInsert();
-//    }
-//
-//    @PreUpdate
-//    public void beforeUpdate() {
-//        super.beforeUpdate();
-//    }
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         throw new RuntimeException("Not supported");

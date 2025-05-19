@@ -25,27 +25,20 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 import java.util.Date;
 
-//@Entity
 @Getter
 @Setter
 @Document
-//@CompoundIndex(def = "{'date' : 2, 'expireAfterSeconds': 60}")
 /**
  * Info on last user connection on Cytomine
  * User x connect to poject y the 2013/01/01 at xxhyymin
  */
 public class LastConnection extends CytomineSocialDomain {
 
-//    @Id
-//    @GeneratedValue(strategy = GenerationType.AUTO)
     protected Long id;
 
     @CreatedDate
-//    @Indexed(name="last_connection_expiration", expireAfterSeconds=300)
     protected Date created;
 
     @LastModifiedDate

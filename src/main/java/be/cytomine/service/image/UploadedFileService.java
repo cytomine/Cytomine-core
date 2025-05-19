@@ -143,6 +143,15 @@ public class UploadedFileService extends ModelService {
             }
         }
 
+        validatedSearchParameters.addAll(
+            SQLSearchParameter
+                .getDomainAssociatedSearchParameters(AbstractImage.class, searchParameters, getEntityManager())
+                .stream()
+                .filter(x -> !x.getProperty().equals("original_filename"))
+                .map(x -> new SearchParameterEntry("ai." + x.getProperty(), x.getOperation(), x.getValue()))
+                .toList()
+        );
+
         SearchParameterProcessed sqlSearchConditions = SQLSearchParameter.searchParametersToSQLConstraints(validatedSearchParameters);
         String search = sqlSearchConditions.getData().stream().map(SearchParameterEntry::getSql).collect(Collectors.joining(" AND "));
 
@@ -180,6 +189,9 @@ public class UploadedFileService extends ModelService {
                 "uf.status, " +
                 "uf.storage_id, " +
                 "uf.user_id, " +
+                "ai.height, " +
+                "ai.magnification, " +
+                "ai.width, " +
                 "CASE WHEN (nlevel(uf.l_tree) > 0) THEN ltree2text(subltree(uf.l_tree, 0, 1)) ELSE NULL END AS root, " +
                 treeSelect +
                 "CASE WHEN (uf.status = " + UploadedFileStatus.CONVERTED.getCode() + " OR uf.status = " + UploadedFileStatus.DEPLOYED.getCode() + ") " +
@@ -248,28 +260,6 @@ public class UploadedFileService extends ModelService {
                 "AND uf.deleted IS NULL " +
                 "GROUP BY uf.id , uf.l_tree " +
                 "ORDER BY uf.l_tree ASC ";
-
-
-//        String request = "SELECT uf.id, uf.created, uf.original_filename, uf.content_type, " +
-//                "uf.l_tree, uf.parent_id as parent, " +
-//                "uf.size, uf.status " +
-//                "FROM uploaded_file uf " +
-//                "LEFT JOIN abstract_image ai ON ai.uploaded_file_id = uf.id " +
-//                "LEFT JOIN abstract_slice asl ON asl.uploaded_file_id = uf.id " +
-//                "LEFT JOIN companion_file cf ON cf.uploaded_file_id = uf.id " +
-//                "LEFT JOIN acl_object_identity as aoi ON aoi.object_id_identity = uf.storage_id " +
-//                "LEFT JOIN acl_entry as ae ON ae.acl_object_identity = aoi.id " +
-//                "LEFT JOIN acl_sid as asi ON asi.id = ae.sid " +
-//                "WHERE asi.sid = :username " +
-//                "AND uf.deleted IS NULL " +
-//                "GROUP BY uf.id " +
-//                "ORDER BY uf.l_tree ASC ";
-
-//        String request = "SELECT uf.id, uf.created, uf.original_filename, uf.content_type, " +
-//                "uf.l_tree, uf.parent_id as parent, " +
-//                "uf.size, uf.status " +
-//                "FROM uploaded_file uf ";
-
 
         Query query = getEntityManager().createNativeQuery(request, Tuple.class);
         query.setParameter("username", user.getUsername());

@@ -16,6 +16,7 @@ package be.cytomine.service.project;
 * limitations under the License.
 */
 
+import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
@@ -26,6 +27,7 @@ import be.cytomine.domain.project.ProjectRepresentativeUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.DatedCytomineDomain;
 import be.cytomine.dto.NamedCytomineDomain;
+import be.cytomine.dto.ProjectBounds;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.WrongArgumentException;
@@ -42,7 +44,6 @@ import be.cytomine.service.CurrentRoleService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
-import be.cytomine.service.dto.ProjectBounds;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.ontology.AnnotationTermService;
 import be.cytomine.service.ontology.OntologyService;
@@ -70,8 +71,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.*;
 import org.springframework.security.acls.domain.BasePermission;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -88,6 +91,9 @@ import static org.springframework.security.acls.domain.BasePermission.*;
 @Service
 @Transactional
 public class ProjectService extends ModelService {
+
+    @Autowired
+    private ApplicationProperties applicationProperties;
 
     @Autowired
     private CommandHistoryRepository commandHistoryRepository;
@@ -151,6 +157,9 @@ public class ProjectService extends ModelService {
 
     @Autowired
     private ProjectRepresentativeUserRepository projectRepresentativeUserRepository;
+
+    @Autowired
+    private RestTemplate restTemplate;
 
     public Project get(Long id) {
         return find(id).orElse(null);
@@ -548,8 +557,6 @@ public class ProjectService extends ModelService {
         return data;
     }
 
-
-
     public List<Project> listByOntology(Ontology ontology) {
         if (currentRoleService.isAdminByNow(currentUserService.getCurrentUser())) {
             return projectRepository.findAllByOntology(ontology);
@@ -629,7 +636,6 @@ public class ProjectService extends ModelService {
 
         return commandResponse;
     }
-
 
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         return update(domain, jsonNewData, transaction, null);
@@ -878,7 +884,6 @@ public class ProjectService extends ModelService {
         project.setCountImages(imageInstanceRepository.countAllByProject(project));
     }
 
-
     protected void beforeDelete(CytomineDomain domain) {
         Project project = (Project)domain;
         commandHistoryRepository.deleteAllByProject(project);
@@ -886,7 +891,6 @@ public class ProjectService extends ModelService {
         redoStackItemRepository.deleteAllByCommand_Project(project);
         commandRepository.deleteAllByProject(project);
     }
-
 
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
         return List.of(domain.getId(), ((Project)domain).getName());

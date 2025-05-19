@@ -84,17 +84,6 @@ public class OntologyAuthorizationTest extends CRUDAuthorizationTest {
         assertThat(ontologyService.list()).doesNotContain(ontology);
     }
 
-
-    // **************
-    // OVERRIDE
-    // **************
-//    @Override
-//    @Test
-//    @WithMockUser(username = USER_ACL_DELETE)
-//    public void user_with_delete_permission_can_delete_domain() {
-//        expectForbidden (() -> when_i_delete_domain());
-//        // Only ACL ADMIN can delete ontologies
-//    }
     @Override
     @Test
     @WithMockUser(username = USER_NO_ACL)
@@ -109,8 +98,6 @@ public class OntologyAuthorizationTest extends CRUDAuthorizationTest {
         expectOK (() -> when_i_add_domain());
         // User with READ permission can create another ontology
     }
-
-
 
     @Override
     public void when_i_get_domain() {

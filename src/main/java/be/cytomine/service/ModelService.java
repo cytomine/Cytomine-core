@@ -95,13 +95,7 @@ public abstract class ModelService<T extends CytomineDomain> {
      */
     public void saveDomain(CytomineDomain newObject) {
         checkDoNotAlreadyExist(newObject);
-//        List<ValidationError> validationErrors = newObject.validate();
-//        if (!validationErrors.isEmpty()) {
-//            for (ValidationError validationError : validationErrors) {
-//                log.error(validationError.getProperty() + " " + validationError.getMessage());
-//            }
-//            throw new WrongArgumentException(validationErrors.toString());
-//        }
+
         try {
             if (newObject.getId()!=null && !entityManager.contains(newObject)) {
                 log.debug("object detached");
@@ -159,7 +153,6 @@ public abstract class ModelService<T extends CytomineDomain> {
         c.setJson(json);
         return executeCommand(c,task);
     }
-
 
     public CommandResponse executeCommand(Command c) {
         return executeCommand(c, null);

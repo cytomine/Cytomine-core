@@ -18,8 +18,13 @@ package be.cytomine.service.middleware;
 
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.ontology.AnnotationDomain;
+import be.cytomine.dto.StorageStats;
+import be.cytomine.dto.image.CropParameter;
+import be.cytomine.dto.image.ImageParameter;
+import be.cytomine.dto.image.LabelParameter;
+import be.cytomine.dto.image.TileParameters;
+import be.cytomine.dto.image.WindowParameter;
 import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.service.dto.*;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.utils.SimplifyGeometryService;
 import be.cytomine.utils.JsonObject;

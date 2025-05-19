@@ -152,7 +152,6 @@ public class CompanionFileService extends ModelService {
         }
     }
 
-
     @Override
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
         return List.of(domain.getId(), ((CompanionFile)domain).getOriginalFilename());
@@ -161,51 +160,4 @@ public class CompanionFileService extends ModelService {
     public boolean hasProfile(AbstractImage image) {
         return !companionFileRepository.findAllByImage(image).stream().filter(x -> x.getType().equals("HDF5")).toList().isEmpty();
     }
-
-
-//    public CompanionFile addProfile(AbstractImage image) {
-//        if (hasProfile(image)) {
-//            throw new InvalidRequestException("Image " + image + " already has a profile");
-//        }
-//
-//        if (image.getDimensions().length() != 3) {
-//            throw new InvalidRequestException("Image "+ image +" is not a 3D image");
-//        }
-//
-//        String filename = "spectral.HDF5";
-//        String extension = "hdf5";
-//        String contentType = "HDF5";
-//
-//
-//        UploadedFile parent = image.getUploadedFile();
-//        Path parentPath = Paths.get(parent.getFilename()).getParent();
-//        String destinationPath = parentPath.resolve("processed/" + filename).toString();
-//        UploadedFile uf = new UploadedFile();
-//        uf.setParent(parent);
-//        uf.setImageServer(parent.getImageServer());
-//        uf.setContentType(contentType);
-//        uf.setStorage(parent.getStorage());
-//        uf.setUser(currentUserService.getCurrentUser());
-//        uf.setOriginalFilename(filename);
-//        uf.setExt(extension);
-//        uf.setSize(0L);
-//        uf.setStatus(UPLOADED.getCode());
-//        uf.setFilename(destinationPath);
-//        getEntityManager().persist(uf);
-//
-//        CompanionFile cf = new CompanionFile();
-//        cf.setUploadedFile(uf);
-//        cf.setImage(image);
-//        cf.setOriginalFilename(filename);
-//        cf.setType("HDF5");
-//        getEntityManager().persist(cf);
-//
-//        try {
-//            imageServerService.makeHDF5(image.getId(), cf.getId(), uf.getId());
-//        } catch (Exception e) {
-//            uf.setStatus(ERROR_CONVERSION.getCode());
-//            getEntityManager().persist(uf);
-//        }
-//        return cf;
-//    }
 }

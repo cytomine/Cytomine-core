@@ -28,10 +28,6 @@ import java.util.Optional;
 @Transactional
 public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
 
-    // *****************************
-    // GET
-    // *****************************
-
     @Test
     @WithMockUser(username = SUPERADMIN)
     public void admin_get_domain() {
@@ -79,10 +75,6 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
     public void guest_with_permission_get_domain() {
         expectOK (() -> when_i_get_domain());
     }
-
-    // *****************************
-    // ADD
-    // *****************************
 
     @Test
     @WithMockUser(username = SUPERADMIN)
@@ -182,10 +174,6 @@ public abstract class CRDAuthorizationTest extends AbstractAuthorizationTest {
             expectOK (() -> when_i_add_domain());
         }
     }
-
-    // *****************************
-    // DELETE
-    // *****************************
 
     @Test
     @WithMockUser(username = SUPERADMIN)

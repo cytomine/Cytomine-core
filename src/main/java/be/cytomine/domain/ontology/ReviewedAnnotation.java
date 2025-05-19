@@ -137,9 +137,6 @@ public class ReviewedAnnotation extends AnnotationDomain implements Serializable
         return terms;
     }
 
-
-    //////////////////////////////
-
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         ReviewedAnnotation annotation = this;
         annotation.id = json.getJSONAttrLong("id",null);
@@ -238,7 +235,6 @@ public class ReviewedAnnotation extends AnnotationDomain implements Serializable
         return user;
     }
 
-
     /**
      * Return domain user (annotation user, image user...)
      * By default, a domain has no user.
@@ -249,5 +245,4 @@ public class ReviewedAnnotation extends AnnotationDomain implements Serializable
     public User userDomainCreator() {
         return reviewUser;
     }
-
 }

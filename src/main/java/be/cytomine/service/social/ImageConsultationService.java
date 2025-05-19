@@ -178,13 +178,6 @@ public class ImageConsultationService {
     public void fillImageConsultation(PersistentImageConsultation consultation, Date before) {
         Date after = consultation.getCreated();
 
-//        // collect {it.created.getTime} is really slow. I just want the getTime of PersistentConnection
-//        def db = mongo.getDB(noSQLCollectionService.getDatabaseName())
-//        def positions = db.persistentUserPosition.aggregate(
-//                [$match: [project: consultation.project, user: consultation.user, image: consultation.image, $and : [[created: [$gte: after]],[created: [$lte: before]]]]],
-//                [$sort: [created: 1]],
-//                [$project: [dateInMillis: [$subtract: ['$created', new Date(0L)]]]]
-//        );
         AggregationResults positions = persistentUserPositionRepository
                 .retrieve(consultation.getProject(), consultation.getUser(), consultation.getImage(), before, after, new Date(0));
 
@@ -342,24 +335,6 @@ public class ImageConsultationService {
     public List<JsonObject> lastImageOfGivenUsersByProject(Project project, List<Long> userIds, String sortProperty, String sortDirection, Long max, Long offset) {
         List<JsonObject> results = new ArrayList<>();
 
-        //        def connected = PersistentProjectConnection.createCriteria().list(sort: "user", order: sortDirection) {
-//            eq("project", project)
-//            projections {
-//                Projections.groupProperty("user")
-//                property("user")
-//            }
-//        }
-
-//        Criteria criteria = Criteria.where("project").is(project);
-//        criteria.
-//        Projection projection = Projections.groupProperty("user");
-//        criteria.setProjection(projection);
-//        Query query = new Query();
-//        query.addCriteria(criteria);
-//        mongoTemplate.find(criteria)
-//        Criteria criteria = sessionFactory.getCurrentSession().createCriteria(PersistentProjectConnection.class);
-//        criteria.add(Restrictions.eq("project", project));
-
         AggregationResults queryResults = persistentImageConsultationRepository.retrieve(project.getId(), sortProperty, (sortDirection.equals("desc") ? -1 : 1));
         List aggregation = queryResults.getMappedResults();
 
@@ -448,14 +423,7 @@ public class ImageConsultationService {
     public List<JsonObject> resumeByUserAndProject(Long userId, Long projectId) {
         Project project = projectRepository.findById(projectId).orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
         securityACLService.check(project, READ);
-//        // groupByImageId et get last imagename et imagethumb et
-//        def db = mongo.getDB(noSQLCollectionService.getDatabaseName())
-//        def consultations = db.persistentImageConsultation.aggregate(
-//                [$match: [project: projectId, user: userId]],
-//                [$sort: [created: 1]],
-//                [$group : [_id : [project : '$project', user : '$user', image: '$image'], time : [$sum : '$time'], frequency : [$sum : 1],
-//                countCreatedAnnotations : [$sum : '$countCreatedAnnotations'], first : [$first: '$created'], last : [$last: '$created'], imageName : [$last: '$imageName'], imageThumb : [$last: '$imageThumb']]]
-//        );
+
         List<Bson> requests = new ArrayList<>();
         requests.add(match(eq("project", projectId)));
         requests.add(match(eq("user", userId)));

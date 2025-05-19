@@ -1,19 +1,19 @@
 package be.cytomine.domain.appengine;
 
-import be.cytomine.converter.UUIDConverter;
-import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.User;
-import be.cytomine.utils.JsonObject;
+import java.util.Optional;
+import java.util.UUID;
+
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import jakarta.validation.constraints.NotNull;
-
-import java.util.Optional;
-
-import java.util.UUID;
+import be.cytomine.converter.UUIDConverter;
+import be.cytomine.domain.CytomineDomain;
+import be.cytomine.domain.image.ImageInstance;
+import be.cytomine.domain.project.Project;
+import be.cytomine.domain.security.User;
+import be.cytomine.utils.JsonObject;
 
 @Entity
 @Getter
@@ -25,6 +25,9 @@ public class TaskRun extends CytomineDomain {
 
     @ManyToOne(fetch = FetchType.LAZY)
     private User user; // launcher
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private ImageInstance image;
 
     @NotNull
     @Column(nullable = false)

@@ -62,6 +62,14 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
     )
     private List<Track> tracks = new ArrayList<>();
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "annotation_link",
+            joinColumns = { @JoinColumn(name = "annotation_ident") },
+            inverseJoinColumns = { @JoinColumn(name = "group_id") }
+    )
+    private List<AnnotationLink> links = new ArrayList<>();
+
     @PrePersist
     public void beforeCreate() {
         super.beforeCreate();
@@ -106,6 +114,14 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
     public List<Long> tracksId() {
         return tracks().stream().map(CytomineDomain::getId).distinct().collect(Collectors.toList());
 
+    }
+
+    public List<Long> annotationLinksId() {
+        return links.stream().map(CytomineDomain::getId).distinct().collect(Collectors.toList());
+    }
+
+    public List<Long> linkedAnnotations() {
+        return links.stream().map(AnnotationLink::getAnnotationIdent).distinct().collect(Collectors.toList());
     }
 
     /**
@@ -195,7 +211,6 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
         returnArray.put("url", UrlApi.getUserAnnotationCropWithAnnotationId(annotation.getId(), "png"));
         returnArray.put("imageURL", UrlApi.getAnnotationURL(annotation.getImage().getProject().getId(), annotation.getImage().getId(), annotation.getId()));
         returnArray.put("reviewed", annotation.hasReviewedAnnotation());
-        // TODO returnArray.put("track", domain?.tracksId());
 
         return returnArray;
     }
@@ -209,6 +224,4 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
     public User userDomainCreator() {
         return user;
     }
-
-
 }

@@ -64,7 +64,6 @@ public class UploadedFileDomainTests {
         uploadedFile = uploadedFileRepository.save(uploadedFile);
         entityManager.flush();
         Long id = uploadedFile.getId();
-        //entityManager.detach(uploadedFile);
         entityManager.refresh(uploadedFile);
         System.out.println("id = " + id);
         uploadedFile = entityManager.find(UploadedFile.class, id);

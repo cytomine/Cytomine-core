@@ -16,9 +16,23 @@ package be.cytomine.service.project;
 * limitations under the License.
 */
 
+import java.util.*;
+import java.util.stream.Collectors;
+
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
+import org.apache.commons.lang3.time.DateUtils;
+import org.assertj.core.api.AssertionsForClassTypes;
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.meta.Description;
 import be.cytomine.domain.meta.Property;
@@ -30,14 +44,11 @@ import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.PersistentProjectConnection;
 import be.cytomine.dto.NamedCytomineDomain;
+import be.cytomine.dto.ProjectBounds;
 import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.ForbiddenException;
-import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
-import be.cytomine.service.CommandService;
 import be.cytomine.service.PermissionService;
-import be.cytomine.service.command.TransactionService;
-import be.cytomine.service.dto.ProjectBounds;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.search.ProjectSearchExtension;
 import be.cytomine.service.security.SecurityACLService;
@@ -46,21 +57,6 @@ import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.filters.SearchOperation;
 import be.cytomine.utils.filters.SearchParameterEntry;
-import org.apache.commons.lang3.time.DateUtils;
-import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.Page;
-import org.springframework.security.test.context.support.WithMockUser;
-
-import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
@@ -77,16 +73,7 @@ public class ProjectServiceTests {
     ProjectService projectService;
 
     @Autowired
-    ProjectRepository projectRepository;
-
-    @Autowired
     BasicInstanceBuilder builder;
-
-    @Autowired
-    CommandService commandService;
-
-    @Autowired
-    TransactionService transactionService;
 
     @Autowired
     PersistentProjectConnectionRepository persistentProjectConnectionRepository;
@@ -105,7 +92,7 @@ public class ProjectServiceTests {
 
     @Autowired
     EntityManager entityManager;
-    
+
     @Autowired
     ProjectRepresentativeUserService projectRepresentativeUserService;
 
@@ -308,7 +295,6 @@ public class ProjectServiceTests {
         assertThat(projectService.findCommandHistory(List.of(project1), builder.given_superadmin().getId(), 0L, 0L, false, null, null))
                 .hasSize(1);
 
-
         assertThat(projectService.findCommandHistory(List.of(project1), builder.given_superadmin().getId(), 0L, 0L, true, DateUtils.addSeconds(new Date(), 10).getTime(), null))
                 .hasSize(0);
 
@@ -324,9 +310,7 @@ public class ProjectServiceTests {
     @Test
     void list_user_project_with_annotation_filters() {
         Project project1 = builder.given_a_project();
-        //Project project2 = builder.given_a_project();
         builder.addUserToProject(project1, builder.given_superadmin().getUsername());
-        //builder.addUserToProject(project2, builder.given_superadmin().getUsername());
 
         project1.setCountImages(100L);
         project1.setCountAnnotations(200L);
@@ -666,8 +650,7 @@ public class ProjectServiceTests {
         Project projectCreated = projectService.find(commandResponse.getObject().getId()).get();
         assertThat(projectCreated.getName()).isEqualTo(project.getName());
 
-        assertThat(securityACLService.getProjectUsers(projectCreated))
-                .containsExactly(builder.given_superadmin().getUsername());
+        assertThat(securityACLService.getProjectUsers(projectCreated)).containsExactly(builder.given_superadmin().getUsername());
 
         assertThat(permissionService.hasACLPermission(projectCreated, builder.given_superadmin().getUsername(), ADMINISTRATION)).isTrue();
 
@@ -681,9 +664,10 @@ public class ProjectServiceTests {
         User user = builder.given_a_user();
         User admin = builder.given_a_user();
 
-
         CommandResponse commandResponse = projectService.add(project.toJsonObject()
-                .withChange("users", List.of(user.getId())).withChange("admins", List.of(admin.getId())));
+            .withChange("users", List.of(user.getId()))
+            .withChange("admins", List.of(admin.getId()))
+        );
 
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);
@@ -740,7 +724,7 @@ public class ProjectServiceTests {
         builder.persistAndReturn(userAnnotation);
         builder.given_an_annotation_term(userAnnotation);
         Ontology anotherOntology = builder.given_an_ontology();
-        
+
         Assertions.assertThrows(ForbiddenException.class, () -> {
             projectService.update(project, project.toJsonObject()
                     .withChange("ontology", anotherOntology.getId()));
@@ -812,13 +796,13 @@ public class ProjectServiceTests {
 
         assertThat(projectRepresentativeUserService.find(project, previousUser)).isPresent();
         assertThat(projectRepresentativeUserService.find(project, newUser)).isEmpty();
-        
+
         CommandResponse commandResponse = projectService.update(project, project.toJsonObject()
                 .withChange("representatives", List.of(newUser.getId())));
 
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);
-        
+
         assertThat(projectRepresentativeUserService.find(project, previousUser)).isEmpty();
         assertThat(projectRepresentativeUserService.find(project, newUser)).isPresent();
     }
@@ -844,7 +828,7 @@ public class ProjectServiceTests {
 
         given_a_persistent_connection_in_project(user1, project1, DateUtils.addSeconds(new Date(), -300));
         given_a_persistent_connection_in_project(user1, project2, DateUtils.addSeconds(new Date(), -5));
-        
+
         assertThat(projectService.getActiveProjects()).contains(project2.getId()).doesNotContain(project1.getId(), project3.getId());
     }
 
@@ -854,7 +838,7 @@ public class ProjectServiceTests {
         Project project1 = builder.given_a_project_with_user(user1);
         Project project2 = builder.given_a_project_with_user(user1);
         Project project3 = builder.given_a_project_with_user(user1);
-        
+
         builder.addUserToProject(project2, user1.getUsername());
         builder.addUserToProject(project2, builder.given_superadmin().getUsername());
 
@@ -867,7 +851,7 @@ public class ProjectServiceTests {
 
         given_a_persistent_connection_in_project(builder.given_superadmin(), project1, DateUtils.addSeconds(new Date(), -10));
         given_a_persistent_connection_in_project(user1, project2, DateUtils.addSeconds(new Date(), -5));
-        
+
         assertThat(projectService.getActiveProjectsWithNumberOfUsers()).hasSize(2);
     }
 
@@ -905,7 +889,7 @@ public class ProjectServiceTests {
     @Test
     void delete_project_with_dependencies() {
         Project project = builder.given_a_project();
-        ImageInstance imageInstance = builder.given_an_image_instance(project);
+        builder.given_an_image_instance(project);
         UserAnnotation annotation = builder.given_a_not_persisted_user_annotation(project);
         builder.persistAndReturn(annotation);
 
@@ -913,7 +897,6 @@ public class ProjectServiceTests {
         Description description = builder.given_a_description(project);
         TagDomainAssociation tagDomainAssociation = builder.given_a_tag_association(builder.given_a_tag(), project);
         AttachedFile attachedFile = builder.given_a_attached_file(project);
-
 
         AssertionsForClassTypes.assertThat(entityManager.find(Property.class, property.getId())).isNotNull();
         AssertionsForClassTypes.assertThat(entityManager.find(Description.class, description.getId())).isNotNull();
@@ -930,63 +913,10 @@ public class ProjectServiceTests {
         AssertionsForClassTypes.assertThat(entityManager.find(Description.class, description.getId())).isNull();
         AssertionsForClassTypes.assertThat(entityManager.find(TagDomainAssociation.class, tagDomainAssociation.getId())).isNull();
         AssertionsForClassTypes.assertThat(entityManager.find(AttachedFile.class, attachedFile.getId())).isNull();
-
     }
-
 
     PersistentProjectConnection given_a_persistent_connection_in_project(User user, Project project, Date created) {
         PersistentProjectConnection connection = projectConnectionService.add(user, project, "xxx", "linux", "chrome", "123", created);
         return connection;
     }
-
-
-
-
-
-
-
-
-// FOR CONTROLLER TEST
-
-    //    //search
-//    void testGetSearch(){
-//
-//        searchParameters = [[operator : "in", field : "ontology_id", value:"null,"+p1.ontology.id]]
-//
-//        result = ProjectAPI.list(searchParameters, Infos.ADMINLOGIN, Infos.ADMINPASSWORD)
-//        assert 200 == result.code
-//        json = JSON.parse(result.data)
-//        assert json.collection instanceof JSONArray
-//
-
-
-
-    //        Project p4 = BasicInstanceBuilder.getProjectNotExist(true)
-//        p4.name = "T&test=5"
-//        p4.save(flush: true)
-//        p4 = p4.refresh()
-//
-//        searchParameters = [[operator : "like", field : "name", value:"T&test=5"]]
-//
-//        result = ProjectAPI.list(searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code
-//        json = JSON.parse(result.data)
-//        assert json.collection instanceof JSONArray
-//        assert json.size == 1
-//        assert !ProjectAPI.containsInJSONList(p1.id,json)
-//        assert ProjectAPI.containsInJSONList(p4.id,json)
-
-
-
-//
-
-//
-//
-//        searchParameters = [[operator : "like", field : "name", value:"T';DELETE FROM amqp_queue_config;SELECT * FROM project WHERE name LIKE 'T%X';--"]]
-//
-//        result = ProjectAPI.list(searchParameters, Infos.SUPERADMINLOGIN, Infos.SUPERADMINPASSWORD)
-//        assert 200 == result.code // if multiple queries, error is returned. If 200 ==> OK
-//    }
-
-
 }
