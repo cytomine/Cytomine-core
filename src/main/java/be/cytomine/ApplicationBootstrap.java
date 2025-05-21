@@ -8,6 +8,7 @@ import java.util.List;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.annotation.Order;
@@ -46,6 +47,7 @@ class ApplicationBootstrap {
 
     private final Environment environment;
 
+    @Autowired
     BootstrapDataService bootstrapDataService;
 
     BootstrapUtilsService bootstrapUtilDataService;
