@@ -17,7 +17,6 @@
 
             DROP TABLE IF EXISTS image_sequence;
             DROP TABLE IF EXISTS image_grouphdf5;
-            DROP TABLE IF EXISTS image_group;
 
             DROP TABLE IF EXISTS annotation_filter_sec_user;
             DROP TABLE IF EXISTS annotation_filter_term;
