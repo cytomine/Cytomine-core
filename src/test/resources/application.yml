@@ -89,7 +89,7 @@ application:
   instanceHostWebsite: instanceHostWebsite.com
   instanceHostSupportMail: instanceHostSupportMail@email.com
   instanceHostPhoneNumber: 0999999999
-
+  defaultLanguage: ENGLISH
 
   appEngine:
     enabled: ${APPENGINE_ENABLED:true}
@@ -104,7 +104,7 @@ application:
       token-validity-in-seconds-for-remember-me: ${TOKEN_VALIDITY_IN_SECONDS_REMEMBER_ME:2592000}
       token-validity-in-seconds-for-short-term: ${TOKEN_VALIDITY_IN_SECONDS_SHORT_TERM:300}
 
-  internalProxyURL: ${INTERNAL_PROXY_URL:http://localhost:8888}
+  internalProxyURL: http://localhost:8888
   annotation:
     maxNumberOfPoint: 200
 
