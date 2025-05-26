@@ -32,6 +32,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.RequestPatternBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.verification.LoggedRequest;
+import com.nimbusds.jose.crypto.RSASSASigner;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -49,7 +50,20 @@ import org.springframework.test.web.servlet.MvcResult;
 import jakarta.transaction.Transactional;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+
+import com.nimbusds.jose.Algorithm;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.jwk.KeyUse;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 
 import static be.cytomine.service.middleware.ImageServerService.IMS_API_BASE_PATH;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
@@ -81,8 +95,13 @@ public class ImageInstanceResourceTests {
 
     private static WireMockServer wireMockServer = new WireMockServer(8888);
 
+    private static RSAKey rsaKey;
+
+    private static final String KEY_ID = "some random string";
+
     @BeforeAll
-    public static void beforeAll() {
+    public static void beforeAll() throws JOSEException {
+        configureWireMock(wireMockServer);
         wireMockServer.start();
     }
 
@@ -609,7 +628,7 @@ public class ImageInstanceResourceTests {
                 )
         );
 
-        MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/thumb.png?maxSize=512", image.getId()))
+        MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/thumb.png?maxSize=512&Authorization=Bearer "+getSignedNotExpiredJwt(), image.getId()))
                 .andExpect(status().isOk())
                 .andReturn();
         List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
@@ -619,7 +638,7 @@ public class ImageInstanceResourceTests {
     @Test
     @Transactional
     public void get_image_instance_thumb_if_image_not_exist() throws Exception {
-        restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/thumb.png", 0))
+        restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/thumb.png?Authorization=Bearer " + getSignedNotExpiredJwt(), 0))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errors").exists());
     }
@@ -937,6 +956,55 @@ public class ImageInstanceResourceTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))))
                 .andExpect(jsonPath("$.collection[0].color").value("#f00"));
+    }
+
+    private String getSignedNotExpiredJwt() throws Exception {
+        return getSignedJwt(Instant.now().plus(10, ChronoUnit.MINUTES));
+    }
+
+    private String getSignedJwt(Instant expiresAt) throws Exception {
+
+        RSASSASigner signer = new RSASSASigner(rsaKey);
+        Instant issuedAt = Instant.now();
+        Map<String, Object> resourceAccessClaim = new HashMap<>();
+        Map<String, Object> resource = new HashMap<>();
+        List<String> resourceRoles = List.of("ADMIN");
+        resource.put("roles", resourceRoles);
+        resourceAccessClaim.put("core" , resource);
+        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+                .expirationTime(new Date(new Date().getTime() + 60 * 1000))
+                .issuer("http://localhost:8888/")
+                .expirationTime(Date.from(expiresAt))
+                .issueTime(Date.from(issuedAt))
+                .claim("iss", "http://localhost:8888/")
+                .claim("sub", UUID.randomUUID())
+                .claim("name", "Some User")
+                .claim("preferred_username", "superadmin")
+                .claim("resource_access" , resourceAccessClaim)
+                .build();
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader.Builder(JWSAlgorithm.RS256)
+                .keyID(rsaKey.getKeyID())
+                .build(), claimsSet);
+        signedJWT.sign(signer);
+        return signedJWT.serialize();
+    }
+
+    public static void configureWireMock(WireMockServer wireMockServer) throws JOSEException {
+        rsaKey = new RSAKeyGenerator(2048)
+                .keyUse(KeyUse.SIGNATURE)
+                .algorithm(new Algorithm("RS256"))
+                .keyID(KEY_ID)
+                .generate();
+
+        RSAKey rsaPublicJWK = rsaKey.toPublicJWK();
+        String jwkResponse = String.format("{\"keys\": [%s]}", rsaPublicJWK.toJSONString());
+
+        wireMockServer.stubFor(com.github.tomakehurst.wiremock.client.WireMock.get(urlMatching("/"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                        .withBody(jwkResponse)));
+
+
     }
 
 }
