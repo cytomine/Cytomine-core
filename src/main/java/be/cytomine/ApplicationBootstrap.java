@@ -41,6 +41,7 @@ import static be.cytomine.service.database.BootstrapTestsDataService.*;
 @Transactional
 class ApplicationBootstrap {
 
+    @Autowired
     private final UserRepository userRepository;
 
     private final ApplicationProperties applicationProperties;
@@ -50,12 +51,14 @@ class ApplicationBootstrap {
     @Autowired
     BootstrapDataService bootstrapDataService;
 
+    @Autowired
     BootstrapUtilsService bootstrapUtilDataService;
 
     private final InitialMongodbSetupMigration initialSetupMigration;
 
     private final Dataset dataset;
 
+    @Autowired
     BootstrapTestsDataService bootstrapTestsDataService;
 
 
