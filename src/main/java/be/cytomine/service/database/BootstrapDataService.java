@@ -19,12 +19,11 @@ package be.cytomine.service.database;
 import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.domain.meta.ConfigurationReadingRole;
 import be.cytomine.domain.processing.ImageFilter;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.processing.ImageFilterRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.utils.Dataset;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -45,7 +44,7 @@ public class BootstrapDataService {
     Dataset dataset;
 
     @Autowired
-    SecUserRepository secUserRepository;
+    UserRepository userRepository;
 
     @Autowired
     ApplicationProperties applicationProperties;
@@ -73,18 +72,12 @@ public class BootstrapDataService {
         bootstrapUtilsService.createRole("ROLE_SUPER_ADMIN");
         bootstrapUtilsService.createRole("ROLE_GUEST");
 
-        bootstrapUtilsService.createUser("admin", "Just an", "Admin", dataset.ADMINEMAIL, dataset.ADMINPASSWORD,  List.of("ROLE_USER", "ROLE_ADMIN"));
-        bootstrapUtilsService.createUser("ImageServer1", "Image", "Server", dataset.ADMINEMAIL, RandomStringUtils.random(32).toUpperCase(), List.of("ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN"));
-        bootstrapUtilsService.createUser("superadmin", "Super", "Admin", dataset.ADMINEMAIL, dataset.ADMINPASSWORD,  List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
-        bootstrapUtilsService.createUser("monitoring", "Monitoring", "Monitoring", dataset.ADMINEMAIL, RandomStringUtils.random(32).toUpperCase(),  List.of("ROLE_USER","ROLE_SUPER_ADMIN"));
+        bootstrapUtilsService.createUser("ImageServer1", "Image", "Server", List.of("ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN"));
 
         bootstrapUtilsService.createRelation(PARENT);
 
         bootstrapUtilsService.createConfigurations("WELCOME", "<p>Welcome to the Cytomine software.</p><p>This software is supported by the <a href='https://cytomine.coop'>Cytomine company</a></p>", ConfigurationReadingRole.ALL);
         bootstrapUtilsService.createConfigurations("admin_email", applicationProperties.getAdminEmail(), ConfigurationReadingRole.ADMIN);
-
-        changeUserKeys("admin", applicationProperties.getAdminPrivateKey(), applicationProperties.getAdminPublicKey());
-        changeUserKeys("superadmin", applicationProperties.getSuperAdminPrivateKey(), applicationProperties.getSuperAdminPublicKey());
     }
 
     public void initImageFilters() {
@@ -125,12 +118,13 @@ public class BootstrapDataService {
         }
     }
 
+    /**  Deprecated API keys. Will be removed in a future release **/
     private void changeUserKeys(String username, String privateKey, String publicKey) {
-        SecUser user = secUserRepository.findByUsernameLikeIgnoreCase(username)
+        User user = userRepository.findByUsernameLikeIgnoreCase(username)
                 .orElseThrow(() -> new ObjectNotFoundException(username + " user does not exists, cannot set its keys"));
         user.setPrivateKey(privateKey);
         user.setPublicKey(publicKey);
-        secUserRepository.save(user);
+        userRepository.save(user);
     }
 
     public void updateImageFilters() {

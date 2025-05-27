@@ -28,7 +28,7 @@ import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.utils.JsonObject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,7 +65,7 @@ public class ReportFormatServiceTests {
     ReviewedAnnotationService reviewedAnnotationService;
 
     @Autowired
-    SecUserService secUserService;
+    UserService userService;
 
     @Autowired
     ImageInstanceService imageInstanceService;
@@ -242,19 +242,19 @@ public class ReportFormatServiceTests {
         User user1 = builder.given_a_user();
         User user2 = builder.given_a_user();
         expectedDataObject = new Object[][]{
-                {"User Name", "First Name", "Last Name"},
-                {user1.getUsername(), user1.getUsername(), user1.humanUsername()},
-                {user2.getUsername(), user2.getUsername(), user2.humanUsername()},
+                {"Username", "Name"},
+                {user1.getUsername(), user1.getName()},
+                {user2.getUsername(), user2.getName()},
         };
         if(!isComplete){
             expectedDataObject[1][1] = "";
             return new ArrayList<>(List.of(
-                    Map.of("username", user1.getUsername(), "lastname", user1.humanUsername()),
-                    Map.of("username", user2.getUsername(), "firstname", user2.humanUsername(), "lastname", user2.humanUsername())));
+                    Map.of("username", user1.getUsername()),
+                    Map.of("username", user2.getUsername(), "name", user2.getName())));
         }else{
             return new ArrayList<>(List.of(
-                    Map.of("username", user1.getUsername(), "firstname", user1.humanUsername(), "lastname", user1.humanUsername()),
-                    Map.of("username", user2.getUsername(), "firstname", user2.humanUsername(), "lastname", user2.humanUsername())));
+                    Map.of("username", user1.getUsername(), "name", user1.getName()),
+                    Map.of("username", user2.getUsername(), "name", user2.getName())));
         }
     }
 }

@@ -108,8 +108,6 @@ public class AnnotationDomainResourceTests {
     ReviewedAnnotation r5;
     ReviewedAnnotation r6;
 
-    AlgoAnnotation algoAnnotation;
-
     private static WireMockServer wireMockServer = new WireMockServer(8888);
 
     @BeforeAll
@@ -150,8 +148,6 @@ public class AnnotationDomainResourceTests {
         r4 =  builder.given_a_reviewed_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", me, null);
         r5 = builder.given_a_reviewed_annotation(slice,"POLYGON((1 1,5 1,5 1,1 5,1 1))", randomUser, null);
         r6 = builder.given_a_reviewed_annotation(slice,"POLYGON((1 1,5 1,5 1,1 5,1 1))", randomUser, term);
-
-        algoAnnotation = builder.given_a_algo_annotation(slice,"POLYGON((1 1,5 1,5 5,1 5,1 1))", builder.given_a_user_job(), term);
     }
     @BeforeEach
     public void BeforeEach() throws ParseException {
@@ -613,24 +609,6 @@ public class AnnotationDomainResourceTests {
                 .andReturn();
     }
 
-
-    @Test
-    @Transactional
-    public void list_algo_annotation_search_by_image_and_user() throws Exception {
-
-        algoAnnotation.setImage(builder.given_an_image_instance(project));
-        algoAnnotation.setUser(builder.given_a_user_job());
-
-        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation.json")
-                        .param("image", algoAnnotation.getImage().getId().toString())
-                        .param("user", algoAnnotation.getUser().getId().toString()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[?(@.id==" + algoAnnotation.getId() + ")]").exists())
-                .andReturn();
-
-
-    }
-
     @Test
     @Transactional
     public void list_reviewed_annotation_property_show() throws Exception {
@@ -1008,8 +986,6 @@ public class AnnotationDomainResourceTests {
         assertThat(rows.length).isEqualTo(2);
     }
 
-    //TODO Download algo annotations
-
     @Test
     @Transactional
     public void download_csv_reports() throws Exception {
@@ -1108,35 +1084,6 @@ public class AnnotationDomainResourceTests {
         AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
 
-    @Disabled("Randomly fail with ProxyExchange, need to find a solution")
-    @Test
-    @jakarta.transaction.Transactional
-    public void get_algo_annotation_crop() throws Exception {
-
-        AlgoAnnotation annotation = AlgoAnnotationResourceTests.given_a_algo_annotation_with_valid_image_server(builder);
-
-        configureFor("localhost", 8888);
-        byte[] mockResponse = UUID.randomUUID().toString().getBytes();
-
-        String url = "/image/"+ URLEncoder.encode("1636379100999/CMU-2/CMU-2.mrxs", StandardCharsets.UTF_8).replace("%2F", "/") + "/annotation/crop";
-        String body = "{\"length\":512,\"z_slices\":0,\"annotations\":[{\"geometry\":\"POLYGON ((1 1, 50 10, 50 50, 10 50, 1 1))\"}],\"timepoints\":0,\"background_transparency\":0}";
-        System.out.println(url);
-        System.out.println(body);
-        stubFor(WireMock.post(urlEqualTo(IMS_API_BASE_PATH + url)).withRequestBody(WireMock.equalTo(
-                                body
-                        ))
-                        .willReturn(
-                                aResponse().withBody(mockResponse)
-                        )
-        );
-
-        MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}/crop.png?maxSize=512", annotation.getId()))
-                .andExpect(status().isOk())
-                .andReturn();
-        List<LoggedRequest> all = wireMockServer.findAll(RequestPatternBuilder.allRequests());
-        AssertionsForClassTypes.assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
-    }
-
     @Test
     @Transactional
     public void show_valid_user_annotation() throws Exception {
@@ -1155,14 +1102,7 @@ public class AnnotationDomainResourceTests {
                 .andExpect(jsonPath("$.id").value(annotation.getId()));
     }
 
-    @Test
-    @Transactional
-    public void show_valid_algo_annotation() throws Exception {
-        AlgoAnnotation annotation = builder.given_a_algo_annotation();
-        restAnnotationDomainControllerMockMvc.perform(get("/api/annotation/{id}.json", annotation.getId()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(annotation.getId()));
-    }
+
 
     @Test
     @Transactional
@@ -1202,29 +1142,6 @@ public class AnnotationDomainResourceTests {
                 .andExpect(status().isOk());
     }
 
-
-
-
-    @Test
-    @Transactional
-    @WithMockUser("superadminjob")
-    public void add_valid_algo_annotation() throws Exception {
-        AlgoAnnotation algoAnnotation = builder.given_a_not_persisted_algo_annotation();
-        restAnnotationDomainControllerMockMvc.perform(post("/api/annotation.json")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(algoAnnotation.toJSON()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.printMessage").value(true))
-                .andExpect(jsonPath("$.callback").exists())
-                .andExpect(jsonPath("$.callback.algoannotationID").exists())
-                .andExpect(jsonPath("$.callback.method").value("be.cytomine.AddAlgoAnnotationCommand"))
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.command").exists())
-                .andExpect(jsonPath("$.annotation.id").exists());
-
-    }
-
-
     @Test
     @org.springframework.transaction.annotation.Transactional
     public void edit_valid_user_annotation() throws Exception {
@@ -1258,23 +1175,6 @@ public class AnnotationDomainResourceTests {
                 .andExpect(jsonPath("$.callback.method").value("be.cytomine.EditReviewedAnnotationCommand"))
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.command").exists());
-    }
-
-    @Test
-    @org.springframework.transaction.annotation.Transactional
-    public void edit_valid_algo_annotation() throws Exception {
-        AlgoAnnotation annotation = builder.given_a_algo_annotation();
-        restAnnotationDomainControllerMockMvc.perform(put("/api/annotation/{id}.json", annotation.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(annotation.toJSON()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.printMessage").value(true))
-                .andExpect(jsonPath("$.callback").exists())
-                .andExpect(jsonPath("$.callback.algoannotationID").exists())
-                .andExpect(jsonPath("$.callback.method").value("be.cytomine.EditAlgoAnnotationCommand"))
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.command").exists());
-
     }
 
 
@@ -1312,33 +1212,6 @@ public class AnnotationDomainResourceTests {
                 .andExpect(jsonPath("$.callback.method").value("be.cytomine.DeleteReviewedAnnotationCommand"))
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.command").exists());
-
-    }
-
-
-    @Test
-    @org.springframework.transaction.annotation.Transactional
-    public void delete_algo_annotation() throws Exception {
-        AlgoAnnotation annotation = builder.given_a_algo_annotation();
-        restAnnotationDomainControllerMockMvc.perform(delete("/api/annotation/{id}.json", annotation.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(annotation.toJSON()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.printMessage").value(true))
-                .andExpect(jsonPath("$.callback").exists())
-                .andExpect(jsonPath("$.callback.algoannotationID").exists())
-                .andExpect(jsonPath("$.callback.method").value("be.cytomine.DeleteAlgoAnnotationCommand"))
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.command").exists());
-
-    }
-
-    @Test
-    @Transactional
-    public void delete_unexisting_annotation() throws Exception {
-        AlgoAnnotation annotation = builder.given_a_algo_annotation();
-        restAnnotationDomainControllerMockMvc.perform(delete("/api/annotation/{id}.json",0))
-                .andExpect(status().isNotFound());
 
     }
 
@@ -1388,7 +1261,7 @@ public class AnnotationDomainResourceTests {
     @Transactional
     public void simplify_annotation() throws Exception {
 
-        AnnotationDomain annotation = builder.given_a_algo_annotation();
+        AnnotationDomain annotation = builder.given_a_user_annotation();
         annotation.setLocation(new WKTReader().read(TestUtils.getResourceFileAsString("dataset/very_big_annotation.txt")));
         assertThat(annotation.getLocation().getNumPoints()).isGreaterThanOrEqualTo(500);
         builder.persistAndReturn(annotation);
@@ -1445,22 +1318,6 @@ public class AnnotationDomainResourceTests {
         AnnotationDomain annotation = builder.given_a_not_persisted_user_annotation();
         annotation.setLocation(new WKTReader().read(annotationWithHole));
         builder.persistAndReturn(annotation);
-
-        MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/{id}/fill.json", annotation.getId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk()).andReturn();
-
-        assertThat(annotation.getLocation().toText())
-                .isEqualTo("POLYGON ((4980 4980, 5516 4932, 5476 4188, 4956 4204, 4980 4980))");
-    }
-
-    @Transactional
-    public void fill_algo_annotation() throws Exception {
-        String annotationWithHole =
-                "POLYGON ((4980 4980, 5516 4932, 5476 4188, 4956 4204, 4980 4980), (5100 4316, 5100 4804, 5404 4780, 5364 4316, 5100 4316))";
-
-        AnnotationDomain annotation = builder.given_a_not_persisted_algo_annotation();
-        annotation.setLocation(new WKTReader().read(annotationWithHole));
 
         MvcResult mvcResult = restAnnotationDomainControllerMockMvc.perform(post("/api/annotation/{id}/fill.json", annotation.getId())
                         .contentType(MediaType.APPLICATION_JSON))

@@ -22,7 +22,7 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.AnnotationTrack;
 import be.cytomine.domain.ontology.Track;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.TrackRepository;
@@ -112,7 +112,7 @@ public class TrackService extends ModelService {
 
         securityACLService.check(imageInstance.getProject(), READ);
         securityACLService.checkFullOrRestrictedForOwner(imageInstance, imageInstance.getUser());
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
 
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
@@ -129,7 +129,7 @@ public class TrackService extends ModelService {
         Track track = ((Track)domain);
         securityACLService.check(domain.container(),READ);
         securityACLService.checkFullOrRestrictedForOwner(track, track.getImage().getUser());
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
 
         ImageInstance imageInstance = imageInstanceService.find(jsonNewData.getJSONAttrLong("image", 0L))
@@ -152,7 +152,7 @@ public class TrackService extends ModelService {
         Track track = ((Track)domain);
         securityACLService.check(domain.container(),READ);
         securityACLService.checkFullOrRestrictedForOwner(track, track.getImage().getUser());
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
 
         Command c = new DeleteCommand(currentUser, transaction);

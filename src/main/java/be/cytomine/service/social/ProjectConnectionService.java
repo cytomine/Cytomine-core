@@ -17,7 +17,6 @@ package be.cytomine.service.social;
 */
 
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.PersistentConnection;
 import be.cytomine.domain.social.PersistentImageConsultation;
@@ -26,7 +25,7 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.AnnotationListing;
 import be.cytomine.repository.UserAnnotationListing;
 import be.cytomine.repository.project.ProjectRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.repositorynosql.social.LastConnectionRepository;
 import be.cytomine.repositorynosql.social.PersistentImageConsultationRepository;
 import be.cytomine.repositorynosql.social.PersistentProjectConnectionRepository;
@@ -85,7 +84,7 @@ public class ProjectConnectionService {
     ProjectConnectionRepository projectConnectionRepository;
 
     @Autowired
-    SecUserRepository secUserRepository;
+    UserRepository userRepository;
 
     @Autowired
     MongoClient mongoClient;
@@ -117,11 +116,11 @@ public class ProjectConnectionService {
     @Autowired
     private SessionFactory sessionFactory;
 
-    public PersistentProjectConnection add(SecUser user, Project project, String session, String os, String browser, String browserVersion) {
+    public PersistentProjectConnection add(User user, Project project, String session, String os, String browser, String browserVersion) {
         return add(user, project, session, os, browser, browserVersion, new Date());
     }
 
-    public PersistentProjectConnection add(SecUser user, Project project, String session, String os, String browser, String browserVersion, Date created) {
+    public PersistentProjectConnection add(User user, Project project, String session, String os, String browser, String browserVersion, Date created) {
         securityACLService.check(project, READ);
         closeLastProjectConnection(user.getId(), project.getId(), created);
 
@@ -141,8 +140,8 @@ public class ProjectConnectionService {
     }
 
     public Optional<PersistentProjectConnection> lastConnectionInProject(Project project, Long userId, String sortProperty, String sortDirection){
-        SecUser secUser = secUserRepository.findById(userId).orElseThrow(() -> new ObjectNotFoundException("User", userId));
-        securityACLService.checkIsSameUserOrAdminContainer(project, secUser, currentUserService.getCurrentUser());
+        User user = userRepository.findById(userId).orElseThrow(() -> new ObjectNotFoundException("User", userId));
+        securityACLService.checkIsSameUserOrAdminContainer(project, user, currentUserService.getCurrentUser());
 
         return persistentProjectConnectionRepository.findAllByUserAndProject(
                 userId,
@@ -281,7 +280,7 @@ public class ProjectConnectionService {
         persistentProjectConnectionRepository.save(connection);
     }
 
-    public Page<PersistentProjectConnection> getConnectionByUserAndProject(SecUser user, Project project, Integer limit, Integer offset){
+    public Page<PersistentProjectConnection> getConnectionByUserAndProject(User user, Project project, Integer limit, Integer offset){
         securityACLService.check(project,WRITE);
         if (limit==0) {
             limit = Integer.MAX_VALUE;
@@ -406,7 +405,7 @@ public class ProjectConnectionService {
     }
 
 
-    public List<JsonObject> numberOfConnectionsByProjectOrderedByHourAndDays(Project project, Long afterThan, SecUser user) {
+    public List<JsonObject> numberOfConnectionsByProjectOrderedByHourAndDays(Project project, Long afterThan, User user) {
 
         securityACLService.check(project, WRITE);
 
@@ -453,7 +452,7 @@ public class ProjectConnectionService {
     }
 
 
-    public List<JsonObject> numberOfProjectConnections(String period, Long afterThan, Long beforeThan, Project project, SecUser user){
+    public List<JsonObject> numberOfProjectConnections(String period, Long afterThan, Long beforeThan, Project project, User user){
         if (user==null && project==null) {
             securityACLService.checkAdmin(currentUserService.getCurrentUser());
         } else if(project!=null) {
@@ -538,7 +537,7 @@ public class ProjectConnectionService {
     }
 
 
-    public List<JsonObject> averageOfProjectConnections(String period, Long afterThan, Long beforeThan, Project project, SecUser user){
+    public List<JsonObject> averageOfProjectConnections(String period, Long afterThan, Long beforeThan, Project project, User user){
         if (project != null) {
             securityACLService.check(project,READ);
             if (user!= null) {

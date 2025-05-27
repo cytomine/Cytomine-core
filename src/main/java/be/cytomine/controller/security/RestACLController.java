@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import be.cytomine.controller.RestCytomineController;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.CytomineException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.security.AclAuthService;
@@ -37,7 +37,7 @@ public class RestACLController extends RestCytomineController {
 
         try {
             if(domainClassName!=null && domainIdent!=null && user!=null) {
-                SecUser secUser = entityManager.find(SecUser.class, Long.parseLong(user));
+                User secUser = entityManager.find(User.class, Long.parseLong(user));
                 return responseSuccess(aclAuthService.get(Long.parseLong(domainIdent),secUser));
             } else {
                 throw new ObjectNotFoundException("Request not valid: domainClassName="+ domainClassName + ", domainIdent= " + domainIdent + ", user=" + user);

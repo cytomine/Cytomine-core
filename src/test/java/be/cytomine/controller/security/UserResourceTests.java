@@ -23,7 +23,6 @@ import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.*;
 import be.cytomine.dto.image.AreaDTO;
@@ -44,12 +43,12 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -60,10 +59,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -118,9 +119,6 @@ public class UserResourceTests {
     private UserRepository userRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
     private PermissionService permissionService;
 
     @BeforeEach
@@ -139,7 +137,7 @@ public class UserResourceTests {
         return connection;
     }
 
-    PersistentImageConsultation given_a_persistent_image_consultation(SecUser user, ImageInstance imageInstance, Date created) {
+    PersistentImageConsultation given_a_persistent_image_consultation(User user, ImageInstance imageInstance, Date created) {
         return imageConsultationService.add(user, imageInstance.getId(), "xxx", "mode", created);
     }
 
@@ -154,7 +152,7 @@ public class UserResourceTests {
         return connection;
     }
 
-    PersistentConnection given_a_last_connection(SecUser user, Long idProject, Date date) {
+    PersistentConnection given_a_last_connection(User user, Long idProject, Date date) {
         LastConnection connection = new LastConnection();
         connection.setId(sequenceService.generateID());
         connection.setUser(user.getId());
@@ -311,28 +309,13 @@ public class UserResourceTests {
         builder.addUserToProject(project, projectUser.getUsername(), READ);
 
         restUserControllerMockMvc.perform(get("/api/user.json")
-                        .param("withRoles", "true")
-                        .param("withLastConsultation", "true")
-                        .param("withNumberConsultations", "true")
                         .param("sortColumn", "created")
                         .param("sortDirection", "desc")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection[?(@.username=='" + simpleUser.getUsername() + "')].role").value("ROLE_USER"))
-                .andExpect(jsonPath("$.collection[?(@.username=='" + projectUser.getUsername() + "')].role").value("ROLE_USER"))
-                .andExpect(jsonPath("$.collection[?(@.username=='" + simpleUser.getUsername() + "')].role").value("ROLE_USER"));
-    }
-
-    @Test
-    @Transactional
-    public void list_user_with_public_key() throws Exception {
-        User simpleUser = builder.given_a_user();
-
-        restUserControllerMockMvc.perform(get("/api/user.json")
-                        .param("publicKey", simpleUser.getPublicKey())
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value(simpleUser.getUsername()));
+                .andExpect(jsonPath("$.collection[?(@.username=='" + simpleUser.getUsername() + "')].name").value("firstname lastname"))
+                .andExpect(jsonPath("$.collection[?(@.username=='" + projectUser.getUsername() + "')].name").value("firstname lastname"))
+                .andExpect(jsonPath("$.collection[?(@.username=='" + simpleUser.getUsername() + "')].name").value("firstname lastname"));
     }
 
     @Test
@@ -343,23 +326,25 @@ public class UserResourceTests {
         restUserControllerMockMvc.perform(get("/api/user/{id}.json", builder.given_superadmin().getId())
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstname").value(currentUser.getFirstname()))
-                .andExpect(jsonPath("$.created").value(currentUser.getCreated().getTime()))
-                .andExpect(jsonPath("$.origin").value("BOOTSTRAP"))
-                .andExpect(jsonPath("$.admin").value(true))
-                .andExpect(jsonPath("$.language").value("EN"))
-                .andExpect(jsonPath("$.publicKey").value(currentUser.getPublicKey()))
-                .andExpect(jsonPath("$.lastname").value(currentUser.getLastname()))
-                .andExpect(jsonPath("$.privateKey").value(currentUser.getPrivateKey()))
-                .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.guest").value(false))
                 .andExpect(jsonPath("$.id").value(currentUser.getId()))
-                .andExpect(jsonPath("$.passwordExpired").value(false))
-                .andExpect(jsonPath("$.updated").exists())
-                .andExpect(jsonPath("$.user").value(false))
-                .andExpect(jsonPath("$.algo").value(false))
-                .andExpect(jsonPath("$.email").value(currentUser.getEmail()))
-                .andExpect(jsonPath("$.username").value(currentUser.getUsername()));
+                .andExpect(jsonPath("$.username").value(currentUser.getUsername()))
+                .andExpect(jsonPath("$.name").value(currentUser.getName()))
+                .andExpect(jsonPath("$.fullName").value(currentUser.getFullName()))
+                .andExpect(jsonPath("$.firstname").doesNotExist())
+                .andExpect(jsonPath("$.created").doesNotExist())
+                .andExpect(jsonPath("$.origin").doesNotExist())
+                .andExpect(jsonPath("$.admin").doesNotExist())
+                .andExpect(jsonPath("$.language").doesNotExist())
+                .andExpect(jsonPath("$.publicKey").doesNotExist())
+                .andExpect(jsonPath("$.lastname").doesNotExist())
+                .andExpect(jsonPath("$.privateKey").doesNotExist())
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.guest").doesNotExist())
+                .andExpect(jsonPath("$.passwordExpired").doesNotExist())
+                .andExpect(jsonPath("$.updated").doesNotExist())
+                .andExpect(jsonPath("$.user").doesNotExist())
+                .andExpect(jsonPath("$.algo").doesNotExist())
+                .andExpect(jsonPath("$.email").doesNotExist());
     }
 
     @Test
@@ -368,26 +353,29 @@ public class UserResourceTests {
     public void get_user_as_current_user() throws Exception {
         User currentUser = builder.given_default_user();
 
+
         restUserControllerMockMvc.perform(get("/api/user/{id}.json", currentUser.getId())
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstname").value(currentUser.getFirstname()))
-                .andExpect(jsonPath("$.created").value(currentUser.getCreated().getTime()))
-                .andExpect(jsonPath("$.origin").exists())
-                .andExpect(jsonPath("$.admin").value(false))
-                .andExpect(jsonPath("$.language").value("EN"))
-                .andExpect(jsonPath("$.publicKey").value(currentUser.getPublicKey()))
-                .andExpect(jsonPath("$.lastname").value(currentUser.getLastname()))
-                .andExpect(jsonPath("$.privateKey").value(currentUser.getPrivateKey()))
-                .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.guest").value(false))
                 .andExpect(jsonPath("$.id").value(currentUser.getId()))
-                .andExpect(jsonPath("$.passwordExpired").value(false))
-                .andExpect(jsonPath("$.updated").exists())
-                .andExpect(jsonPath("$.user").value(true))
-                .andExpect(jsonPath("$.algo").value(false))
-                .andExpect(jsonPath("$.email").value(currentUser.getEmail()))
-                .andExpect(jsonPath("$.username").value(currentUser.getUsername()));
+                .andExpect(jsonPath("$.username").value(currentUser.getUsername()))
+                .andExpect(jsonPath("$.name").value(currentUser.getName()))
+                .andExpect(jsonPath("$.fullName").value(currentUser.getFullName()))
+                .andExpect(jsonPath("$.firstname").doesNotExist())
+                .andExpect(jsonPath("$.created").doesNotExist())
+                .andExpect(jsonPath("$.origin").doesNotExist())
+                .andExpect(jsonPath("$.admin").doesNotExist())
+                .andExpect(jsonPath("$.language").doesNotExist())
+                .andExpect(jsonPath("$.publicKey").doesNotExist())
+                .andExpect(jsonPath("$.lastname").doesNotExist())
+                .andExpect(jsonPath("$.privateKey").doesNotExist())
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.guest").doesNotExist())
+                .andExpect(jsonPath("$.passwordExpired").doesNotExist())
+                .andExpect(jsonPath("$.updated").doesNotExist())
+                .andExpect(jsonPath("$.user").doesNotExist())
+                .andExpect(jsonPath("$.algo").doesNotExist())
+                .andExpect(jsonPath("$.email").doesNotExist());
     }
 
     @Test
@@ -399,23 +387,25 @@ public class UserResourceTests {
         restUserControllerMockMvc.perform(get("/api/user/{id}.json", builder.given_superadmin().getId())
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstname").value(builder.given_superadmin().getFirstname()))
-                .andExpect(jsonPath("$.created").value(builder.given_superadmin().getCreated().getTime()))
-                .andExpect(jsonPath("$.origin").value("BOOTSTRAP"))
-                .andExpect(jsonPath("$.admin").value(true))
-                .andExpect(jsonPath("$.language").value("EN"))
+                .andExpect(jsonPath("$.id").value(builder.given_superadmin().getId()))
+                .andExpect(jsonPath("$.username").value(builder.given_superadmin().getUsername()))
+                .andExpect(jsonPath("$.name").value(builder.given_superadmin().getName()))
+                .andExpect(jsonPath("$.fullName").value(builder.given_superadmin().getFullName()))
+                .andExpect(jsonPath("$.firstname").doesNotExist())
+                .andExpect(jsonPath("$.created").doesNotExist())
+                .andExpect(jsonPath("$.origin").doesNotExist())
+                .andExpect(jsonPath("$.admin").doesNotExist())
+                .andExpect(jsonPath("$.language").doesNotExist())
                 .andExpect(jsonPath("$.publicKey").doesNotExist())
-                .andExpect(jsonPath("$.lastname").value(builder.given_superadmin().getLastname()))
+                .andExpect(jsonPath("$.lastname").doesNotExist())
                 .andExpect(jsonPath("$.privateKey").doesNotExist())
                 .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.guest").value(false))
-                .andExpect(jsonPath("$.id").value(builder.given_superadmin().getId()))
+                .andExpect(jsonPath("$.guest").doesNotExist())
                 .andExpect(jsonPath("$.passwordExpired").doesNotExist())
-                .andExpect(jsonPath("$.updated").exists())
-                .andExpect(jsonPath("$.user").value(false))
-                .andExpect(jsonPath("$.algo").value(false))
-                .andExpect(jsonPath("$.email").doesNotExist())
-                .andExpect(jsonPath("$.username").value(builder.given_superadmin().getUsername()));
+                .andExpect(jsonPath("$.updated").doesNotExist())
+                .andExpect(jsonPath("$.user").doesNotExist())
+                .andExpect(jsonPath("$.algo").doesNotExist())
+                .andExpect(jsonPath("$.email").doesNotExist());
     }
 
     @Test
@@ -472,6 +462,33 @@ public class UserResourceTests {
 
     }
 
+    @Test
+    @Transactional
+    public void get_current_user_keys() throws Exception {
+        User currentUser = builder.given_superadmin();
+
+        restUserControllerMockMvc.perform(get("/api/user/current/keys")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.primaryKey").value(currentUser.getPublicKey()))
+                .andExpect(jsonPath("$.secondaryKey").value(currentUser.getPrivateKey()));
+    }
+
+    @Test
+    @Transactional
+    public void regenerate_current_user_keys() throws Exception {
+        User currentUser = builder.given_superadmin();
+
+        String oldPrimaryKey = currentUser.getPublicKey();
+        String oldSecondaryKey = currentUser.getPrivateKey();
+
+        restUserControllerMockMvc.perform(post("/api/user/current/keys")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.primaryKey").value(not(oldPrimaryKey)))
+                .andExpect(jsonPath("$.secondaryKey").value(not(oldSecondaryKey)));
+    }
+
 
     @Test
     @Transactional
@@ -481,173 +498,122 @@ public class UserResourceTests {
         restUserControllerMockMvc.perform(get("/api/user/current.json")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.firstname").value(currentUser.getFirstname()))
-                .andExpect(jsonPath("$.created").value(currentUser.getCreated().getTime()))
-                .andExpect(jsonPath("$.origin").value("BOOTSTRAP"))
-                .andExpect(jsonPath("$.admin").value(true))
-                .andExpect(jsonPath("$.language").value("EN"))
-                .andExpect(jsonPath("$.publicKey").value(currentUser.getPublicKey()))
-                .andExpect(jsonPath("$.lastname").value(currentUser.getLastname()))
-                .andExpect(jsonPath("$.privateKey").value(currentUser.getPrivateKey()))
-                .andExpect(jsonPath("$.password").doesNotExist())
-                .andExpect(jsonPath("$.guest").value(false))
                 .andExpect(jsonPath("$.id").value(currentUser.getId()))
-                .andExpect(jsonPath("$.passwordExpired").value(false))
-                .andExpect(jsonPath("$.updated").exists())
-                .andExpect(jsonPath("$.user").value(false))
-                .andExpect(jsonPath("$.algo").value(false))
-                .andExpect(jsonPath("$.email").value(currentUser.getEmail()))
-                .andExpect(jsonPath("$.username").value(currentUser.getUsername()));
+                .andExpect(jsonPath("$.username").value(currentUser.getUsername()))
+                .andExpect(jsonPath("$.name").value(currentUser.getName()))
+                .andExpect(jsonPath("$.fullName").value(currentUser.getFullName()))
+                .andExpect(jsonPath("$.firstname").doesNotExist())
+                .andExpect(jsonPath("$.created").doesNotExist())
+                .andExpect(jsonPath("$.origin").doesNotExist())
+                .andExpect(jsonPath("$.admin").doesNotExist())
+                .andExpect(jsonPath("$.language").doesNotExist())
+                .andExpect(jsonPath("$.publicKey").doesNotExist())
+                .andExpect(jsonPath("$.lastname").doesNotExist())
+                .andExpect(jsonPath("$.privateKey").doesNotExist())
+                .andExpect(jsonPath("$.password").doesNotExist())
+                .andExpect(jsonPath("$.guest").doesNotExist())
+                .andExpect(jsonPath("$.passwordExpired").doesNotExist())
+                .andExpect(jsonPath("$.updated").doesNotExist())
+                .andExpect(jsonPath("$.user").doesNotExist())
+                .andExpect(jsonPath("$.algo").doesNotExist())
+                .andExpect(jsonPath("$.email").doesNotExist());
     }
 
 
-    @Test
-    @Transactional
-    public void add_valid_user() throws Exception {
+//    @Test
+//    @Transactional
+//    public void add_valid_user() throws Exception {
+//
+//        restUserControllerMockMvc.perform(post("/api/user.json")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content("{\"name\":\"TEST_CREATE\",\"reference\":\""+ UUID.randomUUID().toString() +"\",\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"username\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
+//                .andDo(print())
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.printMessage").value(true))
+//                .andExpect(jsonPath("$.callback").exists())
+//                .andExpect(jsonPath("$.callback.userID").exists())
+//                .andExpect(jsonPath("$.callback.method").value("be.cytomine.AddUserCommand"))
+//                .andExpect(jsonPath("$.message").exists())
+//                .andExpect(jsonPath("$.command").exists())
+//                .andExpect(jsonPath("$.user.id").exists())
+//                .andExpect(jsonPath("$.user.username").value("TEST_CREATE"));
+//
+//        User user = userRepository.findByUsernameLikeIgnoreCase("TEST_CREATE").get();
+//
+//    }
+//
+//
+//    @Test
+//    @Transactional
+//    public void add_user_refused_if_username_exists() throws Exception {
+//        User user = builder.given_a_user();
+//        restUserControllerMockMvc.perform(post("/api/user.json")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(user.toJSON()))
+//                .andDo(print())
+//                .andExpect(status().isConflict())
+//                .andExpect(jsonPath("$.success").value(false));
+//    }
+//
+//    @Test
+//    @Transactional
+//    public void add_user_refused_if_username_not_set() throws Exception {
+//        User user = builder.given_a_user();
+//        restUserControllerMockMvc.perform(post("/api/user.json")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content("{\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
+//                .andDo(print())
+//                .andExpect(status().isBadRequest())
+//                .andExpect(jsonPath("$.success").value(false));
+//    }
+//
+//    @Test
+//    @Transactional
+//    public void edit_valid_user() throws Exception {
+//
+//        restUserControllerMockMvc.perform(post("/api/user.json")
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content("{\"name\":\"TEST_CREATE\",\"reference\":\""+ UUID.randomUUID().toString() +"\",\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"username\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
+//                .andDo(print())
+//                .andExpect(status().isOk());
+//
+//
+//        User user = userRepository.findByUsernameLikeIgnoreCase("TEST_CREATE").get();
+//
+//        JsonObject jsonObject = user.toJsonObject();
+//        jsonObject.put("name", "TEST_CREATE_CHANGE");
+//
+//        restUserControllerMockMvc.perform(put("/api/user/{id}.json", jsonObject.getId())
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(jsonObject.toJsonString()))
+//                .andDo(print())
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.printMessage").value(true))
+//                .andExpect(jsonPath("$.callback").exists())
+//                .andExpect(jsonPath("$.message").exists())
+//                .andExpect(jsonPath("$.command").exists())
+//                .andExpect(jsonPath("$.user.id").exists())
+//                .andExpect(jsonPath("$.user.name").value("TEST_CREATE_CHANGE"));
+//    }
+//
+//    @Test
+//    @Transactional
+//    public void delete_user() throws Exception {
+//        User user = builder.given_a_user();
+//        restUserControllerMockMvc.perform(delete("/api/user/{id}.json", user.getId())
+//                        .contentType(MediaType.APPLICATION_JSON)
+//                        .content(user.toJSON()))
+//                .andDo(print())
+//                .andExpect(status().isOk())
+//                .andExpect(jsonPath("$.printMessage").value(true))
+//                .andExpect(jsonPath("$.callback").exists())
+//                .andExpect(jsonPath("$.callback.userID").exists())
+//                .andExpect(jsonPath("$.callback.method").value("be.cytomine.DeleteUserCommand"))
+//                .andExpect(jsonPath("$.message").exists())
+//                .andExpect(jsonPath("$.command").exists())
+//                .andExpect(jsonPath("$.user.id").exists());
+//    }
 
-        restUserControllerMockMvc.perform(post("/api/user.json")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"username\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.printMessage").value(true))
-                .andExpect(jsonPath("$.callback").exists())
-                .andExpect(jsonPath("$.callback.userID").exists())
-                .andExpect(jsonPath("$.callback.method").value("be.cytomine.AddUserCommand"))
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.command").exists())
-                .andExpect(jsonPath("$.user.id").exists())
-                .andExpect(jsonPath("$.user.username").value("TEST_CREATE"));
-
-        User user = userRepository.findByUsernameLikeIgnoreCase("TEST_CREATE").get();
-
-        assertThat(user.getPassword()).isNotEqualTo("TEST_CREATE");
-        assertThat(user.getNewPassword()).isNull();
-        assertThat(passwordEncoder.matches("TEST_CREATE", user.getPassword())).isTrue();
-
-    }
-
-
-    @Test
-    @Transactional
-    public void add_user_refused_if_username_exists() throws Exception {
-        User user = builder.given_a_user();
-        restUserControllerMockMvc.perform(post("/api/user.json")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(user.toJSON()))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.success").value(false));
-    }
-
-    @Test
-    @Transactional
-    public void add_user_refused_if_username_not_set() throws Exception {
-        User user = builder.given_a_user();
-        restUserControllerMockMvc.perform(post("/api/user.json")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false));
-    }
-
-    @Test
-    @Transactional
-    public void edit_valid_user() throws Exception {
-
-        restUserControllerMockMvc.perform(post("/api/user.json")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"firstname\":\"TEST_CREATE\",\"lastname\":\"TEST_CREATE\",\"username\":\"TEST_CREATE\",\"email\":\"loicrollus@gmail.com\",\"language\":\"EN\",\"password\":\"TEST_CREATE\"}"))
-                .andExpect(status().isOk());
-
-
-        User user = userRepository.findByUsernameLikeIgnoreCase("TEST_CREATE").get();
-
-        JsonObject jsonObject = user.toJsonObject();
-        jsonObject.put("firstname", "TEST_CREATE_CHANGE");
-        jsonObject.put("lastname", "TEST_CREATE_CHANGE");
-
-        restUserControllerMockMvc.perform(put("/api/user/{id}.json", jsonObject.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonObject.toJsonString()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.printMessage").value(true))
-                .andExpect(jsonPath("$.callback").exists())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.command").exists())
-                .andExpect(jsonPath("$.user.id").exists())
-                .andExpect(jsonPath("$.user.lastname").value("TEST_CREATE_CHANGE"));
-    }
-
-    @Test
-    @Transactional
-    public void edit_valid_user_may_alter_password() throws Exception {
-
-        User user = builder.given_a_user();
-        user.setPassword("secretPassword");
-        user.encodePassword(passwordEncoder);
-        builder.persistAndReturn(user);
-
-        restUserControllerMockMvc.perform(put("/api/user/{id}.json", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(user.toJsonObject().withChange("password", "mustBeChanged").toJsonString()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.printMessage").value(true))
-                .andExpect(jsonPath("$.callback").exists())
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.command").exists())
-                .andExpect(jsonPath("$.user.id").exists());
-
-        assertThat(passwordEncoder.matches("mustBeChanged", user.getPassword())).isTrue();
-    }
-
-    @Test
-    @Transactional
-    public void delete_user() throws Exception {
-        User user = builder.given_a_user();
-        restUserControllerMockMvc.perform(delete("/api/user/{id}.json", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(user.toJSON()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.printMessage").value(true))
-                .andExpect(jsonPath("$.callback").exists())
-                .andExpect(jsonPath("$.callback.userID").exists())
-                .andExpect(jsonPath("$.callback.method").value("be.cytomine.DeleteUserCommand"))
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.command").exists())
-                .andExpect(jsonPath("$.user.id").exists());
-    }
-
-
-    @Test
-    @Transactional
-    public void lock_user() throws Exception {
-
-        User user = builder.given_a_user();
-
-        assertThat(user.getEnabled()).isTrue();
-
-        restUserControllerMockMvc.perform(post("/api/user/{id}/lock.json", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-
-        assertThat(user.getEnabled()).isFalse();
-    }
-
-    @Test
-    @Transactional
-    public void unlock_user() throws Exception {
-
-        User user = builder.given_a_user();
-        user.setEnabled(false);
-
-        assertThat(user.getEnabled()).isFalse();
-
-        restUserControllerMockMvc.perform(delete("/api/user/{id}/lock.json", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-
-        assertThat(user.getEnabled()).isTrue();
-
-    }
 
     @Test
     @Transactional
@@ -918,47 +884,6 @@ public class UserResourceTests {
 
     }
 
-    @Test
-    @Transactional
-    public void change_password() throws Exception {
-        User user = builder.given_a_user();
-
-        restUserControllerMockMvc.perform(put("/api/user/{user}/password.json", user.getId())
-                        .contentType(MediaType.APPLICATION_JSON).content(user.toJsonObject().withChange("password", "newPassword").toJsonString()))
-                .andExpect(status().isOk());
-
-        assertThat(user.getPassword()).isNotEqualTo("newPassword");
-        assertThat(passwordEncoder.matches("newPassword", user.getPassword())).isTrue();
-    }
-
-    @Test
-    @Transactional
-    public void check_valid_password() throws Exception {
-        User user = builder.given_a_user();
-        user.setPassword("newPassword");
-        user.encodePassword(passwordEncoder);
-        builder.persistAndReturn(user);
-
-        restUserControllerMockMvc.perform(post("/api/user/security_check.json")
-                        .with(user(user.getUsername()))
-                        .contentType(MediaType.APPLICATION_JSON).content(JsonObject.of("password", "newPassword").toJsonString()))
-                .andExpect(status().isOk());
-
-    }
-
-    @Test
-    @Transactional
-    public void check_bad_password() throws Exception {
-        User user = builder.given_a_user();
-        user.setPassword("newPassword");
-        user.encodePassword(passwordEncoder);
-        builder.persistAndReturn(user);
-
-        restUserControllerMockMvc.perform(post("/api/user/security_check.json")
-                        .contentType(MediaType.APPLICATION_JSON).content(JsonObject.of("username", user.getUsername(), "password", "xxxxxxxxxx").toJsonString()))
-                .andExpect(status().isUnauthorized());
-    }
-
 
     @Test
     @Transactional
@@ -1054,9 +979,9 @@ public class UserResourceTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(1)))
                 .andExpect(jsonPath("$.collection[0].id").value(userOnline.getId()))
-                .andExpect(jsonPath("$.collection[0].firstname").value(userOnline.getFirstname()))
-                .andExpect(jsonPath("$.collection[0].lastname").value(userOnline.getLastname()))
-                .andExpect(jsonPath("$.collection[0].email").value(userOnline.getEmail()))
+                .andExpect(jsonPath("$.collection[0].username").value(userOnline.getUsername()))
+                .andExpect(jsonPath("$.collection[0].name").value(userOnline.getName()))
+                .andExpect(jsonPath("$.collection[0].fullName").value(userOnline.getFullName()))
                 .andExpect(jsonPath("$.collection[0].lastImageId").value(consultation.getImage()))
                 .andExpect(jsonPath("$.collection[0].lastImageName").hasJsonPath())
                 .andExpect(jsonPath("$.collection[0].lastConnection").value(lastConnection.getCreated().getTime()))
@@ -1112,11 +1037,10 @@ public class UserResourceTests {
     }
 
     private void checkResult(String delimiter, MvcResult result, User user) throws UnsupportedEncodingException {
-        String[] rows = result.getResponse().getContentAsString().split("\n");
+        String[] rows = result.getResponse().getContentAsString().split("\r\n|\r|\n");
         String[] userAnnotationResult = rows[1].split(delimiter);
         AssertionsForClassTypes.assertThat(userAnnotationResult[0]).isEqualTo(user.getUsername());
-        AssertionsForClassTypes.assertThat(userAnnotationResult[1]).isEqualTo(user.getFirstname());
-        AssertionsForClassTypes.assertThat(userAnnotationResult[2].replace("\r", "")).isEqualTo(user.getLastname());
+        AssertionsForClassTypes.assertThat(userAnnotationResult[1]).isEqualTo(user.getName());
     }
 
     private void checkXLSResult(MvcResult result, User user) throws IOException {
@@ -1135,8 +1059,7 @@ public class UserResourceTests {
         }
 
         AssertionsForClassTypes.assertThat(cells[0].getStringCellValue()).isEqualTo(user.getUsername());
-        AssertionsForClassTypes.assertThat(cells[1].getStringCellValue()).isEqualTo(user.getFirstname());
-        AssertionsForClassTypes.assertThat(cells[2].getStringCellValue().replace("\r", "")).isEqualTo(user.getLastname());
+        AssertionsForClassTypes.assertThat(cells[1].getStringCellValue()).isEqualTo(user.getName());
 
 
         workbook.close();

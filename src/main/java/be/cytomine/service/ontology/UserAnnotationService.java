@@ -22,7 +22,6 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.annotation.AnnotationLight;
 import be.cytomine.dto.annotation.SimplifiedAnnotation;
@@ -33,7 +32,6 @@ import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.UserAnnotationListing;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.image.SliceInstanceRepository;
-import be.cytomine.repository.ontology.AlgoAnnotationTermRepository;
 import be.cytomine.repository.ontology.SharedAnnotationRepository;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
 import be.cytomine.service.AnnotationListingService;
@@ -50,6 +48,7 @@ import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.GeometryUtils;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
+import be.cytomine.utils.TokenUtils;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
@@ -60,7 +59,14 @@ import org.springframework.stereotype.Service;
 
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
@@ -107,12 +113,6 @@ public class UserAnnotationService extends ModelService {
     private GenericAnnotationService genericAnnotationService;
 
     @Autowired
-    private AlgoAnnotationTermRepository algoAnnotationTermRepository;
-
-    @Autowired
-    private AlgoAnnotationTermService algoAnnotationTermService;
-
-    @Autowired
     private SliceCoordinatesService sliceCoordinatesService;
 
     @Autowired
@@ -153,7 +153,16 @@ public class UserAnnotationService extends ModelService {
         return optionalUserAnnotation;
     }
 
-    public List listIncluded(ImageInstance image, String geometry, SecUser user, List<Long> terms, AnnotationDomain annotation, List<String> propertiesToShow) {
+    public Optional<UserAnnotation> find(Long id, String authHeader) {
+        Optional<UserAnnotation> userAnnotation = userAnnotationRepository.findById(id);
+        String token = authHeader.replace("Bearer ", "");
+        String username = TokenUtils.getUsernameFromToken(token);
+        User user = currentUserService.getCurrentUser(username);
+        userAnnotation.ifPresent(annotation -> securityACLService.check(annotation.container(),READ, user));
+        return userAnnotation;
+    }
+
+    public List listIncluded(ImageInstance image, String geometry, User user, List<Long> terms, AnnotationDomain annotation, List<String> propertiesToShow) {
         securityACLService.check(image.container(), READ);
 
         UserAnnotationListing userAnnotationListing = new UserAnnotationListing(entityManager);
@@ -165,6 +174,7 @@ public class UserAnnotationService extends ModelService {
         userAnnotationListing.setBbox(geometry);
         return annotationListingService.executeRequest(userAnnotationListing);
     }
+
 
     public Long count(User user, Project project) {
         if (project!=null) {
@@ -236,7 +246,7 @@ public class UserAnnotationService extends ModelService {
         jsonObject.put("imageObject", image);
         jsonObject.put("projectObject", project);
 
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
 
         //Check if user has at least READ permission for the project
         securityACLService.check(project, READ, currentUser);
@@ -398,7 +408,7 @@ public class UserAnnotationService extends ModelService {
      * @return Response structure (new domain data, old domain data..)
      */
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         //Check if user has a role that allows to update annotations
         securityACLService.checkGuest(currentUser);
         //Check if user has at least READ permission for the project
@@ -479,7 +489,7 @@ public class UserAnnotationService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         //Check if user has a role that allows to delete annotations
         securityACLService.checkGuest(currentUser);
         //Check if user has at least READ permission for the project
@@ -525,7 +535,6 @@ public class UserAnnotationService extends ModelService {
     }
 
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
-        deleteDependentAlgoAnnotationTerm((UserAnnotation)domain, transaction, task);
         deleteDependentAnnotationTerm((UserAnnotation)domain, transaction, task);
         deleteDependentSharedAnnotation((UserAnnotation)domain, transaction, task);
         deleteDependentAnnotationTrack((UserAnnotation)domain, transaction, task);
@@ -540,13 +549,6 @@ public class UserAnnotationService extends ModelService {
             } catch (ForbiddenException fe) {
                 throw new ForbiddenException("This annotation has been linked to the term " + annotationTerm.getTerm() + " by " + annotationTerm.userDomainCreator() + ". " + annotationTerm.userDomainCreator() + " must unlink its term before you can delete this annotation.");
             }
-        }
-    }
-
-
-    public void deleteDependentAlgoAnnotationTerm(UserAnnotation ua, Transaction transaction, Task task) {
-        for (AlgoAnnotationTerm algoAnnotationTerm : algoAnnotationTermRepository.findAllByAnnotationIdent(ua.getId())) {
-            algoAnnotationTermService.delete(algoAnnotationTerm, transaction, task, false);
         }
     }
 

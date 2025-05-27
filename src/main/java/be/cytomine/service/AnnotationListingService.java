@@ -20,7 +20,6 @@ import be.cytomine.dto.image.Point;
  */
 
 import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.repository.AlgoAnnotationListing;
 import be.cytomine.repository.AnnotationListing;
 import be.cytomine.repository.UserAnnotationListing;
 import be.cytomine.service.security.SecurityACLService;
@@ -160,7 +159,7 @@ public class AnnotationListingService {
                                     buildList(new HashMap<>(JsonObject.of("id", tuple.get("annotationterms"), "term", tuple.get("term"), "user", buildList(tuple.get("userterm"))))) : new ArrayList<>());
                 }
 
-                if (al.getColumnsToPrint().contains("track") && (al instanceof UserAnnotationListing || al instanceof AlgoAnnotationListing)) {
+                if (al.getColumnsToPrint().contains("track") && (al instanceof UserAnnotationListing)) {
                     trackAsked = true;
                     item.put("track", (tuple.get("track") != null ? buildList(tuple.get("track")) : new ArrayList<>()));
                     item.put("annotationTrack", (tuple.get("track") != null ? buildList(new HashMap<>(Map.of("id", tuple.get("annotationtracks"), "track", tuple.get("track")))) : new ArrayList<>()));
@@ -184,22 +183,17 @@ public class AnnotationListingService {
                     item.put("centroid", new Point((Double) tuple.get("x"), (Double) tuple.get("y")));
                 }
 
-                if (al.getColumnsToPrint().contains("meta")) {
-                    if (al.getClass().getName().contains("UserAnnotation")) {
-                        item.put("cropURL", UrlApi.getUserAnnotationCropWithAnnotationId((Long) tuple.get("id"), "png"));
-                        item.put("smallCropURL", UrlApi.getUserAnnotationCropWithAnnotationIdWithMaxSize((Long) tuple.get("id"), 256, "png"));
-                        item.put("url", UrlApi.getUserAnnotationCropWithAnnotationId((Long) tuple.get("id"), "png"));
-                        item.put("imageURL", UrlApi.getAnnotationURL((Long) tuple.get("project"), (Long) tuple.get("image"), (Long) tuple.get("id")));
-                    } else if (al.getClass().getName().contains("AlgoAnnotation")) {
-                        item.put("cropURL", UrlApi.getAlgoAnnotationCropWithAnnotationId((Long) tuple.get("id"), "png"));
-                        item.put("smallCropURL", UrlApi.getAlgoAnnotationCropWithAnnotationIdWithMaxSize((Long) tuple.get("id"), 256, "png"));
-                        item.put("url", UrlApi.getAlgoAnnotationCropWithAnnotationId((Long) tuple.get("id"), "png"));
-                        item.put("imageURL", UrlApi.getAnnotationURL((Long) tuple.get("project"), (Long) tuple.get("image"), (Long) tuple.get("id")));
-                    } else if (al.getClass().getName().contains("ReviewedAnnotation")) {
-                        item.put("cropURL", UrlApi.getReviewedAnnotationCropWithAnnotationId((Long) tuple.get("id"), "png"));
-                        item.put("smallCropURL", UrlApi.getReviewedAnnotationCropWithAnnotationIdWithMaxSize((Long) tuple.get("id"), 256, "png"));
-                        item.put("url", UrlApi.getReviewedAnnotationCropWithAnnotationId((Long) tuple.get("id"), "png"));
-                        item.put("imageURL", UrlApi.getAnnotationURL((Long) tuple.get("project"), (Long) tuple.get("image"), (Long) tuple.get("id")));
+                if(al.getColumnsToPrint().contains("meta")) {
+                    if(al.getClass().getName().contains("UserAnnotation")) {
+                        item.put("cropURL",UrlApi.getUserAnnotationCropWithAnnotationId((Long)tuple.get("id"), "png"));
+                        item.put("smallCropURL",UrlApi.getUserAnnotationCropWithAnnotationIdWithMaxSize((Long)tuple.get("id"), 256, "png"));
+                        item.put("url",UrlApi.getUserAnnotationCropWithAnnotationId((Long)tuple.get("id"), "png"));
+                        item.put("imageURL",UrlApi.getAnnotationURL((Long)tuple.get("project"), (Long)tuple.get("image"), (Long)tuple.get("id")));
+                    }  else if(al.getClass().getName().contains("ReviewedAnnotation")) {
+                        item.put("cropURL",UrlApi.getReviewedAnnotationCropWithAnnotationId((Long)tuple.get("id"), "png"));
+                        item.put("smallCropURL",UrlApi.getReviewedAnnotationCropWithAnnotationIdWithMaxSize((Long)tuple.get("id"), 256, "png"));
+                        item.put("url",UrlApi.getReviewedAnnotationCropWithAnnotationId((Long)tuple.get("id"), "png"));
+                        item.put("imageURL",UrlApi.getAnnotationURL((Long)tuple.get("project"), (Long)tuple.get("image"), (Long)tuple.get("id")));
                     }
                 }
                 data.add(item);
@@ -261,7 +255,7 @@ public class AnnotationListingService {
     }
 
     List buildList(Object firstElement) {
-        if (firstElement == null) {
+        if (firstElement==null) {
             return new ArrayList();
         }
         List list = new ArrayList();

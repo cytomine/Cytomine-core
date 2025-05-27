@@ -18,7 +18,6 @@ package be.cytomine.service.social;
 
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.PersistentImageConsultation;
 import be.cytomine.domain.social.PersistentProjectConnection;
@@ -29,7 +28,7 @@ import be.cytomine.repository.AnnotationListing;
 import be.cytomine.repository.UserAnnotationListing;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.project.ProjectRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.repositorynosql.social.*;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
@@ -83,7 +82,7 @@ public class ImageConsultationService {
     ProjectConnectionRepository projectConnectionRepository;
 
     @Autowired
-    SecUserRepository secUserRepository;
+    UserRepository userRepository;
 
     @Autowired
     MongoClient mongoClient;
@@ -121,7 +120,7 @@ public class ImageConsultationService {
     @Autowired
     ImageInstanceService imageInstanceService;
 
-    public PersistentImageConsultation add(SecUser user, Long imageId, String session, String mode, Date created) {
+    public PersistentImageConsultation add(User user, Long imageId, String session, String mode, Date created) {
         System.out.println(currentUserService.getCurrentUser());
         ImageInstance imageInstance = imageInstanceRepository.findById(imageId)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
@@ -221,7 +220,7 @@ public class ImageConsultationService {
 
     }
 
-    public Page<PersistentImageConsultation> listImageConsultationByProjectAndUserNoImageDistinct(Project project, SecUser user, Integer max, Integer offset) {
+    public Page<PersistentImageConsultation> listImageConsultationByProjectAndUserNoImageDistinct(Project project, User user, Integer max, Integer offset) {
         securityACLService.checkIsSameUserOrAdminContainer(project, user, currentUserService.getCurrentUser());
         if (max != 0) {
             max += offset; // ?
@@ -231,7 +230,7 @@ public class ImageConsultationService {
         return persistentImageConsultationRepository.findAllByProjectAndUser(project.getId(), user.getId(), PageRequest.of(0, max, Sort.Direction.DESC, "created"));
     }
 
-    public List<JsonObject> listImageConsultationByProjectAndUserWithDistinctImage(Project project, SecUser user) {
+    public List<JsonObject> listImageConsultationByProjectAndUserWithDistinctImage(Project project, User user) {
         securityACLService.checkIsSameUserOrAdminContainer(project, user, currentUserService.getCurrentUser());
         List<Bson> requests = new ArrayList<>();
         List<JsonObject> data = new ArrayList<>();
@@ -496,7 +495,7 @@ public class ImageConsultationService {
 
 
     public List listLastOpened(Long max) {
-        SecUser user = (SecUser)currentUserService.getCurrentUser();
+        User user = (User)currentUserService.getCurrentUser();
         securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
 
         List<Bson> requests = new ArrayList<>();

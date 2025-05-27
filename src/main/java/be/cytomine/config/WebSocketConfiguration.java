@@ -3,17 +3,15 @@ package be.cytomine.config;
 import be.cytomine.domain.project.Project;
 import be.cytomine.repository.image.ImageInstanceRepository;
 import be.cytomine.repository.project.ProjectRepository;
-import be.cytomine.security.jwt.TokenProvider;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.social.WebSocketUserPositionHandler;
 import be.cytomine.utils.StringUtils;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
@@ -21,12 +19,10 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
-import jakarta.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.util.Map;
 
-import static be.cytomine.config.security.JWTFilter.resolveToken;
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
 @Configuration
@@ -36,9 +32,6 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
 
     @Autowired
     WebSocketUserPositionHandler webSocketUserPositionHandler;
-
-    @Autowired
-    TokenProvider tokenProvider;
 
     @Autowired
     ImageInstanceRepository imageInstanceRepository;
@@ -77,9 +70,9 @@ public class WebSocketConfiguration implements WebSocketConfigurer {
 
             Map<String, String> params = StringUtils.splitQuery(request.getURI().toURL());
 
-            Authentication authentication = tokenProvider.getAuthentication(resolveToken(params.get("Authorization")));
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // TODO IAM - validate token passed as query parameter
+//            Authentication authentication = tokenProvider.getAuthentication(resolveToken(params.get("Authorization")));
+//            SecurityContextHolder.getContext().setAuthentication(authentication);
 
             securityACLService.checkIsCurrentUserSameUser(Long.parseLong(userId));
 

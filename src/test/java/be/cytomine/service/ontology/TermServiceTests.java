@@ -292,20 +292,6 @@ public class TermServiceTests {
     }
 
     @Test
-    void delete_term_with_algo_annotation_term_fails() {
-        Term term = builder.given_a_term();
-        AlgoAnnotationTerm annotationTerm = builder.given_an_algo_annotation_term();
-        annotationTerm.setTerm(term);
-
-        Assertions.assertThrows(ConstraintException.class, () -> {
-            termService.delete(term, null, null, true);
-        });
-
-        assertThat(entityManager.find(Term.class, term.getId())).isNotNull();
-        assertThat(entityManager.find(AlgoAnnotationTerm.class, annotationTerm.getId())).isNotNull();
-    }
-
-    @Test
     void delete_term_with_reviewed_annotation_term_fails() {
         Term term = builder.given_a_term();
         ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();

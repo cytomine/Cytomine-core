@@ -18,133 +18,132 @@ package be.cytomine.domain.security;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.SecurityUtils;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
+@Table(name = "sec_user" , uniqueConstraints = @UniqueConstraint(name = "unique_reference" , columnNames = {"reference"}))
 @Entity
 @Getter
 @Setter
-@DiscriminatorValue("be.cytomine.domain.security.User")
-public class User extends SecUser {
+public class User extends CytomineDomain {
 
     @NotNull
     @NotBlank
     @Column(nullable = false)
+    protected String username;
+
+    @NotNull
+    @Column(nullable = false)
+    protected String reference; //TODO IAM: should be UUID type
+
+    @NotNull
+    @NotBlank
+    @Column(nullable = false)
+    protected String name;
+
+    @ManyToMany(fetch = FetchType.EAGER , cascade = CascadeType.ALL)
+    @JoinTable(
+            name = "sec_user_sec_role",
+            joinColumns = { @JoinColumn(name = "sec_user_id") },
+            inverseJoinColumns = { @JoinColumn(name = "sec_role_id") }
+    )
+    private Set<SecRole> roles = new HashSet<>();
+
+    /** Deprecated attributes. Kept here for migration **/
+    @Deprecated
     protected String firstname;
 
-    @NotNull
-    @NotBlank
-    @Column(nullable = false)
+    @Deprecated
     protected String lastname;
 
-    @NotNull
-    @NotBlank
-    @Column(nullable = false)
-    @Email
-    @Size(min = 5, max = 254)
+    @Deprecated
     protected String email;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = true)
+    @Deprecated
     protected Language language;
 
-    @Column(nullable = true)
+    @Deprecated
     protected Boolean isDeveloper = false;
 
+    @Deprecated
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = true)
     protected User creator;
 
-    public User() {
-        super();
+    @Deprecated
+    protected String password;
+
+    @Deprecated
+    protected Boolean enabled = true;
+
+    @Deprecated
+    protected Boolean accountExpired = false;
+
+    @Deprecated
+    protected Boolean accountLocked = false;
+
+    @Deprecated
+    protected Boolean passwordExpired = false;
+
+    @Deprecated
+    protected String origin;
+
+    /** Deprecated API keys. Will be removed in a future release **/
+    @Deprecated
+    protected String publicKey;
+
+    @Deprecated
+    protected String privateKey;
+
+    @Deprecated
+    public void generateKeys() {
+        String privateKey = UUID.randomUUID().toString();
+        String publicKey = UUID.randomUUID().toString();
+        this.setPrivateKey(privateKey);
+        this.setPublicKey(publicKey);
+    }
+    /****************************************************/
+
+    public String getFullName() {
+        if (name.equals(getUsername())) {
+            return getUsername();
+        }
+        return name + " (" + getUsername() + ")";
     }
 
-    @PrePersist
-    public void beforeCreate() {
-        language = Language.ENGLISH;
-    }
-
-    @PreUpdate
-    public void beforeUpdate() {
-
-    }
-
-    /**
-     * Username of the human user back to this user
-     * If User => humanUsername is username
-     * If Algo => humanUsername is user that launch algo username
-     */
-    public String humanUsername() {
-        return username;
-    }
-
+    @Override
     public String toString() {
-        return firstname + " " + lastname;
+        return getFullName();
     }
 
-    /**
-     * Check if user is a job
-     */
-    public Boolean isAlgo() {
-        return false;
+    public String getReference() {
+        return reference.toString();
     }
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
-        User user = (User)this;
+        User user = (User) this;
         user.id = json.getJSONAttrLong("id",null);
         user.username = json.getJSONAttrStr("username");
-        user.firstname = json.getJSONAttrStr("firstname");
-        user.lastname = json.getJSONAttrStr("lastname");
-        user.email = json.getJSONAttrStr("email");
-        user.language = Language.findByCode(json.getJSONAttrStr("language", "ENGLISH"));
-        if(user.language == null) {
-            user.language = Language.valueOf(json.getJSONAttrStr("language", "ENGLISH"));
-        }
-        user.origin = json.getJSONAttrStr("origin");
-        user.isDeveloper = json.getJSONAttrBoolean("isDeveloper", false);
-        if (json.containsKey("password") && user.password != null) {
-            user.newPassword = json.getJSONAttrStr("password"); //user is updated
-        } else if (json.containsKey("password")) {
-            user.password = json.getJSONAttrStr("password"); //user is created
-        }
-        user.created = json.getJSONAttrDate("created");
-        user.updated = json.getJSONAttrDate("updated");
-        user.enabled = json.getJSONAttrBoolean("enabled", true);
-
-        if (user.getPublicKey() == null || user.getPrivateKey() == null || "".equals(json.get("publicKey")) || "".equals(json.get("privateKey"))) {
-            user.generateKeys();
-        }
+        user.name = json.getJSONAttrStr("name");
         return user;
     }
 
-    /**
-     * Define fields available for JSON response
-     * @param domain Domain source for json value
-     * @return Map with fields (keys) and their values
-     */
     public static JsonObject getDataFromDomain(CytomineDomain domain) {
-        JsonObject returnArray = SecUser.getDataFromDomain(domain);
-        User user = (User)domain;
-        returnArray.put("firstname", user.firstname);
-        returnArray.put("lastname", user.lastname);
-        returnArray.put("email", user.email);
-        returnArray.put("language", (user.language!=null? user.language.toString() : null));
-        if (SecurityUtils.getCurrentUserLogin().isPresent() && SecurityUtils.getCurrentUserLogin().get().equals(user.getUsername())) {
-            returnArray.put("publicKey", ((User)domain).getPublicKey());
-            returnArray.put("privateKey", ((User)domain).getPrivateKey());
-            returnArray.put("passwordExpired", ((User)domain).getPasswordExpired());
-        }
-        returnArray.put("isDeveloper", user.isDeveloper);
-        returnArray.put("enabled", user.enabled);
-        returnArray.put("user", user.creator);
-        return returnArray;
+        User user = (User) domain;
+
+        JsonObject json = new JsonObject();
+        json.put("id", user.getId());
+        json.put("username", user.getUsername());
+        json.put("name", user.getName());
+        json.put("fullName", user.getFullName());
+        return json;
     }
 
     @Override
@@ -158,7 +157,7 @@ public class User extends SecUser {
     }
 
     @Override
-    public SecUser userDomainCreator() {
+    public User userDomainCreator() {
         return this;
     }
 }

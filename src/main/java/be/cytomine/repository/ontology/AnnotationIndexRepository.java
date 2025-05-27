@@ -18,14 +18,13 @@ package be.cytomine.repository.ontology;
 
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.AnnotationIndex;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.annotation.AnnotationIndexLightDTO;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,15 +36,15 @@ public interface AnnotationIndexRepository extends JpaRepository<AnnotationIndex
     List<AnnotationIndexLightDTO> findAllLightBySliceInstance(long slice);
 
 
-    Optional<AnnotationIndexLightDTO> findOneBySliceAndUser(SliceInstance slice, SecUser user);
+    Optional<AnnotationIndexLightDTO> findOneBySliceAndUser(SliceInstance slice, User user);
 
     List<AnnotationIndexLightDTO> findAllBySlice(SliceInstance slice);
 
     void deleteAllBySlice(SliceInstance sliceInstance);
 
-    void deleteAllByUser(SecUser user);
+    void deleteAllByUser(User user);
 
-    Optional<AnnotationIndexLightDTO> findOneBySliceInAndUser(List<SliceInstance> slices, SecUser user);
+    Optional<AnnotationIndexLightDTO> findOneBySliceInAndUser(List<SliceInstance> slices, User user);
 
     List<AnnotationIndexLightDTO> findAllBySliceIn(List<SliceInstance> slices);
 }

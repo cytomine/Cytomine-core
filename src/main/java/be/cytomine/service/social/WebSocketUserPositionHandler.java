@@ -1,15 +1,15 @@
 package be.cytomine.service.social;
 
 import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.exceptions.ServerException;
 import be.cytomine.repository.image.ImageInstanceRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.CytomineWebSocketHandler;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.SliceInstanceService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.utils.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -47,13 +47,13 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
     SliceInstanceService sliceInstanceService;
 
     @Autowired
-    SecUserService secUserService;
+    UserService userService;
 
     @Autowired
     ImageInstanceRepository imageInstanceRepository;
 
     @Autowired
-    SecUserRepository secUserRepository;
+    UserRepository userRepository;
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
@@ -160,16 +160,16 @@ public class WebSocketUserPositionHandler extends CytomineWebSocketHandler {
         // ------------------------------------------------ //
 
         //ImageInstance imageInstance = imageInstanceService.get(imageId);
-        //SecUser secUser = secUserService.get(userId);
+        //User secUser = userService.get(userId);
 
         // TODO: We should not have to bypass the authentication or ACL system to do this
         // TODO: The context should hold the authenticated user with a proper WebSocket configuration and implementation
         // I left the previous comments before these 2 TODOs in case someone wonders what's going on here.
         ImageInstance imgInstance = imageInstanceRepository.getById(imageId);
-        Optional<SecUser> secUser = secUserRepository.findById(userId);
+        Optional<User> user = userRepository.findById(userId);
 
-        if (secUser.isPresent()) {
-            Optional<LastUserPosition> lastPosition = userPositionService.lastPositionByUserBypassACL(imgInstance, null, secUser.get(), false);
+        if (user.isPresent()) {
+            Optional<LastUserPosition> lastPosition = userPositionService.lastPositionByUserBypassACL(imgInstance, null, user.get(), false);
             if (lastPosition.isPresent()) {
                 TextMessage position = new TextMessage(lastPosition.get().toJsonObject().toJsonString());
                 sendPosition(session, position);

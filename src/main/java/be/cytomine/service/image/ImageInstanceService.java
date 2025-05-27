@@ -22,7 +22,7 @@ import be.cytomine.domain.image.*;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.image.ImageInstanceBounds;
 import be.cytomine.exceptions.*;
 import be.cytomine.repository.image.AbstractSliceRepository;
@@ -117,9 +117,6 @@ public class ImageInstanceService extends ModelService {
     private UserAnnotationRepository userAnnotationRepository;
 
     @Autowired
-    private AlgoAnnotationRepository algoAnnotationRepository;
-
-    @Autowired
     private ReviewedAnnotationRepository reviewedAnnotationRepository;
 
     @Autowired
@@ -155,14 +152,6 @@ public class ImageInstanceService extends ModelService {
     @Autowired
     MongoClient mongoClient;
 
-    private AlgoAnnotationService algoAnnotationService;
-
-
-    @Autowired
-    public void setAlgoAnnotationService(AlgoAnnotationService algoAnnotationService) {
-        this.algoAnnotationService = algoAnnotationService;
-    }
-
     @Override
     public Class currentDomain() {
         return ImageInstance.class;
@@ -177,6 +166,15 @@ public class ImageInstanceService extends ModelService {
     public Optional<ImageInstance> find(Long id) {
         Optional<ImageInstance> ImageInstance = imageInstanceRepository.findById(id);
         ImageInstance.ifPresent(image -> securityACLService.check(image.container(), READ));
+        return ImageInstance;
+    }
+
+    public Optional<ImageInstance> find(Long id, String authHeader) {
+        Optional<ImageInstance> ImageInstance = imageInstanceRepository.findById(id);
+        String token = authHeader.replace("Bearer ", "");
+        String username = TokenUtils.getUsernameFromToken(token);
+        User user = currentUserService.getCurrentUser(username);
+        ImageInstance.ifPresent(image -> securityACLService.check(image.container(),READ, user));
         return ImageInstance;
     }
 
@@ -273,11 +271,11 @@ public class ImageInstanceService extends ModelService {
         return validParameters;
     }
 
-    public Page<Map<String, Object>> list(SecUser user, List<SearchParameterEntry> searchParameters) {
+    public Page<Map<String, Object>> list(User user, List<SearchParameterEntry> searchParameters) {
         return list(user, searchParameters, "created", "desc", 0L, 0L);
     }
 
-    public Page<Map<String, Object>> list(SecUser user, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
+    public Page<Map<String, Object>> list(User user, List<SearchParameterEntry> searchParameters, String sortColumn, String sortDirection, Long max, Long offset) {
         securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
 
         String imageInstanceAlias = "ui";
@@ -669,8 +667,10 @@ public class ImageInstanceService extends ModelService {
     }
 
 
-    public List<Map<String, Object>> listLight(SecUser user) {
-        securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
+
+
+    public List<Map<String, Object>> listLight(User user) {
+        securityACLService.checkIsSameUser(user,currentUserService.getCurrentUser());
         boolean isAdmin = currentRoleService.isAdminByNow(user);
         String request = "select * from user_image where user_image_id = :id order by instance_filename";
         Query query = getEntityManager().createNativeQuery(request, Tuple.class);
@@ -781,9 +781,9 @@ public class ImageInstanceService extends ModelService {
      * @return Response structure (created domain data,..)
      */
     public CommandResponse add(JsonObject json) {
-        if (json.isMissing("baseImage")) throw new WrongArgumentException("abstract image not set");
-        if (json.isMissing("project")) throw new WrongArgumentException("project not set");
-        SecUser currentUser = currentUserService.getCurrentUser();
+        if(json.isMissing("baseImage")) throw new WrongArgumentException("abstract image not set");
+        if(json.isMissing("project")) throw new WrongArgumentException("project not set");
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(json.getJSONAttrLong("project"), Project.class, READ);
         securityACLService.checkIsNotReadOnly(json.getJSONAttrLong("project"), Project.class);
@@ -830,7 +830,7 @@ public class ImageInstanceService extends ModelService {
      */
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(), READ);
         securityACLService.checkUser(currentUser);
         securityACLService.check(jsonNewData.getJSONAttrLong("project"), Project.class, READ);
@@ -851,9 +851,6 @@ public class ImageInstanceService extends ModelService {
         boolean resolutionUpdated = (!Objects.equals(resolutionX, imageInstance.getPhysicalSizeX())) || (!Objects.equals(resolutionY, imageInstance.getPhysicalSizeY()));
 
         if (resolutionUpdated) {
-            for (AlgoAnnotation algoAnnotation : algoAnnotationRepository.findAllByImage(imageInstance)) {
-                algoAnnotationService.update(algoAnnotation, algoAnnotation.toJsonObject());
-            }
             for (ReviewedAnnotation reviewedAnnotation : reviewedAnnotationRepository.findAllByImage(imageInstance)) {
                 reviewedAnnotationService.update(reviewedAnnotation, reviewedAnnotation.toJsonObject());
             }
@@ -877,7 +874,7 @@ public class ImageInstanceService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
 
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(), READ);
@@ -899,8 +896,7 @@ public class ImageInstanceService extends ModelService {
 
     @Override
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
-        ImageInstance imageInstance = (ImageInstance) domain;
-        deleteDependentAlgoAnnotation(imageInstance, transaction, task);
+        ImageInstance imageInstance = (ImageInstance)domain;
         deleteDependentReviewedAnnotation(imageInstance, transaction, task);
         deleteDependentUserAnnotation(imageInstance, transaction, task);
         deleteDependentAnnotationAction(imageInstance, transaction, task);
@@ -916,11 +912,7 @@ public class ImageInstanceService extends ModelService {
         deleteDependentTrack(imageInstance, transaction, task);
     }
 
-    private void deleteDependentAlgoAnnotation(ImageInstance image, Transaction transaction, Task task) {
-        for (AlgoAnnotation algoAnnotation : algoAnnotationRepository.findAllByImage(image)) {
-            algoAnnotationService.delete(algoAnnotation, transaction, task, false);
-        }
-    }
+
 
     private void deleteDependentReviewedAnnotation(ImageInstance image, Transaction transaction, Task task) {
         for (ReviewedAnnotation reviewedAnnotation : reviewedAnnotationRepository.findAllByImage(image)) {
@@ -993,9 +985,6 @@ public class ImageInstanceService extends ModelService {
         securityACLService.checkFullOrRestrictedForOwner(imageInstance, imageInstance.getUser());
         imageInstance.setReviewStart(new Date());
         imageInstance.setReviewUser(currentUserService.getCurrentUser());
-        if (imageInstance.getReviewUser() != null && imageInstance.getReviewUser().isAlgo()) {
-            throw new WrongArgumentException("The review user " + imageInstance.getReviewUser() + " is not a real user (a userjob)");
-        }
         saveDomain(imageInstance);
     }
 

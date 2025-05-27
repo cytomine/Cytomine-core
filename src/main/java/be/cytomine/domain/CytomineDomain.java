@@ -16,7 +16,7 @@ package be.cytomine.domain;
 * limitations under the License.
 */
 
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.utils.DateUtils;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
@@ -111,7 +111,7 @@ public abstract class CytomineDomain {
         return null;
     }
 
-    public SecUser userDomainCreator() {
+    public User userDomainCreator() {
         return null;
     }
 

@@ -20,9 +20,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
-import be.cytomine.domain.security.UserJob;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.AbstractImageRepository;
@@ -53,7 +51,6 @@ import jakarta.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
 import static org.springframework.security.acls.domain.BasePermission.WRITE;
@@ -110,7 +107,7 @@ public class UploadedFileService extends ModelService {
         return uploadedFileRepository.search(null, null, null, null, pageable);
     }
 
-    public Page<UploadedFile> list(SecUser user, Long parentId, Boolean onlyRoot, Pageable pageable) {
+    public Page<UploadedFile> list(User user, Long parentId, Boolean onlyRoot, Pageable pageable) {
         securityACLService.checkIsSameUser(user, currentUserService.getCurrentUser());
         List<Storage> storages = securityACLService.getStorageList(currentUserService.getCurrentUser(), false);
         return uploadedFileRepository.search(user.getId(), parentId, onlyRoot, DomainUtils.extractIds(storages), pageable);
@@ -344,10 +341,7 @@ public class UploadedFileService extends ModelService {
      * @return Response structure (created domain data,..)
      */
     public CommandResponse add(JsonObject json) {
-        SecUser currentUser = currentUserService.getCurrentUser();
-        if (currentUser instanceof UserJob) {
-            currentUser = ((UserJob) currentUser).getUser();
-        }
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         if (!json.isMissing("storage")) {
             securityACLService.check(json.getJSONAttrLong("storage"), Storage.class, WRITE);
@@ -371,7 +365,7 @@ public class UploadedFileService extends ModelService {
      */
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(), WRITE);
         if (jsonNewData.get("storage") != null && !Objects.equals(jsonNewData.getJSONAttrLong("storage"), ((UploadedFile) domain).getStorage().getId())) {
@@ -391,7 +385,7 @@ public class UploadedFileService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(), WRITE);
 
@@ -412,7 +406,7 @@ public class UploadedFileService extends ModelService {
            * `delete()` signature is standardized for its usage in RestCytomineController,
               so it is not possible to add a flag in the method.
          */
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(), WRITE);
 

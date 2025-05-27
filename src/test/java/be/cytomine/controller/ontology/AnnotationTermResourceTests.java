@@ -18,7 +18,6 @@ package be.cytomine.controller.ontology;
 
 import be.cytomine.BasicInstanceBuilder;
 import be.cytomine.CytomineCoreApplication;
-import be.cytomine.domain.ontology.AlgoAnnotationTerm;
 import be.cytomine.domain.ontology.AnnotationTerm;
 import be.cytomine.domain.ontology.ReviewedAnnotation;
 import be.cytomine.repository.ontology.AnnotationTermRepository;
@@ -82,15 +81,6 @@ public class AnnotationTermResourceTests {
                 .andExpect(jsonPath("$.collection", hasSize(0)));
     }
 
-    @Test
-    @Transactional
-    public void list_by_algo_annotation() throws Exception {
-        AlgoAnnotationTerm algoAnnotationTerm = builder.given_an_algo_annotation_term();
-        restAnnotationTermControllerMockMvc.perform(get("/api/annotation/{id}/term.json", algoAnnotationTerm.getAnnotationIdent()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(1)))
-                .andExpect(jsonPath("$.collection[?(@.id=='"+algoAnnotationTerm.getId()+"')]").exists());
-    }
 
     @Test
     @Transactional
@@ -220,26 +210,6 @@ public class AnnotationTermResourceTests {
 
     }
 
-
-
-    @Test
-    @Transactional
-    @WithMockUser("superadminjob")
-    public void add_valid_annotation_term_for_algo() throws Exception {
-        AlgoAnnotationTerm algoAnnotationTerm = builder.given_an_algo_annotation_term();
-        restAnnotationTermControllerMockMvc.perform(post("/api/annotation/{idAnnotation}/term/{idTerm}.json", algoAnnotationTerm.getAnnotationIdent(),algoAnnotationTerm.getTerm().getId())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(algoAnnotationTerm.toJSON()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.printMessage").value(true))
-                .andExpect(jsonPath("$.callback").exists())
-                .andExpect(jsonPath("$.callback.algoannotationtermID").exists())
-                .andExpect(jsonPath("$.callback.method").value("be.cytomine.AddAlgoAnnotationTermCommand"))
-                .andExpect(jsonPath("$.message").exists())
-                .andExpect(jsonPath("$.command").exists())
-                .andExpect(jsonPath("$.algoannotationterm.id").exists())
-                .andExpect(jsonPath("$.algoannotationterm.term").exists());
-    }
 
     @Test
     @Transactional

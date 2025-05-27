@@ -3,7 +3,6 @@ package be.cytomine.controller.stats;
 import be.cytomine.controller.RestCytomineController;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.ontology.AlgoAnnotation;
 import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
@@ -151,35 +150,6 @@ public class RestStatsController extends RestCytomineController {
         return responseSuccess(statsService.statAnnotationEvolution(project, term, daysRange, startDate, endDate, reverseOrder, accumulate));
     }
 
-
-    @GetMapping("/project/{project}/stats/algoannotationevolution.json")
-    public ResponseEntity<String> statAlgoAnnotationEvolution(
-            @PathVariable("project") Long projectId,
-            @RequestParam(required = false, defaultValue = "1") Integer daysRange,
-            @RequestParam(value = "startDate", required = false) Long startDateLong,
-            @RequestParam(value = "endDate", required = false) Long endDateLong,
-            @RequestParam(value = "term", required = false) Long termId,
-            @RequestParam(value = "accumulate", required = false, defaultValue = "true") Boolean accumulate,
-            @RequestParam(value = "reverseOrder", required = false, defaultValue = "true") Boolean reverseOrder
-
-
-    ) {
-        Project project = projectService.find(projectId)
-                .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
-
-        Term term = null;
-        if (termId !=null) {
-            term = termRepository.findById(termId)
-                    .orElseThrow(() -> new ObjectNotFoundException("Term", termId));
-        }
-
-        Date startDate = startDateLong != null ? new Date(startDateLong) : null;
-        Date endDate = endDateLong != null ? new Date(endDateLong) : null;
-
-        return responseSuccess(statsService.statAlgoAnnotationEvolution(project, term, daysRange, startDate, endDate, reverseOrder, accumulate));
-    }
-
-
     @GetMapping("/project/{project}/stats/reviewedannotationevolution.json")
     public ResponseEntity<String> statReviewedAnnotationEvolution(
             @PathVariable("project") Long projectId,
@@ -325,7 +295,7 @@ public class RestStatsController extends RestCytomineController {
         result.put("images", statsService.total(ImageInstance.class));
         result.put("abstractImages", statsService.total(AbstractImage.class));
         result.put("userAnnotations", statsService.total(UserAnnotation.class));
-        result.put("jobAnnotations", statsService.total(AlgoAnnotation.class));
+        result.put("jobAnnotations", 0);
         result.put("terms", statsService.total(Term.class));
         result.put("ontologies", statsService.total(Ontology.class));
 

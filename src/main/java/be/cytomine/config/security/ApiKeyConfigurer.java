@@ -16,29 +16,26 @@ package be.cytomine.config.security;
 * limitations under the License.
 */
 
-import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.security.DomainUserDetailsService;
-import be.cytomine.security.jwt.TokenProvider;
+import be.cytomine.repository.security.UserRepository;
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+@Deprecated
 public class ApiKeyConfigurer extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
 
-    private final DomainUserDetailsService domainUserDetailsService;
 
-    private final SecUserRepository secUserRepository;
+    private final UserRepository userRepository;
 
 
-    public ApiKeyConfigurer(DomainUserDetailsService domainUserDetailsService, SecUserRepository secUserRepository) {
-        this.domainUserDetailsService = domainUserDetailsService;
-        this.secUserRepository = secUserRepository;
+    public ApiKeyConfigurer(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     @Override
     public void configure(HttpSecurity http) {
-        ApiKeyFilter customFilter = new ApiKeyFilter(domainUserDetailsService, secUserRepository);
+        ApiKeyFilter customFilter = new ApiKeyFilter(userRepository);
         http.addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class);
     }
 }

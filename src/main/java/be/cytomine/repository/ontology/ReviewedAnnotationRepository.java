@@ -50,11 +50,6 @@ public interface ReviewedAnnotationRepository extends JpaRepository<ReviewedAnno
                     "FROM user_annotation ua\n" +
                     "WHERE ua.image_id = :imageId\n" +
                     "GROUP BY user_id\n" +
-                    "UNION\n" +
-                    "SELECT user_id, count(*), sum(count_reviewed_annotations) as total \n" +
-                    "FROM algo_annotation aa\n" +
-                    "WHERE aa.image_id = :imageId\n" +
-                    "GROUP BY user_id\n" +
                     "ORDER BY total desc;", nativeQuery = true
     )
     List<Tuple> stats(Long imageId);

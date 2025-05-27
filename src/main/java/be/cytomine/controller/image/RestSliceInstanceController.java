@@ -327,4 +327,103 @@ public class RestSliceInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("sliceInstance", id));
         return responseSuccess(imageServerService.planeHistogramBounds(sliceInstance.getBaseSlice(), true));
     }
+
+
+
+
+    //TODO
+
+//    //todo : move into a service
+//    def userAnnotationService
+//    def reviewedAnnotationService
+//    def termService
+//    def userService
+//    def annotationListingService
+//    public String getWKTGeometry(SliceInstance sliceInstance, params) {
+//        def geometries = []
+//        if (params.annotations && !params.reviewed) {
+//            def idAnnotations = params.annotations.split(',')
+//            idAnnotations.each { idAnnotation ->
+//                    def annot = userAnnotationService.read(idAnnotation)
+//                if (annot)
+//                    geometries << annot.location
+//            }
+//        }
+//        else if (params.annotations && params.reviewed) {
+//            def idAnnotations = params.annotations.split(',')
+//            idAnnotations.each { idAnnotation ->
+//                    def annot = reviewedAnnotationService.read(idAnnotation)
+//                if (annot)
+//                    geometries << annot.location
+//            }
+//        }
+//        else if (!params.annotations) {
+//            def project = sliceInstance.image.project
+//            List<Long> termsIDS = params.terms?.split(',')?.collect {
+//                Long.parseLong(it)
+//            }
+//            if (!termsIDS) { //don't filter by term, take everything
+//                termsIDS = termService.getAllTermId(project)
+//            }
+//
+//            List<Long> userIDS = params.users?.split(",")?.collect {
+//                Long.parseLong(it)
+//            }
+//            if (!userIDS) { //don't filter by users, take everything
+//                userIDS = userService.listLayers(project).collect { it.id}
+//            }
+//            List<Long> sliceIDS = [sliceInstance.id]
+//
+//            log.info params
+//            //Create a geometry corresponding to the ROI of the request (x,y,w,h)
+//            int x
+//            int y
+//            int w
+//            int h
+//            try {
+//                x = params.int('topLeftX')
+//                y = params.int('topLeftY')
+//                w = params.int('width')
+//                h = params.int('height')
+//            }catch (Exception e) {
+//                x = params.int('x')
+//                y = params.int('y')
+//                w = params.int('w')
+//                h = params.int('h')
+//            }
+//            Geometry roiGeometry = GeometryUtils.createBoundingBox(
+//                    x,                                      //minX
+//                    x + w,                                  //maxX
+//                    sliceInstance.baseSlice.image.height - (y + h),    //minX
+//                    sliceInstance.baseSlice.image.height - y           //maxY
+//            )
+//
+//
+//            //Fetch annotations with the requested term on the request image
+//            if (params.review) {
+//                ReviewedAnnotationListing ral = new ReviewedAnnotationListing(
+//                        project: project.id, terms: termsIDS, reviewUsers: userIDS, slices:sliceIDS, bbox:roiGeometry,
+//                        columnToPrint:['basic', 'meta', 'wkt', 'term']
+//                )
+//                def result = annotationListingService.listGeneric(ral)
+//                log.info "annotations=${result.size()}"
+//                geometries = result.collect {
+//                    new WKTReader().read(it["location"])
+//                }
+//
+//            } else {
+//                log.info "roiGeometry=${roiGeometry}"
+//                log.info "termsIDS=${termsIDS}"
+//                log.info "userIDS=${userIDS}"
+//                Collection<UserAnnotation> annotations = userAnnotationService.list(sliceInstance, roiGeometry, termsIDS, userIDS)
+//                log.info "annotations=${annotations.size()}"
+//                geometries = annotations.collect { geometry ->
+//                        geometry.getLocation()
+//                }
+//            }
+//        }
+//        GeometryCollection geometryCollection = new GeometryCollection((Geometry[])geometries, new GeometryFactory())
+//        return new WKTWriter().write(geometryCollection)
+//    }
+
 }

@@ -22,7 +22,7 @@ import be.cytomine.domain.image.*;
 import be.cytomine.domain.image.server.Storage;
 import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ConstraintException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -33,10 +33,7 @@ import be.cytomine.service.ModelService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.service.meta.AttachedFileService;
 import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.utils.CommandResponse;
-import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.StringUtils;
-import be.cytomine.utils.Task;
+import be.cytomine.utils.*;
 import be.cytomine.utils.filters.SQLSearchParameter;
 import be.cytomine.utils.filters.SearchParameterEntry;
 import be.cytomine.utils.filters.SpecificationBuilder;
@@ -120,6 +117,15 @@ public class AbstractImageService extends ModelService {
         return abstractImage;
     }
 
+    public Optional<AbstractImage> find(Long id, String authHeader) {
+        Optional<AbstractImage> abstractImage = abstractImageRepository.findById(id);
+        String token = authHeader.replace("Bearer ", "");
+        String username = TokenUtils.getUsernameFromToken(token);
+        User user = currentUserService.getCurrentUser(username);
+        abstractImage.ifPresent(image -> securityACLService.check(image.container(),READ, user));
+        return abstractImage;
+    }
+
     public Optional<AbstractImage> findByUploadedFile(Long id) {
         UploadedFile uploadedFile = uploadedFileRepository.findById(id)
                 .orElseThrow(() -> new ObjectNotFoundException("UploadedFile", id));
@@ -133,7 +139,7 @@ public class AbstractImageService extends ModelService {
     }
 
 
-    public SecUser getImageUploader(Long abstractImageId) {
+    public User getImageUploader(Long abstractImageId) {
         AbstractImage abstractImage = find(abstractImageId).orElseThrow(() -> new ObjectNotFoundException("AbstractImage", abstractImageId));
         return Optional.ofNullable(abstractImage.getUploadedFile()).map(UploadedFile::getUser).orElse(null);
     }
@@ -198,7 +204,7 @@ public class AbstractImageService extends ModelService {
      */
     public CommandResponse add(JsonObject json) {
         transactionService.start();
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
 
         if (!json.isMissing("uploadedFile")) {
@@ -216,7 +222,7 @@ public class AbstractImageService extends ModelService {
      */
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),WRITE);
 
         JsonObject versionBeforeUpdate = domain.toJsonObject();
@@ -286,7 +292,7 @@ public class AbstractImageService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(),WRITE);
 

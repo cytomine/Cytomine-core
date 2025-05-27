@@ -3,9 +3,8 @@ package be.cytomine.controller.image;
 import be.cytomine.controller.RestCytomineController;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.AbstractSlice;
-import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.image.UploadedFile;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.image.CropParameter;
 import be.cytomine.dto.image.ImageParameter;
 import be.cytomine.dto.image.TileParameters;
@@ -23,7 +22,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
 @RestController
 @RequestMapping("/api")
@@ -114,7 +112,7 @@ public class RestAbstractSliceController extends RestCytomineController {
     @GetMapping("/abstractslice/{id}/user.json")
     public ResponseEntity<String> showUploaderOfImage(@PathVariable Long id) {
         log.debug("REST request to show image uploader");
-        SecUser user = abstractSliceService.findImageUploaded(id);
+        User user = abstractSliceService.findImageUploaded(id);
         if (user !=null) {
             return responseSuccess(user);
         } else {

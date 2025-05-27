@@ -19,7 +19,7 @@ package be.cytomine.domain.ontology;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.UrlApi;
 import be.cytomine.utils.JsonObject;
@@ -59,14 +59,14 @@ public class ReviewedAnnotation extends AnnotationDomain implements Serializable
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private SecUser user;
+    private User user;
 
     /**
      * User that review annotation
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "review_user_id", nullable = false)
-    private SecUser reviewUser;
+    private User reviewUser;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -126,22 +126,10 @@ public class ReviewedAnnotation extends AnnotationDomain implements Serializable
     }
 
     /**
-     * Check if its an algo annotation
-     */
-    public boolean isAlgoAnnotation() {
-        return false;
-    }
-
-    /**
      * Check if its a review annotation
      */
     public boolean isReviewedAnnotation() {
         return true;
-    }
-
-    @Override
-    public boolean isRoiAnnotation() {
-        return false;
     }
 
     @Override
@@ -156,8 +144,8 @@ public class ReviewedAnnotation extends AnnotationDomain implements Serializable
         annotation.slice = (SliceInstance)json.getJSONAttrDomain(entityManager, "slice", new SliceInstance(), true);
         annotation.image = (ImageInstance)json.getJSONAttrDomain(entityManager, "image", new ImageInstance(), true);
         annotation.project = annotation.getImage().getProject();
-        annotation.user = (SecUser)json.getJSONAttrDomain(entityManager, "user", new SecUser(), true);
-        annotation.reviewUser = (SecUser)json.getJSONAttrDomain(entityManager, "reviewUser", new SecUser(), true);
+        annotation.user = (User)json.getJSONAttrDomain(entityManager, "user", new User(), true);
+        annotation.reviewUser = (User)json.getJSONAttrDomain(entityManager, "reviewUser", new User(), true);
 
         annotation.status = json.getJSONAttrInteger("status",0);
         annotation.geometryCompression = json.getJSONAttrDouble("geometryCompression",0D);
@@ -243,7 +231,7 @@ public class ReviewedAnnotation extends AnnotationDomain implements Serializable
     }
 
     @Override
-    public SecUser user() {
+    public User user() {
         return user;
     }
 
@@ -254,7 +242,7 @@ public class ReviewedAnnotation extends AnnotationDomain implements Serializable
      * @return Domain user
      */
     @Override
-    public SecUser userDomainCreator() {
+    public User userDomainCreator() {
         return reviewUser;
     }
 }

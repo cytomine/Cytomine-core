@@ -15,6 +15,29 @@ spring:
       max-request-size: 15GB
       location: /tmp/multipart
 
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: core
+            authorization-grant-type: authorization_code
+            redirect-uri: ${INTERNAL_PROXY_URL:http://nginx}/iam/realms/cytomine
+            scope:
+              - openid
+        provider:
+          keycloak:
+            user-name-attribute: preferred_username
+            authorization-uri: ${INTERNAL_PROXY_URL:http://nginx}/iam/realms/cytomine/protocol/openid-connect/auth
+            token-uri: ${INTERNAL_PROXY_URL:http://nginx}/iam/realms/cytomine/protocol/openid-connect/token
+            jwk-set-uri: ${INTERNAL_PROXY_URL:http://nginx}/iam/realms/cytomine/.well-known/openid-configuration
+      resourceserver:
+        jwt:
+          issuer-uri: ${SERVER_URL:http://127.0.0.1}/iam/realms/cytomine
+          jws-algorithms: RS256
+          jwk-set-uri: ${INTERNAL_PROXY_URL:http://nginx}/iam/realms/cytomine/protocol/openid-connect/certs
+
+
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
     url: jdbc:postgresql://${POSTGIS_HOST:localhost}:${POSTGIS_PORT:5432}/${POSTGIS_DB_NAME:docker}
@@ -73,7 +96,7 @@ application:
   version: 0.0.0 # do not modify this, it will be replace during build (ci)
 
   serverId: ${SERVER_ID:default}
-  serverURL: ${SERVER_URL:#{'http://cytomine.local'}}
+  serverURL: ${SERVER_URL:http://127.0.0.1}
   storagePath: ${STORAGE_PATH:/data/images}
 
   adminPassword: ${ADMIN_PASSWORD:adminPassword}
@@ -109,3 +132,9 @@ application:
   appEngine:
     enabled: ${APPENGINE_ENABLED:true}
     apiBasePath: ${APPENGINE_API_BASE_PATH:/app-engine/v1/}
+
+jwt:
+  auth:
+    converter:
+      resource-id: core
+      principle-attribute: preferred_username

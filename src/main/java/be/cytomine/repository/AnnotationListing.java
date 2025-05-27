@@ -24,7 +24,7 @@ import be.cytomine.domain.ontology.AnnotationGroup;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.Track;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import lombok.Getter;
@@ -70,14 +70,9 @@ public abstract class AnnotationListing {
     List<Long> annotationGroups = null;
 
     Long user = null;
-    Long userForTermAlgo = null;
-    List<Long> usersForTermAlgo = null;
 
     Long term = null;
     List<Long> terms = null;
-
-    Long suggestedTerm = null;
-    List<Long> suggestedTerms = null;
 
     List<Long> users = null;//for user that draw annotation
     List<Long> usersForTerm = null;//for user that add a term to annotation
@@ -93,7 +88,6 @@ public abstract class AnnotationListing {
     Boolean notReviewedOnly = false;
     Boolean noTerm = false;
     Boolean noTag = false;
-    Boolean noAlgoTerm = false;
     Boolean multipleTerm = false;
     Boolean noTrack = false;
     Boolean multipleTrack = false;
@@ -249,12 +243,6 @@ public abstract class AnnotationListing {
 
                         getUsersForTermConst() +
 
-                        getUserForTermAlgoConst() +
-                        getUsersForTermAlgoConst() +
-
-                        getSuggestedTermConst() +
-                        getSuggestedTermsConst() +
-
                         getNotReviewedOnlyConst() +
                         getParentsConst() +
                         getAvoidEmptyCentroidConst() +
@@ -277,10 +265,7 @@ public abstract class AnnotationListing {
                 sqlColumns.remove("annotationTerms");
                 sqlColumns.remove("userTerm");
 
-                if (this instanceof  AlgoAnnotationListing) {
-                    request += "aat.term_id as term, aat.id as annotationTerms, aat.user_job_id as userTerm ";
-                }
-                else if (this instanceof ReviewedAnnotationListing) {
+                if (this instanceof ReviewedAnnotationListing) {
                     request += "at.term_id as term, 0 as annotationTerms, a.user as userTerm ";
                 }
                 else {
@@ -302,10 +287,7 @@ public abstract class AnnotationListing {
             request += "FROM (" + getSelect(sqlColumns) + getFrom() + whereRequest + ") a \n";
 
             if (term!=null || terms!=null) {
-                if (this instanceof AlgoAnnotationListing) {
-                    request += "LEFT OUTER JOIN algo_annotation_term aat ON aat.annotation_ident = a.id ";
-                }
-                else if (this instanceof ReviewedAnnotationListing) {
+                if (this instanceof ReviewedAnnotationListing) {
                     request += "LEFT OUTER JOIN reviewed_annotation_term at ON a.id = at.reviewed_annotation_terms_id ";
                 }
                 else {
@@ -319,10 +301,7 @@ public abstract class AnnotationListing {
 
             request += "WHERE true ";
             if (term!=null || terms!=null) {
-                if (this instanceof AlgoAnnotationListing) {
-                    request += "AND aat.deleted IS NULL ";
-                }
-                else if (!(this instanceof ReviewedAnnotationListing)) {
+                 if (!(this instanceof ReviewedAnnotationListing)) {
                     request += "AND at.deleted IS NULL ";
                 }
             }
@@ -330,12 +309,7 @@ public abstract class AnnotationListing {
             request += "ORDER BY ";
             request += (track!=null || tracks!=null) ? "a.rank asc" : "a.id desc ";
             if (term!=null || terms!=null) {
-                if (this instanceof AlgoAnnotationListing) {
-                    request += ", aat.term_id ";
-                }
-                else {
-                    request += ", at.term_id ";
-                }
+                request += ", at.term_id ";
             }
             request += ((track!=null || tracks!=null) ? ", atr.track_id " : "");
             return request;
@@ -455,7 +429,7 @@ public abstract class AnnotationListing {
 
     String getUserConst() {
         if (user!=null) {
-            if (entityManager.find(SecUser.class, user)==null) {
+            if (entityManager.find(User.class, user)==null) {
                 throw new ObjectNotFoundException("User "+user+" not exist!");
             }
             return "AND a.user_id = "+user+"\n";
@@ -613,47 +587,6 @@ public abstract class AnnotationListing {
 
     String getExcludedAnnotationConst() {
         return (excludedAnnotation!=null ? "AND a.id <> " + excludedAnnotation + "\n" : "");
-    }
-
-    String getSuggestedTermConst() {
-        if (suggestedTerm!=null) {
-            if (entityManager.find(Term.class, suggestedTerm)!=null) {
-                throw new ObjectNotFoundException("Term "+suggestedTerm+" not exist!");
-            }
-            addIfMissingColumn("algo");
-            return "AND aat.term_id = "+suggestedTerm+"  AND aat.deleted IS NULL \n";
-        } else {
-            return "";
-        }
-    }
-
-    String getSuggestedTermsConst() {
-        if (suggestedTerms!=null) {
-            addIfMissingColumn("algo");
-            return "AND aat.term_id IN ("+joinValues(suggestedTerms)+")\n";
-        } else {
-            return "";
-        }
-    }
-
-    String getUserForTermAlgoConst() {
-        if (userForTermAlgo!=null) {
-            addIfMissingColumn("term");
-            addIfMissingColumn("algo");
-            return "AND aat.user_job_id = " + userForTermAlgo + "\n";
-        } else {
-            return "";
-        }
-    }
-
-    String getUsersForTermAlgoConst() {
-        if (usersForTermAlgo!=null) {
-            addIfMissingColumn("algo");
-            addIfMissingColumn("term");
-            return "AND aat.user_job_id IN ("+joinValues(usersForTermAlgo)+")\n";
-        } else {
-            return "";
-        }
     }
 
     abstract String createOrderBy();

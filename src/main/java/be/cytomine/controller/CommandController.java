@@ -20,17 +20,11 @@ import be.cytomine.domain.command.Command;
 import be.cytomine.domain.command.DeleteCommand;
 import be.cytomine.domain.command.RedoStackItem;
 import be.cytomine.domain.command.UndoStackItem;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.command.CommandRepository;
-import be.cytomine.repository.command.UndoStackItemRepository;
-import be.cytomine.repository.ontology.OntologyRepository;
-import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.CurrentUserService;
-import be.cytomine.service.ontology.OntologyService;
-import be.cytomine.service.security.SecUserService;
-import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
@@ -63,7 +57,7 @@ public class CommandController extends RestCytomineController {
             @PathVariable(required = false) Long id
     ) {
         log.debug("REST request to undo command {}", id);
-        SecUser user = currentUserService.getCurrentUser();
+        User user = currentUserService.getCurrentUser();
         Command command = null;
         if (id!=null) {
             command = commandRepository.findById(id)
@@ -105,7 +99,7 @@ public class CommandController extends RestCytomineController {
             @PathVariable(required = false) Long id
     ) {
         log.debug("REST request to undo command {}", id);
-        SecUser user = currentUserService.getCurrentUser();
+        User user = currentUserService.getCurrentUser();
         Command command = null;
         if (id!=null) {
             command = commandRepository.findById(id)

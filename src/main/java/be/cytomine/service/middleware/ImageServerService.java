@@ -587,7 +587,7 @@ public class ImageServerService {
 
         if (params.getGeometries() != null) {
             String strokeColor = params.getColor() != null ? params.getColor().replace("0x", "#") : "black";
-            Integer strokeWidth = params.getThickness() != null ? params.getThickness() : 1; // TODO: check scale
+            Integer strokeWidth = params.getThickness() != null ? params.getThickness() : 1;
             String annotationType = checkType(params);
 
 

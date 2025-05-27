@@ -18,7 +18,6 @@ package be.cytomine.domain.ontology;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.GenericCytomineDomainContainer;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
@@ -101,7 +100,7 @@ public class SharedAnnotation extends CytomineDomain implements Serializable {
         return sharedAnnotation;
     }
 
-    public SecUser userDomainCreator() {
+    public User userDomainCreator() {
         return sender;
     }
 

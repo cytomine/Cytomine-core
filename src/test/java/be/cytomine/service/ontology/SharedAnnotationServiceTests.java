@@ -115,28 +115,6 @@ public class SharedAnnotationServiceTests {
 
     }
 
-    @Test
-    void add_valid_sharedAnnotation_with_receivers_not_on_the_platform() {
-        AnnotationDomain annotationDomain = builder.given_a_user_annotation();
-        SharedAnnotation sharedAnnotation = builder.given_a_not_persisted_shared_annotation();
-        sharedAnnotation.setAnnotation(annotationDomain);
-        JsonObject json = sharedAnnotation.toJsonObject();
-        json.put("subject", "subject for test mail");
-        json.put("message", "message for test mail");
-        json.put("users", List.of(builder.given_superadmin().getId()));
-        json.put("annotationIdent", sharedAnnotation.getAnnotationIdent());
-        json.put("annotationClassName", sharedAnnotation.getAnnotationClassName());
-        json.remove("receivers");
-        json.put("emails", List.of("IamNotOnCytomine@tooBad.com"));
-        CommandResponse commandResponse = sharedAnnotationService.add(sharedAnnotation.toJsonObject());
-
-        assertThat(commandResponse).isNotNull();
-        assertThat(commandResponse.getStatus()).isEqualTo(200);
-
-        assertThat(sharedAnnotationService.listComments(annotationDomain).size()).isEqualTo(1);
-    }
-
-
 
     @Test
     void delete_sharedAnnotation_with_success() {

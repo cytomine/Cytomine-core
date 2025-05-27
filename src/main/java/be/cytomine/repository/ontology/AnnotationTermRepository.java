@@ -20,7 +20,6 @@ import be.cytomine.domain.ontology.AnnotationTerm;
 import be.cytomine.domain.ontology.Term;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -33,7 +32,7 @@ public interface AnnotationTermRepository extends JpaRepository<AnnotationTerm, 
     List<AnnotationTerm> findAllByUserAnnotationId(Long annotation);
 
 
-    Optional<AnnotationTerm> findByUserAnnotationAndTermAndUser(UserAnnotation annotation, Term term, SecUser user);
+    Optional<AnnotationTerm> findByUserAnnotationAndTermAndUser(UserAnnotation annotation, Term term, User user);
 
 
     Optional<AnnotationTerm>  findByUserAnnotationIdAndTermIdAndUserId(Long annotation, Long term, Long user);

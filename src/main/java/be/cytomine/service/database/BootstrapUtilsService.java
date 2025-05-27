@@ -27,20 +27,19 @@ import be.cytomine.repository.meta.ConfigurationRepository;
 import be.cytomine.repository.ontology.RelationRepository;
 import be.cytomine.repository.processing.ImageFilterRepository;
 import be.cytomine.repository.security.SecRoleRepository;
-import be.cytomine.repository.security.SecUserRepository;
-import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
+import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.service.image.server.StorageService;
-import be.cytomine.utils.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
+
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -51,19 +50,13 @@ public class BootstrapUtilsService {
     SecRoleRepository secRoleRepository;
 
     @Autowired
-    SecUserSecRoleRepository secUserSecRoleRepository;
+    SecUserSecRoleRepository secSecUserSecRoleRepository;
 
     @Autowired
     UserRepository userRepository;
 
     @Autowired
-    ApplicationProperties applicationProperties;
-
-    @Autowired
     StorageService storageService;
-
-    @Autowired
-    ApplicationContext applicationContext;
 
     @Autowired
     RelationRepository relationRepository;
@@ -77,71 +70,31 @@ public class BootstrapUtilsService {
     @Autowired
     ConfigurationRepository configurationRepository;
 
-    @Autowired
-    EntityManager entityManager;
-
-    @Autowired
-    SecUserRepository secUserRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     public void createRole(String role) {
         secRoleRepository.createIfNotExist(role);
     }
 
-    public void createUser(String username, String firstname, String lastname, String email, String password, List<String> roles) {
+    public void createUser(String username, String firstname, String lastname, List<String> roles) {
         if (userRepository.findByUsernameLikeIgnoreCase(username).isEmpty()) {
             log.info("Creating {}...", username);
             User user = new User();
             user.setUsername(username);
-            user.setFirstname(firstname);
-            user.setLastname(lastname);
-            user.setEmail(email);
-            user.setPassword(password);
-            user.encodePassword(passwordEncoder);
-            user.setLanguage(Language.valueOf(applicationProperties.getDefaultLanguage()));
-            user.setEnabled(true);
-            user.setIsDeveloper(false);
-            user.setOrigin("BOOTSTRAP");
+            user.setName(firstname + " " + lastname);
+            user.setReference(UUID.randomUUID().toString());
             user.generateKeys();
 
             log.info("Saving {}...", user.getUsername());
             user = userRepository.save(user);
 
             for (String role : roles) {
-                SecUserSecRole secUserSecRole = new SecUserSecRole();
-                secUserSecRole.setSecRole(secRoleRepository.getByAuthority(role));
-                secUserSecRole.setSecUser(user);
-                secUserSecRoleRepository.save(secUserSecRole);
+                SecUserSecRole secSecUserSecRole = new SecUserSecRole();
+                secSecUserSecRole.setSecRole(secRoleRepository.getByAuthority(role));
+                secSecUserSecRole.setSecUser(user);
+                secSecUserSecRoleRepository.save(secSecUserSecRole);
             }
-
-            SecurityUtils.reauthenticate(applicationContext, "admin", "admin");
 
             storageService.initUserStorage(user);
-        }
-    }
-
-
-    public void createUserJob(String username, String password, User creator, List<String> roles) {
-        if (secUserRepository.findByUsernameLikeIgnoreCase(username).isEmpty()) {
-            log.info("Creating {}...", username);
-            UserJob user = new UserJob();
-            user.setUsername(username);
-            user.setPassword(password);
-            user.setEnabled(true);
-            user.setOrigin("BOOTSTRAP");
-            user.setUser(creator);
-            user.generateKeys();
-            log.info("Saving {}...", user.getUsername());
-            user = secUserRepository.save(user);
-
-            for (String role : roles) {
-                SecUserSecRole secUserSecRole = new SecUserSecRole();
-                secUserSecRole.setSecRole(secRoleRepository.getByAuthority(role));
-                secUserSecRole.setSecUser(user);
-                secUserSecRoleRepository.save(secUserSecRole);
-            }
         }
     }
 

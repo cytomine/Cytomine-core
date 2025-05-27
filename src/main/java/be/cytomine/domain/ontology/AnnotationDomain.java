@@ -21,7 +21,7 @@ import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.image.Point;
 import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -116,16 +116,9 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
     public abstract boolean isUserAnnotation();
 
     /**
-     * Check if its an algo annotation
-     */
-    public abstract boolean isAlgoAnnotation();
-
-    /**
      * Check if its a review annotation
      */
     public abstract boolean isReviewedAnnotation();
-
-    public abstract boolean isRoiAnnotation();
 
     /**
      * Get all terms for automatic review
@@ -175,6 +168,7 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
         return new Point(centroid.getX(), centroid.getY());
     }
 
+
     public static Optional<AnnotationDomain> findAnnotationDomain(EntityManager entityManager, Long id) {
         return Optional.ofNullable(getAnnotationDomain(entityManager, id, ""));
     }
@@ -196,9 +190,6 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
                 case "be.cytomine.domain.ontology.UserAnnotation":
                     domain = UserAnnotation.class;
                     break;
-                case "be.cytomine.domain.ontology.AlgoAnnotation":
-                    domain = AlgoAnnotation.class;
-                    break;
                 case "be.cytomine.domain.ontology.ReviewedAnnotation":
                     domain = ReviewedAnnotation.class;
                     break;
@@ -212,7 +203,6 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
             annotation = (AnnotationDomain)entityManager.find(domain, id);
         } else {
             annotation = entityManager.find(UserAnnotation.class, id);
-            if (annotation==null) annotation = entityManager.find(AlgoAnnotation.class, id);
             if (annotation==null) annotation = entityManager.find(ReviewedAnnotation.class, id);
         }
 
@@ -249,5 +239,6 @@ public abstract class AnnotationDomain extends CytomineDomain implements Seriali
         return returnArray;
     }
 
-    public abstract SecUser user();
+    public abstract User user();
+
 }

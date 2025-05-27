@@ -19,7 +19,6 @@ package be.cytomine.domain.ontology;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.UrlApi;
@@ -140,23 +139,12 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
     }
 
     /**
-     * Check if its an algo annotation
-     */
-    public boolean isAlgoAnnotation() {
-        return false;
-    }
-
-    /**
      * Check if its a review annotation
      */
     public boolean isReviewedAnnotation() {
         return false;
     }
 
-    @Override
-    public boolean isRoiAnnotation() {
-        return false;
-    }
 
     public CytomineDomain buildDomainFromJson(JsonObject json, EntityManager entityManager) {
         UserAnnotation annotation = this;
@@ -228,7 +216,7 @@ public class UserAnnotation extends AnnotationDomain implements Serializable {
     }
 
     @Override
-    public SecUser user() {
+    public User user() {
         return user;
     }
 

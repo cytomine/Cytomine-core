@@ -18,7 +18,7 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.json.JsonInput;
 import be.cytomine.dto.json.JsonMultipleObject;
 import be.cytomine.dto.json.JsonSingleObject;
@@ -28,9 +28,11 @@ import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.meta.PropertyService;
 import be.cytomine.service.project.ProjectService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.utils.GeometryUtils;
 import be.cytomine.utils.JsonObject;
+
+
 
 @RestController
 @RequestMapping("/api")
@@ -46,7 +48,7 @@ public class RestPropertyController extends RestCytomineController {
 
     private final AnnotationDomainRepository annotationDomainRepository;
 
-    private final SecUserService secUserService;
+    private final UserService userService;
 
     @GetMapping("/project/{project}/property.json")
     public ResponseEntity<String> listByProject(
@@ -133,13 +135,13 @@ public class RestPropertyController extends RestCytomineController {
         log.debug("REST request to list annotation position");
         ImageInstance imageInstance = imageInstanceService.find(imageInstanceId)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageInstanceId));
-        SecUser secUser = secUserService.find(userId)
-                .orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
+        User user = userService.find(userId)
+                .orElseThrow(() -> new ObjectNotFoundException("User", userId));
         Geometry boundingbox = null;
         if (bbox!=null) {
             boundingbox = GeometryUtils.createBoundingBox(bbox);
         }
-        return responseSuccess(propertyService.listAnnotationCenterPosition(secUser, imageInstance, boundingbox, key));
+        return responseSuccess(propertyService.listAnnotationCenterPosition(user, imageInstance, boundingbox, key));
     }
 
     @GetMapping("/project/{project}/key/{key}/property.json")

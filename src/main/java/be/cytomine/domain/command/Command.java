@@ -18,7 +18,7 @@ package be.cytomine.domain.command;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.service.ModelService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -55,7 +55,7 @@ public abstract class Command extends CytomineDomain {
      */
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = true)
-    protected SecUser user;
+    protected User user;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "transaction_id", nullable = true)

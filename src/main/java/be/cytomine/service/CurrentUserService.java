@@ -16,29 +16,35 @@ package be.cytomine.service;
 * limitations under the License.
 */
 
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.exceptions.ForbiddenException;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.ServerException;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.security.current.CurrentUser;
-import be.cytomine.utils.SecurityUtils;
+import be.cytomine.security.current.FullCurrentUser;
+import be.cytomine.security.current.PartialCurrentUser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
-import jakarta.persistence.EntityManager;
+import java.util.Optional;
 
+// TODO IAM: adapt to get the Cytomine user from IAM reference
 @Slf4j
 @Service
 public class CurrentUserService {
 
     @Autowired
-    private SecUserRepository secUserRepository;
-
+    private UserRepository userRepository;
 
     public String getCurrentUsername() {
-        CurrentUser currentUser = SecurityUtils.getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
+        CurrentUser currentUser = getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
         if (currentUser.isFullObjectProvided() || currentUser.isUsernameProvided()) {
             return currentUser.getUser().getUsername();
         } else {
@@ -46,29 +52,50 @@ public class CurrentUserService {
         }
     }
 
-    public SecUser getCurrentUser() {
-        CurrentUser currentUser = SecurityUtils.getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
-        SecUser secUser;
+    public User getCurrentUser() {
+        CurrentUser currentUser = getSecurityCurrentUser().orElseThrow(() -> new ServerException("Cannot read current user"));
+        User user;
         if (currentUser.isFullObjectProvided()) {
-            secUser = currentUser.getUser();
+            user = currentUser.getUser();
         } else if(currentUser.isUsernameProvided()) {
-            secUser = secUserRepository.findByUsernameLikeIgnoreCase(currentUser.getUser().getUsername()).orElseThrow(() -> new ServerException("Cannot find current user with username " + currentUser.getUser().getUsername()));
+            user = userRepository.findByUsernameLikeIgnoreCase(currentUser.getUser().getUsername()).orElseThrow(() -> new ServerException("Cannot find current user with username " + currentUser.getUser().getUsername()));
         } else {
             throw new ObjectNotFoundException("User", "Cannot read current user. Object " + currentUser + " is not supported");
         }
-        checkAccountStatus(secUser);
-        return secUser;
+        return user;
     }
 
-    private void checkAccountStatus(SecUser secUser) {
-        if (secUser.getAccountExpired()) {
-            throw new ForbiddenException("Account expired");
-        } else if (secUser.getAccountLocked()) {
-            throw new ForbiddenException("Account locked");
-        } else if (!secUser.getEnabled()) {
-            throw new ForbiddenException("Account disabled");
-        }
+    public User getCurrentUser(String username) {
+        return userRepository.findByUsernameLikeIgnoreCase(username).orElseThrow(() -> new ServerException("Cannot find current user with username " + username));
+    }
 
+    public static Optional<CurrentUser> getSecurityCurrentUser() {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        return Optional.ofNullable(extractCurrentUser(securityContext.getAuthentication()));
+    }
+
+    private static CurrentUser extractCurrentUser(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        } else if (authentication.getDetails() instanceof User) {
+            FullCurrentUser fullCurrentUser = new FullCurrentUser();
+            fullCurrentUser.setUser((User)authentication.getDetails());
+            return fullCurrentUser;
+        } else if (authentication.getPrincipal() instanceof String) {
+            PartialCurrentUser partialCurrentUser = new PartialCurrentUser();
+            partialCurrentUser.setUsername((String)authentication.getPrincipal());
+            return partialCurrentUser;
+        } else if (authentication.getPrincipal() instanceof UserDetails) {
+            PartialCurrentUser partialCurrentUser = new PartialCurrentUser();
+            partialCurrentUser.setUsername(((UserDetails) authentication.getPrincipal()).getUsername());
+            return partialCurrentUser;
+        }else if (authentication instanceof JwtAuthenticationToken) {
+            PartialCurrentUser partialCurrentUser = new PartialCurrentUser();
+            // this is the preferred_username coming from token claims
+            partialCurrentUser.setUsername(authentication.getName());
+            return partialCurrentUser;
+        }
+        return null;
     }
 
 }

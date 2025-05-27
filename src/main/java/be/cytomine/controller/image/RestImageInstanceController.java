@@ -7,7 +7,7 @@ import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.image.group.ImageGroup;
 import be.cytomine.domain.image.group.ImageGroupImageInstance;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.image.CropParameter;
 import be.cytomine.dto.image.ImageParameter;
 import be.cytomine.dto.image.LabelParameter;
@@ -23,7 +23,7 @@ import be.cytomine.service.image.group.ImageGroupService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.search.ImageSearchExtension;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.RequestParams;
@@ -56,8 +56,8 @@ public class RestImageInstanceController extends RestCytomineController {
 
     private final ImageServerService imageServerService;
 
-    private final SecUserService secUserService;
-
+    private final UserService userService;
+    
     private final SliceCoordinatesService sliceCoordinatesService;
 
     private final SecurityACLService securityACLService;
@@ -81,10 +81,10 @@ public class RestImageInstanceController extends RestCytomineController {
             @PathVariable Long id
     ) {
         log.debug("REST request to get image instance by user {}", id);
-        SecUser secUser = secUserService.find(id)
-                .orElseThrow(() -> new ObjectNotFoundException("SecUser", id));
+        User user = userService.find(id)
+                .orElseThrow(() -> new ObjectNotFoundException("User", id));
         RequestParams requestParams = retrievePageableParameters();
-        return responseSuccess(imageInstanceService.list(secUser, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax()));
+        return responseSuccess(imageInstanceService.list(user, retrieveSearchParameters(), requestParams.getSort(), requestParams.getOrder(), requestParams.getOffset(), requestParams.getMax()));
     }
 
     @GetMapping("/user/{id}/imageinstance/light.json")
@@ -92,12 +92,12 @@ public class RestImageInstanceController extends RestCytomineController {
             @PathVariable Long id
     ) {
         log.debug("REST request to get image instance light by user {}", id);
-        SecUser secUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         if (id != 0) {
-            secUser = secUserService.find(id)
-                    .orElseThrow(() -> new ObjectNotFoundException("SecUser", id));
+            currentUser = userService.find(id)
+                    .orElseThrow(() -> new ObjectNotFoundException("User", id));
         }
-        return responseSuccess(imageInstanceService.listLight(secUser));
+        return responseSuccess(imageInstanceService.listLight(currentUser));
     }
 
     @GetMapping("/abstractimage/{id}/imageinstance.json")
@@ -206,6 +206,7 @@ public class RestImageInstanceController extends RestCytomineController {
             @RequestParam(required = false) Double contrast,
             @RequestParam(required = false) Double gamma,
             @RequestParam(required = false) String bits,
+            @RequestParam(required = false) String Authorization,
 
             ProxyExchange<byte[]> proxy
     ) throws IOException {
@@ -217,9 +218,9 @@ public class RestImageInstanceController extends RestCytomineController {
         thumbParameter.setInverse(inverse);
         thumbParameter.setContrast(contrast);
         thumbParameter.setGamma(gamma);
-        thumbParameter.setMaxBits(bits != null && bits.equals("max"));
-        thumbParameter.setBits(bits != null && !bits.equals("max") ? Integer.parseInt(bits) : null);
-        ImageInstance imageInstance = imageInstanceService.find(id)
+        thumbParameter.setMaxBits(bits!=null && bits.equals("max"));
+        thumbParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
+        ImageInstance imageInstance = imageInstanceService.find(id, Authorization)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
 
         String etag = getRequestETag();
@@ -500,6 +501,7 @@ public class RestImageInstanceController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
         return responseSuccess(JsonObject.toJsonString(imageInstanceService.computeBounds(project)));
     }
+
 
     protected void filterOneElement(Map<String, Object> element) {
         element.put("instanceFilename", null);

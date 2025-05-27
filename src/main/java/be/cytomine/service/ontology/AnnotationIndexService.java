@@ -17,7 +17,7 @@ package be.cytomine.service.ontology;
 */
 
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.annotation.AnnotationIndexLightDTO;
 import be.cytomine.repository.ontology.AnnotationIndexRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +47,7 @@ public class AnnotationIndexService {
      * Return the number of annotation created by this user for this slice
      * If user is null, return the number of reviewed annotation for this slice
      */
-    public Long count(SliceInstance slice, SecUser user) {
+    public Long count(SliceInstance slice, User user) {
         if (user!=null) {
             return annotationIndexRepository.findOneBySliceAndUser(slice, user)
                     .map(AnnotationIndexLightDTO::getCountAnnotation).orElse(0L);
@@ -57,7 +57,7 @@ public class AnnotationIndexService {
         }
     }
 
-    public Long count(List<SliceInstance> slices, SecUser user) {
+    public Long count(List<SliceInstance> slices, User user) {
         if (user!=null) {
             return annotationIndexRepository.findOneBySliceInAndUser(slices, user)
                     .map(AnnotationIndexLightDTO::getCountAnnotation).orElse(0L);

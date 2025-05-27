@@ -511,8 +511,6 @@ public abstract class RestCytomineController {
     }
 
     protected void responseImage(PimsResponse image) throws IOException {
-        // TODO: insread of loading the image in byte[] then in response, we should try to connect
-        // PIMS answer directly to the response.outpustream
         String contentType = image.getHeaders().get("Content-Type");
         if (request.getMethod().equals("HEAD")) {
             responseString(contentType, "");

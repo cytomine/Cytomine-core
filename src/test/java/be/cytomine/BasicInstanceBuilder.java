@@ -35,7 +35,7 @@ import be.cytomine.domain.security.*;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.image.MimeRepository;
 import be.cytomine.repository.security.SecRoleRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.PermissionService;
 
 import static org.springframework.security.acls.domain.BasePermission.ADMINISTRATION;
@@ -62,7 +62,7 @@ public class BasicInstanceBuilder {
 
     MimeRepository mimeRepository;
 
-    SecUserRepository secUserRepository;
+    UserRepository userRepository;
 
     ApplicationBootstrap applicationBootstrap;
 
@@ -73,7 +73,7 @@ public class BasicInstanceBuilder {
     public BasicInstanceBuilder(
             EntityManager em,
             TransactionTemplate transactionTemplate,
-            SecUserRepository secUserRepository,
+            UserRepository userRepository,
             PermissionService permissionService,
             SecRoleRepository secRoleRepository,
             MimeRepository mimeRepository,
@@ -82,7 +82,7 @@ public class BasicInstanceBuilder {
             applicationBootstrap.init();
         }
         this.em = em;
-        this.secUserRepository = secUserRepository;
+        this.userRepository = userRepository;
         this.permissionService = permissionService;
         this.secRoleRepository = secRoleRepository;
         this.mimeRepository = mimeRepository;
@@ -91,9 +91,9 @@ public class BasicInstanceBuilder {
         this.transactionTemplate.execute(new TransactionCallbackWithoutResult() {
             @Override
             protected void doInTransactionWithoutResult(TransactionStatus status) {
-                aUser = (User) secUserRepository.findByUsernameLikeIgnoreCase("user")
+                aUser = (User) userRepository.findByUsernameLikeIgnoreCase("user")
                         .orElseGet(() -> given_default_user());
-                anAdmin = (User) secUserRepository.findByUsernameLikeIgnoreCase("admin")
+                anAdmin = (User) userRepository.findByUsernameLikeIgnoreCase("admin")
                         .orElseGet(() -> given_default_admin());
             }
         });
@@ -158,57 +158,30 @@ public class BasicInstanceBuilder {
     }
 
 
-    public UserJob given_a_user_job() {
-        return given_a_user_job(randomString());
-    }
 
-    public UserJob given_a_user_job(String username) {
-        UserJob user = persistAndReturn(given_a_user_job_not_persisted(given_a_user()));
-        user.setUsername(username);
-        user = persistAndReturn(user);
-        addRole(user, ROLE_USER);
-        return user;
-    }
 
-    public void addRole(SecUser user, String authority) {
-        SecUserSecRole secUserSecRole = new SecUserSecRole();
-        secUserSecRole.setSecUser(user);
-        secUserSecRole.setSecRole(secRoleRepository.findByAuthority(authority).orElseThrow(() -> new ObjectNotFoundException("authority " + authority + " does not exists")));
-        em.persist(secUserSecRole);
+
+
+    public void addRole(User user, String authority) {
+        SecUserSecRole secSecUserSecRole = new SecUserSecRole();
+        secSecUserSecRole.setSecUser(user);
+        secSecUserSecRole.setSecRole(secRoleRepository.findByAuthority(authority).orElseThrow(() -> new ObjectNotFoundException("authority " + authority + " does not exists")));
+        em.persist(secSecUserSecRole);
         em.flush();
         em.refresh(user);
     }
 
     public User given_superadmin() {
-        return (User)secUserRepository.findByUsernameLikeIgnoreCase("superadmin").orElseThrow(() -> new ObjectNotFoundException("superadmin not in db"));
-    }
-
-    public UserJob given_superadmin_job() {
-        return (UserJob)secUserRepository.findByUsernameLikeIgnoreCase("superadminjob").orElseThrow(() -> new ObjectNotFoundException("superadminjob not in db"));
+        return (User)userRepository.findByUsernameLikeIgnoreCase("superadmin").orElseThrow(() -> new ObjectNotFoundException("superadmin not in db"));
     }
 
     public static User given_a_not_persisted_user() {
+        //User user2 = new User();
         User user = new User();
-        user.setFirstname("firstname");
-        user.setLastname("lastname");
+        user.setName("firstname lastname");
+        user.setReference(UUID.randomUUID().toString());
         user.setUsername(randomString());
-        user.setEmail(UUID.randomUUID() + "@example.com");
-        user.setPublicKey(randomString());
-        user.setPrivateKey(randomString());
-        user.setPassword(randomString());
-        user.setOrigin("unkown");
-        return user;
-    }
-
-
-    public static UserJob given_a_user_job_not_persisted(User creator) {
-        UserJob user = new UserJob();
-        user.setUsername(randomString());
-        user.setUser(creator);
-        user.setPublicKey(randomString());
-        user.setPrivateKey(randomString());
-        user.setPassword(randomString());
-        user.setOrigin("unkown");
+        user.generateKeys();
         return user;
     }
 
@@ -764,81 +737,6 @@ public class BasicInstanceBuilder {
         return annotation;
     }
 
-
-    public AlgoAnnotation given_a_not_persisted_algo_annotation() {
-        AlgoAnnotation annotation = new AlgoAnnotation();
-        annotation.setUser(given_superadmin_job());
-        try {
-            annotation.setLocation(new WKTReader().read("POLYGON ((1983 2168, 2107 2160, 2047 2074, 1983 2168))"));
-        } catch (ParseException ignored) {
-
-        }
-        annotation.setSlice(given_a_slice_instance());
-        annotation.setImage(annotation.getSlice().getImage());
-        annotation.setProject(annotation.getImage().getProject());
-        return annotation;
-    }
-
-    public AlgoAnnotation given_a_algo_annotation(Project project) {
-        return persistAndReturn(given_a_not_persisted_algo_annotation(project));
-    }
-
-    public AlgoAnnotation given_a_not_persisted_algo_annotation(Project project) {
-        AlgoAnnotation annotation = given_a_not_persisted_algo_annotation();
-        annotation.getSlice().setProject(project);
-        annotation.getImage().setProject(project);
-        annotation.setProject(project);
-        return annotation;
-    }
-
-
-    public AlgoAnnotation given_a_algo_annotation() {
-        return persistAndReturn(given_a_not_persisted_algo_annotation());
-    }
-
-    public AlgoAnnotation given_a_algo_annotation(SliceInstance sliceInstance, String location, UserJob user, Term term) throws ParseException {
-        AlgoAnnotation annotation = given_a_algo_annotation();
-        annotation.setImage(sliceInstance.getImage());
-        annotation.setSlice(sliceInstance);
-        annotation.setLocation(new WKTReader().read(location));
-        annotation.setUser(user);
-        annotation.setProject(sliceInstance.getProject());
-        persistAndReturn(annotation);
-
-        if (term!=null) {
-            AlgoAnnotationTerm annotationTerm = new AlgoAnnotationTerm();
-            annotationTerm.setAnnotation(annotation);
-            annotationTerm.setUserJob(user);
-            annotationTerm.setTerm(term);
-            annotationTerm.setRate(0d);
-            persistAndReturn(annotationTerm);
-            em.refresh(annotation);
-        }
-
-        return annotation;
-    }
-
-    public AlgoAnnotationTerm given_an_algo_annotation_term() {
-        AlgoAnnotation algoAnnotation = given_a_algo_annotation();
-        AlgoAnnotationTerm annotationTerm = new AlgoAnnotationTerm();
-        annotationTerm.setAnnotation(algoAnnotation);
-        annotationTerm.setUserJob(algoAnnotation.getUser());
-        annotationTerm.setTerm(given_a_term(algoAnnotation.getProject().getOntology()));
-        annotationTerm.setRate(0d);
-        persistAndReturn(annotationTerm);
-        em.refresh(algoAnnotation);
-        return annotationTerm;
-    }
-
-    public AlgoAnnotationTerm given_a_not_persisted_algo_annotation_term(AlgoAnnotation algoAnnotation) {
-        AlgoAnnotationTerm annotationTerm = new AlgoAnnotationTerm();
-        annotationTerm.setAnnotation(algoAnnotation);
-        annotationTerm.setUserJob(algoAnnotation.getUser());
-        annotationTerm.setTerm(given_a_term(algoAnnotation.getProject().getOntology()));
-        annotationTerm.setRate(0d);
-        return annotationTerm;
-    }
-
     public SharedAnnotation given_a_not_persisted_shared_annotation() {
         SharedAnnotation sharedAnnotation = new SharedAnnotation();
         sharedAnnotation.setAnnotation(given_a_user_annotation());
@@ -1016,11 +914,11 @@ public class BasicInstanceBuilder {
         return given_a_not_persisted_user_role(user, secRoleRepository.findByAuthority(authority).get());
     }
 
-    public SecUserSecRole given_a_not_persisted_user_role(SecUser secUser, SecRole secRole) {
-        SecUserSecRole secUserSecRole = new SecUserSecRole();
-        secUserSecRole.setSecRole(secRole);
-        secUserSecRole.setSecUser(secUser);
-        return secUserSecRole;
+    public SecUserSecRole given_a_not_persisted_user_role(User secUser, SecRole secRole) {
+        SecUserSecRole secSecUserSecRole = new SecUserSecRole();
+        secSecUserSecRole.setSecRole(secRole);
+        secSecUserSecRole.setSecUser(secUser);
+        return secSecUserSecRole;
     }
 
     public ImageGroup given_a_not_persisted_imagegroup() {

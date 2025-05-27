@@ -17,14 +17,14 @@ package be.cytomine.service.utils;
 */
 
 import be.cytomine.config.properties.ApplicationProperties;
-import be.cytomine.config.properties.NotificationProperties;
+//import be.cytomine.config.properties.NotificationProperties;
 import be.cytomine.exceptions.MiddlewareException;
 import be.cytomine.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+//import org.springframework.mail.javamail.JavaMailSender;
+//import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import jakarta.mail.MessagingException;
@@ -38,8 +38,8 @@ public class CytomineMailService {
 
     static final String NO_REPLY_EMAIL = "no-reply@cytomine.com";
 
-    @Autowired
-    JavaMailSender sender;
+//    @Autowired
+//    JavaMailSender sender;
 
     @Autowired
     ApplicationProperties applicationProperties;
@@ -53,50 +53,50 @@ public class CytomineMailService {
     }
 
     public void send(String from, String[] to, String[] cc, String[] bcc, String subject, String message, Map<String,File> attachment) throws MessagingException {
-        NotificationProperties notificationConfiguration = applicationProperties.getNotification();
-        String defaultEmail = notificationConfiguration.getEmail();
-
-        // Force all e-mail to be issued from the one passed in the configuration to avoid such Exception:
-        // "SMTPSendFailedException: 550 5.7.60 SMTP; Client does not have permissions to send as this sender"
-        from = defaultEmail;
-
-        if (StringUtils.isBlank(from)) {
-            from = NO_REPLY_EMAIL;
-        }
-
-        if (smtpHost.equals("disabled")) {
-            return;
-        }
-
-        MimeMessage mail = sender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(mail, true);
-
-        helper.setReplyTo(applicationProperties.getAdminEmail());
-        helper.setFrom(from);
-        helper.setTo(to);
-        helper.setCc(cc);
-        helper.setBcc(bcc);
-        helper.setSubject(subject);
-        helper.setText("",message);
-
-        for (Map.Entry<String, File> entry : attachment.entrySet()) {
-            helper.addInline(entry.getKey(), entry.getValue());
-        }
-
-        log.debug("Sending email...");
-        log.debug("from " + from);
-        log.debug("to " + Arrays.toString(to));
-        log.debug("cc " + Arrays.toString(cc));
-        log.debug("bcc " + Arrays.toString(bcc));
-        try {
-            sender.send(mail);
-        } catch (Exception e) {
-            log.error("can't send email ["+subject+"] (MessagingException) "+e.getMessage());
-            log.error("from " + from);
-            log.error("to " + Arrays.toString(to));
-            log.error("cc " + Arrays.toString(cc));
-            log.error("bcc " + Arrays.toString(bcc));
-            throw new MiddlewareException(e.getMessage());
-        }
+//        NotificationProperties notificationConfiguration = applicationProperties.getNotification();
+//        String defaultEmail = notificationConfiguration.getEmail();
+//
+//        // Force all e-mail to be issued from the one passed in the configuration to avoid such Exception:
+//        // "SMTPSendFailedException: 550 5.7.60 SMTP; Client does not have permissions to send as this sender"
+//        from = defaultEmail;
+//
+//        if (StringUtils.isBlank(from)) {
+//            from = NO_REPLY_EMAIL;
+//        }
+//
+//        if (smtpHost.equals("disabled")) {
+//            return;
+//        }
+//
+//        MimeMessage mail = sender.createMimeMessage();
+//        MimeMessageHelper helper = new MimeMessageHelper(mail, true);
+//
+//        helper.setReplyTo(applicationProperties.getAdminEmail());
+//        helper.setFrom(from);
+//        helper.setTo(to);
+//        helper.setCc(cc);
+//        helper.setBcc(bcc);
+//        helper.setSubject(subject);
+//        helper.setText("",message);
+//
+//        for (Map.Entry<String, File> entry : attachment.entrySet()) {
+//            helper.addInline(entry.getKey(), entry.getValue());
+//        }
+//
+//        log.debug("Sending email...");
+//        log.debug("from " + from);
+//        log.debug("to " + Arrays.toString(to));
+//        log.debug("cc " + Arrays.toString(cc));
+//        log.debug("bcc " + Arrays.toString(bcc));
+//        try {
+//            sender.send(mail);
+//        } catch (Exception e) {
+//            log.error("can't send email ["+subject+"] (MessagingException) "+e.getMessage());
+//            log.error("from " + from);
+//            log.error("to " + Arrays.toString(to));
+//            log.error("cc " + Arrays.toString(cc));
+//            log.error("bcc " + Arrays.toString(bcc));
+//            throw new MiddlewareException(e.getMessage());
+//        }
     }
 }

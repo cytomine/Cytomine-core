@@ -108,10 +108,10 @@ public class SecUserSecRoleResourceTests {
     @Transactional
     public void add_valid_role() throws Exception {
         User user = builder.given_a_user();
-        SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(user, secRoleRepository.getAdmin());
+        SecUserSecRole secSecUserSecRole = builder.given_a_not_persisted_user_role(user, secRoleRepository.getAdmin());
          restSecUserSecRoleControllerMockMvc.perform(post("/api/user/{user}/role.json", user.getId())
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(secUserSecRole.toJSON()))
+                    .content(secSecUserSecRole.toJSON()))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.printMessage").value(true))
             .andExpect(jsonPath("$.callback").exists())
@@ -126,11 +126,11 @@ public class SecUserSecRoleResourceTests {
     @Transactional
     public void delete_user_role() throws Exception {
         User user = builder.given_a_user();
-        SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(user, secRoleRepository.getAdmin());
-        builder.persistAndReturn(secUserSecRole);
-        restSecUserSecRoleControllerMockMvc.perform(delete("/api/user/{user}/role/{role}.json", user.getId(), secUserSecRole.getSecRole().getId())
+        SecUserSecRole secSecUserSecRole = builder.given_a_not_persisted_user_role(user, secRoleRepository.getAdmin());
+        builder.persistAndReturn(secSecUserSecRole);
+        restSecUserSecRoleControllerMockMvc.perform(delete("/api/user/{user}/role/{role}.json", user.getId(), secSecUserSecRole.getSecRole().getId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(secUserSecRole.toJSON()))
+                        .content(secSecUserSecRole.toJSON()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.printMessage").value(true))
                 .andExpect(jsonPath("$.callback").exists());

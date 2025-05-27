@@ -24,7 +24,7 @@ import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.ontology.Relation;
 import be.cytomine.domain.ontology.RelationTerm;
 import be.cytomine.domain.ontology.Term;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.RelationTermRepository;
@@ -104,7 +104,7 @@ public class RelationTermService extends ModelService {
     public CommandResponse add(JsonObject jsonObject) {
         securityACLService.check(jsonObject.getJSONAttrLong("term1"),Term.class,WRITE);
         securityACLService.check(jsonObject.getJSONAttrLong("term2"),Term.class,WRITE);
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         return executeCommand(new AddCommand(currentUser),null,jsonObject);
     }
     /**
@@ -117,7 +117,7 @@ public class RelationTermService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),DELETE);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);

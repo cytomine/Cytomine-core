@@ -14,7 +14,7 @@ import be.cytomine.service.ontology.ReviewedAnnotationService;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.utils.ParamsService;
 import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.AnnotationListingBuilder;
@@ -58,7 +58,7 @@ public class RestReviewedAnnotationController extends RestCytomineController {
 
     private final TaskService taskService;
 
-    private final SecUserService secUserService;
+    private final UserService userService;
 
     private final TermService termService;
 
@@ -269,7 +269,7 @@ public class RestReviewedAnnotationController extends RestCytomineController {
     ) throws IOException {
         Project project = projectService.find(idProject)
                 .orElseThrow(() -> new ObjectNotFoundException("Project", idProject));
-        reviewUsers = secUserService.fillEmptyUserIds(reviewUsers, idProject);
+        reviewUsers = userService.fillEmptyUserIds(reviewUsers, idProject);
         terms = termService.fillEmptyTermIds(terms, project);
         JsonObject params = mergeQueryParamsAndBodyParams();
         params.put("reviewed", true);

@@ -30,7 +30,6 @@ import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
 import be.cytomine.utils.CommandResponse;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -50,10 +49,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SecUserSecRoleServiceTests {
 
     @Autowired
-    SecUserSecRoleService secUserSecRoleService;
+    SecUserSecRoleService secSecUserSecRoleService;
 
     @Autowired
-    SecUserSecRoleRepository secUserSecRoleRepository;
+    SecUserSecRoleRepository secSecUserSecRoleRepository;
 
     @Autowired
     BasicInstanceBuilder builder;
@@ -71,7 +70,7 @@ public class SecUserSecRoleServiceTests {
     SecurityACLService securityACLService;
 
     @Autowired
-    SecUserService secUserService;
+    UserService userService;
 
     @Autowired
     SecRoleRepository secRoleRepository;
@@ -80,26 +79,26 @@ public class SecUserSecRoleServiceTests {
     EntityManager entityManager;
 
     @Test
-    void get_secUserSecRole_with_success() {
-        SecUserSecRole secUserSecRole = builder.given_a_user_role();
-        assertThat(secUserSecRoleService.find(secUserSecRole.getSecUser(), secUserSecRole.getSecRole())).isPresent();
+    void get_secSecUserSecRole_with_success() {
+        SecUserSecRole secSecUserSecRole = builder.given_a_user_role();
+        assertThat(secSecUserSecRoleService.find(secSecUserSecRole.getSecUser(), secSecUserSecRole.getSecRole())).isPresent();
     }
 
     @Test
-    void get_unexisting_secUserSecRole() {
-        SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_user(), "ROLE_ADMIN");
-        assertThat(secUserSecRoleService.find(secUserSecRole.getSecUser(), secUserSecRole.getSecRole())).isEmpty();
+    void get_unexisting_secSecUserSecRole() {
+        SecUserSecRole secSecUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_user(), "ROLE_ADMIN");
+        assertThat(secSecUserSecRoleService.find(secSecUserSecRole.getSecUser(), secSecUserSecRole.getSecRole())).isEmpty();
     }
 
     @Test
     void list_all_role_for_a_user() {
-        assertThat(secUserSecRoleService.list(builder.given_superadmin()).stream()
+        assertThat(secSecUserSecRoleService.list(builder.given_superadmin()).stream()
                 .map(SecUserSecRole::getSecRole)
                 .map(SecRole::getAuthority))
                 .contains("ROLE_SUPER_ADMIN");
 
 
-        assertThat(secUserSecRoleService.list(builder.given_a_user()).stream()
+        assertThat(secSecUserSecRoleService.list(builder.given_a_user()).stream()
                 .map(SecUserSecRole::getSecRole)
                 .map(SecRole::getAuthority))
                 .contains("ROLE_USER").doesNotContain("ROLE_ADMIN");
@@ -108,27 +107,27 @@ public class SecUserSecRoleServiceTests {
     @Test
     void find_highest_role() {
         User user = builder.given_a_guest();
-        assertThat(secUserSecRoleService.getHighest(user)).isEqualTo(secRoleRepository.getGuest());
+        assertThat(secSecUserSecRoleService.getHighest(user)).isEqualTo(secRoleRepository.getGuest());
 
-        secUserSecRoleRepository.save(builder.given_a_not_persisted_user_role(user, secRoleRepository.getUser()));
+        secSecUserSecRoleRepository.save(builder.given_a_not_persisted_user_role(user, secRoleRepository.getUser()));
 
-        assertThat(secUserSecRoleService.getHighest(user)).isEqualTo(secRoleRepository.getUser());
+        assertThat(secSecUserSecRoleService.getHighest(user)).isEqualTo(secRoleRepository.getUser());
 
-        secUserSecRoleRepository.save(builder.given_a_not_persisted_user_role(user, secRoleRepository.getAdmin()));
+        secSecUserSecRoleRepository.save(builder.given_a_not_persisted_user_role(user, secRoleRepository.getAdmin()));
 
-        assertThat(secUserSecRoleService.getHighest(user)).isEqualTo(secRoleRepository.getAdmin());
+        assertThat(secSecUserSecRoleService.getHighest(user)).isEqualTo(secRoleRepository.getAdmin());
 
-        secUserSecRoleRepository.save(builder.given_a_not_persisted_user_role(user, secRoleRepository.getSuperAdmin()));
+        secSecUserSecRoleRepository.save(builder.given_a_not_persisted_user_role(user, secRoleRepository.getSuperAdmin()));
 
-        assertThat(secUserSecRoleService.getHighest(user)).isEqualTo(secRoleRepository.getSuperAdmin());
+        assertThat(secSecUserSecRoleService.getHighest(user)).isEqualTo(secRoleRepository.getSuperAdmin());
     }
 
 
     @Test
     void add_valid_secUser_SecRole_with_success() {
-        SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_user(), secRoleRepository.getAdmin());
+        SecUserSecRole secSecUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_user(), secRoleRepository.getAdmin());
 
-        CommandResponse commandResponse = secUserSecRoleService.add(secUserSecRole.toJsonObject());
+        CommandResponse commandResponse = secSecUserSecRoleService.add(secSecUserSecRole.toJsonObject());
 
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);
@@ -137,20 +136,20 @@ public class SecUserSecRoleServiceTests {
     @Test
     @WithMockUser(username = "user")
     void add_valid_secUser_SecRole_with_success_with_admin_as_a_user() {
-        SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_user(), secRoleRepository.getAdmin());
+        SecUserSecRole secSecUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_user(), secRoleRepository.getAdmin());
 
         Assertions.assertThrows(ForbiddenException.class, () -> {
-            secUserSecRoleService.add(secUserSecRole.toJsonObject());
+            secSecUserSecRoleService.add(secSecUserSecRole.toJsonObject());
         });
     }
 
 
     @Test
-    void add_already_existing_secUserSecRole_fails() {
-        SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_user(), secRoleRepository.getAdmin());
-        builder.persistAndReturn(secUserSecRole);
+    void add_already_existing_secSecUserSecRole_fails() {
+        SecUserSecRole secSecUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_user(), secRoleRepository.getAdmin());
+        builder.persistAndReturn(secSecUserSecRole);
         Assertions.assertThrows(AlreadyExistException.class, () -> {
-            secUserSecRoleService.add(secUserSecRole.toJsonObject().withChange("id", null));
+            secSecUserSecRoleService.add(secSecUserSecRole.toJsonObject().withChange("id", null));
         });
     }
 
@@ -158,19 +157,19 @@ public class SecUserSecRoleServiceTests {
     @Test
     @WithMockUser(username = "user")
     void user_cannot_add_user_role_to_a_guest() {
-        SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_guest(), secRoleRepository.getUser());
-        entityManager.refresh(secUserSecRole.getSecUser());
+        SecUserSecRole secSecUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_guest(), secRoleRepository.getUser());
+        entityManager.refresh(secSecUserSecRole.getSecUser());
         Assertions.assertThrows(ForbiddenException.class, () -> {
-            secUserSecRoleService.add(secUserSecRole.toJsonObject().withChange("id", null));
+            secSecUserSecRoleService.add(secSecUserSecRole.toJsonObject().withChange("id", null));
         });
     }
 
     @Test
-    void delete_secUserSecRole_with_success() {
-        SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_user(), secRoleRepository.getAdmin());
-        builder.persistAndReturn(secUserSecRole);
+    void delete_secSecUserSecRole_with_success() {
+        SecUserSecRole secSecUserSecRole = builder.given_a_not_persisted_user_role(builder.given_a_user(), secRoleRepository.getAdmin());
+        builder.persistAndReturn(secSecUserSecRole);
 
-        CommandResponse commandResponse = secUserSecRoleService.delete(secUserSecRole, null, null, true);
+        CommandResponse commandResponse = secSecUserSecRoleService.delete(secSecUserSecRole, null, null, true);
 
         assertThat(commandResponse).isNotNull();
         assertThat(commandResponse.getStatus()).isEqualTo(200);
@@ -178,22 +177,22 @@ public class SecUserSecRoleServiceTests {
 
     @Test
     @WithMockUser(username = "user")
-    void delete_secUserSecRole_with_simple_user_fail() {
-        SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(builder.given_default_user(), secRoleRepository.getGuest());
-        builder.persistAndReturn(secUserSecRole);
+    void delete_secSecUserSecRole_with_simple_user_fail() {
+        SecUserSecRole secSecUserSecRole = builder.given_a_not_persisted_user_role(builder.given_default_user(), secRoleRepository.getGuest());
+        builder.persistAndReturn(secSecUserSecRole);
         Assertions.assertThrows(ForbiddenException.class, () -> {
-            secUserSecRoleService.delete(secUserSecRole, null, null, true);
+            secSecUserSecRoleService.delete(secSecUserSecRole, null, null, true);
         });
     }
 
 
     @Test
     @WithMockUser(username = "user")
-    void delete_secUserSecRole_to_remove_its_own_role() {
-        SecUserSecRole secUserSecRole = builder.given_a_not_persisted_user_role(builder.given_default_user(), secRoleRepository.getAdmin());
-        builder.persistAndReturn(secUserSecRole);
+    void delete_secSecUserSecRole_to_remove_its_own_role() {
+        SecUserSecRole secSecUserSecRole = builder.given_a_not_persisted_user_role(builder.given_default_user(), secRoleRepository.getAdmin());
+        builder.persistAndReturn(secSecUserSecRole);
         Assertions.assertThrows(ForbiddenException.class, () -> {
-            secUserSecRoleService.delete(secUserSecRole, null, null, true);
+            secSecUserSecRoleService.delete(secSecUserSecRole, null, null, true);
         });
     }
 
@@ -201,32 +200,32 @@ public class SecUserSecRoleServiceTests {
     void re_define_role() {
         User user = builder.given_a_guest();
 
-        secUserSecRoleService.define(user, secRoleRepository.getGuest());
-        assertThat(secUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
+        secSecUserSecRoleService.define(user, secRoleRepository.getGuest());
+        assertThat(secSecUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
                 .containsExactlyInAnyOrder("ROLE_GUEST");
 
-        secUserSecRoleService.define(user, secRoleRepository.getUser());
-        assertThat(secUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
+        secSecUserSecRoleService.define(user, secRoleRepository.getUser());
+        assertThat(secSecUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
                 .containsExactlyInAnyOrder("ROLE_USER", "ROLE_GUEST");
 
-        secUserSecRoleService.define(user, secRoleRepository.getAdmin());
-        assertThat(secUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
+        secSecUserSecRoleService.define(user, secRoleRepository.getAdmin());
+        assertThat(secSecUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
                 .containsExactlyInAnyOrder("ROLE_USER", "ROLE_GUEST", "ROLE_ADMIN");
 
-        secUserSecRoleService.define(user, secRoleRepository.getSuperAdmin());
-        assertThat(secUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
+        secSecUserSecRoleService.define(user, secRoleRepository.getSuperAdmin());
+        assertThat(secSecUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
                 .containsExactlyInAnyOrder("ROLE_USER", "ROLE_GUEST", "ROLE_ADMIN", "ROLE_SUPER_ADMIN");
 
-        secUserSecRoleService.define(user, secRoleRepository.getAdmin());
-        assertThat(secUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
+        secSecUserSecRoleService.define(user, secRoleRepository.getAdmin());
+        assertThat(secSecUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
                 .containsExactlyInAnyOrder("ROLE_USER", "ROLE_GUEST", "ROLE_ADMIN");
 
-        secUserSecRoleService.define(user, secRoleRepository.getUser());
-        assertThat(secUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
+        secSecUserSecRoleService.define(user, secRoleRepository.getUser());
+        assertThat(secSecUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
                 .containsExactlyInAnyOrder("ROLE_USER", "ROLE_GUEST");
 
-        secUserSecRoleService.define(user, secRoleRepository.getGuest());
-        assertThat(secUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
+        secSecUserSecRoleService.define(user, secRoleRepository.getGuest());
+        assertThat(secSecUserSecRoleService.list(user).stream().map(x -> x.getSecRole().getAuthority()))
                 .containsExactlyInAnyOrder("ROLE_GUEST");
 
     }

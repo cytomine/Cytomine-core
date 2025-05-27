@@ -8,6 +8,7 @@ import java.util.List;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.annotation.Order;
@@ -17,16 +18,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import be.cytomine.config.properties.ApplicationProperties;
 import be.cytomine.config.nosqlmigration.InitialMongodbSetupMigration;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.project.ProjectRepository;
+import be.cytomine.repository.security.UserRepository;
+import be.cytomine.service.PermissionService;
 import be.cytomine.service.UrlApi;
 import be.cytomine.service.database.BootstrapDataService;
 import be.cytomine.service.database.BootstrapTestsDataService;
 import be.cytomine.service.database.BootstrapUtilsService;
 import be.cytomine.service.utils.Dataset;
 import be.cytomine.utils.EnvironmentUtils;
+
 
 import static be.cytomine.service.database.BootstrapTestsDataService.*;
 
@@ -38,21 +41,27 @@ import static be.cytomine.service.database.BootstrapTestsDataService.*;
 @Transactional
 class ApplicationBootstrap {
 
-    private final Environment environment;
+    @Autowired
+    private final UserRepository userRepository;
 
     private final ApplicationProperties applicationProperties;
+
+    private final Environment environment;
+
+    @Autowired
+    BootstrapDataService bootstrapDataService;
+
+    @Autowired
+    BootstrapUtilsService bootstrapUtilDataService;
 
     private final InitialMongodbSetupMigration initialSetupMigration;
 
     private final Dataset dataset;
 
-    private final SecUserRepository secUserRepository;
+    @Autowired
+    BootstrapTestsDataService bootstrapTestsDataService;
 
-    private final BootstrapDataService bootstrapDataService;
 
-    private final BootstrapUtilsService bootstrapUtilDataService;
-
-    private final BootstrapTestsDataService bootstrapTestsDataService;
 
     @PostConstruct
     public void init() {
@@ -90,17 +99,16 @@ class ApplicationBootstrap {
 
         UrlApi.setServerURL(applicationProperties.getServerURL());
 
-        if (EnvironmentUtils.isTest(environment) && secUserRepository.count() == 0) {
+        if (EnvironmentUtils.isTest(environment) && userRepository.count() == 0) {
             bootstrapDataService.initData();
-            bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", dataset.ADMINEMAIL, dataset.ADMINPASSWORD, List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
-
-            // same as superadmin, but a userjob
-            bootstrapUtilDataService.createUserJob("superadminjob", dataset.ADMINPASSWORD,
-                    (User)secUserRepository.findByUsernameLikeIgnoreCase("superadmin").orElseThrow(() -> new ObjectNotFoundException("User", "superadmin")),
-                    List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
+            //noSQLCollectionService.cleanActivityDB() TODO:
+            bootstrapUtilDataService.createUser(dataset.ADMINLOGIN, "Just an", "Admin", List.of("ROLE_USER", "ROLE_ADMIN"));
+            bootstrapUtilDataService.createUser(dataset.ANOTHERLOGIN, "Just another", "User", List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
+            bootstrapUtilDataService.createUser(dataset.SUPERADMINLOGIN, "Super", "Admin", List.of("ROLE_USER", "ROLE_ADMIN","ROLE_SUPER_ADMIN"));
 
             // We need these users for all authorization tests
             // So we create them at the beginning in order to avoid creating them before each authorization tests
+            bootstrapTestsDataService.createUserForTests(ADMIN);
             bootstrapTestsDataService.createUserForTests(SUPERADMIN);
             bootstrapTestsDataService.createUserForTests(USER_ACL_READ);
             bootstrapTestsDataService.createUserForTests(USER_ACL_WRITE);
@@ -110,17 +118,20 @@ class ApplicationBootstrap {
             bootstrapTestsDataService.createUserForTests(USER_NO_ACL);
             bootstrapTestsDataService.createUserForTests(GUEST);
             bootstrapTestsDataService.createUserForTests(CREATOR);
-        } else if (secUserRepository.count() == 0) {
+
+
+        } else if (userRepository.count() == 0) {
             //if database is empty, put minimal data
             bootstrapDataService.initData();
         }
 
+        // Deprecated API keys. Will be removed in a future release. Still used for communication PIMS->core for now
         if (applicationProperties.getImageServerPrivateKey()!=null && applicationProperties.getImageServerPublicKey()!=null) {
-            SecUser imageServerUser = secUserRepository.findByUsernameLikeIgnoreCase("ImageServer1")
+            User imageServerUser = userRepository.findByUsernameLikeIgnoreCase("ImageServer1")
                     .orElseThrow(() -> new ObjectNotFoundException("No user imageserver1, cannot assign keys"));
             imageServerUser.setPrivateKey(applicationProperties.getImageServerPrivateKey());
             imageServerUser.setPublicKey(applicationProperties.getImageServerPublicKey());
-            secUserRepository.save(imageServerUser);
+            userRepository.save(imageServerUser);
         }
 
         log.info("Check image filters...");

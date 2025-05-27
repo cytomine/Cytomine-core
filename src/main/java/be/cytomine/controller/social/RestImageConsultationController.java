@@ -12,13 +12,12 @@ import org.springframework.web.context.request.RequestContextHolder;
 
 import be.cytomine.controller.RestCytomineController;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.social.ImageConsultationService;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.RequestParams;
@@ -35,7 +34,7 @@ public class RestImageConsultationController extends RestCytomineController {
 
     private final ProjectService projectService;
 
-    private final SecUserService secUserService;
+    private final UserService userService;
 
     private final ReportService reportService;
 
@@ -45,7 +44,7 @@ public class RestImageConsultationController extends RestCytomineController {
             @RequestBody JsonObject json
     ) {
         log.info("add an image consultation for image {}", imageId);
-        SecUser user = currentUserService.getCurrentUser();
+        User user = currentUserService.getCurrentUser();
         String session = RequestContextHolder.currentRequestAttributes().getSessionId();
         String mode = json.getJSONAttrStr("mode");
         return responseSuccess(imageConsultationService.add(user, imageId, session, mode, new Date()));
@@ -64,6 +63,7 @@ public class RestImageConsultationController extends RestCytomineController {
     public ResponseEntity<String> listLastOpenImage() {
         log.debug("REST request to get last image instance opened for user");
         RequestParams requestParams = retrievePageableParameters();
+//        User secUser = currentUserService.getCurrentUser();
         return responseSuccess(imageConsultationService.listLastOpened(requestParams.getMax()));
     }
 
@@ -77,7 +77,7 @@ public class RestImageConsultationController extends RestCytomineController {
     ) {
         Project project = projectService.find(projectId)
                 .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
-        SecUser user = secUserService.find(userId).orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
+        User user = userService.find(userId).orElseThrow(() -> new ObjectNotFoundException("User", userId));
 
         if (distinctImages) {
             return responseSuccess(imageConsultationService.listImageConsultationByProjectAndUserWithDistinctImage(project, user));
@@ -109,7 +109,7 @@ public class RestImageConsultationController extends RestCytomineController {
 
             Project project = projectService.find(projectId)
                     .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
-            User user = secUserService.findUser(userId)
+            User user = userService.findUser(userId)
                     .orElseThrow(() -> new ObjectNotFoundException("User", userId));
 
             byte[] report = reportService.generateImageConsultationReport(project.getName(), user.getUsername(), results);

@@ -43,8 +43,6 @@ public class Dataset {
     @Value("${application.adminEmail}")
     public String ADMINEMAIL;
 
-    public String GOODPASSWORDUSERJOB = "PasswordUserJob";
-
     public String BADLOGIN = "badlogin";
     public String BADPASSWORD = "badpassword";
 

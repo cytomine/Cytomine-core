@@ -18,7 +18,7 @@ package be.cytomine.domain.command;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.service.ModelService;
 import be.cytomine.utils.CommandResponse;
 import lombok.Getter;
@@ -36,7 +36,7 @@ public class DeleteCommand extends Command {
 
 
 
-    public DeleteCommand(SecUser currentUser, Transaction transaction) {
+    public DeleteCommand(User currentUser, Transaction transaction) {
         this.user = currentUser;
         this.transaction = transaction;
     }

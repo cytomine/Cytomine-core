@@ -18,7 +18,7 @@ package be.cytomine.domain.image;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.service.UrlApi;
 import be.cytomine.utils.JsonObject;
@@ -44,7 +44,7 @@ public class ImageInstance extends CytomineDomain {
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private SecUser user; //owner
+    private User user; //owner
 
     private String instanceFilename;
 
@@ -59,7 +59,7 @@ public class ImageInstance extends CytomineDomain {
     private Date reviewStop;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private SecUser reviewUser;
+    private User reviewUser;
 
     private Integer magnification;
 
@@ -83,7 +83,7 @@ public class ImageInstance extends CytomineDomain {
         imageInstance.created = json.getJSONAttrDate("created");
         imageInstance.updated = json.getJSONAttrDate("updated");
 
-        imageInstance.user = (SecUser) json.getJSONAttrDomain(entityManager, "user", new SecUser(), false);
+        imageInstance.user = (User) json.getJSONAttrDomain(entityManager, "user", new User(), false);
         imageInstance.baseImage = (AbstractImage) json.getJSONAttrDomain(entityManager, "baseImage", new AbstractImage(), false);
         imageInstance.project = (Project) json.getJSONAttrDomain(entityManager, "project", new Project(), false);
 
@@ -91,7 +91,7 @@ public class ImageInstance extends CytomineDomain {
 
         imageInstance.reviewStart = json.getJSONAttrDate("reviewStart");
         imageInstance.reviewStop = json.getJSONAttrDate("reviewStart");
-        imageInstance.reviewUser = (SecUser) json.getJSONAttrDomain(entityManager, "reviewUser", new SecUser(), false);
+        imageInstance.reviewUser = (User) json.getJSONAttrDomain(entityManager, "reviewUser", new User(), false);
 
         imageInstance.magnification = json.getJSONAttrInteger("magnification", null);
         imageInstance.physicalSizeX = json.getJSONAttrDouble("physicalSizeX", null);
@@ -152,7 +152,7 @@ public class ImageInstance extends CytomineDomain {
 
         returnArray.put("reviewStart", Optional.ofNullable(imageInstance.getReviewStart()).map(x -> String.valueOf(x.getTime())).orElse(null));
         returnArray.put("reviewStop", Optional.ofNullable(imageInstance.getReviewStop()).map(x -> String.valueOf(x.getTime())).orElse(null));
-        returnArray.put("reviewUser", Optional.ofNullable(imageInstance.getReviewUser()).map(SecUser::getId).orElse(null));
+        returnArray.put("reviewUser", Optional.ofNullable(imageInstance.getReviewUser()).map(User::getId).orElse(null));
 
 
         returnArray.put("reviewed", imageInstance.isReviewed());
@@ -214,7 +214,7 @@ public class ImageInstance extends CytomineDomain {
      * @return Domain user
      */
     @Override
-    public SecUser userDomainCreator() {
+    public User userDomainCreator() {
         return user;
     }
 

@@ -17,17 +17,14 @@ package be.cytomine.utils;
 */
 
 import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.dto.annotation.AnnotationResult;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
-import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.*;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.utils.ParamsService;
 
 import org.locationtech.jts.io.ParseException;
@@ -42,7 +39,7 @@ import java.util.stream.Collectors;
 @Component
 public class AnnotationListingBuilder {
 
-    private final SecUserService secUserService;
+    private final UserService userService;
 
     private final EntityManager entityManager;
 
@@ -95,12 +92,6 @@ public class AnnotationListingBuilder {
         if(isReviewedAnnotationAsked(params)) {
             al = new ReviewedAnnotationListing(entityManager);
         }
-        else if(isRoiAnnotationAsked(params)) {
-            al = new RoiAnnotationListing(entityManager);
-        }
-        else if(isAlgoAnnotationAsked(params)) {
-            al = new AlgoAnnotationListing(entityManager);
-        }
         else {
             al = new UserAnnotationListing(entityManager);
         }
@@ -138,20 +129,6 @@ public class AnnotationListingBuilder {
 
         al.setUsersForTerm(StringUtils.extractListFromParameter(params.getJSONAttrStr("usersForTerm")));
 
-        // Users for term algo
-        al.setUserForTermAlgo(params.getJSONAttrLong("userForTermAlgo"));
-        al.setUsersForTermAlgo(StringUtils.extractListFromParameter(params.getJSONAttrStr("usersForTermAlgo")));
-
-        // Jobs
-        if(params.getJSONAttrLong("job")!=null) {
-            al.setUser(secUserService.findByJobId(params.getJSONAttrLong("job")).map(SecUser::getId).orElse(null));
-        }
-
-        // Jobs for term algo
-        if(params.getJSONAttrLong("jobForTermAlgo")!=null) {
-            al.setUserForTermAlgo(secUserService.findByJobId(params.getJSONAttrLong("jobjobForTermAlgo")).map(SecUser::getId).orElse(null));
-        }
-
         // Tags
         al.setTag(params.getJSONAttrLong("tag"));
         al.setTags(StringUtils.extractListFromParameter(params.getJSONAttrStr("tags")));
@@ -161,13 +138,8 @@ public class AnnotationListingBuilder {
         al.setTerm(params.getJSONAttrLong("term"));
         al.setTerms(StringUtils.extractListFromParameter(params.getJSONAttrStr("terms")));
 
-        // Suggested terms
-        al.setSuggestedTerm(params.getJSONAttrLong("suggestedTerm"));
-        al.setSuggestedTerms(StringUtils.extractListFromParameter(params.getJSONAttrStr("suggestedTerms")));
-
         // Boolean for terms
         al.setNoTerm(params.getJSONAttrBoolean("noTerm", false));
-        al.setNoAlgoTerm(params.getJSONAttrBoolean("noAlgoTerm", false));
         al.setMultipleTerm(params.getJSONAttrBoolean("multipleTerm", false));
         al.setNoTrack(params.getJSONAttrBoolean("noTrack", false));
         al.setMultipleTrack(params.getJSONAttrBoolean("multipleTrack", false));
@@ -219,42 +191,6 @@ public class AnnotationListingBuilder {
     }
 
     /**
-     * Check if we ask reviewed annotation
-     */
-    private boolean isRoiAnnotationAsked(JsonObject params) {
-        return params.getJSONAttrBoolean("roi", false);
-    }
-
-    /**
-     * Check if we ask algo annotation
-     */
-    private boolean isAlgoAnnotationAsked(JsonObject params) {
-        if(params.getJSONAttrBoolean("includeAlgo", false)) {
-            return true;
-        }
-
-        Long idUser = params.getJSONAttrLong("user");
-        Long idJob = params.getJSONAttrLong("job");
-        if(idUser!=null) {
-            return secUserService.find(idUser)
-                    .orElseThrow(() -> new ObjectNotFoundException("User", idUser))
-                    .isAlgo();
-        } else if(idJob!=null) {
-            // TODO: check if Job exists => return job != null
-            throw new CytomineMethodNotYetImplementedException("Software package must be implemented");
-        } else {
-            String idUsers = params.getJSONAttrStr("users");
-            if(idUsers!=null && !idUsers.isEmpty()) {
-                List<Long> collect = Arrays.stream(idUsers.replaceAll("_", ",")
-                        .split(",")).map(Long::parseLong).collect(Collectors.toList());
-                return collect.stream().anyMatch(secUserService::isUserJob);
-            }
-        }
-        //if no other filter, just take user annotation
-        return false;
-    }
-
-    /**
      * From a string representing the list of terms ids, get a set of terms name.
      */
     public Set<String> getTermNames(String terms){
@@ -274,7 +210,7 @@ public class AnnotationListingBuilder {
         Set<String> userNames = new HashSet<>();
         for (String userId : users.split(",")){
             if(!userId.isEmpty()){
-                userNames.add(secUserService.get(Long.parseLong(userId)).getUsername());
+                userNames.add(userService.get(Long.parseLong(userId)).getUsername());
             }
         }
         return userNames;

@@ -12,7 +12,7 @@ import be.cytomine.converter.UUIDConverter;
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 
 @Entity
@@ -24,7 +24,7 @@ public class TaskRun extends CytomineDomain {
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private SecUser user; // launcher
+    private User user; // launcher
 
     @ManyToOne(fetch = FetchType.LAZY)
     private ImageInstance image;

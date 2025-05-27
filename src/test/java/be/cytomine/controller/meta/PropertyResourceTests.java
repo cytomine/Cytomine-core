@@ -72,7 +72,7 @@ public class PropertyResourceTests {
     @Test
     @Transactional
     public void list_all_property_for_annotation() throws Exception {
-        Property property = builder.given_a_property(builder.given_a_algo_annotation());
+        Property property = builder.given_a_property(builder.given_a_user_annotation());
         restPropertyControllerMockMvc.perform(get("/api/annotation/{annotation}/property.json", property.getDomainIdent()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.collection", hasSize(greaterThan(0))))
@@ -82,7 +82,7 @@ public class PropertyResourceTests {
     @Test
     @Transactional
     public void list_all_property_for_annotation_not_exists() throws Exception {
-        Property property = builder.given_a_property(builder.given_a_algo_annotation());
+        Property property = builder.given_a_property(builder.given_a_user_annotation());
         restPropertyControllerMockMvc.perform(get("/api/annotation/{annotation}/property.json", 0L))
                 .andExpect(status().isNotFound());
     }
@@ -222,7 +222,7 @@ public class PropertyResourceTests {
     @Test
     @Transactional
     public void show_property_for_annotation() throws Exception {
-        Property property = builder.given_a_property(builder.given_a_algo_annotation());
+        Property property = builder.given_a_property(builder.given_a_user_annotation());
         restPropertyControllerMockMvc.perform(get("/api/annotation/{annotation}/key/{key}/property.json", property.getDomainIdent(), property.getKey()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.key").value(property.getKey()));
@@ -231,7 +231,7 @@ public class PropertyResourceTests {
     @Test
     @Transactional
     public void show_property_for_annotation_not_exists() throws Exception {
-        Property property = builder.given_a_property(builder.given_a_algo_annotation());
+        Property property = builder.given_a_property(builder.given_a_user_annotation());
         restPropertyControllerMockMvc.perform(get("/api/annotation/{annotation}/key/{key}/property.json", 0L, "xxx"))
                 .andExpect(status().isNotFound());
     }
@@ -240,7 +240,7 @@ public class PropertyResourceTests {
     @Test
     @Transactional
     public void show_property_for_annotation_key_not_exists() throws Exception {
-        Property property = builder.given_a_property(builder.given_a_algo_annotation());
+        Property property = builder.given_a_property(builder.given_a_user_annotation());
         restPropertyControllerMockMvc.perform(get("/api/annotation/{annotation}/key/{key}/property.json", property.getDomainIdent(), "xxx"))
                 .andExpect(status().isNotFound());
     }

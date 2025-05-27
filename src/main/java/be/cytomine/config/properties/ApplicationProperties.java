@@ -7,7 +7,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
+@ConfigurationProperties(prefix = "application", ignoreUnknownFields = true)
 @Getter
 @Setter
 public class ApplicationProperties {
@@ -18,7 +18,7 @@ public class ApplicationProperties {
 
     private String serverURL;
 
-    private NotificationProperties notification;
+//    private NotificationProperties notification;
 
     private String storagePath;
 

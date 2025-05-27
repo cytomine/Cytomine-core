@@ -9,7 +9,7 @@ import be.cytomine.repository.project.ProjectRepresentativeUserRepository;
 import be.cytomine.repository.project.ProjectRepository;
 import be.cytomine.service.project.ProjectRepresentativeUserService;
 import be.cytomine.service.project.ProjectService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.utils.TaskService;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
@@ -34,7 +34,7 @@ public class RestProjectRepresentativeUserController extends RestCytomineControl
 
     private final ProjectService projectService;
 
-    private final SecUserService secUserService;
+    private final UserService userService;
 
 
     @GetMapping("/project/{id}/representative.json")
@@ -84,7 +84,7 @@ public class RestProjectRepresentativeUserController extends RestCytomineControl
         } else {
             Project project = projectService.find(projectId)
                     .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
-            User user = secUserService.findUser(userId)
+            User user = userService.findUser(userId)
                     .orElseThrow(() -> new ObjectNotFoundException("User", userId));
             projectRepresentativeUser = projectRepresentativeUserService.find(project, user)
                     .orElseThrow(() -> new ObjectNotFoundException("ProjectRepresentativeUser", JsonObject.of("project", projectId, "user", userId).toJsonString()));

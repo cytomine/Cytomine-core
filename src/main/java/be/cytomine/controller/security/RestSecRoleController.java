@@ -1,32 +1,17 @@
 package be.cytomine.controller.security;
 
 import be.cytomine.controller.RestCytomineController;
-import be.cytomine.domain.image.ImageInstance;
-import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
-import be.cytomine.service.CurrentUserService;
-import be.cytomine.service.image.ImageInstanceService;
-import be.cytomine.service.project.ProjectService;
-import be.cytomine.service.search.UserSearchExtension;
 import be.cytomine.service.security.SecRoleService;
-import be.cytomine.service.security.SecUserService;
-import be.cytomine.service.security.SecurityACLService;
-import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.io.UnsupportedEncodingException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Optional;
-
+//TODO IAM: remove ?
 @RestController
 @RequestMapping("/api")
 @Slf4j

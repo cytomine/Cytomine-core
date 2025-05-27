@@ -21,7 +21,6 @@ import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.AnnotationAction;
 import be.cytomine.domain.social.PersistentImageConsultation;
@@ -131,7 +130,7 @@ public class StatsResourceTests {
         return connection;
     }
 
-    PersistentImageConsultation given_a_persistent_image_consultation(SecUser user, ImageInstance imageInstance, Date created) {
+    PersistentImageConsultation given_a_persistent_image_consultation(User user, ImageInstance imageInstance, Date created) {
         return imageConsultationService.add(user, imageInstance.getId(), "xxx", "mode", created);
     }
 
@@ -317,27 +316,6 @@ public class StatsResourceTests {
                 .andExpect(jsonPath("$.collection", hasSize(equalTo(3))));
 
         restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/annotationevolution.json", project.getId())
-                        .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -20).getTime()))
-                        .param("endDate", String.valueOf(DateUtils.addDays(new Date(), -10).getTime())))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void stats_algo_annotation_evolution() throws Exception {
-        Project project = builder.given_a_project();
-        AlgoAnnotation annotation1 = builder.given_a_algo_annotation(project);
-        annotation1.setCreated(DateUtils.addDays(new Date(), -1));
-        builder.persistAndReturn(annotation1);
-        AlgoAnnotation annotation2 = builder.given_a_algo_annotation(project);
-        annotation2.setCreated(DateUtils.addDays(new Date(), -10));
-        builder.persistAndReturn(annotation2);
-
-        restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/algoannotationevolution.json", project.getId())
-                        .param("daysRange", "7"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.collection", hasSize(equalTo(1))));
-
-        restStatsControllerMockMvc.perform(get("/api/project/{project}/stats/algoannotationevolution.json", project.getId())
                         .param("startDate", String.valueOf(DateUtils.addDays(new Date(), -20).getTime()))
                         .param("endDate", String.valueOf(DateUtils.addDays(new Date(), -10).getTime())))
                 .andExpect(status().isOk());

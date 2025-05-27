@@ -17,7 +17,7 @@ package be.cytomine.controller;
 */
 
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.project.ProjectService;
@@ -60,7 +60,7 @@ public class TaskController extends RestCytomineController {
         } catch(Exception ignored) {
 
         }
-        SecUser user = currentUserService.getCurrentUser();
+        User user = currentUserService.getCurrentUser();
         boolean printInActivity = json.getJSONAttrBoolean("printInActivity", false);
         Task task = taskService.createNewTask(project,user,printInActivity);
         JsonObject jsonObject = task.toJsonObject();

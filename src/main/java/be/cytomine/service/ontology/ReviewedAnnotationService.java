@@ -21,12 +21,10 @@ import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.*;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.ReviewedAnnotationStatsEntry;
 import be.cytomine.dto.UserTermMapping;
 import be.cytomine.exceptions.AlreadyExistException;
-import be.cytomine.exceptions.CytomineMethodNotYetImplementedException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.ReviewedAnnotationListing;
@@ -99,9 +97,6 @@ public class ReviewedAnnotationService extends ModelService {
 
     @Autowired
     private GenericAnnotationService genericAnnotationService;
-
-    @Autowired
-    private AlgoAnnotationTermService algoAnnotationTermService;
 
     @Autowired
     private UserRepository userRepository;
@@ -191,7 +186,7 @@ public class ReviewedAnnotationService extends ModelService {
     public CommandResponse add(JsonObject jsonObject) {
         securityACLService.check(jsonObject.getJSONAttrLong("project"), Project.class, READ);
         securityACLService.checkIsNotReadOnly(jsonObject.getJSONAttrLong("project"), Project.class);
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         //Start transaction
         Transaction transaction = transactionService.start();
@@ -216,7 +211,7 @@ public class ReviewedAnnotationService extends ModelService {
      * @return Response structure (new domain data, old domain data..)
      */
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.checkIsCreator(domain, currentUser);
         CommandResponse result = executeCommand(new EditCommand(currentUser, null), domain, jsonNewData);
@@ -233,7 +228,7 @@ public class ReviewedAnnotationService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.checkIsCreator(domain, currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
@@ -315,7 +310,7 @@ public class ReviewedAnnotationService extends ModelService {
         if (usersIds==null || usersIds.isEmpty()) {
             throw new WrongArgumentException("There is no layer:" + usersIds);
         }
-        List<SecUser> users = usersIds.stream()
+        List<User> users = usersIds.stream()
                 .map(x -> userRepository.findById(x).orElseThrow(() -> new ObjectNotFoundException("User", x))).collect(Collectors.toList());
         ImageInstance imageInstance = imageInstanceRepository.findById(imageInstanceId)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageInstanceId));
@@ -335,12 +330,8 @@ public class ReviewedAnnotationService extends ModelService {
         //get all annotations for each user
         taskService.updateTask(task,5,"Look for all annotations...");
 
-        for (SecUser user : users) {
-            if (user.isAlgo()) {
-                throw new CytomineMethodNotYetImplementedException(""); // TODO
-            } else {
-                annotations.addAll(userAnnotationRepository.findAllByUserAndImage((User)user, imageInstance));
-            }
+        for (User user : users) {
+            annotations.addAll(userAnnotationRepository.findAllByUserAndImage((User)user, imageInstance));
         }
 
         //review each annotation
@@ -370,7 +361,7 @@ public class ReviewedAnnotationService extends ModelService {
     public List<Long> unreviewLayer(Long imageInstanceId, List<Long> usersIds, Task task) {
 
         taskService.updateTask(task,2,"Extract parameters...");
-        List<SecUser> users = usersIds.stream()
+        List<User> users = usersIds.stream()
                 .map(x -> userRepository.findById(x).orElseThrow(() -> new ObjectNotFoundException("User", x))).collect(Collectors.toList());
         ImageInstance imageInstance = imageInstanceRepository.findById(imageInstanceId)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageInstanceId));
@@ -387,12 +378,8 @@ public class ReviewedAnnotationService extends ModelService {
 
         List<AnnotationDomain> annotations = new ArrayList<>();
         taskService.updateTask(task,5,"Look for all annotations...");
-        for (SecUser user : users) {
-            if (user.isAlgo()) {
-                throw new CytomineMethodNotYetImplementedException(""); // TODO
-            } else {
-                annotations.addAll(userAnnotationRepository.findAllByUserAndImage((User)user, imageInstance));
-            }
+        for (User user : users) {
+            annotations.addAll(userAnnotationRepository.findAllByUserAndImage((User)user, imageInstance));
         }
 
         //unreview each one
@@ -446,13 +433,6 @@ public class ReviewedAnnotationService extends ModelService {
 
     public void deleteDependencies(CytomineDomain domain, Transaction transaction, Task task) {
         ((ReviewedAnnotation)domain).getTerms().clear();
-        deleteDependentAlgoAnnotationTerm(((ReviewedAnnotation)domain), transaction, task);
-    }
-
-    public void deleteDependentAlgoAnnotationTerm(ReviewedAnnotation annotation, Transaction transaction, Task task) {
-        for (AlgoAnnotationTerm algoAnnotationTerm : algoAnnotationTermService.list(annotation)) {
-            algoAnnotationTermService.delete(algoAnnotationTerm,transaction,task,false);
-        }
     }
 
     /**

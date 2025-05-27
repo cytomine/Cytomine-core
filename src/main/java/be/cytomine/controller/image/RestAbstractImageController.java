@@ -3,7 +3,7 @@ package be.cytomine.controller.image;
 import be.cytomine.controller.RestCytomineController;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.image.CropParameter;
 import be.cytomine.dto.image.ImageParameter;
 import be.cytomine.dto.image.LabelParameter;
@@ -97,7 +97,7 @@ public class RestAbstractImageController extends RestCytomineController {
     @GetMapping("/abstractimage/{id}/user.json")
     public ResponseEntity<String> showUploaderOfImage(@PathVariable Long id) {
         log.debug("REST request to show image uploader");
-        SecUser user = abstractImageService.getImageUploader(id);
+        User user = abstractImageService.getImageUploader(id);
         if (user !=null) {
             return responseSuccess(abstractImageService.getImageUploader(id));
         } else {
@@ -118,6 +118,7 @@ public class RestAbstractImageController extends RestCytomineController {
             @RequestParam(required = false) Double contrast,
             @RequestParam(required = false) Double gamma,
             @RequestParam(required = false) String bits,
+            @RequestParam(required = false) String Authorization,
 
             ProxyExchange<byte[]> proxy
     ) throws IOException {
@@ -133,7 +134,7 @@ public class RestAbstractImageController extends RestCytomineController {
         thumbParameter.setBits(bits!=null && !bits.equals("max") ? Integer.parseInt(bits): null);
         thumbParameter.setRefresh(refresh);
 
-        AbstractImage abstractImage = abstractImageService.find(id)
+        AbstractImage abstractImage = abstractImageService.find(id, Authorization)
                 .orElseThrow(() -> new ObjectNotFoundException("AbstractImage", id));
         String etag = getRequestETag();
         return imageServerService.thumb(sliceCoordinatesService.getReferenceSlice(abstractImage), thumbParameter, etag, proxy);

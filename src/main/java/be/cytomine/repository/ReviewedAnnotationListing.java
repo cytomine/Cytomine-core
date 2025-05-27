@@ -109,16 +109,9 @@ public class ReviewedAnnotationListing extends AnnotationListing {
         slice.put("time", "asl.time");
         map.put("slice", slice);
 
-
-        AvailableColumns algo = new AvailableColumns();
-        algo.put("id", "aat.id");
-        algo.put("rate", "aat.rate");
-        map.put("algo", algo);
-
         AvailableColumns user = new AvailableColumns();
         user.put("creator", "u.username");
-        user.put("lastname", "u.lastname");
-        user.put("firstname", "u.firstname");
+        user.put("name", "u.name");
         map.put("user", user);
 
         return map;

@@ -18,7 +18,7 @@ package be.cytomine.service.utils;
 
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.Kmeans;
 import be.cytomine.exceptions.WrongArgumentException;
 import be.cytomine.repository.image.SliceInstanceRepository;
@@ -108,22 +108,22 @@ public class KmeansGeometryService {
         return data;
     }
 
-    public int mustBeReduce(List<Long> slices, Long user, String bbox) {
+    public int mustBeReduce(List<Long> slices, Long userId, String bbox) {
         List<SliceInstance> sliceInstances = sliceInstanceRepository.findAllById(slices);
 
-        SecUser secUser = null;
-        if (user!=null) {
-            secUser = entityManager.find(SecUser.class, user);
+        User user = null;
+        if (userId !=null) {
+            user = entityManager.find(User.class, userId);
         }
         try {
-            return mustBeReduce(sliceInstances, secUser,new WKTReader().read(bbox));
+            return mustBeReduce(sliceInstances, user,new WKTReader().read(bbox));
         } catch (ParseException e) {
             throw new WrongArgumentException("Annotation location cannot be converted to geometry: " + bbox);
         }
     }
 
 
-    public int mustBeReduce(List<SliceInstance> slices, SecUser user, Geometry bbox) {
+    public int mustBeReduce(List<SliceInstance> slices, User user, Geometry bbox) {
         List<ImageInstance> images = slices.stream().map(x -> x.getImage()).distinct().toList();
 
         if (images.size() != 1) {

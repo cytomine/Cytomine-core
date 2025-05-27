@@ -21,7 +21,7 @@ import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.image.CompanionFile;
 import be.cytomine.domain.image.UploadedFile;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.repository.image.CompanionFileRepository;
 import be.cytomine.service.CurrentUserService;
@@ -105,7 +105,7 @@ public class CompanionFileService extends ModelService {
      * @return Response structure (created domain data,..)
      */
     public CommandResponse add(JsonObject json) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
 
         return executeCommand(new AddCommand(currentUser),null, json);
@@ -120,7 +120,7 @@ public class CompanionFileService extends ModelService {
      */
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),WRITE);
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
     }
@@ -135,7 +135,7 @@ public class CompanionFileService extends ModelService {
      */
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(domain.container(),WRITE);
 

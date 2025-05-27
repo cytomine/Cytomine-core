@@ -20,7 +20,6 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.project.ProjectDefaultLayer;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ObjectNotFoundException;
@@ -29,7 +28,7 @@ import be.cytomine.repository.project.ProjectDefaultLayerRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.PermissionService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -67,7 +66,7 @@ public class ProjectDefaultLayerService extends ModelService {
     private PermissionService permissionService;
 
     @Autowired
-    private SecUserService secUserService;
+    private UserService userService;
 
 
     @Override
@@ -97,9 +96,9 @@ public class ProjectDefaultLayerService extends ModelService {
 
     @Override
     public CommandResponse add(JsonObject jsonObject) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(jsonObject.getJSONAttrLong("project"),Project.class,WRITE);
-        User user = secUserService.findUser(jsonObject.getJSONAttrLong("user"))
+        User user = userService.findUser(jsonObject.getJSONAttrLong("user"))
                 .orElseThrow(() -> new ObjectNotFoundException("User", jsonObject.getJSONAttrStr("user")));
         Project project = projectRepository.findById(jsonObject.getJSONAttrLong("project"))
                 .orElseThrow(() -> new ObjectNotFoundException("Project", jsonObject.getJSONAttrStr("project")));
@@ -112,13 +111,13 @@ public class ProjectDefaultLayerService extends ModelService {
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
         securityACLService.check(domain,WRITE);
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         return executeCommand(new EditCommand(currentUser, transaction), domain,jsonNewData);
     }
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.check(domain.container(),WRITE);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
@@ -132,8 +131,8 @@ public class ProjectDefaultLayerService extends ModelService {
     }
 
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
-        return List.of(domain.getId(), ((ProjectDefaultLayer)domain).getUser().getFirstname() + " " +
-                ((ProjectDefaultLayer)domain).getUser().getLastname());
+        User user = ((ProjectDefaultLayer)domain).getUser();
+        return List.of(domain.getId(), user.getFullName());
     }
 
 

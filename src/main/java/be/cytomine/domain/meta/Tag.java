@@ -17,7 +17,6 @@ package be.cytomine.domain.meta;
 */
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
@@ -69,7 +68,7 @@ public class Tag extends CytomineDomain {
     }
 
     @Override
-    public SecUser userDomainCreator() {
+    public User userDomainCreator() {
         return user;
     }
 

@@ -47,7 +47,7 @@ import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.dto.appengine.task.TaskRunDetail;
 import be.cytomine.dto.appengine.task.TaskRunValue;
 import be.cytomine.dto.image.CropParameter;
@@ -97,8 +97,7 @@ public class TaskRunService {
 
     public ResponseEntity<String> addTaskRun(Long projectId, String uri, JsonNode body) {
         Project project = projectService.get(projectId);
-        SecUser currentUser = currentUserService.getCurrentUser();
-
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkUser(currentUser);
         securityACLService.check(project, READ);
         securityACLService.checkIsNotReadOnly(project);
@@ -131,7 +130,7 @@ public class TaskRunService {
     }
 
     public List<TaskRunDetail> getTaskRuns(Long projectId) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         Project project = projectService.find(projectId)
             .orElseThrow(() -> new ObjectNotFoundException("Project", projectId));
 
@@ -157,7 +156,7 @@ public class TaskRunService {
             throw new ObjectNotFoundException("TaskRun", taskRunId);
         }
 
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         Project project = projectService.get(projectId);
 
         securityACLService.checkUser(currentUser);

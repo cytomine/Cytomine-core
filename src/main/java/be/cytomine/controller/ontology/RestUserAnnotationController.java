@@ -3,7 +3,6 @@ package be.cytomine.controller.ontology;
 import be.cytomine.controller.RestCytomineController;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.image.CropParameter;
 import be.cytomine.dto.json.JsonInput;
@@ -11,7 +10,6 @@ import be.cytomine.dto.json.JsonMultipleObject;
 import be.cytomine.dto.json.JsonSingleObject;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.exceptions.WrongArgumentException;
-import be.cytomine.repository.UserAnnotationListing;
 import be.cytomine.service.ModelService;
 import be.cytomine.service.middleware.ImageServerService;
 import be.cytomine.service.ontology.SharedAnnotationService;
@@ -19,7 +17,7 @@ import be.cytomine.service.ontology.TermService;
 import be.cytomine.service.ontology.UserAnnotationService;
 import be.cytomine.service.project.ProjectService;
 import be.cytomine.service.report.ReportService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.utils.AnnotationListingBuilder;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
@@ -33,7 +31,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.*;
 
 @RestController
@@ -46,7 +43,7 @@ public class RestUserAnnotationController extends RestCytomineController {
 
     private final ProjectService projectService;
 
-    private final SecUserService secUserService;
+    private final UserService userService;
 
     private final TermService termService;
 
@@ -72,7 +69,7 @@ public class RestUserAnnotationController extends RestCytomineController {
             @RequestParam(value="project", required = false) Long idProject
     ) {
         log.debug("REST request to count user annotation by user/project");
-        SecUser user = secUserService.find(idUser)
+        User user = userService.find(idUser)
                 .orElseThrow(() -> new ObjectNotFoundException("User", idUser));
         Project project = null;
         if (idProject!=null) {
@@ -112,7 +109,7 @@ public class RestUserAnnotationController extends RestCytomineController {
     ) throws IOException {
         Project project = projectService.find(idProject)
                 .orElseThrow(() -> new ObjectNotFoundException("Project", idProject));
-        users = secUserService.fillEmptyUserIds(users, idProject);
+        users = userService.fillEmptyUserIds(users, idProject);
         terms = termService.fillEmptyTermIds(terms, project);
         JsonObject params = mergeQueryParamsAndBodyParams();
         byte[] report = annotationListingBuilder.buildAnnotationReport(idProject, users, params, terms, format);
@@ -273,11 +270,11 @@ public class RestUserAnnotationController extends RestCytomineController {
             @RequestParam(required = false) Integer thickness,
             @RequestParam(required = false) String color,
             @RequestParam(required = false) Integer jpegQuality,
-
+            @RequestParam(required = false) String Authorization,
             ProxyExchange<byte[]> proxy
     ) throws IOException, ParseException {
         log.debug("REST request to get associated image of a abstract image");
-        UserAnnotation userAnnotation = userAnnotationService.find(id)
+        UserAnnotation userAnnotation = userAnnotationService.find(id, Authorization)
                 .orElseThrow(() -> new ObjectNotFoundException("UserAnnotation", id));
 
         CropParameter cropParameter = new CropParameter();

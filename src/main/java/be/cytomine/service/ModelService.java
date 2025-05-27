@@ -23,7 +23,6 @@ import be.cytomine.domain.command.Transaction;
 import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.meta.TagDomainAssociation;
-import be.cytomine.domain.ontology.AlgoAnnotation;
 import be.cytomine.domain.ontology.UserAnnotation;
 import be.cytomine.exceptions.*;
 import be.cytomine.repository.ontology.UserAnnotationRepository;
@@ -36,19 +35,17 @@ import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
 import be.cytomine.utils.Task;
+import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
-import jakarta.validation.ConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 
 import static org.springframework.security.acls.domain.BasePermission.READ;
 
@@ -88,8 +85,6 @@ public abstract class ModelService<T extends CytomineDomain> {
 
     @Autowired
     TagDomainAssociationService tagDomainAssociationService;
-
-    boolean saveOnUndoRedoStack = true;
 
     public Long generateNextId() {
         return sequenceService.generateID();
@@ -174,9 +169,7 @@ public abstract class ModelService<T extends CytomineDomain> {
             Object backup = domainToDelete.toJSON();
             ((DeleteCommand) c).setBackup(backup);
             this.deleteDependencies(domainToDelete, c.getTransaction(), task);
-            //remove all dependent domains
 
-            // TODO: delete dependency mechanism
         }
         initCommandService();
         c.setSaveOnUndoRedoStack(this.isSaveOnUndoRedoStack()); //need to use getter method, to get child value
@@ -436,11 +429,6 @@ public abstract class ModelService<T extends CytomineDomain> {
         return;
     }
 
-    public void updateTask(Task task, int index, int numberOfDirectDependence) {
-        //taskService.updateTask(task, (int)((double)index/(double)numberOfDirectDependence)*100, "")
-        // TODO
-    }
-
     public CytomineDomain getCytomineDomain(String domainClassName, Long domainIdent) {
         try {
             return (CytomineDomain)getEntityManager()
@@ -464,7 +452,7 @@ public abstract class ModelService<T extends CytomineDomain> {
                 CommandResponse commandResponse = addOne(json.get(i));
 
                 String objectName;
-                if (currentDomain() == AlgoAnnotation.class || currentDomain() == UserAnnotation.class) {
+                if (currentDomain() == UserAnnotation.class) {
                     objectName = "annotation";
                 } else {
                     String[] split = currentDomain().toString().toLowerCase().split("\\.");

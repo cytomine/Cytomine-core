@@ -26,7 +26,7 @@ import be.cytomine.repository.project.ProjectRepresentativeUserRepository;
 import be.cytomine.service.CommandService;
 import be.cytomine.service.PermissionService;
 import be.cytomine.service.command.TransactionService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import org.junit.jupiter.api.Assertions;
@@ -70,7 +70,7 @@ public class ProjectRepresentativeServiceTests {
     SecurityACLService securityACLService;
 
     @Autowired
-    SecUserService secUserService;
+    UserService userService;
 
     @Test
     void get_projectRepresentativeUser_with_success() {
@@ -184,7 +184,8 @@ public class ProjectRepresentativeServiceTests {
 
         assertThat(projectRepresentativeUserService.listByProject(projectRepresentativeUser.getProject())).hasSize(1);
 
-        secUserService.deleteUserFromProject(projectRepresentativeUser.getUser(), projectRepresentativeUser.getProject(), true);
+
+        userService.deleteUserFromProject(projectRepresentativeUser.getUser(), projectRepresentativeUser.getProject(), true);
 
         assertThat(projectRepresentativeUserService.listByProject(projectRepresentativeUser.getProject())).hasSize(1);
         assertThat(projectRepresentativeUserService.find(projectRepresentativeUser.getProject(), projectRepresentativeUser.getUser())).isEmpty();

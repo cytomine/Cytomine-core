@@ -17,7 +17,6 @@ package be.cytomine.service;
 */
 
 import be.cytomine.domain.CytomineDomain;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.security.AclRepository;
@@ -28,7 +27,6 @@ import org.springframework.security.acls.model.Permission;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Random;
 
@@ -62,7 +60,7 @@ public class PermissionService {
     }
 
     List<Integer> getPermissionInACL(CytomineDomain domain, User user) {
-        return aclRepository.listMaskForUsers(domain.getId(), user.humanUsername());
+        return aclRepository.listMaskForUsers(domain.getId(), user.getUsername());
     }
 
     List<Integer> getPermissionInACL(CytomineDomain domain, String username) {
@@ -103,7 +101,7 @@ public class PermissionService {
         addPermission(domain,username,permission,currentUserService.getCurrentUser());
     }
 
-    public void addPermission(CytomineDomain domain, String username, Permission permission, SecUser user) {
+    public void addPermission(CytomineDomain domain, String username, Permission permission, User user) {
         if (!hasExactACLPermission(domain, username, permission)) {
             //get domain class id
             Long aclClassId = getAclClassId(domain);

@@ -20,18 +20,17 @@ import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.domain.social.PersistentUserPosition;
 import be.cytomine.dto.image.AreaDTO;
 import be.cytomine.repository.project.ProjectRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.repositorynosql.social.*;
 import be.cytomine.service.AnnotationListingService;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.database.SequenceService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.JsonObject;
 import com.mongodb.client.MongoClient;
@@ -77,7 +76,7 @@ public class UserPositionService {
     CurrentUserService currentUserService;
 
     @Autowired
-    SecUserService secUserService;
+    UserService userService;
 
     @Autowired
     ProjectRepository projectRepository;
@@ -89,7 +88,7 @@ public class UserPositionService {
     ProjectConnectionRepository projectConnectionRepository;
 
     @Autowired
-    SecUserRepository secUserRepository;
+    UserRepository userRepository;
 
     @Autowired
     MongoClient mongoClient;
@@ -121,6 +120,15 @@ public class UserPositionService {
     @Autowired
     SequenceService sequenceService;
 
+//
+//    public LastUserPosition add(User user, SliceInstance sliceInstance) {
+//
+//    }
+//
+//    public LastUserPosition add(User user, ImageInstance imageInstance) {
+//
+//    }
+
     // usersTracked key -> "trackedUserId/imageId"
     public static Map<String, List<User>> broadcasters = new ConcurrentHashMap<>();
 
@@ -129,7 +137,7 @@ public class UserPositionService {
 
     public PersistentUserPosition add(
             Date created,
-            SecUser user,
+            User user,
             SliceInstance sliceInstance,
             ImageInstance imageInstance,
             AreaDTO area,
@@ -195,7 +203,7 @@ public class UserPositionService {
         }
     }
 
-    public Optional<LastUserPosition> lastPositionByUser(ImageInstance image, SliceInstance slice, SecUser user, boolean broadcast) {
+    public Optional<LastUserPosition> lastPositionByUser(ImageInstance image, SliceInstance slice, User user, boolean broadcast) {
         securityACLService.check(image,READ);
 
         return getLastUserPosition(image, slice, user, broadcast);
@@ -205,11 +213,11 @@ public class UserPositionService {
      * TODO Do not bypass ACL checks.
      * Temporary solution to the WebSocket issue
      */
-    public Optional<LastUserPosition> lastPositionByUserBypassACL(ImageInstance image, SliceInstance slice, SecUser user, boolean broadcast) {
+    public Optional<LastUserPosition> lastPositionByUserBypassACL(ImageInstance image, SliceInstance slice, User user, boolean broadcast) {
         return getLastUserPosition(image, slice, user, broadcast);
     }
 
-    private Optional<LastUserPosition> getLastUserPosition(ImageInstance image, SliceInstance slice, SecUser user, boolean broadcast) {
+    private Optional<LastUserPosition> getLastUserPosition(ImageInstance image, SliceInstance slice, User user, boolean broadcast) {
         Query query = new Query();
         query.addCriteria(Criteria.where("user").is(user.getId()));
         query.addCriteria(Criteria.where("image").is(image.getId()));
@@ -252,7 +260,7 @@ public class UserPositionService {
         return results.stream().map(x -> x.getLong("_id")).toList();
     }
 
-    public List<PersistentUserPosition> list(ImageInstance image, SecUser user, SliceInstance slice, Long afterThan, Long beforeThan, Integer max, Integer offset){
+    public List<PersistentUserPosition> list(ImageInstance image, User user, SliceInstance slice, Long afterThan, Long beforeThan, Integer max, Integer offset){
         securityACLService.check(image,WRITE);
         if (max == 0) {
             max = Integer.MAX_VALUE;
@@ -309,7 +317,7 @@ public class UserPositionService {
         return followersIds;
     }
 
-    public List<Map<String, Object>> summarize(ImageInstance image, SecUser user, SliceInstance slice, Long afterThan, Long beforeThan) {
+    public List<Map<String, Object>> summarize(ImageInstance image, User user, SliceInstance slice, Long afterThan, Long beforeThan) {
         securityACLService.check(image, WRITE);
 
         List<Bson> request = new ArrayList<>();

@@ -21,7 +21,6 @@ import be.cytomine.CytomineCoreApplication;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.*;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.dto.ReviewedAnnotationStatsEntry;
 import be.cytomine.dto.UserTermMapping;
@@ -168,8 +167,8 @@ public class ReviewedAnnotationServiceTests {
     @Test
     void stats_group_by_user() {
         ReviewedAnnotation reviewedAnnotation = builder.given_a_reviewed_annotation();
-        SecUser reviewer = reviewedAnnotation.getReviewUser();
-        SecUser anotherUser = builder.given_a_user();
+        User reviewer = reviewedAnnotation.getReviewUser();
+        User anotherUser = builder.given_a_user();
 
         List<ReviewedAnnotationStatsEntry> results = reviewedAnnotationService.statsGroupByUser(reviewedAnnotation.getImage());
 
@@ -505,26 +504,6 @@ public class ReviewedAnnotationServiceTests {
     }
 
     @Test
-    void add_review_for_algo_annotation() {
-
-        AlgoAnnotation annotation = builder.given_a_algo_annotation();
-        AlgoAnnotationTerm algoAnnotationTerm = builder.given_a_not_persisted_algo_annotation_term(annotation);
-        algoAnnotationTerm.setUserJob(annotation.getUser());
-        builder.persistAndReturn(algoAnnotationTerm);
-        entityManager.refresh(annotation);
-
-        imageInstanceService.startReview(annotation.getImage());
-
-        CommandResponse response = reviewedAnnotationService.reviewAnnotation(annotation.getId(), annotation.termsId());
-        AssertionsForClassTypes.assertThat(response).isNotNull();
-        AssertionsForClassTypes.assertThat(response.getStatus()).isEqualTo(200);
-
-        ReviewedAnnotation reviewedAnnotation = reviewedAnnotationRepository.findByParentIdent(annotation.getId()).get();
-        entityManager.refresh(reviewedAnnotation);
-        assertThat(reviewedAnnotation.getTerms()).hasSize(1);
-    }
-
-    @Test
     public void remove_review_for_annotation() {
         ReviewedAnnotation annotation = builder.given_a_reviewed_annotation();
         reviewedAnnotationService.unReviewAnnotation(annotation.getParentIdent());
@@ -668,41 +647,6 @@ public class ReviewedAnnotationServiceTests {
         assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(0);
         assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(0);
     }
-
-
-    @Test
-    void annotation_reviewed_counter_for_algo_annotation() {
-        ImageInstance image = builder.given_an_image_instance();
-        imageInstanceService.startReview(image);
-        AlgoAnnotation annotation = builder.given_a_algo_annotation();
-        annotation.setImage(image);
-        annotation.setProject(image.getProject());
-
-        assertThat(annotation.getCountReviewedAnnotations()).isEqualTo(0);
-        assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(0);
-        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(0);
-
-        reviewedAnnotationService.reviewAnnotation(annotation.getId(), null);
-
-        entityManager.refresh(annotation);
-        entityManager.refresh(image);
-        entityManager.refresh(image.getProject());
-
-        assertThat(annotation.getCountReviewedAnnotations()).isEqualTo(1);
-        assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(1);
-        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(1);
-
-        reviewedAnnotationService.unReviewAnnotation(annotation.getId());
-
-        entityManager.refresh(annotation);
-        entityManager.refresh(image);
-        entityManager.refresh(image.getProject());
-
-        assertThat(annotation.getCountReviewedAnnotations()).isEqualTo(0);
-        assertThat(image.getCountImageReviewedAnnotations()).isEqualTo(0);
-        assertThat(image.getProject().getCountReviewedAnnotations()).isEqualTo(0);
-    }
-
 
     @Test
     void do_annotation_corrections() throws ParseException {

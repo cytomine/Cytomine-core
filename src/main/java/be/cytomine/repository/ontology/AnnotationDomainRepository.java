@@ -43,9 +43,6 @@ public interface AnnotationDomainRepository extends JpaRepository<AnnotationDoma
     @Query(value = "SELECT count(annotation.id) FROM user_annotation annotation WHERE annotation.project_id = :projectId", nativeQuery = true)
     Long countAllUserAnnotationAndProject(Long projectId);
 
-    @Query(value = "SELECT count(annotation.id) FROM algo_annotation annotation WHERE annotation.project_id = :projectId", nativeQuery = true)
-    Long countAllAlgoAnnotationAndProject(Long projectId);
-
     @Query(value = "SELECT count(annotation.id) FROM reviewed_annotation annotation WHERE annotation.project_id = :projectId", nativeQuery = true)
     Long countAllReviewedAnnotationAndProject(Long projectId);
 

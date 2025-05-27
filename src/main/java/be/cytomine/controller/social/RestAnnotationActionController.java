@@ -13,6 +13,7 @@ import be.cytomine.domain.image.SliceInstance;
 import be.cytomine.domain.ontology.AnnotationDomain;
 import be.cytomine.domain.project.Project;
 import be.cytomine.domain.security.User;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.service.social.AnnotationActionService;
@@ -20,7 +21,7 @@ import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.SliceInstanceService;
 import be.cytomine.service.project.ProjectService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.utils.JsonObject;
 
 /**
@@ -39,7 +40,7 @@ public class RestAnnotationActionController extends RestCytomineController {
 
     private final CurrentUserService currentUserService;
 
-    private final SecUserService secUserService;
+    private final UserService userService;
 
     private final ImageInstanceService imageInstanceService;
 
@@ -69,8 +70,8 @@ public class RestAnnotationActionController extends RestCytomineController {
 
         User user = null;
         if (userId!=null) {
-            user = secUserService.findUser(userId)
-                    .orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
+            user = userService.findUser(userId)
+                    .orElseThrow(() -> new ObjectNotFoundException("User", userId));
         }
         return responseSuccess(annotationActionService.list(image, user, afterThan, beforeThan));
     }
@@ -87,8 +88,8 @@ public class RestAnnotationActionController extends RestCytomineController {
 
         User user = null;
         if (userId!=null) {
-            user = secUserService.findUser(userId)
-                    .orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
+            user = userService.findUser(userId)
+                    .orElseThrow(() -> new ObjectNotFoundException("User", userId));
         }
         return responseSuccess(annotationActionService.list(sliceInstance, user, afterThan, beforeThan));
     }

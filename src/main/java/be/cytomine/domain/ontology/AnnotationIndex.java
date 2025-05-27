@@ -17,7 +17,7 @@ package be.cytomine.domain.ontology;
 */
 
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.utils.JsonObject;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,7 +35,7 @@ public class AnnotationIndex {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = true)
-    private SecUser user;
+    private User user;
 
 
     @ManyToOne(fetch = FetchType.LAZY)

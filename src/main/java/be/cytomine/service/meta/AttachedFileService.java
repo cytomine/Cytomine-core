@@ -21,7 +21,7 @@ import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.AbstractImage;
 import be.cytomine.domain.meta.AttachedFile;
 import be.cytomine.domain.ontology.AnnotationDomain;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.meta.AttachedFileRepository;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
@@ -90,7 +90,7 @@ public class AttachedFileService extends ModelService {
     }
 
     public AttachedFile create(String filename,byte[] data, String key, Long domainIdent,String domainClassName) throws ClassNotFoundException {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         CytomineDomain recipientDomain = getCytomineDomain(domainClassName, domainIdent);
 
         if (recipientDomain instanceof AbstractImage) {
@@ -110,7 +110,7 @@ public class AttachedFileService extends ModelService {
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         AttachedFile attachedFile = (AttachedFile)domain;
         CytomineDomain parentDomain = getCytomineDomain(attachedFile.getDomainClassName(), attachedFile.getDomainIdent());
 

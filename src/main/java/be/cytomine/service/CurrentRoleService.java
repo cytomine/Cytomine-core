@@ -17,7 +17,7 @@ package be.cytomine.service;
 */
 
 import be.cytomine.domain.security.SecRole;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.utils.WeakConcurrentHashMap;
@@ -27,17 +27,18 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 
-import jakarta.persistence.EntityManager;
 import java.util.*;
 import java.util.stream.Collectors;
 
+// TODO IAM - ADMIN SESSION ADAPT IF NEEDED
 @Service
 public class CurrentRoleService {
 
     @Autowired
-    private SecUserSecRoleRepository secUserSecRoleRepository;
+    private SecUserSecRoleRepository secSecUserSecRoleRepository;
 
     public Map<String, Date> currentAdmins = new WeakConcurrentHashMap<>(120 * 60 * 1000); //admin session = 120 min max
 
@@ -50,7 +51,7 @@ public class CurrentRoleService {
      * (by default user with ROLE_ADMIN are connected as ROLE_USER)
      * @param user
      */
-    public void activeAdminSession(SecUser user) {
+    public void activeAdminSession(User user) {
         if(hasCurrentUserAdminRole(user)) {
             currentAdmins.put(user.getUsername(), new Date());
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -64,11 +65,19 @@ public class CurrentRoleService {
         }
     }
 
+    public void activeAdminSession(User user , JwtAuthenticationToken jwtAuthenticationToken) {
+        if(hasCurrentUserAdminRole(user)) {
+            currentAdmins.put(user.getUsername(), new Date());
+        } else {
+            throw new ForbiddenException("You are not an admin!");
+        }
+    }
+
     /**
      * Disable admin session for a user
      * @param user
      */
-    public void closeAdminSession(SecUser user) {
+    public void closeAdminSession(User user) {
         if(hasCurrentUserAdminRole(user)) {
             currentAdmins.remove(user.getUsername());
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -84,14 +93,14 @@ public class CurrentRoleService {
     /**
      * Get all user roles (even disabled role)
      */
-    public Set<SecRole> findRealRole(SecUser user) {
+    public Set<SecRole> findRealRole(User user) {
         return user.getRoles();
     }
 
     /**
      * Get all active roles
      */
-    public Set<SecRole> findCurrentRole(SecUser user) {
+    public Set<SecRole> findCurrentRole(User user) {
         Set<SecRole> roles = findRealRole(user);
         boolean isSuperAdmin = roles.stream().anyMatch(role -> role.getAuthority().equals("ROLE_SUPER_ADMIN"));
         //role super admin don't need to open a admin session, so we don't remove the role admin from the current role
@@ -101,28 +110,28 @@ public class CurrentRoleService {
         return roles;
     }
 
-    public Set<String> findCurrentAuthorities(SecUser user) {
+    public Set<String> findCurrentAuthorities(User user) {
         return findCurrentRole(user).stream().map(SecRole::getAuthority).collect(Collectors.toSet());
     }
 
-    public Set<String> findRealAuthorities(SecUser user) {
+    public Set<String> findRealAuthorities(User user) {
         return findRealRole(user).stream().map(SecRole::getAuthority).collect(Collectors.toSet());
     }
 
     /**
      * Check if user is admin (with admin session opened)
      */
-    public boolean isAdminByNow(SecUser user) {
+    public boolean isAdminByNow(User user) {
         Set<String> authorities = findCurrentAuthorities(user);
         return authorities.contains("ROLE_ADMIN") || authorities.contains("ROLE_SUPER_ADMIN");
     }
 
-    public boolean isUserByNow(SecUser user) {
+    public boolean isUserByNow(User user) {
         Set<String> authorities = findCurrentAuthorities(user);
         return authorities.contains("ROLE_USER");
     }
 
-    public boolean isGuestByNow(SecUser user) {
+    public boolean isGuestByNow(User user) {
         Set<String> authorities = findCurrentAuthorities(user);
         return authorities.contains("ROLE_GUEST");
     }
@@ -130,18 +139,18 @@ public class CurrentRoleService {
     /**
      * Check if user is admin (with admin session closed or opened)
      */
-    public boolean isAdmin(SecUser user) {
+    public boolean isAdmin(User user) {
         return findRealAuthorities(user).contains("ROLE_ADMIN");
     }
-    public boolean isUser(SecUser user) {
+    public boolean isUser(User user) {
         return findRealAuthorities(user).contains("ROLE_USER");
     }
-    public boolean isGuest(SecUser user) {
+    public boolean isGuest(User user) {
         return findRealAuthorities(user).contains("ROLE_GUEST");
     }
 
 
-    public boolean hasCurrentUserAdminRole(SecUser user) {
+    public boolean hasCurrentUserAdminRole(User user) {
         Set<String> authorities = findRealRole(user).stream().map(SecRole::getAuthority).collect(Collectors.toSet());
         return authorities.contains("ROLE_ADMIN") || authorities.contains("ROLE_SUPER_ADMIN");
     }

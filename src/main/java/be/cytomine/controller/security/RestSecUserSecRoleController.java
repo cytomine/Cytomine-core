@@ -8,7 +8,6 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.security.SecRoleRepository;
 import be.cytomine.repository.security.UserRepository;
 import be.cytomine.service.CurrentRoleService;
-import be.cytomine.service.security.SecRoleService;
 import be.cytomine.service.security.SecUserSecRoleService;
 import be.cytomine.utils.JsonObject;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +18,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
+
+// TODO IAM: remove?
 @RestController
 @RequestMapping("/api")
 @Slf4j
@@ -77,9 +78,9 @@ public class RestSecUserSecRoleController extends RestCytomineController {
                 .orElseThrow(() -> new ObjectNotFoundException("User", userId));
         SecRole role = secRoleRepository.findById(roleId)
                 .orElseThrow(() -> new ObjectNotFoundException("SecRole", roleId));
-        SecUserSecRole secUserSecRole = secUserSecRoleService.find(user, role)
+        SecUserSecRole secSecUserSecRole = secUserSecRoleService.find(user, role)
                 .orElseThrow(() -> new ObjectNotFoundException("SecUserSecRole", JsonObject.of("user", user.getId(), "role", role.getId()).toJsonString()));
-        return delete(secUserSecRoleService, secUserSecRole.toJsonObject(), null);
+        return delete(secUserSecRoleService, secSecUserSecRole.toJsonObject(), null);
     }
 
 

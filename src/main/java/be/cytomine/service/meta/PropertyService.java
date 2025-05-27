@@ -21,7 +21,7 @@ import be.cytomine.domain.command.*;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.meta.Property;
 import be.cytomine.domain.project.Project;
-import be.cytomine.domain.security.SecUser;
+import be.cytomine.domain.security.User;
 import be.cytomine.repository.meta.PropertyRepository;
 import be.cytomine.repository.ontology.AnnotationDomainRepository;
 import be.cytomine.service.CurrentUserService;
@@ -29,7 +29,6 @@ import be.cytomine.service.ModelService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.utils.CommandResponse;
 import be.cytomine.utils.JsonObject;
-import be.cytomine.utils.ResourcesUtils;
 import be.cytomine.utils.Task;
 import org.locationtech.jts.geom.Geometry;
 import lombok.extern.slf4j.Slf4j;
@@ -101,7 +100,7 @@ public class PropertyService extends ModelService {
     }
 
     public CommandResponse add(JsonObject jsonObject, Transaction transaction, Task task) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         CytomineDomain domain = getCytomineDomain(jsonObject.getJSONAttrStr("domainClassName"), jsonObject.getJSONAttrLong("domainIdent"));
         if(!domain.getClass().getName().contains("AbstractImage")) {
             securityACLService.checkUserAccessRightsForMeta( domain,  currentUser);
@@ -113,7 +112,7 @@ public class PropertyService extends ModelService {
         return executeCommand(command,null, jsonObject);
     }
 
-    public CommandResponse addProperty(String domainClassName, Long domainIdent, String key, String value, SecUser user, Transaction transaction) {
+    public CommandResponse addProperty(String domainClassName, Long domainIdent, String key, String value, User user, Transaction transaction) {
         JsonObject jsonObject = JsonObject.of(
                 "domainClassName", domainClassName,
                 "domainIdent", domainIdent,
@@ -125,7 +124,7 @@ public class PropertyService extends ModelService {
 
     @Override
     public CommandResponse update(CytomineDomain domain, JsonObject jsonNewData, Transaction transaction) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         CytomineDomain parentDomain = getCytomineDomain(((Property) domain).getDomainClassName(), ((Property) domain).getDomainIdent());
         if(!parentDomain.getClass().getName().contains("AbstractImage")) {
             securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
@@ -138,7 +137,7 @@ public class PropertyService extends ModelService {
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         CytomineDomain parentDomain = getCytomineDomain(((Property) domain).getDomainClassName(), ((Property) domain).getDomainIdent());
         if(!parentDomain.getClass().getName().contains("AbstractImage")) {
             securityACLService.checkUserAccessRightsForMeta(parentDomain, currentUser);
@@ -175,13 +174,6 @@ public class PropertyService extends ModelService {
                 (project!=null? "AND ua.project_id = '"+ project.getId() + "' " : "") +
                 (image!=null? "AND ua.image_id = '"+ image.getId() + "' " : "") +
                 "UNION " +
-                "SELECT DISTINCT p1.key " +
-                (withUser? ", aa.user_id " : "") +
-                "FROM property as p1, algo_annotation as aa " +
-                "WHERE p1.domain_ident = aa.id " +
-                (project!=null? "AND aa.project_id = '"+ project.getId() + "' " : "") +
-                (image!=null? "AND aa.image_id = '"+ image.getId() + "' " : "") +
-                "UNION " +
                 "SELECT DISTINCT p2.key " +
                 (withUser? ", ra.user_id " : "") +
                 "FROM property as p2, reviewed_annotation as ra " +
@@ -205,7 +197,7 @@ public class PropertyService extends ModelService {
         return selectListkey(request, Map.of());
     }
 
-    public List<Map<String, Object>> listAnnotationCenterPosition(SecUser user, ImageInstance image, Geometry boundingbox, String key) {
+    public List<Map<String, Object>> listAnnotationCenterPosition(User user, ImageInstance image, Geometry boundingbox, String key) {
         securityACLService.check(image.container(),READ);
         String request = "SELECT DISTINCT ua.id, ST_X(ST_CENTROID(ua.location)) as x,ST_Y(ST_CENTROID(ua.location)) as y, p.value " +
                 "FROM user_annotation ua, property as p " +
@@ -213,15 +205,7 @@ public class PropertyService extends ModelService {
                 "AND p.key = :key " +
                 "AND ua.image_id = '"+ image.getId() +"' " +
                 "AND ua.user_id = '"+ user.getId() +"' " +
-                (boundingbox!=null ? "AND ST_Intersects(ua.location,ST_GeometryFromText('" + boundingbox.toString() + "',0)) " :"") +
-                "UNION " +
-                "SELECT DISTINCT aa.id, ST_X(ST_CENTROID(aa.location)) as x,ST_Y(ST_CENTROID(aa.location)) as y, p.value " +
-                "FROM algo_annotation aa, property as p " +
-                "WHERE p.domain_ident = aa.id " +
-                "AND p.key = :key " +
-                "AND aa.image_id = '"+ image.getId() +"' " +
-                "AND aa.user_id = '"+ user.getId() +"' " +
-                (boundingbox!=null ? "AND ST_Intersects(aa.location,ST_GeometryFromText('" + boundingbox.toString() + "',0)) " :"");
+                (boundingbox!=null ? "AND ST_Intersects(ua.location,ST_GeometryFromText('" + boundingbox.toString() + "',0)) " :"");
 
         return selectsql(request, Map.of("key", (Object)key));
     }

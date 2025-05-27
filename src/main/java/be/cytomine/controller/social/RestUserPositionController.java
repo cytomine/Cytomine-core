@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import be.cytomine.controller.RestCytomineController;
 import be.cytomine.domain.image.ImageInstance;
 import be.cytomine.domain.image.SliceInstance;
-import be.cytomine.domain.security.SecUser;
 import be.cytomine.domain.security.User;
 import be.cytomine.domain.social.LastUserPosition;
 import be.cytomine.dto.image.AreaDTO;
@@ -19,19 +18,25 @@ import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.image.ImageInstanceService;
 import be.cytomine.service.image.SliceInstanceService;
-import be.cytomine.service.security.SecUserService;
+import be.cytomine.service.security.UserService;
 import be.cytomine.service.security.SecurityACLService;
 import be.cytomine.service.social.UserPositionService;
 import be.cytomine.utils.JsonObject;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Date;
 
 /**
  * Controller for user position
  * Position of the user (x,y) on an image for a time
  */
+@RestController
+@RequestMapping("/api")
 @Slf4j
 @RequiredArgsConstructor
-@RequestMapping("/api")
-@RestController
 public class RestUserPositionController extends RestCytomineController {
 
     private final UserPositionService userPositionService;
@@ -42,7 +47,7 @@ public class RestUserPositionController extends RestCytomineController {
 
     private final CurrentUserService currentUserService;
 
-    private final SecUserService secUserService;
+    private final UserService userService;
 
     private final SecurityACLService securityACLService;
 
@@ -75,7 +80,7 @@ public class RestUserPositionController extends RestCytomineController {
             JsonObject json
     ) {
         Date date = new Date();
-        SecUser user = currentUserService.getCurrentUser();
+        User user = currentUserService.getCurrentUser();
 
         Point topLeft = new Point(json.getJSONAttrDouble("topLeftX", 0d), json.getJSONAttrDouble("topLeftY", 0d));
         Point topRight = new Point(json.getJSONAttrDouble("topRightX", 0d), json.getJSONAttrDouble("topRightY", 0d));
@@ -99,7 +104,7 @@ public class RestUserPositionController extends RestCytomineController {
     ) {
         ImageInstance imageInstance =
                 imageInstanceService.find(imageId).orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
-        User user = secUserService.findUser(userId).orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
+        User user = userService.findUser(userId).orElseThrow(() -> new ObjectNotFoundException("User", userId));
         SliceInstance sliceInstance = null;
         if (sliceId!=null) {
             sliceInstance = sliceInstanceService.find(sliceId)
@@ -122,9 +127,9 @@ public class RestUserPositionController extends RestCytomineController {
     ) {
         ImageInstance imageInstance =
                 imageInstanceService.find(imageId).orElseThrow(() -> new ObjectNotFoundException("ImageInstance", imageId));
-        SecUser user = null;
+        User user = null;
         if (userId!=null) {
-            user = secUserService.find(userId).orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
+            user = userService.find(userId).orElseThrow(() -> new ObjectNotFoundException("User", userId));
         }
         SliceInstance sliceInstance = null;
         if (sliceId!=null) {
@@ -159,8 +164,8 @@ public class RestUserPositionController extends RestCytomineController {
             @PathVariable("image") Long imageId,
             @PathVariable("user") Long userId) {
         log.debug("REST request get list of followers");
-        SecUser user = secUserService.find(userId)
-                .orElseThrow(() -> new ObjectNotFoundException("SecUser", userId));
+        User user = userService.find(userId)
+                .orElseThrow(() -> new ObjectNotFoundException("User", userId));
         securityACLService.checkIsSameUser(currentUserService.getCurrentUser(), user);
 
         ImageInstance imageInstance =

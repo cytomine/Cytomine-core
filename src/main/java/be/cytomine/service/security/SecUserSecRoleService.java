@@ -18,16 +18,14 @@ package be.cytomine.service.security;
 
 import be.cytomine.domain.CytomineDomain;
 import be.cytomine.domain.command.*;
-import be.cytomine.domain.ontology.Ontology;
 import be.cytomine.domain.security.SecRole;
-import be.cytomine.domain.security.SecUser;
-import be.cytomine.domain.security.SecUserSecRole;
 import be.cytomine.domain.security.User;
+import be.cytomine.domain.security.SecUserSecRole;
 import be.cytomine.exceptions.AlreadyExistException;
 import be.cytomine.exceptions.ForbiddenException;
 import be.cytomine.exceptions.ObjectNotFoundException;
 import be.cytomine.repository.security.SecRoleRepository;
-import be.cytomine.repository.security.SecUserRepository;
+import be.cytomine.repository.security.UserRepository;
 import be.cytomine.repository.security.SecUserSecRoleRepository;
 import be.cytomine.service.CurrentUserService;
 import be.cytomine.service.ModelService;
@@ -41,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -53,7 +50,7 @@ public class SecUserSecRoleService extends ModelService {
     SecurityACLService securityACLService;
 
     @Autowired
-    SecUserSecRoleRepository secUserSecRoleRepository;
+    SecUserSecRoleRepository secSecUserSecRoleRepository;
 
     @Autowired
     CurrentUserService currentUserService;
@@ -62,7 +59,7 @@ public class SecUserSecRoleService extends ModelService {
     SecRoleRepository secRoleRepository;
 
     @Autowired
-    SecUserRepository secUserRepository;
+    UserRepository userRepository;
 
     @Override
     public Class currentDomain() {
@@ -76,33 +73,33 @@ public class SecUserSecRoleService extends ModelService {
 
     public List<SecUserSecRole> list(User user) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
-        return secUserSecRoleRepository.findAllBySecUser(user);
+        return secSecUserSecRoleRepository.findAllBySecUser(user);
     }
 
     public SecRole getHighest(User user) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
 
-        List<SecUserSecRole> secUserSecRoles = secUserSecRoleRepository.findAllBySecUser(user);
+        List<SecUserSecRole> secSecUserSecRoles = secSecUserSecRoleRepository.findAllBySecUser(user);
 
-        Optional<SecUserSecRole> role_super_admin = secUserSecRoles.stream()
+        Optional<SecUserSecRole> role_super_admin = secSecUserSecRoles.stream()
                 .filter(x -> x.getSecRole().getAuthority().equals("ROLE_SUPER_ADMIN")).findFirst();
         if (role_super_admin.isPresent()) {
             return role_super_admin.get().getSecRole();
         }
 
-        Optional<SecUserSecRole> role_admin = secUserSecRoles.stream()
+        Optional<SecUserSecRole> role_admin = secSecUserSecRoles.stream()
                 .filter(x -> x.getSecRole().getAuthority().equals("ROLE_ADMIN")).findFirst();
         if (role_admin.isPresent()) {
             return role_admin.get().getSecRole();
         }
 
-        Optional<SecUserSecRole> role_user = secUserSecRoles.stream()
+        Optional<SecUserSecRole> role_user = secSecUserSecRoles.stream()
                 .filter(x -> x.getSecRole().getAuthority().equals("ROLE_USER")).findFirst();
         if (role_user.isPresent()) {
             return role_user.get().getSecRole();
         }
 
-        Optional<SecUserSecRole> role_guest = secUserSecRoles.stream()
+        Optional<SecUserSecRole> role_guest = secSecUserSecRoles.stream()
                 .filter(x -> x.getSecRole().getAuthority().equals("ROLE_GUEST")).findFirst();
         if (role_guest.isPresent()) {
             return role_guest.get().getSecRole();
@@ -111,19 +108,19 @@ public class SecUserSecRoleService extends ModelService {
     }
 
 
-    public Optional<SecUserSecRole> find(SecUser user, SecRole role) {
+    public Optional<SecUserSecRole> find(User user, SecRole role) {
         securityACLService.checkGuest(currentUserService.getCurrentUser());
-        return secUserSecRoleRepository.findBySecUserAndSecRole(user, role);
+        return secSecUserSecRoleRepository.findBySecUserAndSecRole(user, role);
     }
 
     @Override
     public CommandResponse add(JsonObject jsonObject) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+        User currentUser = currentUserService.getCurrentUser();
         SecRole role = secRoleRepository.findById(jsonObject.getJSONAttrLong("role"))
                 .orElseThrow(() -> new ObjectNotFoundException("Role", jsonObject.getJSONAttrStr("role")));
-        SecUser user = secUserRepository.findById(jsonObject.getJSONAttrLong("user"))
+        User user = userRepository.findById(jsonObject.getJSONAttrLong("user"))
                 .orElseThrow(() -> new ObjectNotFoundException("User", jsonObject.getJSONAttrStr("user")));
-        Set<String> userRoles = secUserSecRoleRepository.findAllBySecUser(user).stream().map(x -> x.getSecRole().getAuthority())
+        Set<String> userRoles = secSecUserSecRoleRepository.findAllBySecUser(user).stream().map(x -> x.getSecRole().getAuthority())
                 .collect(Collectors.toSet());
 
         if (role.getAuthority().equals("ROLE_ADMIN") || role.getAuthority().equals("ROLE_SUPER_ADMIN")) {
@@ -142,18 +139,12 @@ public class SecUserSecRoleService extends ModelService {
 
     @Override
     public CommandResponse delete(CytomineDomain domain, Transaction transaction, Task task, boolean printMessage) {
-        SecUser currentUser = currentUserService.getCurrentUser();
-        SecUserSecRole secUserSecRole = (SecUserSecRole)domain;
-        if(Objects.equals(secUserSecRole.getSecUser().getId(), currentUser.getId()) && !secUserSecRole.getSecRole().getAuthority().equals("ROLE_SUPER_ADMIN")) {
+        User currentUser = currentUserService.getCurrentUser();
+        SecUserSecRole secSecUserSecRole = (SecUserSecRole)domain;
+        if(Objects.equals(secSecUserSecRole.getSecUser().getId(), currentUser.getId()) && !secSecUserSecRole.getSecRole().getAuthority().equals("ROLE_SUPER_ADMIN")) {
             throw new ForbiddenException("You cannot remove you a role");
         }
-        if(secUserSecRole.getSecUser().isAlgo()) {
-            //TODO
-//            Job job = ((UserJob)domain.secUser).job
-//            securityACLService.check(job?.container(),READ)
-        } else {
-            securityACLService.checkAdmin(currentUser);
-        }
+        securityACLService.checkAdmin(currentUser);
         Command c = new DeleteCommand(currentUser, transaction);
         return executeCommand(c,domain, null);
     }
@@ -161,16 +152,16 @@ public class SecUserSecRoleService extends ModelService {
 
 
     public List<Object> getStringParamsI18n(CytomineDomain domain) {
-        SecUserSecRole secUserSecRole = (SecUserSecRole)domain;
-        return List.of(secUserSecRole.getSecUser().getId(), secUserSecRole.getSecRole().getId());
+        SecUserSecRole secSecUserSecRole = (SecUserSecRole)domain;
+        return List.of(secSecUserSecRole.getSecUser().getId(), secSecUserSecRole.getSecRole().getId());
     }
 
 
     /**
      * Define a role for a user. If admin is defined, user will have admin,user,guest. If user is defined, user will have user,guest, etc
      */
-    public void define(SecUser user, SecRole role) {
-        SecUser currentUser = currentUserService.getCurrentUser();
+    public void define(User user, SecRole role) {
+        User currentUser = currentUserService.getCurrentUser();
         securityACLService.checkAdmin(currentUser);
 
         SecRole roleGuest = secRoleRepository.getByAuthority("ROLE_GUEST");
@@ -207,8 +198,8 @@ public class SecUserSecRoleService extends ModelService {
     }
 
 
-    private void addRole(SecUser user,SecRole role) {
-        Optional<SecUserSecRole> linked = secUserSecRoleRepository.findBySecUserAndSecRole(user,role);
+    private void addRole(User user,SecRole role) {
+        Optional<SecUserSecRole> linked = secSecUserSecRoleRepository.findBySecUserAndSecRole(user,role);
         if(linked.isEmpty()) {
             SecUserSecRole susr = new SecUserSecRole();
             susr.setSecRole(role);
@@ -216,8 +207,8 @@ public class SecUserSecRoleService extends ModelService {
             super.saveDomain(susr);
         }
     }
-    private void removeRole(SecUser user,SecRole role) {
-        Optional<SecUserSecRole> linked = secUserSecRoleRepository.findBySecUserAndSecRole(user,role);
+    private void removeRole(User user,SecRole role) {
+        Optional<SecUserSecRole> linked = secSecUserSecRoleRepository.findBySecUserAndSecRole(user,role);
         if(linked.isPresent()) {
             if(Objects.equals(user.getId(), currentUserService.getCurrentUser().getId()) && !role.getAuthority().equals("ROLE_SUPER_ADMIN")) {
                 throw new ForbiddenException("You cannot remove you a role");
@@ -233,19 +224,19 @@ public class SecUserSecRoleService extends ModelService {
     @Override
     public CytomineDomain retrieve(JsonObject json) {
 
-       SecUser secUser = secUserRepository.getById(json.getJSONAttrLong("user"));
+       User secUser = userRepository.getById(json.getJSONAttrLong("user"));
        SecRole secRole = secRoleRepository.getById(json.getJSONAttrLong("role"));
-       return secUserSecRoleRepository.findBySecUserAndSecRole(secUser,secRole)
+       return secSecUserSecRoleRepository.findBySecUserAndSecRole(secUser,secRole)
                .orElseThrow(() -> new ObjectNotFoundException("SecUserSecRole", json.toJsonString()));
     }
 
 
     public void checkDoNotAlreadyExist(CytomineDomain domain){
-        SecUserSecRole secUserSecRole = (SecUserSecRole)domain;
+        SecUserSecRole secSecUserSecRole = (SecUserSecRole)domain;
         if(domain!=null) {
-            if(secUserSecRoleRepository.findBySecUserAndSecRole(secUserSecRole.getSecUser(), secUserSecRole.getSecRole())
-                    .stream().anyMatch(x -> !Objects.equals(x.getId(), secUserSecRole.getId())))  {
-                throw new AlreadyExistException("User " + secUserSecRole.getSecUser().getUsername() + " has already role " + secUserSecRole.getSecRole().getAuthority());
+            if(secSecUserSecRoleRepository.findBySecUserAndSecRole(secSecUserSecRole.getSecUser(), secSecUserSecRole.getSecRole())
+                    .stream().anyMatch(x -> !Objects.equals(x.getId(), secSecUserSecRole.getId())))  {
+                throw new AlreadyExistException("User " + secSecUserSecRole.getSecUser().getUsername() + " has already role " + secSecUserSecRole.getSecRole().getAuthority());
             }
         }
     }
