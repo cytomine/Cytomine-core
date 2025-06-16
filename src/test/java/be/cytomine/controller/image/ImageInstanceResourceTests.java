@@ -806,11 +806,12 @@ public class ImageInstanceResourceTests {
                 )
         );
 
-        MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/download", image.getId()))
+        MvcResult mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/download?Authorization=Bearer " + getSignedNotExpiredJwt(), image.getId()))
                 .andExpect(status().isOk())
                 .andReturn();
         assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
     }
+
 
 
     @Test

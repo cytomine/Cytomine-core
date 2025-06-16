@@ -452,16 +452,14 @@ public class RestImageInstanceController extends RestCytomineController {
     }
 
     @GetMapping("/imageinstance/{id}/download")
-    public ResponseEntity<byte[]> download(@PathVariable Long id, ProxyExchange<byte[]> proxy) throws IOException {
+    public ResponseEntity<byte[]> download(
+        @PathVariable Long id,
+        @RequestParam String Authorization,
+        ProxyExchange<byte[]> proxy) throws IOException {
         log.debug("REST request to download image instance");
-        ImageInstance imageinstance = imageInstanceService.find(id)
+        ImageInstance imageinstance = imageInstanceService.find(id, Authorization)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
 
-        boolean canDownload = imageinstance.getProject().getAreImagesDownloadable();
-        if (!canDownload) {
-            // TODO: in abstract image, there is no check for that ?!?
-            securityACLService.checkIsAdminContainer(imageinstance.getProject());
-        }
         return imageServerService.download(imageinstance.getBaseImage(), proxy);
     }
 
