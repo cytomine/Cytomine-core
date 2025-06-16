@@ -741,7 +741,7 @@ public class AbstractImageResourceTests {
                 )
         );
 
-        MvcResult mvcResult = restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/download", image.getId()))
+        MvcResult mvcResult = restAbstractImageControllerMockMvc.perform(get("/api/abstractimage/{id}/download?Authorization=Bearer "+getSignedNotExpiredJwt(), image.getId()))
                 .andExpect(status().isOk())
                 .andReturn();
         assertThat(mvcResult.getResponse().getContentAsByteArray()).isEqualTo(mockResponse);
