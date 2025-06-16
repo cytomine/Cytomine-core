@@ -839,7 +839,7 @@ public class ImageInstanceResourceTests {
 
         image.getProject().setAreImagesDownloadable(false);
 
-        mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/download?Authorization=Bearer " + getSignedJwt(Instant.now().minus(10, ChronoUnit.MINUTES)), image.getId())).andReturn();
+        mvcResult = restImageInstanceControllerMockMvc.perform(get("/api/imageinstance/{id}/download?Authorization=Bearer " + getSignedJwt(Instant.now().minus(10, ChronoUnit.DAYS)), image.getId())).andReturn();
         assertThat(mvcResult.getResponse().getStatus()).isEqualTo(403);
         assertThat(mvcResult.getResponse().getContentAsByteArray()).isNotEqualTo(mockResponse);
     }
