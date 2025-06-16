@@ -349,11 +349,13 @@ public class RestAbstractImageController extends RestCytomineController {
     }
 
     @GetMapping("/abstractimage/{id}/download")
-    public ResponseEntity<byte[]> download(@PathVariable Long id, ProxyExchange<byte[]> proxy) throws IOException {
+    public ResponseEntity<byte[]> download(
+        @PathVariable Long id,
+        @RequestParam String Authorization,
+        ProxyExchange<byte[]> proxy) throws IOException {
         log.debug("REST request to download image instance");
-        AbstractImage abstractImage = abstractImageService.find(id)
+        AbstractImage abstractImage = abstractImageService.find(id, Authorization)
                 .orElseThrow(() -> new ObjectNotFoundException("ImageInstance", id));
-        // TODO: in abstract image, there is no check fos download auth!?
         return imageServerService.download(abstractImage, proxy);
     }
 }
