@@ -973,7 +973,6 @@ public class ImageInstanceResourceTests {
         resource.put("roles", resourceRoles);
         resourceAccessClaim.put("core" , resource);
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .expirationTime(new Date(new Date().getTime() + 60 * 1000))
                 .issuer("http://localhost:8888/")
                 .expirationTime(Date.from(expiresAt))
                 .issueTime(Date.from(issuedAt))
