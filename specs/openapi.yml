@@ -18,7 +18,7 @@ tags:
 paths:
   /api/annotations/{id}:
     get:
-      summary: Get an annotation by ID
+      summary: Get an annotation
       description: |
         Retrieves the annotation with the specified ID from the new annotation service.
         Falls back to the legacy annotation retrieval method if not found.
@@ -36,6 +36,58 @@ paths:
                 $ref: "#/components/schemas/annotation"
         "404":
           $ref: "#/components/responses/not-found"
+
+  /api/annotation-layers/{id}/annotations:
+    get:
+      summary: Get all annotations for an annotation layer
+      tags:
+        - Annotation
+      operationId: getAnnotationsByLayer
+      parameters:
+        - $ref: "#/components/parameters/path-annotation-layer-id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/annotation"
+
+  /api/annotation-layers/{id}/task-run-layer:
+    get:
+      summary: Get a task run layer for an annotation layer
+      tags:
+        - Annotation
+      operationId: findTaskRunLayer
+      parameters:
+        - $ref: "#/components/parameters/path-annotation-layer-id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/task-run-layer"
+
+  /api/image-instances/{id}/annotation-layers:
+    get:
+      summary: Get all annotation layers for an image instance
+      tags:
+        - Annotation
+      operationId: getAnnotationLayersByImage
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/annotation-layer"
 
   /server/ping:
     get:
@@ -129,7 +181,23 @@ components:
     path-annotation-id:
       name: id
       in: path
-      description: The annotation ID
+      description: The annotation identifier
+      required: true
+      schema:
+        type: integer
+        format: int64
+    path-annotation-layer-id:
+      name: id
+      in: path
+      description: The annotation layer identifier
+      required: true
+      schema:
+        type: integer
+        format: int64
+    path-image-instance-id:
+      name: id
+      in: path
+      description: The image instance identifier
       required: true
       schema:
         type: integer
@@ -152,7 +220,7 @@ components:
       type: object
       properties:
         id:
-          $ref: "#/components/schemas/id-attribute"
+          $ref: "#/components/schemas/attribute-id"
         annotationLayer:
           type: integer
           description: The layer to which this annotation belongs.
@@ -161,7 +229,15 @@ components:
           type: string
           format: byte
           description: Binary-encoded annotation geometry data (base64-encoded)
-    id-attribute:
+    annotation-layer:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/attribute-id"
+        name:
+          type: string
+          description: The name of the annotation layer
+    attribute-id:
       type: integer
       description: The resource identifier
       format: int64
@@ -175,3 +251,28 @@ components:
         secondaryKey:
           type: string
           format: uuid
+    task-run-layer:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/attribute-id"
+        annotationLayer:
+          type: integer
+          description: The layer to which this annotation belongs.
+          format: int64
+        image:
+          type: integer
+          description: The image instance identifier to which this layer belongs.
+          format: int64
+        taskRun:
+          type: integer
+          description: The task run identifier to which this layer belongs.
+          format: int64
+        xOffset:
+          type: integer
+          description: The x offset of the annotation in the image instance.
+          format: int32
+        yOffset:
+          type: integer
+          description: The y offset of the annotation in the image instance.
+          format: int32
