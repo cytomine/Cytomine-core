@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.2.0] - 2025-06-20
+
 ### Changed
 
 - Refactor authentication process using IAM service with Keycloak
@@ -45,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Legacy software support
 - RabbitMQ message queue support
 
-[Unreleased]: https://github.com/cytomine/Cytomine-core/compare/5.1.1..HEAD
+[Unreleased]: https://github.com/cytomine/Cytomine-core/compare/5.2.0..HEAD
+[5.2.0]: https://github.com/cytomine/Cytomine-core/releases/tag/5.2.0
 [5.1.1]: https://github.com/cytomine/Cytomine-core/releases/tag/5.1.1
 [5.1.0]: https://github.com/cytomine/Cytomine-core/releases/tag/5.1.0
