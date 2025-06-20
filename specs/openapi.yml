@@ -1,24 +1,47 @@
-openapi: 3.0.0
+openapi: 3.1.0
 info:
-  title: Partial core API
+  title: Cytomine Core API
   version: 0.1.0
-  description: core API provides requests for core features of Cytomine. This spec is partial as it currently contains only new endpoints.
+  description: core API provides requests for core features of Cytomine.
 
 servers:
   - url: http://localhost:8080/api/
 
 tags:
-  - name: Account
+  - name: Annotation
+    description: Manage all annotations type
   - name: Legacy user keys
+    description: Legacy user keys management
 
 paths:
+  /api/annotations/{id}:
+    get:
+      summary: Get an annotation by ID
+      description: |
+        Retrieves the annotation with the specified ID from the new annotation service.
+        Falls back to the legacy annotation retrieval method if not found.
+      tags:
+        - Annotation
+      operationId: getById
+      parameters:
+        - $ref: "#/components/parameters/path-annotation-id"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/annotation"
+        '404':
+          $ref: "#/components/responses/not-found"
+
   /user/current/keys:
     get:
       summary: Get key pair for current user
       tags:
         - Legacy user keys
       responses:
-        200:
+        '200':
           description: Successful response
           content:
             application/json:
@@ -31,34 +54,15 @@ paths:
       tags:
         - Legacy user keys
       responses:
-        200:
+        '200':
           description: Successful response
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/legacy-user-keys"
+
 components:
   parameters:
-    pagination-max:
-      name: max
-      in: query
-      description: |
-        Pagination: number of items per page. Use `0` to disable pagination.
-      required: false
-      schema:
-        type: integer
-        format: int32
-        default: '0'
-    pagination-offset:
-      name: offset
-      in: query
-      description: |
-        Pagination: offset of the first returned item. The first item has offset `0`.
-      required: false
-      schema:
-        type: integer
-        format: int32
-        default: '0'
     account-reference:
       name: id
       in: path
@@ -67,26 +71,46 @@ components:
       schema:
         type: string
         format: uuid
+    path-annotation-id:
+      name: id
+      in: path
+      description: The annotation ID
+      required: true
+      schema:
+        type: integer
+        format: int64
+
+  responses:
+    not-found:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Resource not found"
+
   schemas:
-    collection:
+    annotation:
       type: object
       properties:
-        size:
+        id:
+          $ref: "#/components/schemas/id-attribute"
+        annotationLayer:
           type: integer
+          description: The layer to which this annotation belongs.
           format: int64
-          description: The number of items in the collection
-        totalPages:
-          type: integer
-          format: int64
-          description: The number of pages according to the current pagination parameters
-        perPage:
-          type: integer
-          format: int64
-          description: The number of items per page according to the current pagination parameters
-        offset:
-          type: integer
-          format: int64
-          description: The current offset in the pagination according to the current pagination parameters
+        location:
+          type: string
+          format: byte
+          description: Binary-encoded annotation geometry data (base64-encoded)
+    id-attribute:
+      type: integer
+      description: The resource identifier
+      format: int64
+      readOnly: true
     legacy-user-keys:
       type: object
       properties:
@@ -96,16 +120,3 @@ components:
         secondaryKey:
           type: string
           format: uuid
-    generic-error:
-      type: object
-      properties:
-        error_code:
-          type: string
-          pattern: ^CORE-[a-zA-Z0-9_-]+$
-          description: an error code structured as `{component}-{reason}`
-        message:
-          type: string
-          description: the human-readable error message associated with the error_code (non-localized, in english)
-        details:
-          type: object
-          description: provide a more detailed description of the error, structure and content depends on the error code
