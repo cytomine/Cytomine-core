@@ -47,7 +47,7 @@ jobs:
             CORE_VERSION=${{ github.ref_name }}
             CORE_REVISION=${{ github.sha }}
             GRADLE_VERSION=${{ vars.GRADLE_VERSION }}
-            OPENJDK_VERSION=${{ vars.JAVA_VERSION }}
+            OPENJDK_VERSION=${{ vars.OPENJDK_VERSION }}
           context: .
           file: ./Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
