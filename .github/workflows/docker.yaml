@@ -26,7 +26,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: cytomineuliege/core
+          images: cytomine/core
           tags: |
             type=raw,value=latest,enable=${{ steps.release.outputs.release }}
             type=semver,pattern={{raw}}
@@ -46,7 +46,7 @@ jobs:
           build-args: |
             CORE_VERSION=${{ github.ref_name }}
           context: .
-          file: ./docker/Dockerfile
+          file: ./Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
