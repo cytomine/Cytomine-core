@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Refactor authentication process using IAM service with Keycloak
+
 ### Fixed
 
 - Fix large files forwarding from and to the App Engine
+
+### Removed
+
+- Local authentication
 
 ## [5.1.1] - 2025-05-09
 
