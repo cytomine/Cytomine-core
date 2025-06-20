@@ -10,6 +10,8 @@ servers:
 tags:
   - name: Annotation
     description: Manage all annotations type
+  - name: Annotation | User annotation
+    description: Manage annotations created by human users
   - name: Health Check
     description: Health and status server checks
   - name: Legacy user keys
@@ -88,6 +90,590 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/annotation-layer"
+
+  /api/project/{project}/userannotation/count.json:
+    get:
+      description: Count the number of annotation in the project
+      tags:
+        - Annotation | User annotation
+      parameters:
+        - $ref: "#/components/parameters/path-filter-project-id"
+        - name: startDate
+          in: query
+          description: Only count the annotations created after this date (optional)
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: endDate
+          in: query
+          description: Only count the annotations created before this date (optional)
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    format: int64
+                    description: The total number of user annotations in the project
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/project/{id}/userannotation/download:
+    get:
+      tags:
+        - Annotation | User annotation
+      description: Download a user annotation report for a project
+      parameters:
+        - $ref: "#/components/parameters/path-project-id"
+        - name: terms
+          in: query
+          description: "The annotation terms id (if empty: all terms)"
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: users
+          in: query
+          description: "The annotation users id (if empty: all users)"
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: images
+          in: query
+          description: "The annotation images id (if empty: all images)"
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: afterThan
+          in: query
+          description: (Optional) Annotations created before this date will not be returned
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: beforeThan
+          in: query
+          description: (Optional) Annotations created after this date will not be returned
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: format
+          in: query
+          description: The report format (pdf, xls,...)
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: file
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/user/{id}/userannotation/count.json:
+    get:
+      tags:
+        - Annotation | User annotation
+      description: Count the number of annotation for the current user
+      parameters:
+        - name: id
+          in: path
+          description: The user id (mandatory)
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: project
+          in: path
+          description: The project id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    format: int64
+                    description: The total number of user annotations for the user
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/userannotation.json:
+    post:
+      tags:
+        - Annotation | User annotation
+      description: Add user annotation(s)
+      parameters:
+        - name: "POST JSON: project"
+          in: path
+          description: The project id where this annotation belongs
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: "POST JSON: image"
+          in: query
+          description: The image instance id where this annotation belongs
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: "POST JSON: location"
+          in: query
+          description: The WKT geometrical description of the annotation
+          required: true
+          schema:
+            type: string
+        - name: "POST JSON: term"
+          in: query
+          description: Term id to associate with this annotation
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: "POST JSON: minPoint"
+          in: query
+          description: Minimum number of point that constitute the annotation
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: "POST JSON: maxPoint"
+          in: query
+          description: Maximum number of point that constitute the annotation
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/user-annotation"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/user-annotation"
+    get:
+      tags:
+        - Annotation | User annotation
+      description: List user annotation (partial response)
+      parameters:
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User-Collection-annotation"
+          description: OK
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/userannotation/{id}.json:
+    get:
+      tags:
+        - Annotation | User annotation
+      description: Get a user annotation
+      parameters:
+        - $ref: "#/components/parameters/path-annotation-id"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/user-annotation"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+    put:
+      tags:
+        - Annotation | User annotation
+      description: Update a user annotation
+      parameters:
+        - $ref: "#/components/parameters/path-annotation-id"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/user-annotation"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/user-annotation"
+    delete:
+      tags:
+        - Annotation | User annotation
+      description: Delete a user annotation
+      parameters:
+        - $ref: "#/components/parameters/path-annotation-id"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/user-annotation"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/userannotation/{id}/alphamask.{format}:
+    get:
+      tags:
+        - Annotation | User annotation
+      description: Get a user annotation alpha mask
+      parameters:
+        - $ref: "#/components/parameters/path-annotation-id"
+        - $ref: "#/components/parameters/path-image-response-format"
+        - name: maxSize
+          in: query
+          description: Maximum crop size in width and height
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: zoom
+          in: query
+          description:
+            Zoom level in which crop is extracted. Ignored if maxSize is
+            set.
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: increaseArea
+          in: query
+          description:
+            Increase crop area by multiplying original crop size by this
+            factor.
+          required: false
+          schema:
+            type: number
+        - name: complete
+          in: query
+          description: Do not simplify the annotation shape.
+          required: false
+          schema:
+            type: boolean
+        - name: colormap
+          in: query
+          description: The absolute path of a colormap file
+          required: false
+          schema:
+            type: string
+        - name: inverse
+          in: query
+          description: True if colors have to be inversed
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: contrast
+          in: query
+          description: Multiply pixels by contrast
+          required: false
+          schema:
+            type: number
+        - name: gamma
+          in: query
+          description: Apply gamma correction
+          required: false
+          schema:
+            type: number
+        - name: bits
+          in: query
+          description: Output bit depth per channel
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          $ref: "#/components/responses/image"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/userannotation/{id}/crop.{format}:
+    get:
+      tags:
+        - Annotation | User annotation
+      description: Get a user annotation crop
+      parameters:
+        - $ref: "#/components/parameters/path-annotation-id"
+        - $ref: "#/components/parameters/path-image-response-format"
+        - name: type
+          in: query
+          description:
+            Type of crop. Allowed values are 'crop' (default behavior if
+            not set), 'draw' (the shape is drawn in the crop), 'mask' (annotation binary
+            mask), 'alphaMask (part of crop outside annotation is transparent, requires
+            png format)
+          required: false
+          schema:
+            type: string
+        - name: draw
+          in: query
+          description: Equivalent to set type='draw'
+          required: false
+          schema:
+            type: boolean
+        - name: mask
+          in: query
+          description: Equivalent to set type='mask'
+          required: false
+          schema:
+            type: boolean
+        - name: alphaMask
+          in: query
+          description: Equivalent to set type='alphaMask'
+          required: false
+          schema:
+            type: boolean
+        - name: maxSize
+          in: query
+          description: Maximum crop size in width and height
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: zoom
+          in: query
+          description:
+            Zoom level in which crop is extracted. Ignored if maxSize is
+            set.
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: increaseArea
+          in: query
+          description:
+            Increase crop area by multiplying original crop size by this
+            factor.
+          required: false
+          schema:
+            type: number
+        - name: complete
+          in: query
+          description: Do not simplify the annotation shape.
+          required: false
+          schema:
+            type: boolean
+        - name: colormap
+          in: query
+          description: The absolute path of a colormap file
+          required: false
+          schema:
+            type: string
+        - name: inverse
+          in: query
+          description: True if colors have to be inversed
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: contrast
+          in: query
+          description: Multiply pixels by contrast
+          required: false
+          schema:
+            type: number
+        - name: gamma
+          in: query
+          description: Apply gamma correction
+          required: false
+          schema:
+            type: number
+        - name: bits
+          in: query
+          description: Output bit depth per channel
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          $ref: "#/components/responses/image"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/userannotation/{id}/mask.{format}:
+    get:
+      tags:
+        - Annotation | User annotation
+      description: Get a user annotation mask
+      parameters:
+        - $ref: "#/components/parameters/path-annotation-id"
+        - $ref: "#/components/parameters/path-image-response-format"
+        - name: maxSize
+          in: query
+          description: Maximum crop size in width and height
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: zoom
+          in: query
+          description:
+            Zoom level in which crop is extracted. Ignored if maxSize is
+            set.
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: increaseArea
+          in: query
+          description:
+            Increase crop area by multiplying original crop size by this
+            factor.
+          required: false
+          schema:
+            type: number
+        - name: complete
+          in: query
+          description: Do not simplify the annotation shape.
+          required: false
+          schema:
+            type: boolean
+        - name: colormap
+          in: query
+          description: The absolute path of a colormap file
+          required: false
+          schema:
+            type: string
+        - name: inverse
+          in: query
+          description: True if colors have to be inversed
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: contrast
+          in: query
+          description: Multiply pixels by contrast
+          required: false
+          schema:
+            type: number
+        - name: gamma
+          in: query
+          description: Apply gamma correction
+          required: false
+          schema:
+            type: number
+        - name: bits
+          in: query
+          description: Output bit depth per channel
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          $ref: "#/components/responses/image"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
 
   /server/ping:
     get:
@@ -178,6 +764,26 @@ components:
       schema:
         type: string
         format: uuid
+    pagination-max:
+      name: max
+      in: query
+      description: |
+        Pagination: number of items per page. Use `0` to disable pagination.
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: "0"
+    pagination-offset:
+      name: offset
+      in: query
+      description: |
+        Pagination: offset of the first returned item. The first item has offset `0`.
+      required: false
+      schema:
+        type: integer
+        format: int32
+        default: "0"
     path-annotation-id:
       name: id
       in: path
@@ -194,6 +800,14 @@ components:
       schema:
         type: integer
         format: int64
+    path-filter-project-id:
+      name: project
+      in: path
+      description: The project id
+      required: true
+      schema:
+        type: integer
+        format: int64
     path-image-instance-id:
       name: id
       in: path
@@ -202,8 +816,59 @@ components:
       schema:
         type: integer
         format: int64
+    path-image-response-format:
+      name: format
+      in: path
+      description: The expected image format
+      required: true
+      schema:
+        type: string
+        enum:
+          - jpg
+          - png
+    path-project-id:
+      name: id
+      in: path
+      description: The project id
+      required: true
+      schema:
+        type: integer
+        format: int64
 
   responses:
+    bad-request:
+      description: The request was invalid or cannot be served
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Bad request"
+
+    conflict:
+      description: The resource already exists
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Conflict"
+
+    forbidden:
+      description: Not enough permissions to access the resource
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Forbidden"
+
     not-found:
       description: The requested resource was not found
       content:
@@ -214,6 +879,27 @@ components:
               message:
                 type: string
                 example: "Resource not found"
+
+    unauthorized:
+      description: The request requires user authentication
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Unauthorized"
+
+    image:
+      description: Image
+      content:
+        image/jpeg:
+          schema:
+            $ref: "#/components/schemas/generic-image"
+        image/png:
+          schema:
+            $ref: "#/components/schemas/generic-image"
 
   schemas:
     annotation:
@@ -237,11 +923,35 @@ components:
         name:
           type: string
           description: The name of the annotation layer
+    attribute-class:
+      type: string
+      description: The resource full class name
+      readOnly: true
+    attribute-created:
+      type: string
+      description: The timestamp when the resource was created.
+      format: date-time
+      readOnly: true
+    attribute-deleted:
+      type: string
+      description: The timestamp when the resource was marked as deleted.
+      format: date-time
+      readOnly: true
     attribute-id:
       type: integer
       description: The resource identifier
       format: int64
       readOnly: true
+    attribute-updated:
+      type: string
+      description: The timestamp of the last update to the resource.
+      format: date-time
+      readOnly: true
+    generic-image:
+      type: string
+      format: binary
+      example: (binary image)
+      description: Binary image
     legacy-user-keys:
       type: object
       properties:
@@ -276,3 +986,105 @@ components:
           type: integer
           description: The y offset of the annotation in the image instance.
           format: int32
+    user-annotation:
+      description: An annotation created by a user
+      type: object
+      properties:
+        area:
+          type: number
+          description: The annotation area
+          readOnly: true
+        areaUnit:
+          type: integer
+          description: The unit used for area (pixels²=1,micron²=3)
+          format: int32
+          readOnly: true
+        centroid:
+          type: object
+          description: X,Y coord of the annotation centroid
+          readOnly: true
+        class:
+          $ref: "#/components/schemas/attribute-class"
+        countReviewedAnnotations:
+          type: integer
+          description: The number of reviewed annotations for this annotation
+          format: int32
+          readOnly: true
+        created:
+          $ref: "#/components/schemas/attribute-created"
+        cropURL:
+          type: string
+          description: URL to get the annotation crop
+          readOnly: true
+        deleted:
+          $ref: "#/components/schemas/attribute-deleted"
+        geometryCompression:
+          type: number
+          description:
+            The geometry compression rate used to simplify the annotation
+            (during creation)
+        id:
+          $ref: "#/components/schemas/attribute-id"
+        image:
+          type: integer
+          description: The image on which the annotation is drawn
+          format: int64
+        imageURL:
+          type: string
+          description: URL to go to the image
+          readOnly: true
+        location:
+          type: string
+          description: The annotation geometry (shape) in WKT
+        nbComments:
+          type: integer
+          description: The number of comments added by a user on this annotation
+          format: int64
+          readOnly: true
+        perimeter:
+          type: number
+          description: The annotation perimeter
+          readOnly: true
+        perimeterUnit:
+          type: integer
+          description: The unit used for perimeter (pixels=0,mm=2)
+          format: int32
+          readOnly: true
+        project:
+          type: integer
+          description: The project in which the annotation is drawn
+          format: int64
+        reviewed:
+          type: boolean
+          description: True if annotation has at least one review
+          readOnly: true
+        slice:
+          type: integer
+          description: The slice on which the annotation is drawn
+          format: int64
+        smallCropURL:
+          type: string
+          description: URL to get a small annotation crop (<256px)
+          readOnly: true
+        term:
+          type: array
+          description: List of term id mapped with this annotation
+          default: "[]"
+          items:
+            type: string
+        updated:
+          $ref: "#/components/schemas/attribute-updated"
+        url:
+          type: string
+          description: URL to view the annotation on the image
+          readOnly: true
+        user:
+          type: integer
+          description: User id who created this annotation
+          format: int64
+      required:
+        - image
+        - location
+        - project
+        - slice
+        - user
