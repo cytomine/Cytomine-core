@@ -10,6 +10,8 @@ servers:
 tags:
   - name: Annotation
     description: Manage all annotations type
+  - name: Health Check
+    description: Health and status server checks
   - name: Legacy user keys
     description: Legacy user keys management
 
@@ -26,14 +28,67 @@ paths:
       parameters:
         - $ref: "#/components/parameters/path-annotation-id"
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/annotation"
-        '404':
+        "404":
           $ref: "#/components/responses/not-found"
+
+  /server/ping:
+    get:
+      summary: Ping the server
+      description: Returns server health information.
+      tags:
+        - Health Check
+      operationId: ping
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alive:
+                    type: boolean
+                    example: true
+                  serverID:
+                    type: string
+                    example: "default"
+                  serverURL:
+                    type: string
+                    example: "http://127.0.0.1"
+                  version:
+                    type: string
+                    example: "5.2.0"
+
+  /status.json:
+    get:
+      summary: Check server health status
+      description: Returns basic server health information.
+      tags:
+        - Health Check
+      operationId: status
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  alive:
+                    type: boolean
+                    example: true
+                  serverURL:
+                    type: string
+                    example: "http://127.0.0.1"
+                  version:
+                    type: string
+                    example: "5.2.0"
 
   /user/current/keys:
     get:
@@ -41,7 +96,7 @@ paths:
       tags:
         - Legacy user keys
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
@@ -54,7 +109,7 @@ paths:
       tags:
         - Legacy user keys
       responses:
-        '200':
+        "200":
           description: Successful response
           content:
             application/json:
