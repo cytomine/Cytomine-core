@@ -74,8 +74,6 @@ tags:
     description: Manage project default layers
   - name: Project | Representative user
     description: Manage project representative users
-  - name: Project | Associated software
-    description: Manage software installed in a project
   - name: Storage
     description: Manage storages (virtual disk space)
   - name: Storage | Member
@@ -1346,6 +1344,31 @@ paths:
         "404":
           $ref: "#/components/responses/not-found"
 
+  /api/imageinstance/{id}/track.json:
+    get:
+      tags:
+        - Track
+      description: Get all track from an image instance
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackCollection"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
   /api/imageinstance/method/lastopened.json:
     get:
       tags:
@@ -1429,6 +1452,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ImageInstanceCollection"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/project/{id}/track.json:
+    get:
+      tags:
+        - Track
+      description: Get all track from a project
+      parameters:
+        - $ref: "#/components/parameters/path-project-id"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackCollection"
           description: ""
         "400":
           $ref: "#/components/responses/bad-request"
@@ -1587,6 +1635,125 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/SecRole"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/track.json:
+    post:
+      tags:
+        - Track
+      description: Add a track in an image
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Track"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/Track"
+
+  /api/track/{id}.json:
+    get:
+      tags:
+        - Track
+      description: Get a track
+      parameters:
+        - name: id
+          in: path
+          description: The track id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Track"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+    put:
+      tags:
+        - Track
+      description: Update a track
+      parameters:
+        - name: id
+          in: path
+          description: The track id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Track"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/Track"
+    delete:
+      tags:
+        - Track
+      description: Delete a track
+      parameters:
+        - name: id
+          in: path
+          description: The track id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Track"
           description: ""
         "400":
           $ref: "#/components/responses/bad-request"
@@ -6499,203 +6666,10 @@ paths:
           $ref: "#/components/responses/forbidden"
         "404":
           $ref: "#/components/responses/not-found"
-  "/api/track/{id}.json":
-    get:
-      tags:
-        - Track
-      description: Get a track
-      parameters:
-        - name: id
-          in: path
-          description: The track id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Track"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-    put:
-      tags:
-        - Track
-      description: Update a track
-      parameters:
-        - name: id
-          in: path
-          description: The track id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Track"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Track"
-    delete:
-      tags:
-        - Track
-      description: Delete a track
-      parameters:
-        - name: id
-          in: path
-          description: The track id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Track"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/rest track/countByProject.json":
-    get:
-      tags:
-        - Track
-      description: Count the number of tracks in the project
-      parameters:
-        - $ref: "#/components/parameters/path-filter-project-id"
-        - name: startDate
-          in: query
-          description: Only count the tracks created after this date (optional)
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: endDate
-          in: query
-          description: Only count the tracks created before this date (optional)
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          description: "[total:x]"
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/imageinstance/{id}/track.json":
-    get:
-      tags:
-        - Track
-      description: Get all track from an image instance
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TrackCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/project/{id}/track.json":
-    get:
-      tags:
-        - Track
-      description: Get all track from a project
-      parameters:
-        - $ref: "#/components/parameters/path-project-id"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TrackCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/track.json":
-    post:
-      tags:
-        - Track
-      description: Add a track in an image
-      parameters: []
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Track"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Track"
+
+
+
+
   "/api/userannotation/{annotation}/comment/{id}.json":
     get:
       tags:
@@ -11440,35 +11414,6 @@ components:
           readOnly: true
       required:
         - name
-    ParameterConstraint:
-      description: Representation of a constraint applicable to a software parameter
-      type: object
-      properties:
-        class:
-          $ref: "#/components/schemas/attribute-class"
-        id:
-          $ref: "#/components/schemas/attribute-id"
-        created:
-          $ref: "#/components/schemas/attribute-created"
-        updated:
-          $ref: "#/components/schemas/attribute-updated"
-        deleted:
-          $ref: "#/components/schemas/attribute-deleted"
-        name:
-          type: string
-          description: The name of the parameter constraint
-        expression:
-          type: string
-          description: The expression used to evaluate the parameter constraint
-        dataType:
-          type: string
-          description:
-            The data type associated with the parameter constraint (Number,
-            Boolean, String, Date, ...)
-      required:
-        - name
-        - expression
-        - dataType
     PersistentConnection:
       description: A Connection is recorded all long the user is connected.
       type: object
@@ -11686,22 +11631,6 @@ components:
           description: Number of validated annotations in the project
           format: int64
           readOnly: true
-        retrievalProjects:
-          type: array
-          description: Project identifiers that are used for retrieval search
-          items:
-            type: integer
-            format: int64
-        retrievalDisable:
-          type: boolean
-          description: Whether retrieval is disabled or not
-          default: "false"
-        retrievalAllOntology:
-          type: boolean
-          description:
-            If retrieval is enabled, whether to search similar annotations on all project that share
-            the same ontology or not
-          default: "true"
         isClosed:
           type: boolean
           description: Whether the project is closed
