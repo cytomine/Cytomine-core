@@ -36,14 +36,14 @@ tags:
     description: Health and status server checks
   - name: Image | Abstract image
     description: Manage images in a storage
+  - name: Image | Abstract slice
+    description: Manage slices of an image in a storage
   - name: Image | Image instance
     description: Manage images in a project
   - name: Image | Slice instance
     description: Manage slices of an image in a project
   - name: Image | Image server
     description: Manage image servers (IMS)
-  - name: Image | Abstract slice
-    description: Manage slices of an image in a storage
   - name: Image | Companion file
     description: Manage companion files of an image in a storage
   - name: Legacy user keys
@@ -245,6 +245,31 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/AbstractImage"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/abstractimage/{id}/abstractslice.json:
+    get:
+      tags:
+        - Image | Abstract slice
+      description: Get all abstract slices for the given abstract image
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbstractSliceCollection"
           description: ""
         "400":
           $ref: "#/components/responses/bad-request"
@@ -496,6 +521,263 @@ paths:
         "404":
           $ref: "#/components/responses/not-found"
 
+  /api/abstractslice.json:
+    post:
+      tags:
+        - Image | Abstract slice
+      description:
+        Add a new abstract slice. See 'upload file service' to upload a
+        slice.
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AbstractSlice"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/AbstractSlice"
+
+  /api/abstractslice/{id}.json:
+    get:
+      tags:
+        - Image | Abstract slice
+      description: Get an abstract slice
+      parameters:
+        - name: id
+          in: path
+          description: The abstract slice id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AbstractSlice"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+    put:
+      tags:
+        - Image | Abstract slice
+      description: Update an abstract slice
+      parameters:
+        - name: id
+          in: path
+          description: The abstract slice id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AbstractSlice"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/AbstractSlice"
+    delete:
+      tags:
+        - Image | Abstract slice
+      description: Delete an abstract slice)
+      parameters:
+        - name: id
+          in: path
+          description: The abstract slice id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AbstractSlice"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/abstractslice/{id}/thumb.{format}:
+    post:
+      tags:
+        - Image | Abstract slice
+      description: Get a small image (thumb) for a specific slice
+      parameters:
+        - name: id
+          in: path
+          description: The image id
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: refresh
+          in: query
+          description: If true, don't take it from cache and regenerate it
+          required: false
+          schema:
+            type: boolean
+        - $ref: "#/components/parameters/query-max-size"
+        - name: colormap
+          in: query
+          description: The absolute path of a colormap file
+          required: false
+          schema:
+            type: string
+        - name: inverse
+          in: query
+          description: True if colors have to be inversed
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: contrast
+          in: query
+          description: Multiply pixels by contrast
+          required: false
+          schema:
+            type: number
+        - name: gamma
+          in: query
+          description: Apply gamma correction
+          required: false
+          schema:
+            type: number
+        - name: bits
+          in: query
+          description: Output bit depth per channel
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          $ref: "#/components/responses/image"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+
+  /api/abstractslice/{id}/user.json:
+    get:
+      tags:
+        - Image | Abstract slice
+      description: Show user who uploaded the slice
+      parameters:
+        - name: id
+          in: path
+          description: The abstract slice id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AbstractSlice"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/abstractimage/{id}/{channel}/{zStack}/{time}/abstractslice.json:
+    get:
+      tags:
+        - Image | Abstract slice
+      description: Get the abstract slice for the given coordinates and abstract image
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+        - name: zStack
+          in: path
+          description: The zStack coordinate
+          required: true
+          schema:
+            type: number
+        - name: time
+          in: path
+          description: The time coordinate
+          required: true
+          schema:
+            type: number
+        - name: channel
+          in: path
+          description: The channel coordinate
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AbstractSlice"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
   /api/annotations/{id}:
     get:
       summary: Get an annotation
@@ -693,6 +975,37 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/AbstractImage"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/uploadedfile/{id}/abstractslice.json:
+    get:
+      tags:
+        - Image | Abstract slice
+      description: Get all abstract slices for the given uploaded file
+      parameters:
+        - name: id
+          in: path
+          description: The uploaded file id
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbstractSliceCollection"
           description: ""
         "400":
           $ref: "#/components/responses/bad-request"
@@ -1261,377 +1574,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/legacy-user-keys"
   
-  "/api/abstractslice/{id}.json":
-    get:
-      tags:
-        - Image | Abstract slice
-      description: Get an abstract slice
-      parameters:
-        - name: id
-          in: path
-          description: The abstract slice id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/AbstractSlice"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-    put:
-      tags:
-        - Image | Abstract slice
-      description: Update an abstract slice
-      parameters:
-        - name: id
-          in: path
-          description: The abstract slice id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/AbstractSlice"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/AbstractSlice"
-    delete:
-      tags:
-        - Image | Abstract slice
-      description: Delete an abstract slice)
-      parameters:
-        - name: id
-          in: path
-          description: The abstract slice id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/AbstractSlice"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/abstractimage/{id}/abstractslice.json":
-    get:
-      tags:
-        - Image | Abstract slice
-      description: Get all abstract slices for the given abstract image
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AbstractSliceCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/uploadedfile/{id}/abstractslice.json":
-    get:
-      tags:
-        - Image | Abstract slice
-      description: Get all abstract slices for the given uploaded file
-      parameters:
-        - name: id
-          in: path
-          description: The uploaded file id
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AbstractSliceCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/abstractslice/{id}/user.json":
-    get:
-      tags:
-        - Image | Abstract slice
-      description: Show user who uploaded the slice
-      parameters:
-        - name: id
-          in: path
-          description: The abstract slice id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/AbstractSlice"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/abstractimage/{id}/{channel}/{zStack}/{time}/abstractslice.json":
-    get:
-      tags:
-        - Image | Abstract slice
-      description: Get the abstract slice for the given coordinates and abstract image
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-        - name: zStack
-          in: path
-          description: The zStack coordinate
-          required: true
-          schema:
-            type: number
-        - name: time
-          in: path
-          description: The time coordinate
-          required: true
-          schema:
-            type: number
-        - name: channel
-          in: path
-          description: The channel coordinate
-          required: true
-          schema:
-            type: number
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/AbstractSlice"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/abstractslice/{id}/thumb.png":
-    post:
-      tags:
-        - Image | Abstract slice
-      description: Get a small image (thumb) for a specific slice
-      parameters:
-        - name: id
-          in: path
-          description: The image id
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: refresh
-          in: query
-          description: If true, don't take it from cache and regenerate it
-          required: false
-          schema:
-            type: boolean
-        - $ref: "#/components/parameters/query-max-size"
-        - name: colormap
-          in: query
-          description: The absolute path of a colormap file
-          required: false
-          schema:
-            type: string
-        - name: inverse
-          in: query
-          description: True if colors have to be inversed
-          required: false
-          schema:
-            type: integer
-            format: int32
-        - name: contrast
-          in: query
-          description: Multiply pixels by contrast
-          required: false
-          schema:
-            type: number
-        - name: gamma
-          in: query
-          description: Apply gamma correction
-          required: false
-          schema:
-            type: number
-        - name: bits
-          in: query
-          description: Output bit depth per channel
-          required: false
-          schema:
-            type: integer
-            format: int32
-      responses:
-        "200":
-          $ref: "#/components/responses/image"
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-  "/api/abstractslice/{id}/thumb.jpg":
-    post:
-      tags:
-        - Image | Abstract slice
-      description: Get a small image (thumb) for a specific slice
-      parameters:
-        - name: id
-          in: path
-          description: The image id
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: refresh
-          in: query
-          description: If true, don't take it from cache and regenerate it
-          required: false
-          schema:
-            type: boolean
-        - $ref: "#/components/parameters/query-max-size"
-        - name: colormap
-          in: query
-          description: The absolute path of a colormap file
-          required: false
-          schema:
-            type: string
-        - name: inverse
-          in: query
-          description: True if colors have to be inversed
-          required: false
-          schema:
-            type: integer
-            format: int32
-        - name: contrast
-          in: query
-          description: Multiply pixels by contrast
-          required: false
-          schema:
-            type: number
-        - name: gamma
-          in: query
-          description: Apply gamma correction
-          required: false
-          schema:
-            type: number
-        - name: bits
-          in: query
-          description: Output bit depth per channel
-          required: false
-          schema:
-            type: integer
-            format: int32
-      responses:
-        "200":
-          $ref: "#/components/responses/image"
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-  "/api/abstractslice.json":
-    post:
-      tags:
-        - Image | Abstract slice
-      description:
-        Add a new abstract slice. See 'upload file service' to upload a
-        slice.
-      parameters: []
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/AbstractSlice"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/AbstractSlice"
   "/api/companionfile/{id}.json":
     get:
       tags:
