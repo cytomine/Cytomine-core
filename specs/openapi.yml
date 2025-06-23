@@ -837,7 +837,7 @@ paths:
       summary: Get an abstract image
       description: Get an abstract image from the storage
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
       responses:
         "200":
           content:
@@ -859,7 +859,7 @@ paths:
       summary: Update abstract image
       description: Update abstract image metadata in the storage
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
       responses:
         "200":
           content:
@@ -888,7 +888,7 @@ paths:
       summary: Delete an abstract image
       description: Delete an abstract image from the storage
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
       responses:
         "200":
           content:
@@ -939,7 +939,7 @@ paths:
       summary: Get an associated image
       description: Get an associated image of an abstract image (e.g. label, macro, thumbnail)
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
         - $ref: "#/components/parameters/path-image-response-format"
         - $ref: "#/components/parameters/path-associated-label"
         - $ref: "#/components/parameters/query-max-size"
@@ -962,7 +962,7 @@ paths:
         - Image | Abstract image
       description: Get available associated images
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
         - $ref: "#/components/parameters/pagination-max"
         - $ref: "#/components/parameters/pagination-offset"
       responses:
@@ -983,7 +983,7 @@ paths:
       summary: Populate image properties
       description: Populate image properties from underlying file metadata
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
       responses:
         "200":
           description: empty
@@ -1004,7 +1004,7 @@ paths:
       summary: List unused abstract images
       description: List unused abstract images in the storages available for the current user
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
         - $ref: "#/components/parameters/pagination-max"
         - $ref: "#/components/parameters/pagination-offset"
       responses:
@@ -1029,7 +1029,7 @@ paths:
       summary: Get histogram statistics
       description: Get histogram statistics for the abstract image
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
       responses:
         "200":
           description: empty
@@ -1048,7 +1048,7 @@ paths:
       summary: Delete image properties
       description: Delete all previously saved image properties
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
       responses:
         "200":
           description: empty
@@ -1068,7 +1068,7 @@ paths:
         - Image | Abstract image
       description: Get image uploader
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
       responses:
         "200":
           content:
@@ -1091,7 +1091,7 @@ paths:
       summary: Compute histogram
       description: Compute histogram for the abstract image
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
       responses:
         "200":
           description: empty
@@ -1112,7 +1112,7 @@ paths:
       summary: Fill abstract image metadata
       description: Fill abstract image metadata from image properties
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
         - name: deep
           in: path
           description: True to fill property slice fields
@@ -1139,7 +1139,7 @@ paths:
       summary: Regenerate abstract image metadata
       description: Regenerate abstract image metadata from image properties
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
         - name: deep
           in: path
           description: True to fill property slice fields
@@ -1166,7 +1166,7 @@ paths:
       summary: List abstract images in a project
       description: List abstract images having an instance in a project
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
         - $ref: "#/components/parameters/pagination-max"
         - $ref: "#/components/parameters/pagination-offset"
       responses:
@@ -1190,7 +1190,7 @@ paths:
         - Image | Abstract image
       description: Get an abstract image thumbnail
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
         - $ref: "#/components/parameters/path-image-response-format"
         - name: refresh
           in: query
@@ -1250,7 +1250,7 @@ paths:
         - Image | Abstract image
       description: Get an abstract image preview
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
         - $ref: "#/components/parameters/path-image-response-format"
         - $ref: "#/components/parameters/query-max-size"
         - name: colormap
@@ -1304,7 +1304,7 @@ paths:
         - Image | Abstract image
       description: List abstract image servers URLs
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
       responses:
         "200":
           description: URL list
@@ -1470,7 +1470,7 @@ paths:
         - Image | Abstract slice
       description: Get all abstract slices for the given abstract image
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
         - $ref: "#/components/parameters/pagination-max"
         - $ref: "#/components/parameters/pagination-offset"
       responses:
@@ -1552,7 +1552,7 @@ paths:
         - Image | Abstract slice
       description: Get the abstract slice for the given coordinates and abstract image
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
         - name: zStack
           in: path
           description: The zStack coordinate
@@ -1841,7 +1841,7 @@ paths:
         - Image | Companion file
       description: Get all companion files for the given abstract image
       parameters:
-        - $ref: "#/components/parameters/path-AbstractImage-id"
+        - $ref: "#/components/parameters/path-abstract-image-id"
         - $ref: "#/components/parameters/pagination-max"
         - $ref: "#/components/parameters/pagination-offset"
       responses:
@@ -5104,8 +5104,8 @@ paths:
         - Metadata | Property
       description: Get a property for a domain, by key
       parameters:
-        - $ref: "#/components/parameters/path-DomainClassName"
-        - $ref: "#/components/parameters/path-DomainIdent"
+        - $ref: "#/components/parameters/path-domain-class-name"
+        - $ref: "#/components/parameters/path-domain-ident"
         - $ref: "#/components/parameters/path-property-key"
       responses:
         "200":
@@ -5128,8 +5128,8 @@ paths:
         - Metadata | Property
       description: Get a property for a domain
       parameters:
-        - $ref: "#/components/parameters/path-DomainClassName"
-        - $ref: "#/components/parameters/path-DomainIdent"
+        - $ref: "#/components/parameters/path-domain-class-name"
+        - $ref: "#/components/parameters/path-domain-ident"
         - $ref: "#/components/parameters/path-property-id"
       responses:
         "200":
@@ -5151,8 +5151,8 @@ paths:
         - Metadata | Property
       description: Edit a property
       parameters:
-        - $ref: "#/components/parameters/path-DomainClassName"
-        - $ref: "#/components/parameters/path-DomainIdent"
+        - $ref: "#/components/parameters/path-domain-class-name"
+        - $ref: "#/components/parameters/path-domain-ident"
         - $ref: "#/components/parameters/path-property-id"
       responses:
         "200":
@@ -5181,8 +5181,8 @@ paths:
         - Metadata | Property
       description: Delete a property
       parameters:
-        - $ref: "#/components/parameters/path-DomainClassName"
-        - $ref: "#/components/parameters/path-DomainIdent"
+        - $ref: "#/components/parameters/path-domain-class-name"
+        - $ref: "#/components/parameters/path-domain-ident"
         - $ref: "#/components/parameters/path-property-id"
       responses:
         "200":
@@ -5205,8 +5205,8 @@ paths:
         - Metadata | Property
       description: List properties for a cytomine domain
       parameters:
-        - $ref: "#/components/parameters/path-DomainClassName"
-        - $ref: "#/components/parameters/path-DomainIdent"
+        - $ref: "#/components/parameters/path-domain-class-name"
+        - $ref: "#/components/parameters/path-domain-ident"
         - $ref: "#/components/parameters/pagination-max"
         - $ref: "#/components/parameters/pagination-offset"
       responses:
@@ -5229,8 +5229,8 @@ paths:
         - Metadata | Property
       description: Add a property to a domain
       parameters:
-        - $ref: "#/components/parameters/path-DomainClassName"
-        - $ref: "#/components/parameters/path-DomainIdent"
+        - $ref: "#/components/parameters/path-domain-class-name"
+        - $ref: "#/components/parameters/path-domain-ident"
       responses:
         "200":
           content:
@@ -9614,8 +9614,8 @@ paths:
         - Metadata | Attached file
       description: List attached files for a domain
       parameters:
-        - $ref: "#/components/parameters/path-DomainClassName"
-        - $ref: "#/components/parameters/path-DomainIdent"
+        - $ref: "#/components/parameters/path-domain-class-name"
+        - $ref: "#/components/parameters/path-domain-ident"
         - $ref: "#/components/parameters/pagination-max"
         - $ref: "#/components/parameters/pagination-offset"
       responses:
@@ -9639,8 +9639,8 @@ paths:
         - Metadata | Rich-text description
       description: Get description for a domain
       parameters:
-        - $ref: "#/components/parameters/path-DomainClassName"
-        - $ref: "#/components/parameters/path-DomainIdent"
+        - $ref: "#/components/parameters/path-domain-class-name"
+        - $ref: "#/components/parameters/path-domain-ident"
       responses:
         "200":
           content:
@@ -9661,8 +9661,8 @@ paths:
         - Metadata | Rich-text description
       description: Add a description to a domain
       parameters:
-        - $ref: "#/components/parameters/path-DomainClassName"
-        - $ref: "#/components/parameters/path-DomainIdent"
+        - $ref: "#/components/parameters/path-domain-class-name"
+        - $ref: "#/components/parameters/path-domain-ident"
       responses:
         "200":
           content:
@@ -9690,8 +9690,8 @@ paths:
         - Metadata | Rich-text description
       description: Update a description
       parameters:
-        - $ref: "#/components/parameters/path-DomainClassName"
-        - $ref: "#/components/parameters/path-DomainIdent"
+        - $ref: "#/components/parameters/path-domain-class-name"
+        - $ref: "#/components/parameters/path-domain-ident"
       responses:
         "200":
           content:
@@ -9719,8 +9719,8 @@ paths:
         - Metadata | Rich-text description
       description: Delete a description
       parameters:
-        - $ref: "#/components/parameters/path-DomainClassName"
-        - $ref: "#/components/parameters/path-DomainIdent"
+        - $ref: "#/components/parameters/path-domain-class-name"
+        - $ref: "#/components/parameters/path-domain-ident"
       responses:
         "200":
           content:
@@ -9810,8 +9810,8 @@ paths:
         - Metadata | Tag association
       description: List tag associations for a domain
       parameters:
-        - $ref: "#/components/parameters/path-DomainClassName"
-        - $ref: "#/components/parameters/path-DomainIdent"
+        - $ref: "#/components/parameters/path-domain-class-name"
+        - $ref: "#/components/parameters/path-domain-ident"
         - $ref: "#/components/parameters/pagination-max"
         - $ref: "#/components/parameters/pagination-offset"
       responses:
@@ -9834,8 +9834,8 @@ paths:
         - Metadata | Tag association
       description: Associate a tag to a domain
       parameters:
-        - $ref: "#/components/parameters/path-DomainClassName"
-        - $ref: "#/components/parameters/path-DomainIdent"
+        - $ref: "#/components/parameters/path-domain-class-name"
+        - $ref: "#/components/parameters/path-domain-ident"
       responses:
         "200":
           content:
@@ -10102,29 +10102,14 @@ components:
           - asc
           - desc
         default: "desc"
-    query-DomainClassName:
-      name: domainClassName
-      in: query
-      description: The domain class name (domain `class` attribute)
-      required: true
-      schema:
-        type: string
-    query-DomainIdent:
-      name: domainIdent
-      in: query
-      description: The domain identifier (domain `id` attribute)
-      required: true
-      schema:
-        type: integer
-        format: int64
-    path-DomainClassName:
+    path-domain-class-name:
       name: domainClassName
       in: path
       description: The domain class name (domain `class` attribute)
       required: true
       schema:
         type: string
-    path-DomainIdent:
+    path-domain-ident:
       name: domainIdent
       in: path
       description: The domain identifier (domain `id` attribute)
@@ -10132,7 +10117,7 @@ components:
       schema:
         type: integer
         format: int64
-    path-AbstractImage-id:
+    path-abstract-image-id:
       name: id
       in: path
       description: The abstract image id
