@@ -34,14 +34,14 @@ tags:
     description: Manage annotation comments
   - name: Health Check
     description: Health and status server checks
+  - name: Image | Abstract image
+    description: Manage images in a storage
   - name: Image | Image instance
     description: Manage images in a project
   - name: Image | Slice instance
     description: Manage slices of an image in a project
   - name: Image | Image server
     description: Manage image servers (IMS)
-  - name: Image | Abstract image
-    description: Manage images in a storage
   - name: Image | Abstract slice
     description: Manage slices of an image in a storage
   - name: Image | Companion file
@@ -94,6 +94,408 @@ tags:
     description: Manage app-roles associated to users
 
 paths:
+  /api/abstractimage.json:
+    post:
+      tags:
+        - Image | Abstract image
+      summary: Add a new abstract image
+      description: Add a new abstract image in the storage. See IMS to upload an image.
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AbstractImage"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/AbstractImage"
+    get:
+      tags:
+        - Image | Abstract image
+      summary: List abstract images
+      description: List abstract images in the storages the current user has access to
+      parameters:
+        - name: project
+          in: query
+          description: If set, check if image is in project or not
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbstractImageCollection"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/abstractimage/unused.json:
+    get:
+      tags:
+        - Image | Abstract image
+      summary: List unused abstract images
+      description: List unused abstract images in the storages available for the current user
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AbstractImageCollection"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/abstractimage/{id}.json:
+    get:
+      tags:
+        - Image | Abstract image
+      summary: Get an abstract image
+      description: Get an abstract image from the storage
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AbstractImage"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+    put:
+      tags:
+        - Image | Abstract image
+      summary: Update abstract image
+      description: Update abstract image metadata in the storage
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AbstractImage"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/AbstractImage"
+    delete:
+      tags:
+        - Image | Abstract image
+      summary: Delete an abstract image
+      description: Delete an abstract image from the storage
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AbstractImage"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/abstractimage/{id}/associated.json:
+    get:
+      tags:
+        - Image | Abstract image
+      description: Get available associated images
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          description: associated image labels
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/abstractimage/{id}/associated/{label}.{format}:
+    post:
+      tags:
+        - Image | Abstract image
+      summary: Get an associated image
+      description: Get an associated image of an abstract image (e.g. label, macro, thumbnail)
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+        - $ref: "#/components/parameters/path-image-response-format"
+        - $ref: "#/components/parameters/path-associated-label"
+        - $ref: "#/components/parameters/query-max-size"
+      responses:
+        "200":
+          $ref: "#/components/responses/image"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+
+  /api/abstractimage/{id}/properties/extract.json:
+    post:
+      tags:
+        - Image | Abstract image
+      summary: Fill abstract image metadata
+      description: Fill abstract image metadata from image properties
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+        - name: deep
+          in: path
+          description: True to fill property slice fields
+          required: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: empty
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+
+  /api/abstractimage/{id}/properties/regenerate.json:
+    post:
+      tags:
+        - Image | Abstract image
+      summary: Regenerate abstract image metadata
+      description: Regenerate abstract image metadata from image properties
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+        - name: deep
+          in: path
+          description: True to fill property slice fields
+          required: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: empty
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+
+  /api/abstractimage/{id}/preview.{format}:
+    post:
+      tags:
+        - Image | Abstract image
+      description: Get an abstract image preview
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+        - $ref: "#/components/parameters/path-image-response-format"
+        - $ref: "#/components/parameters/query-max-size"
+        - name: colormap
+          in: query
+          description: The absolute path of a colormap file
+          required: false
+          schema:
+            type: string
+        - name: inverse
+          in: query
+          description: True if colors have to be inversed
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: contrast
+          in: query
+          description: Multiply pixels by contrast
+          required: false
+          schema:
+            type: number
+        - name: gamma
+          in: query
+          description: Apply gamma correction
+          required: false
+          schema:
+            type: number
+        - name: bits
+          in: query
+          description: Output bit depth per channel
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          $ref: "#/components/responses/image"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+
+  /api/abstractimage/{id}/thumb.{format}:
+    post:
+      tags:
+        - Image | Abstract image
+      description: Get an abstract image thumbnail
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+        - $ref: "#/components/parameters/path-image-response-format"
+        - name: refresh
+          in: query
+          description: If true, don't take it from cache and regenerate it
+          required: false
+          schema:
+            type: boolean
+        - $ref: "#/components/parameters/query-max-size"
+        - name: colormap
+          in: query
+          description: The absolute path of a colormap file
+          required: false
+          schema:
+            type: string
+        - name: inverse
+          in: query
+          description: True if colors have to be inversed
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: contrast
+          in: query
+          description: Multiply pixels by contrast
+          required: false
+          schema:
+            type: number
+        - name: gamma
+          in: query
+          description: Apply gamma correction
+          required: false
+          schema:
+            type: number
+        - name: bits
+          in: query
+          description: Output bit depth per channel
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          $ref: "#/components/responses/image"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+
+  /api/abstractimage/{id}/user.json:
+    get:
+      tags:
+        - Image | Abstract image
+      description: Get image uploader
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SecUser"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
   /api/annotations/{id}:
     get:
       summary: Get an annotation
@@ -263,6 +665,35 @@ paths:
       responses:
         "200":
           description: file
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/uploadedfile/{id}/abstractimage.json:
+    get:
+      tags:
+        - Image | Abstract image
+      description: Get an abstract image from its uploaded file
+      parameters:
+        - name: id
+          in: path
+          description: The uploaded file id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/AbstractImage"
+          description: ""
         "400":
           $ref: "#/components/responses/bad-request"
         "401":
@@ -829,552 +1260,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/legacy-user-keys"
-
-  /api/abstractimage/{id}.json:
-    get:
-      tags:
-        - Image | Abstract image
-      summary: Get an abstract image
-      description: Get an abstract image from the storage
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/AbstractImage"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-    put:
-      tags:
-        - Image | Abstract image
-      summary: Update abstract image
-      description: Update abstract image metadata in the storage
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/AbstractImage"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/AbstractImage"
-    delete:
-      tags:
-        - Image | Abstract image
-      summary: Delete an abstract image
-      description: Delete an abstract image from the storage
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/AbstractImage"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/uploadedfile/{id}/abstractimage.json":
-    get:
-      tags:
-        - Image | Abstract image
-      description: Get an abstract image from its uploaded file
-      parameters:
-        - name: id
-          in: path
-          description: The uploaded file id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/AbstractImage"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/abstractimage/{id}/associated/{label}.{format}":
-    post:
-      tags:
-        - Image | Abstract image
-      summary: Get an associated image
-      description: Get an associated image of an abstract image (e.g. label, macro, thumbnail)
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-        - $ref: "#/components/parameters/path-image-response-format"
-        - $ref: "#/components/parameters/path-associated-label"
-        - $ref: "#/components/parameters/query-max-size"
-      responses:
-        "200":
-          $ref: "#/components/responses/image"
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-  "/api/abstractimage/{id}/associated.json":
-    get:
-      tags:
-        - Image | Abstract image
-      description: Get available associated images
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          description: associated image labels
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/abstractimage/{id}/properties/populate.json":
-    post:
-      tags:
-        - Image | Abstract image
-      summary: Populate image properties
-      description: Populate image properties from underlying file metadata
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-      responses:
-        "200":
-          description: empty
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-  "/api/abstractimage/unused.json":
-    get:
-      tags:
-        - Image | Abstract image
-      summary: List unused abstract images
-      description: List unused abstract images in the storages available for the current user
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AbstractImageCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/abstractimage/{id}/histogram/stats.json":
-    get:
-      tags:
-        - Image | Abstract image
-      summary: Get histogram statistics
-      description: Get histogram statistics for the abstract image
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-      responses:
-        "200":
-          description: empty
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/abstractimage/{id}/properties/clear.json":
-    post:
-      tags:
-        - Image | Abstract image
-      summary: Delete image properties
-      description: Delete all previously saved image properties
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-      responses:
-        "200":
-          description: empty
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-  "/api/abstractimage/{id}/user.json":
-    get:
-      tags:
-        - Image | Abstract image
-      description: Get image uploader
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/SecUser"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/abstractimage/{id}/histogram/extract.json":
-    post:
-      tags:
-        - Image | Abstract image
-      summary: Compute histogram
-      description: Compute histogram for the abstract image
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-      responses:
-        "200":
-          description: empty
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-  "/api/abstractimage/{id}/properties/extract.json":
-    post:
-      tags:
-        - Image | Abstract image
-      summary: Fill abstract image metadata
-      description: Fill abstract image metadata from image properties
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-        - name: deep
-          in: path
-          description: True to fill property slice fields
-          required: true
-          schema:
-            type: boolean
-      responses:
-        "200":
-          description: empty
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-  "/api/abstractimage/{id}/properties/regenerate.json":
-    post:
-      tags:
-        - Image | Abstract image
-      summary: Regenerate abstract image metadata
-      description: Regenerate abstract image metadata from image properties
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-        - name: deep
-          in: path
-          description: True to fill property slice fields
-          required: true
-          schema:
-            type: boolean
-      responses:
-        "200":
-          description: empty
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-  "/api/project/{id}/image.json":
-    get:
-      tags:
-        - Image | Abstract image
-      summary: List abstract images in a project
-      description: List abstract images having an instance in a project
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AbstractImageCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/abstractimage/{id}/thumb.{format}":
-    post:
-      tags:
-        - Image | Abstract image
-      description: Get an abstract image thumbnail
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-        - $ref: "#/components/parameters/path-image-response-format"
-        - name: refresh
-          in: query
-          description: If true, don't take it from cache and regenerate it
-          required: false
-          schema:
-            type: boolean
-        - $ref: "#/components/parameters/query-max-size"
-        - name: colormap
-          in: query
-          description: The absolute path of a colormap file
-          required: false
-          schema:
-            type: string
-        - name: inverse
-          in: query
-          description: True if colors have to be inversed
-          required: false
-          schema:
-            type: integer
-            format: int32
-        - name: contrast
-          in: query
-          description: Multiply pixels by contrast
-          required: false
-          schema:
-            type: number
-        - name: gamma
-          in: query
-          description: Apply gamma correction
-          required: false
-          schema:
-            type: number
-        - name: bits
-          in: query
-          description: Output bit depth per channel
-          required: false
-          schema:
-            type: integer
-            format: int32
-      responses:
-        "200":
-          $ref: "#/components/responses/image"
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-  "/api/abstractimage/{id}/preview.{format}":
-    post:
-      tags:
-        - Image | Abstract image
-      description: Get an abstract image preview
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-        - $ref: "#/components/parameters/path-image-response-format"
-        - $ref: "#/components/parameters/query-max-size"
-        - name: colormap
-          in: query
-          description: The absolute path of a colormap file
-          required: false
-          schema:
-            type: string
-        - name: inverse
-          in: query
-          description: True if colors have to be inversed
-          required: false
-          schema:
-            type: integer
-            format: int32
-        - name: contrast
-          in: query
-          description: Multiply pixels by contrast
-          required: false
-          schema:
-            type: number
-        - name: gamma
-          in: query
-          description: Apply gamma correction
-          required: false
-          schema:
-            type: number
-        - name: bits
-          in: query
-          description: Output bit depth per channel
-          required: false
-          schema:
-            type: integer
-            format: int32
-      responses:
-        "200":
-          $ref: "#/components/responses/image"
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-  "/api/abstractimage/{id}/imageservers.json":
-    get:
-      tags:
-        - Image | Abstract image
-      description: List abstract image servers URLs
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-      responses:
-        "200":
-          description: URL list
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/abstractimage.json":
-    post:
-      tags:
-        - Image | Abstract image
-      summary: Add a new abstract image
-      description: Add a new abstract image in the storage. See IMS to upload an image.
-      parameters: []
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/AbstractImage"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/AbstractImage"
-    get:
-      tags:
-        - Image | Abstract image
-      summary: List abstract images
-      description: List abstract images in the storages the current user has access to
-      parameters:
-        - name: project
-          in: query
-          description: If set, check if image is in project or not
-          required: false
-          schema:
-            type: integer
-            format: int64
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AbstractImageCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
+  
   "/api/abstractslice/{id}.json":
     get:
       tags:
@@ -13315,8 +13201,7 @@ components:
           description: URL to go to the domain on the webapp (GUI)
         urlImage:
           type: array
-          description:
-            "Domain thumb (if annotation: crop, if image: thumb, if project: null)"
+          description: "Domain thumb (if annotation: crop, if image: thumb, if project: null)"
           items:
             type: string
         user:
