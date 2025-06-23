@@ -1026,6 +1026,421 @@ paths:
                 items:
                   $ref: "#/components/schemas/annotation-layer"
 
+  /api/imageinstance.json:
+    post:
+      tags:
+        - Image | Image instance
+      description: Add an image to a project
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ImageInstance"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ImageInstance"
+
+  /api/imageinstance/{id}.json:
+    get:
+      tags:
+        - Image | Image instance
+      summary: Get an image in a project
+      description: Get an image instance, that is an image in a project
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ImageInstance"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+    put:
+      tags:
+        - Image | Image instance
+      description: Update an image in a project
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ImageInstance"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ImageInstance"
+    delete:
+      tags:
+        - Image | Image instance
+      summary: Remove an image from a project
+      description: |
+        Remove an image from a project. The image instance is deleted with all other resources referencing this
+        resource. It includes notably all associated annotations and metadata.
+
+        The underlying Abstract Image is not deleted: the image is thus not removed from the storage.
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ImageInstance"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/imageinstance/{id}/associated.json:
+    get:
+      tags:
+        - Image | Image instance
+      description: Get associated image labels
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      collection:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - label
+                            - macro
+                            - thumb
+                  - $ref: "#/components/schemas/collection"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/imageinstance/{id}/associated/{label}.{format}:
+    get:
+      tags:
+        - Image | Image instance
+      description:
+        Get an associated image of an image instance (e.g. label, macro,
+        thumbnail)
+      summary: Get an associated image
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+        - $ref: "#/components/parameters/path-associated-label"
+        - $ref: "#/components/parameters/path-image-response-format"
+        - $ref: "#/components/parameters/query-max-size"
+      responses:
+        "200":
+          $ref: "#/components/responses/image"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/imageinstance/{id}/next.json:
+    get:
+      tags:
+        - Image | Image instance
+      description: Get next image in project
+      summary: Get next image in project
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ImageInstance"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/imageinstance/{id}/preview.{format}:
+    get:
+      tags:
+        - Image | Image instance
+      description: Get an image preview
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+        - $ref: "#/components/parameters/query-max-size"
+        - $ref: "#/components/parameters/path-image-response-format"
+        - name: colormap
+          in: query
+          description: The absolute path of a colormap file
+          required: false
+          schema:
+            type: string
+        - name: inverse
+          in: query
+          description: True if colors have to be inversed
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: contrast
+          in: query
+          description: Multiply pixels by contrast
+          required: false
+          schema:
+            type: number
+        - name: gamma
+          in: query
+          description: Apply gamma correction
+          required: false
+          schema:
+            type: number
+        - name: bits
+          in: query
+          description: Output bit depth per channel
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          $ref: "#/components/responses/image"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/imageinstance/{id}/previous.json:
+    get:
+      tags:
+        - Image | Image instance
+      description: Get previous image in project
+      summary: Get previous image in project
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ImageInstance"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/imageinstance/{id}/thumb.{format}:
+    get:
+      tags:
+        - Image | Image instance
+      description: Get an image thumbnail
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+        - $ref: "#/components/parameters/path-image-response-format"
+        - $ref: "#/components/parameters/query-max-size"
+        - name: colormap
+          in: query
+          description: The absolute path of a colormap file
+          required: false
+          schema:
+            type: string
+        - name: inverse
+          in: query
+          description: True if colors have to be inversed
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: contrast
+          in: query
+          description: Multiply pixels by contrast
+          required: false
+          schema:
+            type: number
+        - name: gamma
+          in: query
+          description: Apply gamma correction
+          required: false
+          schema:
+            type: number
+        - name: bits
+          in: query
+          description: Output bit depth per channel
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          $ref: "#/components/responses/image"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/imageinstance/method/lastopened.json:
+    get:
+      tags:
+        - Image | Image instance
+      description: List your last opened images
+      parameters:
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      collection:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              format: int64
+                              description: "The image instance id"
+                            project:
+                              type: integer
+                              format: int64
+                              description: "The project id"
+                            instanceFilename:
+                              type: string
+                              description: The image name in the project
+                            date:
+                              type: string
+                              format: timestamp
+                              description: Your last image opening timestamp
+                            thumb:
+                              type: string
+                              description: Image thumb URL
+                  - $ref: "#/components/schemas/collection"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/project/{project}/imageinstance.json:
+    get:
+      tags:
+        - Image | Image instance
+      description: List images in a project
+      parameters:
+        - $ref: "#/components/parameters/path-filter-project-id"
+        - $ref: "#/components/parameters/query-sort"
+        - $ref: "#/components/parameters/query-sort-order"
+        - name: withLastActivity
+          in: query
+          description: "Return the last consultation of current user in each image."
+          required: false
+          schema:
+            type: boolean
+            default: "false"
+        - name: light
+          in: query
+          description: |
+            If true, the returned list will only
+            contain id, instanceFilename and blindedName properties.
+            Not compatible with withLastActivity parameters
+          schema:
+            type: boolean
+            default: "false"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageInstanceCollection"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
   /api/project/{project}/userannotation/count.json:
     get:
       description: Count the number of annotation in the project
@@ -1213,6 +1628,80 @@ paths:
               schema:
                 $ref: "#/components/schemas/CompanionFileCollection"
           description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/user/{id}/imageinstance.json:
+    get:
+      tags:
+        - Image | Image instance
+      description: List images for a user
+      parameters:
+        - $ref: "#/components/parameters/path-filter-user-id"
+        - $ref: "#/components/parameters/query-sort"
+        - $ref: "#/components/parameters/query-sort-order"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageInstanceCollection"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/user/{id}/imageinstance/light.json:
+    get:
+      tags:
+        - Image | Image instance
+      description: List images for a user (partial response)
+      parameters:
+        - $ref: "#/components/parameters/path-filter-user-id"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      collection:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              format: int64
+                              description: "The image instance id"
+                            project:
+                              type: integer
+                              format: int64
+                              description: "The project id"
+                            projectName:
+                              type: string
+                              description: The project name
+                            instanceFilename:
+                              type: string
+                              description: The image name in the project
+                  - $ref: "#/components/schemas/collection"
         "400":
           $ref: "#/components/responses/bad-request"
         "401":
@@ -1780,484 +2269,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/legacy-user-keys"
   
-  "/api/imageinstance/{id}.json":
-    get:
-      tags:
-        - Image | Image instance
-      summary: Get an image in a project
-      description: Get an image instance, that is an image in a project
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ImageInstance"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-    put:
-      tags:
-        - Image | Image instance
-      description: Update an image in a project
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ImageInstance"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/ImageInstance"
-    delete:
-      tags:
-        - Image | Image instance
-      summary: Remove an image from a project
-      description: |
-        Remove an image from a project. The image instance is deleted with all other resources referencing this
-        resource. It includes notably all associated annotations and metadata.
-
-        The underlying Abstract Image is not deleted: the image is thus not removed from the storage.
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ImageInstance"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/imageinstance/{id}/associated/{label}.{format}":
-    get:
-      tags:
-        - Image | Image instance
-      description:
-        Get an associated image of an image instance (e.g. label, macro,
-        thumbnail)
-      summary: Get an associated image
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-        - $ref: "#/components/parameters/path-associated-label"
-        - $ref: "#/components/parameters/path-image-response-format"
-        - $ref: "#/components/parameters/query-max-size"
-      responses:
-        "200":
-          $ref: "#/components/responses/image"
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/imageinstance/{id}/associated.json":
-    get:
-      tags:
-        - Image | Image instance
-      description: Get associated image labels
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - type: object
-                    properties:
-                      collection:
-                        type: array
-                        items:
-                          type: string
-                          enum:
-                            - label
-                            - macro
-                            - thumb
-                  - $ref: "#/components/schemas/collection"
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/imageinstance/method/lastopened.json":
-    get:
-      tags:
-        - Image | Image instance
-      description: List your last opened images
-      parameters:
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - type: object
-                    properties:
-                      collection:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: integer
-                              format: int64
-                              description: "The image instance id"
-                            project:
-                              type: integer
-                              format: int64
-                              description: "The project id"
-                            instanceFilename:
-                              type: string
-                              description: The image name in the project
-                            date:
-                              type: string
-                              format: timestamp
-                              description: Your last image opening timestamp
-                            thumb:
-                              type: string
-                              description: Image thumb URL
-                  - $ref: "#/components/schemas/collection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/user/{user}/imageinstance/light.json":
-    get:
-      tags:
-        - Image | Image instance
-      description: List images for a user (partial response)
-      parameters:
-        - $ref: "#/components/parameters/path-filter-user-id"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          description: ""
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - type: object
-                    properties:
-                      collection:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: integer
-                              format: int64
-                              description: "The image instance id"
-                            project:
-                              type: integer
-                              format: int64
-                              description: "The project id"
-                            projectName:
-                              type: string
-                              description: The project name
-                            instanceFilename:
-                              type: string
-                              description: The image name in the project
-                  - $ref: "#/components/schemas/collection"
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/user/{user}/imageinstance.json":
-    get:
-      tags:
-        - Image | Image instance
-      description: List images for a user
-      parameters:
-        - $ref: "#/components/parameters/path-filter-user-id"
-        - $ref: "#/components/parameters/query-sort"
-        - $ref: "#/components/parameters/query-sort-order"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ImageInstanceCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/project/{project}/imageinstance.json":
-    get:
-      tags:
-        - Image | Image instance
-      description: List images in a project
-      parameters:
-        - $ref: "#/components/parameters/path-filter-project-id"
-        - $ref: "#/components/parameters/query-sort"
-        - $ref: "#/components/parameters/query-sort-order"
-        - name: withLastActivity
-          in: query
-          description: "Return the last consultation of current user in each image."
-          required: false
-          schema:
-            type: boolean
-            default: "false"
-        - name: light
-          in: query
-          description: |
-            If true, the returned list will only
-            contain id, instanceFilename and blindedName properties.
-            Not compatible with withLastActivity parameters
-          schema:
-            type: boolean
-            default: "false"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ImageInstanceCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/imageinstance/{id}/thumb.{format}":
-    get:
-      tags:
-        - Image | Image instance
-      description: Get an image thumbnail
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-        - $ref: "#/components/parameters/path-image-response-format"
-        - $ref: "#/components/parameters/query-max-size"
-        - name: colormap
-          in: query
-          description: The absolute path of a colormap file
-          required: false
-          schema:
-            type: string
-        - name: inverse
-          in: query
-          description: True if colors have to be inversed
-          required: false
-          schema:
-            type: integer
-            format: int32
-        - name: contrast
-          in: query
-          description: Multiply pixels by contrast
-          required: false
-          schema:
-            type: number
-        - name: gamma
-          in: query
-          description: Apply gamma correction
-          required: false
-          schema:
-            type: number
-        - name: bits
-          in: query
-          description: Output bit depth per channel
-          required: false
-          schema:
-            type: integer
-            format: int32
-      responses:
-        "200":
-          $ref: "#/components/responses/image"
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-
-  "/api/imageinstance/{id}/preview.{format}":
-    get:
-      tags:
-        - Image | Image instance
-      description: Get an image preview
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-        - $ref: "#/components/parameters/query-max-size"
-        - $ref: "#/components/parameters/path-image-response-format"
-        - name: colormap
-          in: query
-          description: The absolute path of a colormap file
-          required: false
-          schema:
-            type: string
-        - name: inverse
-          in: query
-          description: True if colors have to be inversed
-          required: false
-          schema:
-            type: integer
-            format: int32
-        - name: contrast
-          in: query
-          description: Multiply pixels by contrast
-          required: false
-          schema:
-            type: number
-        - name: gamma
-          in: query
-          description: Apply gamma correction
-          required: false
-          schema:
-            type: number
-        - name: bits
-          in: query
-          description: Output bit depth per channel
-          required: false
-          schema:
-            type: integer
-            format: int32
-      responses:
-        "200":
-          $ref: "#/components/responses/image"
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/imageinstance.json":
-    post:
-      tags:
-        - Image | Image instance
-      description: Add an image to a project
-      parameters: []
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ImageInstance"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/ImageInstance"
-  "/api/imageinstance/{id}/next.json":
-    get:
-      tags:
-        - Image | Image instance
-      description: Get next image in project
-      summary: Get next image in project
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ImageInstance"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/imageinstance/{id}/previous.json":
-    get:
-      tags:
-        - Image | Image instance
-      description: Get previous image in project
-      summary: Get previous image in project
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/ImageInstance"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
   "/api/storage/{id}.json":
     get:
       tags:
@@ -13049,33 +13060,6 @@ components:
         y:
           type: number
           description: "(If params showGis=true) the annotation centroid y"
-    ProjectSharingSameImage:
-      description: Response for project sharing the same image (list)
-      type: object
-      properties:
-        admin:
-          type: boolean
-          description: user is admin or not
-        imageinstanceId:
-          type: integer
-          description: Image id
-          format: int64
-        layerId:
-          type: integer
-          description: user id
-          format: int64
-        layerName:
-          type: integer
-          description: user name
-          format: int64
-        projectId:
-          type: integer
-          description: Project id
-          format: int64
-        projectName:
-          type: integer
-          description: Project name
-          format: int64
     search:
       description: Response for search request
       type: object
@@ -13168,42 +13152,6 @@ components:
               items:
                 $ref: "#/components/schemas/AbstractSlice"
         - $ref: "#/components/schemas/collection"
-    AlgoAnnotationCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/AlgoAnnotation"
-        - $ref: "#/components/schemas/collection"
-    AlgoAnnotationTermCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/AlgoAnnotationTerm"
-        - $ref: "#/components/schemas/collection"
-    AnnotationActionCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/AnnotationAction"
-        - $ref: "#/components/schemas/collection"
-    AnnotationFilterCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/AnnotationFilter"
-        - $ref: "#/components/schemas/collection"
     AnnotationIndexCollection:
       allOf:
         - type: object
@@ -13267,24 +13215,6 @@ components:
               items:
                 $ref: "#/components/schemas/Group"
         - $ref: "#/components/schemas/collection"
-    ImageFilterCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/ImageFilter"
-        - $ref: "#/components/schemas/collection"
-    ImageFilterProjectCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/ImageFilterProject"
-        - $ref: "#/components/schemas/collection"
     ImageGroupCollection:
       allOf:
         - type: object
@@ -13312,24 +13242,6 @@ components:
               items:
                 $ref: "#/components/schemas/ImageServer"
         - $ref: "#/components/schemas/collection"
-    LastConnectionCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/LastConnection"
-        - $ref: "#/components/schemas/collection"
-    NestedImageInstanceCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/NestedImageInstance"
-        - $ref: "#/components/schemas/collection"
     OntologyCollection:
       allOf:
         - type: object
@@ -13338,51 +13250,6 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/Ontology"
-        - $ref: "#/components/schemas/collection"
-    ParameterConstraintCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/ParameterConstraint"
-        - $ref: "#/components/schemas/collection"
-    PersistentConnectionCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/PersistentConnection"
-        - $ref: "#/components/schemas/collection"
-    PersistentImageConsultationCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/PersistentImageConsultation"
-        - $ref: "#/components/schemas/collection"
-    PersistentProjectConnectionCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/PersistentProjectConnection"
-        - $ref: "#/components/schemas/collection"
-    ProcessingServerCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/Processing-server"
         - $ref: "#/components/schemas/collection"
     ProjectCollection:
       allOf:
@@ -13393,24 +13260,6 @@ components:
               items:
                 $ref: "#/components/schemas/Project"
         - $ref: "#/components/schemas/collection"
-    ProjectDefaultLayerCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/ProjectDefaultLayer"
-        - $ref: "#/components/schemas/collection"
-    ProjectRepresentativeUserCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/ProjectRepresentativeUser"
-        - $ref: "#/components/schemas/collection"
     PropertyCollection:
       allOf:
         - type: object
@@ -13419,15 +13268,6 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/Property"
-        - $ref: "#/components/schemas/collection"
-    ROIAnnotationCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/ROIAnnotation"
         - $ref: "#/components/schemas/collection"
     RelationCollection:
       allOf:
@@ -13473,15 +13313,6 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/SecUser"
-        - $ref: "#/components/schemas/collection"
-    SecUserSecRoleCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/SecUserSecRole"
         - $ref: "#/components/schemas/collection"
     SharedAnnotationCollection:
       allOf:
@@ -13546,15 +13377,6 @@ components:
               items:
                 $ref: "#/components/schemas/Track"
         - $ref: "#/components/schemas/collection"
-    UploadedFileCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/UploadedFile"
-        - $ref: "#/components/schemas/collection"
     UserCollection:
       allOf:
         - type: object
@@ -13563,13 +13385,4 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/user"
-        - $ref: "#/components/schemas/collection"
-    UserAnnotationCollection:
-      allOf:
-        - type: object
-          properties:
-            collection:
-              type: array
-              items:
-                $ref: "#/components/schemas/user-annotation"
         - $ref: "#/components/schemas/collection"
