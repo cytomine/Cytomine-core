@@ -38,14 +38,14 @@ tags:
     description: Manage images in a storage
   - name: Image | Abstract slice
     description: Manage slices of an image in a storage
+  - name: Image | Companion file
+    description: Manage companion files of an image in a storage
   - name: Image | Image instance
     description: Manage images in a project
   - name: Image | Slice instance
     description: Manage slices of an image in a project
   - name: Image | Image server
     description: Manage image servers (IMS)
-  - name: Image | Companion file
-    description: Manage companion files of an image in a storage
   - name: Legacy user keys
     description: Legacy user keys management
   - name: Metadata | Property
@@ -325,6 +325,31 @@ paths:
           $ref: "#/components/responses/not-found"
         "409":
           $ref: "#/components/responses/conflict"
+
+  /api/abstractimage/{id}/companionfile.json:
+    get:
+      tags:
+        - Image | Companion file
+      description: Get all companion files for the given abstract image
+      parameters:
+        - $ref: "#/components/parameters/path-abstract-image-id"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanionFileCollection"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
 
   /api/abstractimage/{id}/properties/extract.json:
     post:
@@ -833,6 +858,156 @@ paths:
               schema:
                 $ref: "#/components/schemas/task-run-layer"
 
+  /api/companionfile.json:
+    post:
+      tags:
+        - Image | Companion file
+      description:
+        Add a new companion file. See 'upload file service' to upload a
+        slice.
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CompanionFile"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CompanionFile"
+
+  /api/companionfile/{id}.json:
+    get:
+      tags:
+        - Image | Companion file
+      description: Get a companion file
+      parameters:
+        - name: id
+          in: path
+          description: The companion file id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CompanionFile"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+    put:
+      tags:
+        - Image | Companion file
+      description: Update a companion file
+      parameters:
+        - name: id
+          in: path
+          description: The companion file id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CompanionFile"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CompanionFile"
+    delete:
+      tags:
+        - Image | Companion file
+      description: Delete a companion file
+      parameters:
+        - name: id
+          in: path
+          description: The companion file id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CompanionFile"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/companionfile/{id}/user.json:
+    get:
+      tags:
+        - Image | Companion file
+      description: Show user who uploaded the companion file
+      parameters:
+        - name: id
+          in: path
+          description: The companion file id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CompanionFile"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
   /api/image-instances/{id}/annotation-layers:
     get:
       summary: Get all annotation layers for an image instance
@@ -1006,6 +1181,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AbstractSliceCollection"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/uploadedfile/{id}/companionfile.json:
+    get:
+      tags:
+        - Image | Companion file
+      description: Get all companion files for the given uploaded file
+      parameters:
+        - name: id
+          in: path
+          description: The uploaded file id
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanionFileCollection"
           description: ""
         "400":
           $ref: "#/components/responses/bad-request"
@@ -1574,242 +1780,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/legacy-user-keys"
   
-  "/api/companionfile/{id}.json":
-    get:
-      tags:
-        - Image | Companion file
-      description: Get a companion file
-      parameters:
-        - name: id
-          in: path
-          description: The companion file id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/CompanionFile"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-    put:
-      tags:
-        - Image | Companion file
-      description: Update a companion file
-      parameters:
-        - name: id
-          in: path
-          description: The companion file id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/CompanionFile"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/CompanionFile"
-    delete:
-      tags:
-        - Image | Companion file
-      description: Delete a companion file)
-      parameters:
-        - name: id
-          in: path
-          description: The companion file id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/CompanionFile"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/abstractimage/{id}/companionfile.json":
-    get:
-      tags:
-        - Image | Companion file
-      description: Get all companion files for the given abstract image
-      parameters:
-        - $ref: "#/components/parameters/path-abstract-image-id"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CompanionFileCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/uploadedfile/{id}/companionfile.json":
-    get:
-      tags:
-        - Image | Companion file
-      description: Get all companion files for the given uploaded file
-      parameters:
-        - name: id
-          in: path
-          description: The uploaded file id
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CompanionFileCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/companionfile/{id}/user.json":
-    get:
-      tags:
-        - Image | Companion file
-      description: Show user who uploaded the companion file
-      parameters:
-        - name: id
-          in: path
-          description: The companion file id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/CompanionFile"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/profile.json":
-    post:
-      tags:
-        - Image | Companion file
-      description: Ask to compute HDF5 profile for the given image
-      parameters:
-        - name: image
-          in: path
-          description: The abstract image id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/CompanionFile"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/CompanionFile"
-  "/api/companionfile.json":
-    post:
-      tags:
-        - Image | Companion file
-      description:
-        Add a new companion file. See 'upload file service' to upload a
-        slice.
-      parameters: []
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/CompanionFile"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/CompanionFile"
   "/api/imageinstance/{id}.json":
     get:
       tags:
