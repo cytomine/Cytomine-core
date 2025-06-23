@@ -86,10 +86,10 @@ tags:
     description: Manage tracks in an image
   - name: user
     description: Manage users
-  - name: user | Role
-    description: Manage app-roles
-  - name: user | Associated role
+  - name: User | Associated Role
     description: Manage app-roles associated to users
+  - name: User | Role
+    description: Manage app-roles
 
 paths:
   /api/abstractimage.json:
@@ -1544,6 +1544,59 @@ paths:
         "404":
           $ref: "#/components/responses/not-found"
 
+  /api/role.json:
+    get:
+      tags:
+        - User | Role
+      description: List all roles available on cytomine
+      parameters:
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecRoleCollection"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/role/{id}.json:
+    get:
+      tags:
+        - User | Role
+      description: Get a role
+      parameters:
+        - name: id
+          in: path
+          description: The role id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SecRole"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
   /api/uploadedfile/{id}/abstractimage.json:
     get:
       tags:
@@ -1635,6 +1688,95 @@ paths:
         "404":
           $ref: "#/components/responses/not-found"
 
+  /api/user/{id}.json:
+    get:
+      tags:
+        - user
+      description: Get a user
+      parameters:
+        - name: id
+          in: path
+          description: The user id or the user username
+          required: true
+          schema:
+            type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/user"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+    put:
+      tags:
+        - user
+      description: Edit a user
+      parameters:
+        - name: id
+          in: path
+          description: The user id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/user"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/user"
+    delete:
+      tags:
+        - user
+      description: Delete a user
+      parameters:
+        - name: id
+          in: path
+          description: The user id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/user"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
   /api/user/{id}/imageinstance.json:
     get:
       tags:
@@ -1708,6 +1850,185 @@ paths:
           $ref: "#/components/responses/forbidden"
         "404":
           $ref: "#/components/responses/not-found"
+
+  /api/user/{user}/role.json:
+    post:
+      tags:
+        - User | Associated Role
+      description: Get a user role
+      parameters:
+        - name: user
+          in: path
+          description: The user id
+          required: true
+          schema:
+            type: string
+        - name: role
+          in: path
+          description: The role id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SecUserSecRole"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SecUserSecRole"
+    get:
+      tags:
+        - User | Associated Role
+      description: List all roles for a user
+      parameters:
+        - name: user
+          in: path
+          description: The user id
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecUserCollection-sec-role"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/user/{user}/role/{role}.json:
+    get:
+      tags:
+        - User | Associated Role
+      description: Get a user role
+      parameters:
+        - name: user
+          in: path
+          description: The user id
+          required: true
+          schema:
+            type: string
+        - name: role
+          in: path
+          description: The role id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SecUserSecRole"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+    delete:
+      tags:
+        - User | Associated Role
+      description: Delete a user role
+      parameters:
+        - name: user
+          in: path
+          description: The user id
+          required: true
+          schema:
+            type: string
+        - name: role
+          in: path
+          description: The role id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SecUserSecRole"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/user/{user}/role/{role}/define.json:
+    put:
+      tags:
+        - User | Associated Role
+      description:
+        Define a role for a user. If admin is defined, user will have admin,user,guest.
+        If user is defined, user will have user,guest, etc. Role may be create or
+        remove
+      parameters:
+        - name: user
+          in: path
+          description: The user id
+          required: true
+          schema:
+            type: string
+        - name: role
+          in: path
+          description: The role id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SecUserSecRole"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SecUserSecRole"
 
   /api/user/{id}/userannotation/count.json:
     get:
@@ -2266,7 +2587,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/legacy-user-keys"
-  
+
   "/api/storage/{id}.json":
     get:
       tags:
@@ -7195,321 +7516,7 @@ paths:
           application/json:
             schema:
               "$ref": "#/components/schemas/ProjectRepresentativeUser"
-  "/api/role/{id}.json":
-    get:
-      tags:
-        - user | Role
-      description: Get a role
-      parameters:
-        - name: id
-          in: path
-          description: The role id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/SecRole"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/role.json":
-    get:
-      tags:
-        - user | Role
-      description: List all roles available on cytomine
-      parameters:
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SecRoleCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/user/{user}/role/{role}.json":
-    get:
-      tags:
-        - user | Associated role
-      description: Get a user role
-      parameters:
-        - name: user
-          in: path
-          description: The user id
-          required: true
-          schema:
-            type: string
-        - name: role
-          in: path
-          description: The role id
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/SecUserSecRole"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-    delete:
-      tags:
-        - user | Associated role
-      description: Delete a user role
-      parameters:
-        - name: user
-          in: path
-          description: The user id
-          required: true
-          schema:
-            type: string
-        - name: role
-          in: path
-          description: The role id
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/SecUserSecRole"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/user/{user}/role/{role}/define.json":
-    put:
-      tags:
-        - user | Associated role
-      description:
-        Define a role for a user. If admin is defined, user will have admin,user,guest.
-        If user is defined, user will have user,guest, etc. Role may be create or
-        remove
-      parameters:
-        - name: user
-          in: path
-          description: The user id
-          required: true
-          schema:
-            type: string
-        - name: role
-          in: path
-          description: The role id
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/SecUserSecRole"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/SecUserSecRole"
-  "/api/user/{user}/role.json":
-    post:
-      tags:
-        - user | Associated role
-      description: Get a user role
-      parameters:
-        - name: user
-          in: path
-          description: The user id
-          required: true
-          schema:
-            type: string
-        - name: role
-          in: path
-          description: The role id
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/SecUserSecRole"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/SecUserSecRole"
-    get:
-      tags:
-        - user | Associated role
-      description: List all roles for a user
-      parameters:
-        - name: user
-          in: path
-          description: The user id
-          required: true
-          schema:
-            type: string
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SecUserCollection-sec-role"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/user/{id}.json":
-    get:
-      tags:
-        - user
-      description: Get a user
-      parameters:
-        - name: id
-          in: path
-          description: The user id or the user username
-          required: true
-          schema:
-            type: object
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/user"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-    put:
-      tags:
-        - user
-      description: Edit a user
-      parameters:
-        - name: id
-          in: path
-          description: The user id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/user"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/user"
-    delete:
-      tags:
-        - user
-      description: Delete a user
-      parameters:
-        - name: id
-          in: path
-          description: The user id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/user"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
+
   "/api/project/{id}/admin.json":
     get:
       tags:
