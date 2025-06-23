@@ -854,6 +854,49 @@ paths:
               schema:
                 $ref: "#/components/schemas/task-run-layer"
 
+  /api/averageConnections.json:
+    get:
+      tags:
+        - Activity | Project connection
+      description: Get the average project connections on Cytomine.
+      parameters:
+        - name: afterThan
+          in: query
+          description:
+            Average on the project connection where created > the afterThan
+            parameter. Optional, the beforeThan Date -1 year will be considered if none
+            is given.
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: beforeThan
+          in: query
+          description:
+            Average on the project connection where created < the beforeThan
+            parameter. Optional, the current Date will be considered if none is given.
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: period
+          in: query
+          description: "The period of connections (hour : by hours, day : by days, week : by weeks) (Mandatory)"
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: project connection
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
   /api/companionfile.json:
     post:
       tags:
@@ -1004,6 +1047,45 @@ paths:
         "404":
           $ref: "#/components/responses/not-found"
 
+  /api/connectionFrequency.json:
+    get:
+      tags:
+        - Activity | Project connection
+      description: Get the number of connections in the specified project
+      parameters:
+        - name: project
+          in: path
+          description: The identifier of the project
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: startDate
+          in: query
+          description: Only connections after this date will be counted (optional)
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: endDate
+          in: query
+          description: Only connections before this date will be counted (optional)
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: project connection
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
   /api/image-instances/{id}/annotation-layers:
     get:
       summary: Get all annotation layers for an image instance
@@ -1021,6 +1103,44 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/annotation-layer"
+
+  /api/imageconsultation/resume.json:
+    get:
+      tags:
+        - Activity | Image consultation
+      description: Summarize the consulted images for a given user and a given project
+      parameters:
+        - name: user
+          in: query
+          description: The user id
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: project
+          in: query
+          description: The project id
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: export
+          in: query
+          description: "The export format (supported: csv). Otherwise, return a json"
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: image consultation
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
 
   /api/imageinstance.json:
     post:
@@ -1190,6 +1310,27 @@ paths:
         "404":
           $ref: "#/components/responses/not-found"
 
+  /api/imageinstance/{id}/consultation.json:
+    post:
+      tags:
+        - Activity | Image consultation
+      description: Add a new image consultation record
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+      responses:
+        "200":
+          description: image consultation
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+
   /api/imageinstance/{id}/next.json:
     get:
       tags:
@@ -1291,6 +1432,31 @@ paths:
         "404":
           $ref: "#/components/responses/not-found"
 
+  /api/imageinstance/{id}/sliceinstance.json:
+    get:
+      tags:
+        - Image | Slice instance
+      description: List slices for an image
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SliceInstanceCollection"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
   /api/imageinstance/{id}/thumb.{format}:
     get:
       tags:
@@ -1369,6 +1535,47 @@ paths:
         "404":
           $ref: "#/components/responses/not-found"
 
+  /api/imageinstance/{id}/{channel}/{zStack}/{time}/sliceinstance.json:
+    get:
+      tags:
+        - Image | Slice instance
+      description: Get slice at (C,Z,T) in an image
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+        - name: zStack
+          in: path
+          description: The zStack index
+          required: true
+          schema:
+            type: integer
+        - name: time
+          in: path
+          description: The time index
+          required: true
+          schema:
+            type: integer
+        - name: channel
+          in: path
+          description: The channel index
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SliceInstance"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
   /api/imageinstance/method/lastopened.json:
     get:
       tags:
@@ -1410,6 +1617,190 @@ paths:
                               description: Image thumb URL
                   - $ref: "#/components/schemas/collection"
           description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/projectConnection/{id}.json:
+    get:
+      tags:
+        - Activity | Project connection
+      description:
+        Get the details of a project connection including the actions done
+        during a project connection of one user into a project.
+      parameters:
+        - name: project
+          in: path
+          description: The project id. Mandatory
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: id
+          in: path
+          description: The project connection id. Mandatory
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: project connection
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/project/{project}/connectionFrequency.json:
+    get:
+      tags:
+        - Activity | Project connection
+      description: Get the number of connection by project
+      parameters:
+        - $ref: "#/components/parameters/path-filter-project-id"
+        - name: afterThan
+          in: query
+          description: The date when counting starts
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: period
+          in: query
+          description: The period of counting
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: project connection
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/project/{project}/connectionFrequency/{user}.json:
+    get:
+      tags:
+        - Activity | Project connection
+      description: Get the number of connection by project
+      parameters:
+        - $ref: "#/components/parameters/path-filter-project-id"
+        - $ref: "#/components/parameters/path-filter-user-id"
+        - name: afterThan
+          in: query
+          description: The date when counting starts
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: period
+          in: query
+          description: "The period of connections (hour : by hours, day : by days, week : by weeks)"
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: project connection
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/project/{project}/connectionHistory/{user}.json:
+    get:
+      tags:
+        - Activity | Project connection
+      description: Get the project connections of one user into a project.
+      parameters:
+        - name: user
+          in: path
+          description: The user id. Mandatory
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: project
+          in: path
+          description: The project id. Mandatory
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: offset
+          in: query
+          description: An offset. Default value = 0
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: limit
+          in: query
+          description: Limit the project connections. Optionnal
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: project connection
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/project/{project}/imageconsultation/count.json:
+    get:
+      tags:
+        - Activity | Image consultation
+      description: Get the number of image consultations in the specified project
+      parameters:
+        - name: project
+          in: path
+          description: The identifier of the project
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: startDate
+          in: query
+          description: Only image consultations after this date will be counted (optional)
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: endDate
+          in: query
+          description: Only image consultations before this date will be counted (optional)
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: image consultation
         "400":
           $ref: "#/components/responses/bad-request"
         "401":
@@ -1462,6 +1853,66 @@ paths:
         "404":
           $ref: "#/components/responses/not-found"
 
+  /api/project/{project}/lastConnection.json:
+    get:
+      tags:
+        - Activity | Project connection
+      description: List the last user connections in a project
+      parameters:
+        - $ref: "#/components/parameters/path-filter-project-id"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          description: project connection
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/project/{project}/lastConnection/{user}.json:
+    get:
+      tags:
+        - Activity | Project connection
+      description: List the last user connections in a project for a given user
+      parameters:
+        - $ref: "#/components/parameters/path-filter-project-id"
+        - $ref: "#/components/parameters/path-filter-user-id"
+      responses:
+        "200":
+          description: project connection
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/project/{project}/lastImages.json:
+    get:
+      tags:
+        - Activity | Image consultation
+      description: List the last consulted image by each user for a given project
+      parameters:
+        - $ref: "#/components/parameters/path-filter-project-id"
+      responses:
+        "200":
+          description: image consultation
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
   /api/project/{id}/track.json:
     get:
       tags:
@@ -1478,6 +1929,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/TrackCollection"
           description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/project/{project}/user/{user}/imageconsultation.json:
+    get:
+      tags:
+        - Activity | Image consultation
+      description: Get the last consultations of an user into a project
+      parameters:
+        - $ref: "#/components/parameters/path-filter-project-id"
+        - $ref: "#/components/parameters/path-filter-user-id"
+      responses:
+        "200":
+          description: image consultation
         "400":
           $ref: "#/components/responses/bad-request"
         "401":
@@ -1520,6 +1991,81 @@ paths:
                     type: integer
                     format: int64
                     description: The total number of user annotations in the project
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/project/{project}/userconnection.json:
+    post:
+      tags:
+        - Activity | Project connection
+      description: Add a new user connection record to a project
+      parameters:
+        - $ref: "#/components/parameters/path-filter-project-id"
+      responses:
+        "200":
+          description: project connection
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+
+  /api/project/{project}/userconnection/count.json:
+    get:
+      tags:
+        - Activity | Project connection
+      description: Get the number of connections to all projects
+      parameters:
+        - $ref: "#/components/parameters/path-filter-project-id"
+        - name: afterThan
+          in: query
+          description: The date when counting starts
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: period
+          in: query
+          description: "The period of connections (hour : by hours, day : by days, week : by weeks)"
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: project connection
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/project/{project}/userconnection/{user}.json:
+    get:
+      tags:
+        - Activity | Project connection
+      description: Get user connections in a project
+      parameters:
+        - $ref: "#/components/parameters/path-filter-project-id"
+        - $ref: "#/components/parameters/path-filter-user-id"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          description: project connection
         "400":
           $ref: "#/components/responses/bad-request"
         "401":
@@ -1645,6 +2191,212 @@ paths:
         "404":
           $ref: "#/components/responses/not-found"
 
+  /api/sliceinstance/{id}.json:
+    get:
+      tags:
+        - Image | Slice instance
+      description: Get a slice
+      parameters:
+        - $ref: "#/components/parameters/path-image-instance-id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/SliceInstance"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/sliceinstance/{id}/thumb.{format}:
+    get:
+      tags:
+        - Image | Slice instance
+      description: Get a slice thumbnail
+      parameters:
+        - $ref: "#/components/parameters/path-slice-instance-id"
+        - $ref: "#/components/parameters/path-image-response-format"
+        - $ref: "#/components/parameters/query-max-size"
+        - name: colormap
+          in: query
+          description: The absolute path of a colormap file
+          required: false
+          schema:
+            type: string
+        - name: inverse
+          in: query
+          description: True if colors have to be inversed
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: contrast
+          in: query
+          description: Multiply pixels by contrast
+          required: false
+          schema:
+            type: number
+        - name: gamma
+          in: query
+          description: Apply gamma correction
+          required: false
+          schema:
+            type: number
+        - name: bits
+          in: query
+          description: Output bit depth per channel
+          required: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          $ref: "#/components/responses/image"
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/storage.json:
+    post:
+      tags:
+        - Storage
+      description: Add a new storage
+      parameters: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Storage"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/Storage"
+    get:
+      tags:
+        - Storage
+      summary: List storages
+      description: List storages you have access to
+      parameters:
+        - name: all
+          in: query
+          description: Whether to list all storages thanks to your platform administrator role or only those you are member of
+          schema:
+            type: boolean
+            default: "false"
+        - $ref: "#/components/parameters/pagination-max"
+        - $ref: "#/components/parameters/pagination-offset"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StorageCollection"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/storage/{id}.json:
+    get:
+      tags:
+        - Storage
+      description: Get a storage
+      parameters:
+        - $ref: "#/components/schemas/path-storage-id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Storage"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+    put:
+      tags:
+        - Storage
+      description: Update a storage
+      parameters:
+        - $ref: "#/components/schemas/path-storage-id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Storage"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/Storage"
+    delete:
+      tags:
+        - Storage
+      description: Delete a storage
+      parameters:
+        - $ref: "#/components/schemas/path-storage-id"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Storage"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
   /api/track.json:
     post:
       tags:
@@ -1754,6 +2506,98 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Track"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+
+  /api/uploadedfile/{id}.json:
+    get:
+      tags:
+        - Storage | Uploaded file
+      description: Get an uploaded file
+      parameters:
+        - name: id
+          in: path
+          description: The uploaded file id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/UploadedFile"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+    put:
+      tags:
+        - Storage | Uploaded file
+      description: Edit an uploaded file domain (mainly to edit status during upload)
+      parameters:
+        - name: id
+          in: path
+          description: The uploaded file id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/UploadedFile"
+          description: ""
+        "400":
+          $ref: "#/components/responses/bad-request"
+        "401":
+          $ref: "#/components/responses/unauthorized"
+        "403":
+          $ref: "#/components/responses/forbidden"
+        "404":
+          $ref: "#/components/responses/not-found"
+        "409":
+          $ref: "#/components/responses/conflict"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/UploadedFile"
+    delete:
+      tags:
+        - Storage | Uploaded file
+      description:
+        Delete an uploaded file domain. This do not delete the file on
+        disk.
+      parameters:
+        - name: id
+          in: path
+          description: The uploaded file id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/UploadedFile"
           description: ""
         "400":
           $ref: "#/components/responses/bad-request"
@@ -2755,363 +3599,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/legacy-user-keys"
 
-  "/api/storage/{id}.json":
-    get:
-      tags:
-        - Storage
-      description: Get a storage
-      parameters:
-        - $ref: "#/components/schemas/path-storage-id"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Storage"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-    put:
-      tags:
-        - Storage
-      description: Update a storage
-      parameters:
-        - $ref: "#/components/schemas/path-storage-id"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Storage"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Storage"
-    delete:
-      tags:
-        - Storage
-      description: Delete a storage
-      parameters:
-        - $ref: "#/components/schemas/path-storage-id"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Storage"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/storage.json":
-    post:
-      tags:
-        - Storage
-      description: Add a new storage
-      parameters: []
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Storage"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/Storage"
-    get:
-      tags:
-        - Storage
-      summary: List storages
-      description: List storages you have access to
-      parameters:
-        - name: all
-          in: query
-          description: Whether to list all storages thanks to your platform administrator role or only those you are member of
-          schema:
-            type: boolean
-            default: "false"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StorageCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/sliceinstance/{id}.json":
-    get:
-      tags:
-        - Image | Slice instance
-      description: Get a slice
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/SliceInstance"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/imageinstance/{id}/{channel}/{zStack}/{time}/sliceinstance.json":
-    get:
-      tags:
-        - Image | Slice instance
-      description: Get slice at (C,Z,T) in an image
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-        - name: zStack
-          in: path
-          description: The zStack index
-          required: true
-          schema:
-            type: integer
-        - name: time
-          in: path
-          description: The time index
-          required: true
-          schema:
-            type: integer
-        - name: channel
-          in: path
-          description: The channel index
-          required: true
-          schema:
-            type: integer
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/SliceInstance"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/imageinstance/{id}/sliceinstance.json":
-    get:
-      tags:
-        - Image | Slice instance
-      description: List slices for an image
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SliceInstanceCollection"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/sliceinstance/{id}/thumb.{format}":
-    get:
-      tags:
-        - Image | Slice instance
-      description: Get a slice thumbnail
-      parameters:
-        - $ref: "#/components/parameters/path-slice-instance-id"
-        - $ref: "#/components/parameters/path-image-response-format"
-        - $ref: "#/components/parameters/query-max-size"
-        - name: colormap
-          in: query
-          description: The absolute path of a colormap file
-          required: false
-          schema:
-            type: string
-        - name: inverse
-          in: query
-          description: True if colors have to be inversed
-          required: false
-          schema:
-            type: integer
-            format: int32
-        - name: contrast
-          in: query
-          description: Multiply pixels by contrast
-          required: false
-          schema:
-            type: number
-        - name: gamma
-          in: query
-          description: Apply gamma correction
-          required: false
-          schema:
-            type: number
-        - name: bits
-          in: query
-          description: Output bit depth per channel
-          required: false
-          schema:
-            type: integer
-            format: int32
-      responses:
-        "200":
-          $ref: "#/components/responses/image"
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/uploadedfile/{id}.json":
-    get:
-      tags:
-        - Storage | Uploaded file
-      description: Get an uploaded file
-      parameters:
-        - name: id
-          in: path
-          description: The uploaded file id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/UploadedFile"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-    put:
-      tags:
-        - Storage | Uploaded file
-      description: Edit an uploaded file domain (mainly to edit status during upload)
-      parameters:
-        - name: id
-          in: path
-          description: The uploaded file id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/UploadedFile"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              "$ref": "#/components/schemas/UploadedFile"
-    delete:
-      tags:
-        - Storage | Uploaded file
-      description:
-        Delete an uploaded file domain. This do not delete the file on
-        disk.
-      parameters:
-        - name: id
-          in: path
-          description: The uploaded file id
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/UploadedFile"
-          description: ""
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
+
   "/api/uploadedfile/{id}/download":
     get:
       tags:
@@ -6667,9 +7155,6 @@ paths:
         "404":
           $ref: "#/components/responses/not-found"
 
-
-
-
   "/api/userannotation/{annotation}/comment/{id}.json":
     get:
       tags:
@@ -8386,470 +8871,7 @@ paths:
           $ref: "#/components/responses/forbidden"
         "404":
           $ref: "#/components/responses/not-found"
-  "/api/project/{project}/imageconsultation/count.json":
-    get:
-      tags:
-        - Activity | Image consultation
-      description: Get the number of image consultations in the specified project
-      parameters:
-        - name: project
-          in: path
-          description: The identifier of the project
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: startDate
-          in: query
-          description: Only image consultations after this date will be counted (optional)
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: endDate
-          in: query
-          description: Only image consultations before this date will be counted (optional)
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          description: image consultation
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/project/{project}/lastImages.json":
-    get:
-      tags:
-        - Activity | Image consultation
-      description: List the last consulted image by each user for a given project
-      parameters:
-        - $ref: "#/components/parameters/path-filter-project-id"
-      responses:
-        "200":
-          description: image consultation
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/project/{project}/user/{user}/imageconsultation.json":
-    get:
-      tags:
-        - Activity | Image consultation
-      description: Get the last consultations of an user into a project
-      parameters:
-        - $ref: "#/components/parameters/path-filter-project-id"
-        - $ref: "#/components/parameters/path-filter-user-id"
-      responses:
-        "200":
-          description: image consultation
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/imageconsultation/resume.json":
-    get:
-      tags:
-        - Activity | Image consultation
-      description: Summarize the consulted images for a given user and a given project
-      parameters:
-        - name: user
-          in: query
-          description: The user id
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: project
-          in: query
-          description: The project id
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: export
-          in: query
-          description: "The export format (supported: csv). Otherwise, return a json"
-          required: false
-          schema:
-            type: string
-      responses:
-        "200":
-          description: image consultation
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/imageinstance/{id}/consultation.json":
-    post:
-      tags:
-        - Activity | Image consultation
-      description: Add a new image consultation record
-      parameters:
-        - $ref: "#/components/parameters/path-image-instance-id"
-      responses:
-        "200":
-          description: image consultation
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
-  "/api/project/{project}/userconnection/count.json":
-    get:
-      tags:
-        - Activity | Project connection
-      description: Get the number of connections to all projects
-      parameters:
-        - $ref: "#/components/parameters/path-filter-project-id"
-        - name: afterThan
-          in: query
-          description: The date when counting starts
-          required: true
-          schema:
-            type: string
-            format: date
-        - name: period
-          in: query
-          description: "The period of connections (hour : by hours, day : by days, week : by weeks)"
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: project connection
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/project/{project}/lastConnection.json":
-    get:
-      tags:
-        - Activity | Project connection
-      description: List the last user connections in a project
-      parameters:
-        - $ref: "#/components/parameters/path-filter-project-id"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          description: project connection
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/project/{project}/lastConnection/{user}.json":
-    get:
-      tags:
-        - Activity | Project connection
-      description: List the last user connections in a project for a given user
-      parameters:
-        - $ref: "#/components/parameters/path-filter-project-id"
-        - $ref: "#/components/parameters/path-filter-user-id"
-      responses:
-        "200":
-          description: project connection
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/project/{project}/userconnection/{user}.json":
-    get:
-      tags:
-        - Activity | Project connection
-      description: Get user connections in a project
-      parameters:
-        - $ref: "#/components/parameters/path-filter-project-id"
-        - $ref: "#/components/parameters/path-filter-user-id"
-        - $ref: "#/components/parameters/pagination-max"
-        - $ref: "#/components/parameters/pagination-offset"
-      responses:
-        "200":
-          description: project connection
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/project/{project}/connectionFrequency.json":
-    get:
-      tags:
-        - Activity | Project connection
-      description: Get the number of connection by project
-      parameters:
-        - $ref: "#/components/parameters/path-filter-project-id"
-        - name: afterThan
-          in: query
-          description: The date when counting starts
-          required: true
-          schema:
-            type: string
-            format: date
-        - name: period
-          in: query
-          description: The period of counting
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: project connection
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/project/{project}/connectionFrequency/{user}.json":
-    get:
-      tags:
-        - Activity | Project connection
-      description: Get the number of connection by project
-      parameters:
-        - $ref: "#/components/parameters/path-filter-project-id"
-        - $ref: "#/components/parameters/path-filter-user-id"
-        - name: afterThan
-          in: query
-          description: The date when counting starts
-          required: true
-          schema:
-            type: string
-            format: date
-        - name: period
-          in: query
-          description: "The period of connections (hour : by hours, day : by days, week : by weeks)"
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: project connection
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/connectionFrequency.json":
-    get:
-      tags:
-        - Activity | Project connection
-      description: Get the number of connections in the specified project
-      parameters:
-        - name: project
-          in: path
-          description: The identifier of the project
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: startDate
-          in: query
-          description: Only connections after this date will be counted (optional)
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: endDate
-          in: query
-          description: Only connections before this date will be counted (optional)
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          description: project connection
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/averageConnections.json":
-    get:
-      tags:
-        - Activity | Project connection
-      description: Get the average project connections on Cytomine.
-      parameters:
-        - name: afterThan
-          in: query
-          description:
-            Average on the project connection where created > the afterThan
-            parameter. Optional, the beforeThan Date -1 year will be considered if none
-            is given.
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: beforeThan
-          in: query
-          description:
-            Average on the project connection where created < the beforeThan
-            parameter. Optional, the current Date will be considered if none is given.
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: period
-          in: query
-          description: "The period of connections (hour : by hours, day : by days, week : by weeks) (Mandatory)"
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: project connection
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/project/{project}/connectionHistory/{user}.json":
-    get:
-      tags:
-        - Activity | Project connection
-      description: Get the project connections of one user into a project.
-      parameters:
-        - name: user
-          in: path
-          description: The user id. Mandatory
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: project
-          in: path
-          description: The project id. Mandatory
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: offset
-          in: query
-          description: An offset. Default value = 0
-          required: true
-          schema:
-            type: integer
-            format: int32
-        - name: limit
-          in: query
-          description: Limit the project connections. Optionnal
-          required: true
-          schema:
-            type: integer
-            format: int32
-      responses:
-        "200":
-          description: project connection
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/projectConnection/{id}.json":
-    get:
-      tags:
-        - Activity | Project connection
-      description:
-        Get the details of a project connection including the actions done
-        during a project connection of one user into a project.
-      parameters:
-        - name: project
-          in: path
-          description: The project id. Mandatory
-          required: true
-          schema:
-            type: integer
-            format: int64
-        - name: id
-          in: path
-          description: The project connection id. Mandatory
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          description: project connection
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-  "/api/project/{project}/userconnection.json":
-    post:
-      tags:
-        - Activity | Project connection
-      description: Add a new user connection record to a project
-      parameters:
-        - $ref: "#/components/parameters/path-filter-project-id"
-      responses:
-        "200":
-          description: project connection
-        "400":
-          $ref: "#/components/responses/bad-request"
-        "401":
-          $ref: "#/components/responses/unauthorized"
-        "403":
-          $ref: "#/components/responses/forbidden"
-        "404":
-          $ref: "#/components/responses/not-found"
-        "409":
-          $ref: "#/components/responses/conflict"
+
   "/api/imageinstance/{id}/position/{user}.json":
     get:
       tags:
