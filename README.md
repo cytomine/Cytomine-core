@@ -1,5 +1,8 @@
 # Cytomine Core
 
+> [!WARNING]  
+> **Deprecated:** This repository is no longer maintained. Please see [cytomine/cytomine](https://github.com/cytomine/cytomine) for the latest version.
+
 Cytomine Core is a Spring Boot application built with Spring Framework, providing a robust and scalable solution for Cytomine. The application is designed to run with minimal setup and configuration.
 
 ## Develop & run locally using Docker
